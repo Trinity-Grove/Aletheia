@@ -1,0 +1,26 @@
+:root {
+  color-scheme: light;
+  font-family: Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.product-shell {
+  margin-inline: auto;
+  max-width: 72rem;
+  padding: 1.5rem;
+}
+
+.product-shell header {
+  margin-bottom: 3rem;
+}
+
+.product-shell h1 {
+  max-width: 24ch;
+}
