@@ -2,7 +2,7 @@ import parser from '@typescript-eslint/parser';
 
 export default [
   {
-    ignores: ['dist/**', 'coverage/**', 'node_modules/**'],
+    ignores: ['.next/**', 'dist/**', 'coverage/**', 'node_modules/**'],
   },
   {
     files: ['**/*.{js,mjs,cjs,ts,mts,cts}'],
