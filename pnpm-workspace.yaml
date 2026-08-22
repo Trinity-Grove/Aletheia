@@ -2,6 +2,20 @@ packages:
   - apps/*
   - packages/*
 
+# Emergency security-patch exception. Keep the 24-hour quarantine for every
+# other package; remove these exact entries after Next.js 16.3.2 matures.
+minimumReleaseAgeExclude:
+  - '@next/env@16.3.2'
+  - '@next/swc-darwin-arm64@16.3.2'
+  - '@next/swc-darwin-x64@16.3.2'
+  - '@next/swc-linux-arm64-gnu@16.3.2'
+  - '@next/swc-linux-arm64-musl@16.3.2'
+  - '@next/swc-linux-x64-gnu@16.3.2'
+  - '@next/swc-linux-x64-musl@16.3.2'
+  - '@next/swc-win32-arm64-msvc@16.3.2'
+  - '@next/swc-win32-x64-msvc@16.3.2'
+  - 'next@16.3.2'
+
 allowBuilds:
   '@prisma/client': true
   '@prisma/engines': true
