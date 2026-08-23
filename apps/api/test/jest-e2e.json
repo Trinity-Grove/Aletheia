@@ -8,5 +8,6 @@
   "testRegex": ".*\\.e2e-spec\\.ts$",
   "transform": {
     "^.+\\.ts$": ["ts-jest", { "useESM": true, "tsconfig": "<rootDir>/tsconfig.json" }]
-  }
+  },
+  "testTimeout": 30000
 }

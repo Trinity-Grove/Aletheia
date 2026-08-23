@@ -27,4 +27,19 @@ describe('health API', () => {
     });
     expect(response.json().timestamp).toMatch(/Z$/);
   });
+
+  it('GET /api/v1/health/ready returns 503 when postgres is unavailable', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/health/ready',
+    });
+
+    expect(response.statusCode).toBe(503);
+    expect(response.json()).toMatchObject({
+      status: 'not-ready',
+      dependencies: {
+        postgres: 'down',
+      },
+    });
+  });
 });
