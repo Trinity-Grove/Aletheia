@@ -1,0 +1,12 @@
+{
+  "extensionsToTreatAsEsm": [".ts"],
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "moduleNameMapper": {
+    "^(\\.{1,2}/.*)\\.js$": "$1"
+  },
+  "rootDir": "..",
+  "testRegex": ".*\\.e2e-spec\\.ts$",
+  "transform": {
+    "^.+\\.ts$": ["ts-jest", { "useESM": true, "tsconfig": "<rootDir>/tsconfig.json" }]
+  }
+}

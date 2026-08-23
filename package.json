@@ -15,8 +15,8 @@
     "check:boundaries": "node scripts/check-module-boundaries.mjs"
   },
   "devDependencies": {
-    "eslint": "^10.8.1",
-    "typescript": "^7.0.2",
-    "vitest": "^4.1.11"
+    "eslint": "9.39.5",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
   }
 }

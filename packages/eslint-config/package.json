@@ -5,7 +5,9 @@
   "type": "module",
   "exports": "./index.mjs",
   "dependencies": {
-    "@typescript-eslint/parser": "^8.0.0"
+    "@typescript-eslint/eslint-plugin": "8.67.0",
+    "@typescript-eslint/parser": "8.67.0",
+    "globals": "17.11.0"
   },
   "peerDependencies": {
     "eslint": "^9.0.0"
