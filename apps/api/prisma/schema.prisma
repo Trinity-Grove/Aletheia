@@ -21,3 +21,64 @@ model OutboxMessage {
   @@index([occurredAt], name: "outbox_messages_unpublished_idx")
   @@map("outbox_messages")
 }
+
+model User {
+  id           String         @id @default(uuid()) @db.Uuid
+  email        String         @unique
+  passwordHash String         @map("password_hash")
+  fullName     String         @map("full_name")
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+  memberships  FamilyMember[]
+
+  @@map("users")
+}
+
+model Family {
+  id            String             @id @default(uuid()) @db.Uuid
+  name          String
+  countryCode   String             @map("country_code")
+  stateProvince String?            @map("state_province")
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+  members       FamilyMember[]
+  invitations   FamilyInvitation[]
+
+  @@map("families")
+}
+
+model FamilyMember {
+  id        String   @id @default(uuid()) @db.Uuid
+  familyId  String   @map("family_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  role      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([familyId, userId], name: "family_members_family_user_unique")
+  @@index([userId])
+  @@index([familyId])
+  @@map("family_members")
+}
+
+model FamilyInvitation {
+  id         String    @id @default(uuid()) @db.Uuid
+  familyId   String    @map("family_id") @db.Uuid
+  email      String
+  role       String
+  token      String    @unique
+  invitedBy  String    @map("invited_by") @db.Uuid
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz
+  acceptedAt DateTime? @map("accepted_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  @@index([familyId])
+  @@index([email])
+  @@index([token])
+  @@map("family_invitations")
+}

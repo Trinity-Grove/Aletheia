@@ -125,7 +125,11 @@ importers:
         specifier: ^3.2.0
         version: 3.2.7(@types/node@24.13.3)(jiti@2.7.0)(jsdom@27.4.0(@noble/hashes@1.8.0)(supports-color@8.1.1))(supports-color@8.1.1)(terser@5.50.0)
 
-  packages/contracts: {}
+  packages/contracts:
+    dependencies:
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
 
   packages/eslint-config:
     dependencies:
