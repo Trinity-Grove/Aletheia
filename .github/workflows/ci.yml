@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: aletheia
+          POSTGRES_USER: aletheia
+          POSTGRES_PASSWORD: aletheia_dev_secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://aletheia:aletheia_dev_secret@127.0.0.1:5432/aletheia?schema=public
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Prisma migrations
+        run: pnpm --filter @aletheia/api prisma migrate deploy
+
+      - name: Check module boundaries
+        run: pnpm check:boundaries
+
+      - name: Run linter
+        run: pnpm lint
+
+      - name: Run typecheck
+        run: pnpm typecheck
+
+      - name: Run unit tests
+        run: pnpm test:ci
+
+      - name: Run API E2E tests
+        run: pnpm --filter @aletheia/api test:e2e
+
+      - name: Install Playwright Browsers
+        run: pnpm --filter @aletheia/web exec playwright install --with-deps chromium
+
+      - name: Run Web Playwright tests
+        run: pnpm --filter @aletheia/web test:e2e
+
+      - name: Run production builds
+        run: pnpm build
