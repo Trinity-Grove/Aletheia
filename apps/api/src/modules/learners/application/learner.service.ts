@@ -3,11 +3,13 @@ import { LearnerRepository } from '../infrastructure/learner.repository.js';
 import type {
   CreateLearnerDto,
   LearnerResponseDto,
+  LearnerSummaryDto,
   UpdateLearnerDto,
 } from '@aletheia/contracts';
+import type { LearnersPublicApi } from './public-api.js';
 
 @Injectable()
-export class LearnerService {
+export class LearnerService implements LearnersPublicApi {
   constructor(private readonly learnerRepository: LearnerRepository) {}
 
   async createLearner(familyId: string, dto: CreateLearnerDto): Promise<LearnerResponseDto> {
@@ -58,5 +60,18 @@ export class LearnerService {
       throw new NotFoundException(`Learner not found: ${learnerId}`);
     }
     return updated.toResponseDto();
+  }
+
+  async findLearnerById(familyId: string, learnerId: string): Promise<LearnerSummaryDto | null> {
+    const learner = await this.learnerRepository.findByIdAndFamilyId(familyId, learnerId);
+    if (!learner || learner.isArchived) {
+      return null;
+    }
+    return learner.toSummaryDto();
+  }
+
+  async listActiveLearners(familyId: string): Promise<LearnerSummaryDto[]> {
+    const learners = await this.learnerRepository.findByFamilyId(familyId, false);
+    return learners.map((learner) => learner.toSummaryDto());
   }
 }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { DatabaseModule } from '../../platform/database/database.module.js';
 import { FamilyRepository } from './infrastructure/family.repository.js';
 import { FamilyService } from './application/family.service.js';
@@ -7,9 +7,9 @@ import { FamilyController } from './presentation/family.controller.js';
 import { InvitationRepository } from './infrastructure/invitation.repository.js';
 import { InvitationService } from './application/invitation.service.js';
 import { InvitationController } from './presentation/invitation.controller.js';
+import { FamilyTenantGuard } from '../../platform/auth/index.js';
 
-import { FamilyTenantGuard } from './presentation/guards/family-tenant.guard.js';
-
+@Global()
 @Module({
   imports: [DatabaseModule],
   controllers: [FamilyController, InvitationController],
