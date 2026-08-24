@@ -22,7 +22,8 @@ export const createLearnerSchema = z.object({
   notes: z.string().nullish(),
 });
 
-export type CreateLearnerDto = z.infer<typeof createLearnerSchema>;
+export type CreateLearnerDto = z.input<typeof createLearnerSchema>;
+export type CreateLearnerOutput = z.output<typeof createLearnerSchema>;
 
 export const updateLearnerSchema = createLearnerSchema.partial();
 
