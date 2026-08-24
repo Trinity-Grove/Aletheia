@@ -1,13 +1,12 @@
-import { describe, expect, it } from '@jest/globals';
 import { Inject, Injectable, Module } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import * as process from 'node:process';
-import { AppModule } from '../../app.module';
+import { AppModule } from '../../app.module.js';
 import {
   ENVIRONMENT,
   type Environment,
   parseEnvironment,
-} from './environment';
+} from './environment.js';
 
 @Injectable()
 class EnvironmentConsumer {

@@ -1,4 +1,3 @@
-import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { VersioningType } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import {
@@ -6,13 +5,13 @@ import {
   type NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import type { DependencyState } from '@aletheia/contracts';
-import { AppModule } from '../src/app.module';
+import { AppModule } from '../src/app.module.js';
 import {
   OBJECT_STORAGE_PROBE,
   POSTGRES_PROBE,
   REDIS_PROBE,
   type DependencyProbe,
-} from '../src/health/dependency-probe';
+} from '../src/health/dependency-probe.js';
 
 class MutableProbe implements DependencyProbe {
   state: DependencyState;

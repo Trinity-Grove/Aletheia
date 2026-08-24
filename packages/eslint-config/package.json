@@ -8,6 +8,7 @@
     "test": "node --test index.test.mjs"
   },
   "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0"
   },
   "peerDependencies": {

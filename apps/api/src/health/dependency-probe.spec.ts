@@ -1,9 +1,8 @@
-import { describe, expect, it } from '@jest/globals';
-import type { PrismaService } from '../platform/database/prisma.service';
+import type { PrismaService } from '../platform/database/prisma.service.js';
 import {
   NoopDependencyProbe,
   PostgresDependencyProbe,
-} from './dependency-probe';
+} from './dependency-probe.js';
 
 describe('dependency probes', () => {
   it('reports PostgreSQL up after executing SELECT 1', async () => {

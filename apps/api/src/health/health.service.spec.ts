@@ -1,5 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
-import { HealthService } from './health.service';
+import { HealthService } from './health.service.js';
 
 describe('HealthService', () => {
   it('returns a stable UTC liveness response', () => {

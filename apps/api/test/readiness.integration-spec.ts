@@ -1,6 +1,5 @@
-import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
-import { createApplication } from '../src/main';
+import { createApplication } from '../src/main.js';
 
 describe('Health readiness with PostgreSQL', () => {
   let app: NestFastifyApplication;
