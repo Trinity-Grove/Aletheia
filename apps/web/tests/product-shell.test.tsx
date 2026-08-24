@@ -7,19 +7,19 @@ import { ProductShell, LearnerFocusSwitcher } from '../src/components/product-sh
 const mockLearners: LearnerSummaryDto[] = [
   {
     id: 'l-001',
-    displayName: 'Clarinha',
+    firstName: 'Clara',
+    lastName: 'Silva',
+    preferredName: 'Clarinha',
     stage: 'PRIMARY_GRAMMAR',
-    customGrade: '4º Ano',
     avatarColor: '#3B82F6',
-    isArchived: false,
   },
   {
     id: 'l-002',
-    displayName: 'Pedro',
+    firstName: 'Pedro',
+    lastName: 'Silva',
+    preferredName: null,
     stage: 'MIDDLE_LOGIC',
-    customGrade: '7º Ano',
     avatarColor: '#10B981',
-    isArchived: false,
   },
 ];
 

@@ -4,12 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "prebuild": "pnpm --filter @aletheia/contracts build",
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint . --config ../../packages/eslint-config/index.mjs --ignore-pattern .next",
     "start": "next start",
+    "pretest": "pnpm --filter @aletheia/contracts build",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "pretypecheck": "pnpm --filter @aletheia/contracts build",
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {

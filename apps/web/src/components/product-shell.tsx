@@ -37,13 +37,14 @@ export function LearnerFocusSwitcher({
         }}
       >
         <option value="">👨‍👩‍👧‍👦 Toda a Família</option>
-        {learners
-          .filter((learner) => !learner.isArchived)
-          .map((learner) => (
+        {learners.map((learner) => {
+          const displayName = learner.preferredName || learner.firstName;
+          return (
             <option key={learner.id} value={learner.id}>
-              🎓 {learner.displayName}
+              🎓 {displayName}
             </option>
-          ))}
+          );
+        })}
       </select>
     </div>
   );
