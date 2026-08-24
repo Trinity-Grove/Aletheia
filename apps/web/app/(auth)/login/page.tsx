@@ -1,6 +1,5 @@
-import React from 'react';
 import Link from 'next/link';
-import { LoginForm } from '../../../src/components/auth/login-form.js';
+import { LoginForm } from '../../../src/components/auth/login-form';
 
 export default function LoginPage() {
   return (
