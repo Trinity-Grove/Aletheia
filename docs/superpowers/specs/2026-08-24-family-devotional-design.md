@@ -1,7 +1,7 @@
-# Aletheia — Plan 04: Family Devotional & Prayer Journal Design
+# Aletheia — Plan 04: Family Devotional & YouVersion Scripture Integration Design
 
 **Status:** Approved  
-**Version:** 1.0  
+**Version:** 1.1  
 **Date:** 2026-08-24  
 **Author:** Covenant Grove & Antigravity  
 
@@ -9,24 +9,30 @@
 
 ## 1. Overview and Principles
 
-The **Family Devotional** is the spiritual heart of the daily homeschool routine in Aletheia, opening each day with intentional scripture reading, discussion, prayer, and worship.
+The **Family Devotional** is the spiritual center of the homeschool day in Aletheia, supporting scripture reading, reflection, memory verses, discussion, hymnody, and prayer journal.
 
 Core principles:
-1. **Guardians Lead:** Guardians have complete authority over devotional plans, bible translations, reflections, and prayers.
-2. **Faith is Narrated, Never Scored:** In alignment with Aletheia core principles, spirituality and prayer receive NO numerical ranking or grading.
-3. **Integrated Family Prayer Journal:** Prayer petitions and praises/gratitudes persist across days, allowing the family to record when and how prayers were answered as a testament to God's faithfulness.
-4. **Multi-Tenant Family Isolation:** Devotional and prayer records are private to each family and strictly isolated by `FamilyTenantGuard`.
+1. **Guardians Lead:** Guardians have complete authority over devotional passages, reflections, memory verses, and prayer topics.
+2. **YouVersion Platform Integration with Local Fallback:**
+   - Supports live Bible passage text and metadata retrieval via the official **YouVersion Platform REST API / SDK** (`https://api.youversion.com/v1`) using `YOUVERSION_APP_KEY` (`X-YVP-App-Key`).
+   - Resilient design: If no key is set or the network is unavailable, the application gracefully provides manual scripture text input.
+3. **Faith is Narrated, Never Scored:** Spirituality, prayer frequency, and devotional completions receive NO numerical grading or ranking.
+4. **Integrated Family Prayer Journal:** Petitions and praise/gratitude items persist across sessions, allowing families to celebrate answered prayers.
+5. **Strict Multi-Tenant Isolation:** Family devotionals and prayers are strictly scoped by `FamilyTenantGuard`.
 
 ---
 
 ## 2. Contracts and Data Schema
 
 ### 2.1 Contracts (`packages/contracts`)
+- **YouVersion / Scripture DTOs:**
+  - `BibleVersionDto`: `{ id: string; name: string; language: string; abbreviation: string }`
+  - `BiblePassageDto`: `{ reference: string; versionId: string; content: string; copyright?: string }`
 - **Devotional DTOs:**
   - `UpsertDailyDevotionalDto`:
     - `date`: string (`YYYY-MM-DD`)
-    - `bibleReference`: string (1..200, e.g. "Salmo 23:1-6")
-    - `bibleTranslation`: string (1..50, default "ARA")
+    - `bibleReference`: string (e.g. "João 14:1-6", "Salmo 23")
+    - `bibleVersionId`: string optional (e.g. YouVersion Bible ID or "ARA")
     - `passageText`: string optional
     - `reflection`: string optional
     - `memoryVerse`: string optional
@@ -40,11 +46,11 @@ Core principles:
     - `type`: `PrayerType`
     - `title`: string (1..200)
     - `description`: string optional
-    - `learnerId`: string uuid optional (if prayer is on behalf of or requested by a specific learner)
-  - `UpdatePrayerDto`: Partial update of prayer fields.
+    - `learnerId`: string uuid optional
+  - `UpdatePrayerDto`: Partial fields of `CreatePrayerDto`
   - `AnswerPrayerDto`:
-    - `answeredNote`: string optional (testimony of answered prayer)
-  - `PrayerResponseDto`: Full prayer record including `isAnswered`, `answeredAt`, `answeredNote`.
+    - `answeredNote`: string optional
+  - `PrayerResponseDto`: Full prayer record.
 
 ### 2.2 Database Schema (`apps/api/prisma/schema.prisma`)
 ```prisma
@@ -58,7 +64,7 @@ model DailyDevotional {
   familyId            String   @map("family_id") @db.Uuid
   date                DateTime @db.Date
   bibleReference      String   @map("bible_reference")
-  bibleTranslation    String   @default("ARA") @map("bible_translation")
+  bibleVersionId      String?  @map("bible_version_id")
   passageText         String?  @map("passage_text")
   reflection          String?
   memoryVerse         String?  @map("memory_verse")
@@ -102,7 +108,11 @@ model PrayerRequest {
 
 ## 3. Backend Module (`@modules/devotional`)
 
-### 3.1 Domain & Services
+### 3.1 Services & Providers
+- `YouVersionService`:
+  - Consumes `YOUVERSION_APP_KEY` from `EnvironmentService`.
+  - `fetchPassage(reference: string, versionId?: string): Promise<BiblePassageDto | null>`
+  - `getAvailableBibles(): Promise<BibleVersionDto[]>`
 - `DevotionalService`:
   - `upsertDailyDevotional(familyId: string, dto: UpsertDailyDevotionalDto): Promise<DailyDevotionalResponseDto>`
   - `getDevotionalByDate(familyId: string, date: string): Promise<DailyDevotionalResponseDto | null>`
@@ -118,40 +128,34 @@ model PrayerRequest {
 ### 3.2 Presentation Controllers
 - `DevotionalController` (`/api/v1/families/:familyId/devotionals`):
   - `GET /by-date?date=YYYY-MM-DD`
-  - `PUT /by-date` (upserts devotional for specified date)
+  - `PUT /by-date`
   - `GET /history`
+  - `GET /scripture/lookup?reference=JHN.3.16&versionId=3034` (Queries YouVersion API with local fallback)
 - `PrayerController` (`/api/v1/families/:familyId/prayers`):
-  - `POST /` (create prayer petition or gratitude)
-  - `GET /` (list active prayers/gratitudes)
-  - `POST /:id/answer` (mark as answered with note)
-  - `POST /:id/archive` (soft-delete / archive)
+  - `POST /`
+  - `GET /`
+  - `PATCH /:id`
+  - `POST /:id/answer`
+  - `POST /:id/archive`
 
 ---
 
-## 4. Web User Interface (`@aletheia/web`)
+## 4. Web Frontend (`@aletheia/web`)
 
 1. **Devotional Page (`/devotional`):**
-   - Header with Date Picker and quick navigators (⬅️ Ontem, Hoje, ➡️ Amanhã).
-   - Card: **Leitura Bíblica** (Referência, Versão, Texto).
-   - Card: **Reflexão & Conversa Familiar** (Perguntas de reflexão).
-   - Card: **Versículo para Memorização**.
-   - Card: **Hino / Cântico do Dia**.
-   - Drawer / Section: **Caderno de Oração & Gratidão** (Adicionar pedido, marcar orações respondidas).
-2. **Dashboard Integration (`/` or `/today`):**
-   - Highlight widget displaying today's devotional passage, memory verse, and active prayer count.
+   - Header with Date Picker (Ontem, Hoje, Amanhã).
+   - Scripture Card with YouVersion Lookup button (busca automática do texto do versículo/passagem) e editor manual.
+   - Reflection & Discussion questions.
+   - Memory Verse & Hymn of the day.
+   - Prayer Journal drawer/tab (Active petitions, praise/gratitude, mark answered).
+2. **Dashboard Highlight (`/today` or `/`):**
+   - Devotional banner with today's scripture and quick prayer count.
 
 ---
 
 ## 5. Verification Strategy
 
-1. **Boundary & Lint Checks:**
-   - 0 boundary violations (`check:boundaries`).
-   - Clean ESLint across workspace.
-2. **Contract & Unit Tests:**
-   - `packages/contracts/src/devotional.test.ts` & `prayer.test.ts`.
-   - `apps/api/src/modules/devotional/application/*.spec.ts`.
-3. **E2E & Multi-Tenant Tests:**
-   - `apps/api/test/devotional.e2e-spec.ts` (Validating CRUD and tenant boundary isolation).
-4. **Web Frontend Tests:**
-   - Vitest component tests for Devotional view, form editors, and Prayer Journal.
-   - Clean Next.js static build.
+1. **Modular Boundaries:** 0 violations (`check:boundaries`).
+2. **Unit Tests:** Mock YouVersion API responses, tests for Devotional and Prayer services.
+3. **E2E Tests:** Complete multi-tenant verification in `devotional.e2e-spec.ts`.
+4. **Web Tests:** Component tests for Devotional page, Scripture lookup, and Prayer modal.
