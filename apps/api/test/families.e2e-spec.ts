@@ -1,3 +1,4 @@
+import { ForbiddenException } from '@nestjs/common';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
@@ -64,7 +65,6 @@ describe('Families E2E', () => {
           updatedAt: new Date().toISOString(),
         };
       }
-      const { ForbiddenException } = await import('@nestjs/common');
       throw new ForbiddenException('Forbidden');
     });
 
