@@ -9,7 +9,7 @@ import {
 import {
   FAMILY_PUBLIC_API,
   type FamilyPublicApi,
-} from '../../application/public-api.js';
+} from '../../modules/families/application/public-api.js';
 
 @Injectable()
 export class FamilyTenantGuard implements CanActivate {

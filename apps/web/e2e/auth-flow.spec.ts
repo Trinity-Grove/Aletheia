@@ -25,4 +25,14 @@ test.describe('Authentication & Onboarding Web Smoke Tests', () => {
     await page.getByTestId('create-family-button').click();
     await expect(page.getByTestId('success-message')).toBeVisible();
   });
+
+  test('navigates to /learners and opens learner creation modal', async ({ page }) => {
+    await page.goto('/learners');
+    await expect(page.getByTestId('add-learner-btn')).toBeVisible();
+    await page.getByTestId('add-learner-btn').click();
+    await expect(page.getByTestId('learner-first-name-input')).toBeVisible();
+    await expect(page.getByTestId('learner-birth-date-input')).toBeVisible();
+    await expect(page.getByTestId('learner-submit-btn')).toBeVisible();
+  });
 });
+
