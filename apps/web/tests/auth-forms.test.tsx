@@ -1,8 +1,8 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { LoginForm } from '../src/components/auth/login-form.js';
-import { RegisterForm } from '../src/components/auth/register-form.js';
+import { LoginForm } from '../src/components/auth/login-form';
+import { RegisterForm } from '../src/components/auth/register-form';
 
 describe('Auth Forms Component Tests', () => {
   afterEach(() => {
