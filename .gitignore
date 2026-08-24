@@ -4,10 +4,7 @@ node_modules/
 .next/
 dist/
 coverage/
-*.tsbuildinfo
 .env
 .env.*
 !.env.example
-playwright-report/
-test-results/
-blob-report/
+
