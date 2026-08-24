@@ -1,3 +1,4 @@
+import { UnauthorizedException } from '@nestjs/common';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
@@ -26,7 +27,6 @@ describe('Identity Auth E2E', () => {
     });
     jest.spyOn(authService, 'login').mockImplementation(async (dto) => {
       if (dto.password === 'wrong') {
-        const { UnauthorizedException } = await import('@nestjs/common');
         throw new UnauthorizedException('Invalid email or password.');
       }
       return {

@@ -9,6 +9,8 @@ import { InvitationRepository } from './infrastructure/invitation.repository.js'
 import { InvitationService } from './application/invitation.service.js';
 import { InvitationController } from './presentation/invitation.controller.js';
 
+import { FamilyTenantGuard } from './presentation/guards/family-tenant.guard.js';
+
 @Module({
   imports: [DatabaseModule, IdentityModule],
   controllers: [FamilyController, InvitationController],
@@ -17,11 +19,12 @@ import { InvitationController } from './presentation/invitation.controller.js';
     FamilyService,
     InvitationRepository,
     InvitationService,
+    FamilyTenantGuard,
     {
       provide: FAMILY_PUBLIC_API,
       useExisting: FamilyService,
     },
   ],
-  exports: [FAMILY_PUBLIC_API, FamilyService, InvitationService],
+  exports: [FAMILY_PUBLIC_API, FamilyService, InvitationService, FamilyTenantGuard],
 })
 export class FamiliesModule {}

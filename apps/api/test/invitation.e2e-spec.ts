@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
@@ -42,7 +43,6 @@ describe('Invitations E2E', () => {
           familyId: 'family-e2e-1',
         };
       }
-      const { NotFoundException } = await import('@nestjs/common');
       throw new NotFoundException('Invitation not found.');
     });
 
