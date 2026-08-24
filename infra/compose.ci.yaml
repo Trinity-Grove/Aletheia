@@ -1,0 +1,10 @@
+# CI exercises the stack over its private Compose network; no host ports are needed.
+services:
+  postgres:
+    ports: !reset []
+
+  redis:
+    ports: !reset []
+
+  minio:
+    ports: !reset []

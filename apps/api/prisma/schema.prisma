@@ -1,0 +1,22 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model OutboxMessage {
+  id             String    @id @db.Uuid
+  eventType      String    @map("event_type")
+  aggregateType  String    @map("aggregate_type")
+  aggregateId    String    @map("aggregate_id") @db.Uuid
+  payload        Json
+  occurredAt     DateTime  @map("occurred_at") @db.Timestamptz
+  publishedAt    DateTime? @map("published_at") @db.Timestamptz
+  attempts       Int       @default(0)
+  idempotencyKey String    @unique @map("idempotency_key")
+
+  @@map("outbox_messages")
+}

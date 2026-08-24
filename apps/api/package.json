@@ -1,0 +1,63 @@
+{
+  "name": "@aletheia/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "prebuild": "pnpm --filter @aletheia/contracts build && pnpm run prisma:generate",
+    "build": "nest build",
+    "dev": "nest start --watch",
+    "start": "node dist/main.js",
+    "lint": "eslint . --config ../../packages/eslint-config/index.mjs --ignore-pattern dist --global require --global module",
+    "prisma": "prisma",
+    "prisma:generate": "prisma generate --schema prisma/schema.prisma",
+    "pretest": "pnpm --filter @aletheia/contracts build && pnpm run prisma:generate",
+    "test": "jest",
+    "pretest:e2e": "pnpm --filter @aletheia/contracts build && pnpm run prisma:generate",
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "pretest:integration": "pnpm --filter @aletheia/contracts build && pnpm run prisma:generate",
+    "test:integration": "jest --config ./test/jest-integration.json --runInBand",
+    "pretypecheck": "pnpm --filter @aletheia/contracts build && pnpm run prisma:generate",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aletheia/contracts": "workspace:*",
+    "@fastify/static": "^10.1.2",
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/core": "^11.0.1",
+    "@nestjs/platform-fastify": "^11.0.1",
+    "@nestjs/swagger": "^11.0.0",
+    "@prisma/client": "^6.19.3",
+    "fastify": "^5.0.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@jest/globals": "^30.0.0",
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/testing": "^11.0.1",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.0.0",
+    "jest": "^30.0.0",
+    "prisma": "^6.19.3",
+    "ts-jest": "^29.4.0",
+    "typescript": "^5.9.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  }
+}
