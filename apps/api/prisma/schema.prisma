@@ -42,9 +42,44 @@ model Family {
   updatedAt     DateTime           @updatedAt @map("updated_at") @db.Timestamptz
   members       FamilyMember[]
   invitations   FamilyInvitation[]
+  learners      Learner[]
 
   @@map("families")
 }
+
+enum EducationalStage {
+  EARLY_YEARS
+  PRIMARY_GRAMMAR
+  MIDDLE_LOGIC
+  HIGH_RHETORIC
+  OTHER
+
+  @@map("educational_stages")
+}
+
+model Learner {
+  id           String           @id @default(uuid()) @db.Uuid
+  familyId     String           @map("family_id") @db.Uuid
+  firstName    String           @map("first_name")
+  lastName     String?          @map("last_name")
+  preferredName String?         @map("preferred_name")
+  birthDate    DateTime         @map("birth_date") @db.Date
+  stage        EducationalStage @default(PRIMARY_GRAMMAR)
+  customGrade  String?          @map("custom_grade")
+  avatarColor  String?          @map("avatar_color")
+  specialNeeds String?          @map("special_needs")
+  notes        String?
+  archivedAt   DateTime?        @map("archived_at") @db.Timestamptz
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  @@index([familyId])
+  @@index([familyId, archivedAt])
+  @@map("learners")
+}
+
 
 model FamilyMember {
   id        String   @id @default(uuid()) @db.Uuid
