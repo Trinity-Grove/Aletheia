@@ -1,9 +1,18 @@
 {
-  "moduleFileExtensions": ["js", "json", "ts"],
+  "extensionsToTreatAsEsm": [".ts"],
+  "moduleNameMapper": {
+    "^(\\.{1,2}/.*)\\.js$": "$1"
+  },
   "rootDir": "..",
   "testRegex": ".*\\.integration-spec\\.ts$",
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
+    "^.+\\.ts$": [
+      "ts-jest",
+      {
+        "useESM": true,
+        "tsconfig": "<rootDir>/tsconfig.json"
+      }
+    ]
   },
   "testEnvironment": "node"
 }

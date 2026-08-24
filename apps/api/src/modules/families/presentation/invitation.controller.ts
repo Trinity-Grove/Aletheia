@@ -13,7 +13,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { FamilyInvitationDto, InviteGuardianDto } from '@aletheia/contracts';
 import { InvitationService } from '../application/invitation.service.js';
-import { JwtAuthGuard } from '../../identity/index.js';
+import { JwtAuthGuard } from '../../../platform/auth/index.js';
 
 @ApiTags('Invitations')
 @ApiBearerAuth()

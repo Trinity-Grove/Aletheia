@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 
 export interface RegisterFormProps {
-  onSubmit?: (data: { fullName: string; email: string; password: string }) => Promise<void> | void;
+  onSubmit?: (_data: { fullName: string; email: string; password: string }) => Promise<void> | void;
 }
 
 export function RegisterForm({ onSubmit }: RegisterFormProps) {

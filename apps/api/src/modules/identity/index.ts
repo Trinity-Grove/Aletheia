@@ -4,4 +4,3 @@ export {
   type IdentityPublicApi,
   type AuthenticatedUserPayload,
 } from './application/public-api.js';
-export { JwtAuthGuard } from './presentation/guards/jwt-auth.guard.js';

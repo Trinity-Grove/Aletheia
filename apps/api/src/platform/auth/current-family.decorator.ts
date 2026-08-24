@@ -5,10 +5,10 @@ export interface FamilyContextPayload {
 }
 
 export const CurrentFamily = createParamDecorator(
-  (data: keyof FamilyContextPayload | undefined, ctx: ExecutionContext) => {
+  (_data: keyof FamilyContextPayload | undefined, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest();
     const family = request.family as FamilyContextPayload | undefined;
     if (!family) return undefined;
-    return data ? family[data] : family;
+    return _data ? family[_data] : family;
   },
 );

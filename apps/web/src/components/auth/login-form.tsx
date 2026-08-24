@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 
 export interface LoginFormProps {
-  onSubmit?: (data: { email: string; password: string }) => Promise<void> | void;
+  onSubmit?: (_data: { email: string; password: string }) => Promise<void> | void;
 }
 
 export function LoginForm({ onSubmit }: LoginFormProps) {

@@ -12,7 +12,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { CreateFamilyDto, FamilyResponseDto } from '@aletheia/contracts';
 import { FamilyService } from '../application/family.service.js';
-import { JwtAuthGuard } from '../../identity/index.js';
+import { JwtAuthGuard } from '../../../platform/auth/index.js';
 
 @ApiTags('Families')
 @ApiBearerAuth()

@@ -8,7 +8,7 @@ import {
 import {
   IDENTITY_PUBLIC_API,
   type IdentityPublicApi,
-} from '../../application/public-api.js';
+} from '../../modules/identity/application/public-api.js';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {

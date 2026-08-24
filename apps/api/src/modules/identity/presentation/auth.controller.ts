@@ -16,7 +16,7 @@ import type {
   UserSummaryDto,
 } from '@aletheia/contracts';
 import { AuthService } from '../application/auth.service.js';
-import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
+import { JwtAuthGuard } from '../../../platform/auth/index.js';
 
 @ApiTags('Auth')
 @Controller({ path: 'auth', version: '1' })
