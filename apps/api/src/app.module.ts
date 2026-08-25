@@ -5,6 +5,7 @@ import { HealthModule } from './health/health.module.js';
 import { IdentityModule } from './modules/identity/identity.module.js';
 import { FamiliesModule } from './modules/families/families.module.js';
 import { LearnersModule } from './modules/learners/learners.module.js';
+import { DevotionalModule } from './modules/devotional/devotional.module.js';
 
 @Module({
   imports: [
@@ -14,6 +15,8 @@ import { LearnersModule } from './modules/learners/learners.module.js';
     IdentityModule,
     FamiliesModule,
     LearnersModule,
+    DevotionalModule,
   ],
 })
 export class AppModule {}
+

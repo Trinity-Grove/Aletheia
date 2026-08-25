@@ -1,13 +1,16 @@
 import { DevotionalService } from './devotional.service.js';
 import { DevotionalRepository } from '../infrastructure/devotional.repository.js';
+import { PrayerRepository } from '../infrastructure/prayer.repository.js';
 import { YouVersionService } from '../infrastructure/youversion.service.js';
 import { DailyDevotionalEntity } from '../domain/daily-devotional.entity.js';
+import { PrayerRequestEntity } from '../domain/prayer-request.entity.js';
 import type { UpsertDailyDevotionalDto } from '@aletheia/contracts';
 
 describe('DevotionalService', () => {
   let devotionalService: DevotionalService;
   let fakeDevotionals: Map<string, DailyDevotionalEntity>;
   let mockYouVersionService: YouVersionService;
+  let mockPrayerRepository: PrayerRepository;
 
   beforeEach(() => {
     fakeDevotionals = new Map();
@@ -66,7 +69,45 @@ describe('DevotionalService', () => {
       },
     } as unknown as YouVersionService;
 
-    devotionalService = new DevotionalService(mockRepo, mockYouVersionService);
+    mockPrayerRepository = {
+      findByFamilyId: async (_familyId: string, filter?: { isAnswered?: boolean; includeArchived?: boolean }) => {
+        if (filter?.isAnswered === false && filter?.includeArchived === false) {
+          return [
+            new PrayerRequestEntity({
+              id: 'prayer-1',
+              familyId: 'fam-1',
+              learnerId: null,
+              type: 'PETITION',
+              title: 'Health',
+              description: null,
+              isAnswered: false,
+              answeredAt: null,
+              answeredNote: null,
+              archivedAt: null,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            }),
+            new PrayerRequestEntity({
+              id: 'prayer-2',
+              familyId: 'fam-1',
+              learnerId: null,
+              type: 'GRATITUDE',
+              title: 'Provision',
+              description: null,
+              isAnswered: false,
+              answeredAt: null,
+              answeredNote: null,
+              archivedAt: null,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            }),
+          ];
+        }
+        return [];
+      },
+    } as unknown as PrayerRepository;
+
+    devotionalService = new DevotionalService(mockRepo, mockYouVersionService, mockPrayerRepository);
   });
 
   describe('upsertDevotional', () => {
@@ -165,6 +206,33 @@ describe('DevotionalService', () => {
       const bibles = await devotionalService.getAvailableBibles();
       expect(bibles).toHaveLength(2);
       expect(bibles[0]?.abbreviation).toBe('BSB');
+    });
+  });
+
+  describe('DevotionalPublicApi methods', () => {
+    it('getTodayDevotionalSummary returns summary when devotional exists today', async () => {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      await devotionalService.upsertDevotional('fam-1', {
+        date: todayStr,
+        bibleReference: 'Proverbs 3:5-6',
+        memoryVerse: 'Trust in the Lord',
+      });
+
+      const summary = await devotionalService.getTodayDevotionalSummary('fam-1');
+      expect(summary.hasDevotional).toBe(true);
+      expect(summary.bibleReference).toBe('Proverbs 3:5-6');
+      expect(summary.memoryVerse).toBe('Trust in the Lord');
+    });
+
+    it('getTodayDevotionalSummary returns hasDevotional: false when none exists today', async () => {
+      const summary = await devotionalService.getTodayDevotionalSummary('fam-empty');
+      expect(summary.hasDevotional).toBe(false);
+      expect(summary.bibleReference).toBeUndefined();
+    });
+
+    it('getActivePrayerCount returns count of active prayers', async () => {
+      const count = await devotionalService.getActivePrayerCount('fam-1');
+      expect(count).toBe(2);
     });
   });
 });

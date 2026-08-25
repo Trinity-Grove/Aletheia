@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { DevotionalRepository } from '../infrastructure/devotional.repository.js';
+import { PrayerRepository } from '../infrastructure/prayer.repository.js';
 import { YouVersionService } from '../infrastructure/youversion.service.js';
+import type { DevotionalPublicApi } from './public-api.js';
 import type {
   BiblePassageDto,
   BibleVersionDto,
@@ -9,10 +11,11 @@ import type {
 } from '@aletheia/contracts';
 
 @Injectable()
-export class DevotionalService {
+export class DevotionalService implements DevotionalPublicApi {
   constructor(
     private readonly devotionalRepository: DevotionalRepository,
     private readonly youVersionService: YouVersionService,
+    private readonly prayerRepository: PrayerRepository,
   ) {}
 
   async upsertDevotional(
@@ -49,5 +52,28 @@ export class DevotionalService {
 
   async getAvailableBibles(): Promise<BibleVersionDto[]> {
     return this.youVersionService.getAvailableBibles();
+  }
+
+  async getTodayDevotionalSummary(
+    familyId: string,
+  ): Promise<{ hasDevotional: boolean; bibleReference?: string; memoryVerse?: string }> {
+    const today = new Date();
+    const devotional = await this.devotionalRepository.findByDate(familyId, today);
+    if (!devotional) {
+      return { hasDevotional: false };
+    }
+    return {
+      hasDevotional: true,
+      bibleReference: devotional.bibleReference,
+      ...(devotional.memoryVerse ? { memoryVerse: devotional.memoryVerse } : {}),
+    };
+  }
+
+  async getActivePrayerCount(familyId: string): Promise<number> {
+    const prayers = await this.prayerRepository.findByFamilyId(familyId, {
+      isAnswered: false,
+      includeArchived: false,
+    });
+    return prayers.length;
   }
 }
