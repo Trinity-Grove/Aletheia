@@ -34,15 +34,17 @@ model User {
 }
 
 model Family {
-  id            String             @id @default(uuid()) @db.Uuid
-  name          String
-  countryCode   String             @map("country_code")
-  stateProvince String?            @map("state_province")
-  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt     DateTime           @updatedAt @map("updated_at") @db.Timestamptz
-  members       FamilyMember[]
-  invitations   FamilyInvitation[]
-  learners      Learner[]
+  id               String             @id @default(uuid()) @db.Uuid
+  name             String
+  countryCode      String             @map("country_code")
+  stateProvince    String?            @map("state_province")
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+  members          FamilyMember[]
+  invitations      FamilyInvitation[]
+  learners         Learner[]
+  dailyDevotionals DailyDevotional[]
+  prayerRequests   PrayerRequest[]
 
   @@map("families")
 }
@@ -57,29 +59,36 @@ enum EducationalStage {
   @@map("educational_stages")
 }
 
-model Learner {
-  id           String           @id @default(uuid()) @db.Uuid
-  familyId     String           @map("family_id") @db.Uuid
-  firstName    String           @map("first_name")
-  lastName     String?          @map("last_name")
-  preferredName String?         @map("preferred_name")
-  birthDate    DateTime         @map("birth_date") @db.Date
-  stage        EducationalStage @default(PRIMARY_GRAMMAR)
-  customGrade  String?          @map("custom_grade")
-  avatarColor  String?          @map("avatar_color")
-  specialNeeds String?          @map("special_needs")
-  notes        String?
-  archivedAt   DateTime?        @map("archived_at") @db.Timestamptz
-  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+enum PrayerType {
+  PETITION
+  GRATITUDE
 
-  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  @@map("prayer_types")
+}
+
+model Learner {
+  id             String           @id @default(uuid()) @db.Uuid
+  familyId       String           @map("family_id") @db.Uuid
+  firstName      String           @map("first_name")
+  lastName       String?          @map("last_name")
+  preferredName  String?          @map("preferred_name")
+  birthDate      DateTime         @map("birth_date") @db.Date
+  stage          EducationalStage @default(PRIMARY_GRAMMAR)
+  customGrade    String?          @map("custom_grade")
+  avatarColor    String?          @map("avatar_color")
+  specialNeeds   String?          @map("special_needs")
+  notes          String?
+  archivedAt     DateTime?        @map("archived_at") @db.Timestamptz
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  family         Family           @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  prayerRequests PrayerRequest[]
 
   @@index([familyId])
   @@index([familyId, archivedAt])
   @@map("learners")
 }
-
 
 model FamilyMember {
   id        String   @id @default(uuid()) @db.Uuid
@@ -115,4 +124,48 @@ model FamilyInvitation {
   @@index([email])
   @@index([token])
   @@map("family_invitations")
+}
+
+model DailyDevotional {
+  id                   String    @id @default(uuid()) @db.Uuid
+  familyId             String    @map("family_id") @db.Uuid
+  date                 DateTime  @db.Date
+  bibleReference       String    @map("bible_reference")
+  bibleVersionId       String?   @map("bible_version_id")
+  passageText          String?   @map("passage_text")
+  reflection           String?
+  memoryVerse          String?   @map("memory_verse")
+  hymnOrSong           String?   @map("hymn_or_song")
+  discussionQuestions  String?   @map("discussion_questions")
+  practicalApplication String?   @map("practical_application")
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  @@unique([familyId, date])
+  @@index([familyId])
+  @@map("daily_devotionals")
+}
+
+model PrayerRequest {
+  id           String     @id @default(uuid()) @db.Uuid
+  familyId     String     @map("family_id") @db.Uuid
+  learnerId    String?    @map("learner_id") @db.Uuid
+  type         PrayerType @default(PETITION)
+  title        String
+  description  String?
+  isAnswered   Boolean    @default(false) @map("is_answered")
+  answeredAt   DateTime?  @map("answered_at") @db.Timestamptz
+  answeredNote String?    @map("answered_note")
+  archivedAt   DateTime?  @map("archived_at") @db.Timestamptz
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  family  Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner Learner? @relation(fields: [learnerId], references: [id], onDelete: SetNull)
+
+  @@index([familyId])
+  @@index([familyId, isAnswered])
+  @@map("prayer_requests")
 }
