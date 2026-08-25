@@ -4,3 +4,4 @@ export * from './family.js';
 export * from './learner.js';
 export * from './devotional.js';
 export * from './prayer.js';
+export * from './curriculum.js';
