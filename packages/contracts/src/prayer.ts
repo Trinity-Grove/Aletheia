@@ -11,7 +11,8 @@ export const createPrayerSchema = z.object({
   learnerId: z.string().uuid().optional(),
 });
 
-export type CreatePrayerDto = z.infer<typeof createPrayerSchema>;
+export type CreatePrayerDto = z.input<typeof createPrayerSchema>;
+export type CreatePrayerOutput = z.output<typeof createPrayerSchema>;
 
 export const updatePrayerSchema = createPrayerSchema.partial();
 
