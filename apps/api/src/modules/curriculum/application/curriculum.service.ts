@@ -12,9 +12,10 @@ import type {
   UpdateSubjectDto,
   UpsertLearnerPlanDto,
 } from '@aletheia/contracts';
+import type { CurriculumPublicApi } from './public-api.js';
 
 @Injectable()
-export class CurriculumService {
+export class CurriculumService implements CurriculumPublicApi {
   constructor(
     private readonly curriculumRepo: CurriculumRepository,
     private readonly objectiveRepo: ObjectiveRepository,
@@ -140,6 +141,17 @@ export class CurriculumService {
     }
 
     return { subjectsCount: createdSubjects, objectivesCount: createdObjectives };
+  }
+
+  async getLearnerCurriculumSummary(
+    familyId: string,
+    learnerId: string,
+  ): Promise<{ totalObjectives: number; achievedObjectives: number }> {
+    const counts = await this.objectiveRepo.countLearnerObjectives(familyId, learnerId);
+    return {
+      totalObjectives: counts.total,
+      achievedObjectives: counts.achieved,
+    };
   }
 
   private serializeYear(y: any): AcademicYearResponseDto {
