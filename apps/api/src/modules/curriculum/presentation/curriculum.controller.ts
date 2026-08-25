@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -9,61 +11,63 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type {
+  AcademicYearResponseDto,
+  ApplyCurriculumTemplateDto,
+  CreateAcademicYearDto,
+  CreateSubjectDto,
+  LearnerPlanResponseDto,
+  SubjectResponseDto,
+  UpdateSubjectDto,
+  UpsertLearnerPlanDto,
+} from '@aletheia/contracts';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
 import { CurriculumService } from '../application/curriculum.service.js';
-import {
-  createAcademicYearSchema,
-  createSubjectSchema,
-  updateSubjectSchema,
-  upsertLearnerPlanSchema,
-  applyCurriculumTemplateSchema,
-  type AcademicYearResponseDto,
-  type SubjectResponseDto,
-  type LearnerPlanResponseDto,
-  type CreateAcademicYearDto,
-  type CreateSubjectDto,
-  type UpdateSubjectDto,
-  type UpsertLearnerPlanDto,
-  type ApplyCurriculumTemplateDto,
-} from '@aletheia/contracts';
 
-@Controller('families/:familyId/curriculum')
+@ApiTags('Curriculum')
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard, FamilyTenantGuard)
+@Controller({ path: 'families/:familyId/curriculum', version: '1' })
 export class CurriculumController {
   constructor(private readonly curriculumService: CurriculumService) {}
 
   // Academic Years
   @Post('academic-years')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create an academic year for family' })
   async createAcademicYear(
     @Param('familyId') familyId: string,
-    @Body() body: unknown,
+    @Body() dto: CreateAcademicYearDto,
   ): Promise<AcademicYearResponseDto> {
-    const dto = createAcademicYearSchema.parse(body) as CreateAcademicYearDto;
     return this.curriculumService.createAcademicYear(familyId, dto);
   }
 
   @Get('academic-years')
+  @ApiOperation({ summary: 'List academic years for family' })
   async listAcademicYears(@Param('familyId') familyId: string): Promise<AcademicYearResponseDto[]> {
     return this.curriculumService.listAcademicYears(familyId);
   }
 
   @Get('academic-years/current')
+  @ApiOperation({ summary: 'Get or create current academic year for family' })
   async getCurrentAcademicYear(@Param('familyId') familyId: string): Promise<AcademicYearResponseDto> {
     return this.curriculumService.getOrCreateCurrentYear(familyId);
   }
 
   // Subjects
   @Post('subjects')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a subject in curriculum' })
   async createSubject(
     @Param('familyId') familyId: string,
-    @Body() body: unknown,
+    @Body() dto: CreateSubjectDto,
   ): Promise<SubjectResponseDto> {
-    const dto = createSubjectSchema.parse(body) as CreateSubjectDto;
     return this.curriculumService.createSubject(familyId, dto);
   }
 
   @Get('subjects')
+  @ApiOperation({ summary: 'List subjects in curriculum' })
   async listSubjects(
     @Param('familyId') familyId: string,
     @Query('includeArchived') includeArchived?: string,
@@ -72,16 +76,17 @@ export class CurriculumController {
   }
 
   @Patch('subjects/:id')
+  @ApiOperation({ summary: 'Update subject details' })
   async updateSubject(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
-    @Body() body: unknown,
+    @Body() dto: UpdateSubjectDto,
   ): Promise<SubjectResponseDto> {
-    const dto = updateSubjectSchema.parse(body) as UpdateSubjectDto;
     return this.curriculumService.updateSubject(familyId, id, dto);
   }
 
   @Post('subjects/:id/archive')
+  @ApiOperation({ summary: 'Archive subject from active curriculum' })
   async archiveSubject(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
@@ -91,15 +96,16 @@ export class CurriculumController {
 
   // Learner Plans
   @Put('plans')
+  @ApiOperation({ summary: 'Upsert learner curriculum plan' })
   async upsertLearnerPlan(
     @Param('familyId') familyId: string,
-    @Body() body: unknown,
+    @Body() dto: UpsertLearnerPlanDto,
   ): Promise<LearnerPlanResponseDto> {
-    const dto = upsertLearnerPlanSchema.parse(body) as UpsertLearnerPlanDto;
     return this.curriculumService.upsertLearnerPlan(familyId, dto);
   }
 
   @Get('plans')
+  @ApiOperation({ summary: 'Get learner curriculum plan for year' })
   async getLearnerPlan(
     @Param('familyId') familyId: string,
     @Query('learnerId') learnerId: string,
@@ -110,11 +116,12 @@ export class CurriculumController {
 
   // Apply Template Accelerator
   @Post('templates/apply')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Apply a pre-built pedagogical curriculum template' })
   async applyTemplate(
     @Param('familyId') familyId: string,
-    @Body() body: unknown,
+    @Body() dto: ApplyCurriculumTemplateDto,
   ): Promise<{ subjectsCount: number; objectivesCount: number }> {
-    const dto = applyCurriculumTemplateSchema.parse(body) as ApplyCurriculumTemplateDto;
     return this.curriculumService.applyTemplate(familyId, dto);
   }
 }
