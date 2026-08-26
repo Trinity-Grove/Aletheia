@@ -11,4 +11,6 @@ export * from './record.js';
 export * from './portfolio.js';
 export * from './attendance.js';
 export * from './report.js';
-
+export * from './settings.js';
+export * from './notification.js';
+export * from './backup.js';

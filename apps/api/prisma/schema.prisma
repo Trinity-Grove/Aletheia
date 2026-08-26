@@ -22,13 +22,15 @@ model OutboxMessage {
 }
 
 model User {
-  id           String         @id @default(uuid()) @db.Uuid
-  email        String         @unique
-  passwordHash String         @map("password_hash")
-  fullName     String         @map("full_name")
-  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz
-  memberships  FamilyMember[]
+  id            String             @id @default(uuid()) @db.Uuid
+  email         String             @unique
+  passwordHash  String             @map("password_hash")
+  fullName      String             @map("full_name")
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+  memberships   FamilyMember[]
+  notifications NotificationItem[]
+  exportJobs    DataExportJob[]
 
   @@map("users")
 }
@@ -56,6 +58,9 @@ model Family {
   attendanceRecords  AttendanceRecord[]
   complianceRequirements ComplianceRequirement[]
   officialReports    OfficialReport[]
+  settings           FamilySettings?
+  notifications      NotificationItem[]
+  exportJobs         DataExportJob[]
 
   @@map("families")
 }
@@ -638,5 +643,88 @@ model OfficialReport {
   @@index([familyId, type])
   @@map("official_reports")
 }
+
+enum NotificationType {
+  DEVOTIONAL_REMINDER
+  DAILY_SCHEDULE_REMINDER
+  ATTENDANCE_MISSING_REMINDER
+  PRAYER_ANSWERED_ALERT
+  SYSTEM_NOTICE
+
+  @@map("notification_types")
+}
+
+enum ExportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+
+  @@map("export_statuses")
+}
+
+model FamilySettings {
+  id                        String       @id @default(uuid()) @db.Uuid
+  familyId                  String       @unique @map("family_id") @db.Uuid
+  homeschoolName            String?      @map("homeschool_name")
+  defaultGradingScale       GradingScale @default(MASTERY_QUALITATIVE) @map("default_grading_scale")
+  timezone                  String       @default("America/Sao_Paulo")
+  language                  String       @default("pt-BR")
+  devotionalReminderTime    String?      @map("devotional_reminder_time")
+  dailyScheduleReminderTime String?      @map("daily_schedule_reminder_time")
+  attendanceReminderEnabled Boolean      @default(true) @map("attendance_reminder_enabled")
+  emailNotificationsEnabled Boolean      @default(true) @map("email_notifications_enabled")
+  inAppNotificationsEnabled Boolean      @default(true) @map("in_app_notifications_enabled")
+  createdAt                 DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                 DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  family                    Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  @@map("family_settings")
+}
+
+model NotificationItem {
+  id        String           @id @default(uuid()) @db.Uuid
+  familyId  String           @map("family_id") @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  type      NotificationType
+  title     String
+  message   String
+  linkUrl   String?          @map("link_url")
+  isRead    Boolean          @default(false) @map("is_read")
+  readAt    DateTime?        @map("read_at") @db.Timestamptz
+  metadata  Json?
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  family    Family           @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([familyId])
+  @@index([familyId, userId])
+  @@index([familyId, userId, isRead])
+  @@map("notification_items")
+}
+
+model DataExportJob {
+  id            String       @id @default(uuid()) @db.Uuid
+  familyId      String       @map("family_id") @db.Uuid
+  requestedById String       @map("requested_by_id") @db.Uuid
+  status        ExportStatus @default(PENDING)
+  downloadUrl   String?      @map("download_url")
+  fileSizeBytes Int?         @map("file_size_bytes")
+  completedAt   DateTime?    @map("completed_at") @db.Timestamptz
+  errorReason   String?      @map("error_reason")
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  family        Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  requestedBy   User         @relation(fields: [requestedById], references: [id], onDelete: Cascade)
+
+  @@index([familyId])
+  @@index([familyId, status])
+  @@map("data_export_jobs")
+}
+
 
 
