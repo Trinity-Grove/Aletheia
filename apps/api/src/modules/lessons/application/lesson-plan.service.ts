@@ -8,8 +8,10 @@ import type {
   UpdateLessonPlanDto,
 } from '@aletheia/contracts';
 
+import type { LessonPlanPublicApi } from './public-api.js';
+
 @Injectable()
-export class LessonPlanService {
+export class LessonPlanService implements LessonPlanPublicApi {
   constructor(private readonly lessonPlanRepo: LessonPlanRepository) {}
 
   async createLessonPlan(familyId: string, dto: CreateLessonPlanDto): Promise<LessonPlanResponseDto> {
