@@ -49,6 +49,8 @@ model Family {
   subjects           Subject[]
   curriculumPlans    LearnerCurriculumPlan[]
   learningObjectives LearningObjective[]
+  lessonPlans        LessonPlan[]
+  scheduleSlots      WeeklyScheduleSlot[]
 
   @@map("families")
 }
@@ -90,6 +92,8 @@ model Learner {
   prayerRequests     PrayerRequest[]
   curriculumPlans    LearnerCurriculumPlan[]
   learningObjectives LearningObjective[]
+  lessonPlans        LessonPlanLearner[]
+  scheduleSlots      WeeklyScheduleSlot[]
 
   @@index([familyId])
   @@index([familyId, archivedAt])
@@ -205,9 +209,11 @@ model AcademicYear {
   createdAt  DateTime                @default(now()) @map("created_at") @db.Timestamptz
   updatedAt  DateTime                @updatedAt @map("updated_at") @db.Timestamptz
 
-  family     Family                  @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  plans      LearnerCurriculumPlan[]
-  objectives LearningObjective[]
+  family        Family                  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  plans         LearnerCurriculumPlan[]
+  objectives    LearningObjective[]
+  lessonPlans   LessonPlan[]
+  scheduleSlots WeeklyScheduleSlot[]
 
   @@unique([familyId, year])
   @@index([familyId])
@@ -225,8 +231,10 @@ model Subject {
   createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
-  family      Family              @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  objectives  LearningObjective[]
+  family        Family              @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  objectives    LearningObjective[]
+  lessonPlans   LessonPlan[]
+  scheduleSlots WeeklyScheduleSlot[]
 
   @@unique([familyId, name])
   @@index([familyId])
@@ -267,12 +275,114 @@ model LearningObjective {
   createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz
 
-  family         Family          @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  learner        Learner         @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  subject        Subject         @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  academicYear   AcademicYear    @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  family         Family                @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner        Learner               @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  subject        Subject               @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  academicYear   AcademicYear          @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  lessonPlans    LessonPlanObjective[]
 
   @@index([familyId, learnerId, academicYearId])
   @@index([familyId, subjectId])
   @@map("learning_objectives")
 }
+
+enum LessonStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  POSTPONED
+  CANCELLED
+
+  @@map("lesson_statuses")
+}
+
+model LessonPlan {
+  id                    String                @id @default(uuid()) @db.Uuid
+  familyId              String                @map("family_id") @db.Uuid
+  academicYearId        String?               @map("academic_year_id") @db.Uuid
+  subjectId             String                @map("subject_id") @db.Uuid
+  title                 String
+  description           String?
+  date                  DateTime              @db.Date
+  startTime             String?               @map("start_time")
+  endTime               String?               @map("end_time")
+  durationMinutes       Int?                  @map("duration_minutes")
+  actualDurationMinutes Int?                  @map("actual_duration_minutes")
+  status                LessonStatus          @default(PLANNED)
+  materials             String?
+  homework              String?
+  notes                 String?
+  completedAt           DateTime?             @map("completed_at") @db.Timestamptz
+  createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime              @updatedAt @map("updated_at") @db.Timestamptz
+
+  family                Family                @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  academicYear          AcademicYear?         @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  subject               Subject               @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  learners              LessonPlanLearner[]
+  objectives            LessonPlanObjective[]
+
+  @@index([familyId])
+  @@index([familyId, date])
+  @@index([familyId, subjectId])
+  @@index([familyId, status])
+  @@map("lesson_plans")
+}
+
+model LessonPlanLearner {
+  id           String     @id @default(uuid()) @db.Uuid
+  lessonPlanId String     @map("lesson_plan_id") @db.Uuid
+  learnerId    String     @map("learner_id") @db.Uuid
+  notes        String?
+  completed    Boolean    @default(false)
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz
+
+  lessonPlan   LessonPlan @relation(fields: [lessonPlanId], references: [id], onDelete: Cascade)
+  learner      Learner    @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonPlanId, learnerId])
+  @@index([learnerId])
+  @@map("lesson_plan_learners")
+}
+
+model LessonPlanObjective {
+  id           String            @id @default(uuid()) @db.Uuid
+  lessonPlanId String            @map("lesson_plan_id") @db.Uuid
+  objectiveId  String            @map("objective_id") @db.Uuid
+  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz
+
+  lessonPlan   LessonPlan        @relation(fields: [lessonPlanId], references: [id], onDelete: Cascade)
+  objective    LearningObjective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonPlanId, objectiveId])
+  @@index([objectiveId])
+  @@map("lesson_plan_objectives")
+}
+
+model WeeklyScheduleSlot {
+  id             String        @id @default(uuid()) @db.Uuid
+  familyId       String        @map("family_id") @db.Uuid
+  academicYearId String?       @map("academic_year_id") @db.Uuid
+  subjectId      String?       @map("subject_id") @db.Uuid
+  learnerId      String?       @map("learner_id") @db.Uuid
+  dayOfWeek      Int           @map("day_of_week")
+  startTime      String        @map("start_time")
+  endTime        String        @map("end_time")
+  title          String
+  description    String?
+  location       String?
+  color          String?
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  family         Family        @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  academicYear   AcademicYear? @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  subject        Subject?      @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  learner        Learner?      @relation(fields: [learnerId], references: [id], onDelete: SetNull)
+
+  @@index([familyId])
+  @@index([familyId, dayOfWeek])
+  @@index([familyId, learnerId])
+  @@map("weekly_schedule_slots")
+}
+

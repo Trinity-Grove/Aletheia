@@ -7,6 +7,7 @@ import { FamiliesModule } from './modules/families/families.module.js';
 import { LearnersModule } from './modules/learners/learners.module.js';
 import { DevotionalModule } from './modules/devotional/devotional.module.js';
 import { CurriculumModule } from './modules/curriculum/curriculum.module.js';
+import { LessonsModule } from './modules/lessons/lessons.module.js';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { CurriculumModule } from './modules/curriculum/curriculum.module.js';
     LearnersModule,
     DevotionalModule,
     CurriculumModule,
+    LessonsModule,
   ],
 })
 export class AppModule {}
