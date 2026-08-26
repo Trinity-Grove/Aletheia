@@ -23,7 +23,6 @@ describe('Curriculum & Objectives E2E & Multi-Tenant Isolation', () => {
   const guardianBUserId = 'guardian-b-user-id';
 
   const learnerAId = '10000000-0000-0000-0000-000000000001';
-  const learnerBId = '20000000-0000-0000-0000-000000000002';
 
   let academicYearsStore: AcademicYearResponseDto[] = [];
   let subjectsStore: SubjectResponseDto[] = [];
@@ -146,7 +145,7 @@ describe('Curriculum & Objectives E2E & Multi-Tenant Isolation', () => {
       return plansStore.find((p) => p.familyId === familyId && p.learnerId === learnerId && p.academicYearId === academicYearId) ?? null;
     });
 
-    jest.spyOn(curriculumService, 'applyTemplate').mockImplementation(async (familyId, dto) => {
+    jest.spyOn(curriculumService, 'applyTemplate').mockImplementation(async (_familyId, _dto) => {
       return { subjectsCount: 5, objectivesCount: 15 };
     });
 
