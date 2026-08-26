@@ -43,8 +43,12 @@ model Family {
   members          FamilyMember[]
   invitations      FamilyInvitation[]
   learners         Learner[]
-  dailyDevotionals DailyDevotional[]
-  prayerRequests   PrayerRequest[]
+  dailyDevotionals   DailyDevotional[]
+  prayerRequests     PrayerRequest[]
+  academicYears      AcademicYear[]
+  subjects           Subject[]
+  curriculumPlans    LearnerCurriculumPlan[]
+  learningObjectives LearningObjective[]
 
   @@map("families")
 }
@@ -82,8 +86,10 @@ model Learner {
   createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz
 
-  family         Family           @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  prayerRequests PrayerRequest[]
+  family             Family                  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  prayerRequests     PrayerRequest[]
+  curriculumPlans    LearnerCurriculumPlan[]
+  learningObjectives LearningObjective[]
 
   @@index([familyId])
   @@index([familyId, archivedAt])
@@ -168,4 +174,105 @@ model PrayerRequest {
   @@index([familyId])
   @@index([familyId, isAnswered])
   @@map("prayer_requests")
+}
+
+enum PedagogicalFramework {
+  CLASSICAL_TRIVIUM
+  CHARLOTTE_MASON
+  TRADITIONAL
+  UNIT_STUDIES
+  CUSTOM
+
+  @@map("pedagogical_frameworks")
+}
+
+enum ObjectiveStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  ACHIEVED
+
+  @@map("objective_statuses")
+}
+
+model AcademicYear {
+  id         String                  @id @default(uuid()) @db.Uuid
+  familyId   String                  @map("family_id") @db.Uuid
+  year       Int
+  title      String
+  startDate  DateTime?               @map("start_date") @db.Date
+  endDate    DateTime?               @map("end_date") @db.Date
+  isCurrent  Boolean                 @default(false) @map("is_current")
+  createdAt  DateTime                @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime                @updatedAt @map("updated_at") @db.Timestamptz
+
+  family     Family                  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  plans      LearnerCurriculumPlan[]
+  objectives LearningObjective[]
+
+  @@unique([familyId, year])
+  @@index([familyId])
+  @@map("academic_years")
+}
+
+model Subject {
+  id          String              @id @default(uuid()) @db.Uuid
+  familyId    String              @map("family_id") @db.Uuid
+  name        String
+  color       String?
+  icon        String?
+  description String?
+  archivedAt  DateTime?           @map("archived_at") @db.Timestamptz
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime            @updatedAt @map("updated_at") @db.Timestamptz
+
+  family      Family              @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  objectives  LearningObjective[]
+
+  @@unique([familyId, name])
+  @@index([familyId])
+  @@map("subjects")
+}
+
+model LearnerCurriculumPlan {
+  id                   String               @id @default(uuid()) @db.Uuid
+  familyId             String               @map("family_id") @db.Uuid
+  learnerId            String               @map("learner_id") @db.Uuid
+  academicYearId       String               @map("academic_year_id") @db.Uuid
+  pedagogicalFramework PedagogicalFramework @default(CUSTOM) @map("pedagogical_framework")
+  notes                String?
+  createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime             @updatedAt @map("updated_at") @db.Timestamptz
+
+  family               Family               @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner              Learner              @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  academicYear         AcademicYear         @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+
+  @@unique([familyId, learnerId, academicYearId])
+  @@index([familyId])
+  @@map("learner_curriculum_plans")
+}
+
+model LearningObjective {
+  id             String          @id @default(uuid()) @db.Uuid
+  familyId       String          @map("family_id") @db.Uuid
+  learnerId      String          @map("learner_id") @db.Uuid
+  subjectId      String          @map("subject_id") @db.Uuid
+  academicYearId String          @map("academic_year_id") @db.Uuid
+  title          String
+  description    String?
+  status         ObjectiveStatus @default(NOT_STARTED)
+  targetDate     DateTime?       @map("target_date") @db.Date
+  achievedAt     DateTime?       @map("achieved_at") @db.Timestamptz
+  order          Int             @default(0)
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  family         Family          @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner        Learner         @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  subject        Subject         @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  academicYear   AcademicYear    @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+
+  @@index([familyId, learnerId, academicYearId])
+  @@index([familyId, subjectId])
+  @@map("learning_objectives")
 }
