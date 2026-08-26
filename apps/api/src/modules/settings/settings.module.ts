@@ -44,9 +44,6 @@ import { DataExportController } from './presentation/data-export.controller.js';
     FamilySettingsService,
     NotificationService,
     DataExportService,
-    FamilySettingsController,
-    NotificationController,
-    DataExportController,
   ],
 })
 export class SettingsModule {}
