@@ -51,6 +51,8 @@ model Family {
   learningObjectives LearningObjective[]
   lessonPlans        LessonPlan[]
   scheduleSlots      WeeklyScheduleSlot[]
+  learningRecords    LearningRecord[]
+  portfolioItems     PortfolioItem[]
 
   @@map("families")
 }
@@ -94,6 +96,8 @@ model Learner {
   learningObjectives LearningObjective[]
   lessonPlans        LessonPlanLearner[]
   scheduleSlots      WeeklyScheduleSlot[]
+  learningRecords    LearningRecord[]
+  portfolioItems     PortfolioItem[]
 
   @@index([familyId])
   @@index([familyId, archivedAt])
@@ -214,6 +218,8 @@ model AcademicYear {
   objectives    LearningObjective[]
   lessonPlans   LessonPlan[]
   scheduleSlots WeeklyScheduleSlot[]
+  learningRecords LearningRecord[]
+  portfolioItems  PortfolioItem[]
 
   @@unique([familyId, year])
   @@index([familyId])
@@ -235,6 +241,8 @@ model Subject {
   objectives    LearningObjective[]
   lessonPlans   LessonPlan[]
   scheduleSlots WeeklyScheduleSlot[]
+  learningRecords LearningRecord[]
+  portfolioItems  PortfolioItem[]
 
   @@unique([familyId, name])
   @@index([familyId])
@@ -280,6 +288,7 @@ model LearningObjective {
   subject        Subject               @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   academicYear   AcademicYear          @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
   lessonPlans    LessonPlanObjective[]
+  learningRecords LearningRecordObjective[]
 
   @@index([familyId, learnerId, academicYearId])
   @@index([familyId, subjectId])
@@ -321,6 +330,7 @@ model LessonPlan {
   subject               Subject               @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   learners              LessonPlanLearner[]
   objectives            LessonPlanObjective[]
+  learningRecords       LearningRecord[]
 
   @@index([familyId])
   @@index([familyId, date])
@@ -384,5 +394,138 @@ model WeeklyScheduleSlot {
   @@index([familyId, dayOfWeek])
   @@index([familyId, learnerId])
   @@map("weekly_schedule_slots")
+}
+
+enum MasteryLevel {
+  NOT_STARTED
+  EXPOSURE
+  DEVELOPING
+  WITH_ASSISTANCE
+  AUTONOMOUS
+  MASTERED
+
+  @@map("mastery_levels")
+}
+
+enum AssessmentMethod {
+  OBSERVATION
+  NARRATION
+  EXERCISE
+  WRITING
+  PROJECT
+  EXPERIMENT
+  PRESENTATION
+  TEST
+  SELF_ASSESSMENT
+  PRACTICAL_DEMONSTRATION
+
+  @@map("assessment_methods")
+}
+
+enum EvidenceType {
+  IMAGE
+  AUDIO
+  VIDEO
+  DOCUMENT
+  LINK
+  TEXT
+  CERTIFICATE
+
+  @@map("evidence_types")
+}
+
+enum LearningRecordType {
+  PLANNED_LESSON
+  SPONTANEOUS_EXPERIENCE
+  PROJECT_WORK
+  READING_LOG
+  HABIT_PRACTICE
+
+  @@map("learning_record_types")
+}
+
+model LearningRecord {
+  id                   String                  @id @default(uuid()) @db.Uuid
+  familyId             String                  @map("family_id") @db.Uuid
+  learnerId            String                  @map("learner_id") @db.Uuid
+  subjectId            String?                 @map("subject_id") @db.Uuid
+  academicYearId       String?                 @map("academic_year_id") @db.Uuid
+  lessonPlanId         String?                 @map("lesson_plan_id") @db.Uuid
+  type                 LearningRecordType      @default(PLANNED_LESSON)
+  title                String
+  description          String?
+  date                 DateTime                @db.Date
+  durationMinutes      Int?                    @map("duration_minutes")
+  masteryLevel         MasteryLevel            @default(DEVELOPING) @map("mastery_level")
+  assessmentMethod     AssessmentMethod        @default(OBSERVATION) @map("assessment_method")
+  strengths            String?
+  areasForGrowth       String?                 @map("areas_for_growth")
+  characterHabitGrowth String?                 @map("character_habit_growth")
+  notes                String?
+  createdAt            DateTime                @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime                @updatedAt @map("updated_at") @db.Timestamptz
+
+  family               Family                  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner              Learner                 @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  subject              Subject?                @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  academicYear         AcademicYear?           @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  lessonPlan           LessonPlan?             @relation(fields: [lessonPlanId], references: [id], onDelete: SetNull)
+  objectives           LearningRecordObjective[]
+  portfolioItems       PortfolioItem[]
+
+  @@index([familyId])
+  @@index([familyId, learnerId])
+  @@index([familyId, date])
+  @@index([familyId, subjectId])
+  @@index([familyId, type])
+  @@map("learning_records")
+}
+
+model LearningRecordObjective {
+  id               String            @id @default(uuid()) @db.Uuid
+  learningRecordId String            @map("learning_record_id") @db.Uuid
+  objectiveId      String            @map("objective_id") @db.Uuid
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz
+
+  learningRecord   LearningRecord    @relation(fields: [learningRecordId], references: [id], onDelete: Cascade)
+  objective        LearningObjective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
+
+  @@unique([learningRecordId, objectiveId])
+  @@index([objectiveId])
+  @@map("learning_record_objectives")
+}
+
+model PortfolioItem {
+  id               String          @id @default(uuid()) @db.Uuid
+  familyId         String          @map("family_id") @db.Uuid
+  learnerId        String          @map("learner_id") @db.Uuid
+  learningRecordId String?         @map("learning_record_id") @db.Uuid
+  academicYearId   String?         @map("academic_year_id") @db.Uuid
+  subjectId        String?         @map("subject_id") @db.Uuid
+  title            String
+  description      String?
+  type             EvidenceType
+  fileUrl          String?         @map("file_url")
+  textContent      String?         @map("text_content")
+  mimeType         String?         @map("mime_type")
+  fileSizeBytes    Int?            @map("file_size_bytes")
+  capturedAt       DateTime?       @map("captured_at") @db.Date
+  isHighlight      Boolean         @default(false) @map("is_highlight")
+  tags             String[]        @default([])
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  family           Family          @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner          Learner         @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  learningRecord   LearningRecord? @relation(fields: [learningRecordId], references: [id], onDelete: SetNull)
+  academicYear     AcademicYear?   @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  subject          Subject?        @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+
+  @@index([familyId])
+  @@index([familyId, learnerId])
+  @@index([familyId, learningRecordId])
+  @@index([familyId, subjectId])
+  @@index([familyId, isHighlight])
+  @@map("portfolio_items")
 }
 
