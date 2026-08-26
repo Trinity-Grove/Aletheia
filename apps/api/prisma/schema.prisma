@@ -53,6 +53,9 @@ model Family {
   scheduleSlots      WeeklyScheduleSlot[]
   learningRecords    LearningRecord[]
   portfolioItems     PortfolioItem[]
+  attendanceRecords  AttendanceRecord[]
+  complianceRequirements ComplianceRequirement[]
+  officialReports    OfficialReport[]
 
   @@map("families")
 }
@@ -98,6 +101,9 @@ model Learner {
   scheduleSlots      WeeklyScheduleSlot[]
   learningRecords    LearningRecord[]
   portfolioItems     PortfolioItem[]
+  attendanceRecords  AttendanceRecord[]
+  complianceRequirements ComplianceRequirement[]
+  officialReports    OfficialReport[]
 
   @@index([familyId])
   @@index([familyId, archivedAt])
@@ -220,6 +226,9 @@ model AcademicYear {
   scheduleSlots WeeklyScheduleSlot[]
   learningRecords LearningRecord[]
   portfolioItems  PortfolioItem[]
+  attendanceRecords AttendanceRecord[]
+  complianceRequirements ComplianceRequirement[]
+  officialReports OfficialReport[]
 
   @@unique([familyId, year])
   @@index([familyId])
@@ -528,4 +537,106 @@ model PortfolioItem {
   @@index([familyId, isHighlight])
   @@map("portfolio_items")
 }
+
+enum AttendanceStatus {
+  PRESENT
+  EXCUSED_ABSENCE
+  UNEXCUSED_ABSENCE
+  HOLIDAY
+  FIELD_TRIP
+  SICK
+
+  @@map("attendance_statuses")
+}
+
+enum GradingScale {
+  MASTERY_QUALITATIVE
+  LETTER_A_F
+  NUMERIC_0_10
+  NUMERIC_0_100
+  NARRATIVE
+
+  @@map("grading_scales")
+}
+
+enum ReportType {
+  ATTENDANCE_SUMMARY
+  ACADEMIC_TRANSCRIPT
+  LEARNING_PORTFOLIO_DOSSIER
+  ANNUAL_COMPLIANCE_REPORT
+
+  @@map("report_types")
+}
+
+model AttendanceRecord {
+  id             String           @id @default(uuid()) @db.Uuid
+  familyId       String           @map("family_id") @db.Uuid
+  learnerId      String           @map("learner_id") @db.Uuid
+  academicYearId String?          @map("academic_year_id") @db.Uuid
+  date           DateTime         @db.Date
+  status         AttendanceStatus @default(PRESENT)
+  hoursSpent     Float?           @map("hours_spent")
+  notes          String?
+  isAutoLogged   Boolean          @default(false) @map("is_auto_logged")
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  family         Family           @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner        Learner          @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  academicYear   AcademicYear?    @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+
+  @@unique([familyId, learnerId, date])
+  @@index([familyId])
+  @@index([familyId, learnerId])
+  @@index([familyId, date])
+  @@index([familyId, academicYearId])
+  @@map("attendance_records")
+}
+
+model ComplianceRequirement {
+  id                    String        @id @default(uuid()) @db.Uuid
+  familyId              String        @map("family_id") @db.Uuid
+  academicYearId        String        @map("academic_year_id") @db.Uuid
+  learnerId             String?       @map("learner_id") @db.Uuid
+  jurisdiction          String?
+  minInstructionalDays  Int?          @map("min_instructional_days")
+  minInstructionalHours Float?        @map("min_instructional_hours")
+  notes                 String?
+  createdAt             DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  family                Family        @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  academicYear          AcademicYear  @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  learner               Learner?      @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  @@unique([familyId, academicYearId, learnerId])
+  @@index([familyId])
+  @@index([familyId, academicYearId])
+  @@map("compliance_requirements")
+}
+
+model OfficialReport {
+  id             String       @id @default(uuid()) @db.Uuid
+  familyId       String       @map("family_id") @db.Uuid
+  learnerId      String       @map("learner_id") @db.Uuid
+  academicYearId String?      @map("academic_year_id") @db.Uuid
+  type           ReportType
+  title          String
+  gradingScale   GradingScale @default(MASTERY_QUALITATIVE) @map("grading_scale")
+  content        Json
+  generatedAt    DateTime     @default(now()) @map("generated_at") @db.Timestamptz
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  family         Family        @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner        Learner       @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  academicYear   AcademicYear? @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+
+  @@index([familyId])
+  @@index([familyId, learnerId])
+  @@index([familyId, academicYearId])
+  @@index([familyId, type])
+  @@map("official_reports")
+}
+
 
