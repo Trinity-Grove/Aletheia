@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import type { CreateLearnerDto, LearnerResponseDto } from '@aletheia/contracts';
+import { ProductShell } from '../../../src/components/product-shell';
 import { LearnersList } from '../../../src/components/learners/learners-list';
 import { LearnerFormModal } from '../../../src/components/learners/learner-form-modal';
 import { Can } from '../../../src/components/auth/role-guard';
@@ -82,49 +83,61 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
   };
 
   return (
-    <div className="learners-page-container" style={{ padding: '2rem 1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '2rem',
-          flexWrap: 'wrap',
-          gap: '1rem',
-        }}
-      >
-        <div>
-          <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 700 }}>Gestão de Educandos</h1>
-          <p style={{ margin: '0.25rem 0 0 0', color: '#6B7280' }}>
-            Gerencie os perfis pedagógicos e etapas de desenvolvimento dos seus filhos.
-          </p>
+    <ProductShell
+      currentPath="/learners"
+      learners={learners.map((l) => ({
+        id: l.id,
+        firstName: l.firstName,
+        preferredName: l.preferredName,
+        stage: l.stage,
+        avatarColor: l.avatarColor,
+      }))}
+    >
+      <div className="learners-page-container" style={{ padding: '2rem 1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '2rem',
+            flexWrap: 'wrap',
+            gap: '1rem',
+          }}
+        >
+          <div>
+            <h1 className="page-title" style={{ margin: 0, fontSize: '1.75rem', fontWeight: 700 }}>
+              Gestão de Educandos
+            </h1>
+            <p className="page-subtitle" style={{ margin: '0.25rem 0 0 0', color: 'var(--muted, #5c6f67)' }}>
+              Gerencie os perfis pedagógicos e etapas de desenvolvimento dos seus filhos.
+            </p>
+          </div>
+
+          <Can action="create_learner">
+            <button
+              type="button"
+              data-testid="add-learner-btn"
+              onClick={handleOpenCreate}
+              className="btn btn-primary ui-button ui-button--primary"
+            >
+              + Adicionar Educando
+            </button>
+          </Can>
         </div>
 
-        <Can action="create_learner">
-          <button
-            type="button"
-            data-testid="add-learner-btn"
-            onClick={handleOpenCreate}
-            className="btn btn-primary"
-            style={{ padding: '0.625rem 1.25rem', fontWeight: 600 }}
-          >
-            + Adicionar Educando
-          </button>
-        </Can>
+        <LearnersList
+          learners={learners}
+          onEdit={handleOpenEdit}
+          onToggleArchive={handleToggleArchive}
+        />
+
+        <LearnerFormModal
+          isOpen={isModalOpen}
+          initialData={editingLearner}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleSubmitForm}
+        />
       </div>
-
-      <LearnersList
-        learners={learners}
-        onEdit={handleOpenEdit}
-        onToggleArchive={handleToggleArchive}
-      />
-
-      <LearnerFormModal
-        isOpen={isModalOpen}
-        initialData={editingLearner}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleSubmitForm}
-      />
-    </div>
+    </ProductShell>
   );
 }

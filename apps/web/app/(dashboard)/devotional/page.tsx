@@ -10,6 +10,7 @@ import type {
 import { DevotionalView } from '../../../src/components/devotional/devotional-view';
 import { DevotionalFormModal } from '../../../src/components/devotional/devotional-form-modal';
 import { PrayerJournal } from '../../../src/components/devotional/prayer-journal';
+import { ProductShell } from '../../../src/components/product-shell';
 
 export interface DevotionalPageProps {
   initialDevotional?: DailyDevotionalResponseDto | null;
@@ -252,44 +253,46 @@ export default function DevotionalPage({
   };
 
   return (
-    <div className="devotional-page-container" style={{ padding: '2rem 1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 700, color: '#111827' }}>
-          Culto Doméstico & Devocional
-        </h1>
-        <p style={{ margin: '0.25rem 0 0 0', color: '#6B7280', fontSize: '1rem' }}>
-          Cultive a fé em família através da leitura da Bíblia, reflexão, louvor e oração diária.
-        </p>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1.2fr)', gap: '2rem', alignItems: 'start' }}>
-        <div>
-          <DevotionalView
-            currentDate={currentDate}
-            devotional={devotional}
-            onEdit={handleOpenEdit}
-            onDateChange={handleDateChange}
-          />
+    <ProductShell currentPath="/devotional">
+      <div className="devotional-page-container" style={{ padding: '2rem 1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ marginBottom: '2rem' }}>
+          <h1 className="page-title" style={{ margin: 0, fontSize: '1.75rem', fontWeight: 700 }}>
+            Culto Doméstico & Devocional
+          </h1>
+          <p className="page-subtitle" style={{ margin: '0.25rem 0 0 0', color: 'var(--muted, #5c6f67)', fontSize: '1rem' }}>
+            Cultive a fé em família através da leitura da Bíblia, reflexão, louvor e oração diária.
+          </p>
         </div>
 
-        <div>
-          <PrayerJournal
-            prayers={prayers}
-            onCreatePrayer={handleCreatePrayer}
-            onAnswerPrayer={handleAnswerPrayer}
-            onArchivePrayer={handleArchivePrayer}
-          />
-        </div>
-      </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1.2fr)', gap: '2rem', alignItems: 'start' }}>
+          <div>
+            <DevotionalView
+              currentDate={currentDate}
+              devotional={devotional}
+              onEdit={handleOpenEdit}
+              onDateChange={handleDateChange}
+            />
+          </div>
 
-      <DevotionalFormModal
-        isOpen={isModalOpen}
-        currentDate={currentDate}
-        initialData={devotional}
-        familyId={familyId}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleSubmitDevotional}
-      />
-    </div>
+          <div>
+            <PrayerJournal
+              prayers={prayers}
+              onCreatePrayer={handleCreatePrayer}
+              onAnswerPrayer={handleAnswerPrayer}
+              onArchivePrayer={handleArchivePrayer}
+            />
+          </div>
+        </div>
+
+        <DevotionalFormModal
+          isOpen={isModalOpen}
+          currentDate={currentDate}
+          initialData={devotional}
+          familyId={familyId}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleSubmitDevotional}
+        />
+      </div>
+    </ProductShell>
   );
 }
