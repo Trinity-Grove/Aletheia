@@ -10,6 +10,7 @@ import { FamilyGeneralSettings } from '../src/components/settings/family-general
 import { NotificationPreferences } from '../src/components/settings/notification-preferences';
 import { DataBackupCard } from '../src/components/settings/data-backup-card';
 import { NotificationBell } from '../src/components/layout/notification-bell';
+import { AuthProvider } from '../src/lib/auth/rbac-context';
 
 const mockSettings: FamilySettingsResponseDto = {
   id: '00000000-0000-0000-0000-000000000001',
@@ -102,10 +103,12 @@ describe('Settings Hub, Notification Center & Data Backup Web Components', () =>
       const onSaveMock = vi.fn().mockResolvedValue(undefined);
 
       render(
-        <FamilyGeneralSettings
-          settings={mockSettings}
-          onSave={onSaveMock}
-        />
+        <AuthProvider role="OWNER_GUARDIAN">
+          <FamilyGeneralSettings
+            settings={mockSettings}
+            onSave={onSaveMock}
+          />
+        </AuthProvider>
       );
 
       // Verify Initial Render
@@ -150,6 +153,22 @@ describe('Settings Hub, Notification Center & Data Backup Web Components', () =>
       // Verify success feedback
       expect(await screen.findByTestId('family-settings-success-alert')).toBeDefined();
     });
+
+    it('displays read-only notice and disables save for EDUCATOR role', () => {
+      render(
+        <AuthProvider role="EDUCATOR">
+          <FamilyGeneralSettings
+            settings={mockSettings}
+            onSave={vi.fn()}
+          />
+        </AuthProvider>
+      );
+
+      expect(screen.getByTestId('educator-settings-notice')).toBeDefined();
+      expect(screen.queryByTestId('save-family-settings-btn')).toBeNull();
+      const input = screen.getByTestId('homeschool-name-input') as HTMLInputElement;
+      expect(input.disabled).toBe(true);
+    });
   });
 
   describe('NotificationPreferences', () => {
@@ -157,10 +176,12 @@ describe('Settings Hub, Notification Center & Data Backup Web Components', () =>
       const onSaveMock = vi.fn().mockResolvedValue(undefined);
 
       render(
-        <NotificationPreferences
-          settings={mockSettings}
-          onSave={onSaveMock}
-        />
+        <AuthProvider role="OWNER_GUARDIAN">
+          <NotificationPreferences
+            settings={mockSettings}
+            onSave={onSaveMock}
+          />
+        </AuthProvider>
       );
 
       // Verify Initial Times
@@ -218,19 +239,21 @@ describe('Settings Hub, Notification Center & Data Backup Web Components', () =>
       const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
 
       render(
-        <DataBackupCard
-          onExportPackage={onExportMock}
-          exportJobs={[
-            {
-              id: 'job-1',
-              familyId: '11111111-1111-1111-1111-111111111111',
-              requestedById: 'user-1',
-              status: 'COMPLETED',
-              createdAt: '2026-08-26T12:00:00.000Z',
-              updatedAt: '2026-08-26T12:01:00.000Z',
-            },
-          ]}
-        />
+        <AuthProvider role="OWNER_GUARDIAN">
+          <DataBackupCard
+            onExportPackage={onExportMock}
+            exportJobs={[
+              {
+                id: 'job-1',
+                familyId: '11111111-1111-1111-1111-111111111111',
+                requestedById: 'user-1',
+                status: 'COMPLETED',
+                createdAt: '2026-08-26T12:00:00.000Z',
+                updatedAt: '2026-08-26T12:01:00.000Z',
+              },
+            ]}
+          />
+        </AuthProvider>
       );
 
       // Verify Card elements
@@ -252,6 +275,20 @@ describe('Settings Hub, Notification Center & Data Backup Web Components', () =>
       expect(await screen.findByTestId('backup-export-success')).toBeDefined();
 
       clickSpy.mockRestore();
+    });
+
+    it('hides export button for EDUCATOR and shows guardian-only notice', () => {
+      render(
+        <AuthProvider role="EDUCATOR">
+          <DataBackupCard
+            onExportPackage={vi.fn()}
+            exportJobs={[]}
+          />
+        </AuthProvider>
+      );
+
+      expect(screen.queryByTestId('export-full-data-btn')).toBeNull();
+      expect(screen.getByText(/Apenas responsáveis podem exportar o pacote integral de dados/i)).toBeDefined();
     });
   });
 

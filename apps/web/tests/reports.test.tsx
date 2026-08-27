@@ -13,6 +13,7 @@ import { ComplianceGauge } from '../src/components/reports/compliance-gauge';
 import { AttendanceTrackerView } from '../src/components/reports/attendance-tracker-view';
 import { ReportGeneratorView } from '../src/components/reports/report-generator-view';
 import { PrintableTranscript } from '../src/components/reports/printable-transcript';
+import { AuthProvider } from '../src/lib/auth/rbac-context';
 
 const mockLearners: LearnerSummaryDto[] = [
   {
@@ -239,15 +240,17 @@ describe('Attendance Tracker, Compliance Gauges & Official Transcript Web Compon
       const logBulkMock = vi.fn().mockResolvedValue(undefined);
 
       render(
-        <AttendanceTrackerView
-          records={mockAttendanceRecords}
-          complianceSummary={mockComplianceSummary}
-          complianceRequirement={mockComplianceRequirement}
-          learners={mockLearners}
-          activeLearnerId={null}
-          onLogAttendance={logSingleMock}
-          onBulkLogAttendance={logBulkMock}
-        />
+        <AuthProvider role="OWNER_GUARDIAN">
+          <AttendanceTrackerView
+            records={mockAttendanceRecords}
+            complianceSummary={mockComplianceSummary}
+            complianceRequirement={mockComplianceRequirement}
+            learners={mockLearners}
+            activeLearnerId={null}
+            onLogAttendance={logSingleMock}
+            onBulkLogAttendance={logBulkMock}
+          />
+        </AuthProvider>
       );
 
       // Verify Attendance Table & Status Badges
@@ -294,15 +297,17 @@ describe('Attendance Tracker, Compliance Gauges & Official Transcript Web Compon
       const logBulkMock = vi.fn().mockResolvedValue(undefined);
 
       render(
-        <AttendanceTrackerView
-          records={mockAttendanceRecords}
-          complianceSummary={mockComplianceSummary}
-          complianceRequirement={mockComplianceRequirement}
-          learners={mockLearners}
-          activeLearnerId={null}
-          onLogAttendance={logSingleMock}
-          onBulkLogAttendance={logBulkMock}
-        />
+        <AuthProvider role="OWNER_GUARDIAN">
+          <AttendanceTrackerView
+            records={mockAttendanceRecords}
+            complianceSummary={mockComplianceSummary}
+            complianceRequirement={mockComplianceRequirement}
+            learners={mockLearners}
+            activeLearnerId={null}
+            onLogAttendance={logSingleMock}
+            onBulkLogAttendance={logBulkMock}
+          />
+        </AuthProvider>
       );
 
       // --- Test Bulk Attendance Logging ---
@@ -343,14 +348,16 @@ describe('Attendance Tracker, Compliance Gauges & Official Transcript Web Compon
       const exportCsvMock = vi.fn().mockResolvedValue(undefined);
 
       render(
-        <ReportGeneratorView
-          reports={[mockOfficialReport]}
-          learners={mockLearners}
-          activeLearnerId={null}
-          onGenerateReport={generateReportMock}
-          onDeleteReport={deleteReportMock}
-          onExportCsv={exportCsvMock}
-        />
+        <AuthProvider role="OWNER_GUARDIAN">
+          <ReportGeneratorView
+            reports={[mockOfficialReport]}
+            learners={mockLearners}
+            activeLearnerId={null}
+            onGenerateReport={generateReportMock}
+            onDeleteReport={deleteReportMock}
+            onExportCsv={exportCsvMock}
+          />
+        </AuthProvider>
       );
 
       // Verify report card rendered
@@ -412,6 +419,27 @@ describe('Attendance Tracker, Compliance Gauges & Official Transcript Web Compon
       // Test Delete Report
       fireEvent.click(screen.getByTestId('delete-report-btn-rep-1'));
       expect(deleteReportMock).toHaveBeenCalledWith('rep-1');
+    });
+
+    it('hides generate and delete report buttons for EDUCATOR role', () => {
+      render(
+        <AuthProvider role="EDUCATOR">
+          <ReportGeneratorView
+            reports={[mockOfficialReport]}
+            learners={mockLearners}
+            activeLearnerId={null}
+            onGenerateReport={vi.fn()}
+            onDeleteReport={vi.fn()}
+            onExportCsv={vi.fn()}
+          />
+        </AuthProvider>
+      );
+
+      expect(screen.queryByTestId('open-generate-report-btn')).toBeNull();
+      expect(screen.queryByTestId('delete-report-btn-rep-1')).toBeNull();
+      // Educator can still view and export CSV of generated reports
+      expect(screen.getByTestId('view-report-btn-rep-1')).toBeDefined();
+      expect(screen.getByTestId('export-csv-btn-rep-1')).toBeDefined();
     });
   });
 

@@ -30,6 +30,9 @@ export type PermissionAction =
   | 'upload_portfolio_items'
   | 'upload_portfolio_item'
   | 'upload_portfolio'
+  | 'manage_portfolio'
+  | 'export_family_data'
+  | 'export_data'
   | 'modify_compliance_targets'
   | 'modify_compliance_target';
 
@@ -49,6 +52,8 @@ export interface RbacPermissions {
   canManageCurriculum: boolean;
   canLogAttendance: boolean;
   canUploadPortfolioItems: boolean;
+  canManagePortfolio: boolean;
+  canExportFamilyData: boolean;
   canModifyComplianceTargets: boolean;
 
   // Property aliases
@@ -69,6 +74,8 @@ export interface RbacPermissions {
   manage_curriculum: boolean;
   log_attendance: boolean;
   upload_portfolio_items: boolean;
+  manage_portfolio: boolean;
+  export_family_data: boolean;
   modify_compliance_targets: boolean;
 
   can: (action: PermissionAction | string) => boolean;
@@ -167,12 +174,17 @@ export function hasPermission(
     case 'upload_portfolio_items':
     case 'upload_portfolio_item':
     case 'upload_portfolio':
+    case 'manage_portfolio':
       return (
         role === 'OWNER_GUARDIAN' ||
         role === 'GUARDIAN' ||
         role === 'CO_GUARDIAN' ||
         role === 'EDUCATOR'
       );
+
+    case 'export_family_data':
+    case 'export_data':
+      return role === 'OWNER_GUARDIAN' || role === 'GUARDIAN' || role === 'CO_GUARDIAN';
 
     case 'modify_compliance_targets':
     case 'modify_compliance_target':
@@ -202,6 +214,8 @@ export function getPermissions(role: FamilyRole | null | undefined): RbacPermiss
   const canManageCurriculum = isAnyActiveRole;
   const canLogAttendance = isAnyActiveRole;
   const canUploadPortfolioItems = isAnyActiveRole;
+  const canManagePortfolio = isAnyActiveRole;
+  const canExportFamilyData = isGuardianOrOwner;
   const canModifyComplianceTargets = isGuardianOrOwner;
 
   return {
@@ -220,6 +234,8 @@ export function getPermissions(role: FamilyRole | null | undefined): RbacPermiss
     canManageCurriculum,
     canLogAttendance,
     canUploadPortfolioItems,
+    canManagePortfolio,
+    canExportFamilyData,
     canModifyComplianceTargets,
 
     delete_learner: canDeleteLearners,
@@ -239,6 +255,8 @@ export function getPermissions(role: FamilyRole | null | undefined): RbacPermiss
     manage_curriculum: canManageCurriculum,
     log_attendance: canLogAttendance,
     upload_portfolio_items: canUploadPortfolioItems,
+    manage_portfolio: canManagePortfolio,
+    export_family_data: canExportFamilyData,
     modify_compliance_targets: canModifyComplianceTargets,
 
     can: (action: PermissionAction | string) => hasPermission(role, action),
