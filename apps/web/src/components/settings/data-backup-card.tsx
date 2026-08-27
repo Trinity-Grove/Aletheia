@@ -5,6 +5,7 @@ import type {
   DataExportJobResponseDto,
   FamilyDataExportPackageDto,
 } from '@aletheia/contracts';
+import { Can } from '../auth/role-guard';
 
 export interface DataBackupCardProps {
   exportJobs?: DataExportJobResponseDto[];
@@ -156,29 +157,38 @@ export function DataBackupCard({
           Formato: <strong>JSON (UTF-8)</strong> • Sem compressão proprietária • Totalmente portável
         </div>
 
-        <button
-          type="button"
-          data-testid="export-full-data-btn"
-          onClick={handleDownloadBackup}
-          disabled={isLoading || isExporting}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.625rem 1.5rem',
-            backgroundColor: isExporting ? '#9CA3AF' : '#059669',
-            color: '#FFFFFF',
-            fontWeight: 600,
-            fontSize: '0.875rem',
-            borderRadius: '0.5rem',
-            border: 'none',
-            cursor: isExporting ? 'not-allowed' : 'pointer',
-            transition: 'background-color 0.15s ease',
-          }}
+        <Can
+          action="export_family_data"
+          fallback={
+            <div style={{ fontSize: '0.8125rem', color: '#6B7280', fontStyle: 'italic' }}>
+              🔒 Apenas responsáveis podem exportar o pacote integral de dados da família.
+            </div>
+          }
         >
-          <span>📦</span>
-          <span>{isExporting ? 'Exportando Pacote...' : 'Exportar Pacote Completo (JSON)'}</span>
-        </button>
+          <button
+            type="button"
+            data-testid="export-full-data-btn"
+            onClick={handleDownloadBackup}
+            disabled={isLoading || isExporting}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.625rem 1.5rem',
+              backgroundColor: isExporting ? '#9CA3AF' : '#059669',
+              color: '#FFFFFF',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              borderRadius: '0.5rem',
+              border: 'none',
+              cursor: isExporting ? 'not-allowed' : 'pointer',
+              transition: 'background-color 0.15s ease',
+            }}
+          >
+            <span>📦</span>
+            <span>{isExporting ? 'Exportando Pacote...' : 'Exportar Pacote Completo (JSON)'}</span>
+          </button>
+        </Can>
       </div>
 
       {exportJobs.length > 0 && (

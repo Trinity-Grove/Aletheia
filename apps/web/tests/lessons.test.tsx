@@ -8,6 +8,7 @@ import type {
   ScheduleSlotResponseDto,
   SubjectResponseDto,
 } from '@aletheia/contracts';
+import { AuthProvider } from '../src/lib/auth/rbac-context';
 import { DailyAgendaView } from '../src/components/lessons/daily-agenda-view';
 import { LessonFormModal } from '../src/components/lessons/lesson-form-modal';
 import { RescheduleModal } from '../src/components/lessons/reschedule-modal';
@@ -168,7 +169,7 @@ describe('Lessons and Schedule Web Components', () => {
   });
 
   describe('DailyAgendaView', () => {
-    it('renders scheduled lessons and routine slots, calculates completed totals', () => {
+    it('renders scheduled lessons and routine slots, duration pills, and calculates completed totals', () => {
       const openCreateLessonMock = vi.fn();
       const openCreateSlotMock = vi.fn();
       const openCompleteMock = vi.fn();
@@ -176,16 +177,18 @@ describe('Lessons and Schedule Web Components', () => {
       const onDateChangeMock = vi.fn();
 
       render(
-        <DailyAgendaView
-          agenda={mockDailyAgenda}
-          selectedDate="2026-08-26"
-          learners={mockLearners}
-          onDateChange={onDateChangeMock}
-          onOpenCreateLesson={openCreateLessonMock}
-          onOpenCreateSlot={openCreateSlotMock}
-          onOpenCompleteLesson={openCompleteMock}
-          onOpenRescheduleLesson={openRescheduleMock}
-        />
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <DailyAgendaView
+            agenda={mockDailyAgenda}
+            selectedDate="2026-08-26"
+            learners={mockLearners}
+            onDateChange={onDateChangeMock}
+            onOpenCreateLesson={openCreateLessonMock}
+            onOpenCreateSlot={openCreateSlotMock}
+            onOpenCompleteLesson={openCompleteMock}
+            onOpenRescheduleLesson={openRescheduleMock}
+          />
+        </AuthProvider>
       );
 
       // Verify progress totals (1 of 3 items completed = 33%)
@@ -223,16 +226,18 @@ describe('Lessons and Schedule Web Components', () => {
 
     it('renders empty state when there are no agenda items', () => {
       render(
-        <DailyAgendaView
-          agenda={{ date: '2026-08-26', dayOfWeek: 3, items: [] }}
-          selectedDate="2026-08-26"
-          learners={mockLearners}
-          onDateChange={vi.fn()}
-          onOpenCreateLesson={vi.fn()}
-          onOpenCreateSlot={vi.fn()}
-          onOpenCompleteLesson={vi.fn()}
-          onOpenRescheduleLesson={vi.fn()}
-        />
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <DailyAgendaView
+            agenda={{ date: '2026-08-26', dayOfWeek: 3, items: [] }}
+            selectedDate="2026-08-26"
+            learners={mockLearners}
+            onDateChange={vi.fn()}
+            onOpenCreateLesson={vi.fn()}
+            onOpenCreateSlot={vi.fn()}
+            onOpenCompleteLesson={vi.fn()}
+            onOpenRescheduleLesson={vi.fn()}
+          />
+        </AuthProvider>
       );
 
       expect(screen.getByTestId('agenda-empty-state')).toBeDefined();
@@ -363,18 +368,20 @@ describe('Lessons and Schedule Web Components', () => {
   });
 
   describe('WeeklyRoutineGrid', () => {
-    it('displays days of week and recurring time slots', () => {
+    it('displays days of week and recurring time slots with RBAC actions', () => {
       const addSlotMock = vi.fn();
       const deleteSlotMock = vi.fn().mockResolvedValue(undefined);
 
       render(
-        <WeeklyRoutineGrid
-          slots={mockRoutineSlots}
-          learners={mockLearners}
-          subjects={mockSubjects}
-          onAddSlot={addSlotMock}
-          onDeleteSlot={deleteSlotMock}
-        />
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <WeeklyRoutineGrid
+            slots={mockRoutineSlots}
+            learners={mockLearners}
+            subjects={mockSubjects}
+            onAddSlot={addSlotMock}
+            onDeleteSlot={deleteSlotMock}
+          />
+        </AuthProvider>
       );
 
       // Verify day headers
@@ -400,3 +407,4 @@ describe('Lessons and Schedule Web Components', () => {
     });
   });
 });
+

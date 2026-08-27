@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+'use client';
+
+import React, { useState } from 'react';
 import type {
   AcademicYearResponseDto,
   CreateObjectiveDto,
@@ -9,12 +11,13 @@ import type {
   ObjectiveStatus,
   PedagogicalFramework,
   SubjectResponseDto,
-} from "@aletheia/contracts";
-import { AcademicYearSwitcher } from "./academic-year-switcher";
-import { TemplateModal } from "./template-modal";
-import { SubjectModal } from "./subject-modal";
-import { ObjectiveModal } from "./objective-modal";
-import { SubjectCard } from "./subject-card";
+} from '@aletheia/contracts';
+import { AcademicYearSwitcher } from './academic-year-switcher';
+import { TemplateModal } from './template-modal';
+import { SubjectModal } from './subject-modal';
+import { ObjectiveModal } from './objective-modal';
+import { SubjectCard } from './subject-card';
+import { Can } from '../auth/role-guard';
 
 export interface CurriculumViewProps {
   years: AcademicYearResponseDto[];
@@ -51,134 +54,171 @@ export function CurriculumView({
 
   const getFrameworkLabel = (framework?: PedagogicalFramework) => {
     switch (framework) {
-      case "CLASSICAL_TRIVIUM":
-        return "🏛️ Clássica (Trívio)";
-      case "CHARLOTTE_MASON":
-        return "🌿 Charlotte Mason";
-      case "TRADITIONAL":
-        return "📚 Tradicional";
+      case 'CLASSICAL_TRIVIUM':
+        return '🏛️ Clássica (Trívio)';
+      case 'CHARLOTTE_MASON':
+        return '🌿 Charlotte Mason';
+      case 'TRADITIONAL':
+        return '📚 Tradicional';
       default:
-        return "✏️ Personalizado";
+        return '✏️ Personalizado';
     }
   };
 
   const totalObjectives = objectives.length;
-  const achievedObjectives = objectives.filter((o) => o.status === "ACHIEVED").length;
+  const achievedObjectives = objectives.filter((o) => o.status === 'ACHIEVED').length;
   const overallPercent = totalObjectives > 0 ? Math.round((achievedObjectives / totalObjectives) * 100) : 0;
 
   return (
-    <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+    <div
+      data-testid="curriculum-view"
+      style={{
+        maxWidth: '76rem',
+        margin: '0 auto',
+        padding: '1.5rem',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1.5rem',
+      }}
+    >
       {/* Top Header */}
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "1rem",
-          padding: "1.25rem",
-          backgroundColor: "#FFFFFF",
-          borderRadius: "0.75rem",
-          border: "1px solid #E5E7EB",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          padding: '1.5rem',
+          backgroundColor: '#FFFFFF',
+          borderRadius: '1rem',
+          border: '1px solid #E2E8F0',
+          boxShadow: '0 1px 3px 0 rgba(15, 23, 42, 0.05)',
         }}
       >
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#111827" }}>
-              {activeLearner ? `Currículo de ${activeLearner.preferredName || activeLearner.firstName}` : "Currículo & Plano de Estudos"}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.02em' }}>
+              {activeLearner ? `Currículo de ${activeLearner.preferredName || activeLearner.firstName}` : 'Currículo & Plano de Estudos'}
             </h1>
             {learnerPlan && (
               <span
                 data-testid="pedagogical-framework-badge"
                 style={{
-                  fontSize: "0.75rem",
-                  fontWeight: 600,
-                  padding: "0.25rem 0.625rem",
-                  borderRadius: "9999px",
-                  backgroundColor: "#EEF2FF",
-                  color: "#4F46E5",
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '9999px',
+                  backgroundColor: '#EEF2FF',
+                  color: '#4338CA',
+                  border: '1px solid #E0E7FF',
                 }}
               >
                 {getFrameworkLabel(learnerPlan.pedagogicalFramework)}
               </span>
             )}
           </div>
-          <p style={{ fontSize: "0.875rem", color: "#6B7280", marginTop: "0.25rem" }}>
-            Planejamento pedagógico, matriz de disciplinas e objetivos de aprendizagem.
+          <p style={{ fontSize: '0.875rem', color: '#64748B', marginTop: '0.25rem', marginBottom: 0 }}>
+            Planejamento pedagógico, matriz de disciplinas, ementas e objetivos de aprendizagem.
           </p>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           <AcademicYearSwitcher
             years={years}
             activeYearId={activeYearId}
             onSelectYear={onSelectYear}
           />
           {activeLearner && (
+            <Can action="manage_curriculum">
+              <button
+                type="button"
+                data-testid="open-template-modal-btn"
+                onClick={() => setIsTemplateModalOpen(true)}
+                className="btn btn-secondary ui-button ui-button--secondary ui-button--sm"
+                style={{
+                  padding: '0.45rem 0.875rem',
+                  borderRadius: '0.5rem',
+                  border: '1px solid #C7D2FE',
+                  backgroundColor: '#EEF2FF',
+                  color: '#4338CA',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                ⚡ Modelos Pedagógicos
+              </button>
+            </Can>
+          )}
+          <Can action="manage_curriculum">
             <button
               type="button"
-              data-testid="open-template-modal-btn"
-              onClick={() => setIsTemplateModalOpen(true)}
+              data-testid="open-subject-modal-btn"
+              onClick={() => setIsSubjectModalOpen(true)}
+              className="btn btn-primary ui-button ui-button--primary ui-button--sm"
               style={{
-                padding: "0.5rem 1rem",
-                borderRadius: "0.375rem",
-                border: "1px solid #4F46E5",
-                backgroundColor: "#EEF2FF",
-                color: "#4F46E5",
-                fontSize: "0.875rem",
+                padding: '0.45rem 1rem',
+                borderRadius: '0.5rem',
+                border: 'none',
+                backgroundColor: '#4338CA',
+                color: '#FFFFFF',
+                fontSize: '0.8125rem',
                 fontWeight: 600,
-                cursor: "pointer",
+                cursor: 'pointer',
+                boxShadow: '0 1px 2px 0 rgba(67, 56, 202, 0.2)',
               }}
             >
-              ⚡ Modelos Pedagógicos
+              + Nova Disciplina
             </button>
-          )}
-          <button
-            type="button"
-            data-testid="open-subject-modal-btn"
-            onClick={() => setIsSubjectModalOpen(true)}
-            style={{
-              padding: "0.5rem 1rem",
-              borderRadius: "0.375rem",
-              border: "none",
-              backgroundColor: "#2563EB",
-              color: "#FFFFFF",
-              fontSize: "0.875rem",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            + Nova Disciplina
-          </button>
+          </Can>
         </div>
       </div>
 
       {/* Progress Summary Card */}
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "1rem 1.25rem",
-          backgroundColor: "#F8FAFC",
-          borderRadius: "0.5rem",
-          border: "1px solid #E2E8F0",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '1.25rem 1.5rem',
+          backgroundColor: '#FFFFFF',
+          borderRadius: '0.875rem',
+          border: '1px solid #E2E8F0',
+          boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04)',
+          flexWrap: 'wrap',
+          gap: '1rem',
         }}
       >
-        <div>
-          <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "#334155" }}>Progresso Geral do Ano: </span>
-          <span data-testid="overall-progress-text" style={{ fontSize: "0.875rem", fontWeight: 700, color: "#2563EB" }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#334155' }}>
+            Progresso Geral do Ano:
+          </span>
+          <span
+            data-testid="overall-progress-text"
+            style={{ fontSize: '0.875rem', fontWeight: 700, color: '#4338CA' }}
+          >
             {achievedObjectives} de {totalObjectives} objetivos concluídos ({overallPercent}%)
           </span>
         </div>
-        <div style={{ width: "200px", height: "8px", backgroundColor: "#E2E8F0", borderRadius: "9999px", overflow: "hidden" }}>
+        <div
+          style={{
+            width: '240px',
+            maxWidth: '100%',
+            height: '8px',
+            backgroundColor: '#F1F5F9',
+            borderRadius: '9999px',
+            overflow: 'hidden',
+          }}
+        >
           <div
             data-testid="overall-progress-bar"
             style={{
               width: `${overallPercent}%`,
-              height: "100%",
-              backgroundColor: "#2563EB",
-              transition: "width 0.3s ease",
+              height: '100%',
+              backgroundColor: overallPercent === 100 ? '#10B981' : '#4338CA',
+              borderRadius: '9999px',
+              transition: 'width 0.4s ease',
             }}
           />
         </div>
@@ -189,64 +229,92 @@ export function CurriculumView({
         <div
           data-testid="curriculum-empty-state"
           style={{
-            padding: "3rem 1.5rem",
-            textAlign: "center",
-            backgroundColor: "#FFFFFF",
-            borderRadius: "0.75rem",
-            border: "1px dashed #D1D5DB",
+            padding: '3.5rem 1.5rem',
+            textAlign: 'center',
+            backgroundColor: '#FFFFFF',
+            borderRadius: '1rem',
+            border: '2px dashed #CBD5E1',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1rem',
           }}
         >
-          <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📚</div>
-          <h2 style={{ fontSize: "1.125rem", fontWeight: 700, color: "#111827", marginBottom: "0.25rem" }}>
-            Nenhuma disciplina cadastrada para este ano letivo
-          </h2>
-          <p style={{ fontSize: "0.875rem", color: "#6B7280", maxWidth: "28rem", margin: "0 auto 1.5rem auto" }}>
-            Comece aplicando um modelo pedagógico clássico ou Charlotte Mason, ou crie suas próprias disciplinas personalizadas.
-          </p>
-          <div style={{ display: "flex", justifyContent: "center", gap: "0.75rem" }}>
+          <div
+            style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '9999px',
+              backgroundColor: '#EEF2FF',
+              color: '#4338CA',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '2rem',
+              boxShadow: '0 4px 12px rgba(67, 56, 202, 0.1)',
+            }}
+          >
+            📚
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.375rem 0' }}>
+              Nenhuma disciplina cadastrada para este ano letivo
+            </h2>
+            <p style={{ fontSize: '0.875rem', color: '#64748B', maxWidth: '28rem', margin: '0 auto' }}>
+              Comece aplicando um modelo pedagógico clássico ou Charlotte Mason, ou crie suas próprias disciplinas personalizadas.
+            </p>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
             {activeLearner && (
+              <Can action="manage_curriculum">
+                <button
+                  type="button"
+                  onClick={() => setIsTemplateModalOpen(true)}
+                  className="btn btn-primary ui-button ui-button--primary"
+                  style={{
+                    padding: '0.5rem 1.25rem',
+                    borderRadius: '0.5rem',
+                    border: 'none',
+                    backgroundColor: '#4338CA',
+                    color: '#FFFFFF',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 4px rgba(67, 56, 202, 0.2)',
+                  }}
+                >
+                  ⚡ Usar Modelo Pedagógico
+                </button>
+              </Can>
+            )}
+            <Can action="manage_curriculum">
               <button
                 type="button"
-                onClick={() => setIsTemplateModalOpen(true)}
+                onClick={() => setIsSubjectModalOpen(true)}
+                className="btn btn-secondary ui-button ui-button--secondary"
                 style={{
-                  padding: "0.5rem 1.25rem",
-                  borderRadius: "0.375rem",
-                  border: "none",
-                  backgroundColor: "#4F46E5",
-                  color: "#FFFFFF",
-                  fontSize: "0.875rem",
+                  padding: '0.5rem 1.25rem',
+                  borderRadius: '0.5rem',
+                  border: '1px solid #CBD5E1',
+                  backgroundColor: '#FFFFFF',
+                  color: '#334155',
+                  fontSize: '0.875rem',
                   fontWeight: 600,
-                  cursor: "pointer",
+                  cursor: 'pointer',
                 }}
               >
-                ⚡ Usar Modelo Pedagógico
+                + Criar Disciplina Manualmente
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setIsSubjectModalOpen(true)}
-              style={{
-                padding: "0.5rem 1.25rem",
-                borderRadius: "0.375rem",
-                border: "1px solid #D1D5DB",
-                backgroundColor: "#FFFFFF",
-                color: "#374151",
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              + Criar Disciplina Manualmente
-            </button>
+            </Can>
           </div>
         </div>
       ) : (
         <div
           data-testid="subjects-grid"
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(20rem, 1fr))",
-            gap: "1.25rem",
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(22rem, 1fr))',
+            gap: '1.5rem',
           }}
         >
           {subjects.map((subject) => {

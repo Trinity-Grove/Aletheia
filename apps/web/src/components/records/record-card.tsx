@@ -7,6 +7,7 @@ import type {
   AssessmentMethod,
   LearningRecordType,
 } from '@aletheia/contracts';
+import { Can } from '../auth/role-guard';
 
 export interface RecordCardProps {
   record: LearningRecordResponseDto;
@@ -336,61 +337,67 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
             </span>
           )}
           {onAddEvidence && (
-            <button
-              type="button"
-              data-testid={`add-evidence-btn-${record.id}`}
-              onClick={() => onAddEvidence(record)}
-              style={{
-                background: 'none',
-                border: '1px dashed #9CA3AF',
-                borderRadius: '0.25rem',
-                padding: '0.25rem 0.5rem',
-                fontSize: '0.75rem',
-                color: '#4B5563',
-                cursor: 'pointer',
-              }}
-            >
-              + Anexar Evidência
-            </button>
+            <Can action="upload_portfolio_items">
+              <button
+                type="button"
+                data-testid={`add-evidence-btn-${record.id}`}
+                onClick={() => onAddEvidence(record)}
+                style={{
+                  background: 'none',
+                  border: '1px dashed #9CA3AF',
+                  borderRadius: '0.25rem',
+                  padding: '0.25rem 0.5rem',
+                  fontSize: '0.75rem',
+                  color: '#4B5563',
+                  cursor: 'pointer',
+                }}
+              >
+                + Anexar Evidência
+              </button>
+            </Can>
           )}
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           {onEdit && (
-            <button
-              type="button"
-              data-testid={`edit-record-btn-${record.id}`}
-              onClick={() => onEdit(record)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#2563EB',
-                fontSize: '0.8125rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                padding: '0.25rem',
-              }}
-            >
-              Editar
-            </button>
+            <Can action="log_learning">
+              <button
+                type="button"
+                data-testid={`edit-record-btn-${record.id}`}
+                onClick={() => onEdit(record)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#2563EB',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: '0.25rem',
+                }}
+              >
+                Editar
+              </button>
+            </Can>
           )}
           {onDelete && (
-            <button
-              type="button"
-              data-testid={`delete-record-btn-${record.id}`}
-              onClick={() => onDelete(record.id)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#DC2626',
-                fontSize: '0.8125rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                padding: '0.25rem',
-              }}
-            >
-              Excluir
-            </button>
+            <Can action="delete_learners">
+              <button
+                type="button"
+                data-testid={`delete-record-btn-${record.id}`}
+                onClick={() => onDelete(record.id)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#DC2626',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: '0.25rem',
+                }}
+              >
+                Excluir
+              </button>
+            </Can>
           )}
         </div>
       </div>

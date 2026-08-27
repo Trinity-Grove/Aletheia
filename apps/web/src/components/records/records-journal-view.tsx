@@ -8,6 +8,7 @@ import type {
   SubjectResponseDto,
   MasteryLevel,
 } from '@aletheia/contracts';
+import { Can } from '../auth/role-guard';
 import { RecordCard, MASTERY_CONFIG, RECORD_TYPE_LABELS } from './record-card';
 
 export interface RecordsJournalViewProps {
@@ -259,24 +260,26 @@ export function RecordsJournalView({
         </div>
 
         {/* New Record Button */}
-        <button
-          type="button"
-          data-testid="open-create-record-btn"
-          onClick={onOpenCreateRecord}
-          style={{
-            padding: '0.625rem 1.25rem',
-            backgroundColor: '#2563EB',
-            color: '#FFFFFF',
-            borderRadius: '0.5rem',
-            border: 'none',
-            fontSize: '0.875rem',
-            fontWeight: 700,
-            cursor: 'pointer',
-            boxShadow: '0 1px 3px rgba(37, 99, 235, 0.3)',
-          }}
-        >
-          + Novo Registro
-        </button>
+        <Can action="log_learning">
+          <button
+            type="button"
+            data-testid="open-create-record-btn"
+            onClick={onOpenCreateRecord}
+            style={{
+              padding: '0.625rem 1.25rem',
+              backgroundColor: '#2563EB',
+              color: '#FFFFFF',
+              borderRadius: '0.5rem',
+              border: 'none',
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(37, 99, 235, 0.3)',
+            }}
+          >
+            + Novo Registro
+          </button>
+        </Can>
       </div>
 
       {/* Feed of Records */}
@@ -298,23 +301,25 @@ export function RecordsJournalView({
           <p style={{ fontSize: '0.875rem', color: '#6B7280', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
             Registre as lições concluídas, narrações orais, vivências espontâneas e o crescimento dos hábitos dos seus filhos.
           </p>
-          <button
-            type="button"
-            data-testid="empty-create-record-btn"
-            onClick={onOpenCreateRecord}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#2563EB',
-              color: '#FFFFFF',
-              borderRadius: '0.375rem',
-              border: 'none',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Criar Primeiro Registro
-          </button>
+          <Can action="log_learning">
+            <button
+              type="button"
+              data-testid="empty-create-record-btn"
+              onClick={onOpenCreateRecord}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#2563EB',
+                color: '#FFFFFF',
+                borderRadius: '0.375rem',
+                border: 'none',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Criar Primeiro Registro
+            </button>
+          </Can>
         </div>
       ) : (
         <div

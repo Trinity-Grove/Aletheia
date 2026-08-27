@@ -2,6 +2,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { DailyDevotionalResponseDto, PrayerResponseDto } from '@aletheia/contracts';
+import { AuthProvider } from '../src/lib/auth/rbac-context';
 import { DevotionalView } from '../src/components/devotional/devotional-view';
 import { DevotionalFormModal } from '../src/components/devotional/devotional-form-modal';
 import { PrayerJournal } from '../src/components/devotional/prayer-journal';
@@ -64,20 +65,23 @@ describe('Devotional & Prayer Components', () => {
   });
 
   describe('DevotionalView', () => {
-    it('renders devotional details properly when present', () => {
+    it('renders devotional details, gold ribbon badge, and scripture card properly when present', () => {
       const onEdit = vi.fn();
       const onDateChange = vi.fn();
 
       render(
-        <DevotionalView
-          currentDate="2026-08-25"
-          devotional={mockDevotional}
-          onEdit={onEdit}
-          onDateChange={onDateChange}
-        />
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <DevotionalView
+            currentDate="2026-08-25"
+            devotional={mockDevotional}
+            onEdit={onEdit}
+            onDateChange={onDateChange}
+          />
+        </AuthProvider>
       );
 
       expect(screen.getByText('Salmos 23:1-6')).toBeInTheDocument();
+      expect(screen.getByTestId('scripture-gold-badge')).toBeInTheDocument();
       expect(screen.getByText('O cuidado fiel do Bom Pastor que nos conduz em pastos verdejantes.')).toBeInTheDocument();
       expect(screen.getByText('Castelo Forte é Nosso Deus')).toBeInTheDocument();
       expect(screen.getByText('Agradecer a Deus em oração familiar antes de dormir por Seu sustento diário.')).toBeInTheDocument();
@@ -94,12 +98,14 @@ describe('Devotional & Prayer Components', () => {
       const onDateChange = vi.fn();
 
       render(
-        <DevotionalView
-          currentDate="2026-08-25"
-          devotional={null}
-          onEdit={onEdit}
-          onDateChange={onDateChange}
-        />
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <DevotionalView
+            currentDate="2026-08-25"
+            devotional={null}
+            onEdit={onEdit}
+            onDateChange={onDateChange}
+          />
+        </AuthProvider>
       );
 
       expect(screen.getByText(/Nenhum devocional registrado para esta data/i)).toBeInTheDocument();
@@ -114,12 +120,14 @@ describe('Devotional & Prayer Components', () => {
       const onDateChange = vi.fn();
 
       render(
-        <DevotionalView
-          currentDate="2026-08-25"
-          devotional={mockDevotional}
-          onEdit={vi.fn()}
-          onDateChange={onDateChange}
-        />
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <DevotionalView
+            currentDate="2026-08-25"
+            devotional={mockDevotional}
+            onEdit={vi.fn()}
+            onDateChange={onDateChange}
+          />
+        </AuthProvider>
       );
 
       const yesterdayBtn = screen.getByRole('button', { name: /Ontem/i });
@@ -212,14 +220,16 @@ describe('Devotional & Prayer Components', () => {
   });
 
   describe('PrayerJournal', () => {
-    it('renders petitions and praises tabs and prayer items', () => {
+    it('renders petitions and praises tabs, answered celebration banner, and prayer items', () => {
       render(
-        <PrayerJournal
-          prayers={[mockPetitionPrayer, mockGratitudePrayer]}
-          onCreatePrayer={vi.fn()}
-          onAnswerPrayer={vi.fn()}
-          onArchivePrayer={vi.fn()}
-        />
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <PrayerJournal
+            prayers={[mockPetitionPrayer, mockGratitudePrayer]}
+            onCreatePrayer={vi.fn()}
+            onAnswerPrayer={vi.fn()}
+            onArchivePrayer={vi.fn()}
+          />
+        </AuthProvider>
       );
 
       // By default Petitions tab is active
@@ -231,6 +241,7 @@ describe('Devotional & Prayer Components', () => {
       fireEvent.click(gratitudeTab);
 
       expect(screen.getByText('Novo trabalho do papai')).toBeInTheDocument();
+      expect(screen.getByTestId('answered-celebration-banner')).toBeInTheDocument();
       expect(screen.queryByText('Saúde dos avós')).not.toBeInTheDocument();
     });
 
@@ -238,12 +249,14 @@ describe('Devotional & Prayer Components', () => {
       const onAnswerPrayer = vi.fn();
 
       render(
-        <PrayerJournal
-          prayers={[mockPetitionPrayer]}
-          onCreatePrayer={vi.fn()}
-          onAnswerPrayer={onAnswerPrayer}
-          onArchivePrayer={vi.fn()}
-        />
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <PrayerJournal
+            prayers={[mockPetitionPrayer]}
+            onCreatePrayer={vi.fn()}
+            onAnswerPrayer={onAnswerPrayer}
+            onArchivePrayer={vi.fn()}
+          />
+        </AuthProvider>
       );
 
       const answerBtn = screen.getByTestId(`answer-prayer-btn-${mockPetitionPrayer.id}`);
@@ -267,12 +280,14 @@ describe('Devotional & Prayer Components', () => {
       const onArchivePrayer = vi.fn();
 
       render(
-        <PrayerJournal
-          prayers={[mockPetitionPrayer]}
-          onCreatePrayer={vi.fn()}
-          onAnswerPrayer={vi.fn()}
-          onArchivePrayer={onArchivePrayer}
-        />
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <PrayerJournal
+            prayers={[mockPetitionPrayer]}
+            onCreatePrayer={vi.fn()}
+            onAnswerPrayer={vi.fn()}
+            onArchivePrayer={onArchivePrayer}
+          />
+        </AuthProvider>
       );
 
       const archiveBtn = screen.getByTestId(`archive-prayer-btn-${mockPetitionPrayer.id}`);
@@ -285,11 +300,13 @@ describe('Devotional & Prayer Components', () => {
   describe('DevotionalPage', () => {
     it('renders full devotional dashboard page and opens modal', () => {
       render(
-        <DevotionalPage
-          initialDevotional={mockDevotional}
-          initialPrayers={[mockPetitionPrayer, mockGratitudePrayer]}
-          familyId="f0000000-0000-0000-0000-000000000001"
-        />
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <DevotionalPage
+            initialDevotional={mockDevotional}
+            initialPrayers={[mockPetitionPrayer, mockGratitudePrayer]}
+            familyId="f0000000-0000-0000-0000-000000000001"
+          />
+        </AuthProvider>
       );
 
       expect(screen.getByText('Culto Doméstico & Devocional')).toBeInTheDocument();
@@ -303,3 +320,4 @@ describe('Devotional & Prayer Components', () => {
     });
   });
 });
+

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { DailyAgendaDto, DailyAgendaItemDto, LearnerSummaryDto } from '@aletheia/contracts';
+import { Can } from '../auth/role-guard';
 
 export interface DailyAgendaViewProps {
   agenda: DailyAgendaDto;
@@ -64,7 +65,10 @@ export function DailyAgendaView({
   });
 
   return (
-    <div data-testid="daily-agenda-view" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div
+      data-testid="daily-agenda-view"
+      style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
+    >
       {/* Date Navigation and Action Bar */}
       <div
         style={{
@@ -74,22 +78,25 @@ export function DailyAgendaView({
           flexWrap: 'wrap',
           gap: '1rem',
           backgroundColor: '#FFFFFF',
-          padding: '1rem 1.25rem',
-          borderRadius: '0.75rem',
-          border: '1px solid #E5E7EB',
+          padding: '1.25rem 1.5rem',
+          borderRadius: '1rem',
+          border: '1px solid #E2E8F0',
+          boxShadow: '0 1px 3px 0 rgba(15, 23, 42, 0.05)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <button
             type="button"
-            className="btn btn-secondary"
+            className="btn btn-secondary ui-button ui-button--secondary ui-button--sm"
             onClick={() => handleShiftDate(-1)}
             style={{
               padding: '0.375rem 0.75rem',
               borderRadius: '0.375rem',
-              border: '1px solid #D1D5DB',
+              border: '1px solid #CBD5E1',
               backgroundColor: '#FFFFFF',
-              fontSize: '0.875rem',
+              color: '#334155',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
               cursor: 'pointer',
             }}
           >
@@ -97,14 +104,16 @@ export function DailyAgendaView({
           </button>
           <button
             type="button"
-            className="btn btn-secondary"
+            className="btn btn-secondary ui-button ui-button--secondary ui-button--sm"
             onClick={handleToday}
             style={{
               padding: '0.375rem 0.75rem',
               borderRadius: '0.375rem',
-              border: '1px solid #D1D5DB',
-              backgroundColor: '#FFFFFF',
-              fontSize: '0.875rem',
+              border: '1px solid #CBD5E1',
+              backgroundColor: '#F8FAFC',
+              color: '#1E293B',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
               cursor: 'pointer',
             }}
           >
@@ -112,14 +121,16 @@ export function DailyAgendaView({
           </button>
           <button
             type="button"
-            className="btn btn-secondary"
+            className="btn btn-secondary ui-button ui-button--secondary ui-button--sm"
             onClick={() => handleShiftDate(1)}
             style={{
               padding: '0.375rem 0.75rem',
               borderRadius: '0.375rem',
-              border: '1px solid #D1D5DB',
+              border: '1px solid #CBD5E1',
               backgroundColor: '#FFFFFF',
-              fontSize: '0.875rem',
+              color: '#334155',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
               cursor: 'pointer',
             }}
           >
@@ -134,46 +145,55 @@ export function DailyAgendaView({
             value={selectedDate}
             onChange={(e) => onDateChange(e.target.value)}
             style={{
-              padding: '0.375rem 0.75rem',
+              padding: '0.4rem 0.75rem',
               borderRadius: '0.375rem',
-              border: '1px solid #D1D5DB',
+              border: '1px solid #CBD5E1',
               fontSize: '0.875rem',
+              color: '#0F172A',
+              backgroundColor: '#FFFFFF',
             }}
           />
-          <button
-            type="button"
-            data-testid="create-lesson-btn"
-            onClick={onOpenCreateLesson}
-            style={{
-              padding: '0.375rem 0.875rem',
-              borderRadius: '0.375rem',
-              border: 'none',
-              backgroundColor: '#2563EB',
-              color: '#FFFFFF',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            + Nova Lição
-          </button>
-          <button
-            type="button"
-            data-testid="create-slot-btn"
-            onClick={onOpenCreateSlot}
-            style={{
-              padding: '0.375rem 0.875rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #D1D5DB',
-              backgroundColor: '#F9FAFB',
-              color: '#374151',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            + Bloco de Rotina
-          </button>
+          <Can action="manage_lessons">
+            <button
+              type="button"
+              data-testid="create-lesson-btn"
+              onClick={onOpenCreateLesson}
+              className="btn btn-primary ui-button ui-button--primary ui-button--sm"
+              style={{
+                padding: '0.45rem 1rem',
+                borderRadius: '0.5rem',
+                border: 'none',
+                backgroundColor: '#4338CA',
+                color: '#FFFFFF',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                boxShadow: '0 1px 2px 0 rgba(67, 56, 202, 0.2)',
+              }}
+            >
+              + Nova Lição
+            </button>
+          </Can>
+          <Can action="manage_lessons">
+            <button
+              type="button"
+              data-testid="create-slot-btn"
+              onClick={onOpenCreateSlot}
+              className="btn btn-secondary ui-button ui-button--secondary ui-button--sm"
+              style={{
+                padding: '0.45rem 0.875rem',
+                borderRadius: '0.5rem',
+                border: '1px solid #CBD5E1',
+                backgroundColor: '#FFFFFF',
+                color: '#334155',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              + Bloco de Rotina
+            </button>
+          </Can>
         </div>
       </div>
 
@@ -181,18 +201,19 @@ export function DailyAgendaView({
       <div
         style={{
           backgroundColor: '#FFFFFF',
-          borderRadius: '0.75rem',
-          border: '1px solid #E5E7EB',
-          padding: '1.25rem',
+          borderRadius: '1rem',
+          border: '1px solid #E2E8F0',
+          padding: '1.25rem 1.5rem',
+          boxShadow: '0 1px 3px 0 rgba(15, 23, 42, 0.05)',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>
+          <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#334155' }}>
             Progresso do Dia
           </span>
           <span
             data-testid="completed-totals-text"
-            style={{ fontSize: '0.875rem', fontWeight: 700, color: '#2563EB' }}
+            style={{ fontSize: '0.875rem', fontWeight: 700, color: '#4338CA' }}
           >
             {completedItems} de {totalItems} concluídos ({progressPercent}%)
           </span>
@@ -201,7 +222,7 @@ export function DailyAgendaView({
           style={{
             width: '100%',
             height: '8px',
-            backgroundColor: '#F3F4F6',
+            backgroundColor: '#F1F5F9',
             borderRadius: '9999px',
             overflow: 'hidden',
           }}
@@ -211,8 +232,9 @@ export function DailyAgendaView({
             style={{
               height: '100%',
               width: `${progressPercent}%`,
-              backgroundColor: progressPercent === 100 ? '#10B981' : '#3B82F6',
-              transition: 'width 0.3s ease',
+              backgroundColor: progressPercent === 100 ? '#10B981' : '#4338CA',
+              borderRadius: '9999px',
+              transition: 'width 0.4s ease',
             }}
           />
         </div>
@@ -224,58 +246,88 @@ export function DailyAgendaView({
           data-testid="agenda-empty-state"
           style={{
             backgroundColor: '#FFFFFF',
-            border: '2px dashed #E5E7EB',
-            borderRadius: '0.75rem',
-            padding: '3rem 1.5rem',
+            border: '2px dashed #CBD5E1',
+            borderRadius: '1rem',
+            padding: '3.5rem 1.5rem',
             textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1rem',
           }}
         >
-          <p style={{ fontSize: '1.125rem', color: '#4B5563', marginBottom: '0.5rem', fontWeight: 600 }}>
-            Nenhuma atividade ou lição planejada para esta data ({selectedDate}).
-          </p>
-          <p style={{ fontSize: '0.875rem', color: '#6B7280', marginBottom: '1.5rem' }}>
-            Planeje lições do currículo ou adicione blocos de rotina semanal para organizar o aprendizado.
-          </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-            <button
-              type="button"
-              onClick={onOpenCreateLesson}
-              style={{
-                padding: '0.5rem 1rem',
-                borderRadius: '0.375rem',
-                backgroundColor: '#2563EB',
-                color: '#FFFFFF',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              Planejar Lição
-            </button>
-            <button
-              type="button"
-              onClick={onOpenCreateSlot}
-              style={{
-                padding: '0.5rem 1rem',
-                borderRadius: '0.375rem',
-                backgroundColor: '#F3F4F6',
-                color: '#374151',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                border: '1px solid #D1D5DB',
-                cursor: 'pointer',
-              }}
-            >
-              Criar Bloco de Rotina
-            </button>
+          <div
+            style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '9999px',
+              backgroundColor: '#EEF2FF',
+              color: '#4338CA',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '2rem',
+              boxShadow: '0 4px 12px rgba(67, 56, 202, 0.1)',
+            }}
+          >
+            📅
+          </div>
+          <div>
+            <p style={{ fontSize: '1.125rem', color: '#0F172A', marginBottom: '0.375rem', fontWeight: 700 }}>
+              Nenhuma atividade ou lição planejada para esta data ({selectedDate}).
+            </p>
+            <p style={{ fontSize: '0.875rem', color: '#64748B', maxWidth: '28rem', margin: '0 auto' }}>
+              Planeje lições do currículo ou adicione blocos de rotina semanal para organizar o aprendizado da família.
+            </p>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+            <Can action="manage_lessons">
+              <button
+                type="button"
+                onClick={onOpenCreateLesson}
+                className="btn btn-primary ui-button ui-button--primary"
+                style={{
+                  padding: '0.5rem 1.25rem',
+                  borderRadius: '0.5rem',
+                  backgroundColor: '#4338CA',
+                  color: '#FFFFFF',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(67, 56, 202, 0.2)',
+                }}
+              >
+                Planejar Lição
+              </button>
+            </Can>
+            <Can action="manage_lessons">
+              <button
+                type="button"
+                onClick={onOpenCreateSlot}
+                className="btn btn-secondary ui-button ui-button--secondary"
+                style={{
+                  padding: '0.5rem 1.25rem',
+                  borderRadius: '0.5rem',
+                  backgroundColor: '#FFFFFF',
+                  color: '#334155',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  border: '1px solid #CBD5E1',
+                  cursor: 'pointer',
+                }}
+              >
+                Criar Bloco de Rotina
+              </button>
+            </Can>
           </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
           {agenda.items.map((item) => {
             const isCompleted = item.isCompleted || item.status === 'COMPLETED';
             const isRoutine = item.type === 'ROUTINE_SLOT';
+            const itemColor = item.subjectColor || (isRoutine ? '#7E22CE' : '#4338CA');
 
             return (
               <div
@@ -285,17 +337,20 @@ export function DailyAgendaView({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  backgroundColor: isCompleted ? '#F9FAFB' : '#FFFFFF',
-                  borderRadius: '0.75rem',
-                  border: isCompleted ? '1px solid #E5E7EB' : '1px solid #D1D5DB',
-                  padding: '1rem 1.25rem',
-                  boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                  opacity: isCompleted ? 0.85 : 1,
+                  backgroundColor: isCompleted ? '#F8FAFC' : '#FFFFFF',
+                  borderRadius: '0.875rem',
+                  border: isCompleted ? '1px solid #E2E8F0' : '1px solid #E2E8F0',
+                  borderLeft: `4px solid ${itemColor}`,
+                  padding: '1.125rem 1.25rem',
+                  boxShadow: isCompleted ? 'none' : '0 2px 4px rgba(15, 23, 42, 0.04)',
+                  opacity: isCompleted ? 0.8 : 1,
                   transition: 'all 0.2s ease',
+                  gap: '1rem',
+                  flexWrap: 'wrap',
                 }}
               >
                 {/* Left check and details */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: '240px' }}>
                   {/* Checkbox Toggle */}
                   <input
                     type="checkbox"
@@ -314,10 +369,11 @@ export function DailyAgendaView({
                       borderRadius: '0.25rem',
                       cursor: 'pointer',
                       accentColor: '#10B981',
+                      flexShrink: 0,
                     }}
                   />
 
-                  <div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                       {/* Type Badge */}
                       <span
@@ -326,10 +382,11 @@ export function DailyAgendaView({
                           fontSize: '0.6875rem',
                           fontWeight: 700,
                           textTransform: 'uppercase',
-                          padding: '0.125rem 0.375rem',
-                          borderRadius: '0.25rem',
-                          backgroundColor: isRoutine ? '#F3E8FF' : '#DBEAFE',
-                          color: isRoutine ? '#6B21A8' : '#1E40AF',
+                          padding: '0.125rem 0.5rem',
+                          borderRadius: '9999px',
+                          backgroundColor: isRoutine ? '#FAF5FF' : '#EEF2FF',
+                          color: isRoutine ? '#7E22CE' : '#4338CA',
+                          border: isRoutine ? '1px solid #E9D5FF' : '1px solid #E0E7FF',
                         }}
                       >
                         {isRoutine ? 'Rotina' : 'Lição'}
@@ -341,52 +398,68 @@ export function DailyAgendaView({
                           style={{
                             fontSize: '0.6875rem',
                             fontWeight: 600,
-                            padding: '0.125rem 0.375rem',
-                            borderRadius: '0.25rem',
-                            backgroundColor: item.subjectColor ? `${item.subjectColor}20` : '#F3F4F6',
-                            color: item.subjectColor || '#4B5563',
-                            border: `1px solid ${item.subjectColor || '#E5E7EB'}`,
+                            padding: '0.125rem 0.5rem',
+                            borderRadius: '9999px',
+                            backgroundColor: item.subjectColor ? `${item.subjectColor}15` : '#F1F5F9',
+                            color: item.subjectColor || '#334155',
+                            border: `1px solid ${item.subjectColor ? `${item.subjectColor}30` : '#E2E8F0'}`,
                           }}
                         >
-                          {item.subjectName}
+                          📚 {item.subjectName}
                         </span>
                       )}
 
-                      {/* Time */}
+                      {/* Time Duration Pill */}
                       {(item.startTime || item.endTime) && (
                         <span
                           data-testid={`item-time-${item.id}`}
-                          style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: 500 }}
+                          style={{
+                            fontSize: '0.75rem',
+                            color: '#64748B',
+                            fontWeight: 600,
+                            backgroundColor: '#F8FAFC',
+                            padding: '0.125rem 0.5rem',
+                            borderRadius: '9999px',
+                            border: '1px solid #E2E8F0',
+                          }}
                         >
-                          ⏱ {item.startTime || ''}{item.endTime ? ` - ${item.endTime}` : ''}
+                          ⏱️ {item.startTime || ''}{item.endTime ? ` - ${item.endTime}` : ''}
                         </span>
                       )}
 
-                      {/* Status */}
+                      {/* Status Badge */}
                       {item.status && (
                         <span
                           data-testid={`item-status-${item.id}`}
                           style={{
                             fontSize: '0.6875rem',
-                            fontWeight: 600,
-                            padding: '0.125rem 0.375rem',
-                            borderRadius: '0.25rem',
+                            fontWeight: 700,
+                            padding: '0.125rem 0.5rem',
+                            borderRadius: '9999px',
                             backgroundColor:
                               item.status === 'COMPLETED'
-                                ? '#DEF7EC'
+                                ? '#ECFDF5'
                                 : item.status === 'IN_PROGRESS'
-                                ? '#FEF08A'
+                                ? '#FEF3C7'
                                 : item.status === 'POSTPONED'
-                                ? '#FEE2E2'
-                                : '#F3F4F6',
+                                ? '#FFF1F2'
+                                : '#F1F5F9',
                             color:
                               item.status === 'COMPLETED'
-                                ? '#03543F'
+                                ? '#047857'
                                 : item.status === 'IN_PROGRESS'
-                                ? '#713F12'
+                                ? '#92400E'
                                 : item.status === 'POSTPONED'
-                                ? '#991B1B'
-                                : '#374151',
+                                ? '#BE123C'
+                                : '#475569',
+                            border:
+                              item.status === 'COMPLETED'
+                                ? '1px solid #A7F3D0'
+                                : item.status === 'IN_PROGRESS'
+                                ? '1px solid #FDE68A'
+                                : item.status === 'POSTPONED'
+                                ? '1px solid #FECDD3'
+                                : '1px solid #E2E8F0',
                           }}
                         >
                           {item.status}
@@ -398,10 +471,9 @@ export function DailyAgendaView({
                     <div
                       style={{
                         fontSize: '1rem',
-                        fontWeight: 600,
-                        color: isCompleted ? '#6B7280' : '#111827',
+                        fontWeight: 700,
+                        color: isCompleted ? '#64748B' : '#0F172A',
                         textDecoration: isCompleted ? 'line-through' : 'none',
-                        marginTop: '0.25rem',
                       }}
                     >
                       {item.title}
@@ -409,17 +481,19 @@ export function DailyAgendaView({
 
                     {/* Learners */}
                     {item.learnerIds && item.learnerIds.length > 0 && (
-                      <div style={{ display: 'flex', gap: '0.375rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: '0.375rem', marginTop: '0.125rem', flexWrap: 'wrap' }}>
                         {item.learnerIds.map((lId) => (
                           <span
                             key={lId}
                             data-testid={`learner-badge-${lId}`}
                             style={{
                               fontSize: '0.6875rem',
-                              padding: '0.125rem 0.375rem',
-                              borderRadius: '0.25rem',
-                              backgroundColor: '#F3F4F6',
-                              color: '#374151',
+                              padding: '0.125rem 0.5rem',
+                              borderRadius: '9999px',
+                              backgroundColor: '#F1F5F9',
+                              color: '#334155',
+                              fontWeight: 500,
+                              border: '1px solid #E2E8F0',
                             }}
                           >
                             🎓 {learnerMap.get(lId) || 'Educando'}
@@ -430,88 +504,100 @@ export function DailyAgendaView({
                   </div>
                 </div>
 
-                {/* Right Action buttons */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {/* Right Action buttons wrapped in RBAC */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
                   {!isRoutine && (
                     <>
-                      <button
-                        type="button"
-                        data-testid={`complete-lesson-btn-${item.id}`}
-                        onClick={() => onOpenCompleteLesson(item)}
-                        title="Concluir lição com notas e avaliação"
-                        style={{
-                          padding: '0.375rem 0.625rem',
-                          borderRadius: '0.375rem',
-                          border: '1px solid #10B981',
-                          backgroundColor: isCompleted ? '#DEF7EC' : '#FFFFFF',
-                          color: '#047857',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {isCompleted ? '✓ Concluída' : 'Concluir'}
-                      </button>
-
-                      <button
-                        type="button"
-                        data-testid={`reschedule-btn-${item.id}`}
-                        onClick={() => onOpenRescheduleLesson(item)}
-                        title="Reagendar lição"
-                        style={{
-                          padding: '0.375rem 0.625rem',
-                          borderRadius: '0.375rem',
-                          border: '1px solid #D1D5DB',
-                          backgroundColor: '#FFFFFF',
-                          color: '#374151',
-                          fontSize: '0.75rem',
-                          fontWeight: 500,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Reagendar
-                      </button>
-
-                      {onDeleteLesson && (
+                      <Can action="manage_lessons">
                         <button
                           type="button"
-                          data-testid={`delete-lesson-btn-${item.id}`}
-                          onClick={() => onDeleteLesson(item.id)}
-                          title="Excluir lição"
+                          data-testid={`complete-lesson-btn-${item.id}`}
+                          onClick={() => onOpenCompleteLesson(item)}
+                          title="Concluir lição com notas e avaliação"
+                          className="btn btn-sm"
                           style={{
-                            padding: '0.375rem 0.5rem',
+                            padding: '0.35rem 0.75rem',
                             borderRadius: '0.375rem',
-                            border: '1px solid #FCA5A5',
-                            backgroundColor: '#FEF2F2',
-                            color: '#DC2626',
+                            border: isCompleted ? '1px solid #A7F3D0' : '1px solid #10B981',
+                            backgroundColor: isCompleted ? '#ECFDF5' : '#10B981',
+                            color: isCompleted ? '#047857' : '#FFFFFF',
                             fontSize: '0.75rem',
+                            fontWeight: 600,
                             cursor: 'pointer',
                           }}
                         >
-                          Excluir
+                          {isCompleted ? '✓ Concluída' : 'Concluir'}
                         </button>
+                      </Can>
+
+                      <Can action="manage_lessons">
+                        <button
+                          type="button"
+                          data-testid={`reschedule-btn-${item.id}`}
+                          onClick={() => onOpenRescheduleLesson(item)}
+                          title="Reagendar lição"
+                          className="btn btn-secondary btn-sm"
+                          style={{
+                            padding: '0.35rem 0.65rem',
+                            borderRadius: '0.375rem',
+                            border: '1px solid #CBD5E1',
+                            backgroundColor: '#FFFFFF',
+                            color: '#334155',
+                            fontSize: '0.75rem',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Reagendar
+                        </button>
+                      </Can>
+
+                      {onDeleteLesson && (
+                        <Can action="manage_lessons">
+                          <button
+                            type="button"
+                            data-testid={`delete-lesson-btn-${item.id}`}
+                            onClick={() => onDeleteLesson(item.id)}
+                            title="Excluir lição"
+                            className="btn btn-sm"
+                            style={{
+                              padding: '0.35rem 0.5rem',
+                              borderRadius: '0.375rem',
+                              border: '1px solid #FECDD3',
+                              backgroundColor: '#FFF1F2',
+                              color: '#E11D48',
+                              fontSize: '0.75rem',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Excluir
+                          </button>
+                        </Can>
                       )}
                     </>
                   )}
 
                   {isRoutine && onDeleteSlot && (
-                    <button
-                      type="button"
-                      data-testid={`delete-slot-btn-${item.id}`}
-                      onClick={() => onDeleteSlot(item.id)}
-                      title="Excluir bloco de rotina"
-                      style={{
-                        padding: '0.375rem 0.5rem',
-                        borderRadius: '0.375rem',
-                        border: '1px solid #FCA5A5',
-                        backgroundColor: '#FEF2F2',
-                        color: '#DC2626',
-                        fontSize: '0.75rem',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Excluir
-                    </button>
+                    <Can action="manage_lessons">
+                      <button
+                        type="button"
+                        data-testid={`delete-slot-btn-${item.id}`}
+                        onClick={() => onDeleteSlot(item.id)}
+                        title="Excluir bloco de rotina"
+                        className="btn btn-sm"
+                        style={{
+                          padding: '0.35rem 0.5rem',
+                          borderRadius: '0.375rem',
+                          border: '1px solid #FECDD3',
+                          backgroundColor: '#FFF1F2',
+                          color: '#E11D48',
+                          fontSize: '0.75rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Excluir
+                      </button>
+                    </Can>
                   )}
                 </div>
               </div>

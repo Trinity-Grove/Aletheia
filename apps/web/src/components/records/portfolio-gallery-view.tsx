@@ -6,6 +6,7 @@ import type {
   LearnerSummaryDto,
   SubjectResponseDto,
 } from '@aletheia/contracts';
+import { Can } from '../auth/role-guard';
 import { EVIDENCE_TYPE_CONFIG } from './portfolio-item-modal';
 
 export interface PortfolioGalleryViewProps {
@@ -97,24 +98,26 @@ export function PortfolioGalleryView({
             </div>
           </div>
 
-          <button
-            type="button"
-            data-testid="open-add-portfolio-btn"
-            onClick={onOpenAddItem}
-            style={{
-              padding: '0.625rem 1.25rem',
-              backgroundColor: '#2563EB',
-              color: '#FFFFFF',
-              borderRadius: '0.5rem',
-              border: 'none',
-              fontSize: '0.875rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(37, 99, 235, 0.3)',
-            }}
-          >
-            + Adicionar Evidência
-          </button>
+          <Can action="upload_portfolio_items">
+            <button
+              type="button"
+              data-testid="open-add-portfolio-btn"
+              onClick={onOpenAddItem}
+              style={{
+                padding: '0.625rem 1.25rem',
+                backgroundColor: '#2563EB',
+                color: '#FFFFFF',
+                borderRadius: '0.5rem',
+                border: 'none',
+                fontSize: '0.875rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 1px 3px rgba(37, 99, 235, 0.3)',
+              }}
+            >
+              + Adicionar Evidência
+            </button>
+          </Can>
         </div>
       </div>
 
@@ -269,23 +272,25 @@ export function PortfolioGalleryView({
           <p style={{ fontSize: '0.875rem', color: '#6B7280', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
             Fotografe cadernos, desenhos da natureza, adicione áudios de narração e celebre a jornada educativa!
           </p>
-          <button
-            type="button"
-            data-testid="empty-add-portfolio-btn"
-            onClick={onOpenAddItem}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#2563EB',
-              color: '#FFFFFF',
-              borderRadius: '0.375rem',
-              border: 'none',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Adicionar Primeira Obra
-          </button>
+          <Can action="upload_portfolio_items">
+            <button
+              type="button"
+              data-testid="empty-add-portfolio-btn"
+              onClick={onOpenAddItem}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#2563EB',
+                color: '#FFFFFF',
+                borderRadius: '0.375rem',
+                border: 'none',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Adicionar Primeira Obra
+            </button>
+          </Can>
         </div>
       ) : (
         <div
@@ -516,38 +521,42 @@ export function PortfolioGalleryView({
                     )}
 
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button
-                        type="button"
-                        data-testid={`edit-portfolio-btn-${item.id}`}
-                        onClick={() => onEditItem(item)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#2563EB',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          padding: '0.25rem',
-                        }}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        data-testid={`delete-portfolio-btn-${item.id}`}
-                        onClick={() => onDeleteItem(item.id)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#DC2626',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          padding: '0.25rem',
-                        }}
-                      >
-                        Excluir
-                      </button>
+                      <Can action="upload_portfolio_items">
+                        <button
+                          type="button"
+                          data-testid={`edit-portfolio-btn-${item.id}`}
+                          onClick={() => onEditItem(item)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#2563EB',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            padding: '0.25rem',
+                          }}
+                        >
+                          Editar
+                        </button>
+                      </Can>
+                      <Can action="delete_learners">
+                        <button
+                          type="button"
+                          data-testid={`delete-portfolio-btn-${item.id}`}
+                          onClick={() => onDeleteItem(item.id)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#DC2626',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            padding: '0.25rem',
+                          }}
+                        >
+                          Excluir
+                        </button>
+                      </Can>
                     </div>
                   </div>
                 </div>

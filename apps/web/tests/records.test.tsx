@@ -13,6 +13,7 @@ import { RecordCard } from '../src/components/records/record-card';
 import { RecordFormModal } from '../src/components/records/record-form-modal';
 import { RecordsJournalView } from '../src/components/records/records-journal-view';
 import { PortfolioGalleryView } from '../src/components/records/portfolio-gallery-view';
+import { AuthProvider } from '../src/lib/auth/rbac-context';
 
 const mockLearners: LearnerSummaryDto[] = [
   {
@@ -217,12 +218,14 @@ describe('Learning Journal, Mastery & Portfolio Web Components', () => {
       const addEvidenceMock = vi.fn();
 
       render(
-        <RecordCard
-          record={mockRecords[0]!}
-          onEdit={editMock}
-          onDelete={deleteMock}
-          onAddEvidence={addEvidenceMock}
-        />
+        <AuthProvider role="OWNER_GUARDIAN">
+          <RecordCard
+            record={mockRecords[0]!}
+            onEdit={editMock}
+            onDelete={deleteMock}
+            onAddEvidence={addEvidenceMock}
+          />
+        </AuthProvider>
       );
 
       // Verify title & description
@@ -267,6 +270,23 @@ describe('Learning Journal, Mastery & Portfolio Web Components', () => {
       fireEvent.click(screen.getByTestId('delete-record-btn-rec-1'));
       expect(deleteMock).toHaveBeenCalledWith('rec-1');
     });
+
+    it('hides delete button for EDUCATOR role while allowing edit and evidence upload', () => {
+      render(
+        <AuthProvider role="EDUCATOR">
+          <RecordCard
+            record={mockRecords[0]!}
+            onEdit={vi.fn()}
+            onDelete={vi.fn()}
+            onAddEvidence={vi.fn()}
+          />
+        </AuthProvider>
+      );
+
+      expect(screen.getByTestId('edit-record-btn-rec-1')).toBeDefined();
+      expect(screen.getByTestId('add-evidence-btn-rec-1')).toBeDefined();
+      expect(screen.queryByTestId('delete-record-btn-rec-1')).toBeNull();
+    });
   });
 
   describe('RecordsJournalView', () => {
@@ -277,17 +297,19 @@ describe('Learning Journal, Mastery & Portfolio Web Components', () => {
       const addEvidenceMock = vi.fn();
 
       render(
-        <RecordsJournalView
-          records={mockRecords}
-          progressSummary={mockProgressSummary}
-          learners={mockLearners}
-          subjects={mockSubjects}
-          activeLearnerId="00000000-0000-0000-0000-000000000001"
-          onOpenCreateRecord={openCreateMock}
-          onEditRecord={editMock}
-          onDeleteRecord={deleteMock}
-          onAddEvidence={addEvidenceMock}
-        />
+        <AuthProvider role="OWNER_GUARDIAN">
+          <RecordsJournalView
+            records={mockRecords}
+            progressSummary={mockProgressSummary}
+            learners={mockLearners}
+            subjects={mockSubjects}
+            activeLearnerId="00000000-0000-0000-0000-000000000001"
+            onOpenCreateRecord={openCreateMock}
+            onEditRecord={editMock}
+            onDeleteRecord={deleteMock}
+            onAddEvidence={addEvidenceMock}
+          />
+        </AuthProvider>
       );
 
       // Check summary metrics rendered
@@ -309,17 +331,19 @@ describe('Learning Journal, Mastery & Portfolio Web Components', () => {
 
     it('renders empty state when there are no matching records', () => {
       render(
-        <RecordsJournalView
-          records={[]}
-          progressSummary={null}
-          learners={mockLearners}
-          subjects={mockSubjects}
-          activeLearnerId={null}
-          onOpenCreateRecord={vi.fn()}
-          onEditRecord={vi.fn()}
-          onDeleteRecord={vi.fn()}
-          onAddEvidence={vi.fn()}
-        />
+        <AuthProvider role="OWNER_GUARDIAN">
+          <RecordsJournalView
+            records={[]}
+            progressSummary={null}
+            learners={mockLearners}
+            subjects={mockSubjects}
+            activeLearnerId={null}
+            onOpenCreateRecord={vi.fn()}
+            onEditRecord={vi.fn()}
+            onDeleteRecord={vi.fn()}
+            onAddEvidence={vi.fn()}
+          />
+        </AuthProvider>
       );
 
       expect(screen.getByTestId('records-empty-state')).toBeDefined();
@@ -415,15 +439,17 @@ describe('Learning Journal, Mastery & Portfolio Web Components', () => {
       const deleteMock = vi.fn();
 
       render(
-        <PortfolioGalleryView
-          items={mockPortfolioItems}
-          learners={mockLearners}
-          subjects={mockSubjects}
-          activeLearnerId={null}
-          onOpenAddItem={openAddMock}
-          onEditItem={editMock}
-          onDeleteItem={deleteMock}
-        />
+        <AuthProvider role="OWNER_GUARDIAN">
+          <PortfolioGalleryView
+            items={mockPortfolioItems}
+            learners={mockLearners}
+            subjects={mockSubjects}
+            activeLearnerId={null}
+            onOpenAddItem={openAddMock}
+            onEditItem={editMock}
+            onDeleteItem={deleteMock}
+          />
+        </AuthProvider>
       );
 
       // Verify items rendered
@@ -462,6 +488,26 @@ describe('Learning Journal, Mastery & Portfolio Web Components', () => {
       // Test Delete button
       fireEvent.click(screen.getByTestId('delete-portfolio-btn-port-2'));
       expect(deleteMock).toHaveBeenCalledWith('port-2');
+    });
+
+    it('respects RBAC for EDUCATOR in portfolio gallery (can add and edit, cannot delete)', () => {
+      render(
+        <AuthProvider role="EDUCATOR">
+          <PortfolioGalleryView
+            items={mockPortfolioItems}
+            learners={mockLearners}
+            subjects={mockSubjects}
+            activeLearnerId={null}
+            onOpenAddItem={vi.fn()}
+            onEditItem={vi.fn()}
+            onDeleteItem={vi.fn()}
+          />
+        </AuthProvider>
+      );
+
+      expect(screen.getByTestId('open-add-portfolio-btn')).toBeDefined();
+      expect(screen.getByTestId('edit-portfolio-btn-port-1')).toBeDefined();
+      expect(screen.queryByTestId('delete-portfolio-btn-port-1')).toBeNull();
     });
   });
 });

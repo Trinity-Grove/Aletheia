@@ -8,6 +8,7 @@ import type {
   OfficialReportResponseDto,
   ReportType,
 } from '@aletheia/contracts';
+import { Can } from '../auth/role-guard';
 import { PrintableTranscript, GRADING_SCALE_LABELS } from './printable-transcript';
 
 export const REPORT_TYPE_CONFIG: Record<
@@ -164,27 +165,29 @@ export function ReportGeneratorView({
           </select>
         </div>
 
-        <button
-          type="button"
-          data-testid="open-generate-report-btn"
-          onClick={handleOpenModal}
-          style={{
-            padding: '0.625rem 1.25rem',
-            backgroundColor: '#2563EB',
-            color: '#FFFFFF',
-            borderRadius: '0.5rem',
-            border: 'none',
-            fontSize: '0.875rem',
-            fontWeight: 700,
-            cursor: 'pointer',
-            boxShadow: '0 1px 3px rgba(37, 99, 235, 0.3)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.375rem',
-          }}
-        >
-          📜 Gerar Relatório Oficial
-        </button>
+        <Can action="generate_transcripts">
+          <button
+            type="button"
+            data-testid="open-generate-report-btn"
+            onClick={handleOpenModal}
+            style={{
+              padding: '0.625rem 1.25rem',
+              backgroundColor: '#2563EB',
+              color: '#FFFFFF',
+              borderRadius: '0.5rem',
+              border: 'none',
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(37, 99, 235, 0.3)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+            }}
+          >
+            📜 Gerar Relatório Oficial
+          </button>
+        </Can>
       </div>
 
       {/* Reports Feed / Grid */}
@@ -206,23 +209,25 @@ export function ReportGeneratorView({
           <p style={{ fontSize: '0.875rem', color: '#6B7280', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
             Emita históricos escolares oficiais, sumários de presença para conformidade legal e dossiês do portfólio dos educandos.
           </p>
-          <button
-            type="button"
-            data-testid="empty-generate-report-btn"
-            onClick={handleOpenModal}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#2563EB',
-              color: '#FFFFFF',
-              borderRadius: '0.375rem',
-              border: 'none',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Gerar Primeiro Histórico
-          </button>
+          <Can action="generate_transcripts">
+            <button
+              type="button"
+              data-testid="empty-generate-report-btn"
+              onClick={handleOpenModal}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#2563EB',
+                color: '#FFFFFF',
+                borderRadius: '0.375rem',
+                border: 'none',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Gerar Primeiro Histórico
+            </button>
+          </Can>
         </div>
       ) : (
         <div
@@ -348,23 +353,25 @@ export function ReportGeneratorView({
                       📥 CSV
                     </button>
 
-                    <button
-                      type="button"
-                      data-testid={`delete-report-btn-${report.id}`}
-                      onClick={() => onDeleteReport(report.id)}
-                      title="Excluir Relatório"
-                      style={{
-                        padding: '0.4rem 0.625rem',
-                        backgroundColor: '#FEF2F2',
-                        color: '#DC2626',
-                        borderRadius: '0.375rem',
-                        border: '1px solid #FECACA',
-                        fontSize: '0.8125rem',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      🗑️
-                    </button>
+                    <Can action="delete_learners">
+                      <button
+                        type="button"
+                        data-testid={`delete-report-btn-${report.id}`}
+                        onClick={() => onDeleteReport(report.id)}
+                        title="Excluir Relatório"
+                        style={{
+                          padding: '0.4rem 0.625rem',
+                          backgroundColor: '#FEF2F2',
+                          color: '#DC2626',
+                          borderRadius: '0.375rem',
+                          border: '1px solid #FECACA',
+                          fontSize: '0.8125rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🗑️
+                      </button>
+                    </Can>
                   </div>
                 </div>
               </div>

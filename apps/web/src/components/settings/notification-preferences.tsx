@@ -5,6 +5,7 @@ import type {
   FamilySettingsResponseDto,
   UpdateFamilySettingsDto,
 } from '@aletheia/contracts';
+import { Can } from '../auth/role-guard';
 
 export interface NotificationPreferencesProps {
   settings: FamilySettingsResponseDto | null;
@@ -278,24 +279,26 @@ export function NotificationPreferences({
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-            <button
-              type="submit"
-              data-testid="save-notification-preferences-btn"
-              disabled={isLoading || isSaving}
-              style={{
-                padding: '0.625rem 1.5rem',
-                backgroundColor: isSaving ? '#9CA3AF' : '#2563EB',
-                color: '#FFFFFF',
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                borderRadius: '0.5rem',
-                border: 'none',
-                cursor: isSaving ? 'not-allowed' : 'pointer',
-                transition: 'background-color 0.15s ease',
-              }}
-            >
-              {isSaving ? 'Salvando...' : 'Salvar Preferências'}
-            </button>
+            <Can action="edit_family_settings">
+              <button
+                type="submit"
+                data-testid="save-notification-preferences-btn"
+                disabled={isLoading || isSaving}
+                style={{
+                  padding: '0.625rem 1.5rem',
+                  backgroundColor: isSaving ? '#9CA3AF' : '#2563EB',
+                  color: '#FFFFFF',
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: isSaving ? 'not-allowed' : 'pointer',
+                  transition: 'background-color 0.15s ease',
+                }}
+              >
+                {isSaving ? 'Salvando...' : 'Salvar Preferências'}
+              </button>
+            </Can>
           </div>
         </div>
       </form>

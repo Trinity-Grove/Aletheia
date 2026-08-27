@@ -10,6 +10,7 @@ import type {
   LearnerSummaryDto,
   LogAttendanceDto,
 } from '@aletheia/contracts';
+import { Can } from '../auth/role-guard';
 import { ComplianceGauge } from './compliance-gauge';
 
 export const ATTENDANCE_STATUS_CONFIG: Record<
@@ -263,44 +264,48 @@ export function AttendanceTrackerView({
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button
-            type="button"
-            data-testid="open-bulk-attendance-btn"
-            onClick={handleOpenBulkModal}
-            style={{
-              padding: '0.625rem 1rem',
-              backgroundColor: '#F3F4F6',
-              color: '#374151',
-              borderRadius: '0.5rem',
-              border: '1px solid #D1D5DB',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-            }}
-          >
-            👥 Frequência Coletiva
-          </button>
-          <button
-            type="button"
-            data-testid="open-log-attendance-btn"
-            onClick={handleOpenSingleModal}
-            style={{
-              padding: '0.625rem 1.25rem',
-              backgroundColor: '#2563EB',
-              color: '#FFFFFF',
-              borderRadius: '0.5rem',
-              border: 'none',
-              fontSize: '0.875rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(37, 99, 235, 0.3)',
-            }}
-          >
-            + Registrar Frequência
-          </button>
+          <Can action="log_attendance">
+            <button
+              type="button"
+              data-testid="open-bulk-attendance-btn"
+              onClick={handleOpenBulkModal}
+              style={{
+                padding: '0.625rem 1rem',
+                backgroundColor: '#F3F4F6',
+                color: '#374151',
+                borderRadius: '0.5rem',
+                border: '1px solid #D1D5DB',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+              }}
+            >
+              👥 Frequência Coletiva
+            </button>
+          </Can>
+          <Can action="log_attendance">
+            <button
+              type="button"
+              data-testid="open-log-attendance-btn"
+              onClick={handleOpenSingleModal}
+              style={{
+                padding: '0.625rem 1.25rem',
+                backgroundColor: '#2563EB',
+                color: '#FFFFFF',
+                borderRadius: '0.5rem',
+                border: 'none',
+                fontSize: '0.875rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 1px 3px rgba(37, 99, 235, 0.3)',
+              }}
+            >
+              + Registrar Frequência
+            </button>
+          </Can>
         </div>
       </div>
 
@@ -323,23 +328,25 @@ export function AttendanceTrackerView({
           <p style={{ fontSize: '0.875rem', color: '#6B7280', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
             Mantenha o registro de dias letivos e horas cumpridas para garantir a conformidade legal e o histórico anual.
           </p>
-          <button
-            type="button"
-            data-testid="empty-log-attendance-btn"
-            onClick={handleOpenSingleModal}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#2563EB',
-              color: '#FFFFFF',
-              borderRadius: '0.375rem',
-              border: 'none',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Registrar Primeiro Dia
-          </button>
+          <Can action="log_attendance">
+            <button
+              type="button"
+              data-testid="empty-log-attendance-btn"
+              onClick={handleOpenSingleModal}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#2563EB',
+                color: '#FFFFFF',
+                borderRadius: '0.375rem',
+                border: 'none',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Registrar Primeiro Dia
+            </button>
+          </Can>
         </div>
       ) : (
         <div

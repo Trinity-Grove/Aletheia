@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { EducationalStage, LearnerResponseDto } from '@aletheia/contracts';
+import { Can } from '../auth/role-guard';
 
 export interface LearnerCardProps {
   learner: LearnerResponseDto;
@@ -17,119 +18,271 @@ const stageLabels: Record<EducationalStage, string> = {
   OTHER: 'Outro',
 };
 
+function calculateAge(birthDateStr?: string | null): string | null {
+  if (!birthDateStr) return null;
+  const birth = new Date(birthDateStr);
+  if (isNaN(birth.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age > 0 ? `${age} anos` : 'Menos de 1 ano';
+}
+
 export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardProps) {
   const isArchived = Boolean(learner.archivedAt);
   const displayName = learner.preferredName || learner.firstName;
   const initial = (displayName.charAt(0) || '?').toUpperCase();
   const avatarBg = learner.avatarColor || '#4F46E5';
+  const age = calculateAge(learner.birthDate);
 
   return (
     <div
       className={`learner-card ${isArchived ? 'learner-card-archived' : ''}`}
       data-testid={`learner-card-${learner.id}`}
       style={{
-        border: '1px solid var(--border-color, #E5E7EB)',
-        borderRadius: '0.75rem',
-        padding: '1.25rem',
-        backgroundColor: isArchived ? '#F9FAFB' : '#FFFFFF',
-        opacity: isArchived ? 0.75 : 1,
+        backgroundColor: isArchived ? '#F8FAFC' : '#FFFFFF',
+        borderRadius: '1rem',
+        border: isArchived ? '1.5px dashed #CBD5E1' : '1px solid #E2E8F0',
+        boxShadow: isArchived ? 'none' : '0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04)',
+        padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.75rem',
+        gap: '1rem',
+        opacity: isArchived ? 0.75 : 1,
+        transition: 'all 0.2s ease-in-out',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <div
-          data-testid="learner-avatar"
-          style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '9999px',
-            backgroundColor: avatarBg,
-            color: '#FFFFFF',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 'bold',
-            fontSize: '1.125rem',
-          }}
-        >
-          {initial}
-        </div>
-        <div>
-          <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>{displayName}</h3>
-          {learner.lastName && (
-            <span style={{ fontSize: '0.875rem', color: '#6B7280' }}>
-              {learner.firstName} {learner.lastName}
-            </span>
-          )}
-        </div>
-      </div>
+      {/* Top Accent Strip */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '4px',
+          backgroundColor: avatarBg,
+        }}
+      />
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', fontSize: '0.8125rem' }}>
-        <span
-          style={{
-            padding: '0.25rem 0.5rem',
-            borderRadius: '0.375rem',
-            backgroundColor: '#EEF2FF',
-            color: '#4338CA',
-            fontWeight: 500,
-          }}
-        >
-          {stageLabels[learner.stage] || learner.stage}
-        </span>
-
-        {learner.customGrade && (
-          <span
+      {/* Header: Avatar, Names, Archive badge if applicable */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+          <div
+            data-testid="learner-avatar"
             style={{
-              padding: '0.25rem 0.5rem',
-              borderRadius: '0.375rem',
-              backgroundColor: '#F3F4F6',
-              color: '#374151',
-              fontWeight: 500,
+              width: '48px',
+              height: '48px',
+              borderRadius: '9999px',
+              backgroundColor: avatarBg,
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: '1.25rem',
+              boxShadow: `0 2px 8px ${avatarBg}40`,
+              border: '2px solid #FFFFFF',
+              flexShrink: 0,
             }}
           >
-            {learner.customGrade}
-          </span>
-        )}
+            {initial}
+          </div>
+          <div>
+            <h3
+              style={{
+                margin: 0,
+                fontSize: '1.125rem',
+                fontWeight: 700,
+                color: '#0F172A',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              {displayName}
+            </h3>
+            {learner.lastName && (
+              <span style={{ fontSize: '0.875rem', color: '#64748B', display: 'block' }}>
+                {learner.firstName} {learner.lastName}
+              </span>
+            )}
+          </div>
+        </div>
 
-        {learner.birthDate && (
-          <span style={{ color: '#6B7280', alignSelf: 'center' }}>
-            Nascimento: {learner.birthDate}
+        {isArchived && (
+          <span
+            data-testid="learner-archived-chip"
+            style={{
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              backgroundColor: '#F1F5F9',
+              color: '#64748B',
+              padding: '0.25rem 0.5rem',
+              borderRadius: '9999px',
+            }}
+          >
+            Arquivado
           </span>
         )}
       </div>
 
+      {/* Badges and Stage Chips */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+        {/* Stage Chip */}
+        <span
+          data-testid="learner-stage-chip"
+          style={{
+            padding: '0.25rem 0.625rem',
+            borderRadius: '9999px',
+            backgroundColor: '#EEF2FF',
+            color: '#4338CA',
+            fontWeight: 600,
+            fontSize: '0.75rem',
+            border: '1px solid #E0E7FF',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.25rem',
+          }}
+        >
+          <span>🌱</span> {stageLabels[learner.stage] || learner.stage}
+        </span>
+
+        {/* Custom Grade Pill */}
+        {learner.customGrade && (
+          <span
+            data-testid="learner-grade-pill"
+            style={{
+              padding: '0.25rem 0.625rem',
+              borderRadius: '9999px',
+              backgroundColor: '#F1F5F9',
+              color: '#334155',
+              fontWeight: 600,
+              fontSize: '0.75rem',
+              border: '1px solid #E2E8F0',
+            }}
+          >
+            📚 {learner.customGrade}
+          </span>
+        )}
+
+        {/* Age / BirthDate Pill */}
+        {learner.birthDate && (
+          <span
+            data-testid="learner-age-pill"
+            style={{
+              padding: '0.25rem 0.5rem',
+              borderRadius: '9999px',
+              backgroundColor: '#F8FAFC',
+              color: '#64748B',
+              fontSize: '0.75rem',
+              fontWeight: 500,
+              border: '1px solid #E2E8F0',
+            }}
+          >
+            🎂 {age ? `${age} • ` : ''}Nascimento: {learner.birthDate}
+          </span>
+        )}
+      </div>
+
+      {/* Special Needs Alert */}
       {learner.specialNeeds && (
-        <div style={{ fontSize: '0.875rem', color: '#B45309', backgroundColor: '#FEF3C7', padding: '0.375rem 0.5rem', borderRadius: '0.375rem' }}>
-          <strong>Necessidades:</strong> {learner.specialNeeds}
+        <div
+          data-testid="learner-special-needs"
+          style={{
+            fontSize: '0.8125rem',
+            color: '#92400E',
+            backgroundColor: '#FEF3C7',
+            border: '1px solid #FDE68A',
+            padding: '0.5rem 0.75rem',
+            borderRadius: '0.5rem',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.375rem',
+          }}
+        >
+          <span>💡</span>
+          <div>
+            <strong>Necessidades / Adaptações:</strong> {learner.specialNeeds}
+          </div>
         </div>
       )}
 
+      {/* Notes / Pedagogical Observations */}
       {learner.notes && (
-        <p style={{ margin: 0, fontSize: '0.875rem', color: '#4B5563' }}>
+        <div
+          data-testid="learner-notes"
+          style={{
+            backgroundColor: '#F8FAFC',
+            border: '1px solid #E2E8F0',
+            borderRadius: '0.5rem',
+            padding: '0.625rem 0.75rem',
+            fontSize: '0.8125rem',
+            color: '#475569',
+            lineHeight: 1.5,
+          }}
+        >
+          <span style={{ fontWeight: 600, color: '#334155', display: 'block', marginBottom: '0.125rem' }}>
+            💬 Observações:
+          </span>
           {learner.notes}
-        </p>
+        </div>
       )}
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', paddingTop: '0.5rem' }}>
-        <button
-          type="button"
-          onClick={() => onEdit?.(learner)}
-          className="btn btn-secondary"
-          style={{ padding: '0.375rem 0.75rem', fontSize: '0.875rem' }}
-        >
-          Editar
-        </button>
+      {/* Action Buttons wrapped in RBAC <Can> */}
+      <div
+        style={{
+          display: 'flex',
+          gap: '0.5rem',
+          marginTop: 'auto',
+          paddingTop: '0.75rem',
+          borderTop: '1px solid #F1F5F9',
+          justifyContent: 'flex-end',
+        }}
+      >
+        <Can action="manage_learners">
+          <button
+            type="button"
+            data-testid={`edit-learner-btn-${learner.id}`}
+            onClick={() => onEdit?.(learner)}
+            className="btn btn-secondary ui-button ui-button--secondary ui-button--sm"
+            style={{
+              padding: '0.375rem 0.75rem',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              borderRadius: '0.375rem',
+              border: '1px solid #CBD5E1',
+              backgroundColor: '#FFFFFF',
+              color: '#334155',
+              cursor: 'pointer',
+            }}
+          >
+            Editar
+          </button>
+        </Can>
 
-        <button
-          type="button"
-          onClick={() => onToggleArchive?.(learner)}
-          className={`btn ${isArchived ? 'btn-success' : 'btn-outline-danger'}`}
-          style={{ padding: '0.375rem 0.75rem', fontSize: '0.875rem' }}
-        >
-          {isArchived ? 'Reativar' : 'Arquivar'}
-        </button>
+        <Can action="delete_learner">
+          <button
+            type="button"
+            data-testid={`archive-learner-btn-${learner.id}`}
+            onClick={() => onToggleArchive?.(learner)}
+            className={`btn ${isArchived ? 'btn-success' : 'btn-outline-danger'} ui-button ui-button--sm`}
+            style={{
+              padding: '0.375rem 0.75rem',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              borderRadius: '0.375rem',
+              border: isArchived ? '1px solid #10B981' : '1px solid #FCA5A5',
+              backgroundColor: isArchived ? '#ECFDF5' : '#FFF1F2',
+              color: isArchived ? '#047857' : '#E11D48',
+              cursor: 'pointer',
+            }}
+          >
+            {isArchived ? 'Reativar' : 'Arquivar'}
+          </button>
+        </Can>
       </div>
     </div>
   );

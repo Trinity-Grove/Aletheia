@@ -6,6 +6,8 @@ import type {
   GradingScale,
   UpdateFamilySettingsDto,
 } from '@aletheia/contracts';
+import { Can } from '../auth/role-guard';
+import { useAuthRole } from '../../lib/auth/rbac-context';
 
 export interface FamilyGeneralSettingsProps {
   settings: FamilySettingsResponseDto | null;
@@ -96,6 +98,10 @@ export function FamilyGeneralSettings({
     }
   };
 
+  const authContext = useAuthRole();
+  const isEducator = authContext?.isEducator ?? false;
+  const isReadOnly = isEducator;
+
   return (
     <div
       data-testid="family-general-settings-card"
@@ -115,6 +121,23 @@ export function FamilyGeneralSettings({
           Defina o nome da sua academia familiar, fuso horário para lembretes e a abordagem pedagógica padrão.
         </p>
       </div>
+
+      {isEducator && (
+        <div
+          data-testid="educator-settings-notice"
+          style={{
+            padding: '0.75rem 1rem',
+            backgroundColor: '#EFF6FF',
+            border: '1px solid #BFDBFE',
+            borderRadius: '0.5rem',
+            color: '#1E40AF',
+            fontSize: '0.875rem',
+            marginBottom: '1.25rem',
+          }}
+        >
+          ℹ️ <strong>Modo Somente Leitura:</strong> Como Educador, você pode visualizar as configurações da família, mas apenas os Responsáveis podem alterá-las.
+        </div>
+      )}
 
       {successMessage && (
         <div
@@ -166,7 +189,7 @@ export function FamilyGeneralSettings({
               value={homeschoolName}
               onChange={(e) => setHomeschoolName(e.target.value)}
               placeholder="Ex: Academia Familiar Silva"
-              disabled={isLoading || isSaving}
+              disabled={isLoading || isSaving || isReadOnly}
               style={{
                 width: '100%',
                 padding: '0.625rem 0.875rem',
@@ -174,7 +197,7 @@ export function FamilyGeneralSettings({
                 border: '1px solid #D1D5DB',
                 fontSize: '0.875rem',
                 color: '#111827',
-                backgroundColor: '#FFFFFF',
+                backgroundColor: isReadOnly ? '#F9FAFB' : '#FFFFFF',
                 boxSizing: 'border-box',
               }}
             />
@@ -196,7 +219,7 @@ export function FamilyGeneralSettings({
                 data-testid="timezone-select"
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
-                disabled={isLoading || isSaving}
+                disabled={isLoading || isSaving || isReadOnly}
                 style={{
                   width: '100%',
                   padding: '0.625rem 0.875rem',
@@ -204,7 +227,7 @@ export function FamilyGeneralSettings({
                   border: '1px solid #D1D5DB',
                   fontSize: '0.875rem',
                   color: '#111827',
-                  backgroundColor: '#FFFFFF',
+                  backgroundColor: isReadOnly ? '#F9FAFB' : '#FFFFFF',
                   boxSizing: 'border-box',
                 }}
               >
@@ -228,7 +251,7 @@ export function FamilyGeneralSettings({
                 data-testid="language-select"
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                disabled={isLoading || isSaving}
+                disabled={isLoading || isSaving || isReadOnly}
                 style={{
                   width: '100%',
                   padding: '0.625rem 0.875rem',
@@ -236,7 +259,7 @@ export function FamilyGeneralSettings({
                   border: '1px solid #D1D5DB',
                   fontSize: '0.875rem',
                   color: '#111827',
-                  backgroundColor: '#FFFFFF',
+                  backgroundColor: isReadOnly ? '#F9FAFB' : '#FFFFFF',
                   boxSizing: 'border-box',
                 }}
               >
@@ -259,7 +282,7 @@ export function FamilyGeneralSettings({
               data-testid="default-grading-scale-select"
               value={defaultGradingScale}
               onChange={(e) => setDefaultGradingScale(e.target.value as GradingScale)}
-              disabled={isLoading || isSaving}
+              disabled={isLoading || isSaving || isReadOnly}
               style={{
                 width: '100%',
                 padding: '0.625rem 0.875rem',
@@ -267,7 +290,7 @@ export function FamilyGeneralSettings({
                 border: '1px solid #D1D5DB',
                 fontSize: '0.875rem',
                 color: '#111827',
-                backgroundColor: '#FFFFFF',
+                backgroundColor: isReadOnly ? '#F9FAFB' : '#FFFFFF',
                 boxSizing: 'border-box',
               }}
             >
@@ -292,24 +315,26 @@ export function FamilyGeneralSettings({
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
-            <button
-              type="submit"
-              data-testid="save-family-settings-btn"
-              disabled={isLoading || isSaving}
-              style={{
-                padding: '0.625rem 1.5rem',
-                backgroundColor: isSaving ? '#9CA3AF' : '#2563EB',
-                color: '#FFFFFF',
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                borderRadius: '0.5rem',
-                border: 'none',
-                cursor: isSaving ? 'not-allowed' : 'pointer',
-                transition: 'background-color 0.15s ease',
-              }}
-            >
-              {isSaving ? 'Salvando...' : 'Salvar Configurações Gerais'}
-            </button>
+            <Can action="edit_family_settings">
+              <button
+                type="submit"
+                data-testid="save-family-settings-btn"
+                disabled={isLoading || isSaving}
+                style={{
+                  padding: '0.625rem 1.5rem',
+                  backgroundColor: isSaving ? '#9CA3AF' : '#2563EB',
+                  color: '#FFFFFF',
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: isSaving ? 'not-allowed' : 'pointer',
+                  transition: 'background-color 0.15s ease',
+                }}
+              >
+                {isSaving ? 'Salvando...' : 'Salvar Configurações Gerais'}
+              </button>
+            </Can>
           </div>
         </div>
       </form>

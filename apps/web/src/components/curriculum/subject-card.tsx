@@ -1,5 +1,8 @@
-import React from "react";
-import type { ObjectiveResponseDto, ObjectiveStatus, SubjectResponseDto } from "@aletheia/contracts";
+'use client';
+
+import React from 'react';
+import type { ObjectiveResponseDto, ObjectiveStatus, SubjectResponseDto } from '@aletheia/contracts';
+import { Can } from '../auth/role-guard';
 
 export interface SubjectCardProps {
   subject: SubjectResponseDto;
@@ -17,24 +20,25 @@ export function SubjectCard({
   onDeleteObjective,
 }: SubjectCardProps) {
   const total = objectives.length;
-  const achieved = objectives.filter((o) => o.status === "ACHIEVED").length;
+  const achieved = objectives.filter((o) => o.status === 'ACHIEVED').length;
   const percent = total > 0 ? Math.round((achieved / total) * 100) : 0;
+  const subjectColor = subject.color || '#4F46E5';
 
   const cycleStatus = (status: ObjectiveStatus): ObjectiveStatus => {
-    if (status === "NOT_STARTED") return "IN_PROGRESS";
-    if (status === "IN_PROGRESS") return "ACHIEVED";
-    return "NOT_STARTED";
+    if (status === 'NOT_STARTED') return 'IN_PROGRESS';
+    if (status === 'IN_PROGRESS') return 'ACHIEVED';
+    return 'NOT_STARTED';
   };
 
   const getStatusBadge = (status: ObjectiveStatus) => {
     switch (status) {
-      case "ACHIEVED":
-        return { label: "Concluído", bg: "#DEF7EC", text: "#03543F", icon: "✅" };
-      case "IN_PROGRESS":
-        return { label: "Em Andamento", bg: "#FEF3C7", text: "#92400E", icon: "⏳" };
-      case "NOT_STARTED":
+      case 'ACHIEVED':
+        return { label: 'Concluído', bg: '#ECFDF5', text: '#047857', border: '#A7F3D0', icon: '✅' };
+      case 'IN_PROGRESS':
+        return { label: 'Em Andamento', bg: '#FEF3C7', text: '#92400E', border: '#FDE68A', icon: '⏳' };
+      case 'NOT_STARTED':
       default:
-        return { label: "Não Iniciado", bg: "#F3F4F6", text: "#4B5563", icon: "⚪" };
+        return { label: 'Não Iniciado', bg: '#F1F5F9', text: '#475569', border: '#E2E8F0', icon: '⚪' };
     }
   };
 
@@ -42,47 +46,103 @@ export function SubjectCard({
     <div
       data-testid={`subject-card-${subject.id}`}
       style={{
-        backgroundColor: "#FFFFFF",
-        borderRadius: "0.75rem",
-        border: "1px solid #E5E7EB",
-        borderTop: `4px solid ${subject.color || "#2563EB"}`,
-        boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05)",
-        padding: "1.25rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1rem",
+        backgroundColor: '#FFFFFF',
+        borderRadius: '1rem',
+        border: '1px solid #E2E8F0',
+        borderLeft: `5px solid ${subjectColor}`,
+        boxShadow: '0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.03)',
+        padding: '1.5rem',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
+        position: 'relative',
       }}
     >
-      {/* Header */}
+      {/* Header: Title, Description, Objective count badge */}
       <div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <h3 style={{ fontSize: "1.125rem", fontWeight: 700, color: "#111827" }}>{subject.name}</h3>
-          <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#4B5563" }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '0.375rem',
+                backgroundColor: `${subjectColor}18`,
+                color: subjectColor,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.875rem',
+                fontWeight: 700,
+              }}
+            >
+              📚
+            </span>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+              {subject.name}
+            </h3>
+          </div>
+
+          <span
+            data-testid={`subject-count-badge-${subject.id}`}
+            style={{
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              padding: '0.2rem 0.5rem',
+              borderRadius: '9999px',
+              backgroundColor: percent === 100 ? '#ECFDF5' : '#F1F5F9',
+              color: percent === 100 ? '#047857' : '#475569',
+              border: percent === 100 ? '1px solid #A7F3D0' : '1px solid #E2E8F0',
+            }}
+          >
             {achieved}/{total} ({percent}%)
           </span>
         </div>
+
         {subject.description && (
-          <p style={{ fontSize: "0.8125rem", color: "#6B7280", marginTop: "0.25rem" }}>{subject.description}</p>
+          <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0.375rem 0 0 0', lineHeight: 1.4 }}>
+            {subject.description}
+          </p>
         )}
       </div>
 
       {/* Progress Bar */}
-      <div style={{ width: "100%", height: "6px", backgroundColor: "#F3F4F6", borderRadius: "9999px", overflow: "hidden" }}>
+      <div
+        style={{
+          width: '100%',
+          height: '6px',
+          backgroundColor: '#F1F5F9',
+          borderRadius: '9999px',
+          overflow: 'hidden',
+        }}
+      >
         <div
           data-testid="subject-progress-bar"
           style={{
             width: `${percent}%`,
-            height: "100%",
-            backgroundColor: subject.color || "#2563EB",
-            transition: "width 0.3s ease",
+            height: '100%',
+            backgroundColor: subjectColor,
+            borderRadius: '9999px',
+            transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         />
       </div>
 
-      {/* Objectives List */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1 }}>
+      {/* Objectives Tree / List */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
         {objectives.length === 0 ? (
-          <div style={{ fontSize: "0.8125rem", color: "#9CA3AF", fontStyle: "italic", padding: "0.5rem 0" }}>
+          <div
+            style={{
+              fontSize: '0.8125rem',
+              color: '#94A3B8',
+              fontStyle: 'italic',
+              padding: '0.75rem 0',
+              textAlign: 'center',
+              backgroundColor: '#F8FAFC',
+              borderRadius: '0.5rem',
+              border: '1px dashed #E2E8F0',
+            }}
+          >
             Nenhum objetivo cadastrado nesta disciplina.
           </div>
         ) : (
@@ -93,61 +153,86 @@ export function SubjectCard({
                 key={obj.id}
                 data-testid={`objective-item-${obj.id}`}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "0.5rem 0.75rem",
-                  borderRadius: "0.375rem",
-                  backgroundColor: "#F9FAFB",
-                  border: "1px solid #F3F4F6",
-                  fontSize: "0.8125rem",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.5rem 0.75rem',
+                  borderRadius: '0.5rem',
+                  backgroundColor: obj.status === 'ACHIEVED' ? '#F8FAFC' : '#FFFFFF',
+                  border: '1px solid #E2E8F0',
+                  fontSize: '0.8125rem',
+                  gap: '0.5rem',
+                  transition: 'background-color 0.15s ease',
                 }}
               >
-                <span
-                  style={{
-                    color: obj.status === "ACHIEVED" ? "#6B7280" : "#1F2937",
-                    textDecoration: obj.status === "ACHIEVED" ? "line-through" : "none",
-                    flex: 1,
-                    paddingRight: "0.5rem",
-                  }}
-                >
-                  {obj.title}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
+                  <span
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor:
+                        obj.status === 'ACHIEVED'
+                          ? '#10B981'
+                          : obj.status === 'IN_PROGRESS'
+                          ? '#F59E0B'
+                          : '#CBD5E1',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{
+                      color: obj.status === 'ACHIEVED' ? '#64748B' : '#1E293B',
+                      textDecoration: obj.status === 'ACHIEVED' ? 'line-through' : 'none',
+                      fontWeight: 500,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {obj.title}
+                  </span>
+                </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexShrink: 0 }}>
                   <button
                     type="button"
                     data-testid={`status-toggle-btn-${obj.id}`}
                     onClick={() => onToggleStatus(obj.id, cycleStatus(obj.status))}
                     style={{
-                      padding: "0.25rem 0.5rem",
-                      borderRadius: "9999px",
-                      border: "none",
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '9999px',
+                      border: `1px solid ${badge.border}`,
                       backgroundColor: badge.bg,
                       color: badge.text,
-                      fontSize: "0.75rem",
+                      fontSize: '0.75rem',
                       fontWeight: 600,
-                      cursor: "pointer",
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
                     }}
                   >
-                    {badge.icon} {badge.label}
+                    <span>{badge.icon}</span> {badge.label}
                   </button>
 
-                  <button
-                    type="button"
-                    data-testid={`delete-objective-btn-${obj.id}`}
-                    onClick={() => onDeleteObjective(obj.id)}
-                    title="Excluir objetivo"
-                    style={{
-                      border: "none",
-                      background: "none",
-                      color: "#9CA3AF",
-                      cursor: "pointer",
-                      fontSize: "0.75rem",
-                    }}
-                  >
-                    ✕
-                  </button>
+                  <Can action="manage_curriculum">
+                    <button
+                      type="button"
+                      data-testid={`delete-objective-btn-${obj.id}`}
+                      onClick={() => onDeleteObjective(obj.id)}
+                      title="Excluir objetivo"
+                      style={{
+                        border: 'none',
+                        background: 'none',
+                        color: '#94A3B8',
+                        cursor: 'pointer',
+                        fontSize: '0.875rem',
+                        padding: '0 0.25rem',
+                        lineHeight: 1,
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </Can>
                 </div>
               </div>
             );
@@ -155,25 +240,29 @@ export function SubjectCard({
         )}
       </div>
 
-      {/* Footer / Add Objective */}
-      <button
-        type="button"
-        data-testid={`add-objective-btn-${subject.id}`}
-        onClick={() => onAddObjective(subject.id)}
-        style={{
-          width: "100%",
-          padding: "0.375rem",
-          borderRadius: "0.375rem",
-          border: "1px dashed #D1D5DB",
-          backgroundColor: "#FFFFFF",
-          color: "#4B5563",
-          fontSize: "0.75rem",
-          fontWeight: 600,
-          cursor: "pointer",
-        }}
-      >
-        + Adicionar Objetivo
-      </button>
+      {/* Footer / Add Objective button wrapped in RBAC */}
+      <Can action="manage_curriculum">
+        <button
+          type="button"
+          data-testid={`add-objective-btn-${subject.id}`}
+          onClick={() => onAddObjective(subject.id)}
+          className="btn ui-button ui-button--outline ui-button--sm"
+          style={{
+            width: '100%',
+            padding: '0.45rem',
+            borderRadius: '0.5rem',
+            border: '1.5px dashed #CBD5E1',
+            backgroundColor: '#FFFFFF',
+            color: '#475569',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            marginTop: 'auto',
+          }}
+        >
+          + Adicionar Objetivo
+        </button>
+      </Can>
     </div>
   );
 }
