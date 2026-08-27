@@ -18,6 +18,19 @@ const TYPE_ICONS_AND_LABELS: Record<NotificationType, { icon: string; label: str
   SYSTEM_NOTICE: { icon: '🔔', label: 'Aviso do Sistema' },
 };
 
+function formatTimestamp(dateStr?: string | Date): string {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+
+  if (diffInMinutes < 1) return 'Agora';
+  if (diffInMinutes < 60) return `${diffInMinutes}m atrás`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h atrás`;
+  return date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
+}
+
 export function NotificationBell({
   notifications,
   unreadCount,
@@ -86,16 +99,17 @@ export function NotificationBell({
           justifyContent: 'center',
           width: '2.5rem',
           height: '2.5rem',
-          borderRadius: '0.5rem',
-          border: '1px solid #E5E7EB',
+          borderRadius: '0.625rem',
+          border: '1px solid var(--border-light, #E2E8F0)',
           backgroundColor: '#FFFFFF',
-          color: '#374151',
+          color: '#334155',
           cursor: 'pointer',
-          fontSize: '1.25rem',
+          fontSize: '1.125rem',
           transition: 'all 0.15s ease-in-out',
+          boxShadow: 'var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05))',
         }}
       >
-        <span role="img" aria-label="Sino">
+        <span role="img" aria-label="Sino" style={{ display: 'inline-block' }}>
           🔔
         </span>
         {unreadCount > 0 && (
@@ -105,7 +119,7 @@ export function NotificationBell({
               position: 'absolute',
               top: '-0.25rem',
               right: '-0.25rem',
-              backgroundColor: '#EF4444',
+              backgroundColor: '#E11D48',
               color: '#FFFFFF',
               fontSize: '0.6875rem',
               fontWeight: 700,
@@ -116,7 +130,8 @@ export function NotificationBell({
               alignItems: 'center',
               justifyContent: 'center',
               padding: '0 0.25rem',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+              boxShadow: '0 1px 3px rgba(225, 29, 72, 0.4)',
+              animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
             }}
           >
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -127,6 +142,7 @@ export function NotificationBell({
       {isOpen && (
         <div
           data-testid="notification-dropdown"
+          className="glass-card"
           style={{
             position: 'absolute',
             top: 'calc(100% + 0.5rem)',
@@ -134,10 +150,10 @@ export function NotificationBell({
             width: '24rem',
             maxWidth: '90vw',
             backgroundColor: '#FFFFFF',
-            borderRadius: '0.75rem',
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #E5E7EB',
-            zIndex: 50,
+            borderRadius: '0.875rem',
+            boxShadow: '0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05)',
+            border: '1px solid var(--border-light, #E2E8F0)',
+            zIndex: 70,
             overflow: 'hidden',
           }}
         >
@@ -146,19 +162,19 @@ export function NotificationBell({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '0.875rem 1rem',
-              borderBottom: '1px solid #F3F4F6',
-              backgroundColor: '#F9FAFB',
+              padding: '0.875rem 1.125rem',
+              borderBottom: '1px solid #F1F5F9',
+              backgroundColor: '#F8FAFC',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#111827' }}>
+              <span style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#0F172A' }}>
                 Notificações
               </span>
               {unreadCount > 0 && (
                 <span
                   style={{
-                    backgroundColor: '#E0E7FF',
+                    backgroundColor: '#EEF2FF',
                     color: '#4338CA',
                     fontSize: '0.75rem',
                     fontWeight: 600,
@@ -180,7 +196,7 @@ export function NotificationBell({
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#2563EB',
+                  color: '#4F46E5',
                   fontSize: '0.8125rem',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -205,7 +221,7 @@ export function NotificationBell({
                 style={{
                   padding: '2.5rem 1.5rem',
                   textAlign: 'center',
-                  color: '#6B7280',
+                  color: '#64748B',
                   fontSize: '0.875rem',
                 }}
               >
@@ -223,12 +239,12 @@ export function NotificationBell({
                     key={item.id}
                     data-testid={`notification-item-${item.id}`}
                     style={{
-                      padding: '0.875rem 1rem',
+                      padding: '0.875rem 1.125rem',
                       display: 'flex',
                       gap: '0.75rem',
                       alignItems: 'flex-start',
-                      backgroundColor: item.isRead ? '#FFFFFF' : '#F0F9FF',
-                      borderBottom: '1px solid #F3F4F6',
+                      backgroundColor: item.isRead ? '#FFFFFF' : '#F0FDF4',
+                      borderBottom: '1px solid #F1F5F9',
                       transition: 'background-color 0.15s ease',
                     }}
                   >
@@ -250,7 +266,7 @@ export function NotificationBell({
                           style={{
                             fontWeight: item.isRead ? 600 : 700,
                             fontSize: '0.875rem',
-                            color: '#111827',
+                            color: '#0F172A',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
@@ -261,11 +277,11 @@ export function NotificationBell({
                         <span
                           style={{
                             fontSize: '0.6875rem',
-                            color: '#9CA3AF',
+                            color: '#94A3B8',
                             whiteSpace: 'nowrap',
                           }}
                         >
-                          {item.createdAt ? new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                          {formatTimestamp(item.createdAt)}
                         </span>
                       </div>
 
@@ -273,7 +289,7 @@ export function NotificationBell({
                         style={{
                           margin: 0,
                           fontSize: '0.8125rem',
-                          color: '#4B5563',
+                          color: '#475569',
                           lineHeight: 1.4,
                         }}
                       >
@@ -291,8 +307,8 @@ export function NotificationBell({
                         <span
                           style={{
                             fontSize: '0.6875rem',
-                            color: '#6B7280',
-                            backgroundColor: '#E5E7EB',
+                            color: '#475569',
+                            backgroundColor: '#F1F5F9',
                             padding: '0.125rem 0.375rem',
                             borderRadius: '0.25rem',
                             fontWeight: 500,
@@ -310,7 +326,7 @@ export function NotificationBell({
                             style={{
                               background: 'none',
                               border: 'none',
-                              color: '#2563EB',
+                              color: '#4F46E5',
                               fontSize: '0.75rem',
                               fontWeight: 600,
                               cursor: 'pointer',
