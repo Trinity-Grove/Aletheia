@@ -4,19 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prebuild": "pnpm --filter @aletheia/contracts build",
+    "prebuild": "pnpm --filter @aletheia/contracts build && pnpm --filter @aletheia/ui build",
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint . --config ../../packages/eslint-config/index.mjs --ignore-pattern .next",
     "start": "next start",
-    "pretest": "pnpm --filter @aletheia/contracts build",
+    "pretest": "pnpm --filter @aletheia/contracts build && pnpm --filter @aletheia/ui build",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "pretypecheck": "pnpm --filter @aletheia/contracts build",
+    "pretypecheck": "pnpm --filter @aletheia/contracts build && pnpm --filter @aletheia/ui build",
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
     "@aletheia/contracts": "workspace:*",
+    "@aletheia/ui": "workspace:*",
     "next": "16.3.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"

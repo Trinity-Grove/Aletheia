@@ -1,176 +1,200 @@
-import React from 'react';
-import { ProductShell } from '../src/components/product-shell';
+'use client';
+
+import React, { useState } from 'react';
+import { PageHeader, ScriptureCard, Card } from '@aletheia/ui';
+import { ProductShell } from '../src/components/layout/product-shell';
+import { LearnerFocusHeader } from '../src/components/dashboard/learner-focus-header';
+import { DailyJourney } from '../src/components/dashboard/daily-journey';
+import { ActivityList, type DailyActivityItem } from '../src/components/dashboard/activity-list';
+import type { LearnerSummaryDto } from '@aletheia/contracts';
+
+const MOCK_LEARNERS: LearnerSummaryDto[] = [
+  {
+    id: 'learner-1',
+    firstName: 'Ana Clara',
+    lastName: 'Santos',
+    preferredName: 'Clarinha',
+    stage: 'PRIMARY_GRAMMAR',
+  },
+  {
+    id: 'learner-2',
+    firstName: 'Mateus',
+    lastName: 'Santos',
+    preferredName: 'Mateus',
+    stage: 'PRIMARY_GRAMMAR',
+  },
+];
+
+const INITIAL_ACTIVITIES: DailyActivityItem[] = [
+  {
+    id: 'act-1',
+    title: 'Devocional Matinal em Família — Salmo 23',
+    subjectName: 'Devocional',
+    time: '08:00',
+    durationMinutes: 20,
+    completed: true,
+    type: 'devotional',
+  },
+  {
+    id: 'act-2',
+    title: 'Gramática Latina: Declinações da Primeira Família',
+    subjectName: 'Latim & Gramática',
+    time: '09:00',
+    durationMinutes: 45,
+    completed: true,
+    type: 'lesson',
+  },
+  {
+    id: 'act-3',
+    title: 'Matemática Clássica: Aritmética e Frações',
+    subjectName: 'Matemática',
+    time: '10:15',
+    durationMinutes: 50,
+    completed: false,
+    type: 'lesson',
+  },
+  {
+    id: 'act-4',
+    title: 'História Antiga: As Grandes Guerras Médicas',
+    subjectName: 'História',
+    time: '11:15',
+    durationMinutes: 40,
+    completed: false,
+    type: 'lesson',
+  },
+];
 
 export default function HomePage() {
+  const [activeLearnerId, setActiveLearnerId] = useState<string | null>('learner-1');
+  const [activities, setActivities] = useState<DailyActivityItem[]>(INITIAL_ACTIVITIES);
+
+  const handleToggleComplete = (id: string) => {
+    setActivities((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, completed: !item.completed } : item
+      )
+    );
+  };
+
+  const completedActivities = activities.filter((a) => a.completed);
+  const completedMinutes = completedActivities.reduce((acc, curr) => acc + (curr.durationMinutes || 0), 0);
+  const targetMinutes = 240; // 4 hours daily goal
+
   return (
-    <ProductShell currentPath="/">
+    <ProductShell currentPath="/" learners={MOCK_LEARNERS} activeLearnerId={activeLearnerId} onSelectLearner={setActiveLearnerId}>
       <div style={{ padding: '2rem 1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Hero Welcome Banner */}
-        <div
-          style={{
-            backgroundColor: 'var(--forest, #123f34)',
-            color: '#FFFFFF',
-            borderRadius: 'var(--radius-lg, 10px)',
-            padding: '2.5rem 2rem',
-            marginBottom: '2rem',
-            position: 'relative',
-            overflow: 'hidden',
-            boxShadow: 'var(--shadow-lg)',
-          }}
-        >
-          <div style={{ position: 'relative', zIndex: 2, maxWidth: '700px' }}>
-            <p className="eyebrow" style={{ color: 'var(--gold-soft, #f3e5b6)', marginBottom: '0.75rem' }}>
-              <span className="rule" style={{ background: 'var(--gold, #d3a526)' }} />
-              Trinity Grove &bull; Aletheia
-            </p>
-            <h1
-              className="page-title"
-              style={{
-                fontFamily: 'var(--font-serif)',
-                fontSize: 'clamp(2rem, 3.5vw, 2.75rem)',
-                color: '#FFFFFF',
-                lineHeight: 1.15,
-                margin: '0 0 1rem 0',
-                fontWeight: 400,
-              }}
-            >
-              Faithful learning, thoughtfully guided.
-            </h1>
-            <p
-              style={{
-                fontSize: '1.0625rem',
-                color: 'var(--sage-light, #dce6dc)',
-                lineHeight: 1.6,
-                margin: '0 0 1.75rem 0',
-              }}
-            >
-              Acompanhe a formação espiritual, o currículo clássico, a frequência legal e o crescimento diário dos seus filhos em um único lugar soberano.
-            </p>
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <a
-                href="/devotional"
-                className="ui-button ui-button--md"
-                style={{
-                  backgroundColor: 'var(--gold, #d3a526)',
-                  color: 'var(--forest-2, #0c3028)',
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                  borderRadius: 'var(--radius-md, 6px)',
-                }}
-              >
-                📖 Devocional de Hoje
-              </a>
-              <a
-                href="/schedule"
-                className="ui-button ui-button--md"
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                  color: '#FFFFFF',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  textDecoration: 'none',
-                  borderRadius: 'var(--radius-md, 6px)',
-                }}
-              >
+        {/* Page Header */}
+        <PageHeader
+          eyebrow="Trinity Grove • Aletheia"
+          title="Faithful learning, thoughtfully guided."
+          description="Registros acadêmicos estruturados e relatórios de apoio pedagógico para conformidade familiar."
+          action={
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <a href="/schedule" className="ui-button ui-button--primary ui-button--md">
                 🗓️ Agenda & Checklist
               </a>
+              <a href="/devotional" className="ui-button ui-button--secondary ui-button--md">
+                📖 Devocional
+              </a>
             </div>
-          </div>
+          }
+        />
 
-          <div
-            style={{
-              position: 'absolute',
-              right: '-2rem',
-              bottom: '-4rem',
-              fontFamily: 'var(--font-serif)',
-              fontSize: '18rem',
-              color: 'rgba(255, 255, 255, 0.03)',
-              lineHeight: 1,
-              pointerEvents: 'none',
-            }}
-          >
-            ἀ
-          </div>
+        {/* Learner Focus Switcher Header */}
+        <LearnerFocusHeader
+          learners={MOCK_LEARNERS}
+          activeLearnerId={activeLearnerId}
+          onSelectLearner={setActiveLearnerId}
+        />
+
+        {/* Scripture of the Day */}
+        <div style={{ marginBottom: '1.75rem' }}>
+          <ScriptureCard
+            verseText="Ensina a criança no caminho em que deve andar, e, ainda quando for velho, não se desviará dele."
+            citation="Provérbios 22:6 (ARA)"
+          />
         </div>
 
-        {/* Dashboard Quick Modules Grid */}
+        {/* Main Grid: Daily Journey & Activities */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '1.5rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+            gap: '1.75rem',
+            marginBottom: '2rem',
           }}
         >
-          {/* Card 1: Educandos */}
-          <div className="ui-card ui-card--default" style={{ padding: '1.75rem' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>🎓</div>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', color: 'var(--forest, #123f34)', margin: '0 0 0.5rem 0' }}>
-              Educandos & Perfis
-            </h3>
-            <p style={{ color: 'var(--muted, #5c6f67)', fontSize: '0.875rem', lineHeight: 1.5, margin: '0 0 1.25rem 0' }}>
-              Gerencie as etapas de desenvolvimento, estilos de aprendizagem e objetivos individuais dos seus filhos.
-            </p>
-            <a
-              href="/learners"
-              className="ui-button ui-button--secondary ui-button--sm"
-              style={{ textDecoration: 'none' }}
-            >
-              Ver Educandos &rarr;
-            </a>
-          </div>
+          {/* Daily Journey Progress */}
+          <DailyJourney
+            completedMinutes={completedMinutes}
+            targetMinutes={targetMinutes}
+            completedLessons={completedActivities.filter((a) => a.type === 'lesson').length}
+            totalLessons={activities.filter((a) => a.type === 'lesson').length}
+            daySequence={42}
+          />
 
-          {/* Card 2: Currículo */}
-          <div className="ui-card ui-card--default" style={{ padding: '1.75rem' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>🏛️</div>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', color: 'var(--forest, #123f34)', margin: '0 0 0.5rem 0' }}>
-              Currículo & Pedagogia
-            </h3>
-            <p style={{ color: 'var(--muted, #5c6f67)', fontSize: '0.875rem', lineHeight: 1.5, margin: '0 0 1.25rem 0' }}>
-              Estruture o plano de estudos por ano letivo, disciplinas e modelos pedagógicos (Clássico, Charlotte Mason, Tradicional).
-            </p>
-            <a
-              href="/curriculum"
-              className="ui-button ui-button--secondary ui-button--sm"
-              style={{ textDecoration: 'none' }}
-            >
-              Acessar Currículo &rarr;
-            </a>
-          </div>
+          {/* Activity List */}
+          <ActivityList
+            activities={activities}
+            onToggleComplete={handleToggleComplete}
+          />
+        </div>
 
-          {/* Card 3: Diário & Portfólio */}
-          <div className="ui-card ui-card--default" style={{ padding: '1.75rem' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>✨</div>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', color: 'var(--forest, #123f34)', margin: '0 0 0.5rem 0' }}>
-              Diário & Evidências
-            </h3>
-            <p style={{ color: 'var(--muted, #5c6f67)', fontSize: '0.875rem', lineHeight: 1.5, margin: '0 0 1.25rem 0' }}>
-              Registre descobertas da vida real, níveis de domínio qualitativo e construa o portfólio duradouro da família.
-            </p>
-            <a
-              href="/records"
-              className="ui-button ui-button--secondary ui-button--sm"
-              style={{ textDecoration: 'none' }}
-            >
-              Abrir Diário &rarr;
-            </a>
-          </div>
+        {/* Quick Modules Shortcuts */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: '1.25rem',
+          }}
+        >
+          <a href="/curriculum" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Card variant="bordered" shadow="sm" style={{ padding: '1.25rem', transition: 'transform 0.15s ease' }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📚</div>
+              <h4 style={{ margin: 0, fontFamily: 'var(--font-serif)', fontSize: '1.125rem', color: 'var(--color-brand-forest)' }}>
+                Currículo & Objetivos
+              </h4>
+              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                Planejamento por disciplinas, frameworks e árvore de objetivos.
+              </p>
+            </Card>
+          </a>
 
-          {/* Card 4: Frequência & Histórico */}
-          <div className="ui-card ui-card--default" style={{ padding: '1.75rem' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>📋</div>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', color: 'var(--forest, #123f34)', margin: '0 0 0.5rem 0' }}>
-              Frequência & Relatórios
-            </h3>
-            <p style={{ color: 'var(--muted, #5c6f67)', fontSize: '0.875rem', lineHeight: 1.5, margin: '0 0 1.25rem 0' }}>
-              Acompanhe o cumprimento das metas legais de dias e horas e emita históricos escolares oficiais para impressão.
-            </p>
-            <a
-              href="/reports"
-              className="ui-button ui-button--secondary ui-button--sm"
-              style={{ textDecoration: 'none' }}
-            >
-              Emitir Relatórios &rarr;
-            </a>
-          </div>
+          <a href="/records" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Card variant="bordered" shadow="sm" style={{ padding: '1.25rem', transition: 'transform 0.15s ease' }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>✍️</div>
+              <h4 style={{ margin: 0, fontFamily: 'var(--font-serif)', fontSize: '1.125rem', color: 'var(--color-brand-forest)' }}>
+                Diário de Aprendizagem
+              </h4>
+              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                Registro reflexivo, avaliação de domínio e formação de virtudes.
+              </p>
+            </Card>
+          </a>
+
+          <a href="/portfolio" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Card variant="bordered" shadow="sm" style={{ padding: '1.25rem', transition: 'transform 0.15s ease' }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🖼️</div>
+              <h4 style={{ margin: 0, fontFamily: 'var(--font-serif)', fontSize: '1.125rem', color: 'var(--color-brand-forest)' }}>
+                Portfólio de Evidências
+              </h4>
+              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                Acervo fotográfico e documentos comprobatórios de trabalhos.
+              </p>
+            </Card>
+          </a>
+
+          <a href="/reports" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Card variant="bordered" shadow="sm" style={{ padding: '1.25rem', transition: 'transform 0.15s ease' }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📊</div>
+              <h4 style={{ margin: 0, fontFamily: 'var(--font-serif)', fontSize: '1.125rem', color: 'var(--color-brand-forest)' }}>
+                Relatórios de Apoio
+              </h4>
+              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                Históricos acadêmicos e transcrições estruturadas para famílias.
+              </p>
+            </Card>
+          </a>
         </div>
       </div>
     </ProductShell>

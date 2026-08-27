@@ -2,10 +2,17 @@ import { cleanup, render, screen, fireEvent } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
 import type { LearnerSummaryDto, NotificationItemResponseDto } from '@aletheia/contracts';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../src/components/ui/card';
-import { Button } from '../src/components/ui/button';
-import { Badge } from '../src/components/ui/badge';
-import { Modal } from '../src/components/ui/modal';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+  Button,
+  Badge,
+  Modal,
+} from '../src/components/ui';
 import { ProductShell } from '../src/components/layout/product-shell';
 
 const mockLearners: LearnerSummaryDto[] = [
@@ -220,7 +227,7 @@ describe('UI Primitives: Modal', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
 
     // Close button click
-    const closeBtn = screen.getByTestId('modal-close-btn');
+    const closeBtn = screen.getByTestId('modal-close-button');
     fireEvent.click(closeBtn);
     expect(onClose).toHaveBeenCalledTimes(2);
 

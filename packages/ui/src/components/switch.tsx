@@ -26,6 +26,7 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
       <label
         htmlFor={switchId}
         data-testid="switch-wrapper"
+        className={`ui-switch ${className}`.trim()}
         style={{
           display: 'inline-flex',
           alignItems: description ? 'flex-start' : 'center',
@@ -34,7 +35,6 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
           opacity: disabled ? 0.6 : 1,
           userSelect: 'none',
         }}
-        className={`ui-switch ${className}`.trim()}
       >
         <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', marginTop: description ? '0.125rem' : 0 }}>
           <input
@@ -66,8 +66,8 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
             style={{
               width: '2.5rem',
               height: '1.375rem',
-              backgroundColor: checked ? 'var(--forest, #123f34)' : 'var(--sage-soft, #eef1e8)',
-              border: `1.5px solid ${checked ? 'var(--forest, #123f34)' : 'var(--line-strong, rgba(18, 63, 52, 0.24))'}`,
+              backgroundColor: checked ? 'var(--color-brand-forest)' : 'var(--color-brand-sage-soft)',
+              border: `1.5px solid ${checked ? 'var(--color-brand-forest)' : 'var(--border-medium)'}`,
               borderRadius: '9999px',
               position: 'relative',
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -82,7 +82,7 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
                 left: checked ? 'calc(100% - 1.125rem - 1px)' : '1px',
                 width: '1.125rem',
                 height: '1.125rem',
-                backgroundColor: checked ? 'var(--gold, #d3a526)' : '#ffffff',
+                backgroundColor: checked ? 'var(--color-brand-gold)' : '#ffffff',
                 borderRadius: '50%',
                 boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)',
                 transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -94,27 +94,12 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
         {(label || description) && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
             {label && (
-              <span
-                data-testid="switch-label"
-                style={{
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: 'var(--text-primary, #17312a)',
-                  lineHeight: 1.25,
-                }}
-              >
+              <span data-testid="switch-label" className="ui-form-label" style={{ cursor: 'inherit' }}>
                 {label}
               </span>
             )}
             {description && (
-              <span
-                data-testid="switch-description"
-                style={{
-                  fontSize: '0.75rem',
-                  color: 'var(--muted, #5c6f67)',
-                  lineHeight: 1.35,
-                }}
-              >
+              <span data-testid="switch-description" className="ui-form-helper">
                 {description}
               </span>
             )}

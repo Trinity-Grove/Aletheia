@@ -24,7 +24,6 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
       options,
       children,
       disabled,
-      style,
       ...props
     },
     ref
@@ -34,22 +33,18 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     const hasError = Boolean(error);
 
     return (
-      <div className={`ui-select-wrapper ${className}`.trim()} style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+      <div className={`ui-form-group ${className}`.trim()}>
         {label && (
           <label
             htmlFor={selectId}
             data-testid="select-label"
-            style={{
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              color: hasError ? 'var(--color-rose-700, #9f2424)' : 'var(--text-primary, #17312a)',
-            }}
+            className={`ui-form-label ${hasError ? 'ui-form-label--error' : ''}`}
           >
             {label}
           </label>
         )}
 
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+        <div className="ui-select-wrapper" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
           <select
             ref={ref}
             id={selectId}
@@ -58,26 +53,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             disabled={disabled}
             aria-invalid={hasError}
             aria-describedby={hasError ? `${selectId}-error` : helperText ? `${selectId}-helper` : undefined}
-            style={{
-              width: '100%',
-              appearance: 'none',
-              fontFamily: 'var(--font-sans)',
-              fontSize: '0.875rem',
-              lineHeight: 1.25,
-              padding: '0.625rem 2.25rem 0.625rem 0.875rem',
-              backgroundColor: disabled ? 'var(--sage-soft, #eef1e8)' : 'var(--paper, #fffdf7)',
-              color: 'var(--ink, #17312a)',
-              border: `1.5px solid ${
-                hasError
-                  ? 'var(--color-rose-600, #c53030)'
-                  : 'var(--line, rgba(18, 63, 52, 0.14))'
-              }`,
-              borderRadius: 'var(--radius-md, 6px)',
-              outline: 'none',
-              cursor: disabled ? 'not-allowed' : 'pointer',
-              transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-              ...style,
-            }}
+            className={`ui-input-control ${hasError ? 'ui-input-control--error' : ''}`}
+            style={{ appearance: 'none', paddingRight: '2.25rem', cursor: disabled ? 'not-allowed' : 'pointer' }}
             {...props}
           >
             {options
@@ -95,7 +72,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
               position: 'absolute',
               right: '0.875rem',
               pointerEvents: 'none',
-              color: 'var(--muted, #5c6f67)',
+              color: 'var(--text-secondary)',
               fontSize: '0.75rem',
             }}
           >
@@ -108,11 +85,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             id={`${selectId}-error`}
             data-testid="select-error-text"
             role="alert"
-            style={{
-              fontSize: '0.75rem',
-              color: 'var(--color-rose-700, #9f2424)',
-              fontWeight: 500,
-            }}
+            className="ui-form-error"
           >
             {error}
           </span>
@@ -122,10 +95,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           <span
             id={`${selectId}-helper`}
             data-testid="select-helper-text"
-            style={{
-              fontSize: '0.75rem',
-              color: 'var(--muted, #5c6f67)',
-            }}
+            className="ui-form-helper"
           >
             {helperText}
           </span>

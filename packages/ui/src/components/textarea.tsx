@@ -16,7 +16,6 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       error,
       rows = 3,
       disabled,
-      style,
       ...props
     },
     ref
@@ -26,16 +25,12 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     const hasError = Boolean(error);
 
     return (
-      <div className={`ui-textarea-wrapper ${className}`.trim()} style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+      <div className={`ui-form-group ${className}`.trim()}>
         {label && (
           <label
             htmlFor={textareaId}
             data-testid="textarea-label"
-            style={{
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              color: hasError ? 'var(--color-rose-700, #9f2424)' : 'var(--text-primary, #17312a)',
-            }}
+            className={`ui-form-label ${hasError ? 'ui-form-label--error' : ''}`}
           >
             {label}
           </label>
@@ -50,25 +45,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           disabled={disabled}
           aria-invalid={hasError}
           aria-describedby={hasError ? `${textareaId}-error` : helperText ? `${textareaId}-helper` : undefined}
-          style={{
-            width: '100%',
-            fontFamily: 'var(--font-sans)',
-            fontSize: '0.875rem',
-            lineHeight: 1.5,
-            padding: '0.625rem 0.875rem',
-            backgroundColor: disabled ? 'var(--sage-soft, #eef1e8)' : 'var(--paper, #fffdf7)',
-            color: 'var(--ink, #17312a)',
-            border: `1.5px solid ${
-              hasError
-                ? 'var(--color-rose-600, #c53030)'
-                : 'var(--line, rgba(18, 63, 52, 0.14))'
-            }`,
-            borderRadius: 'var(--radius-md, 6px)',
-            outline: 'none',
-            resize: 'vertical',
-            transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-            ...style,
-          }}
+          className={`ui-input-control ${hasError ? 'ui-input-control--error' : ''}`}
+          style={{ resize: 'vertical', minHeight: '5rem', lineHeight: 1.5 }}
           {...props}
         />
 
@@ -77,11 +55,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             id={`${textareaId}-error`}
             data-testid="textarea-error-text"
             role="alert"
-            style={{
-              fontSize: '0.75rem',
-              color: 'var(--color-rose-700, #9f2424)',
-              fontWeight: 500,
-            }}
+            className="ui-form-error"
           >
             {error}
           </span>
@@ -91,10 +65,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           <span
             id={`${textareaId}-helper`}
             data-testid="textarea-helper-text"
-            style={{
-              fontSize: '0.75rem',
-              color: 'var(--muted, #5c6f67)',
-            }}
+            className="ui-form-helper"
           >
             {helperText}
           </span>

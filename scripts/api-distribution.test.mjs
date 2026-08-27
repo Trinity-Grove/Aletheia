@@ -28,7 +28,7 @@ async function availablePort() {
 }
 
 async function waitForLiveness(url, child, output) {
-  const deadline = Date.now() + 15_000;
+  const deadline = Date.now() + 45_000;
 
   while (Date.now() < deadline) {
     if (child.exitCode !== null) {

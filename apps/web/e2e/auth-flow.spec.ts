@@ -21,6 +21,7 @@ test.describe('Authentication & Onboarding Web Smoke Tests', () => {
   test('navigates to /onboarding and creates family aggregate', async ({ page }) => {
     await page.goto('/onboarding');
     await expect(page.getByTestId('onboarding-page')).toBeVisible();
+    await page.waitForLoadState('networkidle');
     await page.getByTestId('family-name-input').fill('Família Santos');
     await page.getByTestId('create-family-button').click();
     await expect(page.getByTestId('success-message')).toBeVisible();
@@ -29,10 +30,10 @@ test.describe('Authentication & Onboarding Web Smoke Tests', () => {
   test('navigates to /learners and opens learner creation modal', async ({ page }) => {
     await page.goto('/learners');
     await expect(page.getByTestId('add-learner-btn')).toBeVisible();
+    await page.waitForLoadState('networkidle');
     await page.getByTestId('add-learner-btn').click();
     await expect(page.getByTestId('learner-first-name-input')).toBeVisible();
     await expect(page.getByTestId('learner-birth-date-input')).toBeVisible();
     await expect(page.getByTestId('learner-submit-btn')).toBeVisible();
   });
 });
-
