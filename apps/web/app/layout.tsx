@@ -24,8 +24,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="pt-BR" className={`${dmSans.variable} ${libreCaslon.variable}`}>
-      <body className="font-sans antialiased">{children}</body>
+    <html
+      lang="pt-BR"
+      suppressHydrationWarning
+      className={`${dmSans.variable} ${libreCaslon.variable}`}
+    >
+      <body suppressHydrationWarning className="font-sans antialiased">
+        {children}
+      </body>
     </html>
   );
 }
