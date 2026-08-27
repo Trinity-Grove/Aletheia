@@ -1,6 +1,6 @@
 export const fontFamilies = {
-  serif: '"Libre Caslon Display", Georgia, serif',
-  sans: '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  serif: '"Lora", Georgia, serif',
+  sans: '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
   mono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
 } as const;
 

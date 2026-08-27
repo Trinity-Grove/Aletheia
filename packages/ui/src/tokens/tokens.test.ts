@@ -25,8 +25,8 @@ describe('Design Tokens Contract', () => {
   });
 
   it('defines font families for serif, sans, and mono without circular dependencies', () => {
-    expect(fontFamilies.serif).toContain('Libre Caslon Display');
-    expect(fontFamilies.sans).toContain('DM Sans');
+    expect(fontFamilies.serif).toContain('Lora');
+    expect(fontFamilies.sans).toContain('Plus Jakarta Sans');
   });
 
   it('defines spacing scale with valid CSS units', () => {

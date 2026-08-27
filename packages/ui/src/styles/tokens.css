@@ -26,8 +26,8 @@
   --bg-surface-subtle: var(--color-brand-sage-soft);
 
   /* Typography Fonts (Non-circular) */
-  --font-serif: var(--font-serif-next, "Libre Caslon Display", Georgia, serif);
-  --font-sans: var(--font-sans-next, "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  --font-serif: var(--font-serif-next, "Lora", Georgia, serif);
+  --font-sans: var(--font-sans-next, "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Typography Colors */

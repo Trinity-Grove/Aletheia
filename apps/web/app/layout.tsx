@@ -1,20 +1,20 @@
 import type { Metadata } from 'next';
-import { DM_Sans, Libre_Caslon_Display } from 'next/font/google';
+import { Plus_Jakarta_Sans, Lora } from 'next/font/google';
 import type { ReactNode } from 'react';
 import '@aletheia/ui/css';
 import './globals.css';
 
-const dmSans = DM_Sans({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-sans-next',
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
 });
 
-const libreCaslon = Libre_Caslon_Display({
+const lora = Lora({
   subsets: ['latin'],
   variable: '--font-serif-next',
-  weight: ['400'],
+  weight: ['500', '600', '700'],
   display: 'swap',
 });
 
@@ -28,7 +28,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     <html
       lang="pt-BR"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${libreCaslon.variable}`}
+      className={`${plusJakartaSans.variable} ${lora.variable}`}
     >
       <body suppressHydrationWarning className="font-sans antialiased">
         {children}
