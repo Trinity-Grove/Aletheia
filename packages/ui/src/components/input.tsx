@@ -19,7 +19,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       leftIcon,
       rightIcon,
       disabled,
-      style,
       ...props
     },
     ref
@@ -29,22 +28,18 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const hasError = Boolean(error);
 
     return (
-      <div className={`ui-input-wrapper ${className}`.trim()} style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+      <div className={`ui-form-group ${className}`.trim()}>
         {label && (
           <label
             htmlFor={inputId}
             data-testid="input-label"
-            style={{
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              color: hasError ? 'var(--color-rose-700, #9f2424)' : 'var(--text-primary, #17312a)',
-            }}
+            className={`ui-form-label ${hasError ? 'ui-form-label--error' : ''}`}
           >
             {label}
           </label>
         )}
 
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+        <div className="ui-input-wrapper" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
           {leftIcon && (
             <span
               data-testid="input-left-icon"
@@ -54,8 +49,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 display: 'flex',
                 alignItems: 'center',
                 pointerEvents: 'none',
-                color: 'var(--muted, #5c6f67)',
-                fontSize: '1rem',
+                color: 'var(--text-secondary)',
               }}
             >
               {leftIcon}
@@ -70,25 +64,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             disabled={disabled}
             aria-invalid={hasError}
             aria-describedby={hasError ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined}
+            className={`ui-input-control ${hasError ? 'ui-input-control--error' : ''}`}
             style={{
-              width: '100%',
-              fontFamily: 'var(--font-sans)',
-              fontSize: '0.875rem',
-              lineHeight: 1.25,
-              padding: '0.625rem 0.875rem',
-              paddingLeft: leftIcon ? '2.5rem' : '0.875rem',
-              paddingRight: rightIcon ? '2.5rem' : '0.875rem',
-              backgroundColor: disabled ? 'var(--sage-soft, #eef1e8)' : 'var(--paper, #fffdf7)',
-              color: 'var(--ink, #17312a)',
-              border: `1.5px solid ${
-                hasError
-                  ? 'var(--color-rose-600, #c53030)'
-                  : 'var(--line, rgba(18, 63, 52, 0.14))'
-              }`,
-              borderRadius: 'var(--radius-md, 6px)',
-              outline: 'none',
-              transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-              ...style,
+              paddingLeft: leftIcon ? '2.5rem' : undefined,
+              paddingRight: rightIcon ? '2.5rem' : undefined,
             }}
             {...props}
           />
@@ -102,8 +81,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 display: 'flex',
                 alignItems: 'center',
                 pointerEvents: 'none',
-                color: 'var(--muted, #5c6f67)',
-                fontSize: '1rem',
+                color: 'var(--text-secondary)',
               }}
             >
               {rightIcon}
@@ -116,11 +94,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={`${inputId}-error`}
             data-testid="input-error-text"
             role="alert"
-            style={{
-              fontSize: '0.75rem',
-              color: 'var(--color-rose-700, #9f2424)',
-              fontWeight: 500,
-            }}
+            className="ui-form-error"
           >
             {error}
           </span>
@@ -130,10 +104,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <span
             id={`${inputId}-helper`}
             data-testid="input-helper-text"
-            style={{
-              fontSize: '0.75rem',
-              color: 'var(--muted, #5c6f67)',
-            }}
+            className="ui-form-helper"
           >
             {helperText}
           </span>

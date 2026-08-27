@@ -1,18 +1,19 @@
 import type { Metadata } from 'next';
 import { DM_Sans, Libre_Caslon_Display } from 'next/font/google';
 import type { ReactNode } from 'react';
+import '@aletheia/ui/css';
 import './globals.css';
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
-  variable: '--font-sans',
+  variable: '--font-sans-next',
   weight: ['400', '500', '600', '700'],
   display: 'swap',
 });
 
 const libreCaslon = Libre_Caslon_Display({
   subsets: ['latin'],
-  variable: '--font-serif',
+  variable: '--font-serif-next',
   weight: ['400'],
   display: 'swap',
 });
@@ -35,4 +36,3 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     </html>
   );
 }
-

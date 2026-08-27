@@ -1,12 +1,12 @@
 import React, { type HTMLAttributes, forwardRef } from 'react';
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'bordered' | 'flat' | 'elevated' | 'glass';
-  shadow?: 'none' | 'sm' | 'md' | 'lg';
+  variant?: 'default' | 'bordered' | 'flat' | 'elevated' | 'glass' | undefined;
+  shadow?: 'none' | 'sm' | 'md' | 'lg' | undefined;
 }
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className = '', variant = 'default', shadow = 'sm', children, style, ...props }, ref) => {
+  ({ className = '', variant = 'default', shadow = 'sm', children, ...props }, ref) => {
     return (
       <div
         ref={ref}
@@ -14,7 +14,6 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
         data-variant={variant}
         data-shadow={shadow}
         className={`ui-card ui-card--${variant} ui-card--shadow-${shadow} ${className}`.trim()}
-        style={style}
         {...props}
       >
         {children}
@@ -43,7 +42,7 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
 CardHeader.displayName = 'CardHeader';
 
 export interface CardTitleProps extends HTMLAttributes<HTMLHeadingElement> {
-  as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+  as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | undefined;
 }
 
 export const CardTitle = forwardRef<HTMLHeadingElement, CardTitleProps>(

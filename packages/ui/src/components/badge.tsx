@@ -4,9 +4,9 @@ export type BadgeVariant = 'indigo' | 'amber' | 'emerald' | 'slate' | 'rose';
 export type BadgeSize = 'sm' | 'md' | 'lg';
 
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
-  variant?: BadgeVariant;
-  size?: BadgeSize;
-  dot?: boolean;
+  variant?: BadgeVariant | undefined;
+  size?: BadgeSize | undefined;
+  dot?: boolean | undefined;
 }
 
 export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
@@ -36,4 +36,5 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
     );
   }
 );
+
 Badge.displayName = 'Badge';
