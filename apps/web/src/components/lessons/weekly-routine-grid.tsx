@@ -8,6 +8,7 @@ import type {
   SubjectResponseDto,
 } from '@aletheia/contracts';
 import { DAYS_OF_WEEK } from './routine-slot-modal';
+import { Can } from '../auth/role-guard';
 
 export interface WeeklyRoutineGridProps {
   slots: ScheduleSlotResponseDto[];
@@ -54,7 +55,10 @@ export function WeeklyRoutineGrid({
   });
 
   return (
-    <div data-testid="weekly-routine-grid" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div
+      data-testid="weekly-routine-grid"
+      style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
+    >
       {/* Header bar */}
       <div
         style={{
@@ -62,46 +66,51 @@ export function WeeklyRoutineGrid({
           justifyContent: 'space-between',
           alignItems: 'center',
           backgroundColor: '#FFFFFF',
-          padding: '1rem 1.25rem',
-          borderRadius: '0.75rem',
-          border: '1px solid #E5E7EB',
+          padding: '1.25rem 1.5rem',
+          borderRadius: '1rem',
+          border: '1px solid #E2E8F0',
+          boxShadow: '0 1px 3px 0 rgba(15, 23, 42, 0.05)',
           flexWrap: 'wrap',
           gap: '1rem',
         }}
       >
         <div>
-          <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#111827', margin: 0 }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.01em' }}>
             Estrutura da Rotina Semanal
           </h2>
-          <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: '0.25rem 0 0 0' }}>
-            Defina os blocos fixos e horários de estudo recorrentes para cada dia da semana.
+          <p style={{ fontSize: '0.875rem', color: '#64748B', margin: '0.25rem 0 0 0' }}>
+            Defina os blocos fixos, matérias recorrentes e horários de estudo para cada dia da semana.
           </p>
         </div>
-        <button
-          type="button"
-          data-testid="add-routine-slot-btn"
-          onClick={() => onAddSlot(1)}
-          style={{
-            padding: '0.5rem 1rem',
-            borderRadius: '0.375rem',
-            backgroundColor: '#2563EB',
-            color: '#FFFFFF',
-            border: 'none',
-            fontSize: '0.875rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          + Adicionar Bloco de Rotina
-        </button>
+        <Can action="manage_lessons">
+          <button
+            type="button"
+            data-testid="add-routine-slot-btn"
+            onClick={() => onAddSlot(1)}
+            className="btn btn-primary ui-button ui-button--primary ui-button--sm"
+            style={{
+              padding: '0.45rem 1rem',
+              borderRadius: '0.5rem',
+              backgroundColor: '#4338CA',
+              color: '#FFFFFF',
+              border: 'none',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px 0 rgba(67, 56, 202, 0.2)',
+            }}
+          >
+            + Adicionar Bloco de Rotina
+          </button>
+        </Can>
       </div>
 
       {/* Grid of days */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '1rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+          gap: '1.25rem',
           alignItems: 'start',
         }}
       >
@@ -114,36 +123,38 @@ export function WeeklyRoutineGrid({
               data-testid={`routine-day-column-${day.value}`}
               style={{
                 backgroundColor: '#FFFFFF',
-                borderRadius: '0.75rem',
-                border: '1px solid #E5E7EB',
+                borderRadius: '1rem',
+                border: '1px solid #E2E8F0',
+                boxShadow: '0 1px 3px 0 rgba(15, 23, 42, 0.04)',
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
-                minHeight: '280px',
+                minHeight: '300px',
               }}
             >
               {/* Day Header */}
               <div
                 style={{
-                  padding: '0.75rem 1rem',
+                  padding: '0.875rem 1rem',
                   backgroundColor: '#F8FAFC',
-                  borderBottom: '1px solid #E5E7EB',
+                  borderBottom: '1px solid #E2E8F0',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                 }}
               >
-                <span style={{ fontWeight: 700, fontSize: '0.875rem', color: '#1E293B' }}>
+                <span style={{ fontWeight: 700, fontSize: '0.875rem', color: '#0F172A' }}>
                   {day.label}
                 </span>
                 <span
                   style={{
                     fontSize: '0.75rem',
-                    fontWeight: 600,
-                    backgroundColor: '#E2E8F0',
-                    color: '#475569',
-                    padding: '0.125rem 0.375rem',
-                    borderRadius: '0.25rem',
+                    fontWeight: 700,
+                    backgroundColor: daySlots.length > 0 ? '#EEF2FF' : '#F1F5F9',
+                    color: daySlots.length > 0 ? '#4338CA' : '#64748B',
+                    padding: '0.125rem 0.5rem',
+                    borderRadius: '9999px',
+                    border: daySlots.length > 0 ? '1px solid #E0E7FF' : '1px solid #E2E8F0',
                   }}
                 >
                   {daySlots.length}
@@ -153,10 +164,10 @@ export function WeeklyRoutineGrid({
               {/* Day Slots List */}
               <div
                 style={{
-                  padding: '0.75rem',
+                  padding: '0.875rem',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.5rem',
+                  gap: '0.625rem',
                   flex: 1,
                 }}
               >
@@ -167,11 +178,15 @@ export function WeeklyRoutineGrid({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      padding: '1.5rem 0.5rem',
-                      color: '#9CA3AF',
+                      padding: '2rem 0.5rem',
+                      color: '#94A3B8',
                       fontSize: '0.8125rem',
                       textAlign: 'center',
                       fontStyle: 'italic',
+                      backgroundColor: '#F8FAFC',
+                      borderRadius: '0.5rem',
+                      border: '1px dashed #E2E8F0',
+                      margin: '0.25rem 0',
                     }}
                   >
                     Sem blocos programados
@@ -180,7 +195,7 @@ export function WeeklyRoutineGrid({
                   daySlots.map((slot) => {
                     const subInfo = slot.subjectId ? subjectMap.get(slot.subjectId) : null;
                     const learnerName = slot.learnerId ? learnerMap.get(slot.learnerId) : null;
-                    const slotColor = slot.color || subInfo?.color || '#3B82F6';
+                    const slotColor = slot.color || subInfo?.color || '#4338CA';
 
                     return (
                       <div
@@ -188,55 +203,62 @@ export function WeeklyRoutineGrid({
                         data-testid={`routine-slot-${slot.id}`}
                         style={{
                           backgroundColor: '#FFFFFF',
-                          borderRadius: '0.5rem',
+                          borderRadius: '0.625rem',
                           border: '1px solid #E2E8F0',
                           borderLeft: `4px solid ${slotColor}`,
-                          padding: '0.625rem 0.75rem',
-                          boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+                          padding: '0.75rem 0.875rem',
+                          boxShadow: '0 1px 2px 0 rgba(15, 23, 42, 0.04)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.375rem',
                         }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span
                             data-testid={`slot-time-${slot.id}`}
                             style={{
                               fontSize: '0.75rem',
                               fontWeight: 700,
-                              color: '#2563EB',
+                              color: '#4338CA',
+                              backgroundColor: '#EEF2FF',
+                              padding: '0.125rem 0.375rem',
+                              borderRadius: '0.25rem',
                             }}
                           >
-                            ⏱ {slot.startTime} - {slot.endTime}
+                            ⏱️ {slot.startTime} - {slot.endTime}
                           </span>
-                          <button
-                            type="button"
-                            data-testid={`delete-slot-btn-${slot.id}`}
-                            onClick={() => onDeleteSlot(slot.id)}
-                            title="Excluir bloco de rotina"
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: '#9CA3AF',
-                              fontSize: '1rem',
-                              lineHeight: 1,
-                              cursor: 'pointer',
-                              padding: '0 0.25rem',
-                            }}
-                          >
-                            &times;
-                          </button>
+                          <Can action="manage_lessons">
+                            <button
+                              type="button"
+                              data-testid={`delete-slot-btn-${slot.id}`}
+                              onClick={() => onDeleteSlot(slot.id)}
+                              title="Excluir bloco de rotina"
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#94A3B8',
+                                fontSize: '1rem',
+                                lineHeight: 1,
+                                cursor: 'pointer',
+                                padding: '0 0.25rem',
+                              }}
+                            >
+                              &times;
+                            </button>
+                          </Can>
                         </div>
 
                         <div
                           style={{
                             fontSize: '0.875rem',
-                            fontWeight: 600,
-                            color: '#1E293B',
-                            margin: '0.25rem 0',
+                            fontWeight: 700,
+                            color: '#0F172A',
                           }}
                         >
                           {slot.title}
                         </div>
 
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.25rem' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.125rem' }}>
                           {slot.subjectName || subInfo?.name ? (
                             <span
                               style={{
@@ -244,7 +266,8 @@ export function WeeklyRoutineGrid({
                                 padding: '0.125rem 0.375rem',
                                 borderRadius: '0.25rem',
                                 backgroundColor: '#F1F5F9',
-                                color: '#475569',
+                                color: '#334155',
+                                fontWeight: 500,
                               }}
                             >
                               📚 {slot.subjectName || subInfo?.name}
@@ -258,7 +281,8 @@ export function WeeklyRoutineGrid({
                                 padding: '0.125rem 0.375rem',
                                 borderRadius: '0.25rem',
                                 backgroundColor: '#EFF6FF',
-                                color: '#1E40AF',
+                                color: '#1D4ED8',
+                                fontWeight: 500,
                               }}
                             >
                               🎓 {learnerName}
@@ -271,8 +295,9 @@ export function WeeklyRoutineGrid({
                                 fontSize: '0.6875rem',
                                 padding: '0.125rem 0.375rem',
                                 borderRadius: '0.25rem',
-                                backgroundColor: '#F3F4F6',
-                                color: '#6B7280',
+                                backgroundColor: '#F8FAFC',
+                                color: '#64748B',
+                                border: '1px solid #E2E8F0',
                               }}
                             >
                               📍 {slot.location}
@@ -284,25 +309,27 @@ export function WeeklyRoutineGrid({
                   })
                 )}
 
-                <button
-                  type="button"
-                  data-testid={`add-slot-day-btn-${day.value}`}
-                  onClick={() => onAddSlot(day.value)}
-                  style={{
-                    marginTop: 'auto',
-                    padding: '0.375rem',
-                    borderRadius: '0.375rem',
-                    border: '1px dashed #CBD5E1',
-                    backgroundColor: '#F8FAFC',
-                    color: '#64748B',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    width: '100%',
-                  }}
-                >
-                  + Adicionar Bloco
-                </button>
+                <Can action="manage_lessons">
+                  <button
+                    type="button"
+                    data-testid={`add-slot-day-btn-${day.value}`}
+                    onClick={() => onAddSlot(day.value)}
+                    style={{
+                      marginTop: 'auto',
+                      padding: '0.45rem',
+                      borderRadius: '0.5rem',
+                      border: '1.5px dashed #CBD5E1',
+                      backgroundColor: '#F8FAFC',
+                      color: '#64748B',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      width: '100%',
+                    }}
+                  >
+                    + Adicionar Bloco
+                  </button>
+                </Can>
               </div>
             </div>
           );

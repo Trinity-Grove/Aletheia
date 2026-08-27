@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import type { CreateLearnerDto, LearnerResponseDto } from '@aletheia/contracts';
 import { LearnersList } from '../../../src/components/learners/learners-list';
 import { LearnerFormModal } from '../../../src/components/learners/learner-form-modal';
+import { Can } from '../../../src/components/auth/role-guard';
 
 export interface LearnersPageProps {
   initialLearners?: LearnerResponseDto[];
@@ -99,15 +100,17 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
           </p>
         </div>
 
-        <button
-          type="button"
-          data-testid="add-learner-btn"
-          onClick={handleOpenCreate}
-          className="btn btn-primary"
-          style={{ padding: '0.625rem 1.25rem', fontWeight: 600 }}
-        >
-          + Adicionar Educando
-        </button>
+        <Can action="create_learner">
+          <button
+            type="button"
+            data-testid="add-learner-btn"
+            onClick={handleOpenCreate}
+            className="btn btn-primary"
+            style={{ padding: '0.625rem 1.25rem', fontWeight: 600 }}
+          >
+            + Adicionar Educando
+          </button>
+        </Can>
       </div>
 
       <LearnersList

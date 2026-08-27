@@ -2,6 +2,7 @@ import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { LearnerResponseDto } from '@aletheia/contracts';
+import { AuthProvider } from '../src/lib/auth/rbac-context';
 import { LearnerCard } from '../src/components/learners/learner-card';
 import { LearnerFormModal } from '../src/components/learners/learner-form-modal';
 import { LearnersList } from '../src/components/learners/learners-list';
@@ -38,16 +39,18 @@ describe('Learner Components', () => {
   });
 
   describe('LearnerCard', () => {
-    it('renders active learner details properly', () => {
+    it('renders active learner details, avatar, stage chip, and age pill properly for Guardian', () => {
       const onEdit = vi.fn();
       const onToggleArchive = vi.fn();
 
       render(
-        <LearnerCard
-          learner={mockLearner}
-          onEdit={onEdit}
-          onToggleArchive={onToggleArchive}
-        />
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <LearnerCard
+            learner={mockLearner}
+            onEdit={onEdit}
+            onToggleArchive={onToggleArchive}
+          />
+        </AuthProvider>
       );
 
       expect(screen.getByText('Clarinha')).toBeInTheDocument();
@@ -55,6 +58,9 @@ describe('Learner Components', () => {
       expect(screen.getByText(/Grammar/i)).toBeInTheDocument();
       expect(screen.getByText(/Dislexia leve/i)).toBeInTheDocument();
       expect(screen.getByText(/Gosta muito de leitura/i)).toBeInTheDocument();
+      expect(screen.getByTestId('learner-avatar')).toHaveTextContent('C');
+      expect(screen.getByTestId('learner-stage-chip')).toBeInTheDocument();
+      expect(screen.getByTestId('learner-age-pill')).toBeInTheDocument();
 
       const editBtn = screen.getByRole('button', { name: /editar/i });
       fireEvent.click(editBtn);
@@ -65,22 +71,40 @@ describe('Learner Components', () => {
       expect(onToggleArchive).toHaveBeenCalledWith(mockLearner);
     });
 
-    it('renders archived learner with reativar button', () => {
+    it('renders archived learner with reativar button for Guardian', () => {
       const onEdit = vi.fn();
       const onToggleArchive = vi.fn();
 
       render(
-        <LearnerCard
-          learner={mockArchivedLearner}
-          onEdit={onEdit}
-          onToggleArchive={onToggleArchive}
-        />
+        <AuthProvider initialRole="GUARDIAN">
+          <LearnerCard
+            learner={mockArchivedLearner}
+            onEdit={onEdit}
+            onToggleArchive={onToggleArchive}
+          />
+        </AuthProvider>
       );
 
       expect(screen.getByText('Pedro')).toBeInTheDocument();
       const reactivateBtn = screen.getByRole('button', { name: /reativar/i });
       fireEvent.click(reactivateBtn);
       expect(onToggleArchive).toHaveBeenCalledWith(mockArchivedLearner);
+    });
+
+    it('hides edit and archive buttons for EDUCATOR role (RBAC Gated)', () => {
+      render(
+        <AuthProvider initialRole="EDUCATOR">
+          <LearnerCard
+            learner={mockLearner}
+            onEdit={vi.fn()}
+            onToggleArchive={vi.fn()}
+          />
+        </AuthProvider>
+      );
+
+      expect(screen.getByText('Clarinha')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /editar/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /arquivar/i })).not.toBeInTheDocument();
     });
   });
 
@@ -145,31 +169,57 @@ describe('Learner Components', () => {
   });
 
   describe('LearnersList', () => {
-    it('renders active and archived learners with toggle filter', () => {
+    it('renders active and archived learners with modern tab switcher and count badges', () => {
       render(
-        <LearnersList
-          learners={[mockLearner, mockArchivedLearner]}
-          onEdit={vi.fn()}
-          onToggleArchive={vi.fn()}
-        />
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <LearnersList
+            learners={[mockLearner, mockArchivedLearner]}
+            onEdit={vi.fn()}
+            onToggleArchive={vi.fn()}
+          />
+        </AuthProvider>
       );
+
+      expect(screen.getByTestId('active-learners-count-badge')).toHaveTextContent('1');
+      expect(screen.getByTestId('archived-learners-count-badge')).toHaveTextContent('1');
 
       // By default shows active learners
       expect(screen.getByText('Clarinha')).toBeInTheDocument();
       expect(screen.queryByText('Pedro')).not.toBeInTheDocument();
 
-      // Switch tab or filter to show archived
+      // Switch tab to show archived
       const archivedTab = screen.getByRole('button', { name: /arquivados/i });
       fireEvent.click(archivedTab);
 
       expect(screen.getByText('Pedro')).toBeInTheDocument();
       expect(screen.queryByText('Clarinha')).not.toBeInTheDocument();
     });
+
+    it('renders empty state illustration when list is empty', () => {
+      render(
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <LearnersList
+            learners={[]}
+            onEdit={vi.fn()}
+            onToggleArchive={vi.fn()}
+            onAddLearner={vi.fn()}
+          />
+        </AuthProvider>
+      );
+
+      expect(screen.getByTestId('learners-empty-state')).toBeInTheDocument();
+      expect(screen.getByText(/Nenhum educando ativo cadastrado/i)).toBeInTheDocument();
+      expect(screen.getByTestId('add-learner-empty-btn')).toBeInTheDocument();
+    });
   });
 
   describe('LearnersPage', () => {
-    it('renders page layout with add button', () => {
-      render(<LearnersPage initialLearners={[mockLearner]} />);
+    it('renders page layout with add button for OWNER_GUARDIAN', () => {
+      render(
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <LearnersPage initialLearners={[mockLearner]} />
+        </AuthProvider>
+      );
 
       expect(screen.getByTestId('add-learner-btn')).toBeInTheDocument();
       expect(screen.getByText('Clarinha')).toBeInTheDocument();
@@ -178,5 +228,17 @@ describe('Learner Components', () => {
       fireEvent.click(screen.getByTestId('add-learner-btn'));
       expect(screen.getByTestId('learner-first-name-input')).toBeInTheDocument();
     });
+
+    it('hides add-learner-btn for EDUCATOR role (RBAC Gated)', () => {
+      render(
+        <AuthProvider initialRole="EDUCATOR">
+          <LearnersPage initialLearners={[mockLearner]} />
+        </AuthProvider>
+      );
+
+      expect(screen.queryByTestId('add-learner-btn')).not.toBeInTheDocument();
+      expect(screen.getByText('Clarinha')).toBeInTheDocument();
+    });
   });
 });
+

@@ -4,6 +4,12 @@ import { useAuthRole } from './rbac-context';
 export type PermissionAction =
   | 'delete_learner'
   | 'delete_learners'
+  | 'create_learner'
+  | 'create_learners'
+  | 'manage_learner'
+  | 'manage_learners'
+  | 'edit_learner'
+  | 'edit_learners'
   | 'edit_family_settings'
   | 'edit_settings'
   | 'invite_members'
@@ -17,7 +23,10 @@ export type PermissionAction =
   | 'manage_attendance'
   | 'manage_lessons'
   | 'manage_lesson'
+  | 'create_lesson'
   | 'log_attendance'
+  | 'manage_devotional'
+  | 'manage_curriculum'
   | 'upload_portfolio_items'
   | 'upload_portfolio_item'
   | 'upload_portfolio'
@@ -27,6 +36,8 @@ export type PermissionAction =
 export interface RbacPermissions {
   role: FamilyRole | null;
   canDeleteLearners: boolean;
+  canManageLearners: boolean;
+  canCreateLearners: boolean;
   canEditFamilySettings: boolean;
   canInviteMembers: boolean;
   canDeleteFamily: boolean;
@@ -34,6 +45,8 @@ export interface RbacPermissions {
   canGenerateTranscripts: boolean;
   canManageAttendance: boolean;
   canManageLessons: boolean;
+  canManageDevotional: boolean;
+  canManageCurriculum: boolean;
   canLogAttendance: boolean;
   canUploadPortfolioItems: boolean;
   canModifyComplianceTargets: boolean;
@@ -41,6 +54,9 @@ export interface RbacPermissions {
   // Property aliases
   delete_learner: boolean;
   delete_learners: boolean;
+  create_learner: boolean;
+  manage_learners: boolean;
+  edit_learner: boolean;
   edit_family_settings: boolean;
   edit_settings: boolean;
   invite_members: boolean;
@@ -49,6 +65,8 @@ export interface RbacPermissions {
   generate_transcripts: boolean;
   manage_attendance: boolean;
   manage_lessons: boolean;
+  manage_devotional: boolean;
+  manage_curriculum: boolean;
   log_attendance: boolean;
   upload_portfolio_items: boolean;
   modify_compliance_targets: boolean;
@@ -66,6 +84,14 @@ export function hasPermission(
   switch (normalizedAction) {
     case 'delete_learner':
     case 'delete_learners':
+      return role === 'OWNER_GUARDIAN' || role === 'GUARDIAN' || role === 'CO_GUARDIAN';
+
+    case 'create_learner':
+    case 'create_learners':
+    case 'manage_learner':
+    case 'manage_learners':
+    case 'edit_learner':
+    case 'edit_learners':
       return role === 'OWNER_GUARDIAN' || role === 'GUARDIAN' || role === 'CO_GUARDIAN';
 
     case 'edit_family_settings':
@@ -108,6 +134,27 @@ export function hasPermission(
         role === 'EDUCATOR'
       );
 
+    case 'manage_devotional':
+    case 'manage_devotionals':
+    case 'create_prayer':
+    case 'manage_prayers':
+      return (
+        role === 'OWNER_GUARDIAN' ||
+        role === 'GUARDIAN' ||
+        role === 'CO_GUARDIAN' ||
+        role === 'EDUCATOR'
+      );
+
+    case 'manage_curriculum':
+    case 'create_subject':
+    case 'create_objective':
+      return (
+        role === 'OWNER_GUARDIAN' ||
+        role === 'GUARDIAN' ||
+        role === 'CO_GUARDIAN' ||
+        role === 'EDUCATOR'
+      );
+
     case 'log_attendance':
     case 'record_attendance':
       return (
@@ -142,6 +189,8 @@ export function getPermissions(role: FamilyRole | null | undefined): RbacPermiss
   const isAnyActiveRole = isGuardianOrOwner || role === 'EDUCATOR';
 
   const canDeleteLearners = isGuardianOrOwner;
+  const canManageLearners = isGuardianOrOwner;
+  const canCreateLearners = isGuardianOrOwner;
   const canEditFamilySettings = isGuardianOrOwner;
   const canInviteMembers = isGuardianOrOwner;
   const canDeleteFamily = isOwner;
@@ -149,6 +198,8 @@ export function getPermissions(role: FamilyRole | null | undefined): RbacPermiss
   const canGenerateTranscripts = isGuardianOrOwner;
   const canManageAttendance = isGuardianOrOwner;
   const canManageLessons = isAnyActiveRole;
+  const canManageDevotional = isAnyActiveRole;
+  const canManageCurriculum = isAnyActiveRole;
   const canLogAttendance = isAnyActiveRole;
   const canUploadPortfolioItems = isAnyActiveRole;
   const canModifyComplianceTargets = isGuardianOrOwner;
@@ -156,6 +207,8 @@ export function getPermissions(role: FamilyRole | null | undefined): RbacPermiss
   return {
     role: role ?? null,
     canDeleteLearners,
+    canManageLearners,
+    canCreateLearners,
     canEditFamilySettings,
     canInviteMembers,
     canDeleteFamily,
@@ -163,12 +216,17 @@ export function getPermissions(role: FamilyRole | null | undefined): RbacPermiss
     canGenerateTranscripts,
     canManageAttendance,
     canManageLessons,
+    canManageDevotional,
+    canManageCurriculum,
     canLogAttendance,
     canUploadPortfolioItems,
     canModifyComplianceTargets,
 
     delete_learner: canDeleteLearners,
     delete_learners: canDeleteLearners,
+    create_learner: canCreateLearners,
+    manage_learners: canManageLearners,
+    edit_learner: canManageLearners,
     edit_family_settings: canEditFamilySettings,
     edit_settings: canEditFamilySettings,
     invite_members: canInviteMembers,
@@ -177,6 +235,8 @@ export function getPermissions(role: FamilyRole | null | undefined): RbacPermiss
     generate_transcripts: canGenerateTranscripts,
     manage_attendance: canManageAttendance,
     manage_lessons: canManageLessons,
+    manage_devotional: canManageDevotional,
+    manage_curriculum: canManageCurriculum,
     log_attendance: canLogAttendance,
     upload_portfolio_items: canUploadPortfolioItems,
     modify_compliance_targets: canModifyComplianceTargets,

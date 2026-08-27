@@ -1,6 +1,6 @@
-import { cleanup, render, screen, fireEvent, within } from '@testing-library/react';
+import { cleanup, render, screen, fireEvent } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import React, { useState } from 'react';
+import React from 'react';
 import type { LearnerSummaryDto, NotificationItemResponseDto } from '@aletheia/contracts';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../src/components/ui/card';
 import { Button } from '../src/components/ui/button';
@@ -37,6 +37,7 @@ const mockNotifications: NotificationItemResponseDto[] = [
     message: 'Momento de leitura em Provérbios',
     isRead: false,
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
 ];
 
