@@ -23,9 +23,10 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   { label: 'Currículo', href: '/curriculum', icon: '📚' },
   { label: 'Agenda & Rotina', href: '/schedule', icon: '📅' },
   { label: 'Diário de Aprendizagem', href: '/records', icon: '✍️' },
-  { label: 'Portfólio', href: '/portfolio', icon: '🎨' },
+  { label: 'Portfólio', href: '/portfolio', icon: '🖼️' },
   { label: 'Frequência', href: '/attendance', icon: '📋' },
   { label: 'Relatórios', href: '/reports', icon: '📊' },
+  { label: 'Design System', href: '/design-system', icon: '🎨' },
   { label: 'Configurações', href: '/settings', icon: '⚙️' },
 ];
 
