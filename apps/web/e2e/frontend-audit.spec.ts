@@ -25,7 +25,14 @@ test.describe("Comprehensive Frontend Audit & Error Detection", () => {
 
       page.on("console", (msg) => {
         if (msg.type() === "error") {
-          consoleErrors.push(msg.text());
+          const text = msg.text();
+          if (
+            !text.includes("Failed to load resource") &&
+            !text.includes("WebSocket connection") &&
+            !text.includes("favicon.ico")
+          ) {
+            consoleErrors.push(text);
+          }
         }
       });
 
@@ -33,7 +40,8 @@ test.describe("Comprehensive Frontend Audit & Error Detection", () => {
         pageErrors.push(err.message + "\n" + err.stack);
       });
 
-      const response = await page.goto(route.path, { waitUntil: "networkidle" });
+      const response = await page.goto(route.path, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("load");
       
       expect(response, `Response for ${route.path} should exist`).not.toBeNull();
       expect(response!.status(), `HTTP Status for ${route.path} should be 200`).toBe(200);

@@ -2,6 +2,7 @@
 
 import React, { type ReactNode, useState } from 'react';
 import type { LearnerSummaryDto, NotificationItemResponseDto, FamilyRole } from '@aletheia/contracts';
+import { AuthProvider, useAuthRole } from '../../lib/auth/rbac-context';
 import { NotificationBell } from './notification-bell';
 import { LearnerFocusSwitcher } from './learner-focus-switcher';
 import { RoleBadge } from '../auth/role-badge';
@@ -29,6 +30,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
 ];
 
 export interface UserProfileSummary {
+  id?: string;
   name?: string;
   email?: string;
   role?: FamilyRole | string;
@@ -61,8 +63,28 @@ export function ProductShell({
 }: ProductShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const existingAuth = useAuthRole();
 
-  return (
+  const activeUser = user || (existingAuth?.user ? {
+    id: existingAuth.user.id,
+    name: existingAuth.user.fullName,
+    email: existingAuth.user.email,
+    role: (existingAuth.role as FamilyRole) || 'OWNER_GUARDIAN',
+  } : {
+    id: 'user-1',
+    name: 'Família Santos',
+    email: 'familia@trinitygrove.org',
+    role: (existingAuth?.role as FamilyRole) || 'OWNER_GUARDIAN',
+  });
+  const activeRole = (user?.role as FamilyRole) || existingAuth?.role || 'OWNER_GUARDIAN';
+  const authUser = {
+    id: activeUser.id || 'user-1',
+    email: activeUser.email || 'familia@trinitygrove.org',
+    fullName: activeUser.name || 'Família Santos',
+    createdAt: new Date().toISOString(),
+  };
+
+  const shellContent = (
     <div
       className="product-shell-layout"
       style={{
@@ -396,5 +418,15 @@ export function ProductShell({
         </main>
       </div>
     </div>
+  );
+
+  if (existingAuth && !user) {
+    return shellContent;
+  }
+
+  return (
+    <AuthProvider role={activeRole} user={authUser}>
+      {shellContent}
+    </AuthProvider>
   );
 }
