@@ -14,6 +14,7 @@ const routes = [
   { path: "/portfolio", name: "Portfolio" },
   { path: "/attendance", name: "Attendance" },
   { path: "/reports", name: "Reports" },
+  { path: "/design-system", name: "Design System" },
   { path: "/settings", name: "Settings" },
 ];
 
