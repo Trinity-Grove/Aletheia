@@ -114,38 +114,54 @@ export function ProductShell({
             alignItems: 'center',
             justifyContent: isCollapsed ? 'center' : 'space-between',
             padding: isCollapsed ? '0 0.5rem' : '0 1.25rem',
-            borderBottom: '1px solid var(--border-light, #E2E8F0)',
+            borderBottom: '1px solid var(--border-light, rgba(18, 63, 52, 0.14))',
           }}
         >
           {!isCollapsed && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
               <div
                 style={{
-                  width: '2rem',
-                  height: '2rem',
-                  borderRadius: '0.5rem',
-                  backgroundColor: 'var(--color-indigo-700, #4338CA)',
-                  color: '#FFFFFF',
+                  width: '2.25rem',
+                  height: '2.25rem',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--forest, #123f34)',
+                  color: 'var(--gold, #d3a526)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: '1rem',
-                  boxShadow: '0 2px 4px 0 rgba(67, 56, 202, 0.25)',
-                }}
-              >
-                Α
-              </div>
-              <span
-                style={{
-                  fontWeight: 800,
+                  fontFamily: 'var(--font-serif)',
                   fontSize: '1.25rem',
-                  letterSpacing: '-0.025em',
-                  color: 'var(--color-slate-900, #0F172A)',
+                  lineHeight: 1,
+                  boxShadow: '0 2px 6px rgba(18, 63, 52, 0.2)',
                 }}
               >
-                Aletheia
-              </span>
+                ἀ
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-serif)',
+                    fontWeight: 400,
+                    fontSize: '1.35rem',
+                    letterSpacing: '-0.02em',
+                    color: 'var(--forest, #123f34)',
+                    lineHeight: 1.1,
+                  }}
+                >
+                  Aletheia
+                </span>
+                <span
+                  style={{
+                    fontSize: '0.6875rem',
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    color: 'var(--sage, #78937f)',
+                    fontWeight: 700,
+                  }}
+                >
+                  Trinity Grove
+                </span>
+              </div>
             </div>
           )}
 
@@ -157,7 +173,7 @@ export function ProductShell({
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--color-slate-500, #64748B)',
+              color: 'var(--muted, #5c6f67)',
               cursor: 'pointer',
               padding: '0.375rem',
               borderRadius: '0.375rem',
@@ -197,12 +213,13 @@ export function ProductShell({
                   gap: '0.75rem',
                   padding: isCollapsed ? '0.625rem 0' : '0.625rem 0.875rem',
                   justifyContent: isCollapsed ? 'center' : 'flex-start',
-                  borderRadius: '0.5rem',
+                  borderRadius: 'var(--radius-md, 6px)',
                   textDecoration: 'none',
                   fontSize: '0.875rem',
-                  fontWeight: isActive ? 600 : 500,
-                  color: isActive ? 'var(--color-indigo-700, #4338CA)' : 'var(--color-slate-700, #334155)',
-                  backgroundColor: isActive ? 'var(--color-indigo-50, #EEF2FF)' : 'transparent',
+                  fontWeight: isActive ? 700 : 500,
+                  color: isActive ? 'var(--forest, #123f34)' : 'var(--muted, #5c6f67)',
+                  backgroundColor: isActive ? 'var(--sage-soft, #eef1e8)' : 'transparent',
+                  borderLeft: isActive ? '3px solid var(--gold, #d3a526)' : '3px solid transparent',
                   transition: 'all 0.15s ease',
                 }}
               >
@@ -219,8 +236,8 @@ export function ProductShell({
             data-testid="user-profile-summary"
             style={{
               padding: '1rem',
-              borderTop: '1px solid var(--border-light, #E2E8F0)',
-              backgroundColor: 'var(--color-slate-50, #F8FAFC)',
+              borderTop: '1px solid var(--border-light, rgba(18, 63, 52, 0.14))',
+              backgroundColor: 'var(--sage-soft, #eef1e8)',
               display: 'flex',
               flexDirection: isCollapsed ? 'column' : 'row',
               alignItems: 'center',
@@ -233,8 +250,8 @@ export function ProductShell({
                 width: '2.25rem',
                 height: '2.25rem',
                 borderRadius: '50%',
-                backgroundColor: 'var(--color-slate-200, #E2E8F0)',
-                color: 'var(--color-slate-700, #334155)',
+                backgroundColor: 'var(--forest, #123f34)',
+                color: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -318,9 +335,11 @@ export function ProductShell({
             <strong
               data-testid="brand-title"
               style={{
-                fontSize: '1.25rem',
-                color: 'var(--color-slate-900, #0F172A)',
-                letterSpacing: '-0.025em',
+                fontFamily: 'var(--font-serif)',
+                fontSize: '1.35rem',
+                fontWeight: 400,
+                color: 'var(--forest, #123f34)',
+                letterSpacing: '-0.02em',
               }}
             >
               Aletheia
