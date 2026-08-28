@@ -15,6 +15,9 @@ import {
   Modal,
 } from '../src/components/ui';
 import { ProductShell } from '../src/components/layout/product-shell';
+import { RecordsJournalView } from '../src/components/records/records-journal-view';
+import { AttendanceTrackerView } from '../src/components/reports/attendance-tracker-view';
+import { AuthProvider } from '../src/lib/auth/rbac-context';
 
 const mockLearners: LearnerSummaryDto[] = [
   {
@@ -307,5 +310,53 @@ describe('ProductShell Integration', () => {
 
     fireEvent.click(screen.getByTestId('sidebar-backdrop'));
     expect(screen.queryByTestId('sidebar-backdrop')).not.toBeInTheDocument();
+  });
+});
+
+describe('Native select option safety', () => {
+  afterEach(cleanup);
+
+  it('renders record and attendance options as text-only content without console warnings', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    try {
+      render(
+        <AuthProvider role="OWNER_GUARDIAN">
+          <RecordsJournalView
+            records={[]}
+            learners={mockLearners}
+            subjects={[]}
+            activeLearnerId={null}
+            onOpenCreateRecord={vi.fn()}
+            onEditRecord={vi.fn()}
+            onDeleteRecord={vi.fn()}
+            onAddEvidence={vi.fn()}
+          />
+        </AuthProvider>,
+      );
+
+      const recordOption = screen.getByRole('option', { name: 'Lição Planejada' });
+      expect(recordOption.querySelector('svg')).toBeNull();
+
+      cleanup();
+
+      render(
+        <AuthProvider role="OWNER_GUARDIAN">
+          <AttendanceTrackerView
+            records={[]}
+            learners={mockLearners}
+            activeLearnerId={null}
+            onLogAttendance={vi.fn().mockResolvedValue(undefined)}
+            onBulkLogAttendance={vi.fn().mockResolvedValue(undefined)}
+          />
+        </AuthProvider>,
+      );
+
+      const attendanceOption = screen.getByRole('option', { name: 'Presente' });
+      expect(attendanceOption.querySelector('svg')).toBeNull();
+      expect(consoleError).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 });

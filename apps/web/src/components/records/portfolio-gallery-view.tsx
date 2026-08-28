@@ -164,7 +164,7 @@ export function PortfolioGalleryView({
             <option value="">Todos os tipos de evidência</option>
             {Object.entries(EVIDENCE_TYPE_CONFIG).map(([k, item]) => (
               <option key={k} value={k}>
-                {item.icon} {item.label}
+                {item.label}
               </option>
             ))}
           </select>
