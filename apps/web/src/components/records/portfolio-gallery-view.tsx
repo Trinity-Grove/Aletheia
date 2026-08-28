@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Palette, GraduationCap, BookOpen, Calendar, Paperclip } from 'lucide-react';
+import { Palette, GraduationCap, BookOpen, Calendar, Paperclip, Star } from 'lucide-react';
 import type {
   PortfolioItemResponseDto,
   LearnerSummaryDto,
@@ -94,8 +94,9 @@ export function PortfolioGalleryView({
             <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#111827' }}>
               {filteredItems.length} obra(s)
             </span>
-            <div style={{ fontSize: '0.75rem', color: '#B45309', fontWeight: 600 }}>
-              ⭐ {items.filter((i) => i.isHighlight).length} destaque(s)
+            <div style={{ fontSize: '0.75rem', color: '#B45309', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+              <Star size={12} fill="#F59E0B" stroke="#D97706" />
+              <span>{items.filter((i) => i.isHighlight).length} destaque(s)</span>
             </div>
           </div>
 
@@ -203,9 +204,13 @@ export function PortfolioGalleryView({
               fontSize: '0.875rem',
               fontWeight: 600,
               cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.375rem',
             }}
           >
-            ⭐ Apenas Destaques
+            <Star size={14} fill={filterOnlyHighlights ? '#F59E0B' : 'none'} stroke={filterOnlyHighlights ? '#D97706' : 'currentColor'} />
+            <span>Apenas Destaques</span>
           </button>
         </div>
 
@@ -388,9 +393,13 @@ export function PortfolioGalleryView({
                         padding: '0.2rem 0.5rem',
                         borderRadius: '9999px',
                         border: '1px solid #FCD34D',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
                       }}
                     >
-                      ⭐ Destaque
+                      <Star size={11} fill="#F59E0B" stroke="#D97706" />
+                      <span>Destaque</span>
                     </span>
                   )}
                 </div>

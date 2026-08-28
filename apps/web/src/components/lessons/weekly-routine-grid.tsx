@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { BookOpen, GraduationCap, MapPin } from 'lucide-react';
+import { BookOpen, GraduationCap, MapPin, Clock } from 'lucide-react';
 import type {
   DayOfWeek,
   LearnerSummaryDto,
@@ -224,9 +224,13 @@ export function WeeklyRoutineGrid({
                               backgroundColor: '#EEF2FF',
                               padding: '0.125rem 0.375rem',
                               borderRadius: '0.25rem',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
                             }}
                           >
-                            ⏱️ {slot.startTime} - {slot.endTime}
+                            <Clock size={11} />
+                            <span>{slot.startTime} - {slot.endTime}</span>
                           </span>
                           <Can action="manage_lessons">
                             <button

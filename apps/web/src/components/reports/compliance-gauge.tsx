@@ -255,9 +255,13 @@ export function ComplianceGauge({
                 fontSize: '0.875rem',
                 fontWeight: 600,
                 color: '#374151',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.375rem',
               }}
             >
-              ⏱️ Horas de Instrução
+              <Clock size={14} />
+              <span>Horas de Instrução</span>
             </span>
             <span
               data-testid="hours-compliance-percentage"

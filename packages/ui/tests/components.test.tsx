@@ -1,6 +1,7 @@
 import { cleanup, render, screen, fireEvent } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
+import { BookOpen, Trash2, User } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -31,13 +32,14 @@ describe('@aletheia/ui Component Primitives', () => {
     it('renders Button with variants, sizes and handles clicks', () => {
       const handleClick = vi.fn();
       render(
-        <Button variant="primary" size="md" onClick={handleClick} leftIcon={<span>📖</span>}>
+        <Button variant="primary" size="md" onClick={handleClick} leftIcon={<BookOpen size={16} data-testid="book-icon" />}>
           Confirmar
         </Button>
       );
 
       const btn = screen.getByTestId('button');
       expect(btn).toHaveTextContent('Confirmar');
+      expect(screen.getByTestId('book-icon')).toBeInTheDocument();
       expect(btn).toHaveAttribute('data-variant', 'primary');
       expect(btn).toHaveAttribute('data-size', 'md');
       fireEvent.click(btn);
@@ -52,10 +54,10 @@ describe('@aletheia/ui Component Primitives', () => {
     });
 
     it('renders IconButton with aria-label and icon', () => {
-      render(<IconButton aria-label="Excluir item" icon={<span>🗑️</span>} />);
+      render(<IconButton aria-label="Excluir item" icon={<Trash2 size={16} data-testid="trash-icon" />} />);
       const btn = screen.getByTestId('icon-button');
       expect(btn).toHaveAttribute('aria-label', 'Excluir item');
-      expect(btn).toHaveTextContent('🗑️');
+      expect(screen.getByTestId('trash-icon')).toBeInTheDocument();
     });
 
     it('renders TextLink with href', () => {
@@ -104,7 +106,7 @@ describe('@aletheia/ui Component Primitives', () => {
           label="Nome"
           error="Nome é obrigatório"
           helperText="Informe seu nome completo"
-          leftIcon={<span>👤</span>}
+          leftIcon={<User size={16} data-testid="user-icon" />}
           defaultValue="João"
         />
       );

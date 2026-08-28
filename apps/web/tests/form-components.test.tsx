@@ -1,6 +1,7 @@
 import { cleanup, render, screen, fireEvent } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import React, { useState } from 'react';
+import { Search, X } from 'lucide-react';
 import { Input, Select, Textarea, Switch } from '../src/components/ui';
 
 describe('UI Primitives: Form Controls', () => {
@@ -41,8 +42,8 @@ describe('UI Primitives: Form Controls', () => {
       render(
         <Input
           label="Busca"
-          leftIcon={<span data-testid="search-icon">🔍</span>}
-          rightIcon={<span data-testid="clear-icon">✖</span>}
+          leftIcon={<Search data-testid="search-icon" size={16} />}
+          rightIcon={<X data-testid="clear-icon" size={16} />}
         />
       );
 

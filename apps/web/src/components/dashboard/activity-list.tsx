@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Check } from 'lucide-react';
+import { Check, Clock } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, Badge, Button, EmptyState } from '@aletheia/ui';
 
 export interface DailyActivityItem {
@@ -32,8 +32,8 @@ export function ActivityList({ activities, onToggleComplete }: ActivityListProps
               {completedCount} de {activities.length} atividades concluídas
             </p>
           </div>
-          <Badge variant={completedCount === activities.length && activities.length > 0 ? 'emerald' : 'amber'} size="sm">
-            {completedCount === activities.length && activities.length > 0 ? '100% Concluído' : `${completedCount}/${activities.length}`}
+          <Badge variant={completedCount === activities.length && activities.length > 0 ? 'emerald' : 'slate'} size="md">
+            {completedCount}/{activities.length}
           </Badge>
         </div>
       </CardHeader>
@@ -41,12 +41,7 @@ export function ActivityList({ activities, onToggleComplete }: ActivityListProps
         {activities.length === 0 ? (
           <EmptyState
             title="Nenhuma atividade para hoje"
-            description="Aproveite o dia para leituras livres ou planeje uma nova lição na agenda."
-            action={
-              <a href="/schedule" className="ui-button ui-button--primary ui-button--sm">
-                Abrir Planejador de Lições
-              </a>
-            }
+            description="Aproveite o dia ou adicione novas lições e rotinas ao cronograma."
           />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -58,15 +53,15 @@ export function ActivityList({ activities, onToggleComplete }: ActivityListProps
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '0.875rem 1.125rem',
+                  padding: '0.75rem 1rem',
                   borderRadius: 'var(--radius-md)',
-                  backgroundColor: act.completed ? 'var(--color-brand-sage-soft)' : 'var(--bg-surface)',
-                  border: '1px solid var(--border-light)',
-                  opacity: act.completed ? 0.75 : 1,
-                  transition: 'all 0.2s ease',
+                  backgroundColor: act.completed ? 'var(--sage-soft)' : 'var(--parchment-light)',
+                  border: '1px solid',
+                  borderColor: act.completed ? 'var(--color-brand-sage)' : 'var(--border-light)',
+                  transition: 'all 0.15s ease',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <button
                     type="button"
                     data-testid={`toggle-activity-${act.id}`}
@@ -109,8 +104,9 @@ export function ActivityList({ activities, onToggleComplete }: ActivityListProps
                         </span>
                       )}
                       {act.time && (
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                          ⏰ {act.time}
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <Clock size={12} />
+                          <span>{act.time}</span>
                         </span>
                       )}
                       {act.durationMinutes && (

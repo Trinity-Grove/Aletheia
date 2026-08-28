@@ -10,6 +10,7 @@ import {
   Link2,
   FileEdit,
   Award,
+  Star,
 } from 'lucide-react';
 import type {
   CreatePortfolioItemDto,
@@ -527,7 +528,10 @@ export function PortfolioItemModal({
               checked={isHighlight}
               onChange={(e) => setIsHighlight(e.target.checked)}
             />
-            <span>⭐ Marcar como Destaque do Portfólio (Showcase)</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}>
+              <Star size={14} fill={isHighlight ? '#F59E0B' : 'none'} stroke={isHighlight ? '#D97706' : 'currentColor'} />
+              <span>Marcar como Destaque do Portfólio (Showcase)</span>
+            </span>
           </label>
 
           {/* Footer */}
