@@ -1,0 +1,95 @@
+/* Layer 3: component tokens — stable customization contracts. */
+:root {
+  --ui-button-height-sm: var(--ui-space-8);
+  --ui-button-height-md: var(--ui-space-10);
+  --ui-button-height-lg: var(--ui-space-12);
+  --ui-button-radius: var(--ui-radius-md);
+  --ui-button-font-weight: var(--ui-font-weight-semibold);
+  --ui-button-primary-background: var(--ui-action-primary-background);
+  --ui-button-primary-background-hover: var(--ui-action-primary-background-hover);
+  --ui-button-primary-background-active: var(--ui-action-primary-background-active);
+  --ui-button-primary-foreground: var(--ui-action-primary-foreground);
+
+  --ui-control-height-sm: var(--ui-space-8);
+  --ui-control-height-md: var(--ui-space-10);
+  --ui-control-height-lg: var(--ui-space-12);
+  --ui-control-radius: var(--ui-radius-md);
+  --ui-control-component-background: var(--ui-control-background);
+  --ui-control-component-border: var(--ui-control-border);
+  --ui-control-component-border-hover: var(--ui-control-border-hover);
+  --ui-control-component-border-focus: var(--ui-control-border-focus);
+  --ui-control-component-placeholder: var(--ui-control-placeholder);
+
+  --ui-card-background: var(--ui-surface-default);
+  --ui-card-border: var(--ui-border-default);
+  --ui-card-radius: var(--ui-radius-lg);
+  --ui-card-shadow: var(--ui-elevation-raised);
+
+  --ui-overlay-modal-background: var(--ui-surface-default);
+  --ui-overlay-modal-border: var(--ui-border-default);
+  --ui-overlay-modal-radius: var(--ui-radius-xl);
+  --ui-overlay-modal-shadow: var(--ui-elevation-modal);
+  --ui-drawer-width: var(--ui-layout-drawer-width);
+  --ui-drawer-background: var(--ui-surface-default);
+  --ui-drawer-shadow: var(--ui-elevation-modal);
+  --ui-dropdown-background: var(--ui-surface-default);
+  --ui-dropdown-border: var(--ui-border-default);
+  --ui-dropdown-radius: var(--ui-radius-md);
+  --ui-dropdown-shadow: var(--ui-elevation-popover);
+  --ui-dropdown-item-background-hover: var(--ui-surface-hover);
+  --ui-dropdown-item-foreground: var(--ui-text-primary);
+  --ui-tooltip-background: var(--ui-surface-inverse);
+  --ui-tooltip-foreground: var(--ui-text-inverse);
+  --ui-tooltip-radius: var(--ui-radius-sm);
+  --ui-tooltip-shadow: var(--ui-elevation-overlay);
+
+  --ui-navigation-sidebar-width: var(--ui-layout-sidebar-width);
+  --ui-navigation-sidebar-collapsed-width: var(--ui-layout-sidebar-collapsed-width);
+  --ui-navigation-header-height: var(--ui-layout-header-height);
+  --ui-navigation-sidebar-background: var(--ui-surface-default);
+  --ui-navigation-header-background: var(--ui-surface-header-translucent);
+  --ui-navigation-link-foreground: var(--ui-text-secondary);
+  --ui-navigation-link-foreground-hover: var(--ui-text-brand);
+  --ui-navigation-link-background-hover: var(--ui-surface-hover);
+  --ui-navigation-link-background-active: var(--ui-action-primary-background);
+  --ui-navigation-link-foreground-active: var(--ui-action-primary-foreground);
+
+  /* Legacy aliases remain public for existing package and application CSS. */
+  --btn-height-sm: var(--ui-button-height-sm);
+  --btn-height-md: var(--ui-button-height-md);
+  --btn-height-lg: var(--ui-button-height-lg);
+  --btn-radius: var(--ui-button-radius);
+  --btn-font-weight: var(--ui-button-font-weight);
+  --btn-primary-bg: var(--ui-button-primary-background);
+  --btn-primary-hover: var(--ui-button-primary-background-hover);
+  --btn-primary-active: var(--ui-button-primary-background-active);
+  --btn-primary-fg: var(--ui-button-primary-foreground);
+  --input-height-sm: var(--ui-control-height-sm);
+  --input-height-md: var(--ui-control-height-md);
+  --input-height-lg: var(--ui-control-height-lg);
+  --input-bg: var(--ui-control-component-background);
+  --input-border: var(--ui-control-component-border);
+  --input-border-hover: var(--ui-control-component-border-hover);
+  --input-border-focus: var(--ui-control-component-border-focus);
+  --input-radius: var(--ui-control-radius);
+  --input-placeholder: var(--ui-control-component-placeholder);
+  --card-bg: var(--ui-card-background);
+  --card-border: var(--ui-card-border);
+  --card-radius: var(--ui-card-radius);
+  --card-shadow: var(--ui-card-shadow);
+  --modal-bg: var(--ui-overlay-modal-background);
+  --modal-border: var(--ui-overlay-modal-border);
+  --modal-radius: var(--ui-overlay-modal-radius);
+  --modal-shadow: var(--ui-overlay-modal-shadow);
+  --drawer-width: var(--ui-drawer-width);
+  --drawer-bg: var(--ui-drawer-background);
+  --tooltip-bg: var(--ui-tooltip-background);
+  --tooltip-fg: var(--ui-tooltip-foreground);
+  --tooltip-radius: var(--ui-tooltip-radius);
+  --tooltip-shadow: var(--ui-tooltip-shadow);
+  --sidebar-width: var(--ui-navigation-sidebar-width);
+  --sidebar-collapsed-width: var(--ui-navigation-sidebar-collapsed-width);
+  --header-height: var(--ui-navigation-header-height);
+  --sidebar-bg: var(--ui-navigation-sidebar-background);
+  --header-bg: var(--ui-navigation-header-background);
+}
