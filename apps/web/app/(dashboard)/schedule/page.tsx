@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { Calendar, CalendarRange } from 'lucide-react';
 import type {
   CompleteLessonDto,
   CreateLessonPlanDto,
@@ -332,9 +333,13 @@ export default function SchedulePage() {
                 fontSize: '0.875rem',
                 boxShadow: activeTab === 'agenda' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                 cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
               }}
             >
-              📅 Agenda Diária (Checklist)
+              <Calendar size={16} />
+              <span>Agenda Diária (Checklist)</span>
             </button>
             <button
               type="button"
@@ -350,9 +355,13 @@ export default function SchedulePage() {
                 fontSize: '0.875rem',
                 boxShadow: activeTab === 'routine' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                 cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
               }}
             >
-              🗓️ Rotina Semanal
+              <CalendarRange size={16} />
+              <span>Rotina Semanal</span>
             </button>
           </div>
         </div>

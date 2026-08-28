@@ -1,6 +1,13 @@
 'use client';
 
 import React from 'react';
+import {
+  Sprout,
+  BookOpen,
+  Calendar,
+  Lightbulb,
+  MessageSquare,
+} from 'lucide-react';
 import type { EducationalStage, LearnerResponseDto } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 
@@ -144,10 +151,11 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
             border: '1px solid #E0E7FF',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '0.25rem',
+            gap: '0.375rem',
           }}
         >
-          <span>🌱</span> {stageLabels[learner.stage] || learner.stage}
+          <Sprout size={12} />
+          <span>{stageLabels[learner.stage] || learner.stage}</span>
         </span>
 
         {/* Custom Grade Pill */}
@@ -162,9 +170,13 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
               fontWeight: 600,
               fontSize: '0.75rem',
               border: '1px solid #E2E8F0',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.375rem',
             }}
           >
-            📚 {learner.customGrade}
+            <BookOpen size={12} />
+            <span>{learner.customGrade}</span>
           </span>
         )}
 
@@ -180,9 +192,13 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
               fontSize: '0.75rem',
               fontWeight: 500,
               border: '1px solid #E2E8F0',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.375rem',
             }}
           >
-            🎂 {age ? `${age} • ` : ''}Nascimento: {learner.birthDate}
+            <Calendar size={12} />
+            <span>{age ? `${age} • ` : ''}Nascimento: {learner.birthDate}</span>
           </span>
         )}
       </div>
@@ -203,7 +219,7 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
             gap: '0.375rem',
           }}
         >
-          <span>💡</span>
+          <Lightbulb size={16} style={{ color: '#D97706', flexShrink: 0, marginTop: '0.125rem' }} />
           <div>
             <strong>Necessidades / Adaptações:</strong> {learner.specialNeeds}
           </div>
@@ -224,8 +240,9 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
             lineHeight: 1.5,
           }}
         >
-          <span style={{ fontWeight: 600, color: '#334155', display: 'block', marginBottom: '0.125rem' }}>
-            💬 Observações:
+          <span style={{ fontWeight: 600, color: '#334155', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.125rem' }}>
+            <MessageSquare size={14} />
+            <span>Observações:</span>
           </span>
           {learner.notes}
         </div>

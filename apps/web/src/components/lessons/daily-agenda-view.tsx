@@ -1,6 +1,13 @@
 'use client';
 
 import React from 'react';
+import {
+  Calendar,
+  BookOpen,
+  Clock,
+  GraduationCap,
+  Check,
+} from 'lucide-react';
 import type { DailyAgendaDto, DailyAgendaItemDto, LearnerSummaryDto } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 
@@ -262,15 +269,15 @@ export function DailyAgendaView({
               height: '64px',
               borderRadius: '9999px',
               backgroundColor: '#EEF2FF',
+              border: '2px solid #E0E7FF',
               color: '#4338CA',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '2rem',
               boxShadow: '0 4px 12px rgba(67, 56, 202, 0.1)',
             }}
           >
-            📅
+            <Calendar size={32} />
           </div>
           <div>
             <p style={{ fontSize: '1.125rem', color: '#0F172A', marginBottom: '0.375rem', fontWeight: 700 }}>
@@ -403,9 +410,13 @@ export function DailyAgendaView({
                             backgroundColor: item.subjectColor ? `${item.subjectColor}15` : '#F1F5F9',
                             color: item.subjectColor || '#334155',
                             border: `1px solid ${item.subjectColor ? `${item.subjectColor}30` : '#E2E8F0'}`,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
                           }}
                         >
-                          📚 {item.subjectName}
+                          <BookOpen size={10} />
+                          <span>{item.subjectName}</span>
                         </span>
                       )}
 
@@ -421,9 +432,13 @@ export function DailyAgendaView({
                             padding: '0.125rem 0.5rem',
                             borderRadius: '9999px',
                             border: '1px solid #E2E8F0',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
                           }}
                         >
-                          ⏱️ {item.startTime || ''}{item.endTime ? ` - ${item.endTime}` : ''}
+                          <Clock size={10} />
+                          <span>{item.startTime || ''}{item.endTime ? ` - ${item.endTime}` : ''}</span>
                         </span>
                       )}
 
@@ -494,9 +509,13 @@ export function DailyAgendaView({
                               color: '#334155',
                               fontWeight: 500,
                               border: '1px solid #E2E8F0',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
                             }}
                           >
-                            🎓 {learnerMap.get(lId) || 'Educando'}
+                            <GraduationCap size={10} />
+                            <span>{learnerMap.get(lId) || 'Educando'}</span>
                           </span>
                         ))}
                       </div>
@@ -524,9 +543,19 @@ export function DailyAgendaView({
                             fontSize: '0.75rem',
                             fontWeight: 600,
                             cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
                           }}
                         >
-                          {isCompleted ? '✓ Concluída' : 'Concluir'}
+                          {isCompleted ? (
+                            <>
+                              <Check size={12} />
+                              <span>Concluída</span>
+                            </>
+                          ) : (
+                            'Concluir'
+                          )}
                         </button>
                       </Can>
 

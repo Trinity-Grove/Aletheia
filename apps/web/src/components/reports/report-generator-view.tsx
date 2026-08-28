@@ -1,6 +1,17 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import {
+  FileText,
+  Calendar,
+  Palette,
+  Landmark,
+  GraduationCap,
+  Eye,
+  Download,
+  Trash2,
+  FileCheck,
+} from 'lucide-react';
 import type {
   GenerateReportDto,
   GradingScale,
@@ -13,29 +24,29 @@ import { PrintableTranscript, GRADING_SCALE_LABELS } from './printable-transcrip
 
 export const REPORT_TYPE_CONFIG: Record<
   ReportType,
-  { label: string; icon: string; description: string; color: string }
+  { label: string; icon: React.ReactNode; description: string; color: string }
 > = {
   ACADEMIC_TRANSCRIPT: {
     label: 'Histórico Escolar Oficial',
-    icon: '📜',
+    icon: <FileText size={18} />,
     description: 'Disciplinas, notas/conceitos calculados, horas e frequência oficial.',
     color: '#2563EB',
   },
   ATTENDANCE_SUMMARY: {
     label: 'Sumário de Frequência & Carga Horária',
-    icon: '📅',
+    icon: <Calendar size={18} />,
     description: 'Dias letivos cumpridos e conformidade de horas anuais.',
     color: '#059669',
   },
   LEARNING_PORTFOLIO_DOSSIER: {
     label: 'Dossiê do Portfólio de Aprendizagem',
-    icon: '🎨',
+    icon: <Palette size={18} />,
     description: 'Compilado de evidências, narrações e obras em destaque.',
     color: '#7C3AED',
   },
   ANNUAL_COMPLIANCE_REPORT: {
     label: 'Relatório Anual de Cumprimento Legal',
-    icon: '🏛️',
+    icon: <Landmark size={18} />,
     description: 'Documento comprobatório consolidado para órgãos legais e arquivos familiares.',
     color: '#D97706',
   },
@@ -185,7 +196,8 @@ export function ReportGeneratorView({
               gap: '0.375rem',
             }}
           >
-            📜 Gerar Relatório Oficial
+            <FileCheck size={16} />
+            <span>Gerar Relatório Oficial</span>
           </button>
         </Can>
       </div>
@@ -202,7 +214,9 @@ export function ReportGeneratorView({
             border: '1px dashed #D1D5DB',
           }}
         >
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📑</div>
+          <div style={{ color: 'var(--color-brand-sage, #78937f)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
+            <FileText size={40} />
+          </div>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#111827', margin: '0 0 0.5rem 0' }}>
             Nenhum relatório oficial gerado ainda
           </h3>
@@ -297,8 +311,9 @@ export function ReportGeneratorView({
                     {report.title}
                   </h3>
 
-                  <div style={{ fontSize: '0.8125rem', color: '#4B5563', marginTop: '0.25rem' }}>
-                    🎓 <strong>{learnerDisplayName}</strong>
+                  <div style={{ fontSize: '0.8125rem', color: '#4B5563', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                    <GraduationCap size={14} style={{ color: '#4B5563' }} />
+                    <strong>{learnerDisplayName}</strong>
                     {report.academicYearTitle && ` • ${report.academicYearTitle}`}
                   </div>
 
@@ -329,9 +344,13 @@ export function ReportGeneratorView({
                       fontSize: '0.8125rem',
                       fontWeight: 600,
                       cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.375rem',
                     }}
                   >
-                    👁️ Visualizar
+                    <Eye size={14} />
+                    <span>Visualizar</span>
                   </button>
 
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -348,9 +367,13 @@ export function ReportGeneratorView({
                         border: '1px solid #D1D5DB',
                         fontSize: '0.8125rem',
                         cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
                       }}
                     >
-                      📥 CSV
+                      <Download size={14} />
+                      <span>CSV</span>
                     </button>
 
                     <Can action="delete_learners">
@@ -367,9 +390,12 @@ export function ReportGeneratorView({
                           border: '1px solid #FECACA',
                           fontSize: '0.8125rem',
                           cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
                         }}
+                        aria-label="Excluir Relatório"
                       >
-                        🗑️
+                        <Trash2 size={14} />
                       </button>
                     </Can>
                   </div>

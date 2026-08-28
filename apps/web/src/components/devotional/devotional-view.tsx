@@ -1,6 +1,14 @@
 'use client';
 
 import React from 'react';
+import {
+  BookOpen,
+  Crown,
+  Sprout,
+  MessageSquare,
+  Brain,
+  Music,
+} from 'lucide-react';
 import type { DailyDevotionalResponseDto } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 
@@ -181,11 +189,10 @@ export function DevotionalView({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '2rem',
               boxShadow: '0 4px 12px rgba(217, 119, 6, 0.1)',
             }}
           >
-            📖
+            <BookOpen size={32} />
           </div>
           <div>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.375rem 0' }}>
@@ -274,7 +281,8 @@ export function DevotionalView({
                   boxShadow: '0 1px 2px rgba(217, 119, 6, 0.1)',
                 }}
               >
-                <span>👑</span> Leitura Bíblica & Aliança
+                <Crown size={14} />
+                <span>Leitura Bíblica & Aliança</span>
               </div>
 
               {devotional.bibleVersionId && (
@@ -289,9 +297,13 @@ export function DevotionalView({
                     fontWeight: 700,
                     textTransform: 'uppercase',
                     border: '1px solid #E0E7FF',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.375rem',
                   }}
                 >
-                  📖 Versão: {devotional.bibleVersionId}
+                  <BookOpen size={12} />
+                  <span>Versão: {devotional.bibleVersionId}</span>
                 </span>
               )}
             </div>
@@ -356,9 +368,13 @@ export function DevotionalView({
                     padding: '0.25rem 0.625rem',
                     borderRadius: '9999px',
                     border: '1px solid #D1FAE5',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.375rem',
                   }}
                 >
-                  🌿 Reflexão & Conversa em Família
+                  <Sprout size={12} />
+                  <span>Reflexão & Conversa em Família</span>
                 </span>
               </div>
 
@@ -389,13 +405,16 @@ export function DevotionalView({
                 >
                   <strong
                     style={{
-                      display: 'block',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.375rem',
                       fontSize: '0.875rem',
                       color: '#166534',
                       marginBottom: '0.5rem',
                     }}
                   >
-                    💬 Perguntas para Diálogo Familiar:
+                    <MessageSquare size={14} />
+                    <span>Perguntas para Diálogo Familiar:</span>
                   </strong>
                   <div
                     style={{
@@ -433,9 +452,13 @@ export function DevotionalView({
                   textTransform: 'uppercase',
                   color: '#1D4ED8',
                   letterSpacing: '0.025em',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.375rem',
                 }}
               >
-                🧠 Versículo para Memorização
+                <Brain size={14} />
+                <span>Versículo para Memorização</span>
               </span>
               <p
                 style={{
@@ -480,9 +503,13 @@ export function DevotionalView({
                       textTransform: 'uppercase',
                       color: '#7E22CE',
                       letterSpacing: '0.025em',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.375rem',
                     }}
                   >
-                    🎵 Hino / Louvor do Dia
+                    <Music size={14} />
+                    <span>Hino / Louvor do Dia</span>
                   </span>
                   <p style={{ fontSize: '1rem', fontWeight: 600, color: '#581C87', margin: 0 }}>
                     {devotional.hymnOrSong}
@@ -510,9 +537,13 @@ export function DevotionalView({
                       textTransform: 'uppercase',
                       color: '#B45309',
                       letterSpacing: '0.025em',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.375rem',
                     }}
                   >
-                    🌱 Aplicação Prática
+                    <Sprout size={14} />
+                    <span>Aplicação Prática</span>
                   </span>
                   <p style={{ fontSize: '0.9375rem', color: '#78350F', margin: 0, lineHeight: '1.5' }}>
                     {devotional.practicalApplication}

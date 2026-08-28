@@ -37,7 +37,7 @@ export function AcademicYearSwitcher({
       >
         {years.map((y) => (
           <option key={y.id} value={y.id}>
-            📅 {y.title} {y.isCurrent ? "(Atual)" : ""}
+            {y.title} {y.isCurrent ? "(Atual)" : ""}
           </option>
         ))}
       </select>

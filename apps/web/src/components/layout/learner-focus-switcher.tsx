@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { Users, ChevronDown } from 'lucide-react';
 import type { LearnerSummaryDto } from '@aletheia/contracts';
 
 export interface LearnerFocusSwitcherProps {
@@ -64,12 +65,12 @@ export function LearnerFocusSwitcher({
           height: '1px',
         }}
       >
-        <option value="">👨‍👩‍👧‍👦 Toda a Família</option>
+        <option value="">Toda a Família</option>
         {learners.map((learner) => {
           const displayName = learner.preferredName || learner.firstName;
           return (
             <option key={learner.id} value={learner.id}>
-              🎓 {displayName}
+              {displayName}
             </option>
           );
         })}
@@ -117,12 +118,12 @@ export function LearnerFocusSwitcher({
             {activeLabel.charAt(0).toUpperCase()}
           </span>
         ) : (
-          <span role="img" aria-label="Família">
-            👨‍👩‍👧‍👦
+          <span aria-label="Família" style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <Users size={14} style={{ color: '#4F46E5' }} />
           </span>
         )}
         <span>{activeLabel}</span>
-        <span style={{ fontSize: '0.625rem', opacity: 0.7 }}>▼</span>
+        <ChevronDown size={12} style={{ opacity: 0.7 }} />
       </button>
 
       {isOpen && (
@@ -164,7 +165,7 @@ export function LearnerFocusSwitcher({
               width: '100%',
             }}
           >
-            <span style={{ fontSize: '1rem' }}>👨‍👩‍👧‍👦</span>
+            <Users size={16} style={{ color: '#4F46E5' }} />
             <span>Toda a Família</span>
           </button>
 

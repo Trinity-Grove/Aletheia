@@ -1,6 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
+import {
+  Calendar,
+  BookOpen,
+  Library,
+  PenLine,
+  FolderHeart,
+  BarChart3,
+} from 'lucide-react';
 import { PageHeader, ScriptureCard, Card } from '@aletheia/ui';
 import { ProductShell } from '../src/components/layout/product-shell';
 import { LearnerFocusHeader } from '../src/components/dashboard/learner-focus-header';
@@ -90,11 +98,13 @@ export default function HomePage() {
           description="Registros acadêmicos estruturados e relatórios de apoio pedagógico para conformidade familiar."
           action={
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <a href="/schedule" className="ui-button ui-button--primary ui-button--md">
-                🗓️ Agenda & Checklist
+              <a href="/schedule" className="ui-button ui-button--primary ui-button--md" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Calendar size={16} />
+                <span>Agenda & Checklist</span>
               </a>
-              <a href="/devotional" className="ui-button ui-button--secondary ui-button--md">
-                📖 Devocional
+              <a href="/devotional" className="ui-button ui-button--secondary ui-button--md" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                <BookOpen size={16} />
+                <span>Devocional</span>
               </a>
             </div>
           }
@@ -150,7 +160,9 @@ export default function HomePage() {
         >
           <a href="/curriculum" style={{ textDecoration: 'none', color: 'inherit' }}>
             <Card variant="bordered" shadow="sm" style={{ padding: '1.25rem', transition: 'transform 0.15s ease' }}>
-              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📚</div>
+              <div style={{ color: 'var(--color-brand-forest)', marginBottom: '0.75rem' }}>
+                <Library size={24} />
+              </div>
               <h4 style={{ margin: 0, fontFamily: 'var(--font-serif)', fontSize: '1.125rem', color: 'var(--color-brand-forest)' }}>
                 Currículo & Objetivos
               </h4>
@@ -162,7 +174,9 @@ export default function HomePage() {
 
           <a href="/records" style={{ textDecoration: 'none', color: 'inherit' }}>
             <Card variant="bordered" shadow="sm" style={{ padding: '1.25rem', transition: 'transform 0.15s ease' }}>
-              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>✍️</div>
+              <div style={{ color: 'var(--color-brand-forest)', marginBottom: '0.75rem' }}>
+                <PenLine size={24} />
+              </div>
               <h4 style={{ margin: 0, fontFamily: 'var(--font-serif)', fontSize: '1.125rem', color: 'var(--color-brand-forest)' }}>
                 Diário de Aprendizagem
               </h4>
@@ -174,7 +188,9 @@ export default function HomePage() {
 
           <a href="/portfolio" style={{ textDecoration: 'none', color: 'inherit' }}>
             <Card variant="bordered" shadow="sm" style={{ padding: '1.25rem', transition: 'transform 0.15s ease' }}>
-              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🖼️</div>
+              <div style={{ color: 'var(--color-brand-forest)', marginBottom: '0.75rem' }}>
+                <FolderHeart size={24} />
+              </div>
               <h4 style={{ margin: 0, fontFamily: 'var(--font-serif)', fontSize: '1.125rem', color: 'var(--color-brand-forest)' }}>
                 Portfólio de Evidências
               </h4>
@@ -186,7 +202,9 @@ export default function HomePage() {
 
           <a href="/reports" style={{ textDecoration: 'none', color: 'inherit' }}>
             <Card variant="bordered" shadow="sm" style={{ padding: '1.25rem', transition: 'transform 0.15s ease' }}>
-              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📊</div>
+              <div style={{ color: 'var(--color-brand-forest)', marginBottom: '0.75rem' }}>
+                <BarChart3 size={24} />
+              </div>
               <h4 style={{ margin: 0, fontFamily: 'var(--font-serif)', fontSize: '1.125rem', color: 'var(--color-brand-forest)' }}>
                 Relatórios de Apoio
               </h4>

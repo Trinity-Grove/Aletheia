@@ -1,4 +1,5 @@
 import React, { useEffect, useId, useRef, type ReactNode } from 'react';
+import { X } from 'lucide-react';
 import { IconButton } from './icon-button.js';
 
 export interface ModalProps {
@@ -154,7 +155,7 @@ export function Modal({
               size="sm"
               onClick={onClose}
             >
-              ✕
+              <X size={16} />
             </IconButton>
           </div>
         )}

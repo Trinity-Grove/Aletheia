@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { GraduationCap } from 'lucide-react';
 import type { LearnerResponseDto } from '@aletheia/contracts';
 import { LearnerCard } from './learner-card';
 import { Can } from '../auth/role-guard';
@@ -174,7 +175,7 @@ export function LearnersList({
               boxShadow: '0 4px 12px rgba(67, 56, 202, 0.1)',
             }}
           >
-            🎓
+            <GraduationCap size={32} />
           </div>
           <div>
             <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.125rem', fontWeight: 700, color: '#0F172A' }}>

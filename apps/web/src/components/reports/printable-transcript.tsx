@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { FileText, Download, Printer, X } from 'lucide-react';
 import type {
   AcademicTranscriptDto,
   GradingScale,
@@ -81,7 +82,9 @@ export function PrintableTranscript({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontSize: '1.25rem' }}>📜</span>
+          <span style={{ color: '#2563EB', display: 'flex', alignItems: 'center' }}>
+            <FileText size={20} />
+          </span>
           <h2 style={{ fontSize: '1.125rem', fontWeight: 700, margin: 0 }}>
             Visualização de Histórico Escolar Oficial
           </h2>
@@ -106,7 +109,8 @@ export function PrintableTranscript({
               gap: '0.375rem',
             }}
           >
-            📥 Baixar CSV
+            <Download size={16} />
+            <span>Baixar CSV</span>
           </button>
           <button
             type="button"
@@ -126,7 +130,8 @@ export function PrintableTranscript({
               gap: '0.375rem',
             }}
           >
-            🖨️ Imprimir / Salvar PDF
+            <Printer size={16} />
+            <span>Imprimir / Salvar PDF</span>
           </button>
           {onClose && (
             <button
@@ -134,16 +139,19 @@ export function PrintableTranscript({
               data-testid="close-transcript-btn"
               onClick={onClose}
               style={{
-                padding: '0.5rem 1rem',
+                padding: '0.5rem 0.75rem',
                 backgroundColor: '#FFFFFF',
                 color: '#6B7280',
                 borderRadius: '0.375rem',
                 border: '1px solid #D1D5DB',
                 fontSize: '0.875rem',
                 cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
               }}
+              aria-label="Fechar"
             >
-              Fechar
+              <X size={16} />
             </button>
           )}
         </div>

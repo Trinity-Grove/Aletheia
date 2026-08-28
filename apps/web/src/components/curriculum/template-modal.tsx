@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Landmark, Sprout, BookOpen } from "lucide-react";
 import type { PedagogicalFramework } from "@aletheia/contracts";
 
 export interface TemplateModalProps {
@@ -24,24 +25,24 @@ export function TemplateModal({ isOpen, onClose, onApply }: TemplateModalProps) 
     }
   };
 
-  const templates: Array<{ id: PedagogicalFramework; title: string; desc: string; icon: string }> = [
+  const templates: Array<{ id: PedagogicalFramework; title: string; desc: string; icon: React.ReactNode }> = [
     {
       id: "CLASSICAL_TRIVIUM",
       title: "Educação Clássica (Trívio)",
       desc: "Foco na fase gramatical: Português, Latim, Aritmética Lógica, História Ocidental Antiga, Ciências e Literatura Poética.",
-      icon: "🏛️",
+      icon: <Landmark size={18} style={{ color: "#4338CA" }} />,
     },
     {
       id: "CHARLOTTE_MASON",
       title: "Abordagem Charlotte Mason",
       desc: "Foco em Livros Vivos (Living Books), Estudo da Natureza, Narração, Picture Study, Trabalhos Manuais e Formação de Hábitos.",
-      icon: "🌿",
+      icon: <Sprout size={18} style={{ color: "#059669" }} />,
     },
     {
       id: "TRADITIONAL",
       title: "Currículo Tradicional Estruturado",
       desc: "Disciplinas fundamentais organizadas: Português, Matemática, História, Geografia e Ciências Naturais.",
-      icon: "📚",
+      icon: <BookOpen size={18} style={{ color: "#D97706" }} />,
     },
   ];
 

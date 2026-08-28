@@ -1,6 +1,22 @@
 'use client';
 
 import React, { type ReactNode, useState } from 'react';
+import {
+  Home,
+  Users,
+  BookOpen,
+  Library,
+  CalendarDays,
+  PenLine,
+  FolderHeart,
+  ClipboardCheck,
+  BarChart3,
+  Palette,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+} from 'lucide-react';
 import type { LearnerSummaryDto, NotificationItemResponseDto, FamilyRole } from '@aletheia/contracts';
 import { AuthProvider, useAuthRole } from '../../lib/auth/rbac-context';
 import { NotificationBell } from './notification-bell';
@@ -13,21 +29,21 @@ export { NotificationBell } from './notification-bell';
 export interface NavItem {
   label: string;
   href: string;
-  icon: string;
+  icon: React.ReactNode;
 }
 
 export const MAIN_NAV_ITEMS: NavItem[] = [
-  { label: 'Início', href: '/', icon: '🏠' },
-  { label: 'Educandos', href: '/learners', icon: '👶' },
-  { label: 'Devocional', href: '/devotional', icon: '📖' },
-  { label: 'Currículo', href: '/curriculum', icon: '📚' },
-  { label: 'Agenda & Rotina', href: '/schedule', icon: '📅' },
-  { label: 'Diário de Aprendizagem', href: '/records', icon: '✍️' },
-  { label: 'Portfólio', href: '/portfolio', icon: '🖼️' },
-  { label: 'Frequência', href: '/attendance', icon: '📋' },
-  { label: 'Relatórios', href: '/reports', icon: '📊' },
-  { label: 'Design System', href: '/design-system', icon: '🎨' },
-  { label: 'Configurações', href: '/settings', icon: '⚙️' },
+  { label: 'Início', href: '/', icon: <Home size={18} /> },
+  { label: 'Educandos', href: '/learners', icon: <Users size={18} /> },
+  { label: 'Devocional', href: '/devotional', icon: <BookOpen size={18} /> },
+  { label: 'Currículo', href: '/curriculum', icon: <Library size={18} /> },
+  { label: 'Agenda & Rotina', href: '/schedule', icon: <CalendarDays size={18} /> },
+  { label: 'Diário de Aprendizagem', href: '/records', icon: <PenLine size={18} /> },
+  { label: 'Portfólio', href: '/portfolio', icon: <FolderHeart size={18} /> },
+  { label: 'Frequência', href: '/attendance', icon: <ClipboardCheck size={18} /> },
+  { label: 'Relatórios', href: '/reports', icon: <BarChart3 size={18} /> },
+  { label: 'Design System', href: '/design-system', icon: <Palette size={18} /> },
+  { label: 'Configurações', href: '/settings', icon: <Settings size={18} /> },
 ];
 
 export interface UserProfileSummary {
@@ -205,7 +221,7 @@ export function ProductShell({
               justifyContent: 'center',
             }}
           >
-            {isCollapsed ? '▶' : '◀'}
+            {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </button>
         </div>
 
@@ -352,7 +368,7 @@ export function ProductShell({
                 cursor: 'pointer',
               }}
             >
-              ☰
+              <Menu size={18} />
             </button>
 
             <strong

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { Palette, GraduationCap, BookOpen, Calendar, Paperclip } from 'lucide-react';
 import type {
   PortfolioItemResponseDto,
   LearnerSummaryDto,
@@ -265,7 +266,9 @@ export function PortfolioGalleryView({
             border: '1px dashed #D1D5DB',
           }}
         >
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🎨</div>
+          <div style={{ color: '#F59E0B', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
+            <Palette size={40} />
+          </div>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#111827', margin: '0 0 0.5rem 0' }}>
             Nenhuma evidência no portfólio
           </h3>
@@ -304,7 +307,7 @@ export function PortfolioGalleryView({
           {filteredItems.map((item) => {
             const typeConfig = EVIDENCE_TYPE_CONFIG[item.type] || {
               label: item.type,
-              icon: '📎',
+              icon: <Paperclip size={16} />,
             };
             const learner = learners.find((l) => l.id === item.learnerId);
 
@@ -413,9 +416,13 @@ export function PortfolioGalleryView({
                           fontWeight: 600,
                           padding: '0.125rem 0.375rem',
                           borderRadius: '0.25rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
                         }}
                       >
-                        🎓 {learner.preferredName || learner.firstName}
+                        <GraduationCap size={10} />
+                        <span>{learner.preferredName || learner.firstName}</span>
                       </span>
                     )}
                     {item.subjectName && (
@@ -427,9 +434,13 @@ export function PortfolioGalleryView({
                           fontWeight: 600,
                           padding: '0.125rem 0.375rem',
                           borderRadius: '0.25rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
                         }}
                       >
-                        📚 {item.subjectName}
+                        <BookOpen size={10} />
+                        <span>{item.subjectName}</span>
                       </span>
                     )}
                   </div>
@@ -464,8 +475,9 @@ export function PortfolioGalleryView({
 
                   {/* Date */}
                   {item.capturedAt && (
-                    <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>
-                      📅 {item.capturedAt}
+                    <span style={{ fontSize: '0.75rem', color: '#9CA3AF', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <Calendar size={10} />
+                      <span>{item.capturedAt}</span>
                     </span>
                   )}
 

@@ -1,6 +1,14 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import {
+  X,
+  Star,
+  Sprout,
+  HeartHandshake,
+  Target,
+  MessageSquare,
+} from 'lucide-react';
 import type {
   CreateLearningRecordDto,
   LearningRecordResponseDto,
@@ -198,12 +206,14 @@ export function RecordFormModal({
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '1.25rem',
               cursor: 'pointer',
               color: '#6B7280',
+              display: 'flex',
+              alignItems: 'center',
             }}
+            aria-label="Fechar"
           >
-            ✕
+            <X size={20} />
           </button>
         </div>
 
@@ -260,7 +270,7 @@ export function RecordFormModal({
                 <option value="">Selecione um educando</option>
                 {learners.map((l) => (
                   <option key={l.id} value={l.id}>
-                    🎓 {l.preferredName || l.firstName}
+                    {l.preferredName || l.firstName}
                   </option>
                 ))}
               </select>
@@ -347,7 +357,7 @@ export function RecordFormModal({
                 <option value="">Sem disciplina vinculada</option>
                 {subjects.map((s) => (
                   <option key={s.id} value={s.id}>
-                    📚 {s.name}
+                    {s.name}
                   </option>
                 ))}
               </select>
@@ -495,9 +505,10 @@ export function RecordFormModal({
             <div>
               <label
                 htmlFor="record-strengths-input"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#065F46', marginBottom: '0.25rem' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 600, color: '#065F46', marginBottom: '0.25rem' }}
               >
-                🌟 Pontos Fortes Observados
+                <Star size={14} />
+                <span>Pontos Fortes Observados</span>
               </label>
               <textarea
                 id="record-strengths-input"
@@ -519,9 +530,10 @@ export function RecordFormModal({
             <div>
               <label
                 htmlFor="record-growth-input"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#92400E', marginBottom: '0.25rem' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 600, color: '#92400E', marginBottom: '0.25rem' }}
               >
-                🌱 Oportunidades de Crescimento
+                <Sprout size={14} />
+                <span>Oportunidades de Crescimento</span>
               </label>
               <textarea
                 id="record-growth-input"
@@ -545,9 +557,10 @@ export function RecordFormModal({
           <div>
             <label
               htmlFor="record-habit-input"
-              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#701A75', marginBottom: '0.25rem' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 600, color: '#701A75', marginBottom: '0.25rem' }}
             >
-              🕊️ Crescimento em Caráter & Hábitos
+              <HeartHandshake size={14} />
+              <span>Crescimento em Caráter & Hábitos</span>
             </label>
             <input
               id="record-habit-input"
@@ -571,14 +584,17 @@ export function RecordFormModal({
             <div>
               <span
                 style={{
-                  display: 'block',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.375rem',
                   fontSize: '0.875rem',
                   fontWeight: 600,
                   color: '#374151',
                   marginBottom: '0.5rem',
                 }}
               >
-                🎯 Vincular Objetivos do Currículo
+                <Target size={14} />
+                <span>Vincular Objetivos do Currículo</span>
               </span>
               <div
                 style={{
@@ -620,9 +636,10 @@ export function RecordFormModal({
           <div>
             <label
               htmlFor="record-notes-input"
-              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
             >
-              💬 Observações Gerais / Diário dos Pais
+              <MessageSquare size={14} />
+              <span>Observações Gerais / Diário dos Pais</span>
             </label>
             <textarea
               id="record-notes-input"

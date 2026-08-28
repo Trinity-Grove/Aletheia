@@ -1,6 +1,14 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import {
+  Bell,
+  BookOpen,
+  Clock,
+  ClipboardCheck,
+  HeartHandshake,
+  Sparkles,
+} from 'lucide-react';
 import type { NotificationItemResponseDto, NotificationType } from '@aletheia/contracts';
 
 export interface NotificationBellProps {
@@ -10,12 +18,12 @@ export interface NotificationBellProps {
   onMarkAllAsRead?: (() => Promise<void>) | undefined;
 }
 
-const TYPE_ICONS_AND_LABELS: Record<NotificationType, { icon: string; label: string }> = {
-  DEVOTIONAL_REMINDER: { icon: '📖', label: 'Devocional' },
-  DAILY_SCHEDULE_REMINDER: { icon: '⏰', label: 'Cronograma' },
-  ATTENDANCE_MISSING_REMINDER: { icon: '📋', label: 'Frequência' },
-  PRAYER_ANSWERED_ALERT: { icon: '🙏', label: 'Oração Respondida' },
-  SYSTEM_NOTICE: { icon: '🔔', label: 'Aviso do Sistema' },
+const TYPE_ICONS_AND_LABELS: Record<NotificationType, { icon: React.ReactNode; label: string }> = {
+  DEVOTIONAL_REMINDER: { icon: <BookOpen size={16} style={{ color: '#D97706' }} />, label: 'Devocional' },
+  DAILY_SCHEDULE_REMINDER: { icon: <Clock size={16} style={{ color: '#2563EB' }} />, label: 'Cronograma' },
+  ATTENDANCE_MISSING_REMINDER: { icon: <ClipboardCheck size={16} style={{ color: '#059669' }} />, label: 'Frequência' },
+  PRAYER_ANSWERED_ALERT: { icon: <HeartHandshake size={16} style={{ color: '#EC4899' }} />, label: 'Oração Respondida' },
+  SYSTEM_NOTICE: { icon: <Bell size={16} style={{ color: '#6366F1' }} />, label: 'Aviso do Sistema' },
 };
 
 function formatTimestamp(dateStr?: string | Date): string {
@@ -109,8 +117,8 @@ export function NotificationBell({
           boxShadow: 'var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05))',
         }}
       >
-        <span role="img" aria-label="Sino" style={{ display: 'inline-block' }}>
-          🔔
+        <span aria-label="Sino" style={{ display: 'inline-flex', alignItems: 'center' }}>
+          <Bell size={18} />
         </span>
         {unreadCount > 0 && (
           <span
@@ -130,11 +138,10 @@ export function NotificationBell({
               alignItems: 'center',
               justifyContent: 'center',
               padding: '0 0.25rem',
-              boxShadow: '0 1px 3px rgba(225, 29, 72, 0.4)',
-              animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              boxShadow: '0 0 0 2px #FFFFFF',
             }}
           >
-            {unreadCount > 99 ? '99+' : unreadCount}
+            {unreadCount}
           </span>
         )}
       </button>
@@ -142,29 +149,30 @@ export function NotificationBell({
       {isOpen && (
         <div
           data-testid="notification-dropdown"
-          className="glass-card"
           style={{
             position: 'absolute',
             top: 'calc(100% + 0.5rem)',
             right: 0,
-            width: '24rem',
-            maxWidth: '90vw',
+            width: '360px',
             backgroundColor: '#FFFFFF',
-            borderRadius: '0.875rem',
-            boxShadow: '0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05)',
-            border: '1px solid var(--border-light, #E2E8F0)',
-            zIndex: 70,
+            borderRadius: '0.75rem',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+            border: '1px solid #E2E8F0',
+            zIndex: 50,
             overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            maxHeight: '480px',
           }}
         >
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0.875rem 1.125rem',
+              padding: '1rem 1.25rem',
               borderBottom: '1px solid #F1F5F9',
-              backgroundColor: '#F8FAFC',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: '#FAFAFA',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -174,20 +182,20 @@ export function NotificationBell({
               {unreadCount > 0 && (
                 <span
                   style={{
-                    backgroundColor: '#EEF2FF',
-                    color: '#4338CA',
+                    backgroundColor: '#EFF6FF',
+                    color: '#2563EB',
                     fontSize: '0.75rem',
-                    fontWeight: 600,
+                    fontWeight: 700,
                     padding: '0.125rem 0.5rem',
                     borderRadius: '9999px',
                   }}
                 >
-                  {unreadCount} nova{unreadCount > 1 ? 's' : ''}
+                  {unreadCount} novas
                 </span>
               )}
             </div>
 
-            {unreadCount > 0 && onMarkAllAsRead && (
+            {onMarkAllAsRead && unreadCount > 0 && (
               <button
                 type="button"
                 data-testid="mark-all-read-btn"
@@ -196,25 +204,19 @@ export function NotificationBell({
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#4F46E5',
+                  color: '#2563EB',
                   fontSize: '0.8125rem',
                   fontWeight: 600,
-                  cursor: 'pointer',
-                  padding: '0.25rem 0.5rem',
-                  borderRadius: '0.25rem',
+                  cursor: isProcessing ? 'wait' : 'pointer',
+                  padding: 0,
                 }}
               >
-                Marcar todas como lidas
+                Marcar lidas
               </button>
             )}
           </div>
 
-          <div
-            style={{
-              maxHeight: '22rem',
-              overflowY: 'auto',
-            }}
-          >
+          <div style={{ overflowY: 'auto', flex: 1 }}>
             {notifications.length === 0 ? (
               <div
                 data-testid="notifications-empty"
@@ -225,13 +227,15 @@ export function NotificationBell({
                   fontSize: '0.875rem',
                 }}
               >
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✨</div>
+                <div style={{ color: 'var(--color-brand-sage, #78937f)', marginBottom: '0.5rem', display: 'flex', justifyContent: 'center' }}>
+                  <Sparkles size={28} />
+                </div>
                 Nenhuma notificação no momento.
               </div>
             ) : (
               notifications.map((item) => {
                 const meta = TYPE_ICONS_AND_LABELS[item.type] || {
-                  icon: '🔔',
+                  icon: <Bell size={16} />,
                   label: 'Notificação',
                 };
                 return (

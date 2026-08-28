@@ -1,6 +1,17 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import {
+  Check,
+  FileText,
+  X,
+  Palmtree,
+  Landmark,
+  Bandage,
+  Users,
+  Calendar,
+  GraduationCap,
+} from 'lucide-react';
 import type {
   AttendanceComplianceSummaryDto,
   AttendanceResponseDto,
@@ -15,49 +26,49 @@ import { ComplianceGauge } from './compliance-gauge';
 
 export const ATTENDANCE_STATUS_CONFIG: Record<
   AttendanceStatus,
-  { label: string; bg: string; text: string; border: string; icon: string }
+  { label: string; bg: string; text: string; border: string; icon: React.ReactNode }
 > = {
   PRESENT: {
     label: 'Presente',
     bg: '#ECFDF5',
     text: '#065F46',
     border: '#A7F3D0',
-    icon: '✅',
+    icon: <Check size={14} />,
   },
   EXCUSED_ABSENCE: {
     label: 'Falta Justificada',
     bg: '#FFFBEB',
     text: '#92400E',
     border: '#FDE68A',
-    icon: '📝',
+    icon: <FileText size={14} />,
   },
   UNEXCUSED_ABSENCE: {
     label: 'Falta Não Justificada',
     bg: '#FEF2F2',
     text: '#991B1B',
     border: '#FECACA',
-    icon: '❌',
+    icon: <X size={14} />,
   },
   HOLIDAY: {
     label: 'Feriado / Recesso',
     bg: '#EFF6FF',
     text: '#1E40AF',
     border: '#BFDBFE',
-    icon: '🏖️',
+    icon: <Palmtree size={14} />,
   },
   FIELD_TRIP: {
     label: 'Passeio Educativo',
     bg: '#F5F3FF',
     text: '#5B21B6',
     border: '#DDD6FE',
-    icon: '🏛️',
+    icon: <Landmark size={14} />,
   },
   SICK: {
     label: 'Atestado / Doença',
     bg: '#FFF7ED',
     text: '#9A3412',
     border: '#FED7AA',
-    icon: '🩹',
+    icon: <Bandage size={14} />,
   },
 };
 
@@ -225,7 +236,7 @@ export function AttendanceTrackerView({
             <option value="">Todos os status</option>
             {Object.entries(ATTENDANCE_STATUS_CONFIG).map(([k, item]) => (
               <option key={k} value={k}>
-                {item.icon} {item.label}
+                {item.label}
               </option>
             ))}
           </select>
@@ -283,7 +294,8 @@ export function AttendanceTrackerView({
                 gap: '0.375rem',
               }}
             >
-              👥 Frequência Coletiva
+              <Users size={16} />
+              <span>Frequência Coletiva</span>
             </button>
           </Can>
           <Can action="log_attendance">
@@ -321,7 +333,9 @@ export function AttendanceTrackerView({
             border: '1px dashed #D1D5DB',
           }}
         >
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📅</div>
+          <div style={{ color: 'var(--color-brand-sage, #78937f)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
+            <Calendar size={40} />
+          </div>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#111827', margin: '0 0 0.5rem 0' }}>
             Nenhum registro de presença encontrado
           </h3>
@@ -399,7 +413,10 @@ export function AttendanceTrackerView({
                       {record.date}
                     </td>
                     <td style={{ padding: '0.875rem 1rem', fontSize: '0.875rem', color: '#374151' }}>
-                      🎓 {learnerDisplayName}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}>
+                        <GraduationCap size={14} style={{ color: '#4B5563' }} />
+                        <span>{learnerDisplayName}</span>
+                      </span>
                     </td>
                     <td style={{ padding: '0.875rem 1rem' }}>
                       <span
@@ -699,7 +716,8 @@ export function AttendanceTrackerView({
                           checked={isChecked}
                           onChange={() => toggleBulkLearner(l.id)}
                         />
-                        🎓 {l.preferredName || l.firstName} {l.lastName || ''}
+                        <GraduationCap size={14} style={{ color: '#4B5563' }} />
+                        <span>{l.preferredName || l.firstName} {l.lastName || ''}</span>
                       </label>
                     );
                   })}
@@ -768,7 +786,7 @@ export function AttendanceTrackerView({
                 >
                   {Object.entries(ATTENDANCE_STATUS_CONFIG).map(([k, item]) => (
                     <option key={k} value={k}>
-                      {item.icon} {item.label}
+                      {item.label}
                     </option>
                   ))}
                 </select>

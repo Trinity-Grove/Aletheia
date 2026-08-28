@@ -1,6 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
+import {
+  Sparkles,
+  PartyPopper,
+  Heart,
+  Sun,
+  Star,
+  Check,
+  X,
+} from 'lucide-react';
 import type { CreatePrayerDto, PrayerResponseDto, PrayerType } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 
@@ -121,9 +130,13 @@ export function PrayerJournal({
                   border: '1px solid #A7F3D0',
                   padding: '0.125rem 0.5rem',
                   borderRadius: '9999px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
                 }}
               >
-                ✨ {answeredCount} respondida(s)
+                <Sparkles size={12} />
+                <span>{answeredCount} respondida(s)</span>
               </span>
             )}
           </div>
@@ -169,7 +182,9 @@ export function PrayerJournal({
             gap: '0.75rem',
           }}
         >
-          <span style={{ fontSize: '1.25rem' }}>🎉</span>
+          <span style={{ color: '#059669', display: 'flex', alignItems: 'center' }}>
+            <PartyPopper size={20} />
+          </span>
           <div style={{ flex: 1 }}>
             <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#065F46', display: 'block' }}>
               Celebração de Resposta de Oração!
@@ -209,7 +224,8 @@ export function PrayerJournal({
             marginBottom: '-1px',
           }}
         >
-          <span>🙏 Pedidos de Oração</span>
+          <Heart size={14} />
+          <span>Pedidos de Oração</span>
           <span
             style={{
               backgroundColor: activeTab === 'PETITION' ? '#EEF2FF' : '#F1F5F9',
@@ -244,7 +260,8 @@ export function PrayerJournal({
             marginBottom: '-1px',
           }}
         >
-          <span>🙌 Gratidões & Louvores</span>
+          <Sun size={14} />
+          <span>Gratidões & Louvores</span>
           <span
             style={{
               backgroundColor: activeTab === 'GRATITUDE' ? '#ECFDF5' : '#F1F5F9',
@@ -274,7 +291,9 @@ export function PrayerJournal({
             fontSize: '0.875rem',
           }}
         >
-          <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>🕊️</div>
+          <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'center' }}>
+            <Sparkles size={32} style={{ color: '#94A3B8' }} />
+          </div>
           <p style={{ margin: 0, fontWeight: 500 }}>
             {activeTab === 'PETITION'
               ? 'Nenhum pedido de oração ativo no momento.'
@@ -338,7 +357,8 @@ export function PrayerJournal({
                         gap: '0.25rem',
                       }}
                     >
-                      <span>✨</span> Respondida!
+                      <Sparkles size={12} />
+                      <span>Respondida!</span>
                     </span>
                   ) : (
                     <span
@@ -383,8 +403,9 @@ export function PrayerJournal({
                       lineHeight: 1.5,
                     }}
                   >
-                    <strong style={{ display: 'block', marginBottom: '0.125rem' }}>
-                      🌟 Testemunho / Resposta:
+                    <strong style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.125rem' }}>
+                      <Star size={14} style={{ color: '#059669' }} />
+                      <span>Testemunho / Resposta:</span>
                     </strong>
                     {prayer.answeredNote}
                   </div>
@@ -411,9 +432,13 @@ export function PrayerJournal({
                         backgroundColor: '#ECFDF5',
                         borderRadius: '0.375rem',
                         cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
                       }}
                     >
-                      ✓ Marcar como Respondida
+                      <Check size={12} />
+                      <span>Marcar como Respondida</span>
                     </button>
                   </Can>
                 )}
@@ -471,8 +496,9 @@ export function PrayerJournal({
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
             }}
           >
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.125rem', fontWeight: 700, color: '#0F172A' }}>
-              🎉 Marcar Oração como Respondida
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.125rem', fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <PartyPopper size={20} style={{ color: '#059669' }} />
+              <span>Marcar Oração como Respondida</span>
             </h3>
             <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.875rem', color: '#64748B' }}>
               Deseja registrar um testemunho ou nota de como Deus respondeu a esta oração na vida da família?
@@ -577,8 +603,18 @@ export function PrayerJournal({
                 marginBottom: '1.25rem',
               }}
             >
-              <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, color: '#0F172A' }}>
-                {newType === 'PETITION' ? '🙏 Novo Pedido de Oração' : '🙌 Nova Gratidão / Louvor'}
+              <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {newType === 'PETITION' ? (
+                  <>
+                    <Heart size={18} style={{ color: '#4338CA' }} />
+                    <span>Novo Pedido de Oração</span>
+                  </>
+                ) : (
+                  <>
+                    <Sun size={18} style={{ color: '#047857' }} />
+                    <span>Nova Gratidão / Louvor</span>
+                  </>
+                )}
               </h3>
               <button
                 type="button"
@@ -586,13 +622,15 @@ export function PrayerJournal({
                 style={{
                   background: 'none',
                   border: 'none',
-                  fontSize: '1.25rem',
                   color: '#94A3B8',
                   cursor: 'pointer',
-                  lineHeight: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0.25rem',
                 }}
+                aria-label="Fechar"
               >
-                &times;
+                <X size={18} />
               </button>
             </div>
 

@@ -1,6 +1,16 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import {
+  X,
+  Image,
+  Mic,
+  Video,
+  FileText,
+  Link2,
+  FileEdit,
+  Award,
+} from 'lucide-react';
 import type {
   CreatePortfolioItemDto,
   PortfolioItemResponseDto,
@@ -24,15 +34,15 @@ export interface PortfolioItemModalProps {
 
 export const EVIDENCE_TYPE_CONFIG: Record<
   EvidenceType,
-  { label: string; icon: string }
+  { label: string; icon: React.ReactNode }
 > = {
-  IMAGE: { label: 'Imagem / Foto do Caderno', icon: '🖼️' },
-  AUDIO: { label: 'Áudio / Narração Gravada', icon: '🎙️' },
-  VIDEO: { label: 'Vídeo / Apresentação', icon: '🎥' },
-  DOCUMENT: { label: 'Documento / PDF / Redação', icon: '📄' },
-  LINK: { label: 'Link Externo', icon: '🔗' },
-  TEXT: { label: 'Texto / Citação / Transcrição', icon: '📝' },
-  CERTIFICATE: { label: 'Certificado / Conquista', icon: '🏅' },
+  IMAGE: { label: 'Imagem / Foto do Caderno', icon: <Image size={16} /> },
+  AUDIO: { label: 'Áudio / Narração Gravada', icon: <Mic size={16} /> },
+  VIDEO: { label: 'Vídeo / Apresentação', icon: <Video size={16} /> },
+  DOCUMENT: { label: 'Documento / PDF / Redação', icon: <FileText size={16} /> },
+  LINK: { label: 'Link Externo', icon: <Link2 size={16} /> },
+  TEXT: { label: 'Texto / Citação / Transcrição', icon: <FileEdit size={16} /> },
+  CERTIFICATE: { label: 'Certificado / Conquista', icon: <Award size={16} /> },
 };
 
 export function PortfolioItemModal({
@@ -185,12 +195,14 @@ export function PortfolioItemModal({
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '1.25rem',
               cursor: 'pointer',
               color: '#6B7280',
+              display: 'flex',
+              alignItems: 'center',
             }}
+            aria-label="Fechar"
           >
-            ✕
+            <X size={20} />
           </button>
         </div>
 
@@ -247,7 +259,7 @@ export function PortfolioItemModal({
                 <option value="">Selecione o educando</option>
                 {learners.map((l) => (
                   <option key={l.id} value={l.id}>
-                    🎓 {l.preferredName || l.firstName}
+                    {l.preferredName || l.firstName}
                   </option>
                 ))}
               </select>
@@ -334,7 +346,7 @@ export function PortfolioItemModal({
                 <option value="">Sem disciplina vinculada</option>
                 {subjects.map((s) => (
                   <option key={s.id} value={s.id}>
-                    📚 {s.name}
+                    {s.name}
                   </option>
                 ))}
               </select>
@@ -363,7 +375,7 @@ export function PortfolioItemModal({
                 <option value="">Nenhum registro vinculado</option>
                 {records.map((r) => (
                   <option key={r.id} value={r.id}>
-                    📖 {r.title} ({r.date})
+                    {r.title} ({r.date})
                   </option>
                 ))}
               </select>

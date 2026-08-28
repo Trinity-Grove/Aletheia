@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Sparkles, BookOpen } from 'lucide-react';
 import type {
   AcademicYearResponseDto,
   CreateObjectiveDto,
@@ -55,13 +56,13 @@ export function CurriculumView({
   const getFrameworkLabel = (framework?: PedagogicalFramework) => {
     switch (framework) {
       case 'CLASSICAL_TRIVIUM':
-        return '🏛️ Clássica (Trívio)';
+        return 'Clássica (Trívio)';
       case 'CHARLOTTE_MASON':
-        return '🌿 Charlotte Mason';
+        return 'Charlotte Mason';
       case 'TRADITIONAL':
-        return '📚 Tradicional';
+        return 'Tradicional';
       default:
-        return '✏️ Personalizado';
+        return 'Personalizado';
     }
   };
 
@@ -145,9 +146,13 @@ export function CurriculumView({
                   fontSize: '0.8125rem',
                   fontWeight: 600,
                   cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.375rem',
                 }}
               >
-                ⚡ Modelos Pedagógicos
+                <Sparkles size={14} />
+                <span>Modelos Pedagógicos</span>
               </button>
             </Can>
           )}
@@ -250,11 +255,10 @@ export function CurriculumView({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '2rem',
               boxShadow: '0 4px 12px rgba(67, 56, 202, 0.1)',
             }}
           >
-            📚
+            <BookOpen size={32} />
           </div>
           <div>
             <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.375rem 0' }}>
@@ -281,9 +285,13 @@ export function CurriculumView({
                     fontWeight: 600,
                     cursor: 'pointer',
                     boxShadow: '0 2px 4px rgba(67, 56, 202, 0.2)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.375rem',
                   }}
                 >
-                  ⚡ Usar Modelo Pedagógico
+                  <Sparkles size={16} />
+                  <span>Usar Modelo Pedagógico</span>
                 </button>
               </Can>
             )}

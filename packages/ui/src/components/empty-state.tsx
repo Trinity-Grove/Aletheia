@@ -1,4 +1,5 @@
 import React, { type HTMLAttributes, forwardRef } from 'react';
+import { Sparkles } from 'lucide-react';
 
 export interface EmptyStateProps extends HTMLAttributes<HTMLDivElement> {
   icon?: React.ReactNode | undefined;
@@ -11,7 +12,7 @@ export const EmptyState = forwardRef<HTMLDivElement, EmptyStateProps>(
   (
     {
       className = '',
-      icon = '🌱',
+      icon = <Sparkles size={36} style={{ color: 'var(--color-brand-sage)' }} />,
       title,
       description,
       action,

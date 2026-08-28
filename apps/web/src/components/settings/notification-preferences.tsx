@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Check, AlertCircle, BookOpen, Clock } from 'lucide-react';
 import type {
   FamilySettingsResponseDto,
   UpdateFamilySettingsDto,
@@ -91,9 +92,13 @@ export function NotificationPreferences({
             color: '#065F46',
             fontSize: '0.875rem',
             marginBottom: '1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
           }}
         >
-          ✓ {successMessage}
+          <Check size={16} />
+          <span>{successMessage}</span>
         </div>
       )}
 
@@ -108,9 +113,13 @@ export function NotificationPreferences({
             color: '#991B1B',
             fontSize: '0.875rem',
             marginBottom: '1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
           }}
         >
-          ✕ {errorMessage}
+          <AlertCircle size={16} />
+          <span>{errorMessage}</span>
         </div>
       )}
 
@@ -133,9 +142,10 @@ export function NotificationPreferences({
               <div>
                 <label
                   htmlFor="devotionalReminderTime"
-                  style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.375rem' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.375rem' }}
                 >
-                  📖 Lembrete do Devocional Familiar
+                  <BookOpen size={14} style={{ color: '#D97706' }} />
+                  <span>Lembrete do Devocional Familiar</span>
                 </label>
                 <input
                   id="devotionalReminderTime"
@@ -159,9 +169,10 @@ export function NotificationPreferences({
               <div>
                 <label
                   htmlFor="dailyScheduleReminderTime"
-                  style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.375rem' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.375rem' }}
                 >
-                  ⏰ Lembrete do Cronograma de Aulas
+                  <Clock size={14} style={{ color: '#2563EB' }} />
+                  <span>Lembrete do Cronograma de Aulas</span>
                 </label>
                 <input
                   id="dailyScheduleReminderTime"

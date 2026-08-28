@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { CheckCircle2, Clock, Circle, BookOpen, X } from 'lucide-react';
 import type { ObjectiveResponseDto, ObjectiveStatus, SubjectResponseDto } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 
@@ -33,12 +34,12 @@ export function SubjectCard({
   const getStatusBadge = (status: ObjectiveStatus) => {
     switch (status) {
       case 'ACHIEVED':
-        return { label: 'Concluído', bg: '#ECFDF5', text: '#047857', border: '#A7F3D0', icon: '✅' };
+        return { label: 'Concluído', bg: '#ECFDF5', text: '#047857', border: '#A7F3D0', icon: <CheckCircle2 size={12} /> };
       case 'IN_PROGRESS':
-        return { label: 'Em Andamento', bg: '#FEF3C7', text: '#92400E', border: '#FDE68A', icon: '⏳' };
+        return { label: 'Em Andamento', bg: '#FEF3C7', text: '#92400E', border: '#FDE68A', icon: <Clock size={12} /> };
       case 'NOT_STARTED':
       default:
-        return { label: 'Não Iniciado', bg: '#F1F5F9', text: '#475569', border: '#E2E8F0', icon: '⚪' };
+        return { label: 'Não Iniciado', bg: '#F1F5F9', text: '#475569', border: '#E2E8F0', icon: <Circle size={12} /> };
     }
   };
 
@@ -72,11 +73,9 @@ export function SubjectCard({
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '0.875rem',
-                fontWeight: 700,
               }}
             >
-              📚
+              <BookOpen size={16} />
             </span>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
               {subject.name}
@@ -225,12 +224,13 @@ export function SubjectCard({
                         background: 'none',
                         color: '#94A3B8',
                         cursor: 'pointer',
-                        fontSize: '0.875rem',
+                        display: 'flex',
+                        alignItems: 'center',
                         padding: '0 0.25rem',
-                        lineHeight: 1,
                       }}
+                      aria-label="Excluir objetivo"
                     >
-                      ✕
+                      <X size={14} />
                     </button>
                   </Can>
                 </div>

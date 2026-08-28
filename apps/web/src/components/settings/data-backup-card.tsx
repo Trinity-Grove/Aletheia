@@ -1,6 +1,23 @@
 'use client';
 
 import React, { useState } from 'react';
+import {
+  ShieldCheck,
+  Check,
+  AlertCircle,
+  Users,
+  GraduationCap,
+  BookOpen,
+  HeartHandshake,
+  Library,
+  Calendar,
+  FileText,
+  Palette,
+  ClipboardCheck,
+  Scale,
+  Lock,
+  Package,
+} from 'lucide-react';
 import type {
   DataExportJobResponseDto,
   FamilyDataExportPackageDto,
@@ -63,7 +80,9 @@ export function DataBackupCard({
     >
       <div style={{ marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-          <span style={{ fontSize: '1.5rem' }}>🛡️</span>
+          <span style={{ color: '#059669', display: 'flex', alignItems: 'center' }}>
+            <ShieldCheck size={24} />
+          </span>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', margin: 0 }}>
             Soberania de Dados & Backup Completo
           </h2>
@@ -84,9 +103,13 @@ export function DataBackupCard({
             color: '#065F46',
             fontSize: '0.875rem',
             marginBottom: '1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
           }}
         >
-          ✓ {exportSuccessMessage}
+          <Check size={16} />
+          <span>{exportSuccessMessage}</span>
         </div>
       )}
 
@@ -101,9 +124,13 @@ export function DataBackupCard({
             color: '#991B1B',
             fontSize: '0.875rem',
             marginBottom: '1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
           }}
         >
-          ✕ {errorMessage}
+          <AlertCircle size={16} />
+          <span>{errorMessage}</span>
         </div>
       )}
 
@@ -122,7 +149,8 @@ export function DataBackupCard({
         <ul
           style={{
             margin: 0,
-            paddingLeft: '1.25rem',
+            padding: 0,
+            listStyle: 'none',
             fontSize: '0.8125rem',
             color: '#475569',
             display: 'grid',
@@ -130,16 +158,16 @@ export function DataBackupCard({
             gap: '0.5rem',
           }}
         >
-          <li>👨‍👩‍👧‍👦 Dados da Família & Configurações</li>
-          <li>🎓 Perfis Pedagógicos dos Educandos</li>
-          <li>📖 Leituras & Diário Devocional</li>
-          <li>🙏 Pedidos & Diário de Orações</li>
-          <li>📚 Anos Letivos, Disciplinas & Currículos</li>
-          <li>📅 Cronogramas & Rotinas Semanais</li>
-          <li>📝 Registros de Aprendizagem & Domínio</li>
-          <li>🎨 Itens de Portfólio & Evidências</li>
-          <li>📋 Registros Diários de Frequência</li>
-          <li>⚖️ Metas de Conformidade & Históricos</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Users size={14} style={{ color: '#6366F1' }} /> Dados da Família & Configurações</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><GraduationCap size={14} style={{ color: '#3B82F6' }} /> Perfis Pedagógicos dos Educandos</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><BookOpen size={14} style={{ color: '#D97706' }} /> Leituras & Diário Devocional</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><HeartHandshake size={14} style={{ color: '#EC4899' }} /> Pedidos & Diário de Orações</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Library size={14} style={{ color: '#8B5CF6' }} /> Anos Letivos, Disciplinas & Currículos</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Calendar size={14} style={{ color: '#10B981' }} /> Cronogramas & Rotinas Semanais</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><FileText size={14} style={{ color: '#0284C7' }} /> Registros de Aprendizagem & Domínio</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Palette size={14} style={{ color: '#F59E0B' }} /> Itens de Portfólio & Evidências</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ClipboardCheck size={14} style={{ color: '#059669' }} /> Registros Diários de Frequência</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Scale size={14} style={{ color: '#7C3AED' }} /> Metas de Conformidade & Históricos</li>
         </ul>
       </div>
 
@@ -160,8 +188,9 @@ export function DataBackupCard({
         <Can
           action="export_family_data"
           fallback={
-            <div style={{ fontSize: '0.8125rem', color: '#6B7280', fontStyle: 'italic' }}>
-              🔒 Apenas responsáveis podem exportar o pacote integral de dados da família.
+            <div style={{ fontSize: '0.8125rem', color: '#6B7280', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              <Lock size={14} />
+              <span>Apenas responsáveis podem exportar o pacote integral de dados da família.</span>
             </div>
           }
         >
@@ -185,7 +214,7 @@ export function DataBackupCard({
               transition: 'background-color 0.15s ease',
             }}
           >
-            <span>📦</span>
+            <Package size={16} />
             <span>{isExporting ? 'Exportando Pacote...' : 'Exportar Pacote Completo (JSON)'}</span>
           </button>
         </Can>

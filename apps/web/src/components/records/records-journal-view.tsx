@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { BookOpen } from 'lucide-react';
 import type {
   LearningRecordResponseDto,
   LearnerProgressSummaryDto,
@@ -294,7 +295,9 @@ export function RecordsJournalView({
             border: '1px dashed #D1D5DB',
           }}
         >
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📖</div>
+          <div style={{ color: 'var(--color-brand-sage, #78937f)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
+            <BookOpen size={40} />
+          </div>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#111827', margin: '0 0 0.5rem 0' }}>
             Nenhum registro de aprendizagem encontrado
           </h3>

@@ -1,4 +1,5 @@
 import React, { type HTMLAttributes, forwardRef } from 'react';
+import { Info, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 
 export type AlertVariant = 'info' | 'success' | 'warning' | 'error';
 
@@ -8,11 +9,11 @@ export interface AlertProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'
   icon?: React.ReactNode | undefined;
 }
 
-const DEFAULT_ICONS: Record<AlertVariant, string> = {
-  info: 'ℹ️',
-  success: '✓',
-  warning: '⚠️',
-  error: '✕',
+const DEFAULT_ICONS: Record<AlertVariant, React.ReactNode> = {
+  info: <Info size={18} />,
+  success: <CheckCircle2 size={18} />,
+  warning: <AlertTriangle size={18} />,
+  error: <XCircle size={18} />,
 };
 
 export const Alert = forwardRef<HTMLDivElement, AlertProps>(

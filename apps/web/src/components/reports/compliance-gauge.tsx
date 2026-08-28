@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { BarChart2, Check, Clock, Calendar } from 'lucide-react';
 import type {
   AttendanceComplianceSummaryDto,
   ComplianceRequirementResponseDto,
@@ -30,7 +31,9 @@ export function ComplianceGauge({
           color: '#6B7280',
         }}
       >
-        <span style={{ fontSize: '1.5rem' }}>📊</span>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem', color: '#9CA3AF' }}>
+          <BarChart2 size={24} />
+        </div>
         <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.875rem' }}>
           Nenhum dado de conformidade registrado para este educando.
         </p>
@@ -114,9 +117,6 @@ export function ComplianceGauge({
         <span
           data-testid="compliance-status-badge"
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.375rem',
             padding: '0.375rem 0.75rem',
             borderRadius: '9999px',
             fontSize: '0.75rem',
@@ -124,10 +124,13 @@ export function ComplianceGauge({
             backgroundColor: statusBg,
             color: statusColor,
             border: `1px solid ${statusBorder}`,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.375rem',
           }}
         >
-          <span>{isCompliant ? '✓' : '⏳'}</span>
-          {statusText}
+          {isCompliant ? <Check size={12} /> : <Clock size={12} />}
+          <span>{statusText}</span>
         </span>
       </div>
 
@@ -162,9 +165,13 @@ export function ComplianceGauge({
                 fontSize: '0.875rem',
                 fontWeight: 600,
                 color: '#374151',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.375rem',
               }}
             >
-              📅 Dias Letivos Cumpridos
+              <Calendar size={14} />
+              <span>Dias Letivos Cumpridos</span>
             </span>
             <span
               data-testid="compliance-percentage"

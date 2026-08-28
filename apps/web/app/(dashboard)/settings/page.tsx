@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { Building2, Bell, ShieldCheck } from 'lucide-react';
 import type {
   DataExportJobResponseDto,
   FamilyDataExportPackageDto,
@@ -221,9 +222,13 @@ export default function SettingsPage() {
               cursor: 'pointer',
               borderBottom: activeTab === 'general' ? '2px solid #2563EB' : '2px solid transparent',
               color: activeTab === 'general' ? '#2563EB' : '#6B7280',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
             }}
           >
-            🏛️ Identidade & Geral
+            <Building2 size={16} />
+            <span>Identidade & Geral</span>
           </button>
 
           <button
@@ -239,9 +244,13 @@ export default function SettingsPage() {
               cursor: 'pointer',
               borderBottom: activeTab === 'notifications' ? '2px solid #2563EB' : '2px solid transparent',
               color: activeTab === 'notifications' ? '#2563EB' : '#6B7280',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
             }}
           >
-            🔔 Notificações & Lembretes
+            <Bell size={16} />
+            <span>Notificações & Lembretes</span>
           </button>
 
           <button
@@ -257,9 +266,13 @@ export default function SettingsPage() {
               cursor: 'pointer',
               borderBottom: activeTab === 'backup' ? '2px solid #2563EB' : '2px solid transparent',
               color: activeTab === 'backup' ? '#2563EB' : '#6B7280',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
             }}
           >
-            🛡️ Backup & Soberania de Dados
+            <ShieldCheck size={16} />
+            <span>Backup & Soberania de Dados</span>
           </button>
         </div>
 

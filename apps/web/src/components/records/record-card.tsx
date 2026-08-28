@@ -1,6 +1,29 @@
 'use client';
 
 import React from 'react';
+import {
+  Calendar,
+  Timer,
+  Clock,
+  Sprout,
+  TrendingUp,
+  HeartHandshake,
+  Sparkles,
+  Trophy,
+  BookOpen,
+  Lightbulb,
+  Hammer,
+  FileText,
+  Search,
+  Star,
+  MessageSquare,
+  Target,
+  Paperclip,
+  Pencil,
+  Trash2,
+  Plus,
+  GraduationCap,
+} from 'lucide-react';
 import type {
   LearningRecordResponseDto,
   MasteryLevel,
@@ -18,14 +41,14 @@ export interface RecordCardProps {
 
 export const MASTERY_CONFIG: Record<
   MasteryLevel,
-  { label: string; bg: string; text: string; icon: string }
+  { label: string; bg: string; text: string; icon: React.ReactNode }
 > = {
-  NOT_STARTED: { label: 'Não Iniciado', bg: '#F3F4F6', text: '#4B5563', icon: '⏳' },
-  EXPOSURE: { label: 'Exposição', bg: '#FEF3C7', text: '#92400E', icon: '🌱' },
-  DEVELOPING: { label: 'Em Desenvolvimento', bg: '#DBEAFE', text: '#1E40AF', icon: '🌿' },
-  WITH_ASSISTANCE: { label: 'Com Assistência', bg: '#E0E7FF', text: '#3730A3', icon: '🤝' },
-  AUTONOMOUS: { label: 'Autônomo', bg: '#D1FAE5', text: '#065F46', icon: '✨' },
-  MASTERED: { label: 'Dominado', bg: '#ECFDF5', text: '#047857', icon: '🏆' },
+  NOT_STARTED: { label: 'Não Iniciado', bg: '#F3F4F6', text: '#4B5563', icon: <Clock size={14} /> },
+  EXPOSURE: { label: 'Exposição', bg: '#FEF3C7', text: '#92400E', icon: <Sprout size={14} /> },
+  DEVELOPING: { label: 'Em Desenvolvimento', bg: '#DBEAFE', text: '#1E40AF', icon: <TrendingUp size={14} /> },
+  WITH_ASSISTANCE: { label: 'Com Assistência', bg: '#E0E7FF', text: '#3730A3', icon: <HeartHandshake size={14} /> },
+  AUTONOMOUS: { label: 'Autônomo', bg: '#D1FAE5', text: '#065F46', icon: <Sparkles size={14} /> },
+  MASTERED: { label: 'Dominado', bg: '#ECFDF5', text: '#047857', icon: <Trophy size={14} /> },
 };
 
 export const ASSESSMENT_LABELS: Record<AssessmentMethod, string> = {
@@ -41,18 +64,18 @@ export const ASSESSMENT_LABELS: Record<AssessmentMethod, string> = {
   PRACTICAL_DEMONSTRATION: 'Demonstração Prática',
 };
 
-export const RECORD_TYPE_LABELS: Record<LearningRecordType, { label: string; icon: string }> = {
-  PLANNED_LESSON: { label: 'Lição Planejada', icon: '📖' },
-  SPONTANEOUS_EXPERIENCE: { label: 'Experiência Espontânea', icon: '💡' },
-  PROJECT_WORK: { label: 'Trabalho em Projeto', icon: '🛠️' },
-  READING_LOG: { label: 'Registro de Leitura', icon: '📚' },
-  HABIT_PRACTICE: { label: 'Prática de Hábito', icon: '🕊️' },
+export const RECORD_TYPE_LABELS: Record<LearningRecordType, { label: string; icon: React.ReactNode }> = {
+  PLANNED_LESSON: { label: 'Lição Planejada', icon: <BookOpen size={14} /> },
+  SPONTANEOUS_EXPERIENCE: { label: 'Experiência Espontânea', icon: <Lightbulb size={14} /> },
+  PROJECT_WORK: { label: 'Trabalho em Projeto', icon: <Hammer size={14} /> },
+  READING_LOG: { label: 'Registro de Leitura', icon: <FileText size={14} /> },
+  HABIT_PRACTICE: { label: 'Prática de Hábito', icon: <HeartHandshake size={14} /> },
 };
 
 export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCardProps) {
   const mastery = MASTERY_CONFIG[record.masteryLevel] || MASTERY_CONFIG.DEVELOPING;
   const assessmentLabel = ASSESSMENT_LABELS[record.assessmentMethod] || record.assessmentMethod;
-  const recordType = RECORD_TYPE_LABELS[record.type] || { label: record.type, icon: '📝' };
+  const recordType = RECORD_TYPE_LABELS[record.type] || { label: record.type, icon: <FileText size={14} /> };
 
   return (
     <article
@@ -103,6 +126,7 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
+                gap: '0.25rem',
                 backgroundColor: record.subjectColor ? `${record.subjectColor}15` : '#EEF2FF',
                 color: record.subjectColor || '#4F46E5',
                 border: `1px solid ${record.subjectColor ? `${record.subjectColor}40` : '#C7D2FE'}`,
@@ -112,7 +136,8 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
                 borderRadius: '0.375rem',
               }}
             >
-              📚 {record.subjectName}
+              <BookOpen size={12} />
+              <span>{record.subjectName}</span>
             </span>
           )}
 
@@ -120,6 +145,9 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
             <span
               data-testid={`record-learner-badge-${record.id}`}
               style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
                 backgroundColor: '#FEF3C7',
                 color: '#92400E',
                 fontSize: '0.75rem',
@@ -128,7 +156,8 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
                 borderRadius: '0.375rem',
               }}
             >
-              🎓 {record.learnerName}
+              <GraduationCap size={12} />
+              <span>{record.learnerName}</span>
             </span>
           )}
         </div>
@@ -193,9 +222,9 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
           flexWrap: 'wrap',
         }}
       >
-        <span data-testid={`record-date-${record.id}`}>📅 {record.date}</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} data-testid={`record-date-${record.id}`}><Calendar size={12} /> {record.date}</span>
         {record.durationMinutes && (
-          <span data-testid={`record-duration-${record.id}`}>⏱️ {record.durationMinutes} min</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} data-testid={`record-duration-${record.id}`}><Timer size={12} /> {record.durationMinutes} min</span>
         )}
         <span
           data-testid={`assessment-method-badge-${record.id}`}
@@ -206,9 +235,13 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
             borderRadius: '0.25rem',
             border: '1px solid #E2E8F0',
             fontWeight: 500,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.375rem',
           }}
         >
-          🔍 Avaliação: {assessmentLabel}
+          <Search size={12} />
+          <span>Avaliação: {assessmentLabel}</span>
         </span>
       </div>
 
@@ -227,16 +260,18 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
         >
           {record.strengths && (
             <div data-testid={`record-strengths-${record.id}`}>
-              <strong style={{ color: '#065F46', display: 'block', marginBottom: '0.25rem' }}>
-                🌟 Pontos Fortes:
+              <strong style={{ color: '#065F46', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.25rem' }}>
+                <Star size={14} />
+                <span>Pontos Fortes:</span>
               </strong>
               <span style={{ color: '#374151' }}>{record.strengths}</span>
             </div>
           )}
           {record.areasForGrowth && (
             <div data-testid={`record-growth-${record.id}`}>
-              <strong style={{ color: '#92400E', display: 'block', marginBottom: '0.25rem' }}>
-                🌱 Áreas para Crescimento:
+              <strong style={{ color: '#92400E', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.25rem' }}>
+                <Sprout size={14} />
+                <span>Áreas para Crescimento:</span>
               </strong>
               <span style={{ color: '#374151' }}>{record.areasForGrowth}</span>
             </div>
@@ -257,8 +292,9 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
             color: '#701A75',
           }}
         >
-          <strong style={{ display: 'block', marginBottom: '0.2rem' }}>
-            🕊️ Crescimento em Caráter & Hábitos:
+          <strong style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.2rem' }}>
+            <HeartHandshake size={14} />
+            <span>Crescimento em Caráter & Hábitos:</span>
           </strong>
           <span>{record.characterHabitGrowth}</span>
         </div>
@@ -275,17 +311,24 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
             padding: '0.625rem 0.75rem',
             fontSize: '0.8125rem',
             color: '#713F12',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.375rem',
           }}
         >
-          <strong>💬 Observações:</strong> {record.notes}
+          <MessageSquare size={14} style={{ marginTop: '0.125rem', flexShrink: 0 }} />
+          <div>
+            <strong>Observações:</strong> {record.notes}
+          </div>
         </div>
       )}
 
       {/* Attached Objectives */}
       {record.objectives && record.objectives.length > 0 && (
         <div data-testid={`record-objectives-container-${record.id}`} style={{ marginTop: '0.25rem' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4B5563', display: 'block', marginBottom: '0.375rem' }}>
-            🎯 Objetivos Vinculados:
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4B5563', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.375rem' }}>
+            <Target size={14} />
+            <span>Objetivos Vinculados:</span>
           </span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
             {record.objectives.map((obj) => (
@@ -331,9 +374,13 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
                 padding: '0.25rem 0.5rem',
                 borderRadius: '0.25rem',
                 fontWeight: 500,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
               }}
             >
-              📎 {record.portfolioItemIds.length} evidência(s)
+              <Paperclip size={12} />
+              <span>{record.portfolioItemIds.length} evidência(s)</span>
             </span>
           )}
           {onAddEvidence && (
@@ -350,15 +397,19 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
                   fontSize: '0.75rem',
                   color: '#4B5563',
                   cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
                 }}
               >
-                + Anexar Evidência
+                <Plus size={12} />
+                <span>+ Evidência</span>
               </button>
             </Can>
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.375rem' }}>
           {onEdit && (
             <Can action="log_learning">
               <button
@@ -367,15 +418,19 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
                 onClick={() => onEdit(record)}
                 style={{
                   background: 'none',
-                  border: 'none',
-                  color: '#2563EB',
-                  fontSize: '0.8125rem',
-                  fontWeight: 600,
+                  border: '1px solid #D1D5DB',
+                  borderRadius: '0.25rem',
+                  padding: '0.25rem 0.5rem',
+                  fontSize: '0.75rem',
+                  color: '#374151',
                   cursor: 'pointer',
-                  padding: '0.25rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
                 }}
               >
-                Editar
+                <Pencil size={12} />
+                <span>Editar</span>
               </button>
             </Can>
           )}
@@ -387,15 +442,18 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
                 onClick={() => onDelete(record.id)}
                 style={{
                   background: 'none',
-                  border: 'none',
+                  border: '1px solid #FCA5A5',
+                  borderRadius: '0.25rem',
+                  padding: '0.25rem 0.5rem',
+                  fontSize: '0.75rem',
                   color: '#DC2626',
-                  fontSize: '0.8125rem',
-                  fontWeight: 600,
                   cursor: 'pointer',
-                  padding: '0.25rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
                 }}
+                aria-label="Excluir registro"
               >
-                Excluir
+                <Trash2 size={12} />
               </button>
             </Can>
           )}

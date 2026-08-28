@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Check, AlertCircle, Lightbulb } from 'lucide-react';
 import type {
   FamilySettingsResponseDto,
   GradingScale,
@@ -150,9 +151,13 @@ export function FamilyGeneralSettings({
             color: '#065F46',
             fontSize: '0.875rem',
             marginBottom: '1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
           }}
         >
-          ✓ {successMessage}
+          <Check size={16} />
+          <span>{successMessage}</span>
         </div>
       )}
 
@@ -167,9 +172,13 @@ export function FamilyGeneralSettings({
             color: '#991B1B',
             fontSize: '0.875rem',
             marginBottom: '1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
           }}
         >
-          ✕ {errorMessage}
+          <AlertCircle size={16} />
+          <span>{errorMessage}</span>
         </div>
       )}
 
@@ -308,9 +317,13 @@ export function FamilyGeneralSettings({
                 borderRadius: '0.375rem',
                 fontSize: '0.8125rem',
                 color: '#4B5563',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
               }}
             >
-              💡 {GRADING_SCALES.find((s) => s.value === defaultGradingScale)?.description}
+              <Lightbulb size={16} style={{ color: '#D97706', flexShrink: 0 }} />
+              <span>{GRADING_SCALES.find((s) => s.value === defaultGradingScale)?.description}</span>
             </div>
           </div>
 

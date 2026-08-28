@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { BookOpen, GraduationCap, MapPin } from 'lucide-react';
 import type {
   DayOfWeek,
   LearnerSummaryDto,
@@ -268,9 +269,13 @@ export function WeeklyRoutineGrid({
                                 backgroundColor: '#F1F5F9',
                                 color: '#334155',
                                 fontWeight: 500,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
                               }}
                             >
-                              📚 {slot.subjectName || subInfo?.name}
+                              <BookOpen size={10} />
+                              <span>{slot.subjectName || subInfo?.name}</span>
                             </span>
                           ) : null}
 
@@ -283,9 +288,13 @@ export function WeeklyRoutineGrid({
                                 backgroundColor: '#EFF6FF',
                                 color: '#1D4ED8',
                                 fontWeight: 500,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
                               }}
                             >
-                              🎓 {learnerName}
+                              <GraduationCap size={10} />
+                              <span>{learnerName}</span>
                             </span>
                           )}
 
@@ -298,9 +307,13 @@ export function WeeklyRoutineGrid({
                                 backgroundColor: '#F8FAFC',
                                 color: '#64748B',
                                 border: '1px solid #E2E8F0',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
                               }}
                             >
-                              📍 {slot.location}
+                              <MapPin size={10} />
+                              <span>{slot.location}</span>
                             </span>
                           )}
                         </div>

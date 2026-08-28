@@ -392,7 +392,7 @@ describe('Lessons and Schedule Web Components', () => {
       // Verify routine slot content
       expect(screen.getByText('Devocional & Canto')).toBeDefined();
       expect(screen.getByText('Estudo de Latim Clássico')).toBeDefined();
-      expect(screen.getByText('📍 Sala de Estar')).toBeDefined();
+      expect(screen.getByText('Sala de Estar')).toBeDefined();
 
       // Test delete slot button
       const firstSlot = mockRoutineSlots[0]!;

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Check } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, Badge, Button, EmptyState } from '@aletheia/ui';
 
 export interface DailyActivityItem {
@@ -86,7 +87,7 @@ export function ActivityList({ activities, onToggleComplete }: ActivityListProps
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    {act.completed ? '✓' : ''}
+                    {act.completed && <Check size={14} />}
                   </button>
 
                   <div>
