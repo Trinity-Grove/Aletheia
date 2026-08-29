@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useId, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { MobileNavigation } from './mobile-navigation.js';
 import { Sidebar } from './sidebar.js';
 import { Topbar } from './topbar.js';
+
+const MOBILE_NAVIGATION_MEDIA_QUERY = '(max-width: 1024px)';
 
 export interface NavigationItem {
   id: string;
@@ -39,6 +41,18 @@ export function AppShell({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const mobileNavigationId = useId();
   const shellClassName = `ui-appshell ${isSidebarCollapsed ? 'ui-appshell--collapsed' : ''} ${className}`.trim();
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+
+    const mobileViewport = window.matchMedia(MOBILE_NAVIGATION_MEDIA_QUERY);
+    const handleViewportChange = (event: MediaQueryListEvent) => {
+      if (!event.matches) setIsMobileMenuOpen(false);
+    };
+
+    mobileViewport.addEventListener('change', handleViewportChange);
+    return () => mobileViewport.removeEventListener('change', handleViewportChange);
+  }, []);
 
   return (
     <div className={shellClassName} data-testid="app-shell">

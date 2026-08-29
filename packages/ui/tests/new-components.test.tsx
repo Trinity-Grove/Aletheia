@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
 import { AppShell, Drawer, Dropdown, MobileNavigation, Sidebar, Tooltip, Topbar } from '../src/index.js';
@@ -325,6 +325,72 @@ describe('accessible overlay primitives', () => {
       expect(openButton).toHaveAttribute('aria-controls', mobileNavigation.id);
       fireEvent.click(screen.getByRole('button', { name: 'Fechar navegação' }));
       expect(screen.queryByRole('dialog', { name: 'Navegação móvel' })).not.toBeInTheDocument();
+    });
+
+    it('closes mobile navigation when the viewport leaves the mobile breakpoint', () => {
+      let matches = true;
+      const listeners = new Set<(event: MediaQueryListEvent) => void>();
+      const mediaQueryList = {
+        get matches() {
+          return matches;
+        },
+        media: '(max-width: 1024px)',
+        onchange: null,
+        addEventListener: (_type: 'change', listener: (event: MediaQueryListEvent) => void) => {
+          listeners.add(listener);
+        },
+        removeEventListener: (_type: 'change', listener: (event: MediaQueryListEvent) => void) => {
+          listeners.delete(listener);
+        },
+        addListener: (listener: (event: MediaQueryListEvent) => void) => listeners.add(listener),
+        removeListener: (listener: (event: MediaQueryListEvent) => void) => listeners.delete(listener),
+        dispatchEvent: (event: Event) => {
+          listeners.forEach((listener) => listener(event as MediaQueryListEvent));
+          return true;
+        },
+      } as unknown as MediaQueryList;
+      const originalMatchMedia = window.matchMedia;
+      const matchMedia = vi.fn(() => mediaQueryList);
+      Object.defineProperty(window, 'matchMedia', { configurable: true, writable: true, value: matchMedia });
+
+      try {
+        document.body.style.overflow = 'scroll';
+        render(
+          <AppShell
+            navigationItems={navigationItems}
+            topbarActions={<button type="button">Perfil</button>}
+          >
+            <div>Conteúdo Principal</div>
+          </AppShell>
+        );
+
+        const opener = screen.getByRole('button', { name: 'Abrir navegação' });
+        opener.focus();
+        fireEvent.click(opener);
+        expect(screen.getByRole('dialog', { name: 'Navegação móvel' })).toBeInTheDocument();
+        expect(document.body.style.overflow).toBe('hidden');
+
+        act(() => {
+          matches = false;
+          mediaQueryList.dispatchEvent({ matches, media: mediaQueryList.media } as MediaQueryListEvent);
+        });
+
+        expect(matchMedia).toHaveBeenCalledWith('(max-width: 1024px)');
+        expect(screen.queryByRole('dialog', { name: 'Navegação móvel' })).not.toBeInTheDocument();
+        expect(document.body.style.overflow).toBe('scroll');
+        expect(opener).toHaveFocus();
+
+        const action = screen.getByRole('button', { name: 'Perfil' });
+        action.focus();
+        fireEvent.keyDown(action, { key: 'Tab', shiftKey: true });
+        expect(action).toHaveFocus();
+      } finally {
+        Object.defineProperty(window, 'matchMedia', {
+          configurable: true,
+          writable: true,
+          value: originalMatchMedia,
+        });
+      }
     });
   });
 });
