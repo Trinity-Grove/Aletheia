@@ -1,5 +1,6 @@
 import type {
   CreateLessonPlanDto,
+  DailyAgendaDto,
   LessonPlanResponseDto,
 } from '@aletheia/contracts';
 
@@ -9,4 +10,10 @@ export interface LessonPlanPublicApi {
   createLessonPlan(familyId: string, dto: CreateLessonPlanDto): Promise<LessonPlanResponseDto>;
   getLessonPlan(familyId: string, id: string): Promise<LessonPlanResponseDto>;
   listLessonPlans(familyId: string): Promise<LessonPlanResponseDto[]>;
+}
+
+export const SCHEDULE_PUBLIC_API = Symbol('SCHEDULE_PUBLIC_API');
+
+export interface SchedulePublicApi {
+  getDailyAgenda(familyId: string, date: string, learnerId?: string): Promise<DailyAgendaDto>;
 }

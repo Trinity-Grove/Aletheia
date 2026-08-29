@@ -4,7 +4,7 @@ import { LessonPlanRepository } from './infrastructure/lesson-plan.repository.js
 import { ScheduleRepository } from './infrastructure/schedule.repository.js';
 import { LessonPlanService } from './application/lesson-plan.service.js';
 import { ScheduleService } from './application/schedule.service.js';
-import { LESSON_PLAN_PUBLIC_API } from './application/public-api.js';
+import { LESSON_PLAN_PUBLIC_API, SCHEDULE_PUBLIC_API } from './application/public-api.js';
 import { LessonPlanController } from './presentation/lesson-plan.controller.js';
 import { ScheduleController } from './presentation/schedule.controller.js';
 
@@ -20,7 +20,11 @@ import { ScheduleController } from './presentation/schedule.controller.js';
       provide: LESSON_PLAN_PUBLIC_API,
       useExisting: LessonPlanService,
     },
+    {
+      provide: SCHEDULE_PUBLIC_API,
+      useExisting: ScheduleService,
+    },
   ],
-  exports: [LESSON_PLAN_PUBLIC_API, LessonPlanService, ScheduleService],
+  exports: [LESSON_PLAN_PUBLIC_API, SCHEDULE_PUBLIC_API, LessonPlanService, ScheduleService],
 })
 export class LessonsModule {}
