@@ -1112,7 +1112,7 @@
    UI Domain Patterns
    -------------------------------------------------------------------------- */
 .ui-pattern-daily-journey {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--ui-daily-journey-block-spacing);
 }
 .ui-daily-journey-header {
   display: flex;
@@ -1121,64 +1121,65 @@
 }
 .ui-daily-journey-subtitle {
   margin: 0.25rem 0 0 0;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
+  font-size: var(--ui-daily-journey-subtitle-font-size);
+  line-height: var(--ui-daily-journey-subtitle-line-height);
+  color: var(--ui-daily-journey-subtitle-foreground);
 }
 .ui-daily-journey-body {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--ui-daily-journey-body-gap);
 }
 .ui-daily-journey-progress-section {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--ui-daily-journey-progress-gap);
 }
 .ui-daily-journey-progress-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 0.875rem;
+  font-size: var(--ui-daily-journey-progress-font-size);
 }
 .ui-daily-journey-progress-title {
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: var(--ui-daily-journey-progress-title-font-weight);
+  color: var(--ui-daily-journey-progress-title-foreground);
 }
 .ui-daily-journey-progress-values {
-  color: var(--text-secondary);
+  color: var(--ui-daily-journey-progress-value-foreground);
 }
 .ui-daily-journey-stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 1rem;
+  gap: var(--ui-daily-journey-stats-gap);
   padding-top: 0.75rem;
-  border-top: 1px solid var(--border-light);
+  border-top: 1px solid var(--ui-daily-journey-stats-divider);
 }
 .ui-daily-journey-stat-card {
   text-align: center;
 }
 .ui-daily-journey-stat-number {
-  font-size: 1.5rem;
-  font-weight: 700;
-  font-family: var(--font-serif);
+  font-size: var(--ui-daily-journey-stat-font-size);
+  font-weight: var(--ui-daily-journey-stat-font-weight);
+  font-family: var(--ui-daily-journey-stat-font-family);
 }
 .ui-daily-journey-stat-number--forest {
-  color: var(--color-brand-forest);
+  color: var(--ui-daily-journey-stat-primary-foreground);
 }
 .ui-daily-journey-stat-number--gold {
-  color: var(--color-brand-gold);
+  color: var(--ui-daily-journey-stat-accent-foreground);
 }
 .ui-daily-journey-stat-number--sage {
-  color: var(--color-brand-sage);
+  color: var(--ui-daily-journey-stat-muted-foreground);
 }
 .ui-daily-journey-stat-label {
   margin: 0.25rem 0 0 0;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  font-weight: 600;
+  font-size: var(--ui-daily-journey-stat-label-font-size);
+  color: var(--ui-daily-journey-stat-label-foreground);
+  font-weight: var(--ui-daily-journey-stat-label-font-weight);
 }
 
 .ui-pattern-activity-list {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--ui-activity-list-block-spacing);
 }
 .ui-activity-list-header {
   display: flex;
@@ -1187,56 +1188,57 @@
 }
 .ui-activity-list-subtitle {
   margin: 0.25rem 0 0 0;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
+  font-size: var(--ui-activity-list-subtitle-font-size);
+  line-height: var(--ui-activity-list-subtitle-line-height);
+  color: var(--ui-activity-list-subtitle-foreground);
 }
 .ui-activity-list-items {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--ui-activity-list-items-gap);
 }
 .ui-activity-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  border-radius: var(--radius-md);
-  background-color: var(--bg-surface-subtle);
-  border: 1px solid var(--border-light);
+  border-radius: var(--ui-activity-list-item-radius);
+  background-color: var(--ui-activity-list-item-background);
+  border: 1px solid var(--ui-activity-list-item-border);
   transition: all var(--ui-motion-duration-fast) var(--ui-motion-easing-default);
 }
 .ui-activity-item--completed {
-  background-color: var(--color-brand-sage-soft);
-  border-color: var(--color-brand-sage);
+  background-color: var(--ui-activity-list-item-completed-background);
+  border-color: var(--ui-activity-list-item-completed-border);
 }
 .ui-activity-item-left {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--ui-activity-list-item-content-gap);
 }
 .ui-activity-checkbox {
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 4px;
-  border: 2px solid var(--border-medium);
+  width: var(--ui-activity-list-checkbox-size);
+  height: var(--ui-activity-list-checkbox-size);
+  border-radius: var(--ui-activity-list-checkbox-radius);
+  border: 2px solid var(--ui-activity-list-checkbox-border);
   background-color: transparent;
-  color: #ffffff;
+  color: var(--ui-activity-list-checkbox-foreground);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.875rem;
+  font-size: var(--ui-activity-list-checkbox-icon-size);
   cursor: pointer;
   transition: all var(--ui-motion-duration-fast) var(--ui-motion-easing-default);
 }
 .ui-activity-checkbox--checked {
-  border-color: var(--color-brand-forest);
-  background-color: var(--color-brand-forest);
+  border-color: var(--ui-activity-list-checkbox-background);
+  background-color: var(--ui-activity-list-checkbox-background);
 }
 .ui-activity-item-title {
   margin: 0;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-size: var(--ui-activity-list-title-font-size);
+  font-weight: var(--ui-activity-list-title-font-weight);
+  color: var(--ui-activity-list-title-foreground);
 }
 .ui-activity-item--completed .ui-activity-item-title {
   text-decoration: line-through;
@@ -1244,24 +1246,24 @@
 .ui-activity-item-meta {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--ui-activity-list-meta-gap);
   margin-top: 0.25rem;
 }
 .ui-activity-item-subject {
-  font-size: 0.75rem;
-  color: var(--color-brand-forest);
-  font-weight: 600;
+  font-size: var(--ui-activity-list-meta-font-size);
+  color: var(--ui-activity-list-subject-foreground);
+  font-weight: var(--ui-activity-list-subject-font-weight);
 }
 .ui-activity-item-time {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
+  font-size: var(--ui-activity-list-meta-font-size);
+  color: var(--ui-activity-list-meta-foreground);
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
 }
 .ui-activity-item-duration {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
+  font-size: var(--ui-activity-list-meta-font-size);
+  color: var(--ui-activity-list-meta-foreground);
 }
 
 @keyframes ui-slide-left {

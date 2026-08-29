@@ -12,6 +12,7 @@ export interface DrawerProps {
   footer?: React.ReactNode;
   position?: 'right' | 'left';
   size?: 'sm' | 'md' | 'lg';
+  ariaLabel?: string | undefined;
 }
 
 const SIZE_CLASSES = {
@@ -32,12 +33,15 @@ export function Drawer({
   footer,
   position = 'right',
   size = 'md',
+  ariaLabel = 'Gaveta lateral',
 }: DrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
   const titleId = useId();
   const descriptionId = useId();
+  const hasTitle = Boolean(title);
+  const accessibleLabel = ariaLabel.trim() || 'Gaveta lateral';
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -113,7 +117,8 @@ export function Drawer({
         ref={drawerRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? titleId : undefined}
+        aria-labelledby={hasTitle ? titleId : undefined}
+        aria-label={hasTitle ? undefined : accessibleLabel}
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
         className={`ui-drawer ui-drawer--${position} ${SIZE_CLASSES[size]}`}
@@ -121,7 +126,7 @@ export function Drawer({
       >
         <div className="ui-drawer-header">
           <div>
-            {title && (
+            {hasTitle && (
               <h3 id={titleId} className="ui-drawer-title" data-testid="drawer-title">
                 {title}
               </h3>

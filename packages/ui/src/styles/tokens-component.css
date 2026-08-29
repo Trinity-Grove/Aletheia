@@ -57,6 +57,54 @@
   --ui-navigation-link-background-active: var(--ui-action-primary-background);
   --ui-navigation-link-foreground-active: var(--ui-action-primary-foreground);
 
+  --ui-daily-journey-block-spacing: var(--ui-space-6);
+  --ui-daily-journey-subtitle-font-size: var(--ui-font-size-base);
+  --ui-daily-journey-subtitle-line-height: var(--ui-line-height-normal);
+  --ui-daily-journey-subtitle-foreground: var(--ui-text-secondary);
+  --ui-daily-journey-body-gap: var(--ui-space-5);
+  --ui-daily-journey-progress-gap: var(--ui-space-2);
+  --ui-daily-journey-progress-font-size: var(--ui-font-size-base);
+  --ui-daily-journey-progress-title-font-weight: var(--ui-font-weight-semibold);
+  --ui-daily-journey-progress-title-foreground: var(--ui-text-primary);
+  --ui-daily-journey-progress-value-foreground: var(--ui-text-secondary);
+  --ui-daily-journey-stats-gap: var(--ui-space-4);
+  --ui-daily-journey-stats-divider: var(--ui-border-default);
+  --ui-daily-journey-stat-font-family: var(--ui-font-serif);
+  --ui-daily-journey-stat-font-size: var(--ui-font-size-2xl);
+  --ui-daily-journey-stat-font-weight: var(--ui-font-weight-bold);
+  --ui-daily-journey-stat-primary-foreground: var(--ui-text-brand);
+  --ui-daily-journey-stat-accent-foreground: var(--ui-text-gold);
+  --ui-daily-journey-stat-muted-foreground: var(--ui-text-muted);
+  --ui-daily-journey-stat-label-font-size: var(--ui-font-size-xs);
+  --ui-daily-journey-stat-label-font-weight: var(--ui-font-weight-semibold);
+  --ui-daily-journey-stat-label-foreground: var(--ui-text-secondary);
+
+  --ui-activity-list-block-spacing: var(--ui-space-6);
+  --ui-activity-list-subtitle-font-size: var(--ui-font-size-base);
+  --ui-activity-list-subtitle-line-height: var(--ui-line-height-normal);
+  --ui-activity-list-subtitle-foreground: var(--ui-text-secondary);
+  --ui-activity-list-items-gap: var(--ui-space-3);
+  --ui-activity-list-item-radius: var(--ui-radius-md);
+  --ui-activity-list-item-background: var(--ui-surface-subtle);
+  --ui-activity-list-item-border: var(--ui-border-default);
+  --ui-activity-list-item-completed-background: var(--ui-surface-subtle);
+  --ui-activity-list-item-completed-border: var(--ui-text-muted);
+  --ui-activity-list-item-content-gap: var(--ui-space-3);
+  --ui-activity-list-checkbox-size: var(--ui-space-6);
+  --ui-activity-list-checkbox-radius: var(--ui-radius-sm);
+  --ui-activity-list-checkbox-border: var(--ui-border-hover);
+  --ui-activity-list-checkbox-foreground: var(--ui-action-primary-foreground);
+  --ui-activity-list-checkbox-background: var(--ui-action-primary-background);
+  --ui-activity-list-checkbox-icon-size: var(--ui-font-size-base);
+  --ui-activity-list-title-font-size: var(--ui-font-size-body);
+  --ui-activity-list-title-font-weight: var(--ui-font-weight-semibold);
+  --ui-activity-list-title-foreground: var(--ui-text-primary);
+  --ui-activity-list-meta-gap: var(--ui-space-2);
+  --ui-activity-list-meta-font-size: var(--ui-font-size-xs);
+  --ui-activity-list-meta-foreground: var(--ui-text-secondary);
+  --ui-activity-list-subject-foreground: var(--ui-text-brand);
+  --ui-activity-list-subject-font-weight: var(--ui-font-weight-semibold);
+
   /* Legacy aliases remain public for existing package and application CSS. */
   --btn-height-sm: var(--ui-button-height-sm);
   --btn-height-md: var(--ui-button-height-md);

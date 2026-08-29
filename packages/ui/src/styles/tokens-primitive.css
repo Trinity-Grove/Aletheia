@@ -81,6 +81,23 @@
   --primitive-font-serif: var(--font-serif-next, "Lora", Georgia, serif);
   --primitive-font-sans: var(--font-sans-next, "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   --primitive-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --primitive-font-size-xs: 0.75rem;
+  --primitive-font-size-sm: 0.8125rem;
+  --primitive-font-size-base: 0.875rem;
+  --primitive-font-size-body: 0.9375rem;
+  --primitive-font-size-md: 1rem;
+  --primitive-font-size-lg: 1.125rem;
+  --primitive-font-size-xl: 1.25rem;
+  --primitive-font-size-2xl: 1.5rem;
+  --primitive-font-size-3xl: 1.875rem;
+  --primitive-font-size-4xl: 2.25rem;
+  --primitive-font-size-5xl: 3rem;
+  --primitive-line-height-none: 1;
+  --primitive-line-height-tight: 1.2;
+  --primitive-line-height-snug: 1.375;
+  --primitive-line-height-normal: 1.5;
+  --primitive-line-height-relaxed: 1.625;
+  --primitive-line-height-loose: 2;
 
   /* Sizing */
   --primitive-space-0: 0px;
@@ -129,5 +146,8 @@
   --primitive-breakpoint-xl: 1280px;
   --primitive-breakpoint-2xl: 1536px;
   --primitive-opacity-disabled: 0.5;
+  --primitive-font-weight-normal: 400;
+  --primitive-font-weight-medium: 500;
   --primitive-font-weight-semibold: 600;
+  --primitive-font-weight-bold: 700;
 }

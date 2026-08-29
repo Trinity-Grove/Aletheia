@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, fireEvent } from '@testing-library/react';
+import { act, cleanup, render, screen, fireEvent, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
 import {
@@ -52,6 +52,26 @@ describe('New UI Components & Patterns', () => {
         </Drawer>
       );
       expect(screen.queryByTestId('drawer-container')).not.toBeInTheDocument();
+    });
+
+    it('uses an accessible fallback name when rendered without a title', () => {
+      render(
+        <Drawer isOpen={true} onClose={() => {}}>
+          <p>Conteúdo sem título</p>
+        </Drawer>
+      );
+
+      expect(screen.getByRole('dialog', { name: 'Gaveta lateral' })).toBeInTheDocument();
+    });
+
+    it('uses an explicit accessible label when rendered without a title', () => {
+      render(
+        <Drawer isOpen={true} onClose={() => {}} ariaLabel="Filtros de atividades">
+          <p>Filtros</p>
+        </Drawer>
+      );
+
+      expect(screen.getByRole('dialog', { name: 'Filtros de atividades' })).toBeInTheDocument();
     });
 
     it('traps Tab focus and restores the opener focus when it closes', () => {
@@ -236,6 +256,23 @@ describe('New UI Components & Patterns', () => {
       fireEvent.keyDown(trigger, { key: 'Escape' });
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
+
+    it('normalizes a non-button element trigger to keyboard-accessible button semantics', () => {
+      render(
+        <Dropdown
+          trigger={<span>Mais opções</span>}
+          items={[{ id: 'edit', label: 'Editar' }]}
+        />
+      );
+
+      const trigger = screen.getByRole('button', { name: 'Mais opções' });
+      expect(trigger).toHaveAttribute('tabindex', '0');
+
+      trigger.focus();
+      fireEvent.keyDown(trigger, { key: ' ' });
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Editar' })).toHaveFocus();
+    });
   });
 
   describe('Tooltip', () => {
@@ -266,6 +303,39 @@ describe('New UI Components & Patterns', () => {
 
       const tooltip = screen.getByRole('tooltip');
       expect(trigger).toHaveAttribute('aria-describedby', tooltip.id);
+    });
+
+    it('stays visible when hover ends while keyboard focus remains active', () => {
+      render(
+        <Tooltip content="Informação auxiliar">
+          <button type="button">Ajuda persistente</button>
+        </Tooltip>
+      );
+
+      const trigger = screen.getByRole('button', { name: 'Ajuda persistente' });
+      trigger.focus();
+      fireEvent.focus(trigger);
+      expect(screen.getByRole('tooltip')).toBeInTheDocument();
+
+      fireEvent.mouseLeave(trigger);
+      expect(screen.getByRole('tooltip')).toBeInTheDocument();
+    });
+
+    it('stays visible when focus ends while hover remains active', async () => {
+      render(
+        <Tooltip content="Informação auxiliar" delayMs={0}>
+          <button type="button">Ajuda persistente</button>
+        </Tooltip>
+      );
+
+      const trigger = screen.getByRole('button', { name: 'Ajuda persistente' });
+      fireEvent.mouseEnter(trigger);
+      await screen.findByRole('tooltip');
+
+      trigger.focus();
+      fireEvent.focus(trigger);
+      fireEvent.blur(trigger);
+      expect(screen.getByRole('tooltip')).toBeInTheDocument();
     });
   });
 
@@ -448,7 +518,30 @@ describe('New UI Components & Patterns', () => {
       expect(screen.queryByRole('dialog', { name: 'Navegação móvel' })).not.toBeInTheDocument();
     });
 
-    it('closes mobile navigation when the viewport leaves the mobile breakpoint', () => {
+    it('forwards an injected navigation link renderer to desktop and mobile navigation', () => {
+      render(
+        <AppShell
+          navigationItems={navigationItems}
+          renderNavigationLink={({ href, ...linkProps }) => (
+            <a {...linkProps} href={`/adapted${href}`} data-adapted-link="true" />
+          )}
+        >
+          <div>Conteúdo Principal</div>
+        </AppShell>
+      );
+
+      const desktopLink = screen.getByTestId('appshell-nav-home');
+      expect(desktopLink).toHaveAttribute('href', '/adapted/');
+      expect(desktopLink).toHaveAttribute('data-adapted-link', 'true');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Abrir navegação' }));
+      const mobileNavigation = screen.getByRole('dialog', { name: 'Navegação móvel' });
+      const mobileLink = within(mobileNavigation).getByRole('link', { name: 'Início' });
+      expect(mobileLink).toHaveAttribute('href', '/adapted/');
+      expect(mobileLink).toHaveAttribute('data-adapted-link', 'true');
+    });
+
+    it('closes mobile navigation and moves focus into desktop navigation beyond the breakpoint', () => {
       let matches = true;
       const listeners = new Set<(event: MediaQueryListEvent) => void>();
       const mediaQueryList = {
@@ -499,12 +592,8 @@ describe('New UI Components & Patterns', () => {
         expect(matchMedia).toHaveBeenCalledWith('(max-width: 1024px)');
         expect(screen.queryByRole('dialog', { name: 'Navegação móvel' })).not.toBeInTheDocument();
         expect(document.body.style.overflow).toBe('scroll');
-        expect(opener).toHaveFocus();
-
-        const action = screen.getByRole('button', { name: 'Perfil' });
-        action.focus();
-        fireEvent.keyDown(action, { key: 'Tab', shiftKey: true });
-        expect(action).toHaveFocus();
+        expect(screen.getByTestId('appshell-nav-home')).toHaveFocus();
+        expect(opener).not.toHaveFocus();
       } finally {
         Object.defineProperty(window, 'matchMedia', {
           configurable: true,
@@ -530,6 +619,22 @@ describe('New UI Components & Patterns', () => {
       expect(screen.getByText('Jornada Diária de Aprendizagem')).toBeInTheDocument();
       expect(screen.getByText('50% da Meta')).toBeInTheDocument();
       expect(screen.getByText('3/6')).toBeInTheDocument();
+    });
+
+    it('exports DailyJourney with a finite zero-width progress bar for a zero-minute target', () => {
+      render(
+        <DailyJourney
+          completedMinutes={0}
+          targetMinutes={0}
+          completedLessons={0}
+          totalLessons={0}
+          daySequence={1}
+        />
+      );
+
+      const progressBar = screen.getByTestId('progress-bar');
+      expect(progressBar).toHaveStyle({ width: '0%' });
+      expect(progressBar.getAttribute('style')).not.toContain('NaN');
     });
 
     it('renders ActivityList and handles toggle', () => {

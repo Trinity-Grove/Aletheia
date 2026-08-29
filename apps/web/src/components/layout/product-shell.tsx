@@ -1,6 +1,8 @@
 'use client';
 
 import React, { type ReactNode } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   Home,
   Users,
@@ -14,7 +16,11 @@ import {
   Palette,
   Settings,
 } from 'lucide-react';
-import { AppShell, type NavigationItem } from '@aletheia/ui';
+import {
+  AppShell,
+  type NavigationItem,
+  type NavigationLinkRenderer,
+} from '@aletheia/ui';
 import type { LearnerSummaryDto, NotificationItemResponseDto, FamilyRole } from '@aletheia/contracts';
 import {
   AuthProvider,
@@ -45,6 +51,10 @@ export const MAIN_NAV_ITEMS: NavigationItem[] = [
   { id: 'settings', label: 'Configurações', href: '/settings', icon: <Settings size={18} /> },
 ];
 
+const renderNextNavigationLink: NavigationLinkRenderer = (linkProps) => (
+  <Link {...(linkProps as React.ComponentProps<typeof Link>)} href={linkProps.href} />
+);
+
 const NAV_ITEM_PERMISSIONS: Partial<Record<NavigationItem['id'], PermissionAction>> = {
   reports: 'generate_transcripts',
   settings: 'edit_settings',
@@ -67,6 +77,7 @@ export interface ProductShellProps {
   onMarkNotificationAsRead?: ((id: string) => Promise<void>) | undefined;
   onMarkAllNotificationsAsRead?: (() => Promise<void>) | undefined;
   user?: UserProfileSummary | undefined;
+  familyId?: string | null | undefined;
   currentPath?: string | undefined;
 }
 
@@ -80,23 +91,29 @@ export function ProductShell({
   onMarkNotificationAsRead,
   onMarkAllNotificationsAsRead,
   user,
+  familyId,
   currentPath,
 }: ProductShellProps) {
+  const pathname = usePathname();
   const existingAuth = useAuthRole();
-  const activeUser = user ?? (existingAuth?.user
+  const activePath = currentPath ?? pathname;
+  const contextUser = existingAuth?.user
     ? {
         id: existingAuth.user.id,
         name: existingAuth.user.fullName,
         email: existingAuth.user.email,
-        role: existingAuth.role ?? 'OWNER_GUARDIAN',
+        ...(existingAuth.role !== null ? { role: existingAuth.role } : {}),
       }
-    : {
-        id: 'user-1',
-        name: 'Família Santos',
-        email: 'familia@trinitygrove.org',
-        role: existingAuth?.role ?? 'OWNER_GUARDIAN',
-      });
+    : undefined;
+  const activeUser = user ?? contextUser ?? {
+    id: 'user-1',
+    name: 'Família Santos',
+    email: 'familia@trinitygrove.org',
+    role: existingAuth?.role ?? 'OWNER_GUARDIAN',
+  };
+  const profileUser = user ?? contextUser;
   const activeRole = (user?.role as FamilyRole | undefined) ?? existingAuth?.role ?? 'OWNER_GUARDIAN';
+  const activeFamilyId = familyId !== undefined ? familyId : existingAuth?.familyId ?? null;
   const permissions = getPermissions(activeRole);
   const navigationItems = MAIN_NAV_ITEMS
     .filter((item) => {
@@ -105,14 +122,16 @@ export function ProductShell({
     })
     .map<NavigationItem>((item) => ({
       ...item,
-      active: currentPath === item.href,
+      active: activePath === item.href,
     }));
-  const authUser = {
-    id: activeUser.id ?? 'user-1',
-    email: activeUser.email ?? 'familia@trinitygrove.org',
-    fullName: activeUser.name ?? 'Família Santos',
-    createdAt: new Date().toISOString(),
-  };
+  const authUser = user === undefined && existingAuth?.user
+    ? existingAuth.user
+    : {
+        id: activeUser.id ?? 'user-1',
+        email: activeUser.email ?? 'familia@trinitygrove.org',
+        fullName: activeUser.name ?? 'Família Santos',
+        createdAt: new Date().toISOString(),
+      };
 
   const topbarActions = (
     <div className="product-shell-topbar-actions">
@@ -137,18 +156,18 @@ export function ProductShell({
     </div>
   );
 
-  const userProfile = user
+  const userProfile = profileUser
     ? (collapsed: boolean) => (
         <div className="product-shell-user-profile">
           <div className="product-shell-user-avatar" aria-hidden="true">
-            {(user.name ?? user.email ?? 'U').charAt(0).toUpperCase()}
+            {(profileUser.name ?? profileUser.email ?? 'U').charAt(0).toUpperCase()}
           </div>
           {!collapsed && (
             <div className="product-shell-user-details">
-              <div className="product-shell-user-name">{user.name ?? user.email}</div>
-              {user.role && (
+              <div className="product-shell-user-name">{profileUser.name ?? profileUser.email}</div>
+              {profileUser.role && (
                 <div className="product-shell-user-role">
-                  <RoleBadge role={user.role} size="sm" />
+                  <RoleBadge role={profileUser.role} size="sm" />
                 </div>
               )}
             </div>
@@ -164,6 +183,7 @@ export function ProductShell({
       brandSubtitle="Trinity Grove"
       brandLogo={<span className="product-shell-brand-logo">ἀ</span>}
       navigationItems={navigationItems}
+      renderNavigationLink={renderNextNavigationLink}
       topbarActions={topbarActions}
       {...(userProfile !== undefined ? { userProfile } : {})}
     >
@@ -171,10 +191,10 @@ export function ProductShell({
     </AppShell>
   );
 
-  if (existingAuth && !user) return shellContent;
+  if (existingAuth && user === undefined && familyId === undefined) return shellContent;
 
   return (
-    <AuthProvider role={activeRole} user={authUser}>
+    <AuthProvider role={activeRole} user={authUser} familyId={activeFamilyId}>
       {shellContent}
     </AuthProvider>
   );

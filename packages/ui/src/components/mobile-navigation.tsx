@@ -2,7 +2,11 @@
 
 import React, { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
-import type { NavigationItem } from './app-shell.js';
+import type {
+  NavigationItem,
+  NavigationLinkRenderer,
+  NavigationLinkRenderProps,
+} from './app-shell.js';
 
 export interface MobileNavigationProps {
   items: NavigationItem[];
@@ -11,6 +15,7 @@ export interface MobileNavigationProps {
   label?: string;
   id?: string;
   userProfile?: React.ReactNode;
+  renderNavigationLink?: NavigationLinkRenderer | undefined;
 }
 
 const focusableSelector =
@@ -23,6 +28,7 @@ export function MobileNavigation({
   label = 'Navegação móvel',
   id,
   userProfile,
+  renderNavigationLink,
 }: MobileNavigationProps) {
   const generatedNavigationId = useId();
   const navigationId = id ?? generatedNavigationId;
@@ -113,22 +119,29 @@ export function MobileNavigation({
 
         <nav className="ui-mobile-navigation-menu" aria-label={label}>
           <ul className="ui-mobile-navigation-list">
-            {items.map((item) => (
-              <li key={item.id} className="ui-mobile-navigation-item">
-                <a
-                  href={item.href}
-                  className={`ui-mobile-navigation-link ${
-                    item.active ? 'ui-mobile-navigation-link--active' : ''
-                  }`}
-                  aria-current={item.active ? 'page' : undefined}
-                  onClick={onClose}
-                >
-                  <span className="ui-mobile-navigation-icon" aria-hidden="true">{item.icon}</span>
-                  <span className="ui-mobile-navigation-label">{item.label}</span>
-                  {item.badge && <span className="ui-mobile-navigation-badge">{item.badge}</span>}
-                </a>
-              </li>
-            ))}
+            {items.map((item) => {
+              const linkProps: NavigationLinkRenderProps = {
+                href: item.href,
+                className: `ui-mobile-navigation-link ${
+                  item.active ? 'ui-mobile-navigation-link--active' : ''
+                }`,
+                'aria-current': item.active ? 'page' : undefined,
+                onClick: onClose,
+                children: (
+                  <>
+                    <span className="ui-mobile-navigation-icon" aria-hidden="true">{item.icon}</span>
+                    <span className="ui-mobile-navigation-label">{item.label}</span>
+                    {item.badge && <span className="ui-mobile-navigation-badge">{item.badge}</span>}
+                  </>
+                ),
+              };
+
+              return (
+                <li key={item.id} className="ui-mobile-navigation-item">
+                  {renderNavigationLink ? renderNavigationLink(linkProps) : <a {...linkProps} />}
+                </li>
+              );
+            })}
           </ul>
         </nav>
         {userProfile && (

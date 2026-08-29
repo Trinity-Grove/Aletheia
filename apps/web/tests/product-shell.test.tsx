@@ -5,6 +5,18 @@ import type { LearnerSummaryDto, NotificationItemResponseDto } from '@aletheia/c
 import { ProductShell, LearnerFocusSwitcher } from '../src/components/product-shell';
 import { AuthProvider, useAuthRole } from '../src/lib/auth/rbac-context';
 
+const nextNavigation = vi.hoisted(() => ({ pathname: '/' }));
+
+vi.mock('next/navigation', () => ({
+  usePathname: () => nextNavigation.pathname,
+}));
+
+vi.mock('next/link', () => ({
+  default: ({ href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a href={href} {...props} data-next-link="true" />
+  ),
+}));
+
 const mockLearners: LearnerSummaryDto[] = [
   {
     id: 'l-001',
@@ -49,9 +61,14 @@ function AuthContextProbe() {
 }
 
 describe('ProductShell adapter', () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    nextNavigation.pathname = '/';
+  });
 
   it('maps the current path into the shared desktop shell landmarks', () => {
+    nextNavigation.pathname = '/learners';
+
     render(
       <ProductShell currentPath="/curriculum">
         <p>Conteúdo</p>
@@ -66,6 +83,26 @@ describe('ProductShell adapter', () => {
     expect(screen.getByRole('main')).toHaveTextContent('Conteúdo');
     expect(screen.getByRole('link', { name: 'Currículo' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'Educandos' })).not.toHaveAttribute('aria-current');
+  });
+
+  it('derives the active route from Next and renders Next-integrated desktop and mobile links', () => {
+    nextNavigation.pathname = '/curriculum';
+
+    render(
+      <ProductShell>
+        <p>Conteúdo roteado</p>
+      </ProductShell>,
+    );
+
+    const desktopLink = screen.getByTestId('appshell-nav-curriculum');
+    expect(desktopLink).toHaveAttribute('aria-current', 'page');
+    expect(desktopLink).toHaveAttribute('data-next-link', 'true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir navegação' }));
+    const mobileNavigation = screen.getByRole('dialog', { name: 'Navegação móvel' });
+    const mobileLink = within(mobileNavigation).getByRole('link', { name: 'Currículo' });
+    expect(mobileLink).toHaveAttribute('aria-current', 'page');
+    expect(mobileLink).toHaveAttribute('data-next-link', 'true');
   });
 
   it('filters guardian-only navigation items using the active role permissions', () => {
@@ -99,7 +136,49 @@ describe('ProductShell adapter', () => {
     );
 
     expect(screen.queryByRole('link', { name: 'Relatórios' })).not.toBeInTheDocument();
-    expect(screen.getByTestId('auth-context-probe')).toHaveTextContent('EDUCATOR|explicit-user|none');
+    expect(screen.getByTestId('auth-context-probe')).toHaveTextContent(
+      'EDUCATOR|explicit-user|outer-family',
+    );
+  });
+
+  it('uses an explicit family override without fabricating any other family context', () => {
+    render(
+      <ProductShell
+        familyId="explicit-family"
+        user={{ id: 'explicit-user', name: 'Helena Educadora', role: 'EDUCATOR' }}
+      >
+        <AuthContextProbe />
+      </ProductShell>,
+    );
+
+    expect(screen.getByTestId('auth-context-probe')).toHaveTextContent(
+      'EDUCATOR|explicit-user|explicit-family',
+    );
+  });
+
+  it('renders profile data from the authenticated context and preserves its active family', () => {
+    render(
+      <AuthProvider
+        role="GUARDIAN"
+        familyId="context-family"
+        user={{
+          id: 'context-user',
+          email: 'context@aletheia.edu',
+          fullName: 'Guardião do Contexto',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        }}
+      >
+        <ProductShell>
+          <AuthContextProbe />
+        </ProductShell>
+      </AuthProvider>,
+    );
+
+    expect(screen.getByTestId('auth-context-probe')).toHaveTextContent(
+      'GUARDIAN|context-user|context-family',
+    );
+    expect(screen.getByTestId('appshell-user-profile')).toHaveTextContent('Guardião do Contexto');
+    expect(screen.getByTestId('appshell-user-profile')).toHaveTextContent('Guardião');
   });
 
   it('forwards learner, notification, and profile content without React warnings', () => {

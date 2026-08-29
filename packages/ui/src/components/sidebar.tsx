@@ -2,7 +2,11 @@
 
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import type { NavigationItem } from './app-shell.js';
+import type {
+  NavigationItem,
+  NavigationLinkRenderer,
+  NavigationLinkRenderProps,
+} from './app-shell.js';
 
 export interface SidebarProps {
   brandTitle?: React.ReactNode;
@@ -13,6 +17,7 @@ export interface SidebarProps {
   onCollapse: (collapsed: boolean) => void;
   footer?: React.ReactNode;
   label?: string;
+  renderNavigationLink?: NavigationLinkRenderer | undefined;
 }
 
 export function Sidebar({
@@ -24,6 +29,7 @@ export function Sidebar({
   onCollapse,
   footer,
   label = 'Navegação principal',
+  renderNavigationLink,
 }: SidebarProps) {
   return (
     <aside
@@ -60,30 +66,37 @@ export function Sidebar({
 
       <nav className="ui-sidebar-navigation ui-appshell-nav" aria-label={label} data-testid="appshell-nav">
         <ul className="ui-sidebar-navigation-list ui-appshell-nav-list">
-          {items.map((item) => (
-            <li key={item.id} className="ui-sidebar-navigation-item ui-appshell-nav-item">
-              <a
-                href={item.href}
-                className={`ui-sidebar-navigation-link ui-appshell-nav-link ${
-                  item.active ? 'ui-sidebar-navigation-link--active ui-appshell-nav-link--active' : ''
-                }`}
-                aria-current={item.active ? 'page' : undefined}
-                aria-label={collapsed ? item.label : undefined}
-                title={collapsed ? item.label : undefined}
-                data-testid={`appshell-nav-${item.id}`}
-              >
-                <span className="ui-sidebar-navigation-icon ui-appshell-nav-icon" aria-hidden="true">
-                  {item.icon}
-                </span>
-                {!collapsed && (
-                  <span className="ui-sidebar-navigation-label ui-appshell-nav-label">{item.label}</span>
-                )}
-                {!collapsed && item.badge && (
-                  <span className="ui-sidebar-navigation-badge ui-appshell-nav-badge">{item.badge}</span>
-                )}
-              </a>
-            </li>
-          ))}
+          {items.map((item) => {
+            const linkProps: NavigationLinkRenderProps = {
+              href: item.href,
+              className: `ui-sidebar-navigation-link ui-appshell-nav-link ${
+                item.active ? 'ui-sidebar-navigation-link--active ui-appshell-nav-link--active' : ''
+              }`,
+              'aria-current': item.active ? 'page' : undefined,
+              'aria-label': collapsed ? item.label : undefined,
+              title: collapsed ? item.label : undefined,
+              'data-testid': `appshell-nav-${item.id}`,
+              children: (
+                <>
+                  <span className="ui-sidebar-navigation-icon ui-appshell-nav-icon" aria-hidden="true">
+                    {item.icon}
+                  </span>
+                  {!collapsed && (
+                    <span className="ui-sidebar-navigation-label ui-appshell-nav-label">{item.label}</span>
+                  )}
+                  {!collapsed && item.badge && (
+                    <span className="ui-sidebar-navigation-badge ui-appshell-nav-badge">{item.badge}</span>
+                  )}
+                </>
+              ),
+            };
+
+            return (
+              <li key={item.id} className="ui-sidebar-navigation-item ui-appshell-nav-item">
+                {renderNavigationLink ? renderNavigationLink(linkProps) : <a {...linkProps} />}
+              </li>
+            );
+          })}
         </ul>
       </nav>
 

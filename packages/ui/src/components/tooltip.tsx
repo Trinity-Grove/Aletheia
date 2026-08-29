@@ -15,9 +15,11 @@ export function Tooltip({
   position = 'top',
   delayMs = 200,
 }: TooltipProps) {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isHoverVisible, setIsHoverVisible] = useState(false);
+  const [isFocusVisible, setIsFocusVisible] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tooltipId = useId();
+  const isVisible = isHoverVisible || isFocusVisible;
 
   const clearShowTimer = () => {
     if (timerRef.current) {
@@ -29,19 +31,20 @@ export function Tooltip({
   const showTooltip = () => {
     clearShowTimer();
     timerRef.current = setTimeout(() => {
-      setIsVisible(true);
+      setIsHoverVisible(true);
     }, delayMs);
   };
 
   const showTooltipImmediately = () => {
-    clearShowTimer();
-    setIsVisible(true);
+    setIsFocusVisible(true);
   };
 
-  const hideTooltip = () => {
+  const hideHoveredTooltip = () => {
     clearShowTimer();
-    setIsVisible(false);
+    setIsHoverVisible(false);
   };
+
+  const hideFocusedTooltip = () => setIsFocusVisible(false);
 
   useEffect(() => clearShowTimer, []);
 
@@ -57,9 +60,9 @@ export function Tooltip({
     <div
       className="ui-tooltip-wrapper"
       onMouseEnter={showTooltip}
-      onMouseLeave={hideTooltip}
+      onMouseLeave={hideHoveredTooltip}
       onFocus={showTooltipImmediately}
-      onBlur={hideTooltip}
+      onBlur={hideFocusedTooltip}
       data-testid="tooltip-wrapper"
     >
       {trigger}

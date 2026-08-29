@@ -79,4 +79,56 @@ describe('CSS token layer contract', () => {
     expect(dropdownStyles).toContain('var(--ui-status-danger-foreground)');
     expect(dropdownStyles).toContain('var(--ui-status-danger-background)');
   });
+
+  it('publishes the primitive type scale and consumes stable shared-pattern contracts', async () => {
+    const [primitive, component, componentStyles] = await Promise.all([
+      readStyleFile('tokens-primitive.css'),
+      readStyleFile('tokens-component.css'),
+      readStyleFile('components.css'),
+    ]);
+    const patternStyles = componentStyles.match(
+      /\/\* --------------------------------------------------------------------------\n   UI Domain Patterns[\s\S]*?(?=@keyframes ui-slide-left)/,
+    )?.[0];
+
+    expect(patternStyles).toBeDefined();
+
+    for (const token of [
+      '--primitive-font-size-xs',
+      '--primitive-font-size-sm',
+      '--primitive-font-size-base',
+      '--primitive-font-size-md',
+      '--primitive-font-size-lg',
+      '--primitive-font-size-xl',
+      '--primitive-font-size-2xl',
+      '--primitive-font-size-3xl',
+      '--primitive-font-size-4xl',
+      '--primitive-font-size-5xl',
+      '--primitive-line-height-none',
+      '--primitive-line-height-tight',
+      '--primitive-line-height-snug',
+      '--primitive-line-height-normal',
+      '--primitive-line-height-relaxed',
+      '--primitive-line-height-loose',
+    ]) {
+      expect(primitive).toContain(token);
+    }
+
+    for (const token of [
+      '--ui-daily-journey-subtitle-font-size',
+      '--ui-daily-journey-subtitle-foreground',
+      '--ui-daily-journey-stat-font-family',
+      '--ui-daily-journey-stat-primary-foreground',
+      '--ui-activity-list-subtitle-font-size',
+      '--ui-activity-list-item-background',
+      '--ui-activity-list-item-completed-border',
+      '--ui-activity-list-checkbox-foreground',
+      '--ui-activity-list-title-font-size',
+    ]) {
+      expect(component).toContain(token);
+      expect(patternStyles).toContain(`var(${token})`);
+    }
+
+    expect(patternStyles).not.toMatch(/var\(--(?:bg|text|border|color|font|radius)-/);
+    expect(patternStyles).not.toMatch(/#ffffff/i);
+  });
 });

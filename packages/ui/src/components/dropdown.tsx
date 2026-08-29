@@ -115,6 +115,8 @@ export function Dropdown({ trigger, items, align = 'left', className = '' }: Dro
     React.cloneElement(trigger, {
       ref: triggerRef,
       id: triggerId,
+      role: trigger.type === 'button' ? trigger.props.role : 'button',
+      tabIndex: trigger.type === 'button' ? trigger.props.tabIndex : (trigger.props.tabIndex ?? 0),
       'aria-haspopup': 'menu',
       'aria-expanded': isOpen,
       'aria-controls': menuId,
