@@ -479,3 +479,58 @@ p.page-subtitle {
   color: var(--muted);
   font-size: 0.9375rem;
 }
+
+/* ProductShell application-specific slots inside the shared AppShell. */
+.product-shell-brand-logo {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--ui-radius-full);
+  background-color: var(--ui-action-primary-background);
+  color: var(--ui-text-gold);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ui-font-serif);
+  font-size: 1.25rem;
+  line-height: 1;
+  box-shadow: var(--ui-elevation-raised);
+}
+
+.product-shell-topbar-actions,
+.product-shell-user-profile {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--ui-space-12) / 4);
+}
+
+.product-shell-user-avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--ui-radius-full);
+  background-color: var(--ui-action-primary-background);
+  color: var(--ui-action-primary-foreground);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.product-shell-user-details {
+  min-width: 0;
+  flex: 1;
+}
+
+.product-shell-user-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--ui-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-shell-user-role {
+  margin-top: calc(var(--ui-space-8) / 8);
+}

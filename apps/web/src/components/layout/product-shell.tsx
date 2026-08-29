@@ -1,6 +1,6 @@
 'use client';
 
-import React, { type ReactNode, useState } from 'react';
+import React, { type ReactNode } from 'react';
 import {
   Home,
   Users,
@@ -13,12 +13,15 @@ import {
   BarChart3,
   Palette,
   Settings,
-  ChevronLeft,
-  ChevronRight,
-  Menu,
 } from 'lucide-react';
+import { AppShell, type NavigationItem } from '@aletheia/ui';
 import type { LearnerSummaryDto, NotificationItemResponseDto, FamilyRole } from '@aletheia/contracts';
-import { AuthProvider, useAuthRole } from '../../lib/auth/rbac-context';
+import {
+  AuthProvider,
+  getPermissions,
+  useAuthRole,
+  type PermissionAction,
+} from '../../lib/auth/rbac-context';
 import { NotificationBell } from './notification-bell';
 import { LearnerFocusSwitcher } from './learner-focus-switcher';
 import { RoleBadge } from '../auth/role-badge';
@@ -26,25 +29,26 @@ import { RoleBadge } from '../auth/role-badge';
 export { LearnerFocusSwitcher } from './learner-focus-switcher';
 export { NotificationBell } from './notification-bell';
 
-export interface NavItem {
-  label: string;
-  href: string;
-  icon: React.ReactNode;
-}
+export type NavItem = NavigationItem;
 
-export const MAIN_NAV_ITEMS: NavItem[] = [
-  { label: 'Início', href: '/', icon: <Home size={18} /> },
-  { label: 'Educandos', href: '/learners', icon: <Users size={18} /> },
-  { label: 'Devocional', href: '/devotional', icon: <BookOpen size={18} /> },
-  { label: 'Currículo', href: '/curriculum', icon: <Library size={18} /> },
-  { label: 'Agenda & Rotina', href: '/schedule', icon: <CalendarDays size={18} /> },
-  { label: 'Diário de Aprendizagem', href: '/records', icon: <PenLine size={18} /> },
-  { label: 'Portfólio', href: '/portfolio', icon: <FolderHeart size={18} /> },
-  { label: 'Frequência', href: '/attendance', icon: <ClipboardCheck size={18} /> },
-  { label: 'Relatórios', href: '/reports', icon: <BarChart3 size={18} /> },
-  { label: 'Design System', href: '/design-system', icon: <Palette size={18} /> },
-  { label: 'Configurações', href: '/settings', icon: <Settings size={18} /> },
+export const MAIN_NAV_ITEMS: NavigationItem[] = [
+  { id: 'home', label: 'Início', href: '/', icon: <Home size={18} /> },
+  { id: 'learners', label: 'Educandos', href: '/learners', icon: <Users size={18} /> },
+  { id: 'devotional', label: 'Devocional', href: '/devotional', icon: <BookOpen size={18} /> },
+  { id: 'curriculum', label: 'Currículo', href: '/curriculum', icon: <Library size={18} /> },
+  { id: 'schedule', label: 'Agenda & Rotina', href: '/schedule', icon: <CalendarDays size={18} /> },
+  { id: 'records', label: 'Diário de Aprendizagem', href: '/records', icon: <PenLine size={18} /> },
+  { id: 'portfolio', label: 'Portfólio', href: '/portfolio', icon: <FolderHeart size={18} /> },
+  { id: 'attendance', label: 'Frequência', href: '/attendance', icon: <ClipboardCheck size={18} /> },
+  { id: 'reports', label: 'Relatórios', href: '/reports', icon: <BarChart3 size={18} /> },
+  { id: 'design-system', label: 'Design System', href: '/design-system', icon: <Palette size={18} /> },
+  { id: 'settings', label: 'Configurações', href: '/settings', icon: <Settings size={18} /> },
 ];
+
+const NAV_ITEM_PERMISSIONS: Partial<Record<NavigationItem['id'], PermissionAction>> = {
+  reports: 'generate_transcripts',
+  settings: 'edit_settings',
+};
 
 export interface UserProfileSummary {
   id?: string;
@@ -78,368 +82,92 @@ export function ProductShell({
   user,
   currentPath,
 }: ProductShellProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const existingAuth = useAuthRole();
-
-  const activeUser = user || (existingAuth?.user ? {
-    id: existingAuth.user.id,
-    name: existingAuth.user.fullName,
-    email: existingAuth.user.email,
-    role: (existingAuth.role as FamilyRole) || 'OWNER_GUARDIAN',
-  } : {
-    id: 'user-1',
-    name: 'Família Santos',
-    email: 'familia@trinitygrove.org',
-    role: (existingAuth?.role as FamilyRole) || 'OWNER_GUARDIAN',
-  });
-  const activeRole = (user?.role as FamilyRole) || existingAuth?.role || 'OWNER_GUARDIAN';
+  const activeUser = user ?? (existingAuth?.user
+    ? {
+        id: existingAuth.user.id,
+        name: existingAuth.user.fullName,
+        email: existingAuth.user.email,
+        role: existingAuth.role ?? 'OWNER_GUARDIAN',
+      }
+    : {
+        id: 'user-1',
+        name: 'Família Santos',
+        email: 'familia@trinitygrove.org',
+        role: existingAuth?.role ?? 'OWNER_GUARDIAN',
+      });
+  const activeRole = (user?.role as FamilyRole | undefined) ?? existingAuth?.role ?? 'OWNER_GUARDIAN';
+  const permissions = getPermissions(activeRole);
+  const navigationItems = MAIN_NAV_ITEMS
+    .filter((item) => {
+      const requiredPermission = NAV_ITEM_PERMISSIONS[item.id];
+      return requiredPermission === undefined || permissions.can(requiredPermission);
+    })
+    .map<NavigationItem>((item) => ({
+      ...item,
+      active: currentPath === item.href,
+    }));
   const authUser = {
-    id: activeUser.id || 'user-1',
-    email: activeUser.email || 'familia@trinitygrove.org',
-    fullName: activeUser.name || 'Família Santos',
+    id: activeUser.id ?? 'user-1',
+    email: activeUser.email ?? 'familia@trinitygrove.org',
+    fullName: activeUser.name ?? 'Família Santos',
     createdAt: new Date().toISOString(),
   };
 
-  const shellContent = (
-    <div
-      className="product-shell-layout"
-      style={{
-        display: 'flex',
-        minHeight: '100vh',
-        backgroundColor: 'var(--bg-canvas, #F1F5F9)',
-      }}
-    >
-      {/* Mobile backdrop */}
-      {isSidebarOpen && (
-        <div
-          data-testid="sidebar-backdrop"
-          aria-hidden="true"
-          onClick={() => setIsSidebarOpen(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.5)',
-            backdropFilter: 'blur(4px)',
-            zIndex: 40,
-          }}
+  const topbarActions = (
+    <div className="product-shell-topbar-actions">
+      {learners !== undefined && onSelectLearner !== undefined && (
+        <LearnerFocusSwitcher
+          learners={learners}
+          activeLearnerId={activeLearnerId}
+          onSelectLearner={onSelectLearner}
         />
       )}
 
-      {/* Sidebar */}
-      <aside
-        data-testid="sidebar"
-        className="glass-sidebar"
-        style={{
-          width: isCollapsed ? 'var(--sidebar-collapsed-width, 4.5rem)' : 'var(--sidebar-width, 17rem)',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'fixed',
-          top: 0,
-          bottom: 0,
-          left: 0,
-          zIndex: 50,
-          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-          transform: isSidebarOpen ? 'translateX(0)' : undefined,
-          backgroundColor: '#FFFFFF',
-          borderRight: '1px solid var(--border-light, #E2E8F0)',
-        }}
-      >
-        {/* Brand / Logo */}
-        <div
-          style={{
-            height: 'var(--header-height, 4.25rem)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: isCollapsed ? 'center' : 'space-between',
-            padding: isCollapsed ? '0 0.5rem' : '0 1.25rem',
-            borderBottom: '1px solid var(--border-light, rgba(18, 63, 52, 0.14))',
-          }}
-        >
-          {!isCollapsed && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-              <div
-                style={{
-                  width: '2.25rem',
-                  height: '2.25rem',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--forest, #123f34)',
-                  color: 'var(--gold, #d3a526)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: 'var(--font-serif)',
-                  fontSize: '1.25rem',
-                  lineHeight: 1,
-                  boxShadow: '0 2px 6px rgba(18, 63, 52, 0.2)',
-                }}
-              >
-                ἀ
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-serif)',
-                    fontWeight: 400,
-                    fontSize: '1.35rem',
-                    letterSpacing: '-0.02em',
-                    color: 'var(--forest, #123f34)',
-                    lineHeight: 1.1,
-                  }}
-                >
-                  Aletheia
-                </span>
-                <span
-                  style={{
-                    fontSize: '0.6875rem',
-                    letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
-                    color: 'var(--sage, #78937f)',
-                    fontWeight: 700,
-                  }}
-                >
-                  Trinity Grove
-                </span>
-              </div>
-            </div>
-          )}
-
-          <button
-            type="button"
-            data-testid="sidebar-collapse-toggle"
-            aria-label={isCollapsed ? 'Expandir barra lateral' : 'Recolher barra lateral'}
-            onClick={() => setIsCollapsed((prev) => !prev)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--muted, #5c6f67)',
-              cursor: 'pointer',
-              padding: '0.375rem',
-              borderRadius: '0.375rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-          </button>
-        </div>
-
-        {/* Navigation links */}
-        <nav
-          data-testid="sidebar-nav"
-          className="main-navigation"
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '1rem 0.75rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.25rem',
-          }}
-        >
-          {MAIN_NAV_ITEMS.map((item) => {
-            const isActive = currentPath ? currentPath === item.href : false;
-            return (
-              <a
-                key={item.href}
-                href={item.href}
-                data-testid={`nav-item-${item.href.replace('/', '') || 'home'}`}
-                data-active={isActive ? 'true' : 'false'}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: isCollapsed ? '0.625rem 0' : '0.625rem 0.875rem',
-                  justifyContent: isCollapsed ? 'center' : 'flex-start',
-                  borderRadius: 'var(--radius-md, 6px)',
-                  textDecoration: 'none',
-                  fontSize: '0.875rem',
-                  fontWeight: isActive ? 700 : 500,
-                  color: isActive ? 'var(--forest, #123f34)' : 'var(--muted, #5c6f67)',
-                  backgroundColor: isActive ? 'var(--sage-soft, #eef1e8)' : 'transparent',
-                  borderLeft: isActive ? '3px solid var(--gold, #d3a526)' : '3px solid transparent',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span style={{ fontSize: '1.125rem' }}>{item.icon}</span>
-                {!isCollapsed && <span>{item.label}</span>}
-              </a>
-            );
-          })}
-        </nav>
-
-        {/* Footer profile summary */}
-        {user && (
-          <div
-            data-testid="user-profile-summary"
-            style={{
-              padding: '1rem',
-              borderTop: '1px solid var(--border-light, rgba(18, 63, 52, 0.14))',
-              backgroundColor: 'var(--sage-soft, #eef1e8)',
-              display: 'flex',
-              flexDirection: isCollapsed ? 'column' : 'row',
-              alignItems: 'center',
-              gap: '0.75rem',
-            }}
-          >
-            <div
-              data-testid="user-avatar"
-              style={{
-                width: '2.25rem',
-                height: '2.25rem',
-                borderRadius: '50%',
-                backgroundColor: 'var(--forest, #123f34)',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: '0.875rem',
-                flexShrink: 0,
-              }}
-            >
-              {(user.name || user.email || 'U').charAt(0).toUpperCase()}
-            </div>
-
-            {!isCollapsed && (
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div
-                  style={{
-                    fontWeight: 600,
-                    fontSize: '0.875rem',
-                    color: 'var(--color-slate-900, #0F172A)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {user.name || user.email}
-                </div>
-                {user.role && (
-                  <div style={{ marginTop: '0.25rem' }}>
-                    <RoleBadge role={user.role} size="sm" />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </aside>
-
-      {/* Main Content Area */}
-      <div
-        style={{
-          flex: 1,
-          marginLeft: isCollapsed ? 'var(--sidebar-collapsed-width, 4.5rem)' : 'var(--sidebar-width, 17rem)',
-          display: 'flex',
-          flexDirection: 'column',
-          minWidth: 0,
-          transition: 'margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-        }}
-      >
-        {/* Floating Top Header */}
-        <header
-          role="banner"
-          className="glass-header"
-          style={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 30,
-            height: 'var(--header-height, 4.25rem)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 1.5rem',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <button
-              type="button"
-              data-testid="mobile-sidebar-toggle"
-              aria-label="Abrir menu lateral"
-              onClick={() => setIsSidebarOpen((prev) => !prev)}
-              style={{
-                display: 'none',
-                background: 'none',
-                border: '1px solid var(--border-light, #E2E8F0)',
-                padding: '0.5rem',
-                borderRadius: '0.5rem',
-                cursor: 'pointer',
-              }}
-            >
-              <Menu size={18} />
-            </button>
-
-            <strong
-              data-testid="brand-title"
-              style={{
-                fontFamily: 'var(--font-serif)',
-                fontSize: '1.35rem',
-                fontWeight: 400,
-                color: 'var(--forest, #123f34)',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              Aletheia
-            </strong>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            {learners && onSelectLearner && (
-              <LearnerFocusSwitcher
-                learners={learners}
-                activeLearnerId={activeLearnerId}
-                onSelectLearner={onSelectLearner}
-              />
-            )}
-
-            {notifications !== undefined && onMarkNotificationAsRead && (
-              <NotificationBell
-                notifications={notifications}
-                unreadCount={unreadCount}
-                onMarkAsRead={onMarkNotificationAsRead}
-                {...(onMarkAllNotificationsAsRead !== undefined ? { onMarkAllAsRead: onMarkAllNotificationsAsRead } : {})}
-              />
-            )}
-
-            {user && (
-              <div
-                data-testid="header-user-badge"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  paddingLeft: '0.5rem',
-                  borderLeft: '1px solid var(--border-light, #E2E8F0)',
-                }}
-              >
-                {user.role && <RoleBadge role={user.role} size="sm" />}
-              </div>
-            )}
-          </div>
-        </header>
-
-        {/* Main View Container */}
-        <main
-          role="main"
-          style={{
-            flex: 1,
-            padding: '2rem',
-            maxWidth: '80rem',
-            width: '100%',
-            margin: '0 auto',
-          }}
-        >
-          {children}
-        </main>
-      </div>
+      {notifications !== undefined && onMarkNotificationAsRead !== undefined && (
+        <NotificationBell
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onMarkAsRead={onMarkNotificationAsRead}
+          {...(onMarkAllNotificationsAsRead !== undefined
+            ? { onMarkAllAsRead: onMarkAllNotificationsAsRead }
+            : {})}
+        />
+      )}
     </div>
   );
 
-  if (existingAuth && !user) {
-    return shellContent;
-  }
+  const userProfile = user ? (
+    <div className="product-shell-user-profile">
+      <div className="product-shell-user-avatar" aria-hidden="true">
+        {(user.name ?? user.email ?? 'U').charAt(0).toUpperCase()}
+      </div>
+      <div className="product-shell-user-details">
+        <div className="product-shell-user-name">{user.name ?? user.email}</div>
+        {user.role && (
+          <div className="product-shell-user-role">
+            <RoleBadge role={user.role} size="sm" />
+          </div>
+        )}
+      </div>
+    </div>
+  ) : undefined;
+
+  const shellContent = (
+    <AppShell
+      className="product-shell"
+      brandTitle="Aletheia"
+      brandSubtitle="Trinity Grove"
+      brandLogo={<span className="product-shell-brand-logo">ἀ</span>}
+      navigationItems={navigationItems}
+      topbarActions={topbarActions}
+      {...(userProfile !== undefined ? { userProfile } : {})}
+    >
+      {children}
+    </AppShell>
+  );
+
+  if (existingAuth) return shellContent;
 
   return (
     <AuthProvider role={activeRole} user={authUser}>

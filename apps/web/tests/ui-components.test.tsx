@@ -252,15 +252,15 @@ describe('ProductShell Integration', () => {
       </ProductShell>
     );
 
-    expect(screen.getByTestId('sidebar')).toBeInTheDocument();
-    const curriculumNav = screen.getByTestId('nav-item-curriculum');
-    expect(curriculumNav).toHaveAttribute('data-active', 'true');
+    expect(screen.getByTestId('appshell-sidebar')).toBeInTheDocument();
+    const curriculumNav = screen.getByTestId('appshell-nav-curriculum');
+    expect(curriculumNav).toHaveAttribute('aria-current', 'page');
 
-    const learnersNav = screen.getByTestId('nav-item-learners');
-    expect(learnersNav).toHaveAttribute('data-active', 'false');
+    const learnersNav = screen.getByTestId('appshell-nav-learners');
+    expect(learnersNav).not.toHaveAttribute('aria-current');
 
     // Test collapse toggle
-    const collapseBtn = screen.getByTestId('sidebar-collapse-toggle');
+    const collapseBtn = screen.getByTestId('appshell-collapse-btn');
     fireEvent.click(collapseBtn);
     expect(collapseBtn).toHaveAttribute('aria-label', 'Expandir barra lateral');
   });
@@ -292,24 +292,25 @@ describe('ProductShell Integration', () => {
     expect(screen.getByTestId('notification-badge')).toHaveTextContent('1');
 
     // User profile and RoleBadge
-    expect(screen.getByTestId('user-profile-summary')).toHaveTextContent('Wendel Silva');
+    expect(screen.getByTestId('appshell-user-profile')).toHaveTextContent('Wendel Silva');
     expect(screen.getAllByTestId('role-badge').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Guardião Principal')[0]).toBeInTheDocument();
   });
 
-  it('supports mobile responsive toggle and backdrop', () => {
+  it('supports mobile responsive navigation and backdrop', () => {
     render(
       <ProductShell>
         <div>Mobile Content</div>
       </ProductShell>
     );
 
-    const mobileToggle = screen.getByTestId('mobile-sidebar-toggle');
+    const mobileToggle = screen.getByTestId('appshell-mobile-menu-btn');
     fireEvent.click(mobileToggle);
-    expect(screen.getByTestId('sidebar-backdrop')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-mobile-navigation')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-mobile-backdrop')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId('sidebar-backdrop'));
-    expect(screen.queryByTestId('sidebar-backdrop')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('appshell-mobile-backdrop'));
+    expect(screen.queryByTestId('appshell-mobile-navigation')).not.toBeInTheDocument();
   });
 });
 
