@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
-import { Drawer, Dropdown, Tooltip } from '../src/index.js';
+import { AppShell, Drawer, Dropdown, MobileNavigation, Sidebar, Tooltip, Topbar } from '../src/index.js';
 
 describe('accessible overlay primitives', () => {
   afterEach(() => {
@@ -179,5 +179,152 @@ describe('accessible overlay primitives', () => {
     fireEvent.mouseEnter(trigger);
     const tooltip = await screen.findByRole('tooltip');
     expect(trigger).toHaveAttribute('aria-describedby', tooltip.id);
+  });
+
+  describe('AppShell', () => {
+    const navigationItems = [
+      { id: 'home', label: 'Início', href: '/', icon: <span aria-hidden="true">H</span>, active: true },
+      { id: 'learners', label: 'Educandos', href: '/learners', icon: <span aria-hidden="true">L</span> },
+    ];
+
+    it('exports a named sidebar landmark with active and collapsed navigation semantics', () => {
+      const onCollapse = vi.fn();
+      const { rerender } = render(
+        <Sidebar
+          brandTitle="Aletheia Test"
+          items={navigationItems}
+          collapsed={false}
+          onCollapse={onCollapse}
+          footer={<span>Família Santos</span>}
+        />
+      );
+
+      expect(screen.getByRole('complementary', { name: 'Navegação principal' })).toBeInTheDocument();
+      expect(screen.getByRole('navigation', { name: 'Navegação principal' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Início' })).toHaveAttribute('aria-current', 'page');
+      expect(screen.getByText('Família Santos')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Recolher barra lateral' }));
+      expect(onCollapse).toHaveBeenCalledWith(true);
+
+      rerender(
+        <Sidebar
+          brandTitle="Aletheia Test"
+          items={navigationItems}
+          collapsed={true}
+          onCollapse={onCollapse}
+        />
+      );
+      expect(screen.queryByText('Início')).not.toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Início' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Expandir barra lateral' })).toBeInTheDocument();
+    });
+
+    it('exports a topbar banner with a named mobile navigation control and actions', () => {
+      const onOpenNavigation = vi.fn();
+      render(
+        <Topbar onOpenNavigation={onOpenNavigation} actions={<button type="button">Perfil</button>} />
+      );
+
+      expect(screen.getByRole('banner')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Abrir navegação' }));
+      expect(onOpenNavigation).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole('button', { name: 'Perfil' })).toBeInTheDocument();
+    });
+
+    it('exports mobile navigation that is absent when closed and closes from its controls', () => {
+      const onClose = vi.fn();
+      const { rerender } = render(
+        <MobileNavigation
+          items={navigationItems}
+          open={false}
+          onClose={onClose}
+          label="Navegação móvel"
+        />
+      );
+
+      expect(screen.queryByRole('dialog', { name: 'Navegação móvel' })).not.toBeInTheDocument();
+
+      rerender(
+        <MobileNavigation
+          items={navigationItems}
+          open={true}
+          onClose={onClose}
+          label="Navegação móvel"
+        />
+      );
+      expect(screen.getByRole('dialog', { name: 'Navegação móvel' })).toBeInTheDocument();
+      expect(screen.getByRole('navigation', { name: 'Navegação móvel' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Início' })).toHaveAttribute('aria-current', 'page');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Fechar navegação' }));
+      expect(onClose).toHaveBeenCalledTimes(1);
+
+      const learnersLink = screen.getByRole('link', { name: 'Educandos' });
+      learnersLink.addEventListener('click', (event) => event.preventDefault());
+      fireEvent.click(learnersLink);
+      expect(onClose).toHaveBeenCalledTimes(2);
+    });
+
+    it('moves focus into mobile navigation, closes on Escape, and restores the opener', () => {
+      function MobileNavigationHarness() {
+        const [open, setOpen] = React.useState(false);
+        return (
+          <>
+            <button type="button" onClick={() => setOpen(true)}>Abrir painel</button>
+            <MobileNavigation
+              items={navigationItems}
+              open={open}
+              onClose={() => setOpen(false)}
+              label="Navegação móvel"
+            />
+          </>
+        );
+      }
+
+      document.body.style.overflow = 'scroll';
+      render(<MobileNavigationHarness />);
+      const opener = screen.getByRole('button', { name: 'Abrir painel' });
+      opener.focus();
+      fireEvent.click(opener);
+
+      const closeButton = screen.getByRole('button', { name: 'Fechar navegação' });
+      const lastLink = screen.getByRole('link', { name: 'Educandos' });
+      expect(document.body.style.overflow).toBe('hidden');
+      expect(closeButton).toHaveFocus();
+      fireEvent.keyDown(closeButton, { key: 'Tab', shiftKey: true });
+      expect(lastLink).toHaveFocus();
+      fireEvent.keyDown(lastLink, { key: 'Tab' });
+      expect(closeButton).toHaveFocus();
+      fireEvent.keyDown(document, { key: 'Escape' });
+      expect(screen.queryByRole('dialog', { name: 'Navegação móvel' })).not.toBeInTheDocument();
+      expect(opener).toHaveFocus();
+      expect(document.body.style.overflow).toBe('scroll');
+    });
+
+    it('composes responsive navigation, topbar, and content while owning their UI state', () => {
+      render(
+        <AppShell
+          brandTitle="Aletheia Test"
+          navigationItems={navigationItems}
+          topbarActions={<button type="button">Perfil</button>}
+        >
+          <div>Conteúdo Principal</div>
+        </AppShell>
+      );
+
+      expect(screen.getByTestId('app-shell')).toBeInTheDocument();
+      expect(screen.getByTestId('appshell-sidebar')).toBeInTheDocument();
+      expect(screen.getByTestId('appshell-topbar')).toBeInTheDocument();
+      expect(screen.getByTestId('appshell-nav-home')).toHaveAttribute('aria-current', 'page');
+      expect(screen.getByText('Conteúdo Principal')).toBeInTheDocument();
+
+      const openButton = screen.getByRole('button', { name: 'Abrir navegação' });
+      fireEvent.click(openButton);
+      const mobileNavigation = screen.getByRole('dialog', { name: 'Navegação móvel' });
+      expect(openButton).toHaveAttribute('aria-controls', mobileNavigation.id);
+      fireEvent.click(screen.getByRole('button', { name: 'Fechar navegação' }));
+      expect(screen.queryByRole('dialog', { name: 'Navegação móvel' })).not.toBeInTheDocument();
+    });
   });
 });
