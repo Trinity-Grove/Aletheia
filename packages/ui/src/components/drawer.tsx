@@ -58,7 +58,7 @@ export function Drawer({
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !event.defaultPrevented) {
         event.preventDefault();
         onCloseRef.current();
         return;
