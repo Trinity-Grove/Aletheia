@@ -107,6 +107,9 @@
   --primitive-size-blur-sm: 4px;
   --primitive-size-blur-md: 8px;
   --primitive-size-drawer-width: 24rem;
+  --primitive-size-drawer-width-sm: 20rem;
+  --primitive-size-drawer-width-md: 26rem;
+  --primitive-size-drawer-width-lg: 36rem;
   --primitive-size-sidebar-width: 17rem;
   --primitive-size-sidebar-collapsed-width: 4.5rem;
   --primitive-size-header-height: 4.5rem;

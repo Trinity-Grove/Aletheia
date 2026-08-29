@@ -21,6 +21,9 @@
   --ui-motion-easing-drawer: var(--primitive-ease-drawer);
   --ui-breakpoint-md: var(--primitive-breakpoint-md);
   --ui-layout-drawer-width: var(--primitive-size-drawer-width);
+  --ui-layout-drawer-width-sm: var(--primitive-size-drawer-width-sm);
+  --ui-layout-drawer-width-md: var(--primitive-size-drawer-width-md);
+  --ui-layout-drawer-width-lg: var(--primitive-size-drawer-width-lg);
   --ui-layout-sidebar-width: var(--primitive-size-sidebar-width);
   --ui-layout-sidebar-collapsed-width: var(--primitive-size-sidebar-collapsed-width);
   --ui-layout-header-height: var(--primitive-size-header-height);

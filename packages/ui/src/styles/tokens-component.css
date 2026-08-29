@@ -30,6 +30,9 @@
   --ui-overlay-modal-radius: var(--ui-radius-xl);
   --ui-overlay-modal-shadow: var(--ui-elevation-modal);
   --ui-drawer-width: var(--ui-layout-drawer-width);
+  --ui-drawer-width-sm: var(--ui-layout-drawer-width-sm);
+  --ui-drawer-width-md: var(--ui-layout-drawer-width-md);
+  --ui-drawer-width-lg: var(--ui-layout-drawer-width-lg);
   --ui-drawer-background: var(--ui-surface-default);
   --ui-drawer-shadow: var(--ui-elevation-modal);
   --ui-dropdown-background: var(--ui-surface-default);

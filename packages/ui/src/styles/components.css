@@ -486,6 +486,7 @@
 }
 .ui-drawer {
   background-color: var(--ui-drawer-background);
+  width: min(100%, var(--ui-drawer-width));
   height: 100%;
   box-shadow: var(--ui-drawer-shadow);
   display: flex;
@@ -501,16 +502,13 @@
   animation: ui-slide-right var(--ui-motion-duration-slow) var(--ui-motion-easing-drawer);
 }
 .ui-drawer--sm {
-  width: 100%;
-  max-width: 20rem;
+  width: min(100%, var(--ui-drawer-width-sm));
 }
 .ui-drawer--md {
-  width: 100%;
-  max-width: 26rem;
+  width: min(100%, var(--ui-drawer-width-md));
 }
 .ui-drawer--lg {
-  width: 100%;
-  max-width: 36rem;
+  width: min(100%, var(--ui-drawer-width-lg));
 }
 .ui-drawer-header {
   padding: 1.5rem 1.75rem;
@@ -619,12 +617,12 @@
   color: var(--ui-text-brand);
 }
 .ui-dropdown-item--danger {
-  color: var(--color-danger-fg);
+  color: var(--ui-status-danger-foreground);
 }
 .ui-dropdown-item--danger:hover,
 .ui-dropdown-item--danger.ui-dropdown-item--focused {
-  background-color: var(--color-danger-bg);
-  color: var(--color-danger-fg);
+  background-color: var(--ui-status-danger-background);
+  color: var(--ui-status-danger-foreground);
 }
 .ui-dropdown-item:disabled {
   opacity: var(--ui-control-disabled-opacity);

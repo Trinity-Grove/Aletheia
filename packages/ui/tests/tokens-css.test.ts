@@ -44,4 +44,39 @@ describe('CSS token layer contract', () => {
     expect(component).not.toMatch(/var\(--primitive-/);
     expect(componentStyles).not.toMatch(/var\(--primitive-/);
   });
+
+  it('uses drawer and dropdown component contracts instead of legacy aliases', async () => {
+    const [component, componentStyles] = await Promise.all([
+      readStyleFile('tokens-component.css'),
+      readStyleFile('components.css'),
+    ]);
+    const drawerStyles = componentStyles.match(
+      /\/\* --------------------------------------------------------------------------\n   UI Drawer[\s\S]*?(?=\/\* --------------------------------------------------------------------------\n   UI Dropdown)/,
+    )?.[0];
+    const dropdownStyles = componentStyles.match(
+      /\/\* --------------------------------------------------------------------------\n   UI Dropdown[\s\S]*?(?=\/\* --------------------------------------------------------------------------\n   UI Tooltip)/,
+    )?.[0];
+
+    expect(drawerStyles).toBeDefined();
+    expect(dropdownStyles).toBeDefined();
+
+    for (const token of [
+      '--ui-drawer-width',
+      '--ui-drawer-width-sm',
+      '--ui-drawer-width-md',
+      '--ui-drawer-width-lg',
+      '--ui-dropdown-background',
+      '--ui-dropdown-item-foreground',
+    ]) {
+      expect(component).toContain(token);
+    }
+
+    expect(drawerStyles).toContain('var(--ui-drawer-width)');
+    expect(drawerStyles).toContain('var(--ui-drawer-width-sm)');
+    expect(drawerStyles).toContain('var(--ui-drawer-width-md)');
+    expect(drawerStyles).toContain('var(--ui-drawer-width-lg)');
+    expect(dropdownStyles).not.toMatch(/var\(--color-danger-/);
+    expect(dropdownStyles).toContain('var(--ui-status-danger-foreground)');
+    expect(dropdownStyles).toContain('var(--ui-status-danger-background)');
+  });
 });
