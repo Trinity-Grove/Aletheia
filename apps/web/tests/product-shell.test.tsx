@@ -1,8 +1,9 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import React, { useState } from 'react';
 import type { LearnerSummaryDto, NotificationItemResponseDto } from '@aletheia/contracts';
 import { ProductShell, LearnerFocusSwitcher } from '../src/components/product-shell';
+import { AuthProvider, useAuthRole } from '../src/lib/auth/rbac-context';
 
 const mockLearners: LearnerSummaryDto[] = [
   {
@@ -37,6 +38,16 @@ const mockNotifications: NotificationItemResponseDto[] = [
   },
 ];
 
+function AuthContextProbe() {
+  const auth = useAuthRole();
+
+  return (
+    <output data-testid="auth-context-probe">
+      {`${auth?.role ?? 'none'}|${auth?.user?.id ?? 'none'}|${auth?.familyId ?? 'none'}`}
+    </output>
+  );
+}
+
 describe('ProductShell adapter', () => {
   afterEach(cleanup);
 
@@ -67,6 +78,28 @@ describe('ProductShell adapter', () => {
     expect(screen.getByRole('link', { name: 'Diário de Aprendizagem' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Relatórios' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Configurações' })).not.toBeInTheDocument();
+  });
+
+  it('uses an explicit user as the descendant auth context over a conflicting outer provider', () => {
+    render(
+      <AuthProvider
+        role="OWNER_GUARDIAN"
+        familyId="outer-family"
+        user={{
+          id: 'outer-user',
+          email: 'outer@aletheia.edu',
+          fullName: 'Outer Guardian',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        }}
+      >
+        <ProductShell user={{ id: 'explicit-user', name: 'Helena Educadora', role: 'EDUCATOR' }}>
+          <AuthContextProbe />
+        </ProductShell>
+      </AuthProvider>,
+    );
+
+    expect(screen.queryByRole('link', { name: 'Relatórios' })).not.toBeInTheDocument();
+    expect(screen.getByTestId('auth-context-probe')).toHaveTextContent('EDUCATOR|explicit-user|none');
   });
 
   it('forwards learner, notification, and profile content without React warnings', () => {
@@ -114,6 +147,35 @@ describe('ProductShell adapter', () => {
 
     expect(menuButton).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('dialog', { name: 'Navegação móvel' })).toBeInTheDocument();
+  });
+
+  it('renders the profile inside shared mobile navigation', () => {
+    render(
+      <ProductShell user={{ name: 'Wendel Silva', email: 'wendel@aletheia.edu', role: 'OWNER_GUARDIAN' }}>
+        <p>Conteúdo mobile</p>
+      </ProductShell>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir navegação' }));
+
+    const mobileNavigation = screen.getByRole('dialog', { name: 'Navegação móvel' });
+    expect(within(mobileNavigation).getByText('Wendel Silva')).toBeInTheDocument();
+    expect(within(mobileNavigation).getByText('Guardião Principal')).toBeInTheDocument();
+  });
+
+  it('collapses profile details while retaining the desktop avatar', () => {
+    render(
+      <ProductShell user={{ name: 'Wendel Silva', email: 'wendel@aletheia.edu', role: 'OWNER_GUARDIAN' }}>
+        <p>Conteúdo</p>
+      </ProductShell>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Recolher barra lateral' }));
+
+    const profile = screen.getByTestId('appshell-user-profile');
+    expect(within(profile).getByText('W')).toBeInTheDocument();
+    expect(within(profile).queryByText('Wendel Silva')).not.toBeInTheDocument();
+    expect(within(profile).queryByText('Guardião Principal')).not.toBeInTheDocument();
   });
 });
 

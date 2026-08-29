@@ -1032,6 +1032,11 @@
   padding: calc(var(--ui-space-8) / 2) calc(var(--ui-space-8) / 4);
   overflow-y: auto;
 }
+.ui-mobile-navigation-profile {
+  padding: calc(var(--ui-space-8) / 2);
+  border-top: 1px solid var(--ui-border-default);
+  background-color: var(--ui-surface-subtle);
+}
 .ui-mobile-navigation-list {
   display: flex;
   flex-direction: column;

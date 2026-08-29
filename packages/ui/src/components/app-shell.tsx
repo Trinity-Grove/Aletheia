@@ -16,6 +16,8 @@ export interface NavigationItem {
   badge?: React.ReactNode;
 }
 
+export type AppShellUserProfile = React.ReactNode | ((collapsed: boolean) => React.ReactNode);
+
 export interface AppShellProps {
   children: React.ReactNode;
   brandTitle?: React.ReactNode;
@@ -23,7 +25,7 @@ export interface AppShellProps {
   brandLogo?: React.ReactNode;
   navigationItems: NavigationItem[];
   topbarActions?: React.ReactNode;
-  userProfile?: React.ReactNode;
+  userProfile?: AppShellUserProfile;
   className?: string;
 }
 
@@ -41,6 +43,8 @@ export function AppShell({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const mobileNavigationId = useId();
   const shellClassName = `ui-appshell ${isSidebarCollapsed ? 'ui-appshell--collapsed' : ''} ${className}`.trim();
+  const renderUserProfile = (collapsed: boolean) =>
+    typeof userProfile === 'function' ? userProfile(collapsed) : userProfile;
 
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') return;
@@ -63,7 +67,7 @@ export function AppShell({
         items={navigationItems}
         collapsed={isSidebarCollapsed}
         onCollapse={setIsSidebarCollapsed}
-        footer={userProfile}
+        footer={renderUserProfile(isSidebarCollapsed)}
       />
 
       <div className="ui-appshell-main-wrapper">
@@ -85,6 +89,7 @@ export function AppShell({
         onClose={() => setIsMobileMenuOpen(false)}
         items={navigationItems}
         label="Navegação móvel"
+        userProfile={renderUserProfile(false)}
       />
     </div>
   );

@@ -10,6 +10,7 @@ export interface MobileNavigationProps {
   onClose: () => void;
   label?: string;
   id?: string;
+  userProfile?: React.ReactNode;
 }
 
 const focusableSelector =
@@ -21,6 +22,7 @@ export function MobileNavigation({
   onClose,
   label = 'Navegação móvel',
   id,
+  userProfile,
 }: MobileNavigationProps) {
   const generatedNavigationId = useId();
   const navigationId = id ?? generatedNavigationId;
@@ -129,6 +131,11 @@ export function MobileNavigation({
             ))}
           </ul>
         </nav>
+        {userProfile && (
+          <div className="ui-mobile-navigation-profile" data-testid="appshell-mobile-user-profile">
+            {userProfile}
+          </div>
+        )}
       </aside>
     </div>
   );

@@ -137,21 +137,25 @@ export function ProductShell({
     </div>
   );
 
-  const userProfile = user ? (
-    <div className="product-shell-user-profile">
-      <div className="product-shell-user-avatar" aria-hidden="true">
-        {(user.name ?? user.email ?? 'U').charAt(0).toUpperCase()}
-      </div>
-      <div className="product-shell-user-details">
-        <div className="product-shell-user-name">{user.name ?? user.email}</div>
-        {user.role && (
-          <div className="product-shell-user-role">
-            <RoleBadge role={user.role} size="sm" />
+  const userProfile = user
+    ? (collapsed: boolean) => (
+        <div className="product-shell-user-profile">
+          <div className="product-shell-user-avatar" aria-hidden="true">
+            {(user.name ?? user.email ?? 'U').charAt(0).toUpperCase()}
           </div>
-        )}
-      </div>
-    </div>
-  ) : undefined;
+          {!collapsed && (
+            <div className="product-shell-user-details">
+              <div className="product-shell-user-name">{user.name ?? user.email}</div>
+              {user.role && (
+                <div className="product-shell-user-role">
+                  <RoleBadge role={user.role} size="sm" />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )
+    : undefined;
 
   const shellContent = (
     <AppShell
@@ -167,7 +171,7 @@ export function ProductShell({
     </AppShell>
   );
 
-  if (existingAuth) return shellContent;
+  if (existingAuth && !user) return shellContent;
 
   return (
     <AuthProvider role={activeRole} user={authUser}>
