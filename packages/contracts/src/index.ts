@@ -14,3 +14,4 @@ export * from './report.js';
 export * from './settings.js';
 export * from './notification.js';
 export * from './backup.js';
+export * from './dashboard.js';
