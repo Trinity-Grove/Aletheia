@@ -2,8 +2,7 @@ import { cleanup, render, screen, fireEvent } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
 import { LearnerFocusHeader } from '../src/components/dashboard/learner-focus-header';
-import { DailyJourney } from '../src/components/dashboard/daily-journey';
-import { ActivityList, type DailyActivityItem } from '../src/components/dashboard/activity-list';
+import { ActivityList, DailyJourney, type DailyActivityItem } from '@aletheia/ui';
 
 describe('Dashboard Component Suite', () => {
   afterEach(cleanup);

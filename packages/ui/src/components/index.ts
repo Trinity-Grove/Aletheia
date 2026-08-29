@@ -7,6 +7,8 @@ export * from './modal.js';
 export * from './drawer.js';
 export * from './dropdown.js';
 export * from './tooltip.js';
+export * from './section-header.js';
+export * from './data-list.js';
 export * from './input.js';
 export * from './select.js';
 export * from './textarea.js';

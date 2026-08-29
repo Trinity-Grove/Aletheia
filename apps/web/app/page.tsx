@@ -9,11 +9,16 @@ import {
   FolderHeart,
   BarChart3,
 } from 'lucide-react';
-import { PageHeader, ScriptureCard, Card } from '@aletheia/ui';
+import {
+  ActivityList,
+  Card,
+  DailyJourney,
+  PageHeader,
+  ScriptureCard,
+  type DailyActivityItem,
+} from '@aletheia/ui';
 import { ProductShell } from '../src/components/layout/product-shell';
 import { LearnerFocusHeader } from '../src/components/dashboard/learner-focus-header';
-import { DailyJourney } from '../src/components/dashboard/daily-journey';
-import { ActivityList, type DailyActivityItem } from '../src/components/dashboard/activity-list';
 import type { LearnerSummaryDto } from '@aletheia/contracts';
 
 const MOCK_LEARNERS: LearnerSummaryDto[] = [

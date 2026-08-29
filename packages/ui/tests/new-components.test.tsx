@@ -1,184 +1,305 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen, fireEvent } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
-import { AppShell, Drawer, Dropdown, MobileNavigation, Sidebar, Tooltip, Topbar } from '../src/index.js';
+import {
+  Drawer,
+  Dropdown,
+  Tooltip,
+  SectionHeader,
+  DataList,
+  AppShell,
+  Sidebar,
+  Topbar,
+  MobileNavigation,
+  DailyJourney,
+  ActivityList,
+} from '../src/index.js';
 
-describe('accessible overlay primitives', () => {
+describe('New UI Components & Patterns', () => {
   afterEach(() => {
     cleanup();
     document.body.style.overflow = '';
   });
 
-  it('traps Tab focus and restores the opener focus and body scroll when it closes', () => {
-    const onClose = vi.fn();
-    document.body.style.overflow = 'scroll';
-    const { rerender } = render(
-      <>
-        <button type="button">Abrir gaveta</button>
-        <Drawer isOpen={false} onClose={onClose} footer={<button type="button">Última ação</button>}>
-          <button type="button">Primeira ação</button>
-        </Drawer>
-      </>
-    );
-    const opener = screen.getByRole('button', { name: 'Abrir gaveta' });
-    opener.focus();
-
-    rerender(
-      <>
-        <button type="button">Abrir gaveta</button>
-        <Drawer isOpen={true} onClose={onClose} footer={<button type="button">Última ação</button>}>
-          <button type="button">Primeira ação</button>
-        </Drawer>
-      </>
-    );
-
-    const closeButton = screen.getByTestId('drawer-close-btn');
-    const lastAction = screen.getByRole('button', { name: 'Última ação' });
-    expect(document.body.style.overflow).toBe('hidden');
-    lastAction.focus();
-    fireEvent.keyDown(lastAction, { key: 'Tab' });
-    expect(closeButton).toHaveFocus();
-    fireEvent.keyDown(closeButton, { key: 'Tab', shiftKey: true });
-    expect(lastAction).toHaveFocus();
-
-    rerender(
-      <>
-        <button type="button">Abrir gaveta</button>
-        <Drawer isOpen={false} onClose={onClose} footer={<button type="button">Última ação</button>}>
-          <button type="button">Primeira ação</button>
-        </Drawer>
-      </>
-    );
-    expect(opener).toHaveFocus();
-    expect(document.body.style.overflow).toBe('scroll');
-  });
-
-  it('closes when Escape is unhandled inside the drawer', () => {
-    function DrawerHarness() {
-      const [isOpen, setIsOpen] = React.useState(true);
-      return (
-        <Drawer isOpen={isOpen} onClose={() => setIsOpen(false)}>
-          <button type="button">Ação da gaveta</button>
+  describe('Drawer', () => {
+    it('renders Drawer when isOpen is true and handles close', () => {
+      const handleClose = vi.fn();
+      render(
+        <Drawer
+          isOpen={true}
+          onClose={handleClose}
+          title="Título da Gaveta"
+          description="Descrição da gaveta lateral"
+          footer={<button type="button">Ação</button>}
+        >
+          <p>Conteúdo do Drawer</p>
         </Drawer>
       );
-    }
 
-    render(<DrawerHarness />);
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-  });
+      expect(screen.getByTestId('drawer-container')).toBeInTheDocument();
+      expect(screen.getByTestId('drawer-title')).toHaveTextContent('Título da Gaveta');
+      expect(screen.getByTestId('drawer-description')).toHaveTextContent('Descrição da gaveta lateral');
+      expect(screen.getByText('Conteúdo do Drawer')).toBeInTheDocument();
 
-  it('closes when its scrim is clicked', () => {
-    function DrawerHarness() {
-      const [isOpen, setIsOpen] = React.useState(true);
-      return <Drawer isOpen={isOpen} onClose={() => setIsOpen(false)}>Conteúdo</Drawer>;
-    }
+      fireEvent.click(screen.getByTestId('drawer-close-btn'));
+      expect(handleClose).toHaveBeenCalledTimes(1);
+    });
 
-    render(<DrawerHarness />);
-    fireEvent.click(screen.getByTestId('drawer-backdrop'));
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-  });
-
-  it('links the trigger to its menu, navigates items, activates selection, and restores focus on Escape', () => {
-    const onEdit = vi.fn();
-    render(
-      <Dropdown
-        trigger={<button type="button">Opções</button>}
-        items={[
-          { id: 'edit', label: 'Editar', onClick: onEdit },
-          { id: 'delete', label: 'Excluir' },
-        ]}
-      />
-    );
-
-    const trigger = screen.getByRole('button', { name: 'Opções' });
-    trigger.focus();
-    fireEvent.keyDown(trigger, { key: 'ArrowDown' });
-    const menu = screen.getByRole('menu');
-    expect(trigger).toHaveAttribute('aria-controls', menu.id);
-    expect(screen.getByRole('menuitem', { name: 'Editar' })).toHaveFocus();
-    fireEvent.keyDown(document.activeElement!, { key: 'ArrowDown' });
-    expect(screen.getByRole('menuitem', { name: 'Excluir' })).toHaveFocus();
-    fireEvent.keyDown(document.activeElement!, { key: 'ArrowUp' });
-    expect(screen.getByRole('menuitem', { name: 'Editar' })).toHaveFocus();
-    fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
-    expect(trigger).toHaveFocus();
-
-    fireEvent.keyDown(trigger, { key: 'ArrowDown' });
-    fireEvent.keyDown(document.activeElement!, { key: 'Enter' });
-    expect(onEdit).toHaveBeenCalledTimes(1);
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
-  });
-
-  it('closes a dropdown after an outside pointer interaction', () => {
-    render(<Dropdown trigger={<button type="button">Opções</button>} items={[{ id: 'edit', label: 'Editar' }]} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Opções' }));
-    fireEvent.mouseDown(document.body);
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
-  });
-
-  it('activates the focused item with Space', () => {
-    const onEdit = vi.fn();
-    render(
-      <Dropdown
-        trigger={<button type="button">Opções</button>}
-        items={[{ id: 'edit', label: 'Editar', onClick: onEdit }]}
-      />
-    );
-
-    fireEvent.keyDown(screen.getByRole('button', { name: 'Opções' }), { key: 'ArrowDown' });
-    fireEvent.keyDown(document.activeElement!, { key: ' ' });
-    expect(onEdit).toHaveBeenCalledTimes(1);
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
-  });
-
-  it('leaves a containing drawer open when its Escape event handles the dropdown first', () => {
-    function DrawerWithDropdown() {
-      const [isDrawerOpen, setIsDrawerOpen] = React.useState(true);
-      return (
-        <Drawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}>
-          <Dropdown trigger={<button type="button">Opções da gaveta</button>} items={[{ label: 'Editar' }]} />
+    it('does not render when isOpen is false', () => {
+      render(
+        <Drawer isOpen={false} onClose={() => {}}>
+          <p>Hidden</p>
         </Drawer>
       );
-    }
+      expect(screen.queryByTestId('drawer-container')).not.toBeInTheDocument();
+    });
 
-    render(<DrawerWithDropdown />);
-    const trigger = screen.getByRole('button', { name: 'Opções da gaveta' });
-    fireEvent.keyDown(trigger, { key: 'ArrowDown' });
-    fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
-    expect(trigger).toHaveFocus();
+    it('traps Tab focus and restores the opener focus when it closes', () => {
+      const onClose = vi.fn();
+      document.body.style.overflow = 'scroll';
+      const { rerender } = render(
+        <>
+          <button type="button">Abrir gaveta</button>
+          <Drawer isOpen={false} onClose={onClose} footer={<button type="button">Última ação</button>}>
+            <button type="button">Primeira ação</button>
+          </Drawer>
+        </>
+      );
+      const opener = screen.getByRole('button', { name: 'Abrir gaveta' });
+      opener.focus();
 
-    fireEvent.keyDown(trigger, { key: 'Escape' });
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      rerender(
+        <>
+          <button type="button">Abrir gaveta</button>
+          <Drawer isOpen={true} onClose={onClose} footer={<button type="button">Última ação</button>}>
+            <button type="button">Primeira ação</button>
+          </Drawer>
+        </>
+      );
+
+      const closeButton = screen.getByTestId('drawer-close-btn');
+      const lastAction = screen.getByRole('button', { name: 'Última ação' });
+      expect(document.body.style.overflow).toBe('hidden');
+      lastAction.focus();
+      fireEvent.keyDown(lastAction, { key: 'Tab' });
+      expect(closeButton).toHaveFocus();
+
+      fireEvent.keyDown(closeButton, { key: 'Tab', shiftKey: true });
+      expect(lastAction).toHaveFocus();
+
+      rerender(
+        <>
+          <button type="button">Abrir gaveta</button>
+          <Drawer isOpen={false} onClose={onClose} footer={<button type="button">Última ação</button>}>
+            <button type="button">Primeira ação</button>
+          </Drawer>
+        </>
+      );
+      expect(opener).toHaveFocus();
+      expect(document.body.style.overflow).toBe('scroll');
+    });
+
+    it('closes when Escape is unhandled inside the drawer', () => {
+      function DrawerHarness() {
+        const [isOpen, setIsOpen] = React.useState(true);
+        return (
+          <Drawer isOpen={isOpen} onClose={() => setIsOpen(false)}>
+            <button type="button">Ação da gaveta</button>
+          </Drawer>
+        );
+      }
+
+      render(<DrawerHarness />);
+      fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('closes when its scrim is clicked', () => {
+      function DrawerHarness() {
+        const [isOpen, setIsOpen] = React.useState(true);
+        return <Drawer isOpen={isOpen} onClose={() => setIsOpen(false)}>Conteúdo</Drawer>;
+      }
+
+      render(<DrawerHarness />);
+      fireEvent.click(screen.getByTestId('drawer-backdrop'));
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
   });
 
-  it('describes its focused trigger with the visible tooltip', () => {
-    render(
-      <Tooltip content="Informação auxiliar">
-        <button type="button">Passe o mouse</button>
-      </Tooltip>
-    );
+  describe('Dropdown', () => {
+    it('opens dropdown on trigger click and calls action on item select', () => {
+      const handleClick = vi.fn();
+      render(
+        <Dropdown
+          trigger={<button type="button">Opções</button>}
+          items={[
+            { id: 'edit', label: 'Editar', onClick: handleClick },
+            { id: 'delete', label: 'Excluir', danger: true },
+          ]}
+        />
+      );
 
-    const trigger = screen.getByRole('button', { name: 'Passe o mouse' });
-    trigger.focus();
-    fireEvent.focus(trigger);
-    const tooltip = screen.getByRole('tooltip');
-    expect(trigger).toHaveAttribute('aria-describedby', tooltip.id);
+      expect(screen.queryByTestId('dropdown-menu')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByText('Opções'));
+      expect(screen.getByTestId('dropdown-menu')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('dropdown-item-edit'));
+      expect(handleClick).toHaveBeenCalledTimes(1);
+      expect(screen.queryByTestId('dropdown-menu')).not.toBeInTheDocument();
+    });
+
+    it('links its trigger and menu, moves focus with ArrowDown, and restores it on Escape', () => {
+      const onEdit = vi.fn();
+      render(
+        <Dropdown
+          trigger={<button type="button">Opções</button>}
+          items={[
+            { id: 'edit', label: 'Editar', onClick: onEdit },
+            { id: 'delete', label: 'Excluir' },
+          ]}
+        />
+      );
+
+      const trigger = screen.getByRole('button', { name: 'Opções' });
+      trigger.focus();
+      fireEvent.keyDown(trigger, { key: 'ArrowDown' });
+
+      const menu = screen.getByRole('menu');
+      expect(trigger).toHaveAttribute('aria-controls', menu.id);
+      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('menuitem', { name: 'Editar' })).toHaveFocus();
+
+      fireEvent.keyDown(document.activeElement!, { key: 'ArrowDown' });
+      expect(screen.getByRole('menuitem', { name: 'Excluir' })).toHaveFocus();
+      fireEvent.keyDown(document.activeElement!, { key: 'ArrowUp' });
+      expect(screen.getByRole('menuitem', { name: 'Editar' })).toHaveFocus();
+
+      fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
+      expect(trigger).toHaveFocus();
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+
+      fireEvent.keyDown(trigger, { key: 'ArrowDown' });
+      fireEvent.keyDown(document.activeElement!, { key: 'Enter' });
+      expect(onEdit).toHaveBeenCalledTimes(1);
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+
+    it('activates the focused item with Space', () => {
+      const onEdit = vi.fn();
+      render(
+        <Dropdown
+          trigger={<button type="button">Opções</button>}
+          items={[{ id: 'edit', label: 'Editar', onClick: onEdit }]}
+        />
+      );
+
+      const trigger = screen.getByRole('button', { name: 'Opções' });
+      fireEvent.keyDown(trigger, { key: 'ArrowDown' });
+      fireEvent.keyDown(document.activeElement!, { key: ' ' });
+
+      expect(onEdit).toHaveBeenCalledTimes(1);
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+
+    it('closes when a pointer interaction occurs outside the disclosure', () => {
+      render(
+        <Dropdown trigger={<button type="button">Opções</button>} items={[{ id: 'edit', label: 'Editar' }]} />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Opções' }));
+      fireEvent.mouseDown(document.body);
+
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+
+    it('leaves a containing drawer open when its Escape event handles the dropdown first', () => {
+      function DrawerWithDropdown() {
+        const [isDrawerOpen, setIsDrawerOpen] = React.useState(true);
+        return (
+          <Drawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}>
+            <Dropdown trigger={<button type="button">Opções da gaveta</button>} items={[{ label: 'Editar' }]} />
+          </Drawer>
+        );
+      }
+
+      render(<DrawerWithDropdown />);
+      const trigger = screen.getByRole('button', { name: 'Opções da gaveta' });
+      fireEvent.keyDown(trigger, { key: 'ArrowDown' });
+      fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
+
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+      expect(trigger).toHaveFocus();
+
+      fireEvent.keyDown(trigger, { key: 'Escape' });
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
   });
 
-  it('describes its hovered trigger with the visible tooltip', async () => {
-    render(
-      <Tooltip content="Informação auxiliar">
-        <button type="button">Passe o mouse</button>
-      </Tooltip>
-    );
+  describe('Tooltip', () => {
+    it('describes the trigger with the tooltip after hover', async () => {
+      render(
+        <Tooltip content="Informação auxiliar">
+          <button type="button">Passe o mouse</button>
+        </Tooltip>
+      );
 
-    const trigger = screen.getByRole('button', { name: 'Passe o mouse' });
-    fireEvent.mouseEnter(trigger);
-    const tooltip = await screen.findByRole('tooltip');
-    expect(trigger).toHaveAttribute('aria-describedby', tooltip.id);
+      const trigger = screen.getByRole('button', { name: 'Passe o mouse' });
+      fireEvent.mouseEnter(trigger);
+
+      const tooltip = await screen.findByRole('tooltip');
+      expect(trigger).toHaveAttribute('aria-describedby', tooltip.id);
+    });
+
+    it('describes the trigger with the visible tooltip on keyboard focus', () => {
+      render(
+        <Tooltip content="Informação auxiliar">
+          <button type="button">Passe o mouse</button>
+        </Tooltip>
+      );
+
+      const trigger = screen.getByRole('button', { name: 'Passe o mouse' });
+      trigger.focus();
+      fireEvent.focus(trigger);
+
+      const tooltip = screen.getByRole('tooltip');
+      expect(trigger).toHaveAttribute('aria-describedby', tooltip.id);
+    });
+  });
+
+  describe('SectionHeader', () => {
+    it('renders title, description and action', () => {
+      render(
+        <SectionHeader
+          title="Seção Acadêmica"
+          description="Gerencie as metas da família"
+          action={<button type="button">Adicionar</button>}
+        />
+      );
+
+      expect(screen.getByTestId('section-header-title')).toHaveTextContent('Seção Acadêmica');
+      expect(screen.getByTestId('section-header-description')).toHaveTextContent('Gerencie as metas da família');
+      expect(screen.getByText('Adicionar')).toBeInTheDocument();
+    });
+  });
+
+  describe('DataList', () => {
+    it('renders list items with label and value', () => {
+      render(
+        <DataList
+          items={[
+            { id: '1', label: 'Educando', value: 'Samuel' },
+            { id: '2', label: 'Etapa', value: 'Gramática', helperText: 'Fase inicial' },
+          ]}
+        />
+      );
+
+      expect(screen.getByTestId('data-list-item-1')).toHaveTextContent('Educando');
+      expect(screen.getByTestId('data-list-item-1')).toHaveTextContent('Samuel');
+      expect(screen.getByTestId('data-list-item-2')).toHaveTextContent('Fase inicial');
+    });
   });
 
   describe('AppShell', () => {
@@ -391,6 +512,43 @@ describe('accessible overlay primitives', () => {
           value: originalMatchMedia,
         });
       }
+    });
+  });
+
+  describe('Patterns: DailyJourney & ActivityList', () => {
+    it('renders DailyJourney with calculated metrics', () => {
+      render(
+        <DailyJourney
+          completedMinutes={120}
+          targetMinutes={240}
+          completedLessons={3}
+          totalLessons={6}
+          daySequence={45}
+        />
+      );
+
+      expect(screen.getByText('Jornada Diária de Aprendizagem')).toBeInTheDocument();
+      expect(screen.getByText('50% da Meta')).toBeInTheDocument();
+      expect(screen.getByText('3/6')).toBeInTheDocument();
+    });
+
+    it('renders ActivityList and handles toggle', () => {
+      const handleToggle = vi.fn();
+      render(
+        <ActivityList
+          activities={[
+            { id: '1', title: 'Leitura Bíblica', completed: false, type: 'devotional' },
+            { id: '2', title: 'Matemática', completed: true, type: 'lesson' },
+          ]}
+          onToggleComplete={handleToggle}
+        />
+      );
+
+      expect(screen.getByText('Atividades de Hoje')).toBeInTheDocument();
+      expect(screen.getByText('1 de 2 atividades concluídas')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('toggle-activity-1'));
+      expect(handleToggle).toHaveBeenCalledWith('1');
     });
   });
 });
