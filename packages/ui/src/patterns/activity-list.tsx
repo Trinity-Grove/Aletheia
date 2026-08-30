@@ -20,11 +20,22 @@ export interface DailyActivityItem {
 export interface ActivityListProps {
   activities: DailyActivityItem[];
   onToggleComplete?: ((id: string) => void) | undefined;
+  completableTypes?: Array<DailyActivityItem['type']> | undefined;
   className?: string;
 }
 
-export function ActivityList({ activities, onToggleComplete, className = '' }: ActivityListProps) {
+const ALL_TYPES: DailyActivityItem['type'][] = ['devotional', 'lesson', 'routine'];
+
+export function ActivityList({
+  activities,
+  onToggleComplete,
+  completableTypes = ALL_TYPES,
+  className = '',
+}: ActivityListProps) {
   const completedCount = activities.filter((a) => a.completed).length;
+
+  const isCompletable = (type: DailyActivityItem['type']) =>
+    onToggleComplete !== undefined && completableTypes.includes(type);
 
   return (
     <Card variant="default" shadow="sm" className={`ui-pattern-activity-list ${className}`}>
@@ -59,15 +70,17 @@ export function ActivityList({ activities, onToggleComplete, className = '' }: A
                 className={`ui-activity-item ${act.completed ? 'ui-activity-item--completed' : ''}`}
               >
                 <div className="ui-activity-item-left">
-                  <button
-                    type="button"
-                    data-testid={`toggle-activity-${act.id}`}
-                    onClick={() => onToggleComplete?.(act.id)}
-                    aria-label={`Marcar ${act.title} como ${act.completed ? 'pendente' : 'concluída'}`}
-                    className={`ui-activity-checkbox ${act.completed ? 'ui-activity-checkbox--checked' : ''}`}
-                  >
-                    {act.completed && <Check size={14} />}
-                  </button>
+                  {isCompletable(act.type) && (
+                    <button
+                      type="button"
+                      data-testid={`toggle-activity-${act.id}`}
+                      onClick={() => onToggleComplete?.(act.id)}
+                      aria-label={`Marcar ${act.title} como ${act.completed ? 'pendente' : 'concluída'}`}
+                      className={`ui-activity-checkbox ${act.completed ? 'ui-activity-checkbox--checked' : ''}`}
+                    >
+                      {act.completed && <Check size={14} />}
+                    </button>
+                  )}
 
                   <div className="ui-activity-item-info">
                     <h4 className="ui-activity-item-title">
@@ -94,13 +107,15 @@ export function ActivityList({ activities, onToggleComplete, className = '' }: A
                   </div>
                 </div>
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onToggleComplete?.(act.id)}
-                >
-                  {act.completed ? 'Desmarcar' : 'Concluir'}
-                </Button>
+                {isCompletable(act.type) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onToggleComplete?.(act.id)}
+                  >
+                    {act.completed ? 'Desmarcar' : 'Concluir'}
+                  </Button>
+                )}
               </div>
             ))}
           </div>

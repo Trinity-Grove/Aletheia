@@ -637,7 +637,7 @@ describe('New UI Components & Patterns', () => {
       expect(progressBar.getAttribute('style')).not.toContain('NaN');
     });
 
-    it('renders ActivityList and handles toggle', () => {
+    it('renders ActivityList and handles toggle for completable types only', () => {
       const handleToggle = vi.fn();
       render(
         <ActivityList
@@ -646,12 +646,32 @@ describe('New UI Components & Patterns', () => {
             { id: '2', title: 'Matemática', completed: true, type: 'lesson' },
           ]}
           onToggleComplete={handleToggle}
+          completableTypes={['lesson']}
         />
       );
 
       expect(screen.getByText('Atividades de Hoje')).toBeInTheDocument();
       expect(screen.getByText('1 de 2 atividades concluídas')).toBeInTheDocument();
 
+      expect(screen.queryByTestId('toggle-activity-1')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('toggle-activity-2')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('toggle-activity-2'));
+      expect(handleToggle).toHaveBeenCalledWith('2');
+    });
+
+    it('defaults to allowing completion controls for all activity types', () => {
+      const handleToggle = vi.fn();
+      render(
+        <ActivityList
+          activities={[
+            { id: '1', title: 'Ritual Noturno', completed: false, type: 'routine' },
+          ]}
+          onToggleComplete={handleToggle}
+        />
+      );
+
+      expect(screen.getByTestId('toggle-activity-1')).toBeInTheDocument();
       fireEvent.click(screen.getByTestId('toggle-activity-1'));
       expect(handleToggle).toHaveBeenCalledWith('1');
     });

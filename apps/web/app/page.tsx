@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Calendar,
   BookOpen,
@@ -62,17 +62,6 @@ export default function HomePage() {
     completeActivity,
   } = useDashboard();
 
-  const handleToggleComplete = async (id: string) => {
-    const activity = data?.activities.find((a) => a.id === id);
-    if (activity && activity.type === 'lesson') {
-      try {
-        await completeActivity(activity);
-      } catch {
-        // Progress only changes after a successful mutation and refetch.
-      }
-    }
-  };
-
   const activities: DailyActivityItem[] = data
     ? data.activities.map((activity) => ({
         ...activity,
@@ -85,6 +74,26 @@ export default function HomePage() {
     firstName: learner.displayName,
     preferredName: learner.displayName,
   })) as LearnerSummaryDto[];
+
+  const [completionError, setCompletionError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (status === 'loading') {
+      setCompletionError(null);
+    }
+  }, [status]);
+
+  const handleToggleComplete = async (id: string) => {
+    const activity = data?.activities.find((a) => a.id === id);
+    if (activity && activity.type === 'lesson') {
+      try {
+        await completeActivity(activity);
+        setCompletionError(null);
+      } catch {
+        setCompletionError('Não foi possível concluir a lição.');
+      }
+    }
+  };
 
   return (
     <ProductShell
@@ -124,13 +133,13 @@ export default function HomePage() {
           />
         )}
 
-        {status === 'loading' && (
+        {!data && status === 'loading' && (
           <div className="dashboard-page-loading" data-testid="dashboard-loading" aria-busy="true">
             <p>Carregando o painel...</p>
           </div>
         )}
 
-        {status === 'error' && (
+        {!data && status === 'error' && (
           <EmptyState
             title="Não conseguimos carregar o painel"
             description={errorMessage ?? undefined}
@@ -142,7 +151,7 @@ export default function HomePage() {
           />
         )}
 
-        {status === 'success' && data && (
+        {data && (
           <>
             {data.learners.length === 0 ? (
               <EmptyState
@@ -155,10 +164,14 @@ export default function HomePage() {
                 }
               />
             ) : (
-              <>
+              <div
+                className="dashboard-page-content"
+                data-testid="dashboard-content"
+                aria-busy={status === 'loading' ? 'true' : 'false'}
+              >
                 <LearnerFocusHeader
                   learners={data.learners}
-                  activeLearnerId={activeLearnerId}
+                  activeLearnerId={data.activeLearnerId}
                   onSelectLearner={setActiveLearnerId}
                 />
 
@@ -177,10 +190,22 @@ export default function HomePage() {
                     totalLessons={data.journey.totalLessons}
                     daySequence={data.journey.daySequence}
                   />
-                  <ActivityList
-                    activities={activities}
-                    onToggleComplete={handleToggleComplete}
-                  />
+
+                  <div className="dashboard-page-activities">
+                    <ActivityList
+                      activities={activities}
+                      onToggleComplete={handleToggleComplete}
+                      completableTypes={['lesson']}
+                    />
+                    <div
+                      className="dashboard-page-completion-status"
+                      data-testid="completion-live-region"
+                      aria-live="polite"
+                      role="status"
+                    >
+                      {completionError && <p>{completionError}</p>}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="dashboard-page-module-grid">
@@ -196,7 +221,7 @@ export default function HomePage() {
                     </a>
                   ))}
                 </div>
-              </>
+              </div>
             )}
           </>
         )}

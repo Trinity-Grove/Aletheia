@@ -218,4 +218,92 @@ describe('HomePage dashboard states', () => {
     expect(screen.getByText('1/3')).toBeInTheDocument();
     expect(screen.getByText('Lições de Latim')).toBeInTheDocument();
   });
+
+  it('announces a failure to complete a lesson in an aria-live region and keeps progress', async () => {
+    const completeActivity = vi.fn().mockRejectedValue(new Error('server error'));
+    mockController.useDashboard.mockReturnValue(
+      buildController({
+        data: validDashboard(),
+        status: 'success',
+        activeLearnerId: LEARNER_A,
+        completeActivity,
+      }),
+    );
+
+    render(<HomePage />);
+
+    const liveRegion = screen.getByTestId('completion-live-region');
+    expect(liveRegion).toHaveAttribute('aria-live');
+
+    fireEvent.click(screen.getByTestId(`toggle-activity-${LESSON_ID}`));
+
+    await waitFor(() =>
+      expect(screen.getByText('Não foi possível concluir a lição.')).toBeInTheDocument(),
+    );
+
+    expect(screen.getByText('60 min')).toBeInTheDocument();
+    expect(screen.getByText('1/3')).toBeInTheDocument();
+  });
+
+  it('keeps the dashboard content mounted and reports busy during a learner refetch', () => {
+    mockController.useDashboard.mockReturnValue(
+      buildController({
+        data: validDashboard(),
+        status: 'loading',
+        activeLearnerId: LEARNER_A,
+      }),
+    );
+
+    render(<HomePage />);
+
+    expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument();
+    expect(screen.getByText('Jornada Diária de Aprendizagem')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Ana' })).toBeInTheDocument();
+
+    const content = screen.getByTestId('dashboard-content');
+    expect(content).toHaveAttribute('aria-busy', 'true');
+  });
+
+  it('hides completion controls for devotional/routine while exposing them for lessons', () => {
+    const devotionalId = '44444444-4444-4444-8444-444444444444';
+    const routineId = '66666666-6666-4666-8666-666666666666';
+    mockController.useDashboard.mockReturnValue(
+      buildController({
+        data: validDashboard({
+          activities: [
+            {
+              id: devotionalId,
+              title: 'Devocional Matinal',
+              completed: false,
+              type: 'devotional',
+            },
+            {
+              id: routineId,
+              title: 'Ritual Noturno',
+              completed: false,
+              type: 'routine',
+            },
+            {
+              id: LESSON_ID,
+              title: 'Lições de Latim',
+              subjectName: 'Latim',
+              completed: false,
+              type: 'lesson',
+            },
+          ],
+        }),
+        status: 'success',
+        activeLearnerId: LEARNER_A,
+      }),
+    );
+
+    render(<HomePage />);
+
+    expect(screen.queryByTestId(`toggle-activity-${devotionalId}`)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(`toggle-activity-${routineId}`)).not.toBeInTheDocument();
+    expect(screen.getByTestId(`toggle-activity-${LESSON_ID}`)).toBeInTheDocument();
+
+    expect(screen.queryByRole('button', { name: 'Desmarcar' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Concluir' })).toHaveLength(1);
+  });
 });
