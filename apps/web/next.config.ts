@@ -4,6 +4,7 @@ import type { NextConfig } from 'next';
 // `tsc --showConfig` output is empty in this environment despite a successful
 // process exit, so use the TypeScript API checker instead.
 const nextConfig: NextConfig = {
+  output: 'standalone',
   experimental: {
     useTypeScriptCli: false,
   },
