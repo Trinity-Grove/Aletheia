@@ -271,10 +271,12 @@ function isPublicApplicationContract(destination) {
 }
 
 function isFeatureModuleComposition(sourceFile, destination) {
-  const [, moduleRoot, ...remainingPath] = destination;
-  return sourceFile.endsWith('.module.ts')
-    && /^[^/]+\.module(?:\.[cm]?[jt]s)?$/.test(moduleRoot ?? '')
-    && remainingPath.length === 0;
+  const [sourceModule, sourceRoot, ...sourceRemainingPath] = pathWithinModules(sourceFile) ?? [];
+  const [destinationModule, destinationRoot, ...destinationRemainingPath] = destination;
+  return sourceRoot === `${sourceModule}.module.ts`
+    && sourceRemainingPath.length === 0
+    && destinationRoot === `${destinationModule}.module.js`
+    && destinationRemainingPath.length === 0;
 }
 
 function violationsFor(sourceFile, source) {

@@ -107,6 +107,32 @@ test('allows Nest module roots to compose public feature modules', async () => {
   assert.equal(result.stderr, '');
 });
 
+test('rejects nested module files that import another feature module root', async () => {
+  const fixtureRoot = await createFixture({
+    'dashboard/application/rogue.module.ts':
+      "import { FamiliesModule } from '../../families/families.module.js';\n",
+    'families/families.module.ts': 'export class FamiliesModule {}\n',
+  });
+
+  const result = check(fixtureRoot);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /dashboard may only import families\/application\/public-api/);
+});
+
+test('rejects canonical module roots that import noncanonical feature modules', async () => {
+  const fixtureRoot = await createFixture({
+    'dashboard/dashboard.module.ts':
+      "import { InternalFamiliesModule } from '../families/internal.module.js';\n",
+    'families/internal.module.ts': 'export class InternalFamiliesModule {}\n',
+  });
+
+  const result = check(fixtureRoot);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /dashboard may only import families\/application\/public-api/);
+});
+
 test('rejects cross-module CommonJS require calls', async () => {
   const fixtureRoot = await createFixture({
     'curriculum/application/use-case.ts':
