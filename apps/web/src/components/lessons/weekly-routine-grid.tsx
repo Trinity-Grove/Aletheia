@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { BookOpen, GraduationCap, MapPin, Clock } from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type {
   DayOfWeek,
   LearnerSummaryDto,
@@ -66,20 +66,20 @@ export function WeeklyRoutineGrid({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--bg-surface)',
           padding: '1.25rem 1.5rem',
-          borderRadius: '1rem',
-          border: '1px solid #E2E8F0',
-          boxShadow: '0 1px 3px 0 rgba(15, 23, 42, 0.05)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-light)',
+          boxShadow: 'var(--shadow-sm)',
           flexWrap: 'wrap',
           gap: '1rem',
         }}
       >
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.01em' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.01em' }}>
             Estrutura da Rotina Semanal
           </h2>
-          <p style={{ fontSize: '0.875rem', color: '#64748B', margin: '0.25rem 0 0 0' }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
             Defina os blocos fixos, matérias recorrentes e horários de estudo para cada dia da semana.
           </p>
         </div>
@@ -91,14 +91,14 @@ export function WeeklyRoutineGrid({
             className="btn btn-primary ui-button ui-button--primary ui-button--sm"
             style={{
               padding: '0.45rem 1rem',
-              borderRadius: '0.5rem',
-              backgroundColor: '#4338CA',
-              color: '#FFFFFF',
+              borderRadius: 'var(--radius-md)',
+              backgroundColor: 'var(--color-indigo-700)',
+              color: 'var(--text-inverse)',
               border: 'none',
               fontSize: '0.8125rem',
               fontWeight: 600,
               cursor: 'pointer',
-              boxShadow: '0 1px 2px 0 rgba(67, 56, 202, 0.2)',
+              boxShadow: 'var(--shadow-sm)',
             }}
           >
             + Adicionar Bloco de Rotina
@@ -123,10 +123,10 @@ export function WeeklyRoutineGrid({
               key={day.value}
               data-testid={`routine-day-column-${day.value}`}
               style={{
-                backgroundColor: '#FFFFFF',
-                borderRadius: '1rem',
-                border: '1px solid #E2E8F0',
-                boxShadow: '0 1px 3px 0 rgba(15, 23, 42, 0.04)',
+                backgroundColor: 'var(--bg-surface)',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--border-light)',
+                boxShadow: 'var(--shadow-sm)',
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
@@ -137,25 +137,25 @@ export function WeeklyRoutineGrid({
               <div
                 style={{
                   padding: '0.875rem 1rem',
-                  backgroundColor: '#F8FAFC',
-                  borderBottom: '1px solid #E2E8F0',
+                  backgroundColor: 'var(--sage-soft)',
+                  borderBottom: '1px solid var(--border-light)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                 }}
               >
-                <span style={{ fontWeight: 700, fontSize: '0.875rem', color: '#0F172A' }}>
+                <span style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text-primary)' }}>
                   {day.label}
                 </span>
                 <span
                   style={{
                     fontSize: '0.75rem',
                     fontWeight: 700,
-                    backgroundColor: daySlots.length > 0 ? '#EEF2FF' : '#F1F5F9',
-                    color: daySlots.length > 0 ? '#4338CA' : '#64748B',
+                    backgroundColor: daySlots.length > 0 ? 'var(--color-indigo-50)' : 'var(--sage-soft)',
+                    color: daySlots.length > 0 ? 'var(--color-indigo-700)' : 'var(--text-secondary)',
                     padding: '0.125rem 0.5rem',
-                    borderRadius: '9999px',
-                    border: daySlots.length > 0 ? '1px solid #E0E7FF' : '1px solid #E2E8F0',
+                    borderRadius: 'var(--radius-full)',
+                    border: daySlots.length > 0 ? '1px solid var(--color-indigo-100)' : '1px solid var(--border-light)',
                   }}
                 >
                   {daySlots.length}
@@ -180,13 +180,13 @@ export function WeeklyRoutineGrid({
                       alignItems: 'center',
                       justifyContent: 'center',
                       padding: '2rem 0.5rem',
-                      color: '#94A3B8',
+                      color: 'var(--text-muted)',
                       fontSize: '0.8125rem',
                       textAlign: 'center',
                       fontStyle: 'italic',
-                      backgroundColor: '#F8FAFC',
-                      borderRadius: '0.5rem',
-                      border: '1px dashed #E2E8F0',
+                      backgroundColor: 'var(--sage-soft)',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px dashed var(--border-light)',
                       margin: '0.25rem 0',
                     }}
                   >
@@ -196,19 +196,19 @@ export function WeeklyRoutineGrid({
                   daySlots.map((slot) => {
                     const subInfo = slot.subjectId ? subjectMap.get(slot.subjectId) : null;
                     const learnerName = slot.learnerId ? learnerMap.get(slot.learnerId) : null;
-                    const slotColor = slot.color || subInfo?.color || '#4338CA';
+                    const slotColor = slot.color || subInfo?.color || 'var(--color-indigo-700)';
 
                     return (
                       <div
                         key={slot.id}
                         data-testid={`routine-slot-${slot.id}`}
                         style={{
-                          backgroundColor: '#FFFFFF',
-                          borderRadius: '0.625rem',
-                          border: '1px solid #E2E8F0',
+                          backgroundColor: 'var(--bg-surface)',
+                          borderRadius: 'var(--radius-md)',
+                          border: '1px solid var(--border-light)',
                           borderLeft: `4px solid ${slotColor}`,
                           padding: '0.75rem 0.875rem',
-                          boxShadow: '0 1px 2px 0 rgba(15, 23, 42, 0.04)',
+                          boxShadow: 'var(--shadow-sm)',
                           display: 'flex',
                           flexDirection: 'column',
                           gap: '0.375rem',
@@ -220,16 +220,16 @@ export function WeeklyRoutineGrid({
                             style={{
                               fontSize: '0.75rem',
                               fontWeight: 700,
-                              color: '#4338CA',
-                              backgroundColor: '#EEF2FF',
+                              color: 'var(--color-indigo-700)',
+                              backgroundColor: 'var(--color-indigo-50)',
                               padding: '0.125rem 0.375rem',
-                              borderRadius: '0.25rem',
+                              borderRadius: 'var(--radius-sm)',
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '0.25rem',
                             }}
                           >
-                            <Clock size={11} />
+                            <AletheiaIcon name="clock" size={11} />
                             <span>{slot.startTime} - {slot.endTime}</span>
                           </span>
                           <Can action="manage_lessons">
@@ -241,7 +241,7 @@ export function WeeklyRoutineGrid({
                               style={{
                                 background: 'none',
                                 border: 'none',
-                                color: '#94A3B8',
+                                color: 'var(--text-muted)',
                                 fontSize: '1rem',
                                 lineHeight: 1,
                                 cursor: 'pointer',
@@ -257,7 +257,7 @@ export function WeeklyRoutineGrid({
                           style={{
                             fontSize: '0.875rem',
                             fontWeight: 700,
-                            color: '#0F172A',
+                            color: 'var(--text-primary)',
                           }}
                         >
                           {slot.title}
@@ -269,16 +269,16 @@ export function WeeklyRoutineGrid({
                               style={{
                                 fontSize: '0.6875rem',
                                 padding: '0.125rem 0.375rem',
-                                borderRadius: '0.25rem',
-                                backgroundColor: '#F1F5F9',
-                                color: '#334155',
+                                borderRadius: 'var(--radius-sm)',
+                                backgroundColor: 'var(--sage-soft)',
+                                color: 'var(--text-secondary)',
                                 fontWeight: 500,
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '0.25rem',
                               }}
                             >
-                              <BookOpen size={10} />
+                              <AletheiaIcon name="book-open" size={10} />
                               <span>{slot.subjectName || subInfo?.name}</span>
                             </span>
                           ) : null}
@@ -288,16 +288,16 @@ export function WeeklyRoutineGrid({
                               style={{
                                 fontSize: '0.6875rem',
                                 padding: '0.125rem 0.375rem',
-                                borderRadius: '0.25rem',
-                                backgroundColor: '#EFF6FF',
-                                color: '#1D4ED8',
+                                borderRadius: 'var(--radius-sm)',
+                                backgroundColor: 'var(--color-indigo-50)',
+                                color: 'var(--color-indigo-700)',
                                 fontWeight: 500,
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '0.25rem',
                               }}
                             >
-                              <GraduationCap size={10} />
+                              <AletheiaIcon name="graduation-cap" size={10} />
                               <span>{learnerName}</span>
                             </span>
                           )}
@@ -307,16 +307,16 @@ export function WeeklyRoutineGrid({
                               style={{
                                 fontSize: '0.6875rem',
                                 padding: '0.125rem 0.375rem',
-                                borderRadius: '0.25rem',
-                                backgroundColor: '#F8FAFC',
-                                color: '#64748B',
-                                border: '1px solid #E2E8F0',
+                                borderRadius: 'var(--radius-sm)',
+                                backgroundColor: 'var(--sage-soft)',
+                                color: 'var(--text-secondary)',
+                                border: '1px solid var(--border-light)',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '0.25rem',
                               }}
                             >
-                              <MapPin size={10} />
+                              <AletheiaIcon name="map-pin" size={10} />
                               <span>{slot.location}</span>
                             </span>
                           )}
@@ -334,10 +334,10 @@ export function WeeklyRoutineGrid({
                     style={{
                       marginTop: 'auto',
                       padding: '0.45rem',
-                      borderRadius: '0.5rem',
-                      border: '1.5px dashed #CBD5E1',
-                      backgroundColor: '#F8FAFC',
-                      color: '#64748B',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1.5px dashed var(--border-medium)',
+                      backgroundColor: 'var(--sage-soft)',
+                      color: 'var(--text-secondary)',
                       fontSize: '0.75rem',
                       fontWeight: 600,
                       cursor: 'pointer',

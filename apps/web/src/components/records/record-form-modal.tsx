@@ -1,14 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import {
-  X,
-  Star,
-  Sprout,
-  HeartHandshake,
-  Target,
-  MessageSquare,
-} from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type {
   CreateLearningRecordDto,
   LearningRecordResponseDto,
@@ -176,27 +169,27 @@ export function RecordFormModal({
     >
       <div
         style={{
-          backgroundColor: '#FFFFFF',
-          borderRadius: '0.75rem',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-lg)',
           maxWidth: '700px',
           width: '100%',
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+          boxShadow: 'var(--shadow-xl)',
         }}
       >
         {/* Header */}
         <div
           style={{
             padding: '1.25rem 1.5rem',
-            borderBottom: '1px solid #E5E7EB',
+            borderBottom: '1px solid var(--border-light)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
-          <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#111827' }}>
+          <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
             {recordToEdit ? 'Editar Registro de Aprendizagem' : 'Novo Registro de Aprendizagem'}
           </h2>
           <button
@@ -207,13 +200,13 @@ export function RecordFormModal({
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: '#6B7280',
+              color: 'var(--text-secondary)',
               display: 'flex',
               alignItems: 'center',
             }}
             aria-label="Fechar"
           >
-            <X size={20} />
+            <AletheiaIcon name="x" size={20} />
           </button>
         </div>
 
@@ -233,10 +226,10 @@ export function RecordFormModal({
               data-testid="record-form-error"
               style={{
                 padding: '0.75rem',
-                backgroundColor: '#FEF2F2',
-                border: '1px solid #F87171',
-                borderRadius: '0.375rem',
-                color: '#991B1B',
+                backgroundColor: 'var(--color-rose-50)',
+                border: '1px solid var(--color-rose-100)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--color-rose-700)',
                 fontSize: '0.875rem',
               }}
             >
@@ -249,7 +242,7 @@ export function RecordFormModal({
             <div>
               <label
                 htmlFor="record-learner-select"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
               >
                 Educando *
               </label>
@@ -262,8 +255,8 @@ export function RecordFormModal({
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #D1D5DB',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
                 }}
               >
@@ -279,7 +272,7 @@ export function RecordFormModal({
             <div>
               <label
                 htmlFor="record-type-select"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
               >
                 Tipo de Registro *
               </label>
@@ -292,8 +285,8 @@ export function RecordFormModal({
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #D1D5DB',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
                 }}
               >
@@ -310,7 +303,7 @@ export function RecordFormModal({
           <div>
             <label
               htmlFor="record-title-input"
-              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
             >
               Título / Assunto *
             </label>
@@ -325,8 +318,8 @@ export function RecordFormModal({
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                borderRadius: '0.375rem',
-                border: '1px solid #D1D5DB',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-medium)',
                 fontSize: '0.875rem',
               }}
             />
@@ -337,7 +330,7 @@ export function RecordFormModal({
             <div>
               <label
                 htmlFor="record-subject-select"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
               >
                 Disciplina / Matéria
               </label>
@@ -349,8 +342,8 @@ export function RecordFormModal({
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #D1D5DB',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
                 }}
               >
@@ -366,7 +359,7 @@ export function RecordFormModal({
             <div>
               <label
                 htmlFor="record-date-input"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
               >
                 Data *
               </label>
@@ -380,8 +373,8 @@ export function RecordFormModal({
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #D1D5DB',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
                 }}
               />
@@ -390,7 +383,7 @@ export function RecordFormModal({
             <div>
               <label
                 htmlFor="record-duration-input"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
               >
                 Duração (min)
               </label>
@@ -406,8 +399,8 @@ export function RecordFormModal({
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #D1D5DB',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
                 }}
               />
@@ -418,7 +411,7 @@ export function RecordFormModal({
           <div>
             <label
               htmlFor="record-description-input"
-              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
             >
               Descrição da Atividade
             </label>
@@ -432,8 +425,8 @@ export function RecordFormModal({
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                borderRadius: '0.375rem',
-                border: '1px solid #D1D5DB',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-medium)',
                 fontSize: '0.875rem',
               }}
             />
@@ -444,7 +437,7 @@ export function RecordFormModal({
             <div>
               <label
                 htmlFor="record-mastery-select"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
               >
                 Nível de Domínio (Mastery) *
               </label>
@@ -457,8 +450,8 @@ export function RecordFormModal({
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #D1D5DB',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
                 }}
               >
@@ -473,7 +466,7 @@ export function RecordFormModal({
             <div>
               <label
                 htmlFor="record-assessment-select"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
               >
                 Método de Avaliação *
               </label>
@@ -486,8 +479,8 @@ export function RecordFormModal({
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #D1D5DB',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
                 }}
               >
@@ -505,9 +498,9 @@ export function RecordFormModal({
             <div>
               <label
                 htmlFor="record-strengths-input"
-                style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 600, color: '#065F46', marginBottom: '0.25rem' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-emerald-700)', marginBottom: '0.25rem' }}
               >
-                <Star size={14} />
+                <AletheiaIcon name="sparkles" size={14} />
                 <span>Pontos Fortes Observados</span>
               </label>
               <textarea
@@ -520,8 +513,8 @@ export function RecordFormModal({
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #D1D5DB',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
                 }}
               />
@@ -530,9 +523,9 @@ export function RecordFormModal({
             <div>
               <label
                 htmlFor="record-growth-input"
-                style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 600, color: '#92400E', marginBottom: '0.25rem' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-amber-700)', marginBottom: '0.25rem' }}
               >
-                <Sprout size={14} />
+                <AletheiaIcon name="sprout" size={14} />
                 <span>Oportunidades de Crescimento</span>
               </label>
               <textarea
@@ -545,8 +538,8 @@ export function RecordFormModal({
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #D1D5DB',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
                 }}
               />
@@ -557,9 +550,9 @@ export function RecordFormModal({
           <div>
             <label
               htmlFor="record-habit-input"
-              style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 600, color: '#701A75', marginBottom: '0.25rem' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-indigo-700)', marginBottom: '0.25rem' }}
             >
-              <HeartHandshake size={14} />
+              <AletheiaIcon name="heart" size={14} />
               <span>Crescimento em Caráter & Hábitos</span>
             </label>
             <input
@@ -572,8 +565,8 @@ export function RecordFormModal({
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                borderRadius: '0.375rem',
-                border: '1px solid #D1D5DB',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-medium)',
                 fontSize: '0.875rem',
               }}
             />
@@ -589,11 +582,11 @@ export function RecordFormModal({
                   gap: '0.375rem',
                   fontSize: '0.875rem',
                   fontWeight: 600,
-                  color: '#374151',
+                  color: 'var(--text-secondary)',
                   marginBottom: '0.5rem',
                 }}
               >
-                <Target size={14} />
+                <AletheiaIcon name="sparkles" size={14} />
                 <span>Vincular Objetivos do Currículo</span>
               </span>
               <div
@@ -603,9 +596,9 @@ export function RecordFormModal({
                   gap: '0.375rem',
                   maxHeight: '120px',
                   overflowY: 'auto',
-                  border: '1px solid #E5E7EB',
+                  border: '1px solid var(--border-light)',
                   padding: '0.5rem',
-                  borderRadius: '0.375rem',
+                  borderRadius: 'var(--radius-sm)',
                 }}
               >
                 {filteredObjectives.map((obj) => (
@@ -636,9 +629,9 @@ export function RecordFormModal({
           <div>
             <label
               htmlFor="record-notes-input"
-              style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
             >
-              <MessageSquare size={14} />
+              <AletheiaIcon name="file-text" size={14} />
               <span>Observações Gerais / Diário dos Pais</span>
             </label>
             <textarea
@@ -651,8 +644,8 @@ export function RecordFormModal({
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                borderRadius: '0.375rem',
-                border: '1px solid #D1D5DB',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-medium)',
                 fontSize: '0.875rem',
               }}
             />
@@ -666,7 +659,7 @@ export function RecordFormModal({
               gap: '0.75rem',
               marginTop: '0.5rem',
               paddingTop: '1rem',
-              borderTop: '1px solid #E5E7EB',
+              borderTop: '1px solid var(--border-light)',
             }}
           >
             <button
@@ -676,10 +669,10 @@ export function RecordFormModal({
               disabled={submitting}
               style={{
                 padding: '0.5rem 1rem',
-                borderRadius: '0.375rem',
-                border: '1px solid #D1D5DB',
-                backgroundColor: '#FFFFFF',
-                color: '#374151',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-medium)',
+                backgroundColor: 'var(--bg-surface)',
+                color: 'var(--text-secondary)',
                 fontSize: '0.875rem',
                 fontWeight: 500,
                 cursor: 'pointer',
@@ -693,10 +686,10 @@ export function RecordFormModal({
               disabled={submitting}
               style={{
                 padding: '0.5rem 1.25rem',
-                borderRadius: '0.375rem',
+                borderRadius: 'var(--radius-sm)',
                 border: 'none',
-                backgroundColor: '#2563EB',
-                color: '#FFFFFF',
+                backgroundColor: 'var(--forest)',
+                color: 'var(--text-inverse)',
                 fontSize: '0.875rem',
                 fontWeight: 600,
                 cursor: 'pointer',

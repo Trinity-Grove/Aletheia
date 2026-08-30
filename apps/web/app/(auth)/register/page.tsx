@@ -1,7 +1,20 @@
+'use client';
+
+import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { RegisterForm } from '../../../src/components/auth/register-form';
+import { useAuth } from '../../../src/lib/auth/auth-context';
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const { register } = useAuth();
+
+  const handleRegister = async (data: { fullName: string; email: string; password: string }) => {
+    await register(data);
+    router.push('/onboarding');
+  };
+
   return (
     <main className="auth-page-container">
       <div className="auth-card">
@@ -10,7 +23,7 @@ export default function RegisterPage() {
           <p>Crie sua conta soberana para liderar a jornada educacional familiar.</p>
         </div>
 
-        <RegisterForm />
+        <RegisterForm onSubmit={handleRegister} />
 
         <div className="auth-footer">
           <p>

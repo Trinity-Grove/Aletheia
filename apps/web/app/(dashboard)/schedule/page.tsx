@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Calendar, CalendarRange } from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type {
   CompleteLessonDto,
   CreateLessonPlanDto,
@@ -301,10 +301,10 @@ export default function SchedulePage() {
           }}
         >
           <div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#111827', margin: 0 }}>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
               Agenda & Rotina de Aprendizagem
             </h1>
-            <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: '0.25rem 0 0 0' }}>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
               Acompanhe o cronograma diário, marque lições concluídas e planeje a rotina semanal da família.
             </p>
           </div>
@@ -313,10 +313,10 @@ export default function SchedulePage() {
           <div
             style={{
               display: 'inline-flex',
-              backgroundColor: '#F3F4F6',
+              backgroundColor: 'var(--sage-soft)',
               padding: '0.25rem',
-              borderRadius: '0.5rem',
-              border: '1px solid #E5E7EB',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-light)',
             }}
           >
             <button
@@ -325,20 +325,20 @@ export default function SchedulePage() {
               onClick={() => setActiveTab('agenda')}
               style={{
                 padding: '0.5rem 1rem',
-                borderRadius: '0.375rem',
+                borderRadius: 'var(--radius-sm)',
                 border: 'none',
-                backgroundColor: activeTab === 'agenda' ? '#FFFFFF' : 'transparent',
-                color: activeTab === 'agenda' ? '#1E40AF' : '#4B5563',
+                backgroundColor: activeTab === 'agenda' ? 'var(--bg-surface)' : 'transparent',
+                color: activeTab === 'agenda' ? 'var(--forest)' : 'var(--text-secondary)',
                 fontWeight: activeTab === 'agenda' ? 700 : 500,
                 fontSize: '0.875rem',
-                boxShadow: activeTab === 'agenda' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                boxShadow: activeTab === 'agenda' ? 'var(--shadow-sm)' : 'none',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',
               }}
             >
-              <Calendar size={16} />
+              <AletheiaIcon name="calendar" size="sm" />
               <span>Agenda Diária (Checklist)</span>
             </button>
             <button
@@ -347,27 +347,27 @@ export default function SchedulePage() {
               onClick={() => setActiveTab('routine')}
               style={{
                 padding: '0.5rem 1rem',
-                borderRadius: '0.375rem',
+                borderRadius: 'var(--radius-sm)',
                 border: 'none',
-                backgroundColor: activeTab === 'routine' ? '#FFFFFF' : 'transparent',
-                color: activeTab === 'routine' ? '#1E40AF' : '#4B5563',
+                backgroundColor: activeTab === 'routine' ? 'var(--bg-surface)' : 'transparent',
+                color: activeTab === 'routine' ? 'var(--forest)' : 'var(--text-secondary)',
                 fontWeight: activeTab === 'routine' ? 700 : 500,
                 fontSize: '0.875rem',
-                boxShadow: activeTab === 'routine' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                boxShadow: activeTab === 'routine' ? 'var(--shadow-sm)' : 'none',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',
               }}
             >
-              <CalendarRange size={16} />
+              <AletheiaIcon name="calendar-range" size="sm" />
               <span>Rotina Semanal</span>
             </button>
           </div>
         </div>
 
         {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: '#6B7280' }}>
+          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
             Carregando agenda e rotina...
           </div>
         ) : activeTab === 'agenda' ? (

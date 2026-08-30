@@ -1,7 +1,6 @@
 import { cleanup, render, screen, fireEvent } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { LearnerSummaryDto, NotificationItemResponseDto } from '@aletheia/contracts';
 import {
   Card,
@@ -13,6 +12,7 @@ import {
   Button,
   Badge,
   Modal,
+  AletheiaIcon,
 } from '../src/components/ui';
 import { ProductShell } from '../src/components/layout/product-shell';
 import { RecordsJournalView } from '../src/components/records/records-journal-view';
@@ -146,7 +146,7 @@ describe('UI Primitives: Button', () => {
 
   it('supports left and right icons', () => {
     render(
-      <Button leftIcon={<ChevronLeft data-testid="left-icon" size={16} />} rightIcon={<ChevronRight data-testid="right-icon" size={16} />}>
+      <Button leftIcon={<AletheiaIcon name="chevron-left" data-testid="left-icon" size={16} />} rightIcon={<AletheiaIcon name="chevron-right" data-testid="right-icon" size={16} />}>
         Com Ícones
       </Button>
     );

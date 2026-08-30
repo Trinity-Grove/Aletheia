@@ -1,17 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import {
-  X,
-  Image,
-  Mic,
-  Video,
-  FileText,
-  Link2,
-  FileEdit,
-  Award,
-  Star,
-} from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type {
   CreatePortfolioItemDto,
   PortfolioItemResponseDto,
@@ -37,13 +27,13 @@ export const EVIDENCE_TYPE_CONFIG: Record<
   EvidenceType,
   { label: string; icon: React.ReactNode }
 > = {
-  IMAGE: { label: 'Imagem / Foto do Caderno', icon: <Image size={16} /> },
-  AUDIO: { label: 'Áudio / Narração Gravada', icon: <Mic size={16} /> },
-  VIDEO: { label: 'Vídeo / Apresentação', icon: <Video size={16} /> },
-  DOCUMENT: { label: 'Documento / PDF / Redação', icon: <FileText size={16} /> },
-  LINK: { label: 'Link Externo', icon: <Link2 size={16} /> },
-  TEXT: { label: 'Texto / Citação / Transcrição', icon: <FileEdit size={16} /> },
-  CERTIFICATE: { label: 'Certificado / Conquista', icon: <Award size={16} /> },
+  IMAGE: { label: 'Imagem / Foto do Caderno', icon: <AletheiaIcon name="image" size={16} /> },
+  AUDIO: { label: 'Áudio / Narração Gravada', icon: <AletheiaIcon name="heart" size={16} /> },
+  VIDEO: { label: 'Vídeo / Apresentação', icon: <AletheiaIcon name="sparkles" size={16} /> },
+  DOCUMENT: { label: 'Documento / PDF / Redação', icon: <AletheiaIcon name="file-text" size={16} /> },
+  LINK: { label: 'Link Externo', icon: <AletheiaIcon name="paperclip" size={16} /> },
+  TEXT: { label: 'Texto / Citação / Transcrição', icon: <AletheiaIcon name="pencil" size={16} /> },
+  CERTIFICATE: { label: 'Certificado / Conquista', icon: <AletheiaIcon name="sparkles" size={16} /> },
 };
 
 export function PortfolioItemModal({
@@ -166,27 +156,27 @@ export function PortfolioItemModal({
     >
       <div
         style={{
-          backgroundColor: '#FFFFFF',
-          borderRadius: '0.75rem',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-lg)',
           maxWidth: '600px',
           width: '100%',
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+          boxShadow: 'var(--shadow-xl)',
         }}
       >
         {/* Header */}
         <div
           style={{
             padding: '1.25rem 1.5rem',
-            borderBottom: '1px solid #E5E7EB',
+            borderBottom: '1px solid var(--border-light)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
-          <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#111827' }}>
+          <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
             {itemToEdit ? 'Editar Evidência de Portfólio' : 'Adicionar Evidência ao Portfólio'}
           </h2>
           <button
@@ -197,13 +187,13 @@ export function PortfolioItemModal({
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: '#6B7280',
+              color: 'var(--text-secondary)',
               display: 'flex',
               alignItems: 'center',
             }}
             aria-label="Fechar"
           >
-            <X size={20} />
+            <AletheiaIcon name="x" size={20} />
           </button>
         </div>
 
@@ -223,10 +213,10 @@ export function PortfolioItemModal({
               data-testid="portfolio-form-error"
               style={{
                 padding: '0.75rem',
-                backgroundColor: '#FEF2F2',
-                border: '1px solid #F87171',
-                borderRadius: '0.375rem',
-                color: '#991B1B',
+                backgroundColor: 'var(--color-rose-50)',
+                border: '1px solid var(--color-rose-100)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--color-rose-700)',
                 fontSize: '0.875rem',
               }}
             >
@@ -239,7 +229,7 @@ export function PortfolioItemModal({
             <div>
               <label
                 htmlFor="portfolio-learner-select"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
               >
                 Educando *
               </label>
@@ -252,8 +242,8 @@ export function PortfolioItemModal({
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #D1D5DB',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
                 }}
               >
@@ -269,7 +259,7 @@ export function PortfolioItemModal({
             <div>
               <label
                 htmlFor="portfolio-type-select"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
               >
                 Tipo de Evidência *
               </label>
@@ -282,8 +272,8 @@ export function PortfolioItemModal({
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #D1D5DB',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
                 }}
               >
@@ -300,7 +290,7 @@ export function PortfolioItemModal({
           <div>
             <label
               htmlFor="portfolio-title-input"
-              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
             >
               Título da Obra / Evidência *
             </label>
@@ -315,8 +305,8 @@ export function PortfolioItemModal({
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                borderRadius: '0.375rem',
-                border: '1px solid #D1D5DB',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-medium)',
                 fontSize: '0.875rem',
               }}
             />
@@ -327,7 +317,7 @@ export function PortfolioItemModal({
             <div>
               <label
                 htmlFor="portfolio-subject-select"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
               >
                 Disciplina Relacionada
               </label>
@@ -339,8 +329,8 @@ export function PortfolioItemModal({
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #D1D5DB',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
                 }}
               >
@@ -356,7 +346,7 @@ export function PortfolioItemModal({
             <div>
               <label
                 htmlFor="portfolio-record-select"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
               >
                 Registro de Aprendizagem
               </label>
@@ -368,8 +358,8 @@ export function PortfolioItemModal({
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #D1D5DB',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
                 }}
               >
@@ -387,7 +377,7 @@ export function PortfolioItemModal({
           <div>
             <label
               htmlFor="portfolio-file-url-input"
-              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
             >
               URL do Arquivo / Foto / Vídeo
             </label>
@@ -401,8 +391,8 @@ export function PortfolioItemModal({
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                borderRadius: '0.375rem',
-                border: '1px solid #D1D5DB',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-medium)',
                 fontSize: '0.875rem',
               }}
             />
@@ -411,7 +401,7 @@ export function PortfolioItemModal({
           <div>
             <label
               htmlFor="portfolio-text-content-input"
-              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
             >
               Conteúdo em Texto / Transcrição da Narração
             </label>
@@ -425,8 +415,8 @@ export function PortfolioItemModal({
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                borderRadius: '0.375rem',
-                border: '1px solid #D1D5DB',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-medium)',
                 fontSize: '0.875rem',
               }}
             />
@@ -436,7 +426,7 @@ export function PortfolioItemModal({
           <div>
             <label
               htmlFor="portfolio-description-input"
-              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
             >
               Comentários / Contexto da Produção
             </label>
@@ -450,8 +440,8 @@ export function PortfolioItemModal({
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                borderRadius: '0.375rem',
-                border: '1px solid #D1D5DB',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-medium)',
                 fontSize: '0.875rem',
               }}
             />
@@ -462,7 +452,7 @@ export function PortfolioItemModal({
             <div>
               <label
                 htmlFor="portfolio-captured-date-input"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
               >
                 Data da Produção
               </label>
@@ -475,8 +465,8 @@ export function PortfolioItemModal({
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #D1D5DB',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
                 }}
               />
@@ -485,7 +475,7 @@ export function PortfolioItemModal({
             <div>
               <label
                 htmlFor="portfolio-tags-input"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}
+                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
               >
                 Tags (separadas por vírgula)
               </label>
@@ -499,8 +489,8 @@ export function PortfolioItemModal({
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #D1D5DB',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
                 }}
               />
@@ -515,10 +505,10 @@ export function PortfolioItemModal({
               gap: '0.5rem',
               fontSize: '0.875rem',
               fontWeight: 600,
-              color: '#B45309',
-              backgroundColor: '#FEF3C7',
+              color: 'var(--color-amber-700)',
+              backgroundColor: 'var(--color-amber-50)',
               padding: '0.625rem 0.75rem',
-              borderRadius: '0.375rem',
+              borderRadius: 'var(--radius-sm)',
               cursor: 'pointer',
             }}
           >
@@ -529,7 +519,7 @@ export function PortfolioItemModal({
               onChange={(e) => setIsHighlight(e.target.checked)}
             />
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}>
-              <Star size={14} fill={isHighlight ? '#F59E0B' : 'none'} stroke={isHighlight ? '#D97706' : 'currentColor'} />
+              <AletheiaIcon name="sparkles" size={14} style={{ color: isHighlight ? 'var(--color-amber-600)' : 'currentColor' }} />
               <span>Marcar como Destaque do Portfólio (Showcase)</span>
             </span>
           </label>
@@ -542,7 +532,7 @@ export function PortfolioItemModal({
               gap: '0.75rem',
               marginTop: '0.5rem',
               paddingTop: '1rem',
-              borderTop: '1px solid #E5E7EB',
+              borderTop: '1px solid var(--border-light)',
             }}
           >
             <button
@@ -552,10 +542,10 @@ export function PortfolioItemModal({
               disabled={submitting}
               style={{
                 padding: '0.5rem 1rem',
-                borderRadius: '0.375rem',
-                border: '1px solid #D1D5DB',
-                backgroundColor: '#FFFFFF',
-                color: '#374151',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-medium)',
+                backgroundColor: 'var(--bg-surface)',
+                color: 'var(--text-secondary)',
                 fontSize: '0.875rem',
                 fontWeight: 500,
                 cursor: 'pointer',
@@ -569,10 +559,10 @@ export function PortfolioItemModal({
               disabled={submitting}
               style={{
                 padding: '0.5rem 1.25rem',
-                borderRadius: '0.375rem',
+                borderRadius: 'var(--radius-sm)',
                 border: 'none',
-                backgroundColor: '#2563EB',
-                color: '#FFFFFF',
+                backgroundColor: 'var(--forest)',
+                color: 'var(--text-inverse)',
                 fontSize: '0.875rem',
                 fontWeight: 600,
                 cursor: 'pointer',

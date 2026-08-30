@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { BarChart2, Check, Clock, Calendar } from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type {
   AttendanceComplianceSummaryDto,
   ComplianceRequirementResponseDto,
@@ -23,16 +23,16 @@ export function ComplianceGauge({
       <div
         data-testid="compliance-gauge-empty"
         style={{
-          backgroundColor: '#FFFFFF',
-          borderRadius: '0.75rem',
-          border: '1px dashed #D1D5DB',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px dashed var(--border-medium)',
           padding: '1.5rem',
           textAlign: 'center',
-          color: '#6B7280',
+          color: 'var(--text-secondary)',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem', color: '#9CA3AF' }}>
-          <BarChart2 size={24} />
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>
+          <AletheiaIcon name="bar-chart-2" size={24} />
         </div>
         <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.875rem' }}>
           Nenhum dado de conformidade registrado para este educando.
@@ -60,20 +60,20 @@ export function ComplianceGauge({
 
   const isCompliant = summary.isCompliant || (daysPercent >= 100 && hoursPercent >= 100);
 
-  const statusBg = isCompliant ? '#ECFDF5' : '#FFFBEB';
-  const statusColor = isCompliant ? '#065F46' : '#92400E';
-  const statusBorder = isCompliant ? '#A7F3D0' : '#FDE68A';
+  const statusBg = isCompliant ? 'var(--color-emerald-50)' : 'var(--color-amber-50)';
+  const statusColor = isCompliant ? 'var(--color-emerald-700)' : 'var(--color-amber-700)';
+  const statusBorder = isCompliant ? 'var(--color-emerald-100)' : 'var(--color-amber-100)';
   const statusText = isCompliant ? 'Conforme com as Metas Legais' : 'Em Progresso / Metas Anuais';
 
   return (
     <div
       data-testid="compliance-gauge"
       style={{
-        backgroundColor: '#FFFFFF',
-        borderRadius: '0.75rem',
-        border: '1px solid #E5E7EB',
+        backgroundColor: 'var(--bg-surface)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border-light)',
         padding: '1.5rem',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
       {/* Header */}
@@ -93,7 +93,7 @@ export function ComplianceGauge({
             style={{
               fontSize: '1.125rem',
               fontWeight: 700,
-              color: '#111827',
+              color: 'var(--text-primary)',
               margin: 0,
             }}
           >
@@ -102,7 +102,7 @@ export function ComplianceGauge({
           <p
             style={{
               fontSize: '0.8125rem',
-              color: '#6B7280',
+              color: 'var(--text-secondary)',
               margin: '0.25rem 0 0 0',
             }}
           >
@@ -118,7 +118,7 @@ export function ComplianceGauge({
           data-testid="compliance-status-badge"
           style={{
             padding: '0.375rem 0.75rem',
-            borderRadius: '9999px',
+            borderRadius: 'var(--radius-full)',
             fontSize: '0.75rem',
             fontWeight: 700,
             backgroundColor: statusBg,
@@ -129,7 +129,7 @@ export function ComplianceGauge({
             gap: '0.375rem',
           }}
         >
-          {isCompliant ? <Check size={12} /> : <Clock size={12} />}
+          {isCompliant ? <AletheiaIcon name="check" size={12} /> : <AletheiaIcon name="clock" size={12} />}
           <span>{statusText}</span>
         </span>
       </div>
@@ -146,10 +146,10 @@ export function ComplianceGauge({
         <div
           data-testid="metric-days-card"
           style={{
-            backgroundColor: '#F9FAFB',
-            borderRadius: '0.5rem',
+            backgroundColor: 'var(--sage-soft)',
+            borderRadius: 'var(--radius-md)',
             padding: '1rem',
-            border: '1px solid #F3F4F6',
+            border: '1px solid var(--border-light)',
           }}
         >
           <div
@@ -164,13 +164,13 @@ export function ComplianceGauge({
               style={{
                 fontSize: '0.875rem',
                 fontWeight: 600,
-                color: '#374151',
+                color: 'var(--text-secondary)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.375rem',
               }}
             >
-              <Calendar size={14} />
+              <AletheiaIcon name="calendar" size={14} />
               <span>Dias Letivos Cumpridos</span>
             </span>
             <span
@@ -178,7 +178,7 @@ export function ComplianceGauge({
               style={{
                 fontSize: '1.125rem',
                 fontWeight: 800,
-                color: daysPercent >= 100 ? '#059669' : '#2563EB',
+                color: daysPercent >= 100 ? 'var(--color-emerald-600)' : 'var(--forest)',
               }}
             >
               {daysPercent}%
@@ -190,8 +190,8 @@ export function ComplianceGauge({
             style={{
               height: '0.75rem',
               width: '100%',
-              backgroundColor: '#E5E7EB',
-              borderRadius: '9999px',
+              backgroundColor: 'var(--border-light)',
+              borderRadius: 'var(--radius-full)',
               overflow: 'hidden',
               marginBottom: '0.75rem',
             }}
@@ -201,8 +201,8 @@ export function ComplianceGauge({
               style={{
                 height: '100%',
                 width: `${daysPercent}%`,
-                backgroundColor: daysPercent >= 100 ? '#10B981' : '#3B82F6',
-                borderRadius: '9999px',
+                backgroundColor: daysPercent >= 100 ? 'var(--color-emerald-600)' : 'var(--color-indigo-600)',
+                borderRadius: 'var(--radius-full)',
                 transition: 'width 0.4s ease-in-out',
               }}
             />
@@ -214,18 +214,18 @@ export function ComplianceGauge({
               display: 'flex',
               justifyContent: 'space-between',
               fontSize: '0.75rem',
-              color: '#6B7280',
+              color: 'var(--text-secondary)',
             }}
           >
             <span>
               Realizado:{' '}
-              <strong style={{ color: '#111827' }}>
+              <strong style={{ color: 'var(--text-primary)' }}>
                 {summary.presentDays} dias
               </strong>
             </span>
             <span>
               Meta:{' '}
-              <strong style={{ color: '#111827' }}>
+              <strong style={{ color: 'var(--text-primary)' }}>
                 {requiredDays} dias
               </strong>
             </span>
@@ -236,10 +236,10 @@ export function ComplianceGauge({
         <div
           data-testid="metric-hours-card"
           style={{
-            backgroundColor: '#F9FAFB',
-            borderRadius: '0.5rem',
+            backgroundColor: 'var(--sage-soft)',
+            borderRadius: 'var(--radius-md)',
             padding: '1rem',
-            border: '1px solid #F3F4F6',
+            border: '1px solid var(--border-light)',
           }}
         >
           <div
@@ -254,13 +254,13 @@ export function ComplianceGauge({
               style={{
                 fontSize: '0.875rem',
                 fontWeight: 600,
-                color: '#374151',
+                color: 'var(--text-secondary)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.375rem',
               }}
             >
-              <Clock size={14} />
+              <AletheiaIcon name="clock" size={14} />
               <span>Horas de Instrução</span>
             </span>
             <span
@@ -268,7 +268,7 @@ export function ComplianceGauge({
               style={{
                 fontSize: '1.125rem',
                 fontWeight: 800,
-                color: hoursPercent >= 100 ? '#059669' : '#8B5CF6',
+                color: hoursPercent >= 100 ? 'var(--color-emerald-600)' : 'var(--color-indigo-700)',
               }}
             >
               {hoursPercent}%
@@ -280,8 +280,8 @@ export function ComplianceGauge({
             style={{
               height: '0.75rem',
               width: '100%',
-              backgroundColor: '#E5E7EB',
-              borderRadius: '9999px',
+              backgroundColor: 'var(--border-light)',
+              borderRadius: 'var(--radius-full)',
               overflow: 'hidden',
               marginBottom: '0.75rem',
             }}
@@ -291,8 +291,8 @@ export function ComplianceGauge({
               style={{
                 height: '100%',
                 width: `${hoursPercent}%`,
-                backgroundColor: hoursPercent >= 100 ? '#10B981' : '#8B5CF6',
-                borderRadius: '9999px',
+                backgroundColor: hoursPercent >= 100 ? 'var(--color-emerald-600)' : 'var(--color-indigo-700)',
+                borderRadius: 'var(--radius-full)',
                 transition: 'width 0.4s ease-in-out',
               }}
             />
@@ -304,18 +304,18 @@ export function ComplianceGauge({
               display: 'flex',
               justifyContent: 'space-between',
               fontSize: '0.75rem',
-              color: '#6B7280',
+              color: 'var(--text-secondary)',
             }}
           >
             <span>
               Realizado:{' '}
-              <strong style={{ color: '#111827' }}>
+              <strong style={{ color: 'var(--text-primary)' }}>
                 {summary.totalHoursLogged} h
               </strong>
             </span>
             <span>
               Meta:{' '}
-              <strong style={{ color: '#111827' }}>
+              <strong style={{ color: 'var(--text-primary)' }}>
                 {requiredHours} h
               </strong>
             </span>
@@ -328,26 +328,26 @@ export function ComplianceGauge({
         style={{
           marginTop: '1.25rem',
           paddingTop: '1rem',
-          borderTop: '1px solid #F3F4F6',
+          borderTop: '1px solid var(--border-light)',
           display: 'flex',
           justifyContent: 'space-around',
           flexWrap: 'wrap',
           gap: '1rem',
           fontSize: '0.8125rem',
-          color: '#4B5563',
+          color: 'var(--text-secondary)',
         }}
       >
         <div data-testid="metric-total-days-logged">
           Total de Dias Registrados:{' '}
-          <strong style={{ color: '#111827' }}>{summary.totalDaysLogged}</strong>
+          <strong style={{ color: 'var(--text-primary)' }}>{summary.totalDaysLogged}</strong>
         </div>
         <div data-testid="metric-present-days">
           Dias Presentes:{' '}
-          <strong style={{ color: '#059669' }}>{summary.presentDays}</strong>
+          <strong style={{ color: 'var(--color-emerald-600)' }}>{summary.presentDays}</strong>
         </div>
         <div data-testid="metric-absent-days">
           Faltas / Ausências:{' '}
-          <strong style={{ color: '#DC2626' }}>{summary.absentDays}</strong>
+          <strong style={{ color: 'var(--color-rose-600)' }}>{summary.absentDays}</strong>
         </div>
       </div>
     </div>

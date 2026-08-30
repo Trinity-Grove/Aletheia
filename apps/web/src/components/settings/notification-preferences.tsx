@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Check, AlertCircle, BookOpen, Clock } from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type {
   FamilySettingsResponseDto,
   UpdateFamilySettingsDto,
@@ -65,18 +65,18 @@ export function NotificationPreferences({
     <div
       data-testid="notification-preferences-card"
       style={{
-        backgroundColor: '#FFFFFF',
-        borderRadius: '0.75rem',
-        border: '1px solid #E5E7EB',
+        backgroundColor: 'var(--bg-surface)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border-light)',
         padding: '1.75rem',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
       <div style={{ marginBottom: '1.5rem' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', margin: 0 }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
           Central de Notificações & Lembretes da Rotina
         </h2>
-        <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: '0.25rem 0 0 0' }}>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
           Configure os horários de alerta para a liturgia familiar diária, rotina acadêmica e canais de entrega.
         </p>
       </div>
@@ -86,10 +86,10 @@ export function NotificationPreferences({
           data-testid="notification-preferences-success-alert"
           style={{
             padding: '0.75rem 1rem',
-            backgroundColor: '#ECFDF5',
-            border: '1px solid #A7F3D0',
-            borderRadius: '0.5rem',
-            color: '#065F46',
+            backgroundColor: 'var(--color-emerald-50)',
+            border: '1px solid var(--color-emerald-100)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--color-emerald-700)',
             fontSize: '0.875rem',
             marginBottom: '1.25rem',
             display: 'flex',
@@ -97,7 +97,7 @@ export function NotificationPreferences({
             gap: '0.5rem',
           }}
         >
-          <Check size={16} />
+          <AletheiaIcon name="check" size={16} />
           <span>{successMessage}</span>
         </div>
       )}
@@ -107,10 +107,10 @@ export function NotificationPreferences({
           data-testid="notification-preferences-error-alert"
           style={{
             padding: '0.75rem 1rem',
-            backgroundColor: '#FEF2F2',
-            border: '1px solid #FECACA',
-            borderRadius: '0.5rem',
-            color: '#991B1B',
+            backgroundColor: 'var(--color-rose-50)',
+            border: '1px solid var(--color-rose-100)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--color-rose-700)',
             fontSize: '0.875rem',
             marginBottom: '1.25rem',
             display: 'flex',
@@ -118,7 +118,7 @@ export function NotificationPreferences({
             gap: '0.5rem',
           }}
         >
-          <AlertCircle size={16} />
+          <AletheiaIcon name="alert-circle" size={16} />
           <span>{errorMessage}</span>
         </div>
       )}
@@ -129,12 +129,12 @@ export function NotificationPreferences({
           <div
             style={{
               padding: '1.25rem',
-              backgroundColor: '#F9FAFB',
-              borderRadius: '0.5rem',
-              border: '1px solid #F3F4F6',
+              backgroundColor: 'var(--sage-soft)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-light)',
             }}
           >
-            <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#1F2937', marginTop: 0, marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', marginTop: 0, marginBottom: '1rem' }}>
               Horários de Lembretes Diários
             </h3>
 
@@ -142,9 +142,9 @@ export function NotificationPreferences({
               <div>
                 <label
                   htmlFor="devotionalReminderTime"
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.375rem' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.375rem' }}
                 >
-                  <BookOpen size={14} style={{ color: '#D97706' }} />
+                  <AletheiaIcon name="book-open" size={14} style={{ color: 'var(--color-amber-600)' }} />
                   <span>Lembrete do Devocional Familiar</span>
                 </label>
                 <input
@@ -157,10 +157,10 @@ export function NotificationPreferences({
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #D1D5DB',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
                     fontSize: '0.875rem',
-                    backgroundColor: '#FFFFFF',
+                    backgroundColor: 'var(--bg-surface)',
                     boxSizing: 'border-box',
                   }}
                 />
@@ -169,9 +169,9 @@ export function NotificationPreferences({
               <div>
                 <label
                   htmlFor="dailyScheduleReminderTime"
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.375rem' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.375rem' }}
                 >
-                  <Clock size={14} style={{ color: '#2563EB' }} />
+                  <AletheiaIcon name="clock" size={14} style={{ color: 'var(--color-indigo-600)' }} />
                   <span>Lembrete do Cronograma de Aulas</span>
                 </label>
                 <input
@@ -184,10 +184,10 @@ export function NotificationPreferences({
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #D1D5DB',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
                     fontSize: '0.875rem',
-                    backgroundColor: '#FFFFFF',
+                    backgroundColor: 'var(--bg-surface)',
                     boxSizing: 'border-box',
                   }}
                 />
@@ -197,7 +197,7 @@ export function NotificationPreferences({
 
           {/* Toggle Switches */}
           <div style={{ display: 'grid', gap: '1rem' }}>
-            <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#1F2937', margin: 0 }}>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
               Canais e Tipos de Notificação
             </h3>
 
@@ -208,15 +208,15 @@ export function NotificationPreferences({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '0.75rem 1rem',
-                border: '1px solid #E5E7EB',
-                borderRadius: '0.5rem',
+                border: '1px solid var(--border-light)',
+                borderRadius: 'var(--radius-md)',
               }}
             >
               <div>
-                <span style={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>
+                <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>
                   Lembrete de Frequência Pendente
                 </span>
-                <p style={{ margin: '0.125rem 0 0 0', fontSize: '0.8125rem', color: '#6B7280' }}>
+                <p style={{ margin: '0.125rem 0 0 0', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
                   Avisar ao final do dia se houver educandos sem registro de presença efetuado.
                 </p>
               </div>
@@ -237,15 +237,15 @@ export function NotificationPreferences({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '0.75rem 1rem',
-                border: '1px solid #E5E7EB',
-                borderRadius: '0.5rem',
+                border: '1px solid var(--border-light)',
+                borderRadius: 'var(--radius-md)',
               }}
             >
               <div>
-                <span style={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>
+                <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>
                   Notificações no Navegador / In-App
                 </span>
-                <p style={{ margin: '0.125rem 0 0 0', fontSize: '0.8125rem', color: '#6B7280' }}>
+                <p style={{ margin: '0.125rem 0 0 0', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
                   Exibir balão e contador de avisos no sino da barra superior da plataforma.
                 </p>
               </div>
@@ -266,15 +266,15 @@ export function NotificationPreferences({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '0.75rem 1rem',
-                border: '1px solid #E5E7EB',
-                borderRadius: '0.5rem',
+                border: '1px solid var(--border-light)',
+                borderRadius: 'var(--radius-md)',
               }}
             >
               <div>
-                <span style={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>
+                <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>
                   Resumo e Notificações por E-mail
                 </span>
-                <p style={{ margin: '0.125rem 0 0 0', fontSize: '0.8125rem', color: '#6B7280' }}>
+                <p style={{ margin: '0.125rem 0 0 0', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
                   Receber avisos importantes e orações respondidas no e-mail dos pais.
                 </p>
               </div>
@@ -297,11 +297,11 @@ export function NotificationPreferences({
                 disabled={isLoading || isSaving}
                 style={{
                   padding: '0.625rem 1.5rem',
-                  backgroundColor: isSaving ? '#9CA3AF' : '#2563EB',
-                  color: '#FFFFFF',
+                  backgroundColor: isSaving ? 'var(--text-muted)' : 'var(--forest)',
+                  color: 'var(--text-inverse)',
                   fontWeight: 600,
                   fontSize: '0.875rem',
-                  borderRadius: '0.5rem',
+                  borderRadius: 'var(--radius-md)',
                   border: 'none',
                   cursor: isSaving ? 'not-allowed' : 'pointer',
                   transition: 'background-color 0.15s ease',

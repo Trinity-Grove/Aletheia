@@ -1,23 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  Palette,
-  Type,
-  Square,
-  Layers,
-  Tag,
-  FileText,
-  AppWindow,
-  Shield,
-  BookOpen,
-  Search,
-  Command,
-  Flame,
-  GraduationCap,
-  PenLine,
-  Info,
-} from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type { FamilyRole } from '@aletheia/contracts';
 import {
   Button,
@@ -91,14 +75,14 @@ export function DesignSystemShowcase() {
         }}
       >
         {[
-          { id: 'tokens', label: 'Cores & Tokens', icon: <Palette size={16} /> },
-          { id: 'typography', label: 'Tipografia', icon: <Type size={16} /> },
-          { id: 'buttons', label: 'Botões', icon: <Square size={16} /> },
-          { id: 'cards', label: 'Cartões', icon: <Layers size={16} /> },
-          { id: 'badges', label: 'Badges', icon: <Tag size={16} /> },
-          { id: 'forms', label: 'Formulários', icon: <FileText size={16} /> },
-          { id: 'modal', label: 'Modais', icon: <AppWindow size={16} /> },
-          { id: 'rbac', label: 'RBAC & Guards', icon: <Shield size={16} /> },
+          { id: 'tokens', label: 'Cores & Tokens', icon: <AletheiaIcon name="palette" size={16} /> },
+          { id: 'typography', label: 'Tipografia', icon: <AletheiaIcon name="file-text" size={16} /> },
+          { id: 'buttons', label: 'Botões', icon: <AletheiaIcon name="check" size={16} /> },
+          { id: 'cards', label: 'Cartões', icon: <AletheiaIcon name="folder" size={16} /> },
+          { id: 'badges', label: 'Badges', icon: <AletheiaIcon name="sparkles" size={16} /> },
+          { id: 'forms', label: 'Formulários', icon: <AletheiaIcon name="file-text" size={16} /> },
+          { id: 'modal', label: 'Modais', icon: <AletheiaIcon name="sparkles" size={16} /> },
+          { id: 'rbac', label: 'RBAC & Guards', icon: <AletheiaIcon name="shield" size={16} /> },
         ].map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -116,7 +100,7 @@ export function DesignSystemShowcase() {
                 fontWeight: isActive ? 700 : 500,
                 fontSize: '0.875rem',
                 backgroundColor: isActive ? 'var(--color-brand-forest, #17312a)' : 'transparent',
-                color: isActive ? '#ffffff' : 'var(--color-text-muted, #5f6c65)',
+                color: isActive ? 'var(--text-inverse)' : 'var(--color-text-muted, #5f6c65)',
                 transition: 'all var(--transition-fast)',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -268,7 +252,7 @@ export function DesignSystemShowcase() {
               <Button variant="ghost">Ghost</Button>
               <Button variant="danger">Danger</Button>
               <Button variant="primary" isLoading>Carregando</Button>
-              <Button variant="primary" leftIcon={<BookOpen size={16} />}>Com Ícone</Button>
+              <Button variant="primary" leftIcon={<AletheiaIcon name="book-open" size={16} />}>Com Ícone</Button>
             </CardContent>
           </Card>
 
@@ -391,8 +375,8 @@ export function DesignSystemShowcase() {
             <Input
               label="Campo com Ícone"
               placeholder="Buscar objetivo..."
-              leftIcon={<Search size={16} />}
-              rightIcon={<Command size={16} />}
+              leftIcon={<AletheiaIcon name="search" size={16} />}
+              rightIcon={<AletheiaIcon name="sparkles" size={16} />}
             />
 
             <Select
@@ -486,7 +470,7 @@ export function DesignSystemShowcase() {
                     borderRadius: 'var(--radius-md, 6px)',
                     border: '1.5px solid var(--forest)',
                     backgroundColor: simulatedRole === r ? 'var(--forest)' : 'transparent',
-                    color: simulatedRole === r ? '#ffffff' : 'var(--forest)',
+                    color: simulatedRole === r ? 'var(--text-inverse)' : 'var(--forest)',
                     fontWeight: 600,
                     fontSize: '0.8125rem',
                     cursor: 'pointer',
@@ -506,29 +490,29 @@ export function DesignSystemShowcase() {
               <AuthProvider role={simulatedRole}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <Can action="delete_family">
-                    <div style={{ padding: '0.5rem', backgroundColor: '#fde8e8', color: '#9f2424', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                      <Flame size={16} />
+                    <div style={{ padding: '0.5rem', backgroundColor: 'var(--color-rose-50)', color: 'var(--color-rose-700)', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                      <AletheiaIcon name="alert-circle" size={16} />
                       <span>Visível apenas para <strong>OWNER_GUARDIAN</strong> (Excluir Núcleo Familiar)</span>
                     </div>
                   </Can>
 
                   <Can action="delete_learner">
-                    <div style={{ padding: '0.5rem', backgroundColor: '#eef1e8', color: '#17312a', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                      <GraduationCap size={16} />
+                    <div style={{ padding: '0.5rem', backgroundColor: 'var(--sage-soft)', color: 'var(--forest-2)', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                      <AletheiaIcon name="graduation-cap" size={16} />
                       <span>Visível para <strong>GUARDIANS</strong> (Excluir / Arquivar Educando)</span>
                     </div>
                   </Can>
 
                   <Can action="log_learning">
-                    <div style={{ padding: '0.5rem', backgroundColor: '#f0f7fb', color: '#1a445d', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                      <PenLine size={16} />
+                    <div style={{ padding: '0.5rem', backgroundColor: 'var(--color-indigo-50)', color: 'var(--color-indigo-700)', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                      <AletheiaIcon name="pencil" size={16} />
                       <span>Visível para <strong>EDUCATOR & GUARDIANS</strong> (Registrar Diário & Lições)</span>
                     </div>
                   </Can>
 
                   <RequireRole roles={['EDUCATOR']}>
-                    <div style={{ padding: '0.5rem', backgroundColor: '#fefbf2', color: '#b48517', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                      <Info size={16} />
+                    <div style={{ padding: '0.5rem', backgroundColor: 'var(--color-amber-50)', color: 'var(--color-amber-700)', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                      <AletheiaIcon name="info" size={16} />
                       <span>Mensagem exclusiva de orientação para o Educador externo.</span>
                     </div>
                   </RequireRole>

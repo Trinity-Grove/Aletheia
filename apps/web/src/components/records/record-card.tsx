@@ -1,29 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Calendar,
-  Timer,
-  Clock,
-  Sprout,
-  TrendingUp,
-  HeartHandshake,
-  Sparkles,
-  Trophy,
-  BookOpen,
-  Lightbulb,
-  Hammer,
-  FileText,
-  Search,
-  Star,
-  MessageSquare,
-  Target,
-  Paperclip,
-  Pencil,
-  Trash2,
-  Plus,
-  GraduationCap,
-} from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type {
   LearningRecordResponseDto,
   MasteryLevel,
@@ -43,12 +21,12 @@ export const MASTERY_CONFIG: Record<
   MasteryLevel,
   { label: string; bg: string; text: string; icon: React.ReactNode }
 > = {
-  NOT_STARTED: { label: 'Não Iniciado', bg: '#F3F4F6', text: '#4B5563', icon: <Clock size={14} /> },
-  EXPOSURE: { label: 'Exposição', bg: '#FEF3C7', text: '#92400E', icon: <Sprout size={14} /> },
-  DEVELOPING: { label: 'Em Desenvolvimento', bg: '#DBEAFE', text: '#1E40AF', icon: <TrendingUp size={14} /> },
-  WITH_ASSISTANCE: { label: 'Com Assistência', bg: '#E0E7FF', text: '#3730A3', icon: <HeartHandshake size={14} /> },
-  AUTONOMOUS: { label: 'Autônomo', bg: '#D1FAE5', text: '#065F46', icon: <Sparkles size={14} /> },
-  MASTERED: { label: 'Dominado', bg: '#ECFDF5', text: '#047857', icon: <Trophy size={14} /> },
+  NOT_STARTED: { label: 'Não Iniciado', bg: 'var(--sage-soft)', text: 'var(--text-secondary)', icon: <AletheiaIcon name="clock" size={14} /> },
+  EXPOSURE: { label: 'Exposição', bg: 'var(--color-amber-50)', text: 'var(--color-amber-700)', icon: <AletheiaIcon name="sprout" size={14} /> },
+  DEVELOPING: { label: 'Em Desenvolvimento', bg: 'var(--color-indigo-50)', text: 'var(--color-indigo-700)', icon: <AletheiaIcon name="trending-up" size={14} /> },
+  WITH_ASSISTANCE: { label: 'Com Assistência', bg: 'var(--color-indigo-100)', text: 'var(--color-indigo-700)', icon: <AletheiaIcon name="heart" size={14} /> },
+  AUTONOMOUS: { label: 'Autônomo', bg: 'var(--color-emerald-100)', text: 'var(--color-emerald-700)', icon: <AletheiaIcon name="sparkles" size={14} /> },
+  MASTERED: { label: 'Dominado', bg: 'var(--color-emerald-50)', text: 'var(--color-emerald-700)', icon: <AletheiaIcon name="sparkles" size={14} /> },
 };
 
 export const ASSESSMENT_LABELS: Record<AssessmentMethod, string> = {
@@ -65,26 +43,26 @@ export const ASSESSMENT_LABELS: Record<AssessmentMethod, string> = {
 };
 
 export const RECORD_TYPE_LABELS: Record<LearningRecordType, { label: string; icon: React.ReactNode }> = {
-  PLANNED_LESSON: { label: 'Lição Planejada', icon: <BookOpen size={14} /> },
-  SPONTANEOUS_EXPERIENCE: { label: 'Experiência Espontânea', icon: <Lightbulb size={14} /> },
-  PROJECT_WORK: { label: 'Trabalho em Projeto', icon: <Hammer size={14} /> },
-  READING_LOG: { label: 'Registro de Leitura', icon: <FileText size={14} /> },
-  HABIT_PRACTICE: { label: 'Prática de Hábito', icon: <HeartHandshake size={14} /> },
+  PLANNED_LESSON: { label: 'Lição Planejada', icon: <AletheiaIcon name="book-open" size={14} /> },
+  SPONTANEOUS_EXPERIENCE: { label: 'Experiência Espontânea', icon: <AletheiaIcon name="lightbulb" size={14} /> },
+  PROJECT_WORK: { label: 'Trabalho em Projeto', icon: <AletheiaIcon name="folder" size={14} /> },
+  READING_LOG: { label: 'Registro de Leitura', icon: <AletheiaIcon name="file-text" size={14} /> },
+  HABIT_PRACTICE: { label: 'Prática de Hábito', icon: <AletheiaIcon name="heart" size={14} /> },
 };
 
 export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCardProps) {
   const mastery = MASTERY_CONFIG[record.masteryLevel] || MASTERY_CONFIG.DEVELOPING;
   const assessmentLabel = ASSESSMENT_LABELS[record.assessmentMethod] || record.assessmentMethod;
-  const recordType = RECORD_TYPE_LABELS[record.type] || { label: record.type, icon: <FileText size={14} /> };
+  const recordType = RECORD_TYPE_LABELS[record.type] || { label: record.type, icon: <AletheiaIcon name="file-text" size={14} /> };
 
   return (
     <article
       data-testid={`record-card-${record.id}`}
       style={{
-        backgroundColor: '#FFFFFF',
-        borderRadius: '0.75rem',
-        border: '1px solid #E5E7EB',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+        backgroundColor: 'var(--bg-surface)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border-light)',
+        boxShadow: 'var(--shadow-sm)',
         padding: '1.25rem',
         display: 'flex',
         flexDirection: 'column',
@@ -109,12 +87,12 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.25rem',
-              backgroundColor: '#F3F4F6',
-              color: '#374151',
+              backgroundColor: 'var(--sage-soft)',
+              color: 'var(--text-secondary)',
               fontSize: '0.75rem',
               fontWeight: 600,
               padding: '0.25rem 0.5rem',
-              borderRadius: '0.375rem',
+              borderRadius: 'var(--radius-sm)',
             }}
           >
             <span>{recordType.icon}</span> {recordType.label}
@@ -127,16 +105,16 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.25rem',
-                backgroundColor: record.subjectColor ? `${record.subjectColor}15` : '#EEF2FF',
-                color: record.subjectColor || '#4F46E5',
-                border: `1px solid ${record.subjectColor ? `${record.subjectColor}40` : '#C7D2FE'}`,
+                backgroundColor: record.subjectColor ? `${record.subjectColor}15` : 'var(--color-indigo-50)',
+                color: record.subjectColor || 'var(--color-indigo-600)',
+                border: `1px solid ${record.subjectColor ? `${record.subjectColor}40` : 'var(--color-indigo-100)'}`,
                 fontSize: '0.75rem',
                 fontWeight: 600,
                 padding: '0.25rem 0.5rem',
-                borderRadius: '0.375rem',
+                borderRadius: 'var(--radius-sm)',
               }}
             >
-              <BookOpen size={12} />
+              <AletheiaIcon name="book-open" size={12} />
               <span>{record.subjectName}</span>
             </span>
           )}
@@ -148,15 +126,15 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.25rem',
-                backgroundColor: '#FEF3C7',
-                color: '#92400E',
+                backgroundColor: 'var(--color-amber-50)',
+                color: 'var(--color-amber-700)',
                 fontSize: '0.75rem',
                 fontWeight: 600,
                 padding: '0.25rem 0.5rem',
-                borderRadius: '0.375rem',
+                borderRadius: 'var(--radius-sm)',
               }}
             >
-              <GraduationCap size={12} />
+              <AletheiaIcon name="graduation-cap" size={12} />
               <span>{record.learnerName}</span>
             </span>
           )}
@@ -174,7 +152,7 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
             fontSize: '0.75rem',
             fontWeight: 700,
             padding: '0.25rem 0.625rem',
-            borderRadius: '9999px',
+            borderRadius: 'var(--radius-full)',
             border: `1px solid ${mastery.text}30`,
           }}
         >
@@ -190,7 +168,7 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
           style={{
             fontSize: '1.125rem',
             fontWeight: 700,
-            color: '#111827',
+            color: 'var(--text-primary)',
             margin: '0 0 0.375rem 0',
           }}
         >
@@ -201,7 +179,7 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
             data-testid={`record-description-${record.id}`}
             style={{
               fontSize: '0.875rem',
-              color: '#4B5563',
+              color: 'var(--text-secondary)',
               margin: 0,
               lineHeight: 1.5,
             }}
@@ -218,29 +196,33 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
           alignItems: 'center',
           gap: '1rem',
           fontSize: '0.8125rem',
-          color: '#6B7280',
+          color: 'var(--text-secondary)',
           flexWrap: 'wrap',
         }}
       >
-        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} data-testid={`record-date-${record.id}`}><Calendar size={12} /> {record.date}</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} data-testid={`record-date-${record.id}`}>
+          <AletheiaIcon name="calendar" size={12} /> {record.date}
+        </span>
         {record.durationMinutes && (
-          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} data-testid={`record-duration-${record.id}`}><Timer size={12} /> {record.durationMinutes} min</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} data-testid={`record-duration-${record.id}`}>
+            <AletheiaIcon name="clock" size={12} /> {record.durationMinutes} min
+          </span>
         )}
         <span
           data-testid={`assessment-method-badge-${record.id}`}
           style={{
-            backgroundColor: '#F8FAFC',
-            color: '#334155',
+            backgroundColor: 'var(--sage-soft)',
+            color: 'var(--text-secondary)',
             padding: '0.2rem 0.5rem',
-            borderRadius: '0.25rem',
-            border: '1px solid #E2E8F0',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--border-light)',
             fontWeight: 500,
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.375rem',
           }}
         >
-          <Search size={12} />
+          <AletheiaIcon name="search" size={12} />
           <span>Avaliação: {assessmentLabel}</span>
         </span>
       </div>
@@ -252,28 +234,28 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: '0.75rem',
-            backgroundColor: '#F9FAFB',
+            backgroundColor: 'var(--sage-soft)',
             padding: '0.75rem',
-            borderRadius: '0.5rem',
+            borderRadius: 'var(--radius-sm)',
             fontSize: '0.8125rem',
           }}
         >
           {record.strengths && (
             <div data-testid={`record-strengths-${record.id}`}>
-              <strong style={{ color: '#065F46', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.25rem' }}>
-                <Star size={14} />
+              <strong style={{ color: 'var(--color-emerald-700)', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.25rem' }}>
+                <AletheiaIcon name="sparkles" size={14} />
                 <span>Pontos Fortes:</span>
               </strong>
-              <span style={{ color: '#374151' }}>{record.strengths}</span>
+              <span style={{ color: 'var(--text-secondary)' }}>{record.strengths}</span>
             </div>
           )}
           {record.areasForGrowth && (
             <div data-testid={`record-growth-${record.id}`}>
-              <strong style={{ color: '#92400E', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.25rem' }}>
-                <Sprout size={14} />
+              <strong style={{ color: 'var(--color-amber-700)', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.25rem' }}>
+                <AletheiaIcon name="sprout" size={14} />
                 <span>Áreas para Crescimento:</span>
               </strong>
-              <span style={{ color: '#374151' }}>{record.areasForGrowth}</span>
+              <span style={{ color: 'var(--text-secondary)' }}>{record.areasForGrowth}</span>
             </div>
           )}
         </div>
@@ -284,16 +266,16 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
         <div
           data-testid={`character-habit-growth-${record.id}`}
           style={{
-            backgroundColor: '#FDF4FF',
-            border: '1px solid #F5D0FE',
-            borderRadius: '0.5rem',
+            backgroundColor: 'var(--color-indigo-50)',
+            border: '1px solid var(--color-indigo-100)',
+            borderRadius: 'var(--radius-sm)',
             padding: '0.625rem 0.75rem',
             fontSize: '0.8125rem',
-            color: '#701A75',
+            color: 'var(--color-indigo-700)',
           }}
         >
           <strong style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.2rem' }}>
-            <HeartHandshake size={14} />
+            <AletheiaIcon name="heart" size={14} />
             <span>Crescimento em Caráter & Hábitos:</span>
           </strong>
           <span>{record.characterHabitGrowth}</span>
@@ -305,18 +287,18 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
         <div
           data-testid={`record-notes-${record.id}`}
           style={{
-            backgroundColor: '#FEFCE8',
-            border: '1px solid #FEF08A',
-            borderRadius: '0.5rem',
+            backgroundColor: 'var(--color-amber-50)',
+            border: '1px solid var(--color-amber-100)',
+            borderRadius: 'var(--radius-sm)',
             padding: '0.625rem 0.75rem',
             fontSize: '0.8125rem',
-            color: '#713F12',
+            color: 'var(--color-amber-700)',
             display: 'flex',
             alignItems: 'flex-start',
             gap: '0.375rem',
           }}
         >
-          <MessageSquare size={14} style={{ marginTop: '0.125rem', flexShrink: 0 }} />
+          <AletheiaIcon name="file-text" size={14} style={{ marginTop: '0.125rem', flexShrink: 0 }} />
           <div>
             <strong>Observações:</strong> {record.notes}
           </div>
@@ -326,8 +308,8 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
       {/* Attached Objectives */}
       {record.objectives && record.objectives.length > 0 && (
         <div data-testid={`record-objectives-container-${record.id}`} style={{ marginTop: '0.25rem' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4B5563', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.375rem' }}>
-            <Target size={14} />
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.375rem' }}>
+            <AletheiaIcon name="sparkles" size={14} />
             <span>Objetivos Vinculados:</span>
           </span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
@@ -336,10 +318,10 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
                 key={obj.id}
                 data-testid={`attached-objective-${obj.id}`}
                 style={{
-                  backgroundColor: '#EFF6FF',
-                  color: '#1D4ED8',
-                  border: '1px solid #BFDBFE',
-                  borderRadius: '0.375rem',
+                  backgroundColor: 'var(--color-indigo-50)',
+                  color: 'var(--color-indigo-700)',
+                  border: '1px solid var(--color-indigo-100)',
+                  borderRadius: 'var(--radius-sm)',
                   padding: '0.2rem 0.5rem',
                   fontSize: '0.75rem',
                   fontWeight: 500,
@@ -360,7 +342,7 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
           alignItems: 'center',
           marginTop: 'auto',
           paddingTop: '0.75rem',
-          borderTop: '1px solid #F3F4F6',
+          borderTop: '1px solid var(--sage-soft)',
         }}
       >
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -369,17 +351,17 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
               data-testid={`record-evidence-count-${record.id}`}
               style={{
                 fontSize: '0.75rem',
-                color: '#4B5563',
-                backgroundColor: '#F3F4F6',
+                color: 'var(--text-secondary)',
+                backgroundColor: 'var(--sage-soft)',
                 padding: '0.25rem 0.5rem',
-                borderRadius: '0.25rem',
+                borderRadius: 'var(--radius-sm)',
                 fontWeight: 500,
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.25rem',
               }}
             >
-              <Paperclip size={12} />
+              <AletheiaIcon name="paperclip" size={12} />
               <span>{record.portfolioItemIds.length} evidência(s)</span>
             </span>
           )}
@@ -391,18 +373,18 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
                 onClick={() => onAddEvidence(record)}
                 style={{
                   background: 'none',
-                  border: '1px dashed #9CA3AF',
-                  borderRadius: '0.25rem',
+                  border: '1.5px dashed var(--border-medium)',
+                  borderRadius: 'var(--radius-sm)',
                   padding: '0.25rem 0.5rem',
                   fontSize: '0.75rem',
-                  color: '#4B5563',
+                  color: 'var(--text-secondary)',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.25rem',
                 }}
               >
-                <Plus size={12} />
+                <AletheiaIcon name="plus" size={12} />
                 <span>+ Evidência</span>
               </button>
             </Can>
@@ -418,18 +400,18 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
                 onClick={() => onEdit(record)}
                 style={{
                   background: 'none',
-                  border: '1px solid #D1D5DB',
-                  borderRadius: '0.25rem',
+                  border: '1px solid var(--border-medium)',
+                  borderRadius: 'var(--radius-sm)',
                   padding: '0.25rem 0.5rem',
                   fontSize: '0.75rem',
-                  color: '#374151',
+                  color: 'var(--text-secondary)',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.25rem',
                 }}
               >
-                <Pencil size={12} />
+                <AletheiaIcon name="pencil" size={12} />
                 <span>Editar</span>
               </button>
             </Can>
@@ -442,18 +424,18 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
                 onClick={() => onDelete(record.id)}
                 style={{
                   background: 'none',
-                  border: '1px solid #FCA5A5',
-                  borderRadius: '0.25rem',
+                  border: '1px solid var(--color-rose-100)',
+                  borderRadius: 'var(--radius-sm)',
                   padding: '0.25rem 0.5rem',
                   fontSize: '0.75rem',
-                  color: '#DC2626',
+                  color: 'var(--color-rose-600)',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                 }}
                 aria-label="Excluir registro"
               >
-                <Trash2 size={12} />
+                <AletheiaIcon name="trash" size={12} />
               </button>
             </Can>
           )}

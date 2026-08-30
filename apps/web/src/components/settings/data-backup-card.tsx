@@ -1,23 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  ShieldCheck,
-  Check,
-  AlertCircle,
-  Users,
-  GraduationCap,
-  BookOpen,
-  HeartHandshake,
-  Library,
-  Calendar,
-  FileText,
-  Palette,
-  ClipboardCheck,
-  Scale,
-  Lock,
-  Package,
-} from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type {
   DataExportJobResponseDto,
   FamilyDataExportPackageDto,
@@ -71,23 +55,23 @@ export function DataBackupCard({
     <div
       data-testid="data-backup-card"
       style={{
-        backgroundColor: '#FFFFFF',
-        borderRadius: '0.75rem',
-        border: '1px solid #E5E7EB',
+        backgroundColor: 'var(--bg-surface)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border-light)',
         padding: '1.75rem',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
       <div style={{ marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-          <span style={{ color: '#059669', display: 'flex', alignItems: 'center' }}>
-            <ShieldCheck size={24} />
+          <span style={{ color: 'var(--color-emerald-600)', display: 'flex', alignItems: 'center' }}>
+            <AletheiaIcon name="shield-check" size={24} />
           </span>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', margin: 0 }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
             Soberania de Dados & Backup Completo
           </h2>
         </div>
-        <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: '0.25rem 0 0 0' }}>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
           Garantia absoluta de posse de dados. Exporte todos os registros pedagógicos, devocionais, notas e histórico da sua família em JSON estruturado a qualquer momento.
         </p>
       </div>
@@ -97,10 +81,10 @@ export function DataBackupCard({
           data-testid="backup-export-success"
           style={{
             padding: '0.75rem 1rem',
-            backgroundColor: '#ECFDF5',
-            border: '1px solid #A7F3D0',
-            borderRadius: '0.5rem',
-            color: '#065F46',
+            backgroundColor: 'var(--color-emerald-50)',
+            border: '1px solid var(--color-emerald-100)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--color-emerald-700)',
             fontSize: '0.875rem',
             marginBottom: '1.25rem',
             display: 'flex',
@@ -108,7 +92,7 @@ export function DataBackupCard({
             gap: '0.5rem',
           }}
         >
-          <Check size={16} />
+          <AletheiaIcon name="check" size={16} />
           <span>{exportSuccessMessage}</span>
         </div>
       )}
@@ -118,10 +102,10 @@ export function DataBackupCard({
           data-testid="backup-export-error"
           style={{
             padding: '0.75rem 1rem',
-            backgroundColor: '#FEF2F2',
-            border: '1px solid #FECACA',
-            borderRadius: '0.5rem',
-            color: '#991B1B',
+            backgroundColor: 'var(--color-rose-50)',
+            border: '1px solid var(--color-rose-100)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--color-rose-700)',
             fontSize: '0.875rem',
             marginBottom: '1.25rem',
             display: 'flex',
@@ -129,7 +113,7 @@ export function DataBackupCard({
             gap: '0.5rem',
           }}
         >
-          <AlertCircle size={16} />
+          <AletheiaIcon name="alert-circle" size={16} />
           <span>{errorMessage}</span>
         </div>
       )}
@@ -137,13 +121,13 @@ export function DataBackupCard({
       <div
         style={{
           padding: '1.25rem',
-          backgroundColor: '#F8FAFC',
-          borderRadius: '0.5rem',
-          border: '1px solid #E2E8F0',
+          backgroundColor: 'var(--sage-soft)',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-light)',
           marginBottom: '1.5rem',
         }}
       >
-        <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#0F172A', marginTop: 0, marginBottom: '0.75rem' }}>
+        <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', marginTop: 0, marginBottom: '0.75rem' }}>
           O que está incluído no pacote de backup JSON:
         </h3>
         <ul
@@ -152,22 +136,22 @@ export function DataBackupCard({
             padding: 0,
             listStyle: 'none',
             fontSize: '0.8125rem',
-            color: '#475569',
+            color: 'var(--text-secondary)',
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
             gap: '0.5rem',
           }}
         >
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Users size={14} style={{ color: '#6366F1' }} /> Dados da Família & Configurações</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><GraduationCap size={14} style={{ color: '#3B82F6' }} /> Perfis Pedagógicos dos Educandos</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><BookOpen size={14} style={{ color: '#D97706' }} /> Leituras & Diário Devocional</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><HeartHandshake size={14} style={{ color: '#EC4899' }} /> Pedidos & Diário de Orações</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Library size={14} style={{ color: '#8B5CF6' }} /> Anos Letivos, Disciplinas & Currículos</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Calendar size={14} style={{ color: '#10B981' }} /> Cronogramas & Rotinas Semanais</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><FileText size={14} style={{ color: '#0284C7' }} /> Registros de Aprendizagem & Domínio</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Palette size={14} style={{ color: '#F59E0B' }} /> Itens de Portfólio & Evidências</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ClipboardCheck size={14} style={{ color: '#059669' }} /> Registros Diários de Frequência</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Scale size={14} style={{ color: '#7C3AED' }} /> Metas de Conformidade & Históricos</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="users" size={14} style={{ color: 'var(--color-indigo-600)' }} /> Dados da Família & Configurações</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="graduation-cap" size={14} style={{ color: 'var(--color-indigo-600)' }} /> Perfis Pedagógicos dos Educandos</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="book-open" size={14} style={{ color: 'var(--color-amber-600)' }} /> Leituras & Diário Devocional</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="heart" size={14} style={{ color: 'var(--color-rose-600)' }} /> Pedidos & Diário de Orações</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="library" size={14} style={{ color: 'var(--color-indigo-700)' }} /> Anos Letivos, Disciplinas & Currículos</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="calendar" size={14} style={{ color: 'var(--color-emerald-600)' }} /> Cronogramas & Rotinas Semanais</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="file-text" size={14} style={{ color: 'var(--color-indigo-600)' }} /> Registros de Aprendizagem & Domínio</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="palette" size={14} style={{ color: 'var(--color-amber-600)' }} /> Itens de Portfólio & Evidências</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="clipboard-check" size={14} style={{ color: 'var(--color-emerald-600)' }} /> Registros Diários de Frequência</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="compass" size={14} style={{ color: 'var(--color-indigo-700)' }} /> Metas de Conformidade & Históricos</li>
         </ul>
       </div>
 
@@ -181,15 +165,15 @@ export function DataBackupCard({
           paddingTop: '0.5rem',
         }}
       >
-        <div style={{ fontSize: '0.8125rem', color: '#6B7280' }}>
+        <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
           Formato: <strong>JSON (UTF-8)</strong> • Sem compressão proprietária • Totalmente portável
         </div>
 
         <Can
           action="export_family_data"
           fallback={
-            <div style={{ fontSize: '0.8125rem', color: '#6B7280', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-              <Lock size={14} />
+            <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              <AletheiaIcon name="lock" size={14} />
               <span>Apenas responsáveis podem exportar o pacote integral de dados da família.</span>
             </div>
           }
@@ -204,25 +188,25 @@ export function DataBackupCard({
               alignItems: 'center',
               gap: '0.5rem',
               padding: '0.625rem 1.5rem',
-              backgroundColor: isExporting ? '#9CA3AF' : '#059669',
-              color: '#FFFFFF',
+              backgroundColor: isExporting ? 'var(--text-muted)' : 'var(--forest)',
+              color: 'var(--text-inverse)',
               fontWeight: 600,
               fontSize: '0.875rem',
-              borderRadius: '0.5rem',
+              borderRadius: 'var(--radius-md)',
               border: 'none',
               cursor: isExporting ? 'not-allowed' : 'pointer',
               transition: 'background-color 0.15s ease',
             }}
           >
-            <Package size={16} />
+            <AletheiaIcon name="download" size={16} />
             <span>{isExporting ? 'Exportando Pacote...' : 'Exportar Pacote Completo (JSON)'}</span>
           </button>
         </Can>
       </div>
 
       {exportJobs.length > 0 && (
-        <div style={{ marginTop: '2rem', borderTop: '1px solid #E5E7EB', paddingTop: '1.25rem' }}>
-          <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.75rem' }}>
+        <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.25rem' }}>
+          <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
             Histórico de Solicitações de Exportação
           </h4>
           <div style={{ display: 'grid', gap: '0.5rem' }}>
@@ -235,8 +219,8 @@ export function DataBackupCard({
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '0.5rem 0.75rem',
-                  backgroundColor: '#F9FAFB',
-                  borderRadius: '0.375rem',
+                  backgroundColor: 'var(--sage-soft)',
+                  borderRadius: 'var(--radius-sm)',
                   fontSize: '0.8125rem',
                 }}
               >
@@ -247,11 +231,11 @@ export function DataBackupCard({
                 <span
                   style={{
                     padding: '0.125rem 0.5rem',
-                    borderRadius: '9999px',
+                    borderRadius: 'var(--radius-full)',
                     fontWeight: 600,
                     fontSize: '0.75rem',
-                    backgroundColor: job.status === 'COMPLETED' ? '#D1FAE5' : '#FEF3C7',
-                    color: job.status === 'COMPLETED' ? '#065F46' : '#92400E',
+                    backgroundColor: job.status === 'COMPLETED' ? 'var(--color-emerald-100)' : 'var(--color-amber-50)',
+                    color: job.status === 'COMPLETED' ? 'var(--color-emerald-700)' : 'var(--color-amber-700)',
                   }}
                 >
                   {job.status}

@@ -259,7 +259,7 @@ export default function DevotionalPage({
           <h1 className="page-title" style={{ margin: 0, fontSize: '1.75rem', fontWeight: 700 }}>
             Culto Doméstico & Devocional
           </h1>
-          <p className="page-subtitle" style={{ margin: '0.25rem 0 0 0', color: 'var(--muted, #5c6f67)', fontSize: '1rem' }}>
+          <p className="page-subtitle" style={{ margin: '0.25rem 0 0 0', color: 'var(--text-secondary)', fontSize: '1rem' }}>
             Cultive a fé em família através da leitura da Bíblia, reflexão, louvor e oração diária.
           </p>
         </div>

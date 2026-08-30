@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Building2, Bell, ShieldCheck } from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type {
   DataExportJobResponseDto,
   FamilyDataExportPackageDto,
@@ -192,10 +192,10 @@ export default function SettingsPage() {
     >
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem 1.5rem' }}>
         <div style={{ marginBottom: '2rem' }}>
-          <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: '#111827', margin: 0 }}>
+          <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
             Configurações & Painel da Família
           </h1>
-          <p style={{ fontSize: '0.9375rem', color: '#6B7280', margin: '0.375rem 0 0 0' }}>
+          <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', margin: '0.375rem 0 0 0' }}>
             Gerencie identidade pedagógica, preferências de notificações da liturgia diária e backup completo de soberania.
           </p>
         </div>
@@ -204,7 +204,7 @@ export default function SettingsPage() {
         <div
           style={{
             display: 'flex',
-            borderBottom: '1px solid #E5E7EB',
+            borderBottom: '1px solid var(--border-light)',
             marginBottom: '2rem',
             gap: '0.5rem',
           }}
@@ -220,14 +220,14 @@ export default function SettingsPage() {
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              borderBottom: activeTab === 'general' ? '2px solid #2563EB' : '2px solid transparent',
-              color: activeTab === 'general' ? '#2563EB' : '#6B7280',
+              borderBottom: activeTab === 'general' ? '2px solid var(--forest)' : '2px solid transparent',
+              color: activeTab === 'general' ? 'var(--forest)' : 'var(--text-secondary)',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.5rem',
             }}
           >
-            <Building2 size={16} />
+            <AletheiaIcon name="building-2" size="sm" />
             <span>Identidade & Geral</span>
           </button>
 
@@ -242,14 +242,14 @@ export default function SettingsPage() {
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              borderBottom: activeTab === 'notifications' ? '2px solid #2563EB' : '2px solid transparent',
-              color: activeTab === 'notifications' ? '#2563EB' : '#6B7280',
+              borderBottom: activeTab === 'notifications' ? '2px solid var(--forest)' : '2px solid transparent',
+              color: activeTab === 'notifications' ? 'var(--forest)' : 'var(--text-secondary)',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.5rem',
             }}
           >
-            <Bell size={16} />
+            <AletheiaIcon name="bell" size="sm" />
             <span>Notificações & Lembretes</span>
           </button>
 
@@ -264,20 +264,20 @@ export default function SettingsPage() {
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              borderBottom: activeTab === 'backup' ? '2px solid #2563EB' : '2px solid transparent',
-              color: activeTab === 'backup' ? '#2563EB' : '#6B7280',
+              borderBottom: activeTab === 'backup' ? '2px solid var(--forest)' : '2px solid transparent',
+              color: activeTab === 'backup' ? 'var(--forest)' : 'var(--text-secondary)',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.5rem',
             }}
           >
-            <ShieldCheck size={16} />
+            <AletheiaIcon name="shield-check" size="sm" />
             <span>Backup & Soberania de Dados</span>
           </button>
         </div>
 
         {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: '#6B7280' }}>
+          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
             Carregando configurações...
           </div>
         ) : (

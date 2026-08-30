@@ -32,7 +32,7 @@ const jestGlobals = {
 
 export default [
   {
-    ignores: ['dist/**', '.next/**', 'coverage/**', 'node_modules/**'],
+    ignores: ['dist/**', '.next/**', 'coverage/**', 'node_modules/**', 'storybook-static/**', '**/.storybook/**'],
   },
   {
     files: ['**/*.{js,mjs,cjs}'],

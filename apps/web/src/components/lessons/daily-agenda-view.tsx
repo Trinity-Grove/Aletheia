@@ -1,13 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Calendar,
-  BookOpen,
-  Clock,
-  GraduationCap,
-  Check,
-} from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type { DailyAgendaDto, DailyAgendaItemDto, LearnerSummaryDto } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 
@@ -84,11 +78,11 @@ export function DailyAgendaView({
           justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: '1rem',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--bg-surface)',
           padding: '1.25rem 1.5rem',
-          borderRadius: '1rem',
-          border: '1px solid #E2E8F0',
-          boxShadow: '0 1px 3px 0 rgba(15, 23, 42, 0.05)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-light)',
+          boxShadow: 'var(--shadow-sm)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -98,10 +92,10 @@ export function DailyAgendaView({
             onClick={() => handleShiftDate(-1)}
             style={{
               padding: '0.375rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #CBD5E1',
-              backgroundColor: '#FFFFFF',
-              color: '#334155',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
+              backgroundColor: 'var(--bg-surface)',
+              color: 'var(--text-secondary)',
               fontSize: '0.8125rem',
               fontWeight: 600,
               cursor: 'pointer',
@@ -115,10 +109,10 @@ export function DailyAgendaView({
             onClick={handleToday}
             style={{
               padding: '0.375rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #CBD5E1',
-              backgroundColor: '#F8FAFC',
-              color: '#1E293B',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
+              backgroundColor: 'var(--sage-soft)',
+              color: 'var(--text-primary)',
               fontSize: '0.8125rem',
               fontWeight: 600,
               cursor: 'pointer',
@@ -132,10 +126,10 @@ export function DailyAgendaView({
             onClick={() => handleShiftDate(1)}
             style={{
               padding: '0.375rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #CBD5E1',
-              backgroundColor: '#FFFFFF',
-              color: '#334155',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
+              backgroundColor: 'var(--bg-surface)',
+              color: 'var(--text-secondary)',
               fontSize: '0.8125rem',
               fontWeight: 600,
               cursor: 'pointer',
@@ -153,11 +147,11 @@ export function DailyAgendaView({
             onChange={(e) => onDateChange(e.target.value)}
             style={{
               padding: '0.4rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #CBD5E1',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
               fontSize: '0.875rem',
-              color: '#0F172A',
-              backgroundColor: '#FFFFFF',
+              color: 'var(--text-primary)',
+              backgroundColor: 'var(--bg-surface)',
             }}
           />
           <Can action="manage_lessons">
@@ -168,14 +162,14 @@ export function DailyAgendaView({
               className="btn btn-primary ui-button ui-button--primary ui-button--sm"
               style={{
                 padding: '0.45rem 1rem',
-                borderRadius: '0.5rem',
+                borderRadius: 'var(--radius-md)',
                 border: 'none',
-                backgroundColor: '#4338CA',
-                color: '#FFFFFF',
+                backgroundColor: 'var(--color-indigo-700)',
+                color: 'var(--text-inverse)',
                 fontSize: '0.8125rem',
                 fontWeight: 600,
                 cursor: 'pointer',
-                boxShadow: '0 1px 2px 0 rgba(67, 56, 202, 0.2)',
+                boxShadow: 'var(--shadow-sm)',
               }}
             >
               + Nova Lição
@@ -189,10 +183,10 @@ export function DailyAgendaView({
               className="btn btn-secondary ui-button ui-button--secondary ui-button--sm"
               style={{
                 padding: '0.45rem 0.875rem',
-                borderRadius: '0.5rem',
-                border: '1px solid #CBD5E1',
-                backgroundColor: '#FFFFFF',
-                color: '#334155',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-medium)',
+                backgroundColor: 'var(--bg-surface)',
+                color: 'var(--text-secondary)',
                 fontSize: '0.8125rem',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -207,20 +201,20 @@ export function DailyAgendaView({
       {/* Progress & Completed Totals Card */}
       <div
         style={{
-          backgroundColor: '#FFFFFF',
-          borderRadius: '1rem',
-          border: '1px solid #E2E8F0',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-light)',
           padding: '1.25rem 1.5rem',
-          boxShadow: '0 1px 3px 0 rgba(15, 23, 42, 0.05)',
+          boxShadow: 'var(--shadow-sm)',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-          <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#334155' }}>
+          <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
             Progresso do Dia
           </span>
           <span
             data-testid="completed-totals-text"
-            style={{ fontSize: '0.875rem', fontWeight: 700, color: '#4338CA' }}
+            style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-indigo-700)' }}
           >
             {completedItems} de {totalItems} concluídos ({progressPercent}%)
           </span>
@@ -229,8 +223,8 @@ export function DailyAgendaView({
           style={{
             width: '100%',
             height: '8px',
-            backgroundColor: '#F1F5F9',
-            borderRadius: '9999px',
+            backgroundColor: 'var(--sage-soft)',
+            borderRadius: 'var(--radius-full)',
             overflow: 'hidden',
           }}
         >
@@ -239,8 +233,8 @@ export function DailyAgendaView({
             style={{
               height: '100%',
               width: `${progressPercent}%`,
-              backgroundColor: progressPercent === 100 ? '#10B981' : '#4338CA',
-              borderRadius: '9999px',
+              backgroundColor: progressPercent === 100 ? 'var(--color-emerald-600)' : 'var(--color-indigo-700)',
+              borderRadius: 'var(--radius-full)',
               transition: 'width 0.4s ease',
             }}
           />
@@ -252,9 +246,9 @@ export function DailyAgendaView({
         <div
           data-testid="agenda-empty-state"
           style={{
-            backgroundColor: '#FFFFFF',
-            border: '2px dashed #CBD5E1',
-            borderRadius: '1rem',
+            backgroundColor: 'var(--bg-surface)',
+            border: '2px dashed var(--border-medium)',
+            borderRadius: 'var(--radius-lg)',
             padding: '3.5rem 1.5rem',
             textAlign: 'center',
             display: 'flex',
@@ -267,23 +261,23 @@ export function DailyAgendaView({
             style={{
               width: '64px',
               height: '64px',
-              borderRadius: '9999px',
-              backgroundColor: '#EEF2FF',
-              border: '2px solid #E0E7FF',
-              color: '#4338CA',
+              borderRadius: 'var(--radius-full)',
+              backgroundColor: 'var(--color-indigo-50)',
+              border: '2px solid var(--color-indigo-100)',
+              color: 'var(--color-indigo-700)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(67, 56, 202, 0.1)',
+              boxShadow: 'var(--shadow-sm)',
             }}
           >
-            <Calendar size={32} />
+            <AletheiaIcon name="calendar" size={32} />
           </div>
           <div>
-            <p style={{ fontSize: '1.125rem', color: '#0F172A', marginBottom: '0.375rem', fontWeight: 700 }}>
+            <p style={{ fontSize: '1.125rem', color: 'var(--text-primary)', marginBottom: '0.375rem', fontWeight: 700 }}>
               Nenhuma atividade ou lição planejada para esta data ({selectedDate}).
             </p>
-            <p style={{ fontSize: '0.875rem', color: '#64748B', maxWidth: '28rem', margin: '0 auto' }}>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '28rem', margin: '0 auto' }}>
               Planeje lições do currículo ou adicione blocos de rotina semanal para organizar o aprendizado da família.
             </p>
           </div>
@@ -295,14 +289,14 @@ export function DailyAgendaView({
                 className="btn btn-primary ui-button ui-button--primary"
                 style={{
                   padding: '0.5rem 1.25rem',
-                  borderRadius: '0.5rem',
-                  backgroundColor: '#4338CA',
-                  color: '#FFFFFF',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--color-indigo-700)',
+                  color: 'var(--text-inverse)',
                   fontSize: '0.875rem',
                   fontWeight: 600,
                   border: 'none',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(67, 56, 202, 0.2)',
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
                 Planejar Lição
@@ -315,12 +309,12 @@ export function DailyAgendaView({
                 className="btn btn-secondary ui-button ui-button--secondary"
                 style={{
                   padding: '0.5rem 1.25rem',
-                  borderRadius: '0.5rem',
-                  backgroundColor: '#FFFFFF',
-                  color: '#334155',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--bg-surface)',
+                  color: 'var(--text-secondary)',
                   fontSize: '0.875rem',
                   fontWeight: 600,
-                  border: '1px solid #CBD5E1',
+                  border: '1px solid var(--border-medium)',
                   cursor: 'pointer',
                 }}
               >
@@ -334,7 +328,7 @@ export function DailyAgendaView({
           {agenda.items.map((item) => {
             const isCompleted = item.isCompleted || item.status === 'COMPLETED';
             const isRoutine = item.type === 'ROUTINE_SLOT';
-            const itemColor = item.subjectColor || (isRoutine ? '#7E22CE' : '#4338CA');
+            const itemColor = item.subjectColor || (isRoutine ? 'var(--color-indigo-700)' : 'var(--color-indigo-700)');
 
             return (
               <div
@@ -344,12 +338,12 @@ export function DailyAgendaView({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  backgroundColor: isCompleted ? '#F8FAFC' : '#FFFFFF',
-                  borderRadius: '0.875rem',
-                  border: isCompleted ? '1px solid #E2E8F0' : '1px solid #E2E8F0',
+                  backgroundColor: isCompleted ? 'var(--sage-soft)' : 'var(--bg-surface)',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-light)',
                   borderLeft: `4px solid ${itemColor}`,
                   padding: '1.125rem 1.25rem',
-                  boxShadow: isCompleted ? 'none' : '0 2px 4px rgba(15, 23, 42, 0.04)',
+                  boxShadow: isCompleted ? 'none' : 'var(--shadow-sm)',
                   opacity: isCompleted ? 0.8 : 1,
                   transition: 'all 0.2s ease',
                   gap: '1rem',
@@ -373,9 +367,9 @@ export function DailyAgendaView({
                     style={{
                       width: '1.25rem',
                       height: '1.25rem',
-                      borderRadius: '0.25rem',
+                      borderRadius: 'var(--radius-sm)',
                       cursor: 'pointer',
-                      accentColor: '#10B981',
+                      accentColor: 'var(--color-emerald-600)',
                       flexShrink: 0,
                     }}
                   />
@@ -390,10 +384,10 @@ export function DailyAgendaView({
                           fontWeight: 700,
                           textTransform: 'uppercase',
                           padding: '0.125rem 0.5rem',
-                          borderRadius: '9999px',
-                          backgroundColor: isRoutine ? '#FAF5FF' : '#EEF2FF',
-                          color: isRoutine ? '#7E22CE' : '#4338CA',
-                          border: isRoutine ? '1px solid #E9D5FF' : '1px solid #E0E7FF',
+                          borderRadius: 'var(--radius-full)',
+                          backgroundColor: isRoutine ? 'var(--color-indigo-50)' : 'var(--color-indigo-50)',
+                          color: isRoutine ? 'var(--color-indigo-700)' : 'var(--color-indigo-700)',
+                          border: isRoutine ? '1px solid var(--color-indigo-100)' : '1px solid var(--color-indigo-100)',
                         }}
                       >
                         {isRoutine ? 'Rotina' : 'Lição'}
@@ -406,16 +400,16 @@ export function DailyAgendaView({
                             fontSize: '0.6875rem',
                             fontWeight: 600,
                             padding: '0.125rem 0.5rem',
-                            borderRadius: '9999px',
-                            backgroundColor: item.subjectColor ? `${item.subjectColor}15` : '#F1F5F9',
-                            color: item.subjectColor || '#334155',
-                            border: `1px solid ${item.subjectColor ? `${item.subjectColor}30` : '#E2E8F0'}`,
+                            borderRadius: 'var(--radius-full)',
+                            backgroundColor: 'var(--sage-soft)',
+                            color: 'var(--text-secondary)',
+                            border: '1px solid var(--border-light)',
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '0.25rem',
                           }}
                         >
-                          <BookOpen size={10} />
+                          <AletheiaIcon name="book-open" size={10} />
                           <span>{item.subjectName}</span>
                         </span>
                       )}
@@ -426,18 +420,18 @@ export function DailyAgendaView({
                           data-testid={`item-time-${item.id}`}
                           style={{
                             fontSize: '0.75rem',
-                            color: '#64748B',
+                            color: 'var(--text-secondary)',
                             fontWeight: 600,
-                            backgroundColor: '#F8FAFC',
+                            backgroundColor: 'var(--sage-soft)',
                             padding: '0.125rem 0.5rem',
-                            borderRadius: '9999px',
-                            border: '1px solid #E2E8F0',
+                            borderRadius: 'var(--radius-full)',
+                            border: '1px solid var(--border-light)',
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '0.25rem',
                           }}
                         >
-                          <Clock size={10} />
+                          <AletheiaIcon name="clock" size={10} />
                           <span>{item.startTime || ''}{item.endTime ? ` - ${item.endTime}` : ''}</span>
                         </span>
                       )}
@@ -450,31 +444,31 @@ export function DailyAgendaView({
                             fontSize: '0.6875rem',
                             fontWeight: 700,
                             padding: '0.125rem 0.5rem',
-                            borderRadius: '9999px',
+                            borderRadius: 'var(--radius-full)',
                             backgroundColor:
                               item.status === 'COMPLETED'
-                                ? '#ECFDF5'
+                                ? 'var(--color-emerald-50)'
                                 : item.status === 'IN_PROGRESS'
-                                ? '#FEF3C7'
+                                ? 'var(--color-amber-50)'
                                 : item.status === 'POSTPONED'
-                                ? '#FFF1F2'
-                                : '#F1F5F9',
+                                ? 'var(--color-rose-50)'
+                                : 'var(--sage-soft)',
                             color:
                               item.status === 'COMPLETED'
-                                ? '#047857'
+                                ? 'var(--color-emerald-700)'
                                 : item.status === 'IN_PROGRESS'
-                                ? '#92400E'
+                                ? 'var(--color-amber-700)'
                                 : item.status === 'POSTPONED'
-                                ? '#BE123C'
-                                : '#475569',
+                                ? 'var(--color-rose-700)'
+                                : 'var(--text-secondary)',
                             border:
                               item.status === 'COMPLETED'
-                                ? '1px solid #A7F3D0'
+                                ? '1px solid var(--color-emerald-100)'
                                 : item.status === 'IN_PROGRESS'
-                                ? '1px solid #FDE68A'
+                                ? '1px solid var(--color-amber-100)'
                                 : item.status === 'POSTPONED'
-                                ? '1px solid #FECDD3'
-                                : '1px solid #E2E8F0',
+                                ? '1px solid var(--color-rose-100)'
+                                : '1px solid var(--border-light)',
                           }}
                         >
                           {item.status}
@@ -487,7 +481,7 @@ export function DailyAgendaView({
                       style={{
                         fontSize: '1rem',
                         fontWeight: 700,
-                        color: isCompleted ? '#64748B' : '#0F172A',
+                        color: isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)',
                         textDecoration: isCompleted ? 'line-through' : 'none',
                       }}
                     >
@@ -504,17 +498,17 @@ export function DailyAgendaView({
                             style={{
                               fontSize: '0.6875rem',
                               padding: '0.125rem 0.5rem',
-                              borderRadius: '9999px',
-                              backgroundColor: '#F1F5F9',
-                              color: '#334155',
+                              borderRadius: 'var(--radius-full)',
+                              backgroundColor: 'var(--sage-soft)',
+                              color: 'var(--text-secondary)',
                               fontWeight: 500,
-                              border: '1px solid #E2E8F0',
+                              border: '1px solid var(--border-light)',
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '0.25rem',
                             }}
                           >
-                            <GraduationCap size={10} />
+                            <AletheiaIcon name="graduation-cap" size={10} />
                             <span>{learnerMap.get(lId) || 'Educando'}</span>
                           </span>
                         ))}
@@ -536,10 +530,10 @@ export function DailyAgendaView({
                           className="btn btn-sm"
                           style={{
                             padding: '0.35rem 0.75rem',
-                            borderRadius: '0.375rem',
-                            border: isCompleted ? '1px solid #A7F3D0' : '1px solid #10B981',
-                            backgroundColor: isCompleted ? '#ECFDF5' : '#10B981',
-                            color: isCompleted ? '#047857' : '#FFFFFF',
+                            borderRadius: 'var(--radius-sm)',
+                            border: isCompleted ? '1px solid var(--color-emerald-100)' : '1px solid var(--color-emerald-600)',
+                            backgroundColor: isCompleted ? 'var(--color-emerald-50)' : 'var(--color-emerald-600)',
+                            color: isCompleted ? 'var(--color-emerald-700)' : 'var(--text-inverse)',
                             fontSize: '0.75rem',
                             fontWeight: 600,
                             cursor: 'pointer',
@@ -550,7 +544,7 @@ export function DailyAgendaView({
                         >
                           {isCompleted ? (
                             <>
-                              <Check size={12} />
+                              <AletheiaIcon name="check" size={12} />
                               <span>Concluída</span>
                             </>
                           ) : (
@@ -568,10 +562,10 @@ export function DailyAgendaView({
                           className="btn btn-secondary btn-sm"
                           style={{
                             padding: '0.35rem 0.65rem',
-                            borderRadius: '0.375rem',
-                            border: '1px solid #CBD5E1',
-                            backgroundColor: '#FFFFFF',
-                            color: '#334155',
+                            borderRadius: 'var(--radius-sm)',
+                            border: '1px solid var(--border-medium)',
+                            backgroundColor: 'var(--bg-surface)',
+                            color: 'var(--text-secondary)',
                             fontSize: '0.75rem',
                             fontWeight: 500,
                             cursor: 'pointer',
@@ -591,10 +585,10 @@ export function DailyAgendaView({
                             className="btn btn-sm"
                             style={{
                               padding: '0.35rem 0.5rem',
-                              borderRadius: '0.375rem',
-                              border: '1px solid #FECDD3',
-                              backgroundColor: '#FFF1F2',
-                              color: '#E11D48',
+                              borderRadius: 'var(--radius-sm)',
+                              border: '1px solid var(--color-rose-100)',
+                              backgroundColor: 'var(--color-rose-50)',
+                              color: 'var(--color-rose-600)',
                               fontSize: '0.75rem',
                               cursor: 'pointer',
                             }}
@@ -616,10 +610,10 @@ export function DailyAgendaView({
                         className="btn btn-sm"
                         style={{
                           padding: '0.35rem 0.5rem',
-                          borderRadius: '0.375rem',
-                          border: '1px solid #FECDD3',
-                          backgroundColor: '#FFF1F2',
-                          color: '#E11D48',
+                          borderRadius: 'var(--radius-sm)',
+                          border: '1px solid var(--color-rose-100)',
+                          backgroundColor: 'var(--color-rose-50)',
+                          color: 'var(--color-rose-600)',
                           fontSize: '0.75rem',
                           cursor: 'pointer',
                         }}

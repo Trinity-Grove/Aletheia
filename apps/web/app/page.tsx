@@ -2,15 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  Calendar,
-  BookOpen,
-  Library,
-  PenLine,
-  FolderHeart,
-  BarChart3,
-} from 'lucide-react';
-import {
   ActivityList,
+  AletheiaIcon,
   Button,
   Card,
   DailyJourney,
@@ -27,25 +20,25 @@ import type { LearnerSummaryDto } from '@aletheia/contracts';
 const MODULE_ACTIONS = [
   {
     href: '/curriculum',
-    icon: Library,
+    iconName: 'library',
     title: 'Currículo & Objetivos',
     description: 'Planejamento por disciplinas, frameworks e árvore de objetivos.',
   },
   {
     href: '/records',
-    icon: PenLine,
+    iconName: 'pen-line',
     title: 'Diário de Aprendizagem',
     description: 'Registro reflexivo, avaliação de domínio e formação de virtudes.',
   },
   {
     href: '/portfolio',
-    icon: FolderHeart,
+    iconName: 'folder-heart',
     title: 'Portfólio de Evidências',
     description: 'Acervo fotográfico e documentos comprobatórios de trabalhos.',
   },
   {
     href: '/reports',
-    icon: BarChart3,
+    iconName: 'bar-chart-3',
     title: 'Relatórios de Apoio',
     description: 'Históricos acadêmicos e transcrições estruturadas para famílias.',
   },
@@ -110,11 +103,11 @@ export default function HomePage() {
           action={
             <div className="dashboard-page-actions">
               <a href="/schedule" className="ui-button ui-button--primary ui-button--md dashboard-page-action-button">
-                <Calendar size={16} />
+                <AletheiaIcon name="calendar" size="sm" />
                 <span>Agenda & Checklist</span>
               </a>
               <a href="/devotional" className="ui-button ui-button--secondary ui-button--md dashboard-page-action-button">
-                <BookOpen size={16} />
+                <AletheiaIcon name="book-open" size="sm" />
                 <span>Devocional</span>
               </a>
             </div>
@@ -213,7 +206,7 @@ export default function HomePage() {
                     <a key={module.href} href={module.href} className="dashboard-page-module-link">
                       <Card variant="bordered" shadow="sm" className="dashboard-page-module-card">
                         <div className="dashboard-page-module-icon">
-                          <module.icon size={24} />
+                          <AletheiaIcon name={module.iconName} size="lg" />
                         </div>
                         <h4 className="dashboard-page-module-title">{module.title}</h4>
                         <p className="dashboard-page-module-description">{module.description}</p>
