@@ -534,3 +534,88 @@ p.page-subtitle {
 .product-shell-user-role {
   margin-top: calc(var(--ui-space-8) / 8);
 }
+
+/* Home dashboard page layout */
+.dashboard-page {
+  padding: 2rem 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-page-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-page-action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-page-scripture {
+  margin-bottom: 1.75rem;
+}
+
+.dashboard-page-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.75rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-page-module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.dashboard-page-module-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.dashboard-page-module-link:hover .dashboard-page-module-card {
+  transform: translateY(-2px);
+}
+
+.dashboard-page-module-card {
+  padding: 1.25rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dashboard-page-module-icon {
+  color: var(--color-brand-forest);
+  margin-bottom: 0.75rem;
+}
+
+.dashboard-page-module-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  color: var(--color-brand-forest);
+}
+
+.dashboard-page-module-description {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.dashboard-page-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-secondary);
+  border: 1.5px dashed var(--border-light);
+  border-radius: var(--radius-lg);
+  background-color: var(--bg-surface);
+}
+
+.dashboard-page-loading p {
+  margin: 0;
+  font-size: 0.9375rem;
+}
