@@ -1,0 +1,15 @@
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/coverage
+**/playwright-report
+**/test-results
+**/*.tsbuildinfo
+.git
+.worktrees
+.claude
+.superpowers
+**/.env
+**/.env.*
+!**/.env.example
