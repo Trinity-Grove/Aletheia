@@ -40,6 +40,7 @@ test('web typecheck generates Next types from a clean checkout', async () => {
           CI: 'true',
           pnpm_config_verify_deps_before_run: 'false',
         },
+        shell: process.platform === 'win32',
       },
     );
 

@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test('family-facing shell loads without fabricated data', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page.getByRole('banner')).toContainText('Aletheia');
+  await expect(page.getByTestId('appshell-sidebar')).toContainText('Aletheia');
   await expect(
     page.getByRole('heading', {
       name: 'Faithful learning, thoughtfully guided.',
