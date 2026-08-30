@@ -21,9 +21,15 @@ import {
   type NavigationItem,
   type NavigationLinkRenderer,
 } from '@aletheia/ui';
-import type { LearnerSummaryDto, NotificationItemResponseDto, FamilyRole } from '@aletheia/contracts';
+import type {
+  LearnerSummaryDto,
+  NotificationItemResponseDto,
+  FamilyRole,
+  UserSummaryDto,
+} from '@aletheia/contracts';
+import { useOptionalAuth } from '../../lib/auth/auth-context';
 import {
-  AuthProvider,
+  AuthProvider as AuthRoleProvider,
   getPermissions,
   useAuthRole,
   type PermissionAction,
@@ -61,10 +67,10 @@ const NAV_ITEM_PERMISSIONS: Partial<Record<NavigationItem['id'], PermissionActio
 };
 
 export interface UserProfileSummary {
-  id?: string;
-  name?: string;
-  email?: string;
-  role?: FamilyRole | string;
+  id?: string | undefined;
+  name?: string | undefined;
+  email?: string | undefined;
+  role?: FamilyRole | string | undefined;
 }
 
 export interface ProductShellProps {
@@ -95,43 +101,9 @@ export function ProductShell({
   currentPath,
 }: ProductShellProps) {
   const pathname = usePathname();
-  const existingAuth = useAuthRole();
+  const authContext = useOptionalAuth();
+  const existingRbac = useAuthRole();
   const activePath = currentPath ?? pathname;
-  const contextUser = existingAuth?.user
-    ? {
-        id: existingAuth.user.id,
-        name: existingAuth.user.fullName,
-        email: existingAuth.user.email,
-        ...(existingAuth.role !== null ? { role: existingAuth.role } : {}),
-      }
-    : undefined;
-  const activeUser = user ?? contextUser ?? {
-    id: 'user-1',
-    name: 'Família Santos',
-    email: 'familia@trinitygrove.org',
-    role: existingAuth?.role ?? 'OWNER_GUARDIAN',
-  };
-  const profileUser = user ?? contextUser;
-  const activeRole = (user?.role as FamilyRole | undefined) ?? existingAuth?.role ?? 'OWNER_GUARDIAN';
-  const activeFamilyId = familyId !== undefined ? familyId : existingAuth?.familyId ?? null;
-  const permissions = getPermissions(activeRole);
-  const navigationItems = MAIN_NAV_ITEMS
-    .filter((item) => {
-      const requiredPermission = NAV_ITEM_PERMISSIONS[item.id];
-      return requiredPermission === undefined || permissions.can(requiredPermission);
-    })
-    .map<NavigationItem>((item) => ({
-      ...item,
-      active: activePath === item.href,
-    }));
-  const authUser = user === undefined && existingAuth?.user
-    ? existingAuth.user
-    : {
-        id: activeUser.id ?? 'user-1',
-        email: activeUser.email ?? 'familia@trinitygrove.org',
-        fullName: activeUser.name ?? 'Família Santos',
-        createdAt: new Date().toISOString(),
-      };
 
   const topbarActions = (
     <div className="product-shell-topbar-actions">
@@ -155,6 +127,82 @@ export function ProductShell({
       )}
     </div>
   );
+
+  // If auth is loading and no explicit user prop or outer rbac user is provided, show loading shell with aria-busy
+  if (authContext?.status === 'loading' && user === undefined && !existingRbac?.user) {
+    return (
+      <div className="product-shell-loading" aria-busy="true" data-testid="product-shell-loading">
+        <AppShell
+          className="product-shell"
+          brandTitle="Aletheia"
+          brandSubtitle="Trinity Grove"
+          brandLogo={<span className="product-shell-brand-logo">ἀ</span>}
+          navigationItems={[]}
+          renderNavigationLink={renderNextNavigationLink}
+          topbarActions={topbarActions}
+        >
+          {children}
+        </AppShell>
+      </div>
+    );
+  }
+
+  // Derive active role truthfully (no hardcoded fallback)
+  const activeRole: FamilyRole | null =
+    (user?.role as FamilyRole | undefined) ??
+    authContext?.activeRole ??
+    existingRbac?.role ??
+    null;
+
+  // Derive active family id
+  const activeFamilyId: string | null =
+    familyId !== undefined
+      ? familyId
+      : (authContext?.activeFamilyId ?? existingRbac?.familyId ?? null);
+
+  // Derive truthful profile user
+  const profileUser: UserProfileSummary | undefined = user
+    ? {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role ?? (activeRole !== null ? activeRole : undefined),
+      }
+    : authContext?.user
+      ? {
+          id: authContext.user.id,
+          name: authContext.user.fullName,
+          email: authContext.user.email,
+          role: activeRole !== null ? activeRole : undefined,
+        }
+      : existingRbac?.user
+        ? {
+            id: existingRbac.user.id,
+            name: existingRbac.user.fullName,
+            email: existingRbac.user.email,
+            role: activeRole !== null ? activeRole : undefined,
+          }
+        : undefined;
+
+  const permissions = getPermissions(activeRole);
+  const navigationItems = MAIN_NAV_ITEMS
+    .filter((item) => {
+      const requiredPermission = NAV_ITEM_PERMISSIONS[item.id];
+      return requiredPermission === undefined || permissions.can(requiredPermission);
+    })
+    .map<NavigationItem>((item) => ({
+      ...item,
+      active: activePath === item.href,
+    }));
+
+  const authUser: UserSummaryDto | null = profileUser
+    ? {
+        id: profileUser.id ?? 'user',
+        email: profileUser.email ?? '',
+        fullName: profileUser.name ?? profileUser.email ?? 'Usuário',
+        createdAt: new Date().toISOString(),
+      }
+    : null;
 
   const userProfile = profileUser
     ? (collapsed: boolean) => (
@@ -191,11 +239,9 @@ export function ProductShell({
     </AppShell>
   );
 
-  if (existingAuth && user === undefined && familyId === undefined) return shellContent;
-
   return (
-    <AuthProvider role={activeRole} user={authUser} familyId={activeFamilyId}>
+    <AuthRoleProvider role={activeRole} user={authUser} familyId={activeFamilyId}>
       {shellContent}
-    </AuthProvider>
+    </AuthRoleProvider>
   );
 }

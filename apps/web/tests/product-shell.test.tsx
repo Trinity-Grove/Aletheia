@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import type { LearnerSummaryDto, NotificationItemResponseDto } from '@aletheia/contracts';
 import { ProductShell, LearnerFocusSwitcher } from '../src/components/product-shell';
 import { AuthProvider, useAuthRole } from '../src/lib/auth/rbac-context';
+import { AuthContext, type AuthContextValue } from '../src/lib/auth/auth-context';
 
 const nextNavigation = vi.hoisted(() => ({ pathname: '/' }));
 
@@ -255,6 +256,91 @@ describe('ProductShell adapter', () => {
     expect(within(profile).getByText('W')).toBeInTheDocument();
     expect(within(profile).queryByText('Wendel Silva')).not.toBeInTheDocument();
     expect(within(profile).queryByText('Guardião Principal')).not.toBeInTheDocument();
+  });
+
+  it('does not fabricate fake user profile or role when unauthenticated', () => {
+    render(
+      <ProductShell>
+        <p>Sem autenticação</p>
+      </ProductShell>,
+    );
+
+    expect(screen.queryByTestId('appshell-user-profile')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Família Santos/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/familia@trinitygrove\.org/i)).not.toBeInTheDocument();
+  });
+
+  it('renders user details from real AuthProvider context', () => {
+    const mockAuthContext: AuthContextValue = {
+      status: 'authenticated',
+      user: {
+        id: 'real-user-1',
+        email: 'real.guardian@aletheia.edu',
+        fullName: 'Guardião Real',
+        createdAt: '2026-08-30T00:00:00.000Z',
+      },
+      token: 'jwt-token',
+      activeFamilyId: 'real-fam-1',
+      activeFamily: {
+        id: 'real-fam-1',
+        name: 'Família Real',
+        countryCode: 'BRA',
+        createdAt: '2026-08-30T00:00:00.000Z',
+        updatedAt: '2026-08-30T00:00:00.000Z',
+      },
+      families: [],
+      activeRole: 'OWNER_GUARDIAN',
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      selectFamily: vi.fn(),
+      refreshSession: vi.fn(),
+      setActiveFamilyFromCreated: vi.fn(),
+    };
+
+    render(
+      <AuthContext.Provider value={mockAuthContext}>
+        <ProductShell>
+          <AuthContextProbe />
+        </ProductShell>
+      </AuthContext.Provider>,
+    );
+
+    expect(screen.getByTestId('auth-context-probe')).toHaveTextContent(
+      'OWNER_GUARDIAN|real-user-1|real-fam-1',
+    );
+    expect(screen.getByTestId('appshell-user-profile')).toHaveTextContent('Guardião Real');
+    expect(screen.getByTestId('appshell-user-profile')).toHaveTextContent('Guardião Principal');
+  });
+
+  it('renders a loading shell with aria-busy="true" while auth is loading', () => {
+    const mockLoadingContext: AuthContextValue = {
+      status: 'loading',
+      user: null,
+      token: null,
+      activeFamilyId: null,
+      activeFamily: null,
+      families: [],
+      activeRole: null,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      selectFamily: vi.fn(),
+      refreshSession: vi.fn(),
+      setActiveFamilyFromCreated: vi.fn(),
+    };
+
+    render(
+      <AuthContext.Provider value={mockLoadingContext}>
+        <ProductShell>
+          <p>Conteúdo Carregando</p>
+        </ProductShell>
+      </AuthContext.Provider>,
+    );
+
+    const loadingContainer = screen.getByTestId('product-shell-loading');
+    expect(loadingContainer).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByText('Conteúdo Carregando')).toBeInTheDocument();
   });
 });
 

@@ -36,7 +36,7 @@ export interface AuthContextValue {
   setActiveFamilyFromCreated: (_family: FamilyResponseDto) => void;
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+export const AuthContext = createContext<AuthContextValue | null>(null);
 
 const TOKEN_STORAGE_KEY = 'aletheia_token';
 const ACTIVE_FAMILY_ID_STORAGE_KEY = 'aletheia_active_family_id';
@@ -311,3 +311,8 @@ export function useAuth(): AuthContextValue {
   }
   return context;
 }
+
+export function useOptionalAuth(): AuthContextValue | null {
+  return useContext(AuthContext);
+}
+

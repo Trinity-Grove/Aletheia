@@ -1,6 +1,8 @@
 export {
+  AuthContext,
   AuthProvider,
   useAuth,
+  useOptionalAuth,
   type AuthStatus,
   type AuthContextValue,
 } from './auth-context';
