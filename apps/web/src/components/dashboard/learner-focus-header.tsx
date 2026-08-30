@@ -38,7 +38,7 @@ export function LearnerFocusHeader({
             height: '3.25rem',
             borderRadius: '50%',
             backgroundColor: 'var(--color-brand-forest)',
-            color: '#FFFFFF',
+            color: 'var(--text-inverse)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -89,7 +89,7 @@ export function LearnerFocusHeader({
                   fontWeight: 600,
                   border: isSelected ? '1.5px solid var(--color-brand-forest)' : '1px solid var(--border-light)',
                   backgroundColor: isSelected ? 'var(--color-brand-forest)' : 'var(--bg-surface)',
-                  color: isSelected ? '#FFFFFF' : 'var(--text-primary)',
+                  color: isSelected ? 'var(--text-inverse)' : 'var(--text-primary)',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}

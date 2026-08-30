@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Sparkles, BookOpen } from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type {
   AcademicYearResponseDto,
   CreateObjectiveDto,
@@ -91,15 +91,15 @@ export function CurriculumView({
           flexWrap: 'wrap',
           gap: '1rem',
           padding: '1.5rem',
-          backgroundColor: '#FFFFFF',
-          borderRadius: '1rem',
-          border: '1px solid #E2E8F0',
-          boxShadow: '0 1px 3px 0 rgba(15, 23, 42, 0.05)',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-light)',
+          boxShadow: 'var(--shadow-sm)',
         }}
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.02em' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
               {activeLearner ? `Currículo de ${activeLearner.preferredName || activeLearner.firstName}` : 'Currículo & Plano de Estudos'}
             </h1>
             {learnerPlan && (
@@ -109,17 +109,17 @@ export function CurriculumView({
                   fontSize: '0.75rem',
                   fontWeight: 700,
                   padding: '0.25rem 0.75rem',
-                  borderRadius: '9999px',
-                  backgroundColor: '#EEF2FF',
-                  color: '#4338CA',
-                  border: '1px solid #E0E7FF',
+                  borderRadius: 'var(--radius-full)',
+                  backgroundColor: 'var(--color-indigo-50)',
+                  color: 'var(--color-indigo-700)',
+                  border: '1px solid var(--color-indigo-100)',
                 }}
               >
                 {getFrameworkLabel(learnerPlan.pedagogicalFramework)}
               </span>
             )}
           </div>
-          <p style={{ fontSize: '0.875rem', color: '#64748B', marginTop: '0.25rem', marginBottom: 0 }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem', marginBottom: 0 }}>
             Planejamento pedagógico, matriz de disciplinas, ementas e objetivos de aprendizagem.
           </p>
         </div>
@@ -139,10 +139,10 @@ export function CurriculumView({
                 className="btn btn-secondary ui-button ui-button--secondary ui-button--sm"
                 style={{
                   padding: '0.45rem 0.875rem',
-                  borderRadius: '0.5rem',
-                  border: '1px solid #C7D2FE',
-                  backgroundColor: '#EEF2FF',
-                  color: '#4338CA',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--color-indigo-100)',
+                  backgroundColor: 'var(--color-indigo-50)',
+                  color: 'var(--color-indigo-700)',
                   fontSize: '0.8125rem',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -151,7 +151,7 @@ export function CurriculumView({
                   gap: '0.375rem',
                 }}
               >
-                <Sparkles size={14} />
+                <AletheiaIcon name="sparkles" size={14} />
                 <span>Modelos Pedagógicos</span>
               </button>
             </Can>
@@ -164,14 +164,14 @@ export function CurriculumView({
               className="btn btn-primary ui-button ui-button--primary ui-button--sm"
               style={{
                 padding: '0.45rem 1rem',
-                borderRadius: '0.5rem',
+                borderRadius: 'var(--radius-md)',
                 border: 'none',
-                backgroundColor: '#4338CA',
-                color: '#FFFFFF',
+                backgroundColor: 'var(--color-indigo-700)',
+                color: 'var(--text-inverse)',
                 fontSize: '0.8125rem',
                 fontWeight: 600,
                 cursor: 'pointer',
-                boxShadow: '0 1px 2px 0 rgba(67, 56, 202, 0.2)',
+                boxShadow: 'var(--shadow-sm)',
               }}
             >
               + Nova Disciplina
@@ -187,21 +187,21 @@ export function CurriculumView({
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '1.25rem 1.5rem',
-          backgroundColor: '#FFFFFF',
-          borderRadius: '0.875rem',
-          border: '1px solid #E2E8F0',
-          boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04)',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-light)',
+          boxShadow: 'var(--shadow-sm)',
           flexWrap: 'wrap',
           gap: '1rem',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#334155' }}>
+          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
             Progresso Geral do Ano:
           </span>
           <span
             data-testid="overall-progress-text"
-            style={{ fontSize: '0.875rem', fontWeight: 700, color: '#4338CA' }}
+            style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-indigo-700)' }}
           >
             {achievedObjectives} de {totalObjectives} objetivos concluídos ({overallPercent}%)
           </span>
@@ -211,8 +211,8 @@ export function CurriculumView({
             width: '240px',
             maxWidth: '100%',
             height: '8px',
-            backgroundColor: '#F1F5F9',
-            borderRadius: '9999px',
+            backgroundColor: 'var(--sage-soft)',
+            borderRadius: 'var(--radius-full)',
             overflow: 'hidden',
           }}
         >
@@ -221,8 +221,8 @@ export function CurriculumView({
             style={{
               width: `${overallPercent}%`,
               height: '100%',
-              backgroundColor: overallPercent === 100 ? '#10B981' : '#4338CA',
-              borderRadius: '9999px',
+              backgroundColor: overallPercent === 100 ? 'var(--color-emerald-600)' : 'var(--color-indigo-700)',
+              borderRadius: 'var(--radius-full)',
               transition: 'width 0.4s ease',
             }}
           />
@@ -236,9 +236,9 @@ export function CurriculumView({
           style={{
             padding: '3.5rem 1.5rem',
             textAlign: 'center',
-            backgroundColor: '#FFFFFF',
-            borderRadius: '1rem',
-            border: '2px dashed #CBD5E1',
+            backgroundColor: 'var(--bg-surface)',
+            borderRadius: 'var(--radius-lg)',
+            border: '2px dashed var(--border-medium)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -249,22 +249,22 @@ export function CurriculumView({
             style={{
               width: '64px',
               height: '64px',
-              borderRadius: '9999px',
-              backgroundColor: '#EEF2FF',
-              color: '#4338CA',
+              borderRadius: 'var(--radius-full)',
+              backgroundColor: 'var(--color-indigo-50)',
+              color: 'var(--color-indigo-700)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(67, 56, 202, 0.1)',
+              boxShadow: 'var(--shadow-sm)',
             }}
           >
-            <BookOpen size={32} />
+            <AletheiaIcon name="book-open" size={32} />
           </div>
           <div>
-            <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.375rem 0' }}>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.375rem 0' }}>
               Nenhuma disciplina cadastrada para este ano letivo
             </h2>
-            <p style={{ fontSize: '0.875rem', color: '#64748B', maxWidth: '28rem', margin: '0 auto' }}>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '28rem', margin: '0 auto' }}>
               Comece aplicando um modelo pedagógico clássico ou Charlotte Mason, ou crie suas próprias disciplinas personalizadas.
             </p>
           </div>
@@ -277,20 +277,20 @@ export function CurriculumView({
                   className="btn btn-primary ui-button ui-button--primary"
                   style={{
                     padding: '0.5rem 1.25rem',
-                    borderRadius: '0.5rem',
+                    borderRadius: 'var(--radius-md)',
                     border: 'none',
-                    backgroundColor: '#4338CA',
-                    color: '#FFFFFF',
+                    backgroundColor: 'var(--color-indigo-700)',
+                    color: 'var(--text-inverse)',
                     fontSize: '0.875rem',
                     fontWeight: 600,
                     cursor: 'pointer',
-                    boxShadow: '0 2px 4px rgba(67, 56, 202, 0.2)',
+                    boxShadow: 'var(--shadow-sm)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.375rem',
                   }}
                 >
-                  <Sparkles size={16} />
+                  <AletheiaIcon name="sparkles" size={16} />
                   <span>Usar Modelo Pedagógico</span>
                 </button>
               </Can>
@@ -302,10 +302,10 @@ export function CurriculumView({
                 className="btn btn-secondary ui-button ui-button--secondary"
                 style={{
                   padding: '0.5rem 1.25rem',
-                  borderRadius: '0.5rem',
-                  border: '1px solid #CBD5E1',
-                  backgroundColor: '#FFFFFF',
-                  color: '#334155',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-medium)',
+                  backgroundColor: 'var(--bg-surface)',
+                  color: 'var(--text-secondary)',
                   fontSize: '0.875rem',
                   fontWeight: 600,
                   cursor: 'pointer',

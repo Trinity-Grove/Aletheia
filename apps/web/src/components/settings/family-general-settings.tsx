@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Check, AlertCircle, Lightbulb } from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type {
   FamilySettingsResponseDto,
   GradingScale,
@@ -107,18 +107,18 @@ export function FamilyGeneralSettings({
     <div
       data-testid="family-general-settings-card"
       style={{
-        backgroundColor: '#FFFFFF',
-        borderRadius: '0.75rem',
-        border: '1px solid #E5E7EB',
+        backgroundColor: 'var(--bg-surface)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border-light)',
         padding: '1.75rem',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
       <div style={{ marginBottom: '1.5rem' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', margin: 0 }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
           Geral da Família & Identidade Pedagógica
         </h2>
-        <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: '0.25rem 0 0 0' }}>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
           Defina o nome da sua academia familiar, fuso horário para lembretes e a abordagem pedagógica padrão.
         </p>
       </div>
@@ -128,10 +128,10 @@ export function FamilyGeneralSettings({
           data-testid="educator-settings-notice"
           style={{
             padding: '0.75rem 1rem',
-            backgroundColor: '#EFF6FF',
-            border: '1px solid #BFDBFE',
-            borderRadius: '0.5rem',
-            color: '#1E40AF',
+            backgroundColor: 'var(--color-indigo-50)',
+            border: '1px solid var(--color-indigo-100)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--color-indigo-700)',
             fontSize: '0.875rem',
             marginBottom: '1.25rem',
           }}
@@ -145,10 +145,10 @@ export function FamilyGeneralSettings({
           data-testid="family-settings-success-alert"
           style={{
             padding: '0.75rem 1rem',
-            backgroundColor: '#ECFDF5',
-            border: '1px solid #A7F3D0',
-            borderRadius: '0.5rem',
-            color: '#065F46',
+            backgroundColor: 'var(--color-emerald-50)',
+            border: '1px solid var(--color-emerald-100)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--color-emerald-700)',
             fontSize: '0.875rem',
             marginBottom: '1.25rem',
             display: 'flex',
@@ -156,7 +156,7 @@ export function FamilyGeneralSettings({
             gap: '0.5rem',
           }}
         >
-          <Check size={16} />
+          <AletheiaIcon name="check" size={16} />
           <span>{successMessage}</span>
         </div>
       )}
@@ -166,10 +166,10 @@ export function FamilyGeneralSettings({
           data-testid="family-settings-error-alert"
           style={{
             padding: '0.75rem 1rem',
-            backgroundColor: '#FEF2F2',
-            border: '1px solid #FECACA',
-            borderRadius: '0.5rem',
-            color: '#991B1B',
+            backgroundColor: 'var(--color-rose-50)',
+            border: '1px solid var(--color-rose-100)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--color-rose-700)',
             fontSize: '0.875rem',
             marginBottom: '1.25rem',
             display: 'flex',
@@ -177,7 +177,7 @@ export function FamilyGeneralSettings({
             gap: '0.5rem',
           }}
         >
-          <AlertCircle size={16} />
+          <AletheiaIcon name="alert-circle" size={16} />
           <span>{errorMessage}</span>
         </div>
       )}
@@ -187,7 +187,7 @@ export function FamilyGeneralSettings({
           <div>
             <label
               htmlFor="homeschoolName"
-              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}
+              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.375rem' }}
             >
               Nome da Academia Familiar / Homeschool
             </label>
@@ -202,15 +202,15 @@ export function FamilyGeneralSettings({
               style={{
                 width: '100%',
                 padding: '0.625rem 0.875rem',
-                borderRadius: '0.5rem',
-                border: '1px solid #D1D5DB',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-medium)',
                 fontSize: '0.875rem',
-                color: '#111827',
-                backgroundColor: isReadOnly ? '#F9FAFB' : '#FFFFFF',
+                color: 'var(--text-primary)',
+                backgroundColor: isReadOnly ? 'var(--sage-soft)' : 'var(--bg-surface)',
                 boxSizing: 'border-box',
               }}
             />
-            <span style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '0.25rem', display: 'block' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
               Este nome será exibido nos cabeçalhos de históricos e relatórios acadêmicos oficiais.
             </span>
           </div>
@@ -219,7 +219,7 @@ export function FamilyGeneralSettings({
             <div>
               <label
                 htmlFor="timezone"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}
+                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.375rem' }}
               >
                 Fuso Horário
               </label>
@@ -232,11 +232,11 @@ export function FamilyGeneralSettings({
                 style={{
                   width: '100%',
                   padding: '0.625rem 0.875rem',
-                  borderRadius: '0.5rem',
-                  border: '1px solid #D1D5DB',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
-                  color: '#111827',
-                  backgroundColor: isReadOnly ? '#F9FAFB' : '#FFFFFF',
+                  color: 'var(--text-primary)',
+                  backgroundColor: isReadOnly ? 'var(--sage-soft)' : 'var(--bg-surface)',
                   boxSizing: 'border-box',
                 }}
               >
@@ -251,7 +251,7 @@ export function FamilyGeneralSettings({
             <div>
               <label
                 htmlFor="language"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}
+                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.375rem' }}
               >
                 Idioma do Sistema
               </label>
@@ -264,11 +264,11 @@ export function FamilyGeneralSettings({
                 style={{
                   width: '100%',
                   padding: '0.625rem 0.875rem',
-                  borderRadius: '0.5rem',
-                  border: '1px solid #D1D5DB',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
-                  color: '#111827',
-                  backgroundColor: isReadOnly ? '#F9FAFB' : '#FFFFFF',
+                  color: 'var(--text-primary)',
+                  backgroundColor: isReadOnly ? 'var(--sage-soft)' : 'var(--bg-surface)',
                   boxSizing: 'border-box',
                 }}
               >
@@ -282,7 +282,7 @@ export function FamilyGeneralSettings({
           <div>
             <label
               htmlFor="defaultGradingScale"
-              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}
+              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.375rem' }}
             >
               Estrutura Pedagógica & Escala de Avaliação Padrão
             </label>
@@ -295,11 +295,11 @@ export function FamilyGeneralSettings({
               style={{
                 width: '100%',
                 padding: '0.625rem 0.875rem',
-                borderRadius: '0.5rem',
-                border: '1px solid #D1D5DB',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-medium)',
                 fontSize: '0.875rem',
-                color: '#111827',
-                backgroundColor: isReadOnly ? '#F9FAFB' : '#FFFFFF',
+                color: 'var(--text-primary)',
+                backgroundColor: isReadOnly ? 'var(--sage-soft)' : 'var(--bg-surface)',
                 boxSizing: 'border-box',
               }}
             >
@@ -313,16 +313,16 @@ export function FamilyGeneralSettings({
               style={{
                 marginTop: '0.5rem',
                 padding: '0.75rem',
-                backgroundColor: '#F3F4F6',
-                borderRadius: '0.375rem',
+                backgroundColor: 'var(--sage-soft)',
+                borderRadius: 'var(--radius-sm)',
                 fontSize: '0.8125rem',
-                color: '#4B5563',
+                color: 'var(--text-secondary)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
               }}
             >
-              <Lightbulb size={16} style={{ color: '#D97706', flexShrink: 0 }} />
+              <AletheiaIcon name="lightbulb" size={16} style={{ color: 'var(--color-amber-600)', flexShrink: 0 }} />
               <span>{GRADING_SCALES.find((s) => s.value === defaultGradingScale)?.description}</span>
             </div>
           </div>
@@ -335,11 +335,11 @@ export function FamilyGeneralSettings({
                 disabled={isLoading || isSaving}
                 style={{
                   padding: '0.625rem 1.5rem',
-                  backgroundColor: isSaving ? '#9CA3AF' : '#2563EB',
-                  color: '#FFFFFF',
+                  backgroundColor: isSaving ? 'var(--text-muted)' : 'var(--forest)',
+                  color: 'var(--text-inverse)',
                   fontWeight: 600,
                   fontSize: '0.875rem',
-                  borderRadius: '0.5rem',
+                  borderRadius: 'var(--radius-md)',
                   border: 'none',
                   cursor: isSaving ? 'not-allowed' : 'pointer',
                   transition: 'background-color 0.15s ease',

@@ -1,8 +1,7 @@
 import { cleanup, render, screen, fireEvent } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import React, { useState } from 'react';
-import { Search, X } from 'lucide-react';
-import { Input, Select, Textarea, Switch } from '../src/components/ui';
+import { AletheiaIcon, Input, Select, Textarea, Switch } from '../src/components/ui';
 
 describe('UI Primitives: Form Controls', () => {
   afterEach(cleanup);
@@ -42,8 +41,8 @@ describe('UI Primitives: Form Controls', () => {
       render(
         <Input
           label="Busca"
-          leftIcon={<Search data-testid="search-icon" size={16} />}
-          rightIcon={<X data-testid="clear-icon" size={16} />}
+          leftIcon={<AletheiaIcon name="search" data-testid="search-icon" size={16} />}
+          rightIcon={<AletheiaIcon name="x" data-testid="clear-icon" size={16} />}
         />
       );
 

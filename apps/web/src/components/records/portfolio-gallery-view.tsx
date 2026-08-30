@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Palette, GraduationCap, BookOpen, Calendar, Paperclip, Star } from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type {
   PortfolioItemResponseDto,
   LearnerSummaryDto,
@@ -69,9 +69,9 @@ export function PortfolioGalleryView({
       <div
         data-testid="portfolio-header-banner"
         style={{
-          backgroundColor: '#FFFFFF',
-          borderRadius: '0.75rem',
-          border: '1px solid #E5E7EB',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-light)',
           padding: '1.25rem 1.5rem',
           display: 'flex',
           justifyContent: 'space-between',
@@ -81,21 +81,21 @@ export function PortfolioGalleryView({
         }}
       >
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#111827', margin: '0 0 0.25rem 0' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 0.25rem 0' }}>
             Galeria de Evidências & Portfólio Vivo
           </h2>
-          <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
             Guarde produções autorais, cadernos, desenhos da natureza, áudios de narração e conquistas.
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div data-testid="portfolio-count-stats" style={{ textAlign: 'right' }}>
-            <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#111827' }}>
+            <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               {filteredItems.length} obra(s)
             </span>
-            <div style={{ fontSize: '0.75rem', color: '#B45309', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-              <Star size={12} fill="#F59E0B" stroke="#D97706" />
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-amber-700)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+              <AletheiaIcon name="sparkles" size={12} style={{ color: 'var(--color-amber-600)' }} />
               <span>{items.filter((i) => i.isHighlight).length} destaque(s)</span>
             </div>
           </div>
@@ -107,14 +107,14 @@ export function PortfolioGalleryView({
               onClick={onOpenAddItem}
               style={{
                 padding: '0.625rem 1.25rem',
-                backgroundColor: '#2563EB',
-                color: '#FFFFFF',
-                borderRadius: '0.5rem',
+                backgroundColor: 'var(--forest)',
+                color: 'var(--text-inverse)',
+                borderRadius: 'var(--radius-md)',
                 border: 'none',
                 fontSize: '0.875rem',
                 fontWeight: 700,
                 cursor: 'pointer',
-                boxShadow: '0 1px 3px rgba(37, 99, 235, 0.3)',
+                boxShadow: 'var(--shadow-sm)',
               }}
             >
               + Adicionar Evidência
@@ -141,8 +141,8 @@ export function PortfolioGalleryView({
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
               padding: '0.5rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #D1D5DB',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
               fontSize: '0.875rem',
               minWidth: '180px',
             }}
@@ -155,10 +155,10 @@ export function PortfolioGalleryView({
             onChange={(e) => setFilterType(e.target.value)}
             style={{
               padding: '0.5rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #D1D5DB',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
               fontSize: '0.875rem',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--bg-surface)',
             }}
           >
             <option value="">Todos os tipos de evidência</option>
@@ -176,10 +176,10 @@ export function PortfolioGalleryView({
             onChange={(e) => setFilterSubject(e.target.value)}
             style={{
               padding: '0.5rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #D1D5DB',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
               fontSize: '0.875rem',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--bg-surface)',
             }}
           >
             <option value="">Todas as disciplinas</option>
@@ -197,10 +197,10 @@ export function PortfolioGalleryView({
             onClick={() => setFilterOnlyHighlights((prev) => !prev)}
             style={{
               padding: '0.5rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: filterOnlyHighlights ? '1px solid #F59E0B' : '1px solid #D1D5DB',
-              backgroundColor: filterOnlyHighlights ? '#FEF3C7' : '#FFFFFF',
-              color: filterOnlyHighlights ? '#92400E' : '#4B5563',
+              borderRadius: 'var(--radius-sm)',
+              border: filterOnlyHighlights ? '1px solid var(--color-amber-600)' : '1px solid var(--border-medium)',
+              backgroundColor: filterOnlyHighlights ? 'var(--color-amber-50)' : 'var(--bg-surface)',
+              color: filterOnlyHighlights ? 'var(--color-amber-700)' : 'var(--text-secondary)',
               fontSize: '0.875rem',
               fontWeight: 600,
               cursor: 'pointer',
@@ -209,7 +209,7 @@ export function PortfolioGalleryView({
               gap: '0.375rem',
             }}
           >
-            <Star size={14} fill={filterOnlyHighlights ? '#F59E0B' : 'none'} stroke={filterOnlyHighlights ? '#D97706' : 'currentColor'} />
+            <AletheiaIcon name="sparkles" size={14} style={{ color: filterOnlyHighlights ? 'var(--color-amber-600)' : 'currentColor' }} />
             <span>Apenas Destaques</span>
           </button>
         </div>
@@ -217,16 +217,16 @@ export function PortfolioGalleryView({
         {/* Tag chips */}
         {allTags.length > 0 && (
           <div data-testid="portfolio-tag-cloud" style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6B7280' }}>Tags:</span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Tags:</span>
             <button
               type="button"
               data-testid="tag-filter-all"
               onClick={() => setSelectedTag('')}
               style={{
-                background: selectedTag === '' ? '#3B82F6' : '#F3F4F6',
-                color: selectedTag === '' ? '#FFFFFF' : '#4B5563',
+                background: selectedTag === '' ? 'var(--color-indigo-600)' : 'var(--sage-soft)',
+                color: selectedTag === '' ? 'var(--text-inverse)' : 'var(--text-secondary)',
                 border: 'none',
-                borderRadius: '9999px',
+                borderRadius: 'var(--radius-full)',
                 padding: '0.2rem 0.5rem',
                 fontSize: '0.75rem',
                 fontWeight: 600,
@@ -242,10 +242,10 @@ export function PortfolioGalleryView({
                 data-testid={`tag-filter-btn-${tag}`}
                 onClick={() => setSelectedTag(selectedTag === tag ? '' : tag)}
                 style={{
-                  background: selectedTag === tag ? '#3B82F6' : '#F3F4F6',
-                  color: selectedTag === tag ? '#FFFFFF' : '#4B5563',
+                  background: selectedTag === tag ? 'var(--color-indigo-600)' : 'var(--sage-soft)',
+                  color: selectedTag === tag ? 'var(--text-inverse)' : 'var(--text-secondary)',
                   border: 'none',
-                  borderRadius: '9999px',
+                  borderRadius: 'var(--radius-full)',
                   padding: '0.2rem 0.5rem',
                   fontSize: '0.75rem',
                   fontWeight: 600,
@@ -266,18 +266,18 @@ export function PortfolioGalleryView({
           style={{
             padding: '3.5rem 1rem',
             textAlign: 'center',
-            backgroundColor: '#FFFFFF',
-            borderRadius: '0.75rem',
-            border: '1px dashed #D1D5DB',
+            backgroundColor: 'var(--bg-surface)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px dashed var(--border-medium)',
           }}
         >
-          <div style={{ color: '#F59E0B', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
-            <Palette size={40} />
+          <div style={{ color: 'var(--color-amber-600)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
+            <AletheiaIcon name="palette" size={40} />
           </div>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#111827', margin: '0 0 0.5rem 0' }}>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
             Nenhuma evidência no portfólio
           </h3>
-          <p style={{ fontSize: '0.875rem', color: '#6B7280', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
             Fotografe cadernos, desenhos da natureza, adicione áudios de narração e celebre a jornada educativa!
           </p>
           <Can action="upload_portfolio_items">
@@ -287,9 +287,9 @@ export function PortfolioGalleryView({
               onClick={onOpenAddItem}
               style={{
                 padding: '0.5rem 1rem',
-                backgroundColor: '#2563EB',
-                color: '#FFFFFF',
-                borderRadius: '0.375rem',
+                backgroundColor: 'var(--forest)',
+                color: 'var(--text-inverse)',
+                borderRadius: 'var(--radius-sm)',
                 border: 'none',
                 fontSize: '0.875rem',
                 fontWeight: 600,
@@ -312,7 +312,7 @@ export function PortfolioGalleryView({
           {filteredItems.map((item) => {
             const typeConfig = EVIDENCE_TYPE_CONFIG[item.type] || {
               label: item.type,
-              icon: <Paperclip size={16} />,
+              icon: <AletheiaIcon name="paperclip" size={16} />,
             };
             const learner = learners.find((l) => l.id === item.learnerId);
 
@@ -321,12 +321,10 @@ export function PortfolioGalleryView({
                 key={item.id}
                 data-testid={`portfolio-card-${item.id}`}
                 style={{
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: '0.75rem',
-                  border: item.isHighlight ? '2px solid #F59E0B' : '1px solid #E5E7EB',
-                  boxShadow: item.isHighlight
-                    ? '0 4px 6px -1px rgba(245, 158, 11, 0.15)'
-                    : '0 1px 3px rgba(0, 0, 0, 0.05)',
+                  backgroundColor: 'var(--bg-surface)',
+                  borderRadius: 'var(--radius-lg)',
+                  border: item.isHighlight ? '2px solid var(--color-amber-600)' : '1px solid var(--border-light)',
+                  boxShadow: 'var(--shadow-sm)',
                   display: 'flex',
                   flexDirection: 'column',
                   overflow: 'hidden',
@@ -337,8 +335,8 @@ export function PortfolioGalleryView({
                   data-testid={`portfolio-media-preview-${item.id}`}
                   style={{
                     height: '160px',
-                    backgroundColor: '#F8FAFC',
-                    borderBottom: '1px solid #E2E8F0',
+                    backgroundColor: 'var(--sage-soft)',
+                    borderBottom: '1px solid var(--border-light)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -357,7 +355,7 @@ export function PortfolioGalleryView({
                       style={{
                         padding: '1rem',
                         fontSize: '0.8125rem',
-                        color: '#334155',
+                        color: 'var(--text-secondary)',
                         fontStyle: 'italic',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -370,7 +368,7 @@ export function PortfolioGalleryView({
                       “{item.textContent}”
                     </div>
                   ) : (
-                    <div style={{ textAlign: 'center', color: '#64748B' }}>
+                    <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
                       <span style={{ fontSize: '2.5rem' }}>{typeConfig.icon}</span>
                       <div style={{ fontSize: '0.75rem', marginTop: '0.25rem', fontWeight: 600 }}>
                         {typeConfig.label}
@@ -386,19 +384,19 @@ export function PortfolioGalleryView({
                         position: 'absolute',
                         top: '0.5rem',
                         right: '0.5rem',
-                        backgroundColor: '#FEF3C7',
-                        color: '#92400E',
+                        backgroundColor: 'var(--color-amber-50)',
+                        color: 'var(--color-amber-700)',
                         fontSize: '0.75rem',
                         fontWeight: 700,
                         padding: '0.2rem 0.5rem',
-                        borderRadius: '9999px',
-                        border: '1px solid #FCD34D',
+                        borderRadius: 'var(--radius-full)',
+                        border: '1px solid var(--color-amber-100)',
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '0.25rem',
                       }}
                     >
-                      <Star size={11} fill="#F59E0B" stroke="#D97706" />
+                      <AletheiaIcon name="sparkles" size={11} style={{ color: 'var(--color-amber-600)' }} />
                       <span>Destaque</span>
                     </span>
                   )}
@@ -419,36 +417,36 @@ export function PortfolioGalleryView({
                     {learner && (
                       <span
                         style={{
-                          backgroundColor: '#EFF6FF',
-                          color: '#1E40AF',
+                          backgroundColor: 'var(--color-indigo-50)',
+                          color: 'var(--color-indigo-700)',
                           fontSize: '0.6875rem',
                           fontWeight: 600,
                           padding: '0.125rem 0.375rem',
-                          borderRadius: '0.25rem',
+                          borderRadius: 'var(--radius-sm)',
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '0.25rem',
                         }}
                       >
-                        <GraduationCap size={10} />
+                        <AletheiaIcon name="graduation-cap" size={10} />
                         <span>{learner.preferredName || learner.firstName}</span>
                       </span>
                     )}
                     {item.subjectName && (
                       <span
                         style={{
-                          backgroundColor: '#F3F4F6',
-                          color: '#4B5563',
+                          backgroundColor: 'var(--sage-soft)',
+                          color: 'var(--text-secondary)',
                           fontSize: '0.6875rem',
                           fontWeight: 600,
                           padding: '0.125rem 0.375rem',
-                          borderRadius: '0.25rem',
+                          borderRadius: 'var(--radius-sm)',
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '0.25rem',
                         }}
                       >
-                        <BookOpen size={10} />
+                        <AletheiaIcon name="book-open" size={10} />
                         <span>{item.subjectName}</span>
                       </span>
                     )}
@@ -460,7 +458,7 @@ export function PortfolioGalleryView({
                     style={{
                       fontSize: '1rem',
                       fontWeight: 700,
-                      color: '#111827',
+                      color: 'var(--text-primary)',
                       margin: 0,
                     }}
                   >
@@ -473,7 +471,7 @@ export function PortfolioGalleryView({
                       data-testid={`portfolio-description-${item.id}`}
                       style={{
                         fontSize: '0.8125rem',
-                        color: '#4B5563',
+                        color: 'var(--text-secondary)',
                         margin: 0,
                         lineHeight: 1.4,
                       }}
@@ -484,8 +482,8 @@ export function PortfolioGalleryView({
 
                   {/* Date */}
                   {item.capturedAt && (
-                    <span style={{ fontSize: '0.75rem', color: '#9CA3AF', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <Calendar size={10} />
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <AletheiaIcon name="calendar" size={10} />
                       <span>{item.capturedAt}</span>
                     </span>
                   )}
@@ -499,10 +497,10 @@ export function PortfolioGalleryView({
                           data-testid={`portfolio-tag-${item.id}-${tag}`}
                           style={{
                             fontSize: '0.6875rem',
-                            color: '#4F46E5',
-                            backgroundColor: '#EEF2FF',
+                            color: 'var(--color-indigo-600)',
+                            backgroundColor: 'var(--color-indigo-50)',
                             padding: '0.125rem 0.375rem',
-                            borderRadius: '0.25rem',
+                            borderRadius: 'var(--radius-sm)',
                           }}
                         >
                           #{tag}
@@ -519,7 +517,7 @@ export function PortfolioGalleryView({
                       alignItems: 'center',
                       marginTop: 'auto',
                       paddingTop: '0.75rem',
-                      borderTop: '1px solid #F3F4F6',
+                      borderTop: '1px solid var(--sage-soft)',
                     }}
                   >
                     {item.fileUrl ? (
@@ -530,7 +528,7 @@ export function PortfolioGalleryView({
                         data-testid={`view-file-link-${item.id}`}
                         style={{
                           fontSize: '0.75rem',
-                          color: '#2563EB',
+                          color: 'var(--forest)',
                           textDecoration: 'none',
                           fontWeight: 600,
                         }}
@@ -550,7 +548,7 @@ export function PortfolioGalleryView({
                           style={{
                             background: 'none',
                             border: 'none',
-                            color: '#2563EB',
+                            color: 'var(--forest)',
                             fontSize: '0.75rem',
                             fontWeight: 600,
                             cursor: 'pointer',
@@ -568,7 +566,7 @@ export function PortfolioGalleryView({
                           style={{
                             background: 'none',
                             border: 'none',
-                            color: '#DC2626',
+                            color: 'var(--color-rose-600)',
                             fontSize: '0.75rem',
                             fontWeight: 600,
                             cursor: 'pointer',
@@ -589,4 +587,3 @@ export function PortfolioGalleryView({
     </div>
   );
 }
-

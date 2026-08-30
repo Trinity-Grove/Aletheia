@@ -1,17 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import {
-  Check,
-  FileText,
-  X,
-  Palmtree,
-  Landmark,
-  Bandage,
-  Users,
-  Calendar,
-  GraduationCap,
-} from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type {
   AttendanceComplianceSummaryDto,
   AttendanceResponseDto,
@@ -30,45 +20,45 @@ export const ATTENDANCE_STATUS_CONFIG: Record<
 > = {
   PRESENT: {
     label: 'Presente',
-    bg: '#ECFDF5',
-    text: '#065F46',
-    border: '#A7F3D0',
-    icon: <Check size={14} />,
+    bg: 'var(--color-emerald-50)',
+    text: 'var(--color-emerald-700)',
+    border: 'var(--color-emerald-100)',
+    icon: <AletheiaIcon name="check" size={14} />,
   },
   EXCUSED_ABSENCE: {
     label: 'Falta Justificada',
-    bg: '#FFFBEB',
-    text: '#92400E',
-    border: '#FDE68A',
-    icon: <FileText size={14} />,
+    bg: 'var(--color-amber-50)',
+    text: 'var(--color-amber-700)',
+    border: 'var(--color-amber-100)',
+    icon: <AletheiaIcon name="file-text" size={14} />,
   },
   UNEXCUSED_ABSENCE: {
     label: 'Falta Não Justificada',
-    bg: '#FEF2F2',
-    text: '#991B1B',
-    border: '#FECACA',
-    icon: <X size={14} />,
+    bg: 'var(--color-rose-50)',
+    text: 'var(--color-rose-700)',
+    border: 'var(--color-rose-100)',
+    icon: <AletheiaIcon name="x" size={14} />,
   },
   HOLIDAY: {
     label: 'Feriado / Recesso',
-    bg: '#EFF6FF',
-    text: '#1E40AF',
-    border: '#BFDBFE',
-    icon: <Palmtree size={14} />,
+    bg: 'var(--color-indigo-50)',
+    text: 'var(--color-indigo-700)',
+    border: 'var(--color-indigo-100)',
+    icon: <AletheiaIcon name="calendar" size={14} />,
   },
   FIELD_TRIP: {
     label: 'Passeio Educativo',
-    bg: '#F5F3FF',
-    text: '#5B21B6',
-    border: '#DDD6FE',
-    icon: <Landmark size={14} />,
+    bg: 'var(--color-indigo-50)',
+    text: 'var(--color-indigo-700)',
+    border: 'var(--color-indigo-100)',
+    icon: <AletheiaIcon name="landmark" size={14} />,
   },
   SICK: {
     label: 'Atestado / Doença',
-    bg: '#FFF7ED',
-    text: '#9A3412',
-    border: '#FED7AA',
-    icon: <Bandage size={14} />,
+    bg: 'var(--color-amber-50)',
+    text: 'var(--color-amber-700)',
+    border: 'var(--color-amber-100)',
+    icon: <AletheiaIcon name="alert-circle" size={14} />,
   },
 };
 
@@ -227,10 +217,10 @@ export function AttendanceTrackerView({
             onChange={(e) => setFilterStatus(e.target.value)}
             style={{
               padding: '0.5rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #D1D5DB',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
               fontSize: '0.875rem',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--bg-surface)',
             }}
           >
             <option value="">Todos os status</option>
@@ -249,10 +239,10 @@ export function AttendanceTrackerView({
             onChange={(e) => setFilterDate(e.target.value)}
             style={{
               padding: '0.45rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #D1D5DB',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
               fontSize: '0.875rem',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--bg-surface)',
             }}
           />
           {filterDate && (
@@ -261,7 +251,7 @@ export function AttendanceTrackerView({
               onClick={() => setFilterDate('')}
               style={{
                 fontSize: '0.75rem',
-                color: '#4B5563',
+                color: 'var(--text-secondary)',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
@@ -282,10 +272,10 @@ export function AttendanceTrackerView({
               onClick={handleOpenBulkModal}
               style={{
                 padding: '0.625rem 1rem',
-                backgroundColor: '#F3F4F6',
-                color: '#374151',
-                borderRadius: '0.5rem',
-                border: '1px solid #D1D5DB',
+                backgroundColor: 'var(--sage-soft)',
+                color: 'var(--text-secondary)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-medium)',
                 fontSize: '0.875rem',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -294,7 +284,7 @@ export function AttendanceTrackerView({
                 gap: '0.375rem',
               }}
             >
-              <Users size={16} />
+              <AletheiaIcon name="users" size={16} />
               <span>Frequência Coletiva</span>
             </button>
           </Can>
@@ -305,14 +295,14 @@ export function AttendanceTrackerView({
               onClick={handleOpenSingleModal}
               style={{
                 padding: '0.625rem 1.25rem',
-                backgroundColor: '#2563EB',
-                color: '#FFFFFF',
-                borderRadius: '0.5rem',
+                backgroundColor: 'var(--forest)',
+                color: 'var(--text-inverse)',
+                borderRadius: 'var(--radius-md)',
                 border: 'none',
                 fontSize: '0.875rem',
                 fontWeight: 700,
                 cursor: 'pointer',
-                boxShadow: '0 1px 3px rgba(37, 99, 235, 0.3)',
+                boxShadow: 'var(--shadow-sm)',
               }}
             >
               + Registrar Frequência
@@ -328,18 +318,18 @@ export function AttendanceTrackerView({
           style={{
             padding: '3.5rem 1rem',
             textAlign: 'center',
-            backgroundColor: '#FFFFFF',
-            borderRadius: '0.75rem',
-            border: '1px dashed #D1D5DB',
+            backgroundColor: 'var(--bg-surface)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px dashed var(--border-medium)',
           }}
         >
-          <div style={{ color: 'var(--color-brand-sage, #78937f)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
-            <Calendar size={40} />
+          <div style={{ color: 'var(--sage)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
+            <AletheiaIcon name="calendar" size={40} />
           </div>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#111827', margin: '0 0 0.5rem 0' }}>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
             Nenhum registro de presença encontrado
           </h3>
-          <p style={{ fontSize: '0.875rem', color: '#6B7280', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
             Mantenha o registro de dias letivos e horas cumpridas para garantir a conformidade legal e o histórico anual.
           </p>
           <Can action="log_attendance">
@@ -349,9 +339,9 @@ export function AttendanceTrackerView({
               onClick={handleOpenSingleModal}
               style={{
                 padding: '0.5rem 1rem',
-                backgroundColor: '#2563EB',
-                color: '#FFFFFF',
-                borderRadius: '0.375rem',
+                backgroundColor: 'var(--forest)',
+                color: 'var(--text-inverse)',
+                borderRadius: 'var(--radius-sm)',
                 border: 'none',
                 fontSize: '0.875rem',
                 fontWeight: 600,
@@ -366,11 +356,11 @@ export function AttendanceTrackerView({
         <div
           data-testid="attendance-table-container"
           style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '0.75rem',
-            border: '1px solid #E5E7EB',
+            backgroundColor: 'var(--bg-surface)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-light)',
             overflow: 'hidden',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+            boxShadow: 'var(--shadow-sm)',
           }}
         >
           <table
@@ -378,20 +368,20 @@ export function AttendanceTrackerView({
             style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}
           >
             <thead>
-              <tr style={{ backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-                <th style={{ padding: '0.75rem 1rem', fontSize: '0.75rem', fontWeight: 700, color: '#4B5563' }}>
+              <tr style={{ backgroundColor: 'var(--sage-soft)', borderBottom: '1px solid var(--border-light)' }}>
+                <th style={{ padding: '0.75rem 1rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
                   Data
                 </th>
-                <th style={{ padding: '0.75rem 1rem', fontSize: '0.75rem', fontWeight: 700, color: '#4B5563' }}>
+                <th style={{ padding: '0.75rem 1rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
                   Educando
                 </th>
-                <th style={{ padding: '0.75rem 1rem', fontSize: '0.75rem', fontWeight: 700, color: '#4B5563' }}>
+                <th style={{ padding: '0.75rem 1rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
                   Status
                 </th>
-                <th style={{ padding: '0.75rem 1rem', fontSize: '0.75rem', fontWeight: 700, color: '#4B5563' }}>
+                <th style={{ padding: '0.75rem 1rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
                   Carga Horária
                 </th>
-                <th style={{ padding: '0.75rem 1rem', fontSize: '0.75rem', fontWeight: 700, color: '#4B5563' }}>
+                <th style={{ padding: '0.75rem 1rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
                   Observações
                 </th>
               </tr>
@@ -407,14 +397,14 @@ export function AttendanceTrackerView({
                   <tr
                     key={record.id}
                     data-testid={`attendance-row-${record.id}`}
-                    style={{ borderBottom: '1px solid #F3F4F6' }}
+                    style={{ borderBottom: '1px solid var(--sage-soft)' }}
                   >
-                    <td style={{ padding: '0.875rem 1rem', fontSize: '0.875rem', color: '#111827', fontWeight: 500 }}>
+                    <td style={{ padding: '0.875rem 1rem', fontSize: '0.875rem', color: 'var(--text-primary)', fontWeight: 500 }}>
                       {record.date}
                     </td>
-                    <td style={{ padding: '0.875rem 1rem', fontSize: '0.875rem', color: '#374151' }}>
+                    <td style={{ padding: '0.875rem 1rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}>
-                        <GraduationCap size={14} style={{ color: '#4B5563' }} />
+                        <AletheiaIcon name="graduation-cap" size={14} style={{ color: 'var(--text-secondary)' }} />
                         <span>{learnerDisplayName}</span>
                       </span>
                     </td>
@@ -426,7 +416,7 @@ export function AttendanceTrackerView({
                           alignItems: 'center',
                           gap: '0.25rem',
                           padding: '0.25rem 0.625rem',
-                          borderRadius: '9999px',
+                          borderRadius: 'var(--radius-full)',
                           fontSize: '0.75rem',
                           fontWeight: 700,
                           backgroundColor: conf.bg,
@@ -438,22 +428,22 @@ export function AttendanceTrackerView({
                         {conf.label}
                       </span>
                     </td>
-                    <td style={{ padding: '0.875rem 1rem', fontSize: '0.875rem', color: '#4B5563' }}>
+                    <td style={{ padding: '0.875rem 1rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                       {record.hoursSpent !== null && record.hoursSpent !== undefined
                         ? `${record.hoursSpent}h`
                         : '—'}
                     </td>
-                    <td style={{ padding: '0.875rem 1rem', fontSize: '0.8125rem', color: '#6B7280' }}>
+                    <td style={{ padding: '0.875rem 1rem', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
                       {record.notes || '—'}
                       {record.isAutoLogged && (
                         <span
                           style={{
                             marginLeft: '0.5rem',
                             fontSize: '0.6875rem',
-                            backgroundColor: '#E0E7FF',
-                            color: '#3730A3',
+                            backgroundColor: 'var(--color-indigo-100)',
+                            color: 'var(--color-indigo-700)',
                             padding: '0.125rem 0.375rem',
-                            borderRadius: '0.25rem',
+                            borderRadius: 'var(--radius-sm)',
                           }}
                         >
                           Auto
@@ -485,20 +475,20 @@ export function AttendanceTrackerView({
         >
           <div
             style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '0.75rem',
+              backgroundColor: 'var(--bg-surface)',
+              borderRadius: 'var(--radius-lg)',
               maxWidth: '480px',
               width: '100%',
               padding: '1.5rem',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+              boxShadow: 'var(--shadow-xl)',
             }}
           >
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', margin: '0 0 1rem 0' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 1rem 0' }}>
               Registrar Frequência Individual
             </h2>
             <form onSubmit={handleSaveSingle} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                   Educando *
                 </label>
                 <select
@@ -509,8 +499,8 @@ export function AttendanceTrackerView({
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #D1D5DB',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
                     fontSize: '0.875rem',
                   }}
                 >
@@ -524,7 +514,7 @@ export function AttendanceTrackerView({
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                     Data *
                   </label>
                   <input
@@ -536,14 +526,14 @@ export function AttendanceTrackerView({
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      borderRadius: '0.375rem',
-                      border: '1px solid #D1D5DB',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-medium)',
                       fontSize: '0.875rem',
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                     Carga Horária (h)
                   </label>
                   <input
@@ -557,8 +547,8 @@ export function AttendanceTrackerView({
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      borderRadius: '0.375rem',
-                      border: '1px solid #D1D5DB',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-medium)',
                       fontSize: '0.875rem',
                     }}
                   />
@@ -566,7 +556,7 @@ export function AttendanceTrackerView({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                   Status de Presença *
                 </label>
                 <select
@@ -577,8 +567,8 @@ export function AttendanceTrackerView({
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #D1D5DB',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
                     fontSize: '0.875rem',
                   }}
                 >
@@ -591,7 +581,7 @@ export function AttendanceTrackerView({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                   Observações / Justificativas
                 </label>
                 <textarea
@@ -603,8 +593,8 @@ export function AttendanceTrackerView({
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #D1D5DB',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
                     fontSize: '0.875rem',
                   }}
                 />
@@ -617,10 +607,10 @@ export function AttendanceTrackerView({
                   onClick={() => setIsSingleModalOpen(false)}
                   style={{
                     padding: '0.5rem 1rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #D1D5DB',
-                    backgroundColor: '#FFFFFF',
-                    color: '#374151',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
+                    backgroundColor: 'var(--bg-surface)',
+                    color: 'var(--text-secondary)',
                     fontSize: '0.875rem',
                     cursor: 'pointer',
                   }}
@@ -633,10 +623,10 @@ export function AttendanceTrackerView({
                   disabled={isSubmitting}
                   style={{
                     padding: '0.5rem 1.25rem',
-                    borderRadius: '0.375rem',
+                    borderRadius: 'var(--radius-sm)',
                     border: 'none',
-                    backgroundColor: '#2563EB',
-                    color: '#FFFFFF',
+                    backgroundColor: 'var(--forest)',
+                    color: 'var(--text-inverse)',
                     fontSize: '0.875rem',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -667,20 +657,20 @@ export function AttendanceTrackerView({
         >
           <div
             style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '0.75rem',
+              backgroundColor: 'var(--bg-surface)',
+              borderRadius: 'var(--radius-lg)',
               maxWidth: '520px',
               width: '100%',
               padding: '1.5rem',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+              boxShadow: 'var(--shadow-xl)',
             }}
           >
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', margin: '0 0 1rem 0' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 1rem 0' }}>
               Registrar Frequência Coletiva
             </h2>
             <form onSubmit={handleSaveBulk} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
                   Selecione os Educandos *
                 </label>
                 <div
@@ -688,10 +678,10 @@ export function AttendanceTrackerView({
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '0.5rem',
-                    backgroundColor: '#F9FAFB',
+                    backgroundColor: 'var(--sage-soft)',
                     padding: '0.75rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #E5E7EB',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-light)',
                     maxHeight: '140px',
                     overflowY: 'auto',
                   }}
@@ -706,7 +696,7 @@ export function AttendanceTrackerView({
                           alignItems: 'center',
                           gap: '0.5rem',
                           fontSize: '0.875rem',
-                          color: '#374151',
+                          color: 'var(--text-secondary)',
                           cursor: 'pointer',
                         }}
                       >
@@ -716,7 +706,7 @@ export function AttendanceTrackerView({
                           checked={isChecked}
                           onChange={() => toggleBulkLearner(l.id)}
                         />
-                        <GraduationCap size={14} style={{ color: '#4B5563' }} />
+                        <AletheiaIcon name="graduation-cap" size={14} style={{ color: 'var(--text-secondary)' }} />
                         <span>{l.preferredName || l.firstName} {l.lastName || ''}</span>
                       </label>
                     );
@@ -726,7 +716,7 @@ export function AttendanceTrackerView({
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                     Data *
                   </label>
                   <input
@@ -738,14 +728,14 @@ export function AttendanceTrackerView({
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      borderRadius: '0.375rem',
-                      border: '1px solid #D1D5DB',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-medium)',
                       fontSize: '0.875rem',
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                     Carga Horária (h)
                   </label>
                   <input
@@ -759,8 +749,8 @@ export function AttendanceTrackerView({
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      borderRadius: '0.375rem',
-                      border: '1px solid #D1D5DB',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-medium)',
                       fontSize: '0.875rem',
                     }}
                   />
@@ -768,7 +758,7 @@ export function AttendanceTrackerView({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                   Status de Presença *
                 </label>
                 <select
@@ -779,8 +769,8 @@ export function AttendanceTrackerView({
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #D1D5DB',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
                     fontSize: '0.875rem',
                   }}
                 >
@@ -793,7 +783,7 @@ export function AttendanceTrackerView({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                   Observações Gerais
                 </label>
                 <textarea
@@ -806,7 +796,7 @@ export function AttendanceTrackerView({
                     width: '100%',
                     padding: '0.5rem 0.75rem',
                     borderRadius: '0.375rem',
-                    border: '1px solid #D1D5DB',
+                    border: '1px solid var(--border-medium)',
                     fontSize: '0.875rem',
                   }}
                 />
@@ -819,10 +809,10 @@ export function AttendanceTrackerView({
                   onClick={() => setIsBulkModalOpen(false)}
                   style={{
                     padding: '0.5rem 1rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #D1D5DB',
-                    backgroundColor: '#FFFFFF',
-                    color: '#374151',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
+                    backgroundColor: 'var(--bg-surface)',
+                    color: 'var(--text-secondary)',
                     fontSize: '0.875rem',
                     cursor: 'pointer',
                   }}
@@ -835,10 +825,10 @@ export function AttendanceTrackerView({
                   disabled={isSubmitting || bulkSelectedLearnerIds.length === 0}
                   style={{
                     padding: '0.5rem 1.25rem',
-                    borderRadius: '0.375rem',
+                    borderRadius: 'var(--radius-sm)',
                     border: 'none',
-                    backgroundColor: '#2563EB',
-                    color: '#FFFFFF',
+                    backgroundColor: 'var(--forest)',
+                    color: 'var(--text-inverse)',
                     fontSize: '0.875rem',
                     fontWeight: 600,
                     cursor: 'pointer',

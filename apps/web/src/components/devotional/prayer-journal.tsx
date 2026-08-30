@@ -1,15 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  Sparkles,
-  PartyPopper,
-  Heart,
-  Sun,
-  Star,
-  Check,
-  X,
-} from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type { CreatePrayerDto, PrayerResponseDto, PrayerType } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 
@@ -94,14 +86,14 @@ export function PrayerJournal({
     <div
       data-testid="prayer-journal"
       style={{
-        backgroundColor: '#FFFFFF',
-        borderRadius: '1rem',
-        border: '1px solid #E2E8F0',
+        backgroundColor: 'var(--bg-surface)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border-light)',
         padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
         gap: '1.25rem',
-        boxShadow: '0 1px 3px 0 rgba(15, 23, 42, 0.05)',
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
       {/* Header */}
@@ -116,7 +108,7 @@ export function PrayerJournal({
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#0F172A' }}>
+            <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               Diário de Oração da Família
             </h2>
             {answeredCount > 0 && (
@@ -125,22 +117,22 @@ export function PrayerJournal({
                 style={{
                   fontSize: '0.75rem',
                   fontWeight: 700,
-                  backgroundColor: '#ECFDF5',
-                  color: '#047857',
-                  border: '1px solid #A7F3D0',
+                  backgroundColor: 'var(--color-emerald-50)',
+                  color: 'var(--color-emerald-700)',
+                  border: '1px solid var(--color-emerald-100)',
                   padding: '0.125rem 0.5rem',
-                  borderRadius: '9999px',
+                  borderRadius: 'var(--radius-full)',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.25rem',
                 }}
               >
-                <Sparkles size={12} />
+                <AletheiaIcon name="sparkles" size={12} />
                 <span>{answeredCount} respondida(s)</span>
               </span>
             )}
           </div>
-          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#64748B' }}>
+          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
             Intercessões, súplicas ativas e testemunhos de orações respondidas pelo Senhor.
           </p>
         </div>
@@ -155,12 +147,12 @@ export function PrayerJournal({
               padding: '0.45rem 1rem',
               fontSize: '0.8125rem',
               fontWeight: 600,
-              borderRadius: '0.5rem',
+              borderRadius: 'var(--radius-md)',
               border: 'none',
-              backgroundColor: '#4338CA',
-              color: '#FFFFFF',
+              backgroundColor: 'var(--color-indigo-700)',
+              color: 'var(--text-inverse)',
               cursor: 'pointer',
-              boxShadow: '0 1px 2px 0 rgba(67, 56, 202, 0.2)',
+              boxShadow: 'var(--shadow-sm)',
             }}
           >
             + Novo Registro
@@ -173,23 +165,23 @@ export function PrayerJournal({
         <div
           data-testid="answered-celebration-banner"
           style={{
-            backgroundColor: '#ECFDF5',
-            border: '1px solid #A7F3D0',
-            borderRadius: '0.75rem',
+            backgroundColor: 'var(--color-emerald-50)',
+            border: '1px solid var(--color-emerald-100)',
+            borderRadius: 'var(--radius-lg)',
             padding: '0.75rem 1rem',
             display: 'flex',
             alignItems: 'center',
             gap: '0.75rem',
           }}
         >
-          <span style={{ color: '#059669', display: 'flex', alignItems: 'center' }}>
-            <PartyPopper size={20} />
+          <span style={{ color: 'var(--color-emerald-600)', display: 'flex', alignItems: 'center' }}>
+            <AletheiaIcon name="sparkles" size={20} />
           </span>
           <div style={{ flex: 1 }}>
-            <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#065F46', display: 'block' }}>
+            <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-emerald-700)', display: 'block' }}>
               Celebração de Resposta de Oração!
             </span>
-            <span style={{ fontSize: '0.8125rem', color: '#047857' }}>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--color-emerald-700)' }}>
               Deus tem sido fiel em ouvir as orações da sua família. Compartilhe o testemunho!
             </span>
           </div>
@@ -200,7 +192,7 @@ export function PrayerJournal({
       <div
         style={{
           display: 'flex',
-          borderBottom: '1px solid #E2E8F0',
+          borderBottom: '1px solid var(--border-light)',
           gap: '1rem',
         }}
       >
@@ -219,21 +211,21 @@ export function PrayerJournal({
             cursor: 'pointer',
             fontSize: '0.875rem',
             fontWeight: activeTab === 'PETITION' ? 700 : 500,
-            color: activeTab === 'PETITION' ? '#4338CA' : '#64748B',
-            borderBottom: activeTab === 'PETITION' ? '2px solid #4338CA' : '2px solid transparent',
+            color: activeTab === 'PETITION' ? 'var(--color-indigo-700)' : 'var(--text-secondary)',
+            borderBottom: activeTab === 'PETITION' ? '2px solid var(--color-indigo-700)' : '2px solid transparent',
             marginBottom: '-1px',
           }}
         >
-          <Heart size={14} />
+          <AletheiaIcon name="heart" size={14} />
           <span>Pedidos de Oração</span>
           <span
             style={{
-              backgroundColor: activeTab === 'PETITION' ? '#EEF2FF' : '#F1F5F9',
-              color: activeTab === 'PETITION' ? '#4338CA' : '#64748B',
+              backgroundColor: activeTab === 'PETITION' ? 'var(--color-indigo-50)' : 'var(--sage-soft)',
+              color: activeTab === 'PETITION' ? 'var(--color-indigo-700)' : 'var(--text-secondary)',
               fontSize: '0.75rem',
               fontWeight: 700,
               padding: '0.125rem 0.5rem',
-              borderRadius: '9999px',
+              borderRadius: 'var(--radius-full)',
             }}
           >
             {petitionCount}
@@ -255,21 +247,21 @@ export function PrayerJournal({
             cursor: 'pointer',
             fontSize: '0.875rem',
             fontWeight: activeTab === 'GRATITUDE' ? 700 : 500,
-            color: activeTab === 'GRATITUDE' ? '#047857' : '#64748B',
-            borderBottom: activeTab === 'GRATITUDE' ? '2px solid #047857' : '2px solid transparent',
+            color: activeTab === 'GRATITUDE' ? 'var(--color-emerald-700)' : 'var(--text-secondary)',
+            borderBottom: activeTab === 'GRATITUDE' ? '2px solid var(--color-emerald-700)' : '2px solid transparent',
             marginBottom: '-1px',
           }}
         >
-          <Sun size={14} />
+          <AletheiaIcon name="sparkles" size={14} />
           <span>Gratidões & Louvores</span>
           <span
             style={{
-              backgroundColor: activeTab === 'GRATITUDE' ? '#ECFDF5' : '#F1F5F9',
-              color: activeTab === 'GRATITUDE' ? '#047857' : '#64748B',
+              backgroundColor: activeTab === 'GRATITUDE' ? 'var(--color-emerald-50)' : 'var(--sage-soft)',
+              color: activeTab === 'GRATITUDE' ? 'var(--color-emerald-700)' : 'var(--text-secondary)',
               fontSize: '0.75rem',
               fontWeight: 700,
               padding: '0.125rem 0.5rem',
-              borderRadius: '9999px',
+              borderRadius: 'var(--radius-full)',
             }}
           >
             {gratitudeCount}
@@ -284,22 +276,22 @@ export function PrayerJournal({
           style={{
             textAlign: 'center',
             padding: '2.5rem 1rem',
-            backgroundColor: '#F8FAFC',
-            borderRadius: '0.75rem',
-            border: '1px dashed #CBD5E1',
-            color: '#64748B',
+            backgroundColor: 'var(--sage-soft)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px dashed var(--border-medium)',
+            color: 'var(--text-secondary)',
             fontSize: '0.875rem',
           }}
         >
           <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'center' }}>
-            <Sparkles size={32} style={{ color: '#94A3B8' }} />
+            <AletheiaIcon name="sparkles" size={32} style={{ color: 'var(--text-muted)' }} />
           </div>
           <p style={{ margin: 0, fontWeight: 500 }}>
             {activeTab === 'PETITION'
               ? 'Nenhum pedido de oração ativo no momento.'
               : 'Nenhuma gratidão registrada ainda.'}
           </p>
-          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem', color: '#94A3B8' }}>
+          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
             Adicione um novo registro para que todos possam orar juntos.
           </p>
         </div>
@@ -313,13 +305,11 @@ export function PrayerJournal({
               key={prayer.id}
               data-testid={`prayer-card-${prayer.id}`}
               style={{
-                border: prayer.isAnswered ? '1px solid #A7F3D0' : '1px solid #E2E8F0',
-                borderRadius: '0.75rem',
+                border: prayer.isAnswered ? '1px solid var(--color-emerald-100)' : '1px solid var(--border-light)',
+                borderRadius: 'var(--radius-lg)',
                 padding: '1.25rem',
-                backgroundColor: prayer.isAnswered ? '#F0FDF4' : '#FFFFFF',
-                boxShadow: prayer.isAnswered
-                  ? '0 2px 4px rgba(16, 185, 129, 0.05)'
-                  : '0 1px 2px rgba(15, 23, 42, 0.04)',
+                backgroundColor: prayer.isAnswered ? 'var(--color-emerald-50)' : 'var(--bg-surface)',
+                boxShadow: 'var(--shadow-sm)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
@@ -337,7 +327,7 @@ export function PrayerJournal({
                     flexWrap: 'wrap',
                   }}
                 >
-                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0F172A' }}>
+                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                     {prayer.title}
                   </h3>
 
@@ -345,11 +335,11 @@ export function PrayerJournal({
                     <span
                       data-testid={`prayer-answered-badge-${prayer.id}`}
                       style={{
-                        backgroundColor: '#DCFCE7',
-                        color: '#15803D',
-                        border: '1px solid #86EFAC',
+                        backgroundColor: 'var(--color-emerald-50)',
+                        color: 'var(--color-emerald-700)',
+                        border: '1px solid var(--color-emerald-100)',
                         padding: '0.125rem 0.625rem',
-                        borderRadius: '9999px',
+                        borderRadius: 'var(--radius-full)',
                         fontSize: '0.75rem',
                         fontWeight: 700,
                         display: 'inline-flex',
@@ -357,16 +347,16 @@ export function PrayerJournal({
                         gap: '0.25rem',
                       }}
                     >
-                      <Sparkles size={12} />
+                      <AletheiaIcon name="sparkles" size={12} />
                       <span>Respondida!</span>
                     </span>
                   ) : (
                     <span
                       style={{
-                        backgroundColor: prayer.type === 'PETITION' ? '#EEF2FF' : '#ECFDF5',
-                        color: prayer.type === 'PETITION' ? '#4338CA' : '#047857',
+                        backgroundColor: prayer.type === 'PETITION' ? 'var(--color-indigo-50)' : 'var(--color-emerald-50)',
+                        color: prayer.type === 'PETITION' ? 'var(--color-indigo-700)' : 'var(--color-emerald-700)',
                         padding: '0.125rem 0.5rem',
-                        borderRadius: '9999px',
+                        borderRadius: 'var(--radius-full)',
                         fontSize: '0.6875rem',
                         fontWeight: 600,
                       }}
@@ -381,7 +371,7 @@ export function PrayerJournal({
                     style={{
                       margin: '0.25rem 0 0.5rem 0',
                       fontSize: '0.875rem',
-                      color: '#475569',
+                      color: 'var(--text-secondary)',
                       lineHeight: 1.5,
                     }}
                   >
@@ -395,16 +385,16 @@ export function PrayerJournal({
                     style={{
                       marginTop: '0.5rem',
                       padding: '0.625rem 0.875rem',
-                      backgroundColor: '#FFFFFF',
-                      borderRadius: '0.5rem',
-                      border: '1px solid #BBF7D0',
+                      backgroundColor: 'var(--bg-surface)',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--color-emerald-100)',
                       fontSize: '0.8125rem',
-                      color: '#166534',
+                      color: 'var(--color-emerald-700)',
                       lineHeight: 1.5,
                     }}
                   >
                     <strong style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.125rem' }}>
-                      <Star size={14} style={{ color: '#059669' }} />
+                      <AletheiaIcon name="sparkles" size={14} style={{ color: 'var(--color-emerald-600)' }} />
                       <span>Testemunho / Resposta:</span>
                     </strong>
                     {prayer.answeredNote}
@@ -427,17 +417,17 @@ export function PrayerJournal({
                         padding: '0.3rem 0.625rem',
                         fontSize: '0.75rem',
                         fontWeight: 600,
-                        color: '#047857',
-                        borderColor: '#A7F3D0',
-                        backgroundColor: '#ECFDF5',
-                        borderRadius: '0.375rem',
+                        color: 'var(--color-emerald-700)',
+                        borderColor: 'var(--color-emerald-100)',
+                        backgroundColor: 'var(--color-emerald-50)',
+                        borderRadius: 'var(--radius-sm)',
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '0.25rem',
                       }}
                     >
-                      <Check size={12} />
+                      <AletheiaIcon name="check" size={12} />
                       <span>Marcar como Respondida</span>
                     </button>
                   </Can>
@@ -453,8 +443,8 @@ export function PrayerJournal({
                       padding: '0.3rem 0.5rem',
                       fontSize: '0.75rem',
                       fontWeight: 500,
-                      color: '#94A3B8',
-                      borderRadius: '0.375rem',
+                      color: 'var(--text-muted)',
+                      borderRadius: 'var(--radius-sm)',
                       cursor: 'pointer',
                       border: '1px solid transparent',
                     }}
@@ -488,25 +478,25 @@ export function PrayerJournal({
         >
           <div
             style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '1rem',
+              backgroundColor: 'var(--bg-surface)',
+              borderRadius: 'var(--radius-lg)',
               maxWidth: '480px',
               width: '100%',
               padding: '1.75rem',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+              boxShadow: 'var(--shadow-xl)',
             }}
           >
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.125rem', fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <PartyPopper size={20} style={{ color: '#059669' }} />
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <AletheiaIcon name="sparkles" size={20} style={{ color: 'var(--color-emerald-600)' }} />
               <span>Marcar Oração como Respondida</span>
             </h3>
-            <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.875rem', color: '#64748B' }}>
+            <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
               Deseja registrar um testemunho ou nota de como Deus respondeu a esta oração na vida da família?
             </p>
             <div className="form-group" style={{ marginBottom: '1.25rem' }}>
               <label
                 htmlFor="answered-note"
-                style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '0.375rem' }}
+                style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.375rem' }}
               >
                 Nota de Agradecimento / Testemunho
               </label>
@@ -520,8 +510,8 @@ export function PrayerJournal({
                 style={{
                   width: '100%',
                   padding: '0.625rem 0.75rem',
-                  borderRadius: '0.5rem',
-                  border: '1px solid #CBD5E1',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-medium)',
                   fontSize: '0.875rem',
                   boxSizing: 'border-box',
                 }}
@@ -536,9 +526,9 @@ export function PrayerJournal({
                   padding: '0.5rem 1rem',
                   fontSize: '0.875rem',
                   fontWeight: 600,
-                  borderRadius: '0.375rem',
-                  border: '1px solid #CBD5E1',
-                  backgroundColor: '#FFFFFF',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
+                  backgroundColor: 'var(--bg-surface)',
                   cursor: 'pointer',
                 }}
               >
@@ -553,10 +543,10 @@ export function PrayerJournal({
                   padding: '0.5rem 1rem',
                   fontSize: '0.875rem',
                   fontWeight: 600,
-                  borderRadius: '0.375rem',
+                  borderRadius: 'var(--radius-sm)',
                   border: 'none',
-                  backgroundColor: '#059669',
-                  color: '#FFFFFF',
+                  backgroundColor: 'var(--color-emerald-600)',
+                  color: 'var(--text-inverse)',
                   cursor: 'pointer',
                 }}
               >
@@ -587,12 +577,12 @@ export function PrayerJournal({
         >
           <div
             style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '1rem',
+              backgroundColor: 'var(--bg-surface)',
+              borderRadius: 'var(--radius-lg)',
               maxWidth: '520px',
               width: '100%',
               padding: '1.75rem',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+              boxShadow: 'var(--shadow-xl)',
             }}
           >
             <div
@@ -603,15 +593,15 @@ export function PrayerJournal({
                 marginBottom: '1.25rem',
               }}
             >
-              <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 {newType === 'PETITION' ? (
                   <>
-                    <Heart size={18} style={{ color: '#4338CA' }} />
+                    <AletheiaIcon name="heart" size={18} style={{ color: 'var(--color-indigo-700)' }} />
                     <span>Novo Pedido de Oração</span>
                   </>
                 ) : (
                   <>
-                    <Sun size={18} style={{ color: '#047857' }} />
+                    <AletheiaIcon name="sparkles" size={18} style={{ color: 'var(--color-emerald-700)' }} />
                     <span>Nova Gratidão / Louvor</span>
                   </>
                 )}
@@ -622,7 +612,7 @@ export function PrayerJournal({
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#94A3B8',
+                  color: 'var(--text-muted)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -630,7 +620,7 @@ export function PrayerJournal({
                 }}
                 aria-label="Fechar"
               >
-                <X size={18} />
+                <AletheiaIcon name="x" size={18} />
               </button>
             </div>
 
@@ -641,10 +631,10 @@ export function PrayerJournal({
                 style={{
                   marginBottom: '1rem',
                   padding: '0.625rem 0.75rem',
-                  backgroundColor: '#FFF1F2',
-                  border: '1px solid #FCA5A5',
-                  color: '#9F1239',
-                  borderRadius: '0.5rem',
+                  backgroundColor: 'var(--color-rose-50)',
+                  border: '1px solid var(--color-rose-100)',
+                  color: 'var(--color-rose-700)',
+                  borderRadius: 'var(--radius-md)',
                   fontSize: '0.875rem',
                 }}
               >
@@ -663,7 +653,7 @@ export function PrayerJournal({
                     display: 'block',
                     fontSize: '0.8125rem',
                     fontWeight: 600,
-                    color: '#334155',
+                    color: 'var(--text-secondary)',
                     marginBottom: '0.25rem',
                   }}
                 >
@@ -676,8 +666,8 @@ export function PrayerJournal({
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #CBD5E1',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
                     fontSize: '0.875rem',
                   }}
                 >
@@ -693,7 +683,7 @@ export function PrayerJournal({
                     display: 'block',
                     fontSize: '0.8125rem',
                     fontWeight: 600,
-                    color: '#334155',
+                    color: 'var(--text-secondary)',
                     marginBottom: '0.25rem',
                   }}
                 >
@@ -710,8 +700,8 @@ export function PrayerJournal({
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #CBD5E1',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
                     fontSize: '0.875rem',
                     boxSizing: 'border-box',
                   }}
@@ -725,7 +715,7 @@ export function PrayerJournal({
                     display: 'block',
                     fontSize: '0.8125rem',
                     fontWeight: 600,
-                    color: '#334155',
+                    color: 'var(--text-secondary)',
                     marginBottom: '0.25rem',
                   }}
                 >
@@ -741,8 +731,8 @@ export function PrayerJournal({
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #CBD5E1',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
                     fontSize: '0.875rem',
                     boxSizing: 'border-box',
                   }}
@@ -766,9 +756,9 @@ export function PrayerJournal({
                     padding: '0.5rem 1rem',
                     fontSize: '0.875rem',
                     fontWeight: 600,
-                    borderRadius: '0.375rem',
-                    border: '1px solid #CBD5E1',
-                    backgroundColor: '#FFFFFF',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
+                    backgroundColor: 'var(--bg-surface)',
                     cursor: 'pointer',
                   }}
                 >
@@ -783,10 +773,10 @@ export function PrayerJournal({
                     padding: '0.5rem 1.25rem',
                     fontSize: '0.875rem',
                     fontWeight: 600,
-                    borderRadius: '0.375rem',
+                    borderRadius: 'var(--radius-sm)',
                     border: 'none',
-                    backgroundColor: '#4338CA',
-                    color: '#FFFFFF',
+                    backgroundColor: 'var(--color-indigo-700)',
+                    color: 'var(--text-inverse)',
                     cursor: 'pointer',
                   }}
                 >

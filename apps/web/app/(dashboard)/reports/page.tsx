@@ -135,16 +135,16 @@ export default function ReportsPage() {
     >
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.5rem 1rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#111827', margin: 0 }}>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
             Gerador de Documentos & Históricos Oficiais
           </h1>
-          <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: '0.25rem 0 0 0' }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
             Emita históricos escolares com conversão flexível de notas, sumários de presença e relatórios de conformidade.
           </p>
         </div>
 
         {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: '#6B7280' }}>
+          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
             Carregando relatórios oficiais...
           </div>
         ) : (

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Landmark, Sprout, BookOpen } from "lucide-react";
+import { AletheiaIcon } from "@aletheia/ui";
 import type { PedagogicalFramework } from "@aletheia/contracts";
 
 export interface TemplateModalProps {
@@ -30,19 +30,19 @@ export function TemplateModal({ isOpen, onClose, onApply }: TemplateModalProps) 
       id: "CLASSICAL_TRIVIUM",
       title: "Educação Clássica (Trívio)",
       desc: "Foco na fase gramatical: Português, Latim, Aritmética Lógica, História Ocidental Antiga, Ciências e Literatura Poética.",
-      icon: <Landmark size={18} style={{ color: "#4338CA" }} />,
+      icon: <AletheiaIcon name="landmark" size={18} style={{ color: "var(--color-indigo-700)" }} />,
     },
     {
       id: "CHARLOTTE_MASON",
       title: "Abordagem Charlotte Mason",
       desc: "Foco em Livros Vivos (Living Books), Estudo da Natureza, Narração, Picture Study, Trabalhos Manuais e Formação de Hábitos.",
-      icon: <Sprout size={18} style={{ color: "#059669" }} />,
+      icon: <AletheiaIcon name="sprout" size={18} style={{ color: "var(--color-emerald-600)" }} />,
     },
     {
       id: "TRADITIONAL",
       title: "Currículo Tradicional Estruturado",
       desc: "Disciplinas fundamentais organizadas: Português, Matemática, História, Geografia e Ciências Naturais.",
-      icon: <BookOpen size={18} style={{ color: "#D97706" }} />,
+      icon: <AletheiaIcon name="book-open" size={18} style={{ color: "var(--color-amber-600)" }} />,
     },
   ];
 
@@ -61,18 +61,18 @@ export function TemplateModal({ isOpen, onClose, onApply }: TemplateModalProps) 
     >
       <div
         style={{
-          backgroundColor: "#FFFFFF",
-          borderRadius: "0.75rem",
+          backgroundColor: "var(--bg-surface)",
+          borderRadius: "var(--radius-lg)",
           padding: "1.5rem",
           maxWidth: "36rem",
           width: "90%",
-          boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+          boxShadow: "var(--shadow-xl)",
         }}
       >
-        <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#111827", marginBottom: "0.5rem" }}>
+        <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem" }}>
           Aplicar Modelo Pedagógico
         </h2>
-        <p style={{ fontSize: "0.875rem", color: "#4B5563", marginBottom: "1.25rem" }}>
+        <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginBottom: "1.25rem" }}>
           Escolha uma abordagem para gerar disciplinas sugeridas e objetivos de aprendizagem iniciais:
         </p>
 
@@ -87,9 +87,9 @@ export function TemplateModal({ isOpen, onClose, onApply }: TemplateModalProps) 
                   alignItems: "flex-start",
                   gap: "0.75rem",
                   padding: "1rem",
-                  borderRadius: "0.5rem",
-                  border: `2px solid ${selectedTemplate === t.id ? "#2563EB" : "#E5E7EB"}`,
-                  backgroundColor: selectedTemplate === t.id ? "#EFF6FF" : "#FFFFFF",
+                  borderRadius: "var(--radius-md)",
+                  border: `2px solid ${selectedTemplate === t.id ? "var(--forest)" : "var(--border-light)"}`,
+                  backgroundColor: selectedTemplate === t.id ? "var(--color-indigo-50)" : "var(--bg-surface)",
                   cursor: "pointer",
                 }}
               >
@@ -102,11 +102,11 @@ export function TemplateModal({ isOpen, onClose, onApply }: TemplateModalProps) 
                   style={{ marginTop: "0.25rem" }}
                 />
                 <div>
-                  <div style={{ fontWeight: 600, color: "#1F2937", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <div style={{ fontWeight: 600, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
                     <span>{t.icon}</span>
                     <span>{t.title}</span>
                   </div>
-                  <div style={{ fontSize: "0.8125rem", color: "#4B5563", marginTop: "0.25rem" }}>{t.desc}</div>
+                  <div style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginTop: "0.25rem" }}>{t.desc}</div>
                 </div>
               </label>
             ))}
@@ -118,12 +118,12 @@ export function TemplateModal({ isOpen, onClose, onApply }: TemplateModalProps) 
               onClick={onClose}
               style={{
                 padding: "0.5rem 1rem",
-                borderRadius: "0.375rem",
-                border: "1px solid #D1D5DB",
-                backgroundColor: "#FFFFFF",
+                borderRadius: "var(--radius-sm)",
+                border: "1px solid var(--border-medium)",
+                backgroundColor: "var(--bg-surface)",
                 fontSize: "0.875rem",
                 fontWeight: 500,
-                color: "#374151",
+                color: "var(--text-secondary)",
                 cursor: "pointer",
               }}
             >
@@ -135,10 +135,10 @@ export function TemplateModal({ isOpen, onClose, onApply }: TemplateModalProps) 
               disabled={loading}
               style={{
                 padding: "0.5rem 1.25rem",
-                borderRadius: "0.375rem",
+                borderRadius: "var(--radius-sm)",
                 border: "none",
-                backgroundColor: "#2563EB",
-                color: "#FFFFFF",
+                backgroundColor: "var(--forest)",
+                color: "var(--text-inverse)",
                 fontSize: "0.875rem",
                 fontWeight: 600,
                 cursor: loading ? "not-allowed" : "pointer",

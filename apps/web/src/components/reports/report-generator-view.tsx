@@ -1,17 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import {
-  FileText,
-  Calendar,
-  Palette,
-  Landmark,
-  GraduationCap,
-  Eye,
-  Download,
-  Trash2,
-  FileCheck,
-} from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type {
   GenerateReportDto,
   GradingScale,
@@ -28,27 +18,27 @@ export const REPORT_TYPE_CONFIG: Record<
 > = {
   ACADEMIC_TRANSCRIPT: {
     label: 'Histórico Escolar Oficial',
-    icon: <FileText size={18} />,
+    icon: <AletheiaIcon name="file-text" size={18} />,
     description: 'Disciplinas, notas/conceitos calculados, horas e frequência oficial.',
-    color: '#2563EB',
+    color: 'var(--color-indigo-600)',
   },
   ATTENDANCE_SUMMARY: {
     label: 'Sumário de Frequência & Carga Horária',
-    icon: <Calendar size={18} />,
+    icon: <AletheiaIcon name="calendar" size={18} />,
     description: 'Dias letivos cumpridos e conformidade de horas anuais.',
-    color: '#059669',
+    color: 'var(--color-emerald-600)',
   },
   LEARNING_PORTFOLIO_DOSSIER: {
     label: 'Dossiê do Portfólio de Aprendizagem',
-    icon: <Palette size={18} />,
+    icon: <AletheiaIcon name="palette" size={18} />,
     description: 'Compilado de evidências, narrações e obras em destaque.',
-    color: '#7C3AED',
+    color: 'var(--color-indigo-700)',
   },
   ANNUAL_COMPLIANCE_REPORT: {
     label: 'Relatório Anual de Cumprimento Legal',
-    icon: <Landmark size={18} />,
+    icon: <AletheiaIcon name="landmark" size={18} />,
     description: 'Documento comprobatório consolidado para órgãos legais e arquivos familiares.',
-    color: '#D97706',
+    color: 'var(--color-amber-600)',
   },
 };
 
@@ -161,10 +151,10 @@ export function ReportGeneratorView({
             onChange={(e) => setFilterType(e.target.value)}
             style={{
               padding: '0.5rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #D1D5DB',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
               fontSize: '0.875rem',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--bg-surface)',
             }}
           >
             <option value="">Todos os tipos de relatório</option>
@@ -183,20 +173,20 @@ export function ReportGeneratorView({
             onClick={handleOpenModal}
             style={{
               padding: '0.625rem 1.25rem',
-              backgroundColor: '#2563EB',
-              color: '#FFFFFF',
-              borderRadius: '0.5rem',
+              backgroundColor: 'var(--forest)',
+              color: 'var(--text-inverse)',
+              borderRadius: 'var(--radius-md)',
               border: 'none',
               fontSize: '0.875rem',
               fontWeight: 700,
               cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(37, 99, 235, 0.3)',
+              boxShadow: 'var(--shadow-sm)',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.375rem',
             }}
           >
-            <FileCheck size={16} />
+            <AletheiaIcon name="file-text" size={16} />
             <span>Gerar Relatório Oficial</span>
           </button>
         </Can>
@@ -209,18 +199,18 @@ export function ReportGeneratorView({
           style={{
             padding: '3.5rem 1rem',
             textAlign: 'center',
-            backgroundColor: '#FFFFFF',
-            borderRadius: '0.75rem',
-            border: '1px dashed #D1D5DB',
+            backgroundColor: 'var(--bg-surface)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px dashed var(--border-medium)',
           }}
         >
-          <div style={{ color: 'var(--color-brand-sage, #78937f)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
-            <FileText size={40} />
+          <div style={{ color: 'var(--sage)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
+            <AletheiaIcon name="file-text" size={40} />
           </div>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#111827', margin: '0 0 0.5rem 0' }}>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
             Nenhum relatório oficial gerado ainda
           </h3>
-          <p style={{ fontSize: '0.875rem', color: '#6B7280', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
             Emita históricos escolares oficiais, sumários de presença para conformidade legal e dossiês do portfólio dos educandos.
           </p>
           <Can action="generate_transcripts">
@@ -230,9 +220,9 @@ export function ReportGeneratorView({
               onClick={handleOpenModal}
               style={{
                 padding: '0.5rem 1rem',
-                backgroundColor: '#2563EB',
-                color: '#FFFFFF',
-                borderRadius: '0.375rem',
+                backgroundColor: 'var(--forest)',
+                color: 'var(--text-inverse)',
+                borderRadius: 'var(--radius-sm)',
                 border: 'none',
                 fontSize: '0.875rem',
                 fontWeight: 600,
@@ -263,15 +253,15 @@ export function ReportGeneratorView({
                 key={report.id}
                 data-testid={`report-card-${report.id}`}
                 style={{
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: '0.75rem',
-                  border: '1px solid #E5E7EB',
+                  backgroundColor: 'var(--bg-surface)',
+                  borderRadius: 'var(--radius-lg)',
+                  border: '1px solid var(--border-light)',
                   padding: '1.25rem',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
                   gap: '1rem',
-                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
                 <div>
@@ -287,15 +277,15 @@ export function ReportGeneratorView({
                       style={{
                         fontSize: '0.75rem',
                         fontWeight: 700,
-                        backgroundColor: '#EFF6FF',
+                        backgroundColor: 'var(--color-indigo-50)',
                         color: conf.color,
                         padding: '0.25rem 0.5rem',
-                        borderRadius: '9999px',
+                        borderRadius: 'var(--radius-full)',
                       }}
                     >
                       {conf.icon} {conf.label}
                     </span>
-                    <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                       {report.generatedAt.slice(0, 10)}
                     </span>
                   </div>
@@ -304,20 +294,20 @@ export function ReportGeneratorView({
                     style={{
                       fontSize: '1.125rem',
                       fontWeight: 700,
-                      color: '#111827',
+                      color: 'var(--text-primary)',
                       margin: '0.25rem 0',
                     }}
                   >
                     {report.title}
                   </h3>
 
-                  <div style={{ fontSize: '0.8125rem', color: '#4B5563', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                    <GraduationCap size={14} style={{ color: '#4B5563' }} />
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                    <AletheiaIcon name="graduation-cap" size={14} style={{ color: 'var(--text-secondary)' }} />
                     <strong>{learnerDisplayName}</strong>
                     {report.academicYearTitle && ` • ${report.academicYearTitle}`}
                   </div>
 
-                  <div style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: '0.5rem' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
                     Escala: {GRADING_SCALE_LABELS[report.gradingScale] || report.gradingScale}
                   </div>
                 </div>
@@ -328,7 +318,7 @@ export function ReportGeneratorView({
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     paddingTop: '0.75rem',
-                    borderTop: '1px solid #F3F4F6',
+                    borderTop: '1px solid var(--sage-soft)',
                   }}
                 >
                   <button
@@ -337,9 +327,9 @@ export function ReportGeneratorView({
                     onClick={() => setSelectedReportForView(report)}
                     style={{
                       padding: '0.4rem 0.875rem',
-                      backgroundColor: '#2563EB',
-                      color: '#FFFFFF',
-                      borderRadius: '0.375rem',
+                      backgroundColor: 'var(--forest)',
+                      color: 'var(--text-inverse)',
+                      borderRadius: 'var(--radius-sm)',
                       border: 'none',
                       fontSize: '0.8125rem',
                       fontWeight: 600,
@@ -349,7 +339,7 @@ export function ReportGeneratorView({
                       gap: '0.375rem',
                     }}
                   >
-                    <Eye size={14} />
+                    <AletheiaIcon name="eye" size={14} />
                     <span>Visualizar</span>
                   </button>
 
@@ -361,10 +351,10 @@ export function ReportGeneratorView({
                       title="Exportar CSV"
                       style={{
                         padding: '0.4rem 0.625rem',
-                        backgroundColor: '#F3F4F6',
-                        color: '#374151',
-                        borderRadius: '0.375rem',
-                        border: '1px solid #D1D5DB',
+                        backgroundColor: 'var(--sage-soft)',
+                        color: 'var(--text-secondary)',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--border-medium)',
                         fontSize: '0.8125rem',
                         cursor: 'pointer',
                         display: 'inline-flex',
@@ -372,7 +362,7 @@ export function ReportGeneratorView({
                         gap: '0.25rem',
                       }}
                     >
-                      <Download size={14} />
+                      <AletheiaIcon name="download" size={14} />
                       <span>CSV</span>
                     </button>
 
@@ -384,10 +374,10 @@ export function ReportGeneratorView({
                         title="Excluir Relatório"
                         style={{
                           padding: '0.4rem 0.625rem',
-                          backgroundColor: '#FEF2F2',
-                          color: '#DC2626',
-                          borderRadius: '0.375rem',
-                          border: '1px solid #FECACA',
+                          backgroundColor: 'var(--color-rose-50)',
+                          color: 'var(--color-rose-600)',
+                          borderRadius: 'var(--radius-sm)',
+                          border: '1px solid var(--color-rose-100)',
                           fontSize: '0.8125rem',
                           cursor: 'pointer',
                           display: 'inline-flex',
@@ -395,7 +385,7 @@ export function ReportGeneratorView({
                         }}
                         aria-label="Excluir Relatório"
                       >
-                        <Trash2 size={14} />
+                        <AletheiaIcon name="trash-2" size={14} />
                       </button>
                     </Can>
                   </div>
@@ -423,21 +413,21 @@ export function ReportGeneratorView({
         >
           <div
             style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '0.75rem',
+              backgroundColor: 'var(--bg-surface)',
+              borderRadius: 'var(--radius-lg)',
               maxWidth: '560px',
               width: '100%',
               padding: '1.75rem',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+              boxShadow: 'var(--shadow-xl)',
             }}
           >
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', margin: '0 0 1rem 0' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 1rem 0' }}>
               Gerar Relatório / Histórico Oficial
             </h2>
 
             <form onSubmit={handleGenerate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                   Educando *
                 </label>
                 <select
@@ -448,8 +438,8 @@ export function ReportGeneratorView({
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #D1D5DB',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
                     fontSize: '0.875rem',
                   }}
                 >
@@ -462,7 +452,7 @@ export function ReportGeneratorView({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                   Tipo de Relatório *
                 </label>
                 <select
@@ -473,8 +463,8 @@ export function ReportGeneratorView({
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #D1D5DB',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
                     fontSize: '0.875rem',
                   }}
                 >
@@ -487,7 +477,7 @@ export function ReportGeneratorView({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                   Título do Documento *
                 </label>
                 <input
@@ -500,15 +490,15 @@ export function ReportGeneratorView({
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #D1D5DB',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
                     fontSize: '0.875rem',
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                   Critério de Escala de Notas / Domínio *
                 </label>
                 <select
@@ -519,8 +509,8 @@ export function ReportGeneratorView({
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #D1D5DB',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
                     fontSize: '0.875rem',
                   }}
                 >
@@ -533,7 +523,7 @@ export function ReportGeneratorView({
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#374151', cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                   <input
                     type="checkbox"
                     data-testid="report-include-attendance-checkbox"
@@ -543,7 +533,7 @@ export function ReportGeneratorView({
                   Incluir Sumário de Frequência e Carga Horária Cumprida
                 </label>
 
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#374151', cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                   <input
                     type="checkbox"
                     data-testid="report-include-portfolio-checkbox"
@@ -555,7 +545,7 @@ export function ReportGeneratorView({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                   Observações Gerais Pedagógicas / Notações
                 </label>
                 <textarea
@@ -567,8 +557,8 @@ export function ReportGeneratorView({
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #D1D5DB',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
                     fontSize: '0.875rem',
                   }}
                 />
@@ -581,10 +571,10 @@ export function ReportGeneratorView({
                   onClick={() => setIsModalOpen(false)}
                   style={{
                     padding: '0.5rem 1rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #D1D5DB',
-                    backgroundColor: '#FFFFFF',
-                    color: '#374151',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
+                    backgroundColor: 'var(--bg-surface)',
+                    color: 'var(--text-secondary)',
                     fontSize: '0.875rem',
                     cursor: 'pointer',
                   }}
@@ -597,10 +587,10 @@ export function ReportGeneratorView({
                   disabled={isGenerating}
                   style={{
                     padding: '0.5rem 1.25rem',
-                    borderRadius: '0.375rem',
+                    borderRadius: 'var(--radius-sm)',
                     border: 'none',
-                    backgroundColor: '#2563EB',
-                    color: '#FFFFFF',
+                    backgroundColor: 'var(--forest)',
+                    color: 'var(--text-inverse)',
                     fontSize: '0.875rem',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -632,14 +622,14 @@ export function ReportGeneratorView({
         >
           <div
             style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '0.75rem',
+              backgroundColor: 'var(--bg-surface)',
+              borderRadius: 'var(--radius-lg)',
               maxWidth: '900px',
               width: '100%',
               maxHeight: '90vh',
               overflowY: 'auto',
               padding: '2rem',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
+              boxShadow: 'var(--shadow-xl)',
             }}
           >
             <PrintableTranscript

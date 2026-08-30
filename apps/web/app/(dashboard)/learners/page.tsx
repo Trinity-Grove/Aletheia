@@ -108,7 +108,7 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
             <h1 className="page-title" style={{ margin: 0, fontSize: '1.75rem', fontWeight: 700 }}>
               Gestão de Educandos
             </h1>
-            <p className="page-subtitle" style={{ margin: '0.25rem 0 0 0', color: 'var(--muted, #5c6f67)' }}>
+            <p className="page-subtitle" style={{ margin: '0.25rem 0 0 0', color: 'var(--text-secondary)' }}>
               Gerencie os perfis pedagógicos e etapas de desenvolvimento dos seus filhos.
             </p>
           </div>

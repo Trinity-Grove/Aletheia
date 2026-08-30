@@ -4,19 +4,7 @@ import React, { type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Home,
-  Users,
-  BookOpen,
-  Library,
-  CalendarDays,
-  PenLine,
-  FolderHeart,
-  ClipboardCheck,
-  BarChart3,
-  Palette,
-  Settings,
-} from 'lucide-react';
-import {
+  AletheiaIcon,
   AppShell,
   type NavigationItem,
   type NavigationLinkRenderer,
@@ -44,17 +32,17 @@ export { NotificationBell } from './notification-bell';
 export type NavItem = NavigationItem;
 
 export const MAIN_NAV_ITEMS: NavigationItem[] = [
-  { id: 'home', label: 'Início', href: '/', icon: <Home size={18} /> },
-  { id: 'learners', label: 'Educandos', href: '/learners', icon: <Users size={18} /> },
-  { id: 'devotional', label: 'Devocional', href: '/devotional', icon: <BookOpen size={18} /> },
-  { id: 'curriculum', label: 'Currículo', href: '/curriculum', icon: <Library size={18} /> },
-  { id: 'schedule', label: 'Agenda & Rotina', href: '/schedule', icon: <CalendarDays size={18} /> },
-  { id: 'records', label: 'Diário de Aprendizagem', href: '/records', icon: <PenLine size={18} /> },
-  { id: 'portfolio', label: 'Portfólio', href: '/portfolio', icon: <FolderHeart size={18} /> },
-  { id: 'attendance', label: 'Frequência', href: '/attendance', icon: <ClipboardCheck size={18} /> },
-  { id: 'reports', label: 'Relatórios', href: '/reports', icon: <BarChart3 size={18} /> },
-  { id: 'design-system', label: 'Design System', href: '/design-system', icon: <Palette size={18} /> },
-  { id: 'settings', label: 'Configurações', href: '/settings', icon: <Settings size={18} /> },
+  { id: 'home', label: 'Início', href: '/', icon: <AletheiaIcon name="home" size={18} /> },
+  { id: 'learners', label: 'Educandos', href: '/learners', icon: <AletheiaIcon name="users" size={18} /> },
+  { id: 'devotional', label: 'Devocional', href: '/devotional', icon: <AletheiaIcon name="book-open" size={18} /> },
+  { id: 'curriculum', label: 'Currículo', href: '/curriculum', icon: <AletheiaIcon name="library" size={18} /> },
+  { id: 'schedule', label: 'Agenda & Rotina', href: '/schedule', icon: <AletheiaIcon name="calendar-days" size={18} /> },
+  { id: 'records', label: 'Diário de Aprendizagem', href: '/records', icon: <AletheiaIcon name="pen-line" size={18} /> },
+  { id: 'portfolio', label: 'Portfólio', href: '/portfolio', icon: <AletheiaIcon name="folder-heart" size={18} /> },
+  { id: 'attendance', label: 'Frequência', href: '/attendance', icon: <AletheiaIcon name="clipboard-check" size={18} /> },
+  { id: 'reports', label: 'Relatórios', href: '/reports', icon: <AletheiaIcon name="bar-chart-3" size={18} /> },
+  { id: 'design-system', label: 'Design System', href: '/design-system', icon: <AletheiaIcon name="palette" size={18} /> },
+  { id: 'settings', label: 'Configurações', href: '/settings', icon: <AletheiaIcon name="settings" size={18} /> },
 ];
 
 const renderNextNavigationLink: NavigationLinkRenderer = (linkProps) => (

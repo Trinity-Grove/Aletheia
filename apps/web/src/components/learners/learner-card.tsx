@@ -1,13 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Sprout,
-  BookOpen,
-  Calendar,
-  Lightbulb,
-  MessageSquare,
-} from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type { EducationalStage, LearnerResponseDto } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 
@@ -42,7 +36,7 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
   const isArchived = Boolean(learner.archivedAt);
   const displayName = learner.preferredName || learner.firstName;
   const initial = (displayName.charAt(0) || '?').toUpperCase();
-  const avatarBg = learner.avatarColor || '#4F46E5';
+  const avatarBg = learner.avatarColor || 'var(--color-indigo-600)';
   const age = calculateAge(learner.birthDate);
 
   return (
@@ -50,10 +44,10 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
       className={`learner-card ${isArchived ? 'learner-card-archived' : ''}`}
       data-testid={`learner-card-${learner.id}`}
       style={{
-        backgroundColor: isArchived ? '#F8FAFC' : '#FFFFFF',
-        borderRadius: '1rem',
-        border: isArchived ? '1.5px dashed #CBD5E1' : '1px solid #E2E8F0',
-        boxShadow: isArchived ? 'none' : '0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04)',
+        backgroundColor: isArchived ? 'var(--sage-soft)' : 'var(--bg-surface)',
+        borderRadius: 'var(--radius-lg)',
+        border: isArchived ? '1.5px dashed var(--border-medium)' : '1px solid var(--border-light)',
+        boxShadow: isArchived ? 'none' : 'var(--shadow-sm)',
         padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
@@ -84,16 +78,15 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
             style={{
               width: '48px',
               height: '48px',
-              borderRadius: '9999px',
+              borderRadius: 'var(--radius-full)',
               backgroundColor: avatarBg,
-              color: '#FFFFFF',
+              color: 'var(--text-inverse)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 700,
               fontSize: '1.25rem',
-              boxShadow: `0 2px 8px ${avatarBg}40`,
-              border: '2px solid #FFFFFF',
+              border: '2px solid var(--bg-surface)',
               flexShrink: 0,
             }}
           >
@@ -105,14 +98,14 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
                 margin: 0,
                 fontSize: '1.125rem',
                 fontWeight: 700,
-                color: '#0F172A',
+                color: 'var(--text-primary)',
                 letterSpacing: '-0.01em',
               }}
             >
               {displayName}
             </h3>
             {learner.lastName && (
-              <span style={{ fontSize: '0.875rem', color: '#64748B', display: 'block' }}>
+              <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', display: 'block' }}>
                 {learner.firstName} {learner.lastName}
               </span>
             )}
@@ -125,10 +118,10 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
             style={{
               fontSize: '0.75rem',
               fontWeight: 600,
-              backgroundColor: '#F1F5F9',
-              color: '#64748B',
+              backgroundColor: 'var(--sage-soft)',
+              color: 'var(--text-secondary)',
               padding: '0.25rem 0.5rem',
-              borderRadius: '9999px',
+              borderRadius: 'var(--radius-full)',
             }}
           >
             Arquivado
@@ -143,18 +136,18 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
           data-testid="learner-stage-chip"
           style={{
             padding: '0.25rem 0.625rem',
-            borderRadius: '9999px',
-            backgroundColor: '#EEF2FF',
-            color: '#4338CA',
+            borderRadius: 'var(--radius-full)',
+            backgroundColor: 'var(--color-indigo-50)',
+            color: 'var(--color-indigo-700)',
             fontWeight: 600,
             fontSize: '0.75rem',
-            border: '1px solid #E0E7FF',
+            border: '1px solid var(--color-indigo-100)',
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.375rem',
           }}
         >
-          <Sprout size={12} />
+          <AletheiaIcon name="sprout" size={12} />
           <span>{stageLabels[learner.stage] || learner.stage}</span>
         </span>
 
@@ -164,18 +157,18 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
             data-testid="learner-grade-pill"
             style={{
               padding: '0.25rem 0.625rem',
-              borderRadius: '9999px',
-              backgroundColor: '#F1F5F9',
-              color: '#334155',
+              borderRadius: 'var(--radius-full)',
+              backgroundColor: 'var(--sage-soft)',
+              color: 'var(--text-secondary)',
               fontWeight: 600,
               fontSize: '0.75rem',
-              border: '1px solid #E2E8F0',
+              border: '1px solid var(--border-light)',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.375rem',
             }}
           >
-            <BookOpen size={12} />
+            <AletheiaIcon name="book-open" size={12} />
             <span>{learner.customGrade}</span>
           </span>
         )}
@@ -186,18 +179,18 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
             data-testid="learner-age-pill"
             style={{
               padding: '0.25rem 0.5rem',
-              borderRadius: '9999px',
-              backgroundColor: '#F8FAFC',
-              color: '#64748B',
+              borderRadius: 'var(--radius-full)',
+              backgroundColor: 'var(--sage-soft)',
+              color: 'var(--text-secondary)',
               fontSize: '0.75rem',
               fontWeight: 500,
-              border: '1px solid #E2E8F0',
+              border: '1px solid var(--border-light)',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.375rem',
             }}
           >
-            <Calendar size={12} />
+            <AletheiaIcon name="calendar" size={12} />
             <span>{age ? `${age} • ` : ''}Nascimento: {learner.birthDate}</span>
           </span>
         )}
@@ -209,17 +202,17 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
           data-testid="learner-special-needs"
           style={{
             fontSize: '0.8125rem',
-            color: '#92400E',
-            backgroundColor: '#FEF3C7',
-            border: '1px solid #FDE68A',
+            color: 'var(--color-amber-700)',
+            backgroundColor: 'var(--color-amber-50)',
+            border: '1px solid var(--color-amber-100)',
             padding: '0.5rem 0.75rem',
-            borderRadius: '0.5rem',
+            borderRadius: 'var(--radius-md)',
             display: 'flex',
             alignItems: 'flex-start',
             gap: '0.375rem',
           }}
         >
-          <Lightbulb size={16} style={{ color: '#D97706', flexShrink: 0, marginTop: '0.125rem' }} />
+          <AletheiaIcon name="lightbulb" size={16} style={{ color: 'var(--color-amber-600)', flexShrink: 0, marginTop: '0.125rem' }} />
           <div>
             <strong>Necessidades / Adaptações:</strong> {learner.specialNeeds}
           </div>
@@ -231,17 +224,17 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
         <div
           data-testid="learner-notes"
           style={{
-            backgroundColor: '#F8FAFC',
-            border: '1px solid #E2E8F0',
-            borderRadius: '0.5rem',
+            backgroundColor: 'var(--sage-soft)',
+            border: '1px solid var(--border-light)',
+            borderRadius: 'var(--radius-md)',
             padding: '0.625rem 0.75rem',
             fontSize: '0.8125rem',
-            color: '#475569',
+            color: 'var(--text-secondary)',
             lineHeight: 1.5,
           }}
         >
-          <span style={{ fontWeight: 600, color: '#334155', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.125rem' }}>
-            <MessageSquare size={14} />
+          <span style={{ fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.125rem' }}>
+            <AletheiaIcon name="file-text" size={14} />
             <span>Observações:</span>
           </span>
           {learner.notes}
@@ -255,7 +248,7 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
           gap: '0.5rem',
           marginTop: 'auto',
           paddingTop: '0.75rem',
-          borderTop: '1px solid #F1F5F9',
+          borderTop: '1px solid var(--border-light)',
           justifyContent: 'flex-end',
         }}
       >
@@ -269,10 +262,10 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
               padding: '0.375rem 0.75rem',
               fontSize: '0.8125rem',
               fontWeight: 600,
-              borderRadius: '0.375rem',
-              border: '1px solid #CBD5E1',
-              backgroundColor: '#FFFFFF',
-              color: '#334155',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
+              backgroundColor: 'var(--bg-surface)',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
             }}
           >
@@ -290,10 +283,10 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
               padding: '0.375rem 0.75rem',
               fontSize: '0.8125rem',
               fontWeight: 600,
-              borderRadius: '0.375rem',
-              border: isArchived ? '1px solid #10B981' : '1px solid #FCA5A5',
-              backgroundColor: isArchived ? '#ECFDF5' : '#FFF1F2',
-              color: isArchived ? '#047857' : '#E11D48',
+              borderRadius: 'var(--radius-sm)',
+              border: isArchived ? '1px solid var(--color-emerald-600)' : '1px solid var(--color-rose-100)',
+              backgroundColor: isArchived ? 'var(--color-emerald-50)' : 'var(--color-rose-50)',
+              color: isArchived ? 'var(--color-emerald-700)' : 'var(--color-rose-600)',
               cursor: 'pointer',
             }}
           >

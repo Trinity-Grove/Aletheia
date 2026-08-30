@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, Clock, Circle, BookOpen, X } from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type { ObjectiveResponseDto, ObjectiveStatus, SubjectResponseDto } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 
@@ -23,7 +23,7 @@ export function SubjectCard({
   const total = objectives.length;
   const achieved = objectives.filter((o) => o.status === 'ACHIEVED').length;
   const percent = total > 0 ? Math.round((achieved / total) * 100) : 0;
-  const subjectColor = subject.color || '#4F46E5';
+  const subjectColor = subject.color || 'var(--color-indigo-600)';
 
   const cycleStatus = (status: ObjectiveStatus): ObjectiveStatus => {
     if (status === 'NOT_STARTED') return 'IN_PROGRESS';
@@ -34,12 +34,12 @@ export function SubjectCard({
   const getStatusBadge = (status: ObjectiveStatus) => {
     switch (status) {
       case 'ACHIEVED':
-        return { label: 'Concluído', bg: '#ECFDF5', text: '#047857', border: '#A7F3D0', icon: <CheckCircle2 size={12} /> };
+        return { label: 'Concluído', bg: 'var(--color-emerald-50)', text: 'var(--color-emerald-700)', border: 'var(--color-emerald-100)', icon: <AletheiaIcon name="check-circle-2" size={12} /> };
       case 'IN_PROGRESS':
-        return { label: 'Em Andamento', bg: '#FEF3C7', text: '#92400E', border: '#FDE68A', icon: <Clock size={12} /> };
+        return { label: 'Em Andamento', bg: 'var(--color-amber-50)', text: 'var(--color-amber-700)', border: 'var(--color-amber-100)', icon: <AletheiaIcon name="clock" size={12} /> };
       case 'NOT_STARTED':
       default:
-        return { label: 'Não Iniciado', bg: '#F1F5F9', text: '#475569', border: '#E2E8F0', icon: <Circle size={12} /> };
+        return { label: 'Não Iniciado', bg: 'var(--sage-soft)', text: 'var(--text-secondary)', border: 'var(--border-light)', icon: <AletheiaIcon name="circle" size={12} /> };
     }
   };
 
@@ -47,11 +47,11 @@ export function SubjectCard({
     <div
       data-testid={`subject-card-${subject.id}`}
       style={{
-        backgroundColor: '#FFFFFF',
-        borderRadius: '1rem',
-        border: '1px solid #E2E8F0',
+        backgroundColor: 'var(--bg-surface)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border-light)',
         borderLeft: `5px solid ${subjectColor}`,
-        boxShadow: '0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.03)',
+        boxShadow: 'var(--shadow-sm)',
         padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
@@ -67,17 +67,17 @@ export function SubjectCard({
               style={{
                 width: '28px',
                 height: '28px',
-                borderRadius: '0.375rem',
-                backgroundColor: `${subjectColor}18`,
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'var(--sage-soft)',
                 color: subjectColor,
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <BookOpen size={16} />
+              <AletheiaIcon name="book-open" size={16} />
             </span>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
               {subject.name}
             </h3>
           </div>
@@ -88,10 +88,10 @@ export function SubjectCard({
               fontSize: '0.75rem',
               fontWeight: 700,
               padding: '0.2rem 0.5rem',
-              borderRadius: '9999px',
-              backgroundColor: percent === 100 ? '#ECFDF5' : '#F1F5F9',
-              color: percent === 100 ? '#047857' : '#475569',
-              border: percent === 100 ? '1px solid #A7F3D0' : '1px solid #E2E8F0',
+              borderRadius: 'var(--radius-full)',
+              backgroundColor: percent === 100 ? 'var(--color-emerald-50)' : 'var(--sage-soft)',
+              color: percent === 100 ? 'var(--color-emerald-700)' : 'var(--text-secondary)',
+              border: percent === 100 ? '1px solid var(--color-emerald-100)' : '1px solid var(--border-light)',
             }}
           >
             {achieved}/{total} ({percent}%)
@@ -99,7 +99,7 @@ export function SubjectCard({
         </div>
 
         {subject.description && (
-          <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0.375rem 0 0 0', lineHeight: 1.4 }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0.375rem 0 0 0', lineHeight: 1.4 }}>
             {subject.description}
           </p>
         )}
@@ -110,8 +110,8 @@ export function SubjectCard({
         style={{
           width: '100%',
           height: '6px',
-          backgroundColor: '#F1F5F9',
-          borderRadius: '9999px',
+          backgroundColor: 'var(--sage-soft)',
+          borderRadius: 'var(--radius-full)',
           overflow: 'hidden',
         }}
       >
@@ -121,7 +121,7 @@ export function SubjectCard({
             width: `${percent}%`,
             height: '100%',
             backgroundColor: subjectColor,
-            borderRadius: '9999px',
+            borderRadius: 'var(--radius-full)',
             transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         />
@@ -133,13 +133,13 @@ export function SubjectCard({
           <div
             style={{
               fontSize: '0.8125rem',
-              color: '#94A3B8',
+              color: 'var(--text-muted)',
               fontStyle: 'italic',
               padding: '0.75rem 0',
               textAlign: 'center',
-              backgroundColor: '#F8FAFC',
-              borderRadius: '0.5rem',
-              border: '1px dashed #E2E8F0',
+              backgroundColor: 'var(--sage-soft)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px dashed var(--border-light)',
             }}
           >
             Nenhum objetivo cadastrado nesta disciplina.
@@ -156,9 +156,9 @@ export function SubjectCard({
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '0.5rem 0.75rem',
-                  borderRadius: '0.5rem',
-                  backgroundColor: obj.status === 'ACHIEVED' ? '#F8FAFC' : '#FFFFFF',
-                  border: '1px solid #E2E8F0',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: obj.status === 'ACHIEVED' ? 'var(--sage-soft)' : 'var(--bg-surface)',
+                  border: '1px solid var(--border-light)',
                   fontSize: '0.8125rem',
                   gap: '0.5rem',
                   transition: 'background-color 0.15s ease',
@@ -172,16 +172,16 @@ export function SubjectCard({
                       borderRadius: '50%',
                       backgroundColor:
                         obj.status === 'ACHIEVED'
-                          ? '#10B981'
+                          ? 'var(--color-emerald-600)'
                           : obj.status === 'IN_PROGRESS'
-                          ? '#F59E0B'
-                          : '#CBD5E1',
+                          ? 'var(--color-amber-600)'
+                          : 'var(--border-medium)',
                       flexShrink: 0,
                     }}
                   />
                   <span
                     style={{
-                      color: obj.status === 'ACHIEVED' ? '#64748B' : '#1E293B',
+                      color: obj.status === 'ACHIEVED' ? 'var(--text-secondary)' : 'var(--text-primary)',
                       textDecoration: obj.status === 'ACHIEVED' ? 'line-through' : 'none',
                       fontWeight: 500,
                       lineHeight: 1.4,
@@ -198,7 +198,7 @@ export function SubjectCard({
                     onClick={() => onToggleStatus(obj.id, cycleStatus(obj.status))}
                     style={{
                       padding: '0.2rem 0.5rem',
-                      borderRadius: '9999px',
+                      borderRadius: 'var(--radius-full)',
                       border: `1px solid ${badge.border}`,
                       backgroundColor: badge.bg,
                       color: badge.text,
@@ -222,7 +222,7 @@ export function SubjectCard({
                       style={{
                         border: 'none',
                         background: 'none',
-                        color: '#94A3B8',
+                        color: 'var(--text-muted)',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -230,7 +230,7 @@ export function SubjectCard({
                       }}
                       aria-label="Excluir objetivo"
                     >
-                      <X size={14} />
+                      <AletheiaIcon name="x" size={14} />
                     </button>
                   </Can>
                 </div>
@@ -250,10 +250,10 @@ export function SubjectCard({
           style={{
             width: '100%',
             padding: '0.45rem',
-            borderRadius: '0.5rem',
-            border: '1.5px dashed #CBD5E1',
-            backgroundColor: '#FFFFFF',
-            color: '#475569',
+            borderRadius: 'var(--radius-md)',
+            border: '1.5px dashed var(--border-medium)',
+            backgroundColor: 'var(--bg-surface)',
+            color: 'var(--text-secondary)',
             fontSize: '0.75rem',
             fontWeight: 600,
             cursor: 'pointer',

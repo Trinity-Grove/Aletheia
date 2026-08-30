@@ -1,14 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  BookOpen,
-  Crown,
-  Sprout,
-  MessageSquare,
-  Brain,
-  Music,
-} from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type { DailyDevotionalResponseDto } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 
@@ -63,11 +56,11 @@ export function DevotionalView({
           justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: '1rem',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--bg-surface)',
           padding: '1rem 1.25rem',
-          borderRadius: '1rem',
-          border: '1px solid #E2E8F0',
-          boxShadow: '0 1px 3px 0 rgba(15, 23, 42, 0.05)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-light)',
+          boxShadow: 'var(--shadow-sm)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -79,10 +72,10 @@ export function DevotionalView({
               padding: '0.375rem 0.75rem',
               fontSize: '0.8125rem',
               fontWeight: 600,
-              borderRadius: '0.375rem',
-              border: '1px solid #CBD5E1',
-              backgroundColor: '#FFFFFF',
-              color: '#334155',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
+              backgroundColor: 'var(--bg-surface)',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
             }}
           >
@@ -96,10 +89,10 @@ export function DevotionalView({
               padding: '0.375rem 0.75rem',
               fontSize: '0.8125rem',
               fontWeight: 600,
-              borderRadius: '0.375rem',
-              border: '1px solid #CBD5E1',
-              backgroundColor: '#F8FAFC',
-              color: '#1E293B',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
+              backgroundColor: 'var(--sage-soft)',
+              color: 'var(--text-primary)',
               cursor: 'pointer',
             }}
           >
@@ -113,10 +106,10 @@ export function DevotionalView({
               padding: '0.375rem 0.75rem',
               fontSize: '0.8125rem',
               fontWeight: 600,
-              borderRadius: '0.375rem',
-              border: '1px solid #CBD5E1',
-              backgroundColor: '#FFFFFF',
-              color: '#334155',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
+              backgroundColor: 'var(--bg-surface)',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
             }}
           >
@@ -132,11 +125,11 @@ export function DevotionalView({
             onChange={(e) => onDateChange(e.target.value)}
             style={{
               padding: '0.375rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #CBD5E1',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
               fontSize: '0.875rem',
-              color: '#0F172A',
-              backgroundColor: '#FFFFFF',
+              color: 'var(--text-primary)',
+              backgroundColor: 'var(--bg-surface)',
             }}
           />
           <Can action="manage_devotional">
@@ -149,12 +142,12 @@ export function DevotionalView({
                 padding: '0.45rem 1rem',
                 fontSize: '0.8125rem',
                 fontWeight: 600,
-                borderRadius: '0.375rem',
+                borderRadius: 'var(--radius-sm)',
                 border: 'none',
-                backgroundColor: '#4338CA',
-                color: '#FFFFFF',
+                backgroundColor: 'var(--color-indigo-700)',
+                color: 'var(--text-inverse)',
                 cursor: 'pointer',
-                boxShadow: '0 1px 2px 0 rgba(67, 56, 202, 0.2)',
+                boxShadow: 'var(--shadow-sm)',
               }}
             >
               {devotional ? 'Editar Devocional' : 'Criar Devocional'}
@@ -167,9 +160,9 @@ export function DevotionalView({
         <div
           data-testid="devotional-empty-state"
           style={{
-            backgroundColor: '#FFFFFF',
-            border: '2px dashed #CBD5E1',
-            borderRadius: '1rem',
+            backgroundColor: 'var(--bg-surface)',
+            border: '2px dashed var(--border-medium)',
+            borderRadius: 'var(--radius-lg)',
             padding: '3.5rem 1.5rem',
             textAlign: 'center',
             display: 'flex',
@@ -182,23 +175,23 @@ export function DevotionalView({
             style={{
               width: '64px',
               height: '64px',
-              borderRadius: '9999px',
-              backgroundColor: '#FFFBEB',
-              border: '2px solid #FEF3C7',
-              color: '#D97706',
+              borderRadius: 'var(--radius-full)',
+              backgroundColor: 'var(--color-amber-50)',
+              border: '2px solid var(--color-amber-100)',
+              color: 'var(--color-amber-600)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(217, 119, 6, 0.1)',
+              boxShadow: 'var(--shadow-sm)',
             }}
           >
-            <BookOpen size={32} />
+            <AletheiaIcon name="book-open" size={32} />
           </div>
           <div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.375rem 0' }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.375rem 0' }}>
               Nenhum devocional registrado para esta data ({currentDate})
             </h3>
-            <p style={{ fontSize: '0.875rem', color: '#64748B', maxWidth: '28rem', margin: 0 }}>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '28rem', margin: 0 }}>
               Reúna a família ao redor da Palavra de Deus. Registre as passagens lidas, reflexões e orações de hoje.
             </p>
           </div>
@@ -212,12 +205,12 @@ export function DevotionalView({
                 padding: '0.625rem 1.25rem',
                 fontSize: '0.875rem',
                 fontWeight: 600,
-                borderRadius: '0.5rem',
-                backgroundColor: '#4338CA',
-                color: '#FFFFFF',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--color-indigo-700)',
+                color: 'var(--text-inverse)',
                 border: 'none',
                 cursor: 'pointer',
-                boxShadow: '0 2px 4px 0 rgba(67, 56, 202, 0.2)',
+                boxShadow: 'var(--shadow-sm)',
                 marginTop: '0.5rem',
               }}
             >
@@ -231,11 +224,11 @@ export function DevotionalView({
           <div
             data-testid="scripture-card"
             style={{
-              backgroundColor: '#FFFFFF',
-              border: '1px solid #E2E8F0',
-              borderRadius: '1rem',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-light)',
+              borderRadius: 'var(--radius-lg)',
               padding: '1.75rem',
-              boxShadow: '0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.03)',
+              boxShadow: 'var(--shadow-sm)',
               position: 'relative',
               overflow: 'hidden',
             }}
@@ -248,7 +241,7 @@ export function DevotionalView({
                 left: 0,
                 right: 0,
                 height: '4px',
-                background: 'linear-gradient(90deg, #F59E0B 0%, #D97706 100%)',
+                background: 'linear-gradient(90deg, var(--gold) 0%, var(--color-amber-600) 100%)',
               }}
             />
 
@@ -270,18 +263,18 @@ export function DevotionalView({
                   alignItems: 'center',
                   gap: '0.375rem',
                   padding: '0.25rem 0.75rem',
-                  borderRadius: '9999px',
-                  backgroundColor: '#FEF3C7',
-                  border: '1px solid #FDE68A',
-                  color: '#92400E',
+                  borderRadius: 'var(--radius-full)',
+                  backgroundColor: 'var(--color-amber-50)',
+                  border: '1px solid var(--color-amber-100)',
+                  color: 'var(--color-amber-700)',
                   fontSize: '0.75rem',
                   fontWeight: 700,
                   letterSpacing: '0.025em',
                   textTransform: 'uppercase',
-                  boxShadow: '0 1px 2px rgba(217, 119, 6, 0.1)',
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
-                <Crown size={14} />
+                <AletheiaIcon name="sparkles" size={14} />
                 <span>Leitura Bíblica & Aliança</span>
               </div>
 
@@ -290,19 +283,19 @@ export function DevotionalView({
                   data-testid="bible-version-badge"
                   style={{
                     fontSize: '0.75rem',
-                    backgroundColor: '#EEF2FF',
-                    color: '#4338CA',
+                    backgroundColor: 'var(--color-indigo-50)',
+                    color: 'var(--color-indigo-700)',
                     padding: '0.25rem 0.625rem',
-                    borderRadius: '0.375rem',
+                    borderRadius: 'var(--radius-sm)',
                     fontWeight: 700,
                     textTransform: 'uppercase',
-                    border: '1px solid #E0E7FF',
+                    border: '1px solid var(--color-indigo-100)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.375rem',
                   }}
                 >
-                  <BookOpen size={12} />
+                  <AletheiaIcon name="book-open" size={12} />
                   <span>Versão: {devotional.bibleVersionId}</span>
                 </span>
               )}
@@ -314,7 +307,7 @@ export function DevotionalView({
                 fontSize: '1.5rem',
                 fontWeight: 800,
                 margin: '0 0 1rem 0',
-                color: '#0F172A',
+                color: 'var(--text-primary)',
                 letterSpacing: '-0.02em',
               }}
             >
@@ -327,12 +320,12 @@ export function DevotionalView({
                 style={{
                   margin: 0,
                   padding: '1.25rem 1.5rem',
-                  backgroundColor: '#F8FAFC',
-                  borderLeft: '4px solid #D97706',
-                  borderRadius: '0 0.5rem 0.5rem 0',
+                  backgroundColor: 'var(--sage-soft)',
+                  borderLeft: '4px solid var(--color-amber-600)',
+                  borderRadius: '0 var(--radius-sm) var(--radius-sm) 0',
                   fontSize: '1.0625rem',
                   lineHeight: '1.7',
-                  color: '#1E293B',
+                  color: 'var(--text-primary)',
                   fontStyle: 'italic',
                   whiteSpace: 'pre-line',
                 }}
@@ -347,11 +340,11 @@ export function DevotionalView({
             <div
               data-testid="reflection-card"
               style={{
-                backgroundColor: '#FFFFFF',
-                border: '1px solid #E2E8F0',
-                borderRadius: '1rem',
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border-light)',
+                borderRadius: 'var(--radius-lg)',
                 padding: '1.5rem',
-                boxShadow: '0 2px 4px -1px rgba(15, 23, 42, 0.04)',
+                boxShadow: 'var(--shadow-sm)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '1rem',
@@ -363,17 +356,17 @@ export function DevotionalView({
                     fontSize: '0.75rem',
                     fontWeight: 700,
                     textTransform: 'uppercase',
-                    color: '#047857',
-                    backgroundColor: '#ECFDF5',
+                    color: 'var(--color-emerald-700)',
+                    backgroundColor: 'var(--color-emerald-50)',
                     padding: '0.25rem 0.625rem',
-                    borderRadius: '9999px',
-                    border: '1px solid #D1FAE5',
+                    borderRadius: 'var(--radius-full)',
+                    border: '1px solid var(--color-emerald-100)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.375rem',
                   }}
                 >
-                  <Sprout size={12} />
+                  <AletheiaIcon name="sprout" size={12} />
                   <span>Reflexão & Conversa em Família</span>
                 </span>
               </div>
@@ -384,7 +377,7 @@ export function DevotionalView({
                   style={{
                     fontSize: '0.9375rem',
                     lineHeight: '1.65',
-                    color: '#334155',
+                    color: 'var(--text-secondary)',
                     margin: 0,
                     whiteSpace: 'pre-line',
                   }}
@@ -397,9 +390,9 @@ export function DevotionalView({
                 <div
                   data-testid="discussion-questions-box"
                   style={{
-                    backgroundColor: '#F0FDF4',
-                    border: '1px solid #BBF7D0',
-                    borderRadius: '0.625rem',
+                    backgroundColor: 'var(--color-emerald-50)',
+                    border: '1px solid var(--color-emerald-100)',
+                    borderRadius: 'var(--radius-md)',
                     padding: '1rem 1.25rem',
                   }}
                 >
@@ -409,17 +402,17 @@ export function DevotionalView({
                       alignItems: 'center',
                       gap: '0.375rem',
                       fontSize: '0.875rem',
-                      color: '#166534',
+                      color: 'var(--color-emerald-700)',
                       marginBottom: '0.5rem',
                     }}
                   >
-                    <MessageSquare size={14} />
+                    <AletheiaIcon name="file-text" size={14} />
                     <span>Perguntas para Diálogo Familiar:</span>
                   </strong>
                   <div
                     style={{
                       fontSize: '0.875rem',
-                      color: '#15803D',
+                      color: 'var(--color-emerald-700)',
                       whiteSpace: 'pre-line',
                       lineHeight: '1.55',
                     }}
@@ -436,9 +429,9 @@ export function DevotionalView({
             <div
               data-testid="memory-verse-card"
               style={{
-                backgroundColor: '#EFF6FF',
-                border: '1px solid #BFDBFE',
-                borderRadius: '1rem',
+                backgroundColor: 'var(--color-indigo-50)',
+                border: '1px solid var(--color-indigo-100)',
+                borderRadius: 'var(--radius-lg)',
                 padding: '1.25rem 1.5rem',
                 display: 'flex',
                 flexDirection: 'column',
@@ -450,21 +443,21 @@ export function DevotionalView({
                   fontSize: '0.75rem',
                   fontWeight: 700,
                   textTransform: 'uppercase',
-                  color: '#1D4ED8',
+                  color: 'var(--color-indigo-700)',
                   letterSpacing: '0.025em',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.375rem',
                 }}
               >
-                <Brain size={14} />
+                <AletheiaIcon name="lightbulb" size={14} />
                 <span>Versículo para Memorização</span>
               </span>
               <p
                 style={{
                   fontSize: '1.0625rem',
                   fontWeight: 600,
-                  color: '#1E40AF',
+                  color: 'var(--color-indigo-700)',
                   margin: 0,
                   lineHeight: '1.5',
                 }}
@@ -487,9 +480,9 @@ export function DevotionalView({
                 <div
                   data-testid="hymn-card"
                   style={{
-                    backgroundColor: '#FAF5FF',
-                    border: '1px solid #E9D5FF',
-                    borderRadius: '1rem',
+                    backgroundColor: 'var(--color-indigo-50)',
+                    border: '1px solid var(--color-indigo-100)',
+                    borderRadius: 'var(--radius-lg)',
                     padding: '1.25rem',
                     display: 'flex',
                     flexDirection: 'column',
@@ -501,17 +494,17 @@ export function DevotionalView({
                       fontSize: '0.75rem',
                       fontWeight: 700,
                       textTransform: 'uppercase',
-                      color: '#7E22CE',
+                      color: 'var(--color-indigo-700)',
                       letterSpacing: '0.025em',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.375rem',
                     }}
                   >
-                    <Music size={14} />
+                    <AletheiaIcon name="heart" size={14} />
                     <span>Hino / Louvor do Dia</span>
                   </span>
-                  <p style={{ fontSize: '1rem', fontWeight: 600, color: '#581C87', margin: 0 }}>
+                  <p style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--color-indigo-700)', margin: 0 }}>
                     {devotional.hymnOrSong}
                   </p>
                 </div>
@@ -521,9 +514,9 @@ export function DevotionalView({
                 <div
                   data-testid="practical-application-card"
                   style={{
-                    backgroundColor: '#FFFBEB',
-                    border: '1px solid #FDE68A',
-                    borderRadius: '1rem',
+                    backgroundColor: 'var(--color-amber-50)',
+                    border: '1px solid var(--color-amber-100)',
+                    borderRadius: 'var(--radius-lg)',
                     padding: '1.25rem',
                     display: 'flex',
                     flexDirection: 'column',
@@ -535,17 +528,17 @@ export function DevotionalView({
                       fontSize: '0.75rem',
                       fontWeight: 700,
                       textTransform: 'uppercase',
-                      color: '#B45309',
+                      color: 'var(--color-amber-700)',
                       letterSpacing: '0.025em',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.375rem',
                     }}
                   >
-                    <Sprout size={14} />
+                    <AletheiaIcon name="sprout" size={14} />
                     <span>Aplicação Prática</span>
                   </span>
-                  <p style={{ fontSize: '0.9375rem', color: '#78350F', margin: 0, lineHeight: '1.5' }}>
+                  <p style={{ fontSize: '0.9375rem', color: 'var(--color-amber-700)', margin: 0, lineHeight: '1.5' }}>
                     {devotional.practicalApplication}
                   </p>
                 </div>

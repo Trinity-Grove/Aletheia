@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { BookOpen } from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type {
   LearningRecordResponseDto,
   LearnerProgressSummaryDto,
@@ -98,9 +98,9 @@ export function RecordsJournalView({
       <div
         data-testid="records-metrics-summary"
         style={{
-          backgroundColor: '#FFFFFF',
-          borderRadius: '0.75rem',
-          border: '1px solid #E5E7EB',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-light)',
           padding: '1.5rem',
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
@@ -108,41 +108,41 @@ export function RecordsJournalView({
         }}
       >
         <div data-testid="metric-total-records">
-          <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#6B7280' }}>
+          <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
             Total de Registros
           </span>
-          <p style={{ fontSize: '1.75rem', fontWeight: 800, color: '#111827', margin: '0.25rem 0 0 0' }}>
+          <p style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0.25rem 0 0 0' }}>
             {summaryStats.totalRecords}
           </p>
-          <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             {activeLearner ? `Registros de ${activeLearner.preferredName || activeLearner.firstName}` : 'Toda a família'}
           </span>
         </div>
 
         <div data-testid="metric-total-hours">
-          <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#6B7280' }}>
+          <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
             Tempo de Aprendizado
           </span>
-          <p style={{ fontSize: '1.75rem', fontWeight: 800, color: '#2563EB', margin: '0.25rem 0 0 0' }}>
+          <p style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--forest)', margin: '0.25rem 0 0 0' }}>
             {Math.round(summaryStats.totalMinutes / 60)}h{' '}
             <span style={{ fontSize: '1rem', fontWeight: 600 }}>({summaryStats.totalMinutes} min)</span>
           </p>
-          <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>Em lições e vivências</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Em lições e vivências</span>
         </div>
 
         <div data-testid="metric-mastered-autonomous">
-          <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#6B7280' }}>
+          <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
             Domínio & Autonomia
           </span>
-          <p style={{ fontSize: '1.75rem', fontWeight: 800, color: '#059669', margin: '0.25rem 0 0 0' }}>
+          <p style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-emerald-600)', margin: '0.25rem 0 0 0' }}>
             {(summaryStats.masteryCount['MASTERED'] || 0) + (summaryStats.masteryCount['AUTONOMOUS'] || 0)}
           </p>
-          <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>Lições autônomas / dominadas</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Lições autônomas / dominadas</span>
         </div>
 
         {/* Mini Mastery Distribution Pill */}
         <div data-testid="metric-mastery-distribution" style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-          <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#6B7280' }}>
+          <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
             Distribuição de Domínio
           </span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginTop: '0.25rem' }}>
@@ -158,7 +158,7 @@ export function RecordsJournalView({
                     fontSize: '0.75rem',
                     fontWeight: 600,
                     padding: '0.2rem 0.5rem',
-                    borderRadius: '0.375rem',
+                    borderRadius: 'var(--radius-sm)',
                   }}
                 >
                   {conf.icon} {count}
@@ -189,8 +189,8 @@ export function RecordsJournalView({
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
               padding: '0.5rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #D1D5DB',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
               fontSize: '0.875rem',
               minWidth: '180px',
             }}
@@ -203,10 +203,10 @@ export function RecordsJournalView({
             onChange={(e) => setFilterType(e.target.value)}
             style={{
               padding: '0.5rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #D1D5DB',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
               fontSize: '0.875rem',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--bg-surface)',
             }}
           >
             <option value="">Todos os tipos</option>
@@ -224,10 +224,10 @@ export function RecordsJournalView({
             onChange={(e) => setFilterSubject(e.target.value)}
             style={{
               padding: '0.5rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #D1D5DB',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
               fontSize: '0.875rem',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--bg-surface)',
             }}
           >
             <option value="">Todas as disciplinas</option>
@@ -245,10 +245,10 @@ export function RecordsJournalView({
             onChange={(e) => setFilterMastery(e.target.value)}
             style={{
               padding: '0.5rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #D1D5DB',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
               fontSize: '0.875rem',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--bg-surface)',
             }}
           >
             <option value="">Todos os níveis de domínio</option>
@@ -268,14 +268,14 @@ export function RecordsJournalView({
             onClick={onOpenCreateRecord}
             style={{
               padding: '0.625rem 1.25rem',
-              backgroundColor: '#2563EB',
-              color: '#FFFFFF',
-              borderRadius: '0.5rem',
+              backgroundColor: 'var(--forest)',
+              color: 'var(--text-inverse)',
+              borderRadius: 'var(--radius-md)',
               border: 'none',
               fontSize: '0.875rem',
               fontWeight: 700,
               cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(37, 99, 235, 0.3)',
+              boxShadow: 'var(--shadow-sm)',
             }}
           >
             + Novo Registro
@@ -290,18 +290,18 @@ export function RecordsJournalView({
           style={{
             padding: '3.5rem 1rem',
             textAlign: 'center',
-            backgroundColor: '#FFFFFF',
-            borderRadius: '0.75rem',
-            border: '1px dashed #D1D5DB',
+            backgroundColor: 'var(--bg-surface)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px dashed var(--border-medium)',
           }}
         >
-          <div style={{ color: 'var(--color-brand-sage, #78937f)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
-            <BookOpen size={40} />
+          <div style={{ color: 'var(--sage)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
+            <AletheiaIcon name="book-open" size={40} />
           </div>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#111827', margin: '0 0 0.5rem 0' }}>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
             Nenhum registro de aprendizagem encontrado
           </h3>
-          <p style={{ fontSize: '0.875rem', color: '#6B7280', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
             Registre as lições concluídas, narrações orais, vivências espontâneas e o crescimento dos hábitos dos seus filhos.
           </p>
           <Can action="log_learning">
@@ -311,9 +311,9 @@ export function RecordsJournalView({
               onClick={onOpenCreateRecord}
               style={{
                 padding: '0.5rem 1rem',
-                backgroundColor: '#2563EB',
-                color: '#FFFFFF',
-                borderRadius: '0.375rem',
+                backgroundColor: 'var(--forest)',
+                color: 'var(--text-inverse)',
+                borderRadius: 'var(--radius-sm)',
                 border: 'none',
                 fontSize: '0.875rem',
                 fontWeight: 600,

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FileText, Download, Printer, X } from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type {
   AcademicTranscriptDto,
   GradingScale,
@@ -63,8 +63,8 @@ export function PrintableTranscript({
     <div
       data-testid="printable-transcript-view"
       style={{
-        backgroundColor: '#FFFFFF',
-        color: '#111827',
+        backgroundColor: 'var(--bg-surface)',
+        color: 'var(--text-primary)',
         display: 'flex',
         flexDirection: 'column',
         gap: '1.5rem',
@@ -78,12 +78,12 @@ export function PrintableTranscript({
           justifyContent: 'space-between',
           alignItems: 'center',
           paddingBottom: '1rem',
-          borderBottom: '1px solid #E5E7EB',
+          borderBottom: '1px solid var(--border-light)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ color: '#2563EB', display: 'flex', alignItems: 'center' }}>
-            <FileText size={20} />
+          <span style={{ color: 'var(--color-indigo-600)', display: 'flex', alignItems: 'center' }}>
+            <AletheiaIcon name="file-text" size={20} />
           </span>
           <h2 style={{ fontSize: '1.125rem', fontWeight: 700, margin: 0 }}>
             Visualização de Histórico Escolar Oficial
@@ -97,10 +97,10 @@ export function PrintableTranscript({
             onClick={handleExportCsv}
             style={{
               padding: '0.5rem 1rem',
-              backgroundColor: '#F3F4F6',
-              color: '#374151',
-              borderRadius: '0.375rem',
-              border: '1px solid #D1D5DB',
+              backgroundColor: 'var(--sage-soft)',
+              color: 'var(--text-secondary)',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
               fontSize: '0.875rem',
               fontWeight: 600,
               cursor: 'pointer',
@@ -109,7 +109,7 @@ export function PrintableTranscript({
               gap: '0.375rem',
             }}
           >
-            <Download size={16} />
+            <AletheiaIcon name="download" size={16} />
             <span>Baixar CSV</span>
           </button>
           <button
@@ -118,9 +118,9 @@ export function PrintableTranscript({
             onClick={handlePrint}
             style={{
               padding: '0.5rem 1.25rem',
-              backgroundColor: '#2563EB',
-              color: '#FFFFFF',
-              borderRadius: '0.375rem',
+              backgroundColor: 'var(--forest)',
+              color: 'var(--text-inverse)',
+              borderRadius: 'var(--radius-sm)',
               border: 'none',
               fontSize: '0.875rem',
               fontWeight: 700,
@@ -130,7 +130,7 @@ export function PrintableTranscript({
               gap: '0.375rem',
             }}
           >
-            <Printer size={16} />
+            <AletheiaIcon name="printer" size={16} />
             <span>Imprimir / Salvar PDF</span>
           </button>
           {onClose && (
@@ -140,10 +140,10 @@ export function PrintableTranscript({
               onClick={onClose}
               style={{
                 padding: '0.5rem 0.75rem',
-                backgroundColor: '#FFFFFF',
-                color: '#6B7280',
-                borderRadius: '0.375rem',
-                border: '1px solid #D1D5DB',
+                backgroundColor: 'var(--bg-surface)',
+                color: 'var(--text-secondary)',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-medium)',
                 fontSize: '0.875rem',
                 cursor: 'pointer',
                 display: 'inline-flex',
@@ -151,7 +151,7 @@ export function PrintableTranscript({
               }}
               aria-label="Fechar"
             >
-              <X size={16} />
+              <AletheiaIcon name="x" size={16} />
             </button>
           )}
         </div>
@@ -161,10 +161,10 @@ export function PrintableTranscript({
       <div
         id="official-transcript-document"
         style={{
-          border: '2px solid #374151',
+          border: '2px solid var(--text-secondary)',
           padding: '2.5rem',
-          borderRadius: '0.25rem',
-          backgroundColor: '#FFFFFF',
+          borderRadius: 'var(--radius-sm)',
+          backgroundColor: 'var(--bg-surface)',
           fontFamily: 'serif, Georgia, Times, serif',
           lineHeight: 1.5,
         }}
@@ -173,7 +173,7 @@ export function PrintableTranscript({
         <header
           style={{
             textAlign: 'center',
-            borderBottom: '2px double #4B5563',
+            borderBottom: '2px double var(--text-secondary)',
             paddingBottom: '1.5rem',
             marginBottom: '1.5rem',
           }}
@@ -185,13 +185,13 @@ export function PrintableTranscript({
               fontWeight: 800,
               letterSpacing: '0.05em',
               textTransform: 'uppercase',
-              color: '#1F2937',
+              color: 'var(--text-primary)',
               marginBottom: '0.25rem',
             }}
           >
             {familyOrgName}
           </div>
-          <div style={{ fontSize: '0.875rem', color: '#4B5563', fontStyle: 'italic', marginBottom: '0.5rem' }}>
+          <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontStyle: 'italic', marginBottom: '0.5rem' }}>
             Registro Educacional Familiar & Portfólio de Formação Integral
           </div>
           <h1
@@ -200,7 +200,7 @@ export function PrintableTranscript({
               fontSize: '1.25rem',
               fontWeight: 700,
               textTransform: 'uppercase',
-              color: '#111827',
+              color: 'var(--text-primary)',
               margin: '0.5rem 0 0 0',
               textDecoration: 'underline',
             }}
@@ -216,40 +216,40 @@ export function PrintableTranscript({
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: '1rem',
-            backgroundColor: '#F9FAFB',
-            border: '1px solid #E5E7EB',
+            backgroundColor: 'var(--sage-soft)',
+            border: '1px solid var(--border-light)',
             padding: '1rem 1.25rem',
-            borderRadius: '0.375rem',
+            borderRadius: 'var(--radius-sm)',
             marginBottom: '1.5rem',
             fontSize: '0.875rem',
           }}
         >
           <div>
-            <span style={{ fontWeight: 700, color: '#4B5563' }}>Educando: </span>
-            <span data-testid="transcript-learner-name" style={{ fontWeight: 800, color: '#111827' }}>
+            <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Educando: </span>
+            <span data-testid="transcript-learner-name" style={{ fontWeight: 800, color: 'var(--text-primary)' }}>
               {learnerName}
             </span>
           </div>
           {content.learnerBirthDate && (
             <div>
-              <span style={{ fontWeight: 700, color: '#4B5563' }}>Data de Nascimento: </span>
+              <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Data de Nascimento: </span>
               <span data-testid="transcript-learner-birth">{content.learnerBirthDate}</span>
             </div>
           )}
           <div>
-            <span style={{ fontWeight: 700, color: '#4B5563' }}>Ciclo / Série: </span>
+            <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Ciclo / Série: </span>
             <span data-testid="transcript-grade-level" style={{ fontWeight: 600 }}>
               {content.gradeLevel || 'Ensino Fundamental'}
             </span>
           </div>
           <div>
-            <span style={{ fontWeight: 700, color: '#4B5563' }}>Ano Acadêmico: </span>
+            <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Ano Acadêmico: </span>
             <span data-testid="transcript-academic-year" style={{ fontWeight: 600 }}>
               {academicYearTitle}
             </span>
           </div>
           <div>
-            <span style={{ fontWeight: 700, color: '#4B5563' }}>Data de Emissão: </span>
+            <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Data de Emissão: </span>
             <span data-testid="transcript-issue-date">{generatedDate}</span>
           </div>
         </section>
@@ -258,13 +258,13 @@ export function PrintableTranscript({
         <div
           data-testid="transcript-grading-scale"
           style={{
-            backgroundColor: '#F3F4F6',
+            backgroundColor: 'var(--sage-soft)',
             padding: '0.5rem 0.75rem',
-            borderRadius: '0.25rem',
+            borderRadius: 'var(--radius-sm)',
             fontSize: '0.8125rem',
-            color: '#374151',
+            color: 'var(--text-secondary)',
             marginBottom: '1.25rem',
-            borderLeft: '4px solid #3B82F6',
+            borderLeft: '4px solid var(--color-indigo-600)',
           }}
         >
           <strong>Critério de Avaliação Adotado: </strong>
@@ -278,7 +278,7 @@ export function PrintableTranscript({
               fontSize: '1rem',
               fontWeight: 700,
               textTransform: 'uppercase',
-              borderBottom: '1px solid #9CA3AF',
+              borderBottom: '1px solid var(--border-medium)',
               paddingBottom: '0.25rem',
               marginBottom: '0.75rem',
             }}
@@ -295,20 +295,20 @@ export function PrintableTranscript({
             }}
           >
             <thead>
-              <tr style={{ backgroundColor: '#F3F4F6', borderBottom: '2px solid #9CA3AF' }}>
-                <th style={{ padding: '0.5rem', textAlign: 'left', border: '1px solid #D1D5DB' }}>
+              <tr style={{ backgroundColor: 'var(--sage-soft)', borderBottom: '2px solid var(--border-medium)' }}>
+                <th style={{ padding: '0.5rem', textAlign: 'left', border: '1px solid var(--border-medium)' }}>
                   Disciplina
                 </th>
-                <th style={{ padding: '0.5rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>
+                <th style={{ padding: '0.5rem', textAlign: 'center', border: '1px solid var(--border-medium)' }}>
                   Avaliações
                 </th>
-                <th style={{ padding: '0.5rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>
+                <th style={{ padding: '0.5rem', textAlign: 'center', border: '1px solid var(--border-medium)' }}>
                   Domínio Médio
                 </th>
-                <th style={{ padding: '0.5rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>
+                <th style={{ padding: '0.5rem', textAlign: 'center', border: '1px solid var(--border-medium)' }}>
                   Nota / Conceito
                 </th>
-                <th style={{ padding: '0.5rem', textAlign: 'left', border: '1px solid #D1D5DB' }}>
+                <th style={{ padding: '0.5rem', textAlign: 'left', border: '1px solid var(--border-medium)' }}>
                   Síntese Avaliativa
                 </th>
               </tr>
@@ -316,7 +316,7 @@ export function PrintableTranscript({
             <tbody>
               {subjectGrades.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ padding: '1rem', textAlign: 'center', color: '#6B7280', border: '1px solid #D1D5DB' }}>
+                  <td colSpan={5} style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)', border: '1px solid var(--border-medium)' }}>
                     Nenhuma disciplina avaliada neste período letivo.
                   </td>
                 </tr>
@@ -325,15 +325,15 @@ export function PrintableTranscript({
                   <tr
                     key={grade.subjectId}
                     data-testid={`subject-grade-row-${grade.subjectId}`}
-                    style={{ borderBottom: '1px solid #E5E7EB' }}
+                    style={{ borderBottom: '1px solid var(--border-light)' }}
                   >
-                    <td style={{ padding: '0.5rem', fontWeight: 600, border: '1px solid #D1D5DB' }}>
+                    <td style={{ padding: '0.5rem', fontWeight: 600, border: '1px solid var(--border-medium)' }}>
                       {grade.subjectName}
                     </td>
-                    <td style={{ padding: '0.5rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>
+                    <td style={{ padding: '0.5rem', textAlign: 'center', border: '1px solid var(--border-medium)' }}>
                       {grade.evaluationCount}
                     </td>
-                    <td style={{ padding: '0.5rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>
+                    <td style={{ padding: '0.5rem', textAlign: 'center', border: '1px solid var(--border-medium)' }}>
                       {grade.averageMasteryLevel || '—'}
                     </td>
                     <td
@@ -341,8 +341,8 @@ export function PrintableTranscript({
                         padding: '0.5rem',
                         textAlign: 'center',
                         fontWeight: 700,
-                        border: '1px solid #D1D5DB',
-                        color: '#1E3A8A',
+                        border: '1px solid var(--border-medium)',
+                        color: 'var(--color-indigo-700)',
                       }}
                     >
                       {grade.calculatedGrade}
@@ -351,7 +351,7 @@ export function PrintableTranscript({
                         ? ` [${grade.numericGrade}]`
                         : ''}
                     </td>
-                    <td style={{ padding: '0.5rem', fontSize: '0.8125rem', border: '1px solid #D1D5DB' }}>
+                    <td style={{ padding: '0.5rem', fontSize: '0.8125rem', border: '1px solid var(--border-medium)' }}>
                       {grade.narrativeSummary || 'Progresso satisfatório de acordo com o plano curricular.'}
                     </td>
                   </tr>
@@ -367,10 +367,10 @@ export function PrintableTranscript({
             data-testid="transcript-attendance-summary"
             style={{
               marginBottom: '1.75rem',
-              backgroundColor: '#FAFAFA',
-              border: '1px solid #E5E7EB',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-light)',
               padding: '1rem',
-              borderRadius: '0.25rem',
+              borderRadius: 'var(--radius-sm)',
             }}
           >
             <h3
@@ -379,7 +379,7 @@ export function PrintableTranscript({
                 fontWeight: 700,
                 textTransform: 'uppercase',
                 margin: '0 0 0.5rem 0',
-                color: '#374151',
+                color: 'var(--text-secondary)',
               }}
             >
               Registro de Frequência & Carga Horária
@@ -406,7 +406,7 @@ export function PrintableTranscript({
               </div>
               <div>
                 Situação:{' '}
-                <strong style={{ color: attendanceSummary.isCompliant ? '#059669' : '#D97706' }}>
+                <strong style={{ color: attendanceSummary.isCompliant ? 'var(--color-emerald-600)' : 'var(--color-amber-600)' }}>
                   {attendanceSummary.isCompliant ? 'Conforme Metas' : 'Em Andamento'}
                 </strong>
               </div>
@@ -421,7 +421,7 @@ export function PrintableTranscript({
             style={{
               marginBottom: '1.75rem',
               fontSize: '0.875rem',
-              color: '#374151',
+              color: 'var(--text-secondary)',
             }}
           >
             <h3
@@ -429,7 +429,7 @@ export function PrintableTranscript({
                 fontSize: '0.9375rem',
                 fontWeight: 700,
                 textTransform: 'uppercase',
-                borderBottom: '1px solid #E5E7EB',
+                borderBottom: '1px solid var(--border-light)',
                 paddingBottom: '0.25rem',
                 margin: '0 0 0.5rem 0',
               }}
@@ -456,14 +456,14 @@ export function PrintableTranscript({
           }}
         >
           <div>
-            <div style={{ borderBottom: '1px solid #4B5563', marginBottom: '0.5rem', height: '2rem' }} />
+            <div style={{ borderBottom: '1px solid var(--border-medium)', marginBottom: '0.5rem', height: '2rem' }} />
             <span style={{ fontWeight: 700 }}>Responsável Legal / Educador Titular</span>
-            <div style={{ color: '#6B7280', fontSize: '0.75rem' }}>Assinatura</div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Assinatura</div>
           </div>
           <div>
-            <div style={{ borderBottom: '1px solid #4B5563', marginBottom: '0.5rem', height: '2rem' }} />
+            <div style={{ borderBottom: '1px solid var(--border-medium)', marginBottom: '0.5rem', height: '2rem' }} />
             <span style={{ fontWeight: 700 }}>Coordenador Pedagógico / Responsável</span>
-            <div style={{ color: '#6B7280', fontSize: '0.75rem' }}>Data: ____/____/________</div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Data: ____/____/________</div>
           </div>
         </section>
       </div>

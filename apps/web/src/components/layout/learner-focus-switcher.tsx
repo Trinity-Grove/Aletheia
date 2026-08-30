@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Users, ChevronDown } from 'lucide-react';
+import { AletheiaIcon } from '@aletheia/ui';
 import type { LearnerSummaryDto } from '@aletheia/contracts';
 
 export interface LearnerFocusSwitcherProps {
@@ -88,15 +88,15 @@ export function LearnerFocusSwitcher({
           alignItems: 'center',
           gap: '0.5rem',
           padding: compact ? '0.375rem 0.625rem' : '0.45rem 0.875rem',
-          borderRadius: '9999px',
-          backgroundColor: activeLearner ? '#EEF2FF' : '#F1F5F9',
-          border: `1px solid ${activeLearner ? '#C7D2FE' : '#E2E8F0'}`,
-          color: activeLearner ? '#3730A3' : '#334155',
+          borderRadius: 'var(--radius-full)',
+          backgroundColor: activeLearner ? 'var(--color-indigo-50)' : 'var(--sage-soft)',
+          border: `1px solid ${activeLearner ? 'var(--color-indigo-100)' : 'var(--border-light)'}`,
+          color: activeLearner ? 'var(--color-indigo-700)' : 'var(--text-secondary)',
           fontSize: '0.875rem',
           fontWeight: 600,
           cursor: 'pointer',
           transition: 'all 0.15s ease',
-          boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+          boxShadow: 'var(--shadow-sm)',
         }}
       >
         {activeLearner ? (
@@ -106,8 +106,8 @@ export function LearnerFocusSwitcher({
               width: '1.25rem',
               height: '1.25rem',
               borderRadius: '50%',
-              backgroundColor: activeLearner.avatarColor || '#4F46E5',
-              color: '#FFFFFF',
+              backgroundColor: activeLearner.avatarColor || 'var(--color-indigo-600)',
+              color: 'var(--text-inverse)',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -119,11 +119,11 @@ export function LearnerFocusSwitcher({
           </span>
         ) : (
           <span aria-label="Família" style={{ display: 'inline-flex', alignItems: 'center' }}>
-            <Users size={14} style={{ color: '#4F46E5' }} />
+            <AletheiaIcon name="users" size={14} style={{ color: 'var(--color-indigo-600)' }} />
           </span>
         )}
         <span>{activeLabel}</span>
-        <ChevronDown size={12} style={{ opacity: 0.7 }} />
+        <AletheiaIcon name="chevron-down" size={12} style={{ opacity: 0.7 }} />
       </button>
 
       {isOpen && (
@@ -135,10 +135,10 @@ export function LearnerFocusSwitcher({
             left: 0,
             zIndex: 60,
             minWidth: '14rem',
-            backgroundColor: '#FFFFFF',
-            borderRadius: '0.75rem',
-            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
-            border: '1px solid #E2E8F0',
+            backgroundColor: 'var(--bg-surface)',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: 'var(--shadow-lg)',
+            border: '1px solid var(--border-light)',
             padding: '0.375rem',
             display: 'flex',
             flexDirection: 'column',
@@ -154,10 +154,10 @@ export function LearnerFocusSwitcher({
               alignItems: 'center',
               gap: '0.625rem',
               padding: '0.5rem 0.75rem',
-              borderRadius: '0.5rem',
+              borderRadius: 'var(--radius-md)',
               border: 'none',
-              backgroundColor: activeLearnerId === null ? '#F1F5F9' : 'transparent',
-              color: '#1E293B',
+              backgroundColor: activeLearnerId === null ? 'var(--sage-soft)' : 'transparent',
+              color: 'var(--text-primary)',
               fontSize: '0.875rem',
               fontWeight: activeLearnerId === null ? 700 : 500,
               cursor: 'pointer',
@@ -165,11 +165,11 @@ export function LearnerFocusSwitcher({
               width: '100%',
             }}
           >
-            <Users size={16} style={{ color: '#4F46E5' }} />
+            <AletheiaIcon name="users" size={16} style={{ color: 'var(--color-indigo-600)' }} />
             <span>Toda a Família</span>
           </button>
 
-          <div style={{ height: '1px', backgroundColor: '#F1F5F9', margin: '0.125rem 0' }} />
+          <div style={{ height: '1px', backgroundColor: 'var(--border-light)', margin: '0.125rem 0' }} />
 
           {learners.map((l) => {
             const displayName = l.preferredName || l.firstName;
@@ -185,10 +185,10 @@ export function LearnerFocusSwitcher({
                   alignItems: 'center',
                   gap: '0.625rem',
                   padding: '0.5rem 0.75rem',
-                  borderRadius: '0.5rem',
+                  borderRadius: 'var(--radius-md)',
                   border: 'none',
-                  backgroundColor: isSelected ? '#EEF2FF' : 'transparent',
-                  color: isSelected ? '#3730A3' : '#334155',
+                  backgroundColor: isSelected ? 'var(--color-indigo-50)' : 'transparent',
+                  color: isSelected ? 'var(--color-indigo-700)' : 'var(--text-secondary)',
                   fontSize: '0.875rem',
                   fontWeight: isSelected ? 700 : 500,
                   cursor: 'pointer',
@@ -201,8 +201,8 @@ export function LearnerFocusSwitcher({
                     width: '1.25rem',
                     height: '1.25rem',
                     borderRadius: '50%',
-                    backgroundColor: l.avatarColor || '#4F46E5',
-                    color: '#FFFFFF',
+                    backgroundColor: l.avatarColor || 'var(--color-indigo-600)',
+                    color: 'var(--text-inverse)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
