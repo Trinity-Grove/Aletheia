@@ -23,15 +23,22 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@storybook/addon-a11y": "^8.6.14",
+    "@storybook/addon-essentials": "^8.6.14",
+    "@storybook/blocks": "^8.6.14",
+    "@storybook/react": "^8.6.14",
+    "@storybook/react-vite": "^8.6.14",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.1.0",
+    "axe-core": "^4.13.0",
     "jsdom": "^27.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "storybook": "^8.6.14",
     "typescript": "^5.9.0",
     "vitest": "^3.2.0"
   },
@@ -39,7 +46,9 @@
     "build": "tsc -p tsconfig.json && node copy-css.mjs",
     "lint": "eslint . --config ../eslint-config/index.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "storybook": "storybook dev -p 6006",
+    "storybook:build": "storybook build"
   },
   "dependencies": {
     "lucide-react": "^1.34.0"
