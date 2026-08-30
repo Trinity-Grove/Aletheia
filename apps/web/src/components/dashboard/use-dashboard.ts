@@ -35,8 +35,8 @@ export function useDashboard(): DashboardController {
   const requestIdRef = useRef(0);
 
   const loadDashboard = useCallback(async () => {
-    const token = localStorage.getItem('token');
-    const familyId = localStorage.getItem('familyId');
+    const token = localStorage.getItem('token') ?? localStorage.getItem('aletheia_token');
+    const familyId = localStorage.getItem('familyId') ?? localStorage.getItem('aletheia_active_family_id');
 
     if (!token || !familyId) {
       setData(null);
@@ -112,8 +112,8 @@ export function useDashboard(): DashboardController {
     async (activity: DashboardActivityDto): Promise<void> => {
       if (activity.type !== 'lesson') return;
 
-      const token = localStorage.getItem('token');
-      const familyId = localStorage.getItem('familyId');
+      const token = localStorage.getItem('token') ?? localStorage.getItem('aletheia_token');
+      const familyId = localStorage.getItem('familyId') ?? localStorage.getItem('aletheia_active_family_id');
       if (!token || !familyId) return;
 
       const body: CompleteLessonDto = { completedAt: new Date().toISOString() };

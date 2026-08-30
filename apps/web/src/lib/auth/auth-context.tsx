@@ -44,7 +44,7 @@ const ACTIVE_FAMILY_ID_STORAGE_KEY = 'aletheia_active_family_id';
 function getStoredToken(): string | null {
   if (typeof window === 'undefined') return null;
   try {
-    return localStorage.getItem(TOKEN_STORAGE_KEY);
+    return localStorage.getItem(TOKEN_STORAGE_KEY) ?? localStorage.getItem('token');
   } catch {
     return null;
   }
@@ -55,8 +55,10 @@ function setStoredToken(token: string | null): void {
   try {
     if (token) {
       localStorage.setItem(TOKEN_STORAGE_KEY, token);
+      localStorage.setItem('token', token);
     } else {
       localStorage.removeItem(TOKEN_STORAGE_KEY);
+      localStorage.removeItem('token');
     }
   } catch {
     // Ignore localStorage write failures
@@ -66,7 +68,7 @@ function setStoredToken(token: string | null): void {
 function getStoredActiveFamilyId(): string | null {
   if (typeof window === 'undefined') return null;
   try {
-    return localStorage.getItem(ACTIVE_FAMILY_ID_STORAGE_KEY);
+    return localStorage.getItem(ACTIVE_FAMILY_ID_STORAGE_KEY) ?? localStorage.getItem('familyId');
   } catch {
     return null;
   }
@@ -77,8 +79,10 @@ function setStoredActiveFamilyId(familyId: string | null): void {
   try {
     if (familyId) {
       localStorage.setItem(ACTIVE_FAMILY_ID_STORAGE_KEY, familyId);
+      localStorage.setItem('familyId', familyId);
     } else {
       localStorage.removeItem(ACTIVE_FAMILY_ID_STORAGE_KEY);
+      localStorage.removeItem('familyId');
     }
   } catch {
     // Ignore localStorage write failures
