@@ -1,5 +1,24 @@
+'use client';
+
+import React, { Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { LoginForm } from '../../../src/components/auth/login-form';
+import { useAuth } from '../../../src/lib/auth/auth-context';
+
+function LoginFormWrapper() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { login } = useAuth();
+
+  const handleLogin = async (data: { email: string; password: string }) => {
+    await login(data);
+    const redirectParam = searchParams?.get('redirect') || '/';
+    router.push(redirectParam);
+  };
+
+  return <LoginForm onSubmit={handleLogin} />;
+}
 
 export default function LoginPage() {
   return (
@@ -10,7 +29,9 @@ export default function LoginPage() {
           <p>Acesse o portal do guardião e gerencie o currículo da sua família.</p>
         </div>
 
-        <LoginForm />
+        <Suspense fallback={<LoginForm />}>
+          <LoginFormWrapper />
+        </Suspense>
 
         <div className="auth-footer">
           <p>

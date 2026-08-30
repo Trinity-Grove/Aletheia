@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans, Lora } from 'next/font/google';
 import type { ReactNode } from 'react';
+import { AuthProvider } from '../src/lib/auth/auth-context';
 import '@aletheia/ui/css';
 import './globals.css';
 
@@ -31,7 +32,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       className={`${plusJakartaSans.variable} ${lora.variable}`}
     >
       <body suppressHydrationWarning className="font-sans antialiased">
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
