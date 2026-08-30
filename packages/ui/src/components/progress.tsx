@@ -17,7 +17,9 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(
     },
     ref
   ) => {
-    const percentage = Math.min(Math.max(0, (value / max) * 100), 100);
+    const percentage = Number.isFinite(value) && Number.isFinite(max) && max > 0
+      ? Math.min(Math.max(0, (value / max) * 100), 100)
+      : 0;
 
     return (
       <div

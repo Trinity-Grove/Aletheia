@@ -2,6 +2,10 @@ import { ScheduleService } from './schedule.service.js';
 import { ScheduleSlotEntity } from '../domain/schedule-slot.entity.js';
 import { LessonPlanEntity, LessonPlanLearnerEntity } from '../domain/lesson-plan.entity.js';
 import { NotFoundException } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import { LessonPlanRepository } from '../infrastructure/lesson-plan.repository.js';
+import { ScheduleRepository } from '../infrastructure/schedule.repository.js';
+import { SCHEDULE_PUBLIC_API, type SchedulePublicApi } from './public-api.js';
 
 describe('ScheduleService', () => {
   let service: ScheduleService;
@@ -194,6 +198,35 @@ describe('ScheduleService', () => {
         dayOfWeek: 7,
         learnerId: undefined,
       });
+    });
+  });
+
+  describe('public API provider', () => {
+    it('resolves the schedule service and forwards family, date, and learner arguments', async () => {
+      const scheduleList = jest.fn().mockResolvedValue([]);
+      const lessonPlanList = jest.fn().mockResolvedValue([]);
+      const moduleRef = await Test.createTestingModule({
+        providers: [
+          ScheduleService,
+          { provide: ScheduleRepository, useValue: { list: scheduleList } },
+          { provide: LessonPlanRepository, useValue: { list: lessonPlanList } },
+          { provide: SCHEDULE_PUBLIC_API, useExisting: ScheduleService },
+        ],
+      }).compile();
+
+      const publicApi = moduleRef.get<SchedulePublicApi>(SCHEDULE_PUBLIC_API);
+      await publicApi.getDailyAgenda(FAMILY_ID, '2026-08-26', LEARNER_ID);
+
+      expect(publicApi).toBe(moduleRef.get(ScheduleService));
+      expect(scheduleList).toHaveBeenCalledWith(FAMILY_ID, {
+        dayOfWeek: 3,
+        learnerId: LEARNER_ID,
+      });
+      expect(lessonPlanList).toHaveBeenCalledWith(FAMILY_ID, {
+        date: '2026-08-26',
+        learnerId: LEARNER_ID,
+      });
+      await moduleRef.close();
     });
   });
 });

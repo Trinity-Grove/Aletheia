@@ -479,3 +479,163 @@ p.page-subtitle {
   color: var(--muted);
   font-size: 0.9375rem;
 }
+
+/* ProductShell application-specific slots inside the shared AppShell. */
+.product-shell-brand-logo {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--ui-radius-full);
+  background-color: var(--ui-action-primary-background);
+  color: var(--ui-text-gold);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ui-font-serif);
+  font-size: 1.25rem;
+  line-height: 1;
+  box-shadow: var(--ui-elevation-raised);
+}
+
+.product-shell-topbar-actions,
+.product-shell-user-profile {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--ui-space-12) / 4);
+}
+
+.product-shell-user-avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--ui-radius-full);
+  background-color: var(--ui-action-primary-background);
+  color: var(--ui-action-primary-foreground);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.product-shell-user-details {
+  min-width: 0;
+  flex: 1;
+}
+
+.product-shell-user-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--ui-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-shell-user-role {
+  margin-top: calc(var(--ui-space-8) / 8);
+}
+
+/* Home dashboard page layout */
+.dashboard-page {
+  padding: 2rem 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-page-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-page-action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-page-scripture {
+  margin-bottom: 1.75rem;
+}
+
+.dashboard-page-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.75rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-page-module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.dashboard-page-module-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.dashboard-page-module-link:hover .dashboard-page-module-card {
+  transform: translateY(-2px);
+}
+
+.dashboard-page-module-card {
+  padding: 1.25rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dashboard-page-module-icon {
+  color: var(--color-brand-forest);
+  margin-bottom: 0.75rem;
+}
+
+.dashboard-page-module-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  color: var(--color-brand-forest);
+}
+
+.dashboard-page-module-description {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.dashboard-page-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-secondary);
+  border: 1.5px dashed var(--border-light);
+  border-radius: var(--radius-lg);
+  background-color: var(--bg-surface);
+}
+
+.dashboard-page-loading p {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.dashboard-page-activities {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dashboard-page-completion-status {
+  min-height: 0;
+}
+
+.dashboard-page-completion-status p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-rose-700);
+  background-color: var(--color-rose-50);
+  border: 1px solid var(--color-rose-100);
+  border-radius: var(--radius-md);
+  padding: 0.625rem 0.875rem;
+}

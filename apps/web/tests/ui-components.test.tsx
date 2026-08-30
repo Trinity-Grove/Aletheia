@@ -15,6 +15,9 @@ import {
   Modal,
 } from '../src/components/ui';
 import { ProductShell } from '../src/components/layout/product-shell';
+import { RecordsJournalView } from '../src/components/records/records-journal-view';
+import { AttendanceTrackerView } from '../src/components/reports/attendance-tracker-view';
+import { AuthProvider } from '../src/lib/auth/rbac-context';
 
 const mockLearners: LearnerSummaryDto[] = [
   {
@@ -249,15 +252,15 @@ describe('ProductShell Integration', () => {
       </ProductShell>
     );
 
-    expect(screen.getByTestId('sidebar')).toBeInTheDocument();
-    const curriculumNav = screen.getByTestId('nav-item-curriculum');
-    expect(curriculumNav).toHaveAttribute('data-active', 'true');
+    expect(screen.getByTestId('appshell-sidebar')).toBeInTheDocument();
+    const curriculumNav = screen.getByTestId('appshell-nav-curriculum');
+    expect(curriculumNav).toHaveAttribute('aria-current', 'page');
 
-    const learnersNav = screen.getByTestId('nav-item-learners');
-    expect(learnersNav).toHaveAttribute('data-active', 'false');
+    const learnersNav = screen.getByTestId('appshell-nav-learners');
+    expect(learnersNav).not.toHaveAttribute('aria-current');
 
     // Test collapse toggle
-    const collapseBtn = screen.getByTestId('sidebar-collapse-toggle');
+    const collapseBtn = screen.getByTestId('appshell-collapse-btn');
     fireEvent.click(collapseBtn);
     expect(collapseBtn).toHaveAttribute('aria-label', 'Expandir barra lateral');
   });
@@ -289,23 +292,72 @@ describe('ProductShell Integration', () => {
     expect(screen.getByTestId('notification-badge')).toHaveTextContent('1');
 
     // User profile and RoleBadge
-    expect(screen.getByTestId('user-profile-summary')).toHaveTextContent('Wendel Silva');
+    expect(screen.getByTestId('appshell-user-profile')).toHaveTextContent('Wendel Silva');
     expect(screen.getAllByTestId('role-badge').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Guardião Principal')[0]).toBeInTheDocument();
   });
 
-  it('supports mobile responsive toggle and backdrop', () => {
+  it('supports mobile responsive navigation and backdrop', () => {
     render(
       <ProductShell>
         <div>Mobile Content</div>
       </ProductShell>
     );
 
-    const mobileToggle = screen.getByTestId('mobile-sidebar-toggle');
+    const mobileToggle = screen.getByTestId('appshell-mobile-menu-btn');
     fireEvent.click(mobileToggle);
-    expect(screen.getByTestId('sidebar-backdrop')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-mobile-navigation')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-mobile-backdrop')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId('sidebar-backdrop'));
-    expect(screen.queryByTestId('sidebar-backdrop')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('appshell-mobile-backdrop'));
+    expect(screen.queryByTestId('appshell-mobile-navigation')).not.toBeInTheDocument();
+  });
+});
+
+describe('Native select option safety', () => {
+  afterEach(cleanup);
+
+  it('renders record and attendance options as text-only content without console warnings', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    try {
+      render(
+        <AuthProvider role="OWNER_GUARDIAN">
+          <RecordsJournalView
+            records={[]}
+            learners={mockLearners}
+            subjects={[]}
+            activeLearnerId={null}
+            onOpenCreateRecord={vi.fn()}
+            onEditRecord={vi.fn()}
+            onDeleteRecord={vi.fn()}
+            onAddEvidence={vi.fn()}
+          />
+        </AuthProvider>,
+      );
+
+      const recordOption = screen.getByRole('option', { name: 'Lição Planejada' });
+      expect(recordOption.querySelector('svg')).toBeNull();
+
+      cleanup();
+
+      render(
+        <AuthProvider role="OWNER_GUARDIAN">
+          <AttendanceTrackerView
+            records={[]}
+            learners={mockLearners}
+            activeLearnerId={null}
+            onLogAttendance={vi.fn().mockResolvedValue(undefined)}
+            onBulkLogAttendance={vi.fn().mockResolvedValue(undefined)}
+          />
+        </AuthProvider>,
+      );
+
+      const attendanceOption = screen.getByRole('option', { name: 'Presente' });
+      expect(attendanceOption.querySelector('svg')).toBeNull();
+      expect(consoleError).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 });

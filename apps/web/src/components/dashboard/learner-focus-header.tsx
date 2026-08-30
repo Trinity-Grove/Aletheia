@@ -1,11 +1,9 @@
 'use client';
 
 import React from 'react';
-import type { LearnerSummaryDto } from '@aletheia/contracts';
-import { Badge } from '@aletheia/ui';
 
 export interface LearnerFocusHeaderProps {
-  learners: LearnerSummaryDto[];
+  learners: Array<{ id: string; displayName: string }>;
   activeLearnerId: string | null;
   onSelectLearner: (learnerId: string | null) => void;
 }
@@ -15,7 +13,8 @@ export function LearnerFocusHeader({
   activeLearnerId,
   onSelectLearner,
 }: LearnerFocusHeaderProps) {
-  const activeLearner = learners.find((l) => l.id === activeLearnerId) || learners[0];
+  const activeLearner =
+    learners.find((l) => l.id === activeLearnerId) ?? null;
 
   return (
     <div
@@ -48,7 +47,7 @@ export function LearnerFocusHeader({
             boxShadow: '0 4px 12px rgba(18, 63, 52, 0.2)',
           }}
         >
-          {activeLearner?.firstName?.charAt(0) || 'E'}
+          {activeLearner?.displayName?.charAt(0) || 'E'}
         </div>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
@@ -61,13 +60,8 @@ export function LearnerFocusHeader({
                 fontWeight: 400,
               }}
             >
-              {activeLearner ? `${activeLearner.firstName} ${activeLearner.lastName || ''}`.trim() : 'Todos os Educandos'}
+              {activeLearner ? activeLearner.displayName : 'Todos os Educandos'}
             </h2>
-            {activeLearner?.stage && (
-              <Badge variant="emerald" size="sm">
-                {activeLearner.stage}
-              </Badge>
-            )}
           </div>
           <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
             Foco pedagógico e jornada diária personalizada
@@ -81,7 +75,7 @@ export function LearnerFocusHeader({
             Alternar foco:
           </span>
           {learners.map((l) => {
-            const isSelected = l.id === (activeLearner?.id);
+            const isSelected = l.id === activeLearner?.id;
             return (
               <button
                 key={l.id}
@@ -100,7 +94,7 @@ export function LearnerFocusHeader({
                   transition: 'all 0.15s ease',
                 }}
               >
-                {l.firstName}
+                {l.displayName}
               </button>
             );
           })}

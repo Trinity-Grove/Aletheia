@@ -270,6 +270,15 @@ function isPublicApplicationContract(destination) {
     && remainingPath.length === 0;
 }
 
+function isFeatureModuleComposition(sourceFile, destination) {
+  const [sourceModule, sourceRoot, ...sourceRemainingPath] = pathWithinModules(sourceFile) ?? [];
+  const [destinationModule, destinationRoot, ...destinationRemainingPath] = destination;
+  return sourceRoot === `${sourceModule}.module.ts`
+    && sourceRemainingPath.length === 0
+    && destinationRoot === `${destinationModule}.module.js`
+    && destinationRemainingPath.length === 0;
+}
+
 function violationsFor(sourceFile, source) {
   const sourceModule = moduleNameFor(sourceFile);
   if (!sourceModule) return [];
@@ -285,7 +294,12 @@ function violationsFor(sourceFile, source) {
     const destinationModule = destination?.[0];
     const destinationLayer = destination?.[1];
 
-    if (!destinationModule || destinationModule === sourceModule || isPublicApplicationContract(destination)) {
+    if (
+      !destinationModule ||
+      destinationModule === sourceModule ||
+      isPublicApplicationContract(destination) ||
+      isFeatureModuleComposition(sourceFile, destination)
+    ) {
       return [];
     }
 

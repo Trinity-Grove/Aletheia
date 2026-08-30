@@ -299,7 +299,7 @@ export function RecordFormModal({
               >
                 {Object.entries(RECORD_TYPE_LABELS).map(([key, item]) => (
                   <option key={key} value={key}>
-                    {item.icon} {item.label}
+                    {item.label}
                   </option>
                 ))}
               </select>
@@ -464,7 +464,7 @@ export function RecordFormModal({
               >
                 {Object.entries(MASTERY_CONFIG).map(([lvl, conf]) => (
                   <option key={lvl} value={lvl}>
-                    {conf.icon} {conf.label}
+                    {conf.label}
                   </option>
                 ))}
               </select>

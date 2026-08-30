@@ -65,6 +65,7 @@ test('a clean API package build emits and boots dist/main.js', async () => {
         CI: 'true',
         pnpm_config_verify_deps_before_run: 'false',
       },
+      shell: process.platform === 'win32',
     },
   );
 

@@ -170,7 +170,7 @@ export function ReportGeneratorView({
             <option value="">Todos os tipos de relatório</option>
             {Object.entries(REPORT_TYPE_CONFIG).map(([k, item]) => (
               <option key={k} value={k}>
-                {item.icon} {item.label}
+                {item.label}
               </option>
             ))}
           </select>
@@ -480,7 +480,7 @@ export function ReportGeneratorView({
                 >
                   {Object.entries(REPORT_TYPE_CONFIG).map(([k, item]) => (
                     <option key={k} value={k}>
-                      {item.icon} {item.label}
+                      {item.label}
                     </option>
                   ))}
                 </select>

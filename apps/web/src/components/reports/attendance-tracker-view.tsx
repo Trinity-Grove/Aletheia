@@ -584,7 +584,7 @@ export function AttendanceTrackerView({
                 >
                   {Object.entries(ATTENDANCE_STATUS_CONFIG).map(([k, item]) => (
                     <option key={k} value={k}>
-                      {item.icon} {item.label}
+                      {item.label}
                     </option>
                   ))}
                 </select>

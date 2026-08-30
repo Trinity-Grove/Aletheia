@@ -212,7 +212,7 @@ export function RecordsJournalView({
             <option value="">Todos os tipos</option>
             {Object.entries(RECORD_TYPE_LABELS).map(([k, item]) => (
               <option key={k} value={k}>
-                {item.icon} {item.label}
+                {item.label}
               </option>
             ))}
           </select>
@@ -254,7 +254,7 @@ export function RecordsJournalView({
             <option value="">Todos os níveis de domínio</option>
             {Object.entries(MASTERY_CONFIG).map(([k, item]) => (
               <option key={k} value={k}>
-                {item.icon} {item.label}
+                {item.label}
               </option>
             ))}
           </select>

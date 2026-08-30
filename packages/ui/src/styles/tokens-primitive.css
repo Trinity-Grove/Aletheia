@@ -1,0 +1,153 @@
+/* Layer 1: primitive tokens — raw values only. */
+:root {
+  /* Trinity Grove palette */
+  --primitive-color-forest-900: #08251f;
+  --primitive-color-forest-800: #0c3028;
+  --primitive-color-forest-700: #123f34;
+  --primitive-color-forest-600: #1b5346;
+  --primitive-color-forest-500: #236758;
+  --primitive-color-sage-900: #2a3c31;
+  --primitive-color-sage-700: #4a6453;
+  --primitive-color-sage-500: #78937f;
+  --primitive-color-sage-300: #b0c4b6;
+  --primitive-color-sage-200: #dce6dc;
+  --primitive-color-sage-100: #eef1e8;
+  --primitive-color-sage-50: #f7f9f6;
+  --primitive-color-gold-900: #6b4f0b;
+  --primitive-color-gold-700: #b48517;
+  --primitive-color-gold-500: #d3a526;
+  --primitive-color-gold-300: #d7bf79;
+  --primitive-color-gold-200: #f3e5b6;
+  --primitive-color-gold-100: #f9f0d0;
+  --primitive-color-gold-50: #fefbf2;
+  --primitive-color-ivory: #fbf8ef;
+  --primitive-color-paper: #fffdf7;
+  --primitive-color-ink: #17312a;
+  --primitive-color-muted: #5c6f67;
+  --primitive-color-white: #ffffff;
+  --primitive-color-black: #000000;
+
+  /* Feedback palettes */
+  --primitive-color-emerald-700: #123f34;
+  --primitive-color-emerald-600: #1b5346;
+  --primitive-color-emerald-500: #059669;
+  --primitive-color-emerald-100: #dce6dc;
+  --primitive-color-emerald-50: #f1f6f1;
+  --primitive-color-amber-700: #b48517;
+  --primitive-color-amber-600: #d3a526;
+  --primitive-color-amber-500: #d97706;
+  --primitive-color-amber-100: #f9f0d0;
+  --primitive-color-amber-50: #fefbf2;
+  --primitive-color-rose-700: #9f2424;
+  --primitive-color-rose-600: #c53030;
+  --primitive-color-rose-500: #e11d48;
+  --primitive-color-rose-100: #fde8e8;
+  --primitive-color-rose-50: #fdf2f2;
+  --primitive-color-indigo-700: #1a445d;
+  --primitive-color-indigo-600: #245c7d;
+  --primitive-color-indigo-500: #4338ca;
+  --primitive-color-indigo-100: #dbeef7;
+  --primitive-color-indigo-50: #f0f7fb;
+  --primitive-color-slate-900: #17312a;
+  --primitive-color-slate-800: #23443b;
+  --primitive-color-slate-700: #36564c;
+  --primitive-color-slate-600: #5c6f67;
+  --primitive-color-slate-500: #78937f;
+  --primitive-color-slate-400: #a3b8aa;
+  --primitive-color-slate-300: #cad6ce;
+  --primitive-color-slate-200: #e2e8e3;
+  --primitive-color-slate-100: #eef1e8;
+  --primitive-color-slate-50: #fbf8ef;
+
+  /* Raw surface, border, overlay, and elevation values */
+  --primitive-color-surface-hover: #f5f2e6;
+  --primitive-color-surface-active: #ece7d7;
+  --primitive-color-surface-muted: #f4f6f3;
+  --primitive-color-border-subtle: rgba(18, 63, 52, 0.08);
+  --primitive-color-border-light: rgba(18, 63, 52, 0.14);
+  --primitive-color-border-medium: rgba(18, 63, 52, 0.24);
+  --primitive-color-border-strong: rgba(18, 63, 52, 0.4);
+  --primitive-color-focus-ring: rgba(18, 63, 52, 0.35);
+  --primitive-color-scrim: rgba(8, 37, 31, 0.65);
+  --primitive-color-modal-scrim: rgba(18, 63, 52, 0.45);
+  --primitive-color-paper-translucent: rgba(255, 253, 247, 0.85);
+  --primitive-shadow-raised: 0 2px 4px 0 rgba(18, 63, 52, 0.04);
+  --primitive-shadow-overlay: 0 6px 16px -2px rgba(18, 63, 52, 0.07), 0 2px 6px -1px rgba(18, 63, 52, 0.04);
+  --primitive-shadow-modal: 0 16px 32px -4px rgba(18, 63, 52, 0.09), 0 6px 12px -2px rgba(18, 63, 52, 0.04);
+  --primitive-shadow-popover: 0 20px 40px -6px rgba(11, 47, 39, 0.12);
+  --primitive-shadow-inner: inset 0 2px 4px 0 rgba(18, 63, 52, 0.05);
+
+  /* Typography */
+  --primitive-font-serif: var(--font-serif-next, "Lora", Georgia, serif);
+  --primitive-font-sans: var(--font-sans-next, "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  --primitive-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --primitive-font-size-xs: 0.75rem;
+  --primitive-font-size-sm: 0.8125rem;
+  --primitive-font-size-base: 0.875rem;
+  --primitive-font-size-body: 0.9375rem;
+  --primitive-font-size-md: 1rem;
+  --primitive-font-size-lg: 1.125rem;
+  --primitive-font-size-xl: 1.25rem;
+  --primitive-font-size-2xl: 1.5rem;
+  --primitive-font-size-3xl: 1.875rem;
+  --primitive-font-size-4xl: 2.25rem;
+  --primitive-font-size-5xl: 3rem;
+  --primitive-line-height-none: 1;
+  --primitive-line-height-tight: 1.2;
+  --primitive-line-height-snug: 1.375;
+  --primitive-line-height-normal: 1.5;
+  --primitive-line-height-relaxed: 1.625;
+  --primitive-line-height-loose: 2;
+
+  /* Sizing */
+  --primitive-space-0: 0px;
+  --primitive-space-1: 0.25rem;
+  --primitive-space-2: 0.5rem;
+  --primitive-space-3: 0.75rem;
+  --primitive-space-4: 1rem;
+  --primitive-space-5: 1.25rem;
+  --primitive-space-6: 1.5rem;
+  --primitive-space-8: 2rem;
+  --primitive-space-10: 2.5rem;
+  --primitive-space-12: 3rem;
+  --primitive-space-16: 4rem;
+  --primitive-radius-none: 0px;
+  --primitive-radius-xs: 2px;
+  --primitive-radius-sm: 4px;
+  --primitive-radius-md: 6px;
+  --primitive-radius-lg: 10px;
+  --primitive-radius-xl: 14px;
+  --primitive-radius-2xl: 20px;
+  --primitive-radius-full: 9999px;
+  --primitive-size-focus-ring: 3px;
+  --primitive-size-focus-offset: 2px;
+  --primitive-size-blur-sm: 4px;
+  --primitive-size-blur-md: 8px;
+  --primitive-size-drawer-width: 24rem;
+  --primitive-size-drawer-width-sm: 20rem;
+  --primitive-size-drawer-width-md: 26rem;
+  --primitive-size-drawer-width-lg: 36rem;
+  --primitive-size-sidebar-width: 17rem;
+  --primitive-size-sidebar-collapsed-width: 4.5rem;
+  --primitive-size-header-height: 4.5rem;
+
+  /* Motion and responsive values */
+  --primitive-duration-fast: 150ms;
+  --primitive-duration-normal: 200ms;
+  --primitive-duration-slow: 300ms;
+  --primitive-ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --primitive-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --primitive-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --primitive-ease-drawer: cubic-bezier(0.16, 1, 0.3, 1);
+  --primitive-ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --primitive-breakpoint-sm: 640px;
+  --primitive-breakpoint-md: 768px;
+  --primitive-breakpoint-lg: 1024px;
+  --primitive-breakpoint-xl: 1280px;
+  --primitive-breakpoint-2xl: 1536px;
+  --primitive-opacity-disabled: 0.5;
+  --primitive-font-weight-normal: 400;
+  --primitive-font-weight-medium: 500;
+  --primitive-font-weight-semibold: 600;
+  --primitive-font-weight-bold: 700;
+}
