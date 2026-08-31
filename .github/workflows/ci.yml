@@ -60,6 +60,9 @@ jobs:
       - name: Check module boundaries
         run: pnpm check:boundaries
 
+      - name: Check no sibling-ranking/comparison code exists
+        run: pnpm check:no-sibling-comparison
+
       - name: Lint
         run: pnpm lint
 

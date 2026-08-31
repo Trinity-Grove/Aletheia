@@ -114,6 +114,7 @@ export class DataExportRepository {
       attendanceRecords,
       complianceRequirements,
       officialReports,
+      notifications,
     ] = await Promise.all([
       this.prisma.family.findUnique({ where: { id: familyId } }),
       this.prisma.familySettings.findUnique({ where: { familyId } }),
@@ -145,6 +146,7 @@ export class DataExportRepository {
       this.prisma.attendanceRecord.findMany({ where: { familyId }, orderBy: { date: 'desc' } }),
       this.prisma.complianceRequirement.findMany({ where: { familyId } }),
       this.prisma.officialReport.findMany({ where: { familyId }, orderBy: { generatedAt: 'desc' } }),
+      this.prisma.notificationItem.findMany({ where: { familyId }, orderBy: { createdAt: 'desc' } }),
     ]);
 
     const serialize = <T>(val: T): any => (val ? JSON.parse(JSON.stringify(val)) : null);
@@ -168,6 +170,7 @@ export class DataExportRepository {
       attendanceRecords: serialize(attendanceRecords) ?? [],
       complianceRequirements: serialize(complianceRequirements) ?? [],
       officialReports: serialize(officialReports) ?? [],
+      notifications: serialize(notifications) ?? [],
     };
   }
 
