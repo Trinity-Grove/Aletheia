@@ -38,6 +38,7 @@ describe('DataExportService', () => {
       attendanceRecords: [{ id: 'ar-1', familyId: 'fam-1', status: 'PRESENT' }],
       complianceRequirements: [{ id: 'cr-1', familyId: 'fam-1' }],
       officialReports: [{ id: 'or-1', familyId: 'fam-1', title: 'Transcript' }],
+      notifications: [{ id: 'n-1', familyId: 'fam-1', title: 'Devotional reminder' }],
     };
 
     const mockRepo = {
@@ -168,6 +169,7 @@ describe('DataExportService', () => {
       expect(result.attendanceRecords).toHaveLength(1);
       expect(result.complianceRequirements).toHaveLength(1);
       expect(result.officialReports).toHaveLength(1);
+      expect(result.notifications).toHaveLength(1);
     });
   });
 

@@ -8,6 +8,7 @@
   "scripts": {
     "build": "pnpm -r --if-present build",
     "check:boundaries": "node --test scripts/check-module-boundaries.test.mjs && node scripts/check-module-boundaries.mjs",
+    "check:no-sibling-comparison": "node --test scripts/check-no-sibling-comparison.test.mjs",
     "dev": "pnpm --parallel --filter @aletheia/web --filter @aletheia/api dev",
     "lint": "pnpm -r --if-present lint",
     "prisma:generate": "pnpm --filter @aletheia/api prisma:generate",
@@ -16,7 +17,7 @@
     "test": "pnpm -r --if-present test",
     "test:ci": "pnpm -r --if-present test",
     "test:distribution": "node --test scripts/api-distribution.test.mjs",
-    "verify": "pnpm prisma:generate && pnpm check:boundaries && pnpm lint && pnpm test:clean-typegen && pnpm typecheck && pnpm test:ci && pnpm --filter @aletheia/api test:e2e && pnpm test:distribution && pnpm build"
+    "verify": "pnpm prisma:generate && pnpm check:boundaries && pnpm check:no-sibling-comparison && pnpm lint && pnpm test:clean-typegen && pnpm typecheck && pnpm test:ci && pnpm --filter @aletheia/api test:e2e && pnpm test:distribution && pnpm build"
   },
   "devDependencies": {
     "eslint": "^9.0.0",

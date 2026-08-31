@@ -49,6 +49,7 @@ export const familyDataExportPackageSchema = z.object({
   attendanceRecords: z.array(z.record(z.string(), z.any())).optional(),
   complianceRequirements: z.array(z.record(z.string(), z.any())).optional(),
   officialReports: z.array(z.record(z.string(), z.any())).optional(),
+  notifications: z.array(z.record(z.string(), z.any())).optional(),
 });
 
 export type FamilyDataExportPackageDto = z.infer<typeof familyDataExportPackageSchema>;

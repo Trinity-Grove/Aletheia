@@ -87,12 +87,14 @@ describe('Data Backup Contracts', () => {
         attendanceRecords: [],
         complianceRequirements: [],
         officialReports: [],
+        notifications: [],
       };
 
       const parsed = familyDataExportPackageSchema.parse(pkg);
       expect(parsed.version).toBe('1.0.0');
       expect(parsed.family.name).toBe('Família Silva');
       expect(parsed.learners).toHaveLength(1);
+      expect(parsed.notifications).toEqual([]);
     });
   });
 });

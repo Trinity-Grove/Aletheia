@@ -35,8 +35,8 @@ aletheia/
 
 ### 1. Identity, Families & Multi-Tenant RBAC
 - Multi-tenant architecture ensuring complete data isolation per family.
-- Secure JWT authentication with HTTP-only cookies.
-- Role-Based Access Control (`GUARDIAN`, `EDUCATOR`, `STUDENT`) and co-educator invitations.
+- Secure JWT authentication (bearer token).
+- Role-Based Access Control (`OWNER_GUARDIAN`, `GUARDIAN`, `CO_GUARDIAN`, `EDUCATOR`) and co-educator invitations. A self-service `STUDENT` portal is intentionally out of scope for the current MVP.
 
 ### 2. Learners & Educational Profiles
 - Individual pedagogical profiles for each child (educational stages: *Early Years*, *Primary/Grammar*, *Middle/Logic*, *High/Rhetoric*).
@@ -71,12 +71,12 @@ aletheia/
 - Legal attendance logging with customizable status (*Present*, *Excused*, *Unexcused*, *Holiday*, *Field Trip*, *Sick*).
 - Regulatory compliance progress gauges against annual targets (e.g. 200 instructional days / 800 hours).
 - Official Academic Transcript generator with multi-grading scale converter (*Mastery Qualitative*, *Letter Grades A–F*, *Numeric 0–10 / 0–100*, *Narrative*).
-- Print-ready official layout with homeschool organization header and CSV data export.
+- Browser print-ready layout (via print stylesheet) with homeschool organization header, plus structured CSV data export. No server-generated PDF document yet — printing to PDF is left to the browser.
 
 ### 8. Family Settings, Notification Center & Data Sovereignty
 - Homeschool identity customization (Organization Name, Motto, Timezone, Pedagogical Defaults).
 - In-app notification center and reminder preferences for devotionals and attendance.
-- **Complete Family Data Backup Export (JSON):** 100% data sovereignty and GDPR/LGPD compliance allowing families to download their entire history in a single structured file.
+- **Complete Family Data Backup Export (JSON):** data sovereignty and GDPR/LGPD-minded portability, letting families download their full educational and devotional history — every domain record scoped to the family — in a single structured file. (Operational metadata such as pending co-educator invitations is not included.)
 
 ---
 
@@ -122,7 +122,7 @@ NODE_ENV=development
 corepack pnpm prisma:generate
 
 # Apply database migrations
-corepack pnpm --filter @aletheia/api prisma:migrate
+corepack pnpm --filter @aletheia/api prisma migrate deploy
 ```
 
 ### 4. Running the Development Servers
