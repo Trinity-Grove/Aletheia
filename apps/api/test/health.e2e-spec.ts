@@ -114,15 +114,15 @@ describe('Health liveness endpoint', () => {
       properties: {
         postgres: {
           type: 'string',
-          enum: ['up', 'down', 'degraded'],
+          enum: ['up', 'down', 'degraded', 'not_configured'],
         },
         redis: {
           type: 'string',
-          enum: ['up', 'down', 'degraded'],
+          enum: ['up', 'down', 'degraded', 'not_configured'],
         },
         objectStorage: {
           type: 'string',
-          enum: ['up', 'down', 'degraded'],
+          enum: ['up', 'down', 'degraded', 'not_configured'],
         },
       },
       required: ['postgres', 'redis', 'objectStorage'],

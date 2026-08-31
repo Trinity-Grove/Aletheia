@@ -12,8 +12,8 @@ import {
   type DependencyProbe,
 } from './dependency-probe';
 
-const degradedProbe: DependencyProbe = {
-  check: async () => 'degraded',
+const notConfiguredProbe: DependencyProbe = {
+  check: async () => 'not_configured',
 };
 
 @Injectable()
@@ -31,13 +31,13 @@ export class HealthService {
     version: string = process.env.npm_package_version ?? '0.0.0',
     @Inject(POSTGRES_PROBE)
     @Optional()
-    postgres: DependencyProbe = degradedProbe,
+    postgres: DependencyProbe = notConfiguredProbe,
     @Inject(REDIS_PROBE)
     @Optional()
-    redis: DependencyProbe = degradedProbe,
+    redis: DependencyProbe = notConfiguredProbe,
     @Inject(OBJECT_STORAGE_PROBE)
     @Optional()
-    objectStorage: DependencyProbe = degradedProbe,
+    objectStorage: DependencyProbe = notConfiguredProbe,
   ) {
     this.now = now;
     this.version = version;
@@ -77,7 +77,10 @@ export class HealthService {
       return 'not-ready';
     }
 
-    if (redis !== 'up' || objectStorage !== 'up') {
+    const isDegraded = (state: DependencyState) =>
+      state !== 'up' && state !== 'not_configured';
+
+    if (isDegraded(redis) || isDegraded(objectStorage)) {
       return 'degraded';
     }
 

@@ -1,4 +1,4 @@
-export type DependencyState = 'up' | 'down' | 'degraded';
+export type DependencyState = 'up' | 'down' | 'degraded' | 'not_configured';
 
 export interface HealthResponse {
   status: 'ok';

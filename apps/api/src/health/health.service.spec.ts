@@ -32,6 +32,25 @@ describe('HealthService', () => {
     });
   });
 
+  it('is ready when postgres is up and optional dependencies are not configured', async () => {
+    const service = new HealthService(
+      () => new Date(),
+      '0.1.0',
+      { check: async () => 'up' },
+      { check: async () => 'not_configured' },
+      { check: async () => 'not_configured' },
+    );
+
+    await expect(service.ready()).resolves.toEqual({
+      status: 'ready',
+      dependencies: {
+        postgres: 'up',
+        redis: 'not_configured',
+        objectStorage: 'not_configured',
+      },
+    });
+  });
+
   it('is degraded when postgres is up and optional dependencies are down', async () => {
     const service = new HealthService(
       () => new Date(),

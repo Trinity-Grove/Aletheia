@@ -1,6 +1,6 @@
 import type { PrismaService } from '../platform/database/prisma.service.js';
 import {
-  NoopDependencyProbe,
+  NotConfiguredDependencyProbe,
   PostgresDependencyProbe,
 } from './dependency-probe.js';
 
@@ -28,9 +28,9 @@ describe('dependency probes', () => {
     await expect(probe.check()).resolves.toBe('down');
   });
 
-  it('reports an unconfigured optional dependency as degraded', async () => {
-    const probe = new NoopDependencyProbe();
+  it('reports an unconfigured optional dependency as not_configured', async () => {
+    const probe = new NotConfiguredDependencyProbe();
 
-    await expect(probe.check()).resolves.toBe('degraded');
+    await expect(probe.check()).resolves.toBe('not_configured');
   });
 });
