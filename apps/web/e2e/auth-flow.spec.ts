@@ -60,11 +60,6 @@ test.describe('Authentication & Onboarding Web Smoke Tests', () => {
       }
     });
 
-    await page.addInitScript(() => {
-      localStorage.setItem('aletheia_token', 'mock-valid-token');
-      localStorage.setItem('token', 'mock-valid-token');
-    });
-
     await page.goto('/onboarding');
     await expect(page.getByTestId('onboarding-page')).toBeVisible();
 
@@ -109,8 +104,6 @@ test.describe('Authentication & Onboarding Web Smoke Tests', () => {
     });
 
     await page.addInitScript(() => {
-      localStorage.setItem('aletheia_token', 'mock-valid-token');
-      localStorage.setItem('token', 'mock-valid-token');
       localStorage.setItem('aletheia_active_family_id', '22222222-2222-4222-a222-222222222222');
       localStorage.setItem('familyId', '22222222-2222-4222-a222-222222222222');
     });

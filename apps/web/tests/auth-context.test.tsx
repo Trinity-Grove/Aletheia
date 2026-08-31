@@ -76,7 +76,11 @@ describe('AuthContext and useAuth', () => {
     consoleError.mockRestore();
   });
 
-  it('initializes to unauthenticated when no token is in localStorage', async () => {
+  it('initializes to unauthenticated when there is no valid session cookie', async () => {
+    // The session lives in an httpOnly cookie the app can't inspect directly —
+    // the only way to know it's absent is for /auth/me to reject.
+    vi.spyOn(api, 'get').mockRejectedValue(new ApiError(401, 'Unauthorized', 'No session'));
+
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <AuthProvider>{children}</AuthProvider>
     );
@@ -96,9 +100,23 @@ describe('AuthContext and useAuth', () => {
     expect(getApiAuthToken()).toBeNull();
   });
 
-  it('initializes to authenticated when valid token exists and selects default first family', async () => {
-    localStorage.setItem('aletheia_token', 'valid-token-123');
+  it('treats a network failure on initial mount the same as no session', async () => {
+    vi.spyOn(api, 'get').mockRejectedValue(new TypeError('Failed to fetch'));
 
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AuthProvider>{children}</AuthProvider>
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.status).toBe('unauthenticated');
+    });
+
+    expect(result.current.user).toBeNull();
+  });
+
+  it('initializes to authenticated when the session cookie is valid and selects default first family', async () => {
     const getSpy = vi.spyOn(api, 'get').mockImplementation(async (path: string) => {
       if (path === '/auth/me') return mockUser;
       if (path === '/families/mine') return [mockFamily1, mockFamily2];
@@ -115,19 +133,16 @@ describe('AuthContext and useAuth', () => {
       expect(result.current.status).toBe('authenticated');
     });
 
-    expect(result.current.token).toBe('valid-token-123');
     expect(result.current.user).toEqual(mockUser);
     expect(result.current.families).toEqual([mockFamily1, mockFamily2]);
     expect(result.current.activeFamilyId).toBe('family-uuid-1');
     expect(result.current.activeFamily).toEqual(mockFamily1);
     expect(result.current.activeRole).toBe('OWNER_GUARDIAN');
-    expect(getApiAuthToken()).toBe('valid-token-123');
     expect(getSpy).toHaveBeenCalledWith('/auth/me');
     expect(getSpy).toHaveBeenCalledWith('/families/mine');
   });
 
   it('restores stored activeFamilyId on initial mount if present in families list', async () => {
-    localStorage.setItem('aletheia_token', 'valid-token-123');
     localStorage.setItem('aletheia_active_family_id', 'family-uuid-2');
 
     vi.spyOn(api, 'get').mockImplementation(async (path: string) => {
@@ -151,35 +166,16 @@ describe('AuthContext and useAuth', () => {
     expect(result.current.activeRole).toBe('EDUCATOR');
   });
 
-  it('handles 401 on initial mount by clearing stored token and setting unauthenticated', async () => {
-    localStorage.setItem('aletheia_token', 'expired-token');
-
-    vi.spyOn(api, 'get').mockRejectedValue(new ApiError(401, 'Unauthorized', 'Token expired'));
-
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <AuthProvider>{children}</AuthProvider>
-    );
-
-    const { result } = renderHook(() => useAuth(), { wrapper });
-
-    await waitFor(() => {
-      expect(result.current.status).toBe('unauthenticated');
-    });
-
-    expect(localStorage.getItem('aletheia_token')).toBeNull();
-    expect(result.current.user).toBeNull();
-    expect(result.current.token).toBeNull();
-    expect(getApiAuthToken()).toBeNull();
-  });
-
-  it('logs in successfully and populates user, token, families, and active family', async () => {
+  it('logs in successfully and populates user, token, and active family', async () => {
     const authResponse: AuthResponseDto = {
       accessToken: 'new-login-token-456',
       user: mockUser,
     };
 
+    vi.spyOn(api, 'get')
+      .mockRejectedValueOnce(new ApiError(401, 'Unauthorized', 'No session'))
+      .mockResolvedValue([mockFamily1]);
     const postSpy = vi.spyOn(api, 'post').mockResolvedValue(authResponse);
-    const getSpy = vi.spyOn(api, 'get').mockResolvedValue([mockFamily1]);
 
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <AuthProvider>{children}</AuthProvider>
@@ -202,7 +198,6 @@ describe('AuthContext and useAuth', () => {
       email: 'guardian@example.com',
       password: 'secretPassword123',
     });
-    expect(getSpy).toHaveBeenCalledWith('/families/mine');
 
     expect(result.current.status).toBe('authenticated');
     expect(result.current.token).toBe('new-login-token-456');
@@ -210,7 +205,10 @@ describe('AuthContext and useAuth', () => {
     expect(result.current.families).toEqual([mockFamily1]);
     expect(result.current.activeFamilyId).toBe('family-uuid-1');
     expect(result.current.activeRole).toBe('OWNER_GUARDIAN');
-    expect(localStorage.getItem('aletheia_token')).toBe('new-login-token-456');
+    // The token is never written to localStorage — the browser holds the
+    // session as the httpOnly cookie the server just set via Set-Cookie.
+    expect(localStorage.getItem('aletheia_token')).toBeNull();
+    expect(localStorage.getItem('token')).toBeNull();
     expect(getApiAuthToken()).toBe('new-login-token-456');
   });
 
@@ -220,6 +218,7 @@ describe('AuthContext and useAuth', () => {
       user: mockUser,
     };
 
+    vi.spyOn(api, 'get').mockRejectedValue(new ApiError(401, 'Unauthorized', 'No session'));
     const postSpy = vi.spyOn(api, 'post').mockResolvedValue(authResponse);
 
     const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -253,12 +252,11 @@ describe('AuthContext and useAuth', () => {
     expect(result.current.activeFamilyId).toBeNull();
     expect(result.current.activeFamily).toBeNull();
     expect(result.current.activeRole).toBeNull();
-    expect(localStorage.getItem('aletheia_token')).toBe('register-token-789');
+    expect(localStorage.getItem('aletheia_token')).toBeNull();
     expect(getApiAuthToken()).toBe('register-token-789');
   });
 
-  it('logs out and clears all session state and localStorage', async () => {
-    localStorage.setItem('aletheia_token', 'valid-token');
+  it('logs out, notifies the server to clear the session cookie, and clears local state', async () => {
     localStorage.setItem('aletheia_active_family_id', 'family-uuid-1');
 
     vi.spyOn(api, 'get').mockImplementation(async (path: string) => {
@@ -266,6 +264,7 @@ describe('AuthContext and useAuth', () => {
       if (path === '/families/mine') return [mockFamily1];
       throw new Error(`Unexpected path: ${path}`);
     });
+    const postSpy = vi.spyOn(api, 'post').mockResolvedValue({ success: true });
 
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <AuthProvider>{children}</AuthProvider>
@@ -281,6 +280,7 @@ describe('AuthContext and useAuth', () => {
       result.current.logout();
     });
 
+    expect(postSpy).toHaveBeenCalledWith('/auth/logout');
     expect(result.current.status).toBe('unauthenticated');
     expect(result.current.user).toBeNull();
     expect(result.current.token).toBeNull();
@@ -288,14 +288,11 @@ describe('AuthContext and useAuth', () => {
     expect(result.current.activeFamilyId).toBeNull();
     expect(result.current.activeFamily).toBeNull();
     expect(result.current.activeRole).toBeNull();
-    expect(localStorage.getItem('aletheia_token')).toBeNull();
     expect(localStorage.getItem('aletheia_active_family_id')).toBeNull();
     expect(getApiAuthToken()).toBeNull();
   });
 
   it('selects a different active family and updates activeRole and localStorage', async () => {
-    localStorage.setItem('aletheia_token', 'valid-token');
-
     vi.spyOn(api, 'get').mockImplementation(async (path: string) => {
       if (path === '/auth/me') return mockUser;
       if (path === '/families/mine') return [mockFamily1, mockFamily2];
@@ -326,8 +323,6 @@ describe('AuthContext and useAuth', () => {
   });
 
   it('adds newly created family via setActiveFamilyFromCreated', async () => {
-    localStorage.setItem('aletheia_token', 'valid-token');
-
     vi.spyOn(api, 'get').mockImplementation(async (path: string) => {
       if (path === '/auth/me') return mockUser;
       if (path === '/families/mine') return [];
@@ -358,14 +353,13 @@ describe('AuthContext and useAuth', () => {
     expect(localStorage.getItem('aletheia_active_family_id')).toBe('family-uuid-1');
   });
 
-  it('listens to window auth:unauthorized event and logs out', async () => {
-    localStorage.setItem('aletheia_token', 'valid-token');
-
+  it('listens to window auth:unauthorized event and clears local session without calling logout', async () => {
     vi.spyOn(api, 'get').mockImplementation(async (path: string) => {
       if (path === '/auth/me') return mockUser;
       if (path === '/families/mine') return [mockFamily1];
       throw new Error(`Unexpected path: ${path}`);
     });
+    const postSpy = vi.spyOn(api, 'post').mockResolvedValue({ success: true });
 
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <AuthProvider>{children}</AuthProvider>
@@ -384,7 +378,9 @@ describe('AuthContext and useAuth', () => {
     expect(result.current.status).toBe('unauthenticated');
     expect(result.current.user).toBeNull();
     expect(result.current.token).toBeNull();
-    expect(localStorage.getItem('aletheia_token')).toBeNull();
     expect(getApiAuthToken()).toBeNull();
+    // A 401 means the cookie is already invalid server-side — no need to
+    // also call the logout endpoint.
+    expect(postSpy).not.toHaveBeenCalledWith('/auth/logout');
   });
 });

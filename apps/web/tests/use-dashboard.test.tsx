@@ -97,8 +97,7 @@ describe('useDashboard hook', () => {
     expect(url).toBe(`/api/v1/families/${FAMILY_ID}/dashboard?date=${expectedDate}`);
 
     const init = fetchMock.mock.calls[0]![1] as RequestInit;
-    const headers = init.headers as Record<string, string>;
-    expect(headers.Authorization).toBe(`Bearer ${TOKEN}`);
+    expect(init.credentials).toBe('include');
   });
 
   it('transitions to error on a non-ok HTTP response', async () => {
@@ -259,7 +258,7 @@ describe('useDashboard hook', () => {
     expect(completeInit.method).toBe('POST');
     const completeHeaders = completeInit.headers as Record<string, string>;
     expect(completeHeaders['Content-Type']).toBe('application/json');
-    expect(completeHeaders.Authorization).toBe(`Bearer ${TOKEN}`);
+    expect(completeInit.credentials).toBe('include');
 
     await waitFor(() => expect(result.current.data?.activities.find((a) => a.id === LESSON_ID)?.completed).toBe(true));
   });

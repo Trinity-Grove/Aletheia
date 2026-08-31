@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import cookie from '@fastify/cookie';
 import helmet from '@fastify/helmet';
 import { VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
@@ -27,6 +28,7 @@ export async function createApplication(): Promise<NestFastifyApplication> {
     credentials: true,
   });
   await app.register(helmet);
+  await app.register(cookie);
 
   if (environment.nodeEnv !== 'production') {
     const document = SwaggerModule.createDocument(

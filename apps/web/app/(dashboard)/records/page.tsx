@@ -32,13 +32,12 @@ export default function RecordsPage() {
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
   const [evidenceRecord, setEvidenceRecord] = useState<LearningRecordResponseDto | null>(null);
 
-  // Initial Load: token, family, learners, subjects, objectives
+  // Initial Load: family, learners, subjects, objectives
   useEffect(() => {
     async function loadBaseData() {
       try {
-        const token = localStorage.getItem('token');
         const storedFamilyId = localStorage.getItem('familyId');
-        if (!token || !storedFamilyId) {
+        if (!storedFamilyId) {
           setLoading(false);
           return;
         }
@@ -46,7 +45,7 @@ export default function RecordsPage() {
 
         // Learners
         const learnersRes = await fetch(`/api/v1/families/${storedFamilyId}/learners`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (learnersRes.ok) {
           const lData = await learnersRes.json();
@@ -55,7 +54,7 @@ export default function RecordsPage() {
 
         // Subjects
         const subjectsRes = await fetch(`/api/v1/families/${storedFamilyId}/curriculum/subjects`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (subjectsRes.ok) {
           const sData = await subjectsRes.json();
@@ -64,7 +63,7 @@ export default function RecordsPage() {
 
         // Objectives
         const objectivesRes = await fetch(`/api/v1/families/${storedFamilyId}/curriculum/objectives`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (objectivesRes.ok) {
           const oData = await objectivesRes.json();
@@ -83,13 +82,12 @@ export default function RecordsPage() {
   const fetchRecords = useCallback(async () => {
     if (!familyId) return;
     try {
-      const token = localStorage.getItem('token');
       const params = new URLSearchParams();
       if (activeLearnerId) {
         params.append('learnerId', activeLearnerId);
       }
       const res = await fetch(`/api/v1/families/${familyId}/records?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
       });
       if (res.ok) {
         const data = await res.json();
@@ -107,11 +105,10 @@ export default function RecordsPage() {
       return;
     }
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch(
         `/api/v1/families/${familyId}/records/learners/${activeLearnerId}/summary`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         }
       );
       if (res.ok) {
@@ -131,15 +128,12 @@ export default function RecordsPage() {
   // Actions
   const handleSaveRecord = async (dto: CreateLearningRecordDto) => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
 
     if (recordToEdit) {
       const res = await fetch(`/api/v1/families/${familyId}/records/${recordToEdit.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
         body: JSON.stringify(dto),
       });
       if (!res.ok) {
@@ -149,10 +143,8 @@ export default function RecordsPage() {
     } else {
       const res = await fetch(`/api/v1/families/${familyId}/records`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
         body: JSON.stringify(dto),
       });
       if (!res.ok) {
@@ -166,10 +158,9 @@ export default function RecordsPage() {
 
   const handleDeleteRecord = async (recordId: string) => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
     const res = await fetch(`/api/v1/families/${familyId}/records/${recordId}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
     });
     if (res.ok) {
       await fetchRecords();
@@ -179,13 +170,10 @@ export default function RecordsPage() {
 
   const handleSaveEvidence = async (dto: CreatePortfolioItemDto) => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
     const res = await fetch(`/api/v1/families/${familyId}/portfolio`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
       body: JSON.stringify(dto),
     });
     if (!res.ok) {

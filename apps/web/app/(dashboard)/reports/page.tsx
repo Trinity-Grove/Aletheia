@@ -16,13 +16,12 @@ export default function ReportsPage() {
   const [reports, setReports] = useState<OfficialReportResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Initial Load: token, family, learners
+  // Initial Load: family, learners
   useEffect(() => {
     async function loadBaseData() {
       try {
-        const token = localStorage.getItem('token');
         const storedFamilyId = localStorage.getItem('familyId');
-        if (!token || !storedFamilyId) {
+        if (!storedFamilyId) {
           setLoading(false);
           return;
         }
@@ -30,7 +29,7 @@ export default function ReportsPage() {
 
         // Learners
         const learnersRes = await fetch(`/api/v1/families/${storedFamilyId}/learners`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (learnersRes.ok) {
           const lData = await learnersRes.json();
@@ -49,13 +48,12 @@ export default function ReportsPage() {
   const fetchReports = useCallback(async () => {
     if (!familyId) return;
     try {
-      const token = localStorage.getItem('token');
       const params = new URLSearchParams();
       if (activeLearnerId) {
         params.append('learnerId', activeLearnerId);
       }
       const res = await fetch(`/api/v1/families/${familyId}/reports?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
       });
       if (res.ok) {
         const data = await res.json();
@@ -75,13 +73,10 @@ export default function ReportsPage() {
     dto: GenerateReportDto
   ): Promise<OfficialReportResponseDto | void> => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
     const res = await fetch(`/api/v1/families/${familyId}/reports/generate`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
       body: JSON.stringify(dto),
     });
     if (!res.ok) {
@@ -95,10 +90,9 @@ export default function ReportsPage() {
 
   const handleDeleteReport = async (reportId: string) => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
     const res = await fetch(`/api/v1/families/${familyId}/reports/${reportId}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
     });
     if (res.ok) {
       await fetchReports();
@@ -107,9 +101,8 @@ export default function ReportsPage() {
 
   const handleExportCsv = async (reportId: string) => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
     const res = await fetch(`/api/v1/families/${familyId}/reports/${reportId}/export/csv`, {
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
     });
     if (res.ok) {
       const data = await res.json();
