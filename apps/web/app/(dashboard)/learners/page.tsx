@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { CreateLearnerDto, LearnerResponseDto } from '@aletheia/contracts';
 import { ProductShell } from '../../../src/components/product-shell';
 import { LearnersList } from '../../../src/components/learners/learners-list';
@@ -15,6 +15,32 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
   const [learners, setLearners] = useState<LearnerResponseDto[]>(initialLearners);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLearner, setEditingLearner] = useState<LearnerResponseDto | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialLearners.length > 0) return;
+
+    async function loadLearners() {
+      try {
+        const token = localStorage.getItem('token');
+        const familyId = localStorage.getItem('familyId');
+        if (!token || !familyId) return;
+
+        const res = await fetch(`/api/v1/families/${familyId}/learners`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          setLearners(await res.json());
+        } else {
+          setLoadError('Não foi possível carregar os educandos.');
+        }
+      } catch {
+        setLoadError('Não foi possível carregar os educandos. Verifique sua conexão.');
+      }
+    }
+    loadLearners();
+  }, [initialLearners.length]);
 
   const handleOpenCreate = () => {
     setEditingLearner(null);
@@ -27,59 +53,58 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
   };
 
   const handleToggleArchive = (learner: LearnerResponseDto) => {
-    const isArchived = Boolean(learner.archivedAt);
-    setLearners((prev) =>
-      prev.map((item) =>
-        item.id === learner.id
-          ? {
-              ...item,
-              archivedAt: isArchived ? null : new Date().toISOString(),
-            }
-          : item
-      )
-    );
+    void (async () => {
+      const token = localStorage.getItem('token');
+      const familyId = localStorage.getItem('familyId');
+      if (!token || !familyId) return;
+
+      const isArchived = Boolean(learner.archivedAt);
+      const action = isArchived ? 'reactivate' : 'archive';
+      try {
+        const res = await fetch(`/api/v1/families/${familyId}/learners/${learner.id}/${action}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || `Falha ao ${isArchived ? 'reativar' : 'arquivar'} educando.`);
+        }
+        const updated = await res.json();
+        setLearners((prev) => prev.map((item) => (item.id === learner.id ? updated : item)));
+        setActionError(null);
+      } catch (err: unknown) {
+        setActionError(err instanceof Error ? err.message : 'Falha ao atualizar educando.');
+      }
+    })();
   };
 
   const handleSubmitForm = async (data: CreateLearnerDto) => {
-    if (editingLearner) {
-      setLearners((prev) =>
-        prev.map((item) => {
-          if (item.id !== editingLearner.id) return item;
-          const updated: LearnerResponseDto = {
-            ...item,
-            firstName: data.firstName ?? item.firstName,
-            lastName: data.lastName !== undefined ? data.lastName : item.lastName,
-            preferredName: data.preferredName !== undefined ? data.preferredName : item.preferredName,
-            birthDate: data.birthDate ?? item.birthDate,
-            stage: data.stage ?? item.stage,
-            customGrade: data.customGrade !== undefined ? data.customGrade : item.customGrade,
-            avatarColor: data.avatarColor !== undefined ? data.avatarColor : item.avatarColor,
-            specialNeeds: data.specialNeeds !== undefined ? data.specialNeeds : item.specialNeeds,
-            notes: data.notes !== undefined ? data.notes : item.notes,
-            updatedAt: new Date().toISOString(),
-          };
-          return updated;
-        })
-      );
-    } else {
-      const newLearner: LearnerResponseDto = {
-        id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `l-${Date.now()}`,
-        familyId: 'family-current',
-        firstName: data.firstName,
-        lastName: data.lastName ?? null,
-        preferredName: data.preferredName ?? null,
-        birthDate: data.birthDate,
-        stage: data.stage ?? 'PRIMARY_GRAMMAR',
-        customGrade: data.customGrade ?? null,
-        avatarColor: data.avatarColor ?? '#3B82F6',
-        specialNeeds: data.specialNeeds ?? null,
-        notes: data.notes ?? null,
-        archivedAt: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setLearners((prev) => [...prev, newLearner]);
+    const token = localStorage.getItem('token');
+    const familyId = localStorage.getItem('familyId');
+    if (!token || !familyId) {
+      throw new Error('Sessão inválida. Faça login novamente.');
     }
+
+    const isEditing = Boolean(editingLearner);
+    const url = isEditing
+      ? `/api/v1/families/${familyId}/learners/${editingLearner!.id}`
+      : `/api/v1/families/${familyId}/learners`;
+
+    const res = await fetch(url, {
+      method: isEditing ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Falha ao salvar educando.');
+    }
+
+    const saved: LearnerResponseDto = await res.json();
+    setLearners((prev) =>
+      isEditing ? prev.map((item) => (item.id === saved.id ? saved : item)) : [...prev, saved]
+    );
   };
 
   return (
@@ -124,6 +149,12 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
             </button>
           </Can>
         </div>
+
+        {(loadError || actionError) && (
+          <div className="alert alert-error" role="alert" style={{ marginBottom: '1.5rem' }}>
+            {loadError ?? actionError}
+          </div>
+        )}
 
         <LearnersList
           learners={learners}

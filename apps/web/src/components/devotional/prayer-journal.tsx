@@ -437,7 +437,15 @@ export function PrayerJournal({
                   <button
                     type="button"
                     data-testid={`archive-prayer-btn-${prayer.id}`}
-                    onClick={() => onArchivePrayer(prayer.id)}
+                    onClick={() => {
+                      void (async () => {
+                        try {
+                          await onArchivePrayer(prayer.id);
+                        } catch (err: unknown) {
+                          setError(err instanceof Error ? err.message : 'Falha ao arquivar oração.');
+                        }
+                      })();
+                    }}
                     className="btn btn-outline-danger ui-button ui-button--ghost ui-button--sm"
                     style={{
                       padding: '0.3rem 0.5rem',

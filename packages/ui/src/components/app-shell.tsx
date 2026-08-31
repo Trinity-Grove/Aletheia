@@ -99,6 +99,10 @@ export function AppShell({
 
   return (
     <div ref={shellRef} className={shellClassName} data-testid="app-shell">
+      <a href="#appshell-main-content" className="ui-skip-link">
+        Pular para o conteúdo principal
+      </a>
+
       <Sidebar
         brandTitle={brandTitle}
         brandSubtitle={brandSubtitle}
@@ -118,7 +122,12 @@ export function AppShell({
           navigationControlsId={mobileNavigationId}
         />
 
-        <main className="ui-appshell-content" data-testid="appshell-main-content">
+        <main
+          id="appshell-main-content"
+          className="ui-appshell-content"
+          data-testid="appshell-main-content"
+          tabIndex={-1}
+        >
           {children}
         </main>
       </div>
