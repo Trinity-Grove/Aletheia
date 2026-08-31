@@ -12,14 +12,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import type {
-  CreateScheduleSlotDto,
-  DailyAgendaDto,
-  DayOfWeek,
-  ScheduleSlotResponseDto,
-  UpdateScheduleSlotDto,
+import {
+  createScheduleSlotSchema,
+  updateScheduleSlotSchema,
+  type CreateScheduleSlotDto,
+  type DailyAgendaDto,
+  type DayOfWeek,
+  type ScheduleSlotResponseDto,
+  type UpdateScheduleSlotDto,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
+import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { ScheduleService } from '../application/schedule.service.js';
 
 @ApiTags('Schedule')
@@ -34,7 +37,7 @@ export class ScheduleController {
   @ApiOperation({ summary: 'Create a weekly routine schedule slot' })
   async createSlot(
     @Param('familyId') familyId: string,
-    @Body() dto: CreateScheduleSlotDto,
+    @Body(new ZodValidationPipe(createScheduleSlotSchema)) dto: CreateScheduleSlotDto,
   ): Promise<ScheduleSlotResponseDto> {
     return this.scheduleService.createSlot(familyId, dto);
   }
@@ -71,7 +74,7 @@ export class ScheduleController {
   async updateSlot(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
-    @Body() dto: UpdateScheduleSlotDto,
+    @Body(new ZodValidationPipe(updateScheduleSlotSchema)) dto: UpdateScheduleSlotDto,
   ): Promise<ScheduleSlotResponseDto> {
     return this.scheduleService.updateSlot(familyId, id, dto);
   }

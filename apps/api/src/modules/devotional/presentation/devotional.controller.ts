@@ -10,14 +10,16 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import type {
-  BiblePassageDto,
-  BibleVersionDto,
-  DailyDevotionalResponseDto,
-  UpsertDailyDevotionalDto,
+import {
+  upsertDailyDevotionalSchema,
+  type BiblePassageDto,
+  type BibleVersionDto,
+  type DailyDevotionalResponseDto,
+  type UpsertDailyDevotionalDto,
 } from '@aletheia/contracts';
 import { DevotionalService } from '../application/devotional.service.js';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
+import { ZodValidationPipe } from '../../../platform/validation/index.js';
 
 @ApiTags('Devotionals')
 @ApiBearerAuth()
@@ -47,7 +49,7 @@ export class DevotionalController {
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async upsertDevotional(
     @Param('familyId') familyId: string,
-    @Body() dto: UpsertDailyDevotionalDto,
+    @Body(new ZodValidationPipe(upsertDailyDevotionalSchema)) dto: UpsertDailyDevotionalDto,
   ): Promise<DailyDevotionalResponseDto> {
     return this.devotionalService.upsertDevotional(familyId, dto);
   }

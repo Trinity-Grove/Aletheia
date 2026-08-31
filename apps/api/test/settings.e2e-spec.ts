@@ -25,12 +25,12 @@ import type {
 describe('Family Settings, Notifications & Export E2E & Multi-Tenant Isolation', () => {
   let app: NestFastifyApplication;
 
-  const familyAId = '00000000-0000-0000-0000-000000000001';
-  const familyBId = '00000000-0000-0000-0000-000000000002';
+  const familyAId = '00000000-0000-4000-8000-000000000001';
+  const familyBId = '00000000-0000-4000-8000-000000000002';
   const guardianAToken = 'guardian-a-token';
   const guardianBToken = 'guardian-b-token';
-  const guardianAUserId = '10000000-0000-0000-0000-000000000001';
-  const guardianBUserId = '10000000-0000-0000-0000-000000000002';
+  const guardianAUserId = '10000000-0000-4000-8000-000000000001';
+  const guardianBUserId = '10000000-0000-4000-8000-000000000002';
 
   let settingsStore: Map<string, FamilySettingsResponseDto>;
   let notificationsStore: NotificationItemResponseDto[];
@@ -373,7 +373,7 @@ describe('Family Settings, Notifications & Export E2E & Multi-Tenant Isolation',
         .set('Authorization', `Bearer ${guardianAToken}`)
         .send({
           homeschoolName: 'Providence Classical Academy',
-          defaultGradingScale: 'PERCENTAGE_0_100',
+          defaultGradingScale: 'NUMERIC_0_100',
           timezone: 'America/New_York',
           language: 'en-US',
           devotionalReminderTime: '07:30',
@@ -386,7 +386,7 @@ describe('Family Settings, Notifications & Export E2E & Multi-Tenant Isolation',
 
       expect(patchRes.body.familyId).toBe(familyAId);
       expect(patchRes.body.homeschoolName).toBe('Providence Classical Academy');
-      expect(patchRes.body.defaultGradingScale).toBe('PERCENTAGE_0_100');
+      expect(patchRes.body.defaultGradingScale).toBe('NUMERIC_0_100');
       expect(patchRes.body.timezone).toBe('America/New_York');
       expect(patchRes.body.language).toBe('en-US');
       expect(patchRes.body.devotionalReminderTime).toBe('07:30');
@@ -402,7 +402,7 @@ describe('Family Settings, Notifications & Export E2E & Multi-Tenant Isolation',
         .expect(200);
 
       expect(verifyRes.body.homeschoolName).toBe('Providence Classical Academy');
-      expect(verifyRes.body.defaultGradingScale).toBe('PERCENTAGE_0_100');
+      expect(verifyRes.body.defaultGradingScale).toBe('NUMERIC_0_100');
 
       // 4. Isolation check: Family B settings remain default
       const famBRes = await supertest(app.getHttpServer())

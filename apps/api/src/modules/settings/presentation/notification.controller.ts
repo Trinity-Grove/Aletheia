@@ -1,10 +1,12 @@
 import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from "@nestjs/common";
-import type {
-  CreateNotificationDto,
-  NotificationFilterDto,
-  NotificationItemResponseDto,
+import {
+  createNotificationSchema,
+  type CreateNotificationDto,
+  type NotificationFilterDto,
+  type NotificationItemResponseDto,
 } from "@aletheia/contracts";
 import { JwtAuthGuard, FamilyTenantGuard } from "../../../platform/auth/index.js";
+import { ZodValidationPipe } from "../../../platform/validation/index.js";
 import { NotificationService } from "../application/notification.service.js";
 
 @Controller({ path: "families/:familyId/notifications", version: "1" })
@@ -15,7 +17,7 @@ export class NotificationController {
   @Post()
   async createNotification(
     @Param("familyId") familyId: string,
-    @Body() dto: CreateNotificationDto,
+    @Body(new ZodValidationPipe(createNotificationSchema)) dto: CreateNotificationDto,
   ): Promise<NotificationItemResponseDto> {
     return this.notificationService.createNotification(familyId, dto);
   }

@@ -12,16 +12,19 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import type {
-  CreateLearningRecordDto,
-  LearnerProgressSummaryDto,
-  LearningRecordFilterDto,
-  LearningRecordResponseDto,
-  LearningRecordType,
-  MasteryLevel,
-  UpdateLearningRecordDto,
+import {
+  createLearningRecordSchema,
+  updateLearningRecordSchema,
+  type CreateLearningRecordDto,
+  type LearnerProgressSummaryDto,
+  type LearningRecordFilterDto,
+  type LearningRecordResponseDto,
+  type LearningRecordType,
+  type MasteryLevel,
+  type UpdateLearningRecordDto,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
+import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { LearningRecordService } from '../application/learning-record.service.js';
 
 @ApiTags('Learning Records')
@@ -36,7 +39,7 @@ export class LearningRecordController {
   @ApiOperation({ summary: 'Create a learning record' })
   async createRecord(
     @Param('familyId') familyId: string,
-    @Body() dto: CreateLearningRecordDto,
+    @Body(new ZodValidationPipe(createLearningRecordSchema)) dto: CreateLearningRecordDto,
   ): Promise<LearningRecordResponseDto> {
     return this.recordService.createRecord(familyId, dto);
   }
@@ -88,7 +91,7 @@ export class LearningRecordController {
   async updateRecord(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
-    @Body() dto: UpdateLearningRecordDto,
+    @Body(new ZodValidationPipe(updateLearningRecordSchema)) dto: UpdateLearningRecordDto,
   ): Promise<LearningRecordResponseDto> {
     return this.recordService.updateRecord(familyId, id, dto);
   }

@@ -12,13 +12,16 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import type {
-  CreateObjectiveDto,
-  ObjectiveResponseDto,
-  ObjectiveStatus,
-  UpdateObjectiveDto,
+import {
+  createObjectiveSchema,
+  updateObjectiveSchema,
+  type CreateObjectiveDto,
+  type ObjectiveResponseDto,
+  type ObjectiveStatus,
+  type UpdateObjectiveDto,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
+import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { ObjectiveService } from '../application/objective.service.js';
 
 @ApiTags('Learning Objectives')
@@ -33,7 +36,7 @@ export class ObjectiveController {
   @ApiOperation({ summary: 'Create a learning objective' })
   async createObjective(
     @Param('familyId') familyId: string,
-    @Body() dto: CreateObjectiveDto,
+    @Body(new ZodValidationPipe(createObjectiveSchema)) dto: CreateObjectiveDto,
   ): Promise<ObjectiveResponseDto> {
     return this.objectiveService.createObjective(familyId, dto);
   }
@@ -60,7 +63,7 @@ export class ObjectiveController {
   async updateObjective(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
-    @Body() dto: UpdateObjectiveDto,
+    @Body(new ZodValidationPipe(updateObjectiveSchema)) dto: UpdateObjectiveDto,
   ): Promise<ObjectiveResponseDto> {
     return this.objectiveService.updateObjective(familyId, id, dto);
   }

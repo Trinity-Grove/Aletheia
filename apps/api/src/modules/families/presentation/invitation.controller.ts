@@ -11,9 +11,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import type { FamilyInvitationDto, InviteGuardianDto } from '@aletheia/contracts';
+import { inviteGuardianSchema, type FamilyInvitationDto, type InviteGuardianDto } from '@aletheia/contracts';
 import { InvitationService } from '../application/invitation.service.js';
 import { JwtAuthGuard } from '../../../platform/auth/index.js';
+import { ZodValidationPipe } from '../../../platform/validation/index.js';
 
 @ApiTags('Invitations')
 @ApiBearerAuth()
@@ -30,7 +31,7 @@ export class InvitationController {
   async createInvitation(
     @Req() req: { user: { userId: string } },
     @Param('familyId') familyId: string,
-    @Body() body: InviteGuardianDto,
+    @Body(new ZodValidationPipe(inviteGuardianSchema)) body: InviteGuardianDto,
   ): Promise<FamilyInvitationDto> {
     return this.invitationService.createInvitation(req.user.userId, familyId, body);
   }

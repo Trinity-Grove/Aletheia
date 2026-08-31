@@ -1,10 +1,12 @@
 import { Body, Controller, Get, Param, Post, Req, UseGuards } from "@nestjs/common";
-import type {
-  CreateExportJobDto,
-  DataExportJobResponseDto,
-  FamilyDataExportPackageDto,
+import {
+  createExportJobSchema,
+  type CreateExportJobDto,
+  type DataExportJobResponseDto,
+  type FamilyDataExportPackageDto,
 } from "@aletheia/contracts";
 import { JwtAuthGuard, FamilyTenantGuard } from "../../../platform/auth/index.js";
+import { ZodValidationPipe } from "../../../platform/validation/index.js";
 import { DataExportService } from "../application/data-export.service.js";
 
 @Controller({ path: "families/:familyId/export", version: "1" })
@@ -16,7 +18,7 @@ export class DataExportController {
   async createExportJob(
     @Param("familyId") familyId: string,
     @Req() req: { user?: { userId?: string } },
-    @Body() dto?: CreateExportJobDto,
+    @Body(new ZodValidationPipe(createExportJobSchema.optional())) dto?: CreateExportJobDto,
   ): Promise<DataExportJobResponseDto> {
     const userId = req.user?.userId ?? "";
     return this.dataExportService.createExportJob(familyId, userId, dto);

@@ -11,17 +11,21 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import type {
-  AttendanceComplianceSummaryDto,
-  AttendanceFilterDto,
-  AttendanceResponseDto,
-  AttendanceStatus,
-  BulkLogAttendanceDto,
-  ComplianceRequirementResponseDto,
-  LogAttendanceDto,
-  UpsertComplianceRequirementDto,
+import {
+  bulkLogAttendanceSchema,
+  logAttendanceSchema,
+  upsertComplianceRequirementSchema,
+  type AttendanceComplianceSummaryDto,
+  type AttendanceFilterDto,
+  type AttendanceResponseDto,
+  type AttendanceStatus,
+  type BulkLogAttendanceDto,
+  type ComplianceRequirementResponseDto,
+  type LogAttendanceDto,
+  type UpsertComplianceRequirementDto,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
+import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { AttendanceService } from '../application/attendance.service.js';
 
 @ApiTags('Attendance')
@@ -36,7 +40,7 @@ export class AttendanceController {
   @ApiOperation({ summary: 'Log attendance for a single learner' })
   async logAttendance(
     @Param('familyId') familyId: string,
-    @Body() dto: LogAttendanceDto,
+    @Body(new ZodValidationPipe(logAttendanceSchema)) dto: LogAttendanceDto,
   ): Promise<AttendanceResponseDto> {
     return this.attendanceService.logAttendance(familyId, dto);
   }
@@ -46,7 +50,7 @@ export class AttendanceController {
   @ApiOperation({ summary: 'Bulk log attendance for multiple learners' })
   async bulkLogAttendance(
     @Param('familyId') familyId: string,
-    @Body() dto: BulkLogAttendanceDto,
+    @Body(new ZodValidationPipe(bulkLogAttendanceSchema)) dto: BulkLogAttendanceDto,
   ): Promise<AttendanceResponseDto[]> {
     return this.attendanceService.bulkLogAttendance(familyId, dto);
   }
@@ -85,7 +89,7 @@ export class AttendanceController {
   @ApiOperation({ summary: 'Upsert compliance requirements for family/year' })
   async upsertRequirements(
     @Param('familyId') familyId: string,
-    @Body() dto: UpsertComplianceRequirementDto,
+    @Body(new ZodValidationPipe(upsertComplianceRequirementSchema)) dto: UpsertComplianceRequirementDto,
   ): Promise<ComplianceRequirementResponseDto> {
     return this.attendanceService.upsertComplianceRequirement(familyId, dto);
   }

@@ -11,12 +11,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import type {
-  GenerateReportDto,
-  OfficialReportResponseDto,
-  ReportType,
+import {
+  generateReportSchema,
+  type GenerateReportDto,
+  type OfficialReportResponseDto,
+  type ReportType,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
+import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { ReportService } from '../application/report.service.js';
 
 @ApiTags('Reports')
@@ -31,7 +33,7 @@ export class ReportController {
   @ApiOperation({ summary: 'Generate an official report or academic transcript' })
   async generateReport(
     @Param('familyId') familyId: string,
-    @Body() dto: GenerateReportDto,
+    @Body(new ZodValidationPipe(generateReportSchema)) dto: GenerateReportDto,
   ): Promise<OfficialReportResponseDto> {
     return this.reportService.generateReport(familyId, dto);
   }

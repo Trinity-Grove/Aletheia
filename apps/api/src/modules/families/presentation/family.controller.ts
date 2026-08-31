@@ -10,9 +10,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import type { CreateFamilyDto, FamilyResponseDto } from '@aletheia/contracts';
+import { createFamilySchema, type CreateFamilyDto, type FamilyResponseDto } from '@aletheia/contracts';
 import { FamilyService } from '../application/family.service.js';
 import { JwtAuthGuard } from '../../../platform/auth/index.js';
+import { ZodValidationPipe } from '../../../platform/validation/index.js';
 
 @ApiTags('Families')
 @ApiBearerAuth()
@@ -28,7 +29,7 @@ export class FamilyController {
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async create(
     @Req() req: { user: { userId: string } },
-    @Body() body: CreateFamilyDto,
+    @Body(new ZodValidationPipe(createFamilySchema)) body: CreateFamilyDto,
   ): Promise<FamilyResponseDto> {
     return this.familyService.createFamily(req.user.userId, body);
   }

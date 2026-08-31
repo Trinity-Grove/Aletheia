@@ -12,15 +12,20 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import type {
-  CompleteLessonDto,
-  CreateLessonPlanDto,
-  LessonPlanResponseDto,
-  LessonStatus,
-  RescheduleLessonDto,
-  UpdateLessonPlanDto,
+import {
+  completeLessonSchema,
+  createLessonPlanSchema,
+  rescheduleLessonSchema,
+  updateLessonPlanSchema,
+  type CompleteLessonDto,
+  type CreateLessonPlanDto,
+  type LessonPlanResponseDto,
+  type LessonStatus,
+  type RescheduleLessonDto,
+  type UpdateLessonPlanDto,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
+import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { LessonPlanService } from '../application/lesson-plan.service.js';
 
 @ApiTags('Lessons')
@@ -35,7 +40,7 @@ export class LessonPlanController {
   @ApiOperation({ summary: 'Create a lesson plan' })
   async createLesson(
     @Param('familyId') familyId: string,
-    @Body() dto: CreateLessonPlanDto,
+    @Body(new ZodValidationPipe(createLessonPlanSchema)) dto: CreateLessonPlanDto,
   ): Promise<LessonPlanResponseDto> {
     return this.lessonPlanService.createLessonPlan(familyId, dto);
   }
@@ -77,7 +82,7 @@ export class LessonPlanController {
   async updateLesson(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
-    @Body() dto: UpdateLessonPlanDto,
+    @Body(new ZodValidationPipe(updateLessonPlanSchema)) dto: UpdateLessonPlanDto,
   ): Promise<LessonPlanResponseDto> {
     return this.lessonPlanService.updateLessonPlan(familyId, id, dto);
   }
@@ -88,7 +93,7 @@ export class LessonPlanController {
   async completeLesson(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
-    @Body() dto: CompleteLessonDto,
+    @Body(new ZodValidationPipe(completeLessonSchema)) dto: CompleteLessonDto,
     @Query('learnerId') learnerId?: string,
   ): Promise<LessonPlanResponseDto> {
     return this.lessonPlanService.completeLesson(familyId, id, dto, learnerId);
@@ -100,7 +105,7 @@ export class LessonPlanController {
   async rescheduleLesson(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
-    @Body() dto: RescheduleLessonDto,
+    @Body(new ZodValidationPipe(rescheduleLessonSchema)) dto: RescheduleLessonDto,
   ): Promise<LessonPlanResponseDto> {
     return this.lessonPlanService.rescheduleLesson(familyId, id, dto);
   }
