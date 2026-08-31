@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ENVIRONMENT, type Environment } from './platform/config/environment.js';
 import { EnvironmentModule } from './platform/config/environment.module.js';
 import { DatabaseModule } from './platform/database/database.module.js';
 import { HealthModule } from './health/health.module.js';
@@ -16,6 +19,19 @@ import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 @Module({
   imports: [
     EnvironmentModule,
+    ThrottlerModule.forRootAsync({
+      inject: [ENVIRONMENT],
+      useFactory: (environment: Environment) => [
+        {
+          name: 'default',
+          ttl: 60_000,
+          // Generous enough for real traffic while still bounding abuse;
+          // effectively unbounded in tests so e2e suites firing many
+          // requests in quick succession never trip this guard.
+          limit: environment.nodeEnv === 'test' ? 100_000 : 60,
+        },
+      ],
+    }),
     DatabaseModule,
     HealthModule,
     IdentityModule,
@@ -28,6 +44,12 @@ import { DashboardModule } from './modules/dashboard/dashboard.module.js';
     ReportsModule,
     SettingsModule,
     DashboardModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

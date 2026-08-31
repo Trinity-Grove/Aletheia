@@ -4,6 +4,8 @@ export interface Environment {
   nodeEnv: 'development' | 'test' | 'production';
   databaseUrl: string;
   redisUrl: string | null;
+  jwtSecret: string;
+  corsOrigins: string[];
   objectStorage: {
     endpoint: string;
     accessKey: string;
@@ -35,6 +37,14 @@ const environmentSchema = z
       (value) => value ?? '',
       z.string().trim().min(1, 'DATABASE_URL is required').pipe(z.url()),
     ),
+    JWT_SECRET: z.preprocess(
+      (value) => value ?? '',
+      z
+        .string()
+        .trim()
+        .min(16, 'JWT_SECRET is required and must be at least 16 characters long'),
+    ),
+    CORS_ORIGIN: optionalValue,
     REDIS_URL: optionalUrl,
     S3_ENDPOINT: optionalUrl,
     S3_ACCESS_KEY: optionalValue,
@@ -68,6 +78,12 @@ const environmentSchema = z
       nodeEnv: environment.NODE_ENV,
       databaseUrl: environment.DATABASE_URL,
       redisUrl: environment.REDIS_URL ?? null,
+      jwtSecret: environment.JWT_SECRET,
+      corsOrigins: environment.CORS_ORIGIN
+        ? environment.CORS_ORIGIN.split(',')
+            .map((origin) => origin.trim())
+            .filter((origin) => origin.length > 0)
+        : ['http://localhost:3000'],
       objectStorage: environment.S3_ENDPOINT
         ? {
             endpoint: environment.S3_ENDPOINT,
