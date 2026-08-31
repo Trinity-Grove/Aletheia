@@ -39,6 +39,7 @@ export default function DevotionalPage({
   const [devotional, setDevotional] = useState<DailyDevotionalResponseDto | null>(initialDevotional);
   const [prayers, setPrayers] = useState<PrayerResponseDto[]>(initialPrayers);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const fetchDevotional = useCallback(
     async (date: string) => {
@@ -47,11 +48,15 @@ export default function DevotionalPage({
         if (res.ok) {
           const data = await res.json();
           setDevotional(data);
+          setLoadError(null);
         } else if (res.status === 404) {
           setDevotional(null);
+          setLoadError(null);
+        } else {
+          setLoadError('Não foi possível carregar o devocional do dia.');
         }
       } catch {
-        // Fallback or silent catch
+        setLoadError('Não foi possível carregar o devocional do dia. Verifique sua conexão.');
       }
     },
     [familyId]
@@ -63,9 +68,11 @@ export default function DevotionalPage({
       if (res.ok) {
         const data = await res.json();
         setPrayers(data);
+      } else {
+        setLoadError('Não foi possível carregar o mural de orações.');
       }
     } catch {
-      // Fallback or silent catch
+      setLoadError('Não foi possível carregar o mural de orações. Verifique sua conexão.');
     }
   }, [familyId]);
 
@@ -93,163 +100,67 @@ export default function DevotionalPage({
   };
 
   const handleSubmitDevotional = async (data: UpsertDailyDevotionalDto) => {
-    try {
-      const res = await fetch(`/api/v1/families/${encodeURIComponent(familyId)}/devotionals`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+    const res = await fetch(`/api/v1/families/${encodeURIComponent(familyId)}/devotionals`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
 
-      if (res.ok) {
-        const saved = await res.json();
-        setDevotional(saved);
-        if (saved.date !== currentDate) {
-          setCurrentDate(saved.date);
-        }
-      } else {
-        // Fallback local update for unit testing / mocked environments
-        const fallbackDevotional: DailyDevotionalResponseDto = {
-          id: devotional?.id || `dev-${Date.now()}`,
-          familyId,
-          date: data.date,
-          bibleReference: data.bibleReference,
-          bibleVersionId: data.bibleVersionId ?? null,
-          passageText: data.passageText ?? null,
-          reflection: data.reflection ?? null,
-          memoryVerse: data.memoryVerse ?? null,
-          hymnOrSong: data.hymnOrSong ?? null,
-          discussionQuestions: typeof data.discussionQuestions === 'string' ? data.discussionQuestions : null,
-          practicalApplication: data.practicalApplication ?? null,
-          createdAt: devotional?.createdAt || new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        setDevotional(fallbackDevotional);
-      }
-    } catch {
-      // Local fallback
-      const fallbackDevotional: DailyDevotionalResponseDto = {
-        id: devotional?.id || `dev-${Date.now()}`,
-        familyId,
-        date: data.date,
-        bibleReference: data.bibleReference,
-        bibleVersionId: data.bibleVersionId ?? null,
-        passageText: data.passageText ?? null,
-        reflection: data.reflection ?? null,
-        memoryVerse: data.memoryVerse ?? null,
-        hymnOrSong: data.hymnOrSong ?? null,
-        discussionQuestions: typeof data.discussionQuestions === 'string' ? data.discussionQuestions : null,
-        practicalApplication: data.practicalApplication ?? null,
-        createdAt: devotional?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setDevotional(fallbackDevotional);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Falha ao salvar devocional.');
+    }
+
+    const saved = await res.json();
+    setDevotional(saved);
+    if (saved.date !== currentDate) {
+      setCurrentDate(saved.date);
     }
   };
 
   const handleCreatePrayer = async (data: CreatePrayerDto) => {
-    try {
-      const res = await fetch(`/api/v1/families/${encodeURIComponent(familyId)}/prayers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+    const res = await fetch(`/api/v1/families/${encodeURIComponent(familyId)}/prayers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
 
-      if (res.ok) {
-        const created = await res.json();
-        setPrayers((prev) => [created, ...prev]);
-      } else {
-        const fallbackPrayer: PrayerResponseDto = {
-          id: `prayer-${Date.now()}`,
-          familyId,
-          learnerId: data.learnerId ?? null,
-          type: data.type ?? 'PETITION',
-          title: data.title,
-          description: data.description ?? null,
-          isAnswered: false,
-          answeredAt: null,
-          answeredNote: null,
-          archivedAt: null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        setPrayers((prev) => [fallbackPrayer, ...prev]);
-      }
-    } catch {
-      const fallbackPrayer: PrayerResponseDto = {
-        id: `prayer-${Date.now()}`,
-        familyId,
-        learnerId: data.learnerId ?? null,
-        type: data.type ?? 'PETITION',
-        title: data.title,
-        description: data.description ?? null,
-        isAnswered: false,
-        answeredAt: null,
-        answeredNote: null,
-        archivedAt: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setPrayers((prev) => [fallbackPrayer, ...prev]);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Falha ao salvar oração.');
     }
+
+    const created = await res.json();
+    setPrayers((prev) => [created, ...prev]);
   };
 
   const handleAnswerPrayer = async (id: string, answeredNote?: string) => {
-    try {
-      const res = await fetch(`/api/v1/families/${encodeURIComponent(familyId)}/prayers/${encodeURIComponent(id)}/answer`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answeredNote }),
-      });
+    const res = await fetch(`/api/v1/families/${encodeURIComponent(familyId)}/prayers/${encodeURIComponent(id)}/answer`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ answeredNote }),
+    });
 
-      if (res.ok) {
-        const updated = await res.json();
-        setPrayers((prev) => prev.map((p) => (p.id === id ? updated : p)));
-      } else {
-        setPrayers((prev) =>
-          prev.map((p) =>
-            p.id === id
-              ? {
-                  ...p,
-                  isAnswered: true,
-                  answeredAt: new Date().toISOString(),
-                  answeredNote: answeredNote ?? null,
-                  updatedAt: new Date().toISOString(),
-                }
-              : p
-          )
-        );
-      }
-    } catch {
-      setPrayers((prev) =>
-        prev.map((p) =>
-          p.id === id
-            ? {
-                ...p,
-                isAnswered: true,
-                answeredAt: new Date().toISOString(),
-                answeredNote: answeredNote ?? null,
-                updatedAt: new Date().toISOString(),
-              }
-            : p
-        )
-      );
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Falha ao registrar oração respondida.');
     }
+
+    const updated = await res.json();
+    setPrayers((prev) => prev.map((p) => (p.id === id ? updated : p)));
   };
 
   const handleArchivePrayer = async (id: string) => {
-    try {
-      const res = await fetch(`/api/v1/families/${encodeURIComponent(familyId)}/prayers/${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-      });
+    const res = await fetch(`/api/v1/families/${encodeURIComponent(familyId)}/prayers/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
 
-      if (res.ok) {
-        setPrayers((prev) => prev.filter((p) => p.id !== id));
-      } else {
-        setPrayers((prev) => prev.filter((p) => p.id !== id));
-      }
-    } catch {
-      setPrayers((prev) => prev.filter((p) => p.id !== id));
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Falha ao arquivar oração.');
     }
+
+    setPrayers((prev) => prev.filter((p) => p.id !== id));
   };
 
   return (
@@ -263,6 +174,12 @@ export default function DevotionalPage({
             Cultive a fé em família através da leitura da Bíblia, reflexão, louvor e oração diária.
           </p>
         </div>
+
+        {loadError && (
+          <div className="alert alert-error" role="alert" style={{ marginBottom: '1.5rem' }}>
+            {loadError}
+          </div>
+        )}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1.2fr)', gap: '2rem', alignItems: 'start' }}>
           <div>

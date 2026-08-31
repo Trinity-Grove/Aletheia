@@ -25,6 +25,7 @@ export default function CurriculumPage() {
   const [objectives, setObjectives] = useState<ObjectiveResponseDto[]>([]);
   const [learnerPlan, setLearnerPlan] = useState<LearnerPlanResponseDto | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -47,6 +48,8 @@ export default function CurriculumPage() {
           if (lData.length > 0 && !activeLearnerId) {
             setActiveLearnerId(lData[0].id);
           }
+        } else {
+          setLoadError("Não foi possível carregar os educandos.");
         }
 
         // Load academic years
@@ -60,6 +63,8 @@ export default function CurriculumPage() {
             const current = yData.find((y: AcademicYearResponseDto) => y.isCurrent) || yData[0];
             setActiveYearId(current.id);
           }
+        } else {
+          setLoadError("Não foi possível carregar os anos letivos.");
         }
 
         // Load subjects
@@ -69,9 +74,11 @@ export default function CurriculumPage() {
         if (subjectsRes.ok) {
           const sData = await subjectsRes.json();
           setSubjects(sData);
+        } else {
+          setLoadError("Não foi possível carregar as disciplinas.");
         }
       } catch {
-        // ignore error
+        setLoadError("Não foi possível carregar o currículo. Verifique sua conexão.");
       } finally {
         setLoading(false);
       }
@@ -189,6 +196,11 @@ export default function CurriculumPage() {
       activeLearnerId={activeLearnerId}
       onSelectLearner={setActiveLearnerId}
     >
+      {loadError && (
+        <div className="alert alert-error" role="alert" style={{ margin: "1rem" }}>
+          {loadError}
+        </div>
+      )}
       {loading ? (
         <div style={{ padding: "2rem", textAlign: "center" }}>Carregando plano curricular...</div>
       ) : (

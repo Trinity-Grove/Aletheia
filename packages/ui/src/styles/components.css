@@ -780,6 +780,26 @@
   min-height: 100vh;
   background-color: var(--ui-surface-canvas);
 }
+.ui-skip-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(-100%);
+  z-index: 50;
+  padding: calc(var(--ui-space-8) / 2) var(--ui-space-8);
+  background-color: var(--ui-surface-canvas);
+  color: var(--ui-text-primary);
+  border: 1px solid var(--ui-border-default);
+  border-radius: 0 0 var(--ui-radius-md) 0;
+  text-decoration: none;
+  font-weight: 600;
+  transition: transform var(--ui-motion-duration-fast) var(--ui-motion-easing-default);
+}
+.ui-skip-link:focus-visible {
+  transform: translateY(0);
+  outline: var(--ui-focus-ring-width) solid var(--ui-focus-ring-color);
+  outline-offset: var(--ui-focus-ring-offset);
+}
 .ui-sidebar,
 .ui-appshell-sidebar {
   width: var(--ui-navigation-sidebar-width);
