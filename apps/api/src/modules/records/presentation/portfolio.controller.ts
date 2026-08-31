@@ -12,14 +12,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import type {
-  CreatePortfolioItemDto,
-  EvidenceType,
-  PortfolioItemFilterDto,
-  PortfolioItemResponseDto,
-  UpdatePortfolioItemDto,
+import {
+  createPortfolioItemSchema,
+  updatePortfolioItemSchema,
+  type CreatePortfolioItemDto,
+  type EvidenceType,
+  type PortfolioItemFilterDto,
+  type PortfolioItemResponseDto,
+  type UpdatePortfolioItemDto,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
+import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { PortfolioService } from '../application/portfolio.service.js';
 
 @ApiTags('Portfolio')
@@ -34,7 +37,7 @@ export class PortfolioController {
   @ApiOperation({ summary: 'Create a portfolio evidence item' })
   async createItem(
     @Param('familyId') familyId: string,
-    @Body() dto: CreatePortfolioItemDto,
+    @Body(new ZodValidationPipe(createPortfolioItemSchema)) dto: CreatePortfolioItemDto,
   ): Promise<PortfolioItemResponseDto> {
     return this.portfolioService.createItem(familyId, dto);
   }
@@ -77,7 +80,7 @@ export class PortfolioController {
   async updateItem(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
-    @Body() dto: UpdatePortfolioItemDto,
+    @Body(new ZodValidationPipe(updatePortfolioItemSchema)) dto: UpdatePortfolioItemDto,
   ): Promise<PortfolioItemResponseDto> {
     return this.portfolioService.updateItem(familyId, id, dto);
   }

@@ -9,14 +9,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import type {
-  AuthResponseDto,
-  LoginDto,
-  RegisterGuardianDto,
-  UserSummaryDto,
+import {
+  loginSchema,
+  registerGuardianSchema,
+  type AuthResponseDto,
+  type LoginDto,
+  type RegisterGuardianDto,
+  type UserSummaryDto,
 } from '@aletheia/contracts';
 import { AuthService } from '../application/auth.service.js';
 import { JwtAuthGuard } from '../../../platform/auth/index.js';
+import { ZodValidationPipe } from '../../../platform/validation/index.js';
 
 @ApiTags('Auth')
 @Controller({ path: 'auth', version: '1' })
@@ -29,7 +32,9 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'Guardian successfully registered.' })
   @ApiResponse({ status: 400, description: 'Invalid input or weak password.' })
   @ApiResponse({ status: 409, description: 'Email already in use.' })
-  async register(@Body() body: RegisterGuardianDto): Promise<AuthResponseDto> {
+  async register(
+    @Body(new ZodValidationPipe(registerGuardianSchema)) body: RegisterGuardianDto,
+  ): Promise<AuthResponseDto> {
     return this.authService.register(body);
   }
 
@@ -38,7 +43,9 @@ export class AuthController {
   @ApiOperation({ summary: 'Login with guardian email and password' })
   @ApiResponse({ status: 200, description: 'Login successful.' })
   @ApiResponse({ status: 401, description: 'Invalid credentials.' })
-  async login(@Body() body: LoginDto): Promise<AuthResponseDto> {
+  async login(
+    @Body(new ZodValidationPipe(loginSchema)) body: LoginDto,
+  ): Promise<AuthResponseDto> {
     return this.authService.login(body);
   }
 

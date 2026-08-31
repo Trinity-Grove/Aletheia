@@ -11,14 +11,18 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import type {
-  AnswerPrayerDto,
-  CreatePrayerDto,
-  PrayerResponseDto,
-  UpdatePrayerDto,
+import {
+  answerPrayerSchema,
+  createPrayerSchema,
+  updatePrayerSchema,
+  type AnswerPrayerDto,
+  type CreatePrayerDto,
+  type PrayerResponseDto,
+  type UpdatePrayerDto,
 } from '@aletheia/contracts';
 import { PrayerService } from '../application/prayer.service.js';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
+import { ZodValidationPipe } from '../../../platform/validation/index.js';
 
 @ApiTags('Prayers')
 @ApiBearerAuth()
@@ -36,7 +40,7 @@ export class PrayerController {
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async createPrayer(
     @Param('familyId') familyId: string,
-    @Body() dto: CreatePrayerDto,
+    @Body(new ZodValidationPipe(createPrayerSchema)) dto: CreatePrayerDto,
   ): Promise<PrayerResponseDto> {
     return this.prayerService.createPrayer(familyId, dto);
   }
@@ -84,7 +88,7 @@ export class PrayerController {
   async updatePrayer(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
-    @Body() dto: UpdatePrayerDto,
+    @Body(new ZodValidationPipe(updatePrayerSchema)) dto: UpdatePrayerDto,
   ): Promise<PrayerResponseDto> {
     return this.prayerService.updatePrayer(familyId, id, dto);
   }
@@ -100,7 +104,7 @@ export class PrayerController {
   async answerPrayer(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
-    @Body() dto: AnswerPrayerDto,
+    @Body(new ZodValidationPipe(answerPrayerSchema)) dto: AnswerPrayerDto,
   ): Promise<PrayerResponseDto> {
     return this.prayerService.answerPrayer(familyId, id, dto);
   }

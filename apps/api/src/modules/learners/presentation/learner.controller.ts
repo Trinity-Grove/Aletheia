@@ -11,13 +11,16 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import type {
-  CreateLearnerDto,
-  LearnerResponseDto,
-  UpdateLearnerDto,
+import {
+  createLearnerSchema,
+  updateLearnerSchema,
+  type CreateLearnerDto,
+  type LearnerResponseDto,
+  type UpdateLearnerDto,
 } from '@aletheia/contracts';
 import { LearnerService } from '../application/learner.service.js';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
+import { ZodValidationPipe } from '../../../platform/validation/index.js';
 
 @ApiTags('Learners')
 @ApiBearerAuth()
@@ -35,7 +38,7 @@ export class LearnerController {
   @ApiResponse({ status: 403, description: 'Forbidden if not member of family.' })
   async createLearner(
     @Param('familyId') familyId: string,
-    @Body() dto: CreateLearnerDto,
+    @Body(new ZodValidationPipe(createLearnerSchema)) dto: CreateLearnerDto,
   ): Promise<LearnerResponseDto> {
     return this.learnerService.createLearner(familyId, dto);
   }
@@ -76,7 +79,7 @@ export class LearnerController {
   async updateLearner(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
-    @Body() dto: UpdateLearnerDto,
+    @Body(new ZodValidationPipe(updateLearnerSchema)) dto: UpdateLearnerDto,
   ): Promise<LearnerResponseDto> {
     return this.learnerService.updateLearner(familyId, id, dto);
   }

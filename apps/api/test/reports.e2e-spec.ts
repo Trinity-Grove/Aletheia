@@ -23,16 +23,16 @@ import type {
 describe('Compliance, Attendance & Reports E2E & Multi-Tenant Isolation', () => {
   let app: NestFastifyApplication;
 
-  const familyAId = '00000000-0000-0000-0000-000000000001';
-  const familyBId = '00000000-0000-0000-0000-000000000002';
+  const familyAId = '00000000-0000-4000-8000-000000000001';
+  const familyBId = '00000000-0000-4000-8000-000000000002';
   const guardianAToken = 'guardian-a-token';
   const guardianBToken = 'guardian-b-token';
   const guardianAUserId = 'guardian-a-user-id';
   const guardianBUserId = 'guardian-b-user-id';
 
-  const learnerAId = '10000000-0000-0000-0000-000000000001';
-  const learnerBId = '10000000-0000-0000-0000-000000000002';
-  const academicYearId = '20000000-0000-0000-0000-000000000001';
+  const learnerAId = '10000000-0000-4000-8000-000000000001';
+  const learnerBId = '10000000-0000-4000-8000-000000000002';
+  const academicYearId = '20000000-0000-4000-8000-000000000001';
 
   let attendanceStore: AttendanceResponseDto[] = [];
   let complianceStore: ComplianceRequirementResponseDto[] = [];

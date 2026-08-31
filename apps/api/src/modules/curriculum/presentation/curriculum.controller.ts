@@ -12,17 +12,23 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import type {
-  AcademicYearResponseDto,
-  ApplyCurriculumTemplateDto,
-  CreateAcademicYearDto,
-  CreateSubjectDto,
-  LearnerPlanResponseDto,
-  SubjectResponseDto,
-  UpdateSubjectDto,
-  UpsertLearnerPlanDto,
+import {
+  applyCurriculumTemplateSchema,
+  createAcademicYearSchema,
+  createSubjectSchema,
+  updateSubjectSchema,
+  upsertLearnerPlanSchema,
+  type AcademicYearResponseDto,
+  type ApplyCurriculumTemplateDto,
+  type CreateAcademicYearDto,
+  type CreateSubjectDto,
+  type LearnerPlanResponseDto,
+  type SubjectResponseDto,
+  type UpdateSubjectDto,
+  type UpsertLearnerPlanDto,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
+import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { CurriculumService } from '../application/curriculum.service.js';
 
 @ApiTags('Curriculum')
@@ -38,7 +44,7 @@ export class CurriculumController {
   @ApiOperation({ summary: 'Create an academic year for family' })
   async createAcademicYear(
     @Param('familyId') familyId: string,
-    @Body() dto: CreateAcademicYearDto,
+    @Body(new ZodValidationPipe(createAcademicYearSchema)) dto: CreateAcademicYearDto,
   ): Promise<AcademicYearResponseDto> {
     return this.curriculumService.createAcademicYear(familyId, dto);
   }
@@ -61,7 +67,7 @@ export class CurriculumController {
   @ApiOperation({ summary: 'Create a subject in curriculum' })
   async createSubject(
     @Param('familyId') familyId: string,
-    @Body() dto: CreateSubjectDto,
+    @Body(new ZodValidationPipe(createSubjectSchema)) dto: CreateSubjectDto,
   ): Promise<SubjectResponseDto> {
     return this.curriculumService.createSubject(familyId, dto);
   }
@@ -80,7 +86,7 @@ export class CurriculumController {
   async updateSubject(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
-    @Body() dto: UpdateSubjectDto,
+    @Body(new ZodValidationPipe(updateSubjectSchema)) dto: UpdateSubjectDto,
   ): Promise<SubjectResponseDto> {
     return this.curriculumService.updateSubject(familyId, id, dto);
   }
@@ -99,7 +105,7 @@ export class CurriculumController {
   @ApiOperation({ summary: 'Upsert learner curriculum plan' })
   async upsertLearnerPlan(
     @Param('familyId') familyId: string,
-    @Body() dto: UpsertLearnerPlanDto,
+    @Body(new ZodValidationPipe(upsertLearnerPlanSchema)) dto: UpsertLearnerPlanDto,
   ): Promise<LearnerPlanResponseDto> {
     return this.curriculumService.upsertLearnerPlan(familyId, dto);
   }
@@ -120,7 +126,7 @@ export class CurriculumController {
   @ApiOperation({ summary: 'Apply a pre-built pedagogical curriculum template' })
   async applyTemplate(
     @Param('familyId') familyId: string,
-    @Body() dto: ApplyCurriculumTemplateDto,
+    @Body(new ZodValidationPipe(applyCurriculumTemplateSchema)) dto: ApplyCurriculumTemplateDto,
   ): Promise<{ subjectsCount: number; objectivesCount: number }> {
     return this.curriculumService.applyTemplate(familyId, dto);
   }

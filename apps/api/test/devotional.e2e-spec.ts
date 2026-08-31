@@ -16,8 +16,8 @@ import type {
 describe('Devotional & Prayer E2E & Multi-Tenant Isolation', () => {
   let app: NestFastifyApplication;
 
-  const familyAId = '00000000-0000-0000-0000-000000000001';
-  const familyBId = '00000000-0000-0000-0000-000000000002';
+  const familyAId = '00000000-0000-4000-8000-000000000001';
+  const familyBId = '00000000-0000-4000-8000-000000000002';
   const guardianAToken = 'guardian-a-token';
   const guardianBToken = 'guardian-b-token';
   const guardianAUserId = 'guardian-a-user-id';

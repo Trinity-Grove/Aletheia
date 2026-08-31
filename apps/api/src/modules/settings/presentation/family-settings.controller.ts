@@ -1,6 +1,11 @@
 import { Body, Controller, Get, Param, Patch, UseGuards } from "@nestjs/common";
-import type { FamilySettingsResponseDto, UpdateFamilySettingsDto } from "@aletheia/contracts";
+import {
+  updateFamilySettingsSchema,
+  type FamilySettingsResponseDto,
+  type UpdateFamilySettingsDto,
+} from "@aletheia/contracts";
 import { JwtAuthGuard, FamilyTenantGuard } from "../../../platform/auth/index.js";
+import { ZodValidationPipe } from "../../../platform/validation/index.js";
 import { FamilySettingsService } from "../application/family-settings.service.js";
 
 @Controller({ path: "families/:familyId/settings", version: "1" })
@@ -16,7 +21,7 @@ export class FamilySettingsController {
   @Patch()
   async updateSettings(
     @Param("familyId") familyId: string,
-    @Body() dto: UpdateFamilySettingsDto,
+    @Body(new ZodValidationPipe(updateFamilySettingsSchema)) dto: UpdateFamilySettingsDto,
   ): Promise<FamilySettingsResponseDto> {
     return this.settingsService.updateSettings(familyId, dto);
   }
