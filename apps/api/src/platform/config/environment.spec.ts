@@ -21,10 +21,31 @@ class EnvironmentConsumer {
 class EnvironmentConsumerModule {}
 
 describe('parseEnvironment', () => {
+  const validJwtSecret = 'unit_test_jwt_secret_key_1234567890';
+
   it('rejects a missing database URL', () => {
-    expect(() => parseEnvironment({ NODE_ENV: 'development' })).toThrow(
-      'DATABASE_URL is required',
-    );
+    expect(() =>
+      parseEnvironment({ NODE_ENV: 'development', JWT_SECRET: validJwtSecret }),
+    ).toThrow('DATABASE_URL is required');
+  });
+
+  it('rejects a missing JWT secret', () => {
+    expect(() =>
+      parseEnvironment({
+        NODE_ENV: 'development',
+        DATABASE_URL: 'postgresql://user:pass@localhost:5432/aletheia',
+      }),
+    ).toThrow('JWT_SECRET is required');
+  });
+
+  it('rejects a JWT secret shorter than 16 characters', () => {
+    expect(() =>
+      parseEnvironment({
+        NODE_ENV: 'development',
+        DATABASE_URL: 'postgresql://user:pass@localhost:5432/aletheia',
+        JWT_SECRET: 'too-short',
+      }),
+    ).toThrow('JWT_SECRET is required and must be at least 16 characters long');
   });
 
   it('does not require optional infrastructure for API startup', () => {
@@ -32,12 +53,27 @@ describe('parseEnvironment', () => {
       parseEnvironment({
         NODE_ENV: 'test',
         DATABASE_URL: 'postgresql://user:pass@localhost:5432/aletheia',
+        JWT_SECRET: validJwtSecret,
       }),
     ).toMatchObject({
       nodeEnv: 'test',
       databaseUrl: expect.any(String),
       redisUrl: null,
       objectStorage: null,
+      corsOrigins: ['http://localhost:3000'],
+    });
+  });
+
+  it('splits a comma-separated CORS_ORIGIN into a trimmed list', () => {
+    expect(
+      parseEnvironment({
+        NODE_ENV: 'production',
+        DATABASE_URL: 'postgresql://user:pass@localhost:5432/aletheia',
+        JWT_SECRET: validJwtSecret,
+        CORS_ORIGIN: 'https://app.example.com, https://admin.example.com ',
+      }),
+    ).toMatchObject({
+      corsOrigins: ['https://app.example.com', 'https://admin.example.com'],
     });
   });
 
@@ -46,6 +82,8 @@ describe('parseEnvironment', () => {
       parseEnvironment({
         NODE_ENV: 'production',
         DATABASE_URL: 'postgresql://user:pass@db:5432/aletheia',
+        JWT_SECRET: validJwtSecret,
+        CORS_ORIGIN: 'https://app.example.com',
         REDIS_URL: 'redis://cache:6379',
         S3_ENDPOINT: 'https://objects.example.com',
         S3_ACCESS_KEY: 'access-key',
@@ -56,6 +94,8 @@ describe('parseEnvironment', () => {
       nodeEnv: 'production',
       databaseUrl: 'postgresql://user:pass@db:5432/aletheia',
       redisUrl: 'redis://cache:6379',
+      jwtSecret: validJwtSecret,
+      corsOrigins: ['https://app.example.com'],
       objectStorage: {
         endpoint: 'https://objects.example.com',
         accessKey: 'access-key',
@@ -81,6 +121,7 @@ describe('parseEnvironment', () => {
         parseEnvironment({
           NODE_ENV: 'development',
           DATABASE_URL: 'postgresql://user:pass@localhost:5432/aletheia',
+          JWT_SECRET: validJwtSecret,
           S3_ENDPOINT: 'http://localhost:9000',
           S3_ACCESS_KEY: 'access-key',
           S3_SECRET_KEY: 'secret-key',
@@ -95,6 +136,7 @@ describe('parseEnvironment', () => {
     const variableNames = [
       'NODE_ENV',
       'DATABASE_URL',
+      'JWT_SECRET',
       'REDIS_URL',
       'S3_ENDPOINT',
       'S3_ACCESS_KEY',
@@ -108,7 +150,8 @@ describe('parseEnvironment', () => {
     process.env.NODE_ENV = 'test';
     process.env.DATABASE_URL =
       'postgresql://user:pass@localhost:5432/aletheia';
-    for (const name of variableNames.slice(2)) {
+    process.env.JWT_SECRET = validJwtSecret;
+    for (const name of variableNames.slice(3)) {
       delete process.env[name];
     }
 
@@ -124,6 +167,7 @@ describe('parseEnvironment', () => {
         databaseUrl: 'postgresql://user:pass@localhost:5432/aletheia',
         redisUrl: null,
         objectStorage: null,
+        corsOrigins: ['http://localhost:3000'],
       });
     } finally {
       await moduleRef?.close();

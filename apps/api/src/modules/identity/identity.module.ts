@@ -6,15 +6,19 @@ import { IDENTITY_PUBLIC_API } from './application/public-api.js';
 import { UserRepository } from './infrastructure/user.repository.js';
 import { AuthController } from './presentation/auth.controller.js';
 import { JwtAuthGuard } from '../../platform/auth/index.js';
+import { ENVIRONMENT, type Environment } from '../../platform/config/environment.js';
 import { DatabaseModule } from '../../platform/database/database.module.js';
 
 @Global()
 @Module({
   imports: [
     DatabaseModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'aletheia_dev_jwt_secret_key_1234567890',
-      signOptions: { expiresIn: '7d' },
+    JwtModule.registerAsync({
+      inject: [ENVIRONMENT],
+      useFactory: (environment: Environment) => ({
+        secret: environment.jwtSecret,
+        signOptions: { expiresIn: '7d' },
+      }),
     }),
   ],
   controllers: [AuthController],

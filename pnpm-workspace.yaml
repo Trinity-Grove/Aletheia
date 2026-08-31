@@ -23,3 +23,9 @@ allowBuilds:
   esbuild: true
   prisma: true
   unrs-resolver: false
+
+# @fastify/helmet and @fastify/cors otherwise pull in their own nested
+# fastify copy, which breaks TypeScript's structural typing against the
+# app's own NestFastifyApplication instance. Force one shared instance.
+overrides:
+  fastify: 5.12.1
