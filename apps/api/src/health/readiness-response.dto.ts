@@ -1,7 +1,12 @@
 import type { DependencyState, ReadinessResponse } from '@aletheia/contracts';
 import { ApiProperty, ApiSchema } from '@nestjs/swagger';
 
-const dependencyStates: DependencyState[] = ['up', 'down', 'degraded'];
+const dependencyStates: DependencyState[] = [
+  'up',
+  'down',
+  'degraded',
+  'not_configured',
+];
 
 @ApiSchema({ name: 'ReadinessDependencies' })
 export class ReadinessDependenciesDto {

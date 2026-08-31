@@ -57,6 +57,10 @@ jobs:
       - name: Generate Prisma Client
         run: pnpm prisma:generate
 
+      - name: Audit dependencies for known vulnerabilities
+        run: pnpm audit --audit-level high
+        continue-on-error: true
+
       - name: Check module boundaries
         run: pnpm check:boundaries
 

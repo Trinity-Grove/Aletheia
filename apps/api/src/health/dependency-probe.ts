@@ -29,8 +29,8 @@ export class PostgresDependencyProbe implements DependencyProbe {
 }
 
 @Injectable()
-export class NoopDependencyProbe implements DependencyProbe {
+export class NotConfiguredDependencyProbe implements DependencyProbe {
   async check(): Promise<DependencyState> {
-    return 'degraded';
+    return 'not_configured';
   }
 }

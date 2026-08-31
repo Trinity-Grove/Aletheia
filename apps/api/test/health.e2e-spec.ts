@@ -114,18 +114,35 @@ describe('Health liveness endpoint', () => {
       properties: {
         postgres: {
           type: 'string',
-          enum: ['up', 'down', 'degraded'],
+          enum: ['up', 'down', 'degraded', 'not_configured'],
         },
         redis: {
           type: 'string',
-          enum: ['up', 'down', 'degraded'],
+          enum: ['up', 'down', 'degraded', 'not_configured'],
         },
         objectStorage: {
           type: 'string',
-          enum: ['up', 'down', 'degraded'],
+          enum: ['up', 'down', 'degraded', 'not_configured'],
         },
       },
       required: ['postgres', 'redis', 'objectStorage'],
+    });
+  });
+
+  it('GET /api/v1/health/ready reports not_configured (not degraded) for unwired optional dependencies', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/health/ready',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      status: 'ready',
+      dependencies: {
+        postgres: 'up',
+        redis: 'not_configured',
+        objectStorage: 'not_configured',
+      },
     });
   });
 

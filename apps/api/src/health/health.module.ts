@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../platform/database/database.module';
 import {
-  NoopDependencyProbe,
+  NotConfiguredDependencyProbe,
   OBJECT_STORAGE_PROBE,
   POSTGRES_PROBE,
   PostgresDependencyProbe,
@@ -16,18 +16,18 @@ import { HealthService } from './health.service';
   providers: [
     HealthService,
     PostgresDependencyProbe,
-    NoopDependencyProbe,
+    NotConfiguredDependencyProbe,
     {
       provide: POSTGRES_PROBE,
       useExisting: PostgresDependencyProbe,
     },
     {
       provide: REDIS_PROBE,
-      useExisting: NoopDependencyProbe,
+      useExisting: NotConfiguredDependencyProbe,
     },
     {
       provide: OBJECT_STORAGE_PROBE,
-      useExisting: NoopDependencyProbe,
+      useExisting: NotConfiguredDependencyProbe,
     },
   ],
 })

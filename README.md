@@ -4,6 +4,8 @@
 
 Aletheia is an open, sovereign, and deeply pedagogical platform designed to serve homeschooling families across the globe. Built from the ground up on strict hexagonal architecture and multi-tenant family boundary isolation, Aletheia combines daily Christian devotionals, customizable educational frameworks (*Classical, Charlotte Mason, Traditional*), flexible lesson and routine planning, qualitative mastery tracking, legal attendance compliance, official transcripts generation, and complete data portability.
 
+**Project status:** Aletheia is an MIT-licensed, community-driven MVP under active development. There is no billing, subscription, or paid tier today — the broader product vision (jurisdiction compliance engine, student portal, resource marketplace) is tracked as future work, not shipped functionality. See [Open Issues](https://github.com/Trinity-Grove/Aletheia/issues) for the current roadmap.
+
 ---
 
 ## 🏛️ Architecture & Tech Stack
