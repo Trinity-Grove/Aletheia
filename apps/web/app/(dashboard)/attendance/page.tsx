@@ -23,13 +23,12 @@ export default function AttendancePage() {
     useState<ComplianceRequirementResponseDto | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Initial Load: token, family, learners, requirements
+  // Initial Load: family, learners, requirements
   useEffect(() => {
     async function loadBaseData() {
       try {
-        const token = localStorage.getItem('token');
         const storedFamilyId = localStorage.getItem('familyId');
-        if (!token || !storedFamilyId) {
+        if (!storedFamilyId) {
           setLoading(false);
           return;
         }
@@ -37,7 +36,7 @@ export default function AttendancePage() {
 
         // Learners
         const learnersRes = await fetch(`/api/v1/families/${storedFamilyId}/learners`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (learnersRes.ok) {
           const lData = await learnersRes.json();
@@ -46,7 +45,7 @@ export default function AttendancePage() {
 
         // Requirements
         const reqRes = await fetch(`/api/v1/families/${storedFamilyId}/attendance/requirements`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (reqRes.ok) {
           const reqData = await reqRes.json();
@@ -67,13 +66,12 @@ export default function AttendancePage() {
   const fetchAttendance = useCallback(async () => {
     if (!familyId) return;
     try {
-      const token = localStorage.getItem('token');
       const params = new URLSearchParams();
       if (activeLearnerId) {
         params.append('learnerId', activeLearnerId);
       }
       const res = await fetch(`/api/v1/families/${familyId}/attendance?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
       });
       if (res.ok) {
         const data = await res.json();
@@ -91,11 +89,10 @@ export default function AttendancePage() {
       return;
     }
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch(
         `/api/v1/families/${familyId}/attendance/summary?learnerId=${activeLearnerId}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         }
       );
       if (res.ok) {
@@ -115,13 +112,10 @@ export default function AttendancePage() {
   // Actions
   const handleLogAttendance = async (dto: LogAttendanceDto) => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
     const res = await fetch(`/api/v1/families/${familyId}/attendance`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
       body: JSON.stringify(dto),
     });
     if (!res.ok) {
@@ -134,13 +128,10 @@ export default function AttendancePage() {
 
   const handleBulkLogAttendance = async (dto: BulkLogAttendanceDto) => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
     const res = await fetch(`/api/v1/families/${familyId}/attendance/bulk`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
       body: JSON.stringify(dto),
     });
     if (!res.ok) {

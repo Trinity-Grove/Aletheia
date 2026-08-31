@@ -88,6 +88,7 @@ async function request<T>(
   }
 
   const fetchInit: RequestInit = {
+    credentials: 'include',
     ...restOptions,
     method,
     headers,

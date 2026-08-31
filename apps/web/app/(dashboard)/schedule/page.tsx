@@ -52,13 +52,12 @@ export default function SchedulePage() {
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
   const [completeItem, setCompleteItem] = useState<CompleteLessonItem | null>(null);
 
-  // Initial Load: token, family, learners, subjects, objectives
+  // Initial Load: family, learners, subjects, objectives
   useEffect(() => {
     async function loadBaseData() {
       try {
-        const token = localStorage.getItem('token');
         const storedFamilyId = localStorage.getItem('familyId');
-        if (!token || !storedFamilyId) {
+        if (!storedFamilyId) {
           setLoading(false);
           return;
         }
@@ -66,7 +65,7 @@ export default function SchedulePage() {
 
         // Learners
         const learnersRes = await fetch(`/api/v1/families/${storedFamilyId}/learners`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (learnersRes.ok) {
           const lData = await learnersRes.json();
@@ -75,7 +74,7 @@ export default function SchedulePage() {
 
         // Subjects
         const subjectsRes = await fetch(`/api/v1/families/${storedFamilyId}/curriculum/subjects`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (subjectsRes.ok) {
           const sData = await subjectsRes.json();
@@ -84,7 +83,7 @@ export default function SchedulePage() {
 
         // Objectives
         const objectivesRes = await fetch(`/api/v1/families/${storedFamilyId}/curriculum/objectives`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (objectivesRes.ok) {
           const oData = await objectivesRes.json();
@@ -103,13 +102,12 @@ export default function SchedulePage() {
   const fetchAgenda = useCallback(async () => {
     if (!familyId) return;
     try {
-      const token = localStorage.getItem('token');
       const params = new URLSearchParams({ date: selectedDate });
       if (activeLearnerId) {
         params.append('learnerId', activeLearnerId);
       }
       const res = await fetch(`/api/v1/families/${familyId}/schedule/agenda?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
       });
       if (res.ok) {
         const data = await res.json();
@@ -124,13 +122,12 @@ export default function SchedulePage() {
   const fetchSlots = useCallback(async () => {
     if (!familyId) return;
     try {
-      const token = localStorage.getItem('token');
       const params = new URLSearchParams();
       if (activeLearnerId) {
         params.append('learnerId', activeLearnerId);
       }
       const res = await fetch(`/api/v1/families/${familyId}/schedule/slots?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
       });
       if (res.ok) {
         const data = await res.json();
@@ -152,13 +149,10 @@ export default function SchedulePage() {
   // Actions
   const handleCreateLesson = async (dto: CreateLessonPlanDto) => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
     const res = await fetch(`/api/v1/families/${familyId}/lessons`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
       body: JSON.stringify(dto),
     });
     if (!res.ok) {
@@ -170,13 +164,10 @@ export default function SchedulePage() {
 
   const handleReschedule = async (lessonId: string, dto: RescheduleLessonDto) => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
     const res = await fetch(`/api/v1/families/${familyId}/lessons/${lessonId}/reschedule`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
       body: JSON.stringify(dto),
     });
     if (!res.ok) {
@@ -192,17 +183,14 @@ export default function SchedulePage() {
     learnerId?: string
   ) => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
     const url = learnerId
       ? `/api/v1/families/${familyId}/lessons/${lessonId}/complete?learnerId=${learnerId}`
       : `/api/v1/families/${familyId}/lessons/${lessonId}/complete`;
 
     const res = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
       body: JSON.stringify(dto),
     });
     if (!res.ok) {
@@ -214,10 +202,9 @@ export default function SchedulePage() {
 
   const handleDeleteLesson = async (lessonId: string) => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
     const res = await fetch(`/api/v1/families/${familyId}/lessons/${lessonId}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
     });
     if (res.ok) {
       await fetchAgenda();
@@ -226,13 +213,10 @@ export default function SchedulePage() {
 
   const handleCreateSlot = async (dto: CreateScheduleSlotDto) => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
     const res = await fetch(`/api/v1/families/${familyId}/schedule/slots`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
       body: JSON.stringify(dto),
     });
     if (!res.ok) {
@@ -245,10 +229,9 @@ export default function SchedulePage() {
 
   const handleDeleteSlot = async (slotId: string) => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
     const res = await fetch(`/api/v1/families/${familyId}/schedule/slots/${slotId}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
     });
     if (res.ok) {
       await fetchSlots();

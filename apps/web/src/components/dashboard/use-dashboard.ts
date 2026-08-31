@@ -35,10 +35,9 @@ export function useDashboard(): DashboardController {
   const requestIdRef = useRef(0);
 
   const loadDashboard = useCallback(async () => {
-    const token = localStorage.getItem('token') ?? localStorage.getItem('aletheia_token');
     const familyId = localStorage.getItem('familyId') ?? localStorage.getItem('aletheia_active_family_id');
 
-    if (!token || !familyId) {
+    if (!familyId) {
       setData(null);
       setStatus('idle');
       setErrorMessage(null);
@@ -60,7 +59,7 @@ export function useDashboard(): DashboardController {
 
     try {
       const res = await fetch(`/api/v1/families/${familyId}/dashboard?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
         signal: controller.signal,
       });
 
@@ -112,9 +111,8 @@ export function useDashboard(): DashboardController {
     async (activity: DashboardActivityDto): Promise<void> => {
       if (activity.type !== 'lesson') return;
 
-      const token = localStorage.getItem('token') ?? localStorage.getItem('aletheia_token');
       const familyId = localStorage.getItem('familyId') ?? localStorage.getItem('aletheia_active_family_id');
-      if (!token || !familyId) return;
+      if (!familyId) return;
 
       const body: CompleteLessonDto = { completedAt: new Date().toISOString() };
 
@@ -122,10 +120,8 @@ export function useDashboard(): DashboardController {
         `/api/v1/families/${familyId}/lessons/${activity.id}/complete`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(body),
         },
       );

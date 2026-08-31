@@ -16,7 +16,7 @@ import type {
   RegisterGuardianDto,
   UserSummaryDto,
 } from '@aletheia/contracts';
-import { api, ApiError, getApiAuthToken, setApiAuthToken } from '../api';
+import { api, ApiError, setApiAuthToken } from '../api';
 
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -38,32 +38,7 @@ export interface AuthContextValue {
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
-const TOKEN_STORAGE_KEY = 'aletheia_token';
 const ACTIVE_FAMILY_ID_STORAGE_KEY = 'aletheia_active_family_id';
-
-function getStoredToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    return localStorage.getItem(TOKEN_STORAGE_KEY) ?? localStorage.getItem('token');
-  } catch {
-    return null;
-  }
-}
-
-function setStoredToken(token: string | null): void {
-  if (typeof window === 'undefined') return;
-  try {
-    if (token) {
-      localStorage.setItem(TOKEN_STORAGE_KEY, token);
-      localStorage.setItem('token', token);
-    } else {
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
-      localStorage.removeItem('token');
-    }
-  } catch {
-    // Ignore localStorage write failures
-  }
-}
 
 function getStoredActiveFamilyId(): string | null {
   if (typeof window === 'undefined') return null;
@@ -89,6 +64,22 @@ function setStoredActiveFamilyId(familyId: string | null): void {
   }
 }
 
+function selectDefaultFamilyId(fetchedFamilies: FamilyResponseDto[]): string | null {
+  const storedFamilyId = getStoredActiveFamilyId();
+
+  if (storedFamilyId && fetchedFamilies.some((f) => f.id === storedFamilyId)) {
+    return storedFamilyId;
+  }
+
+  if (fetchedFamilies.length > 0 && fetchedFamilies[0]) {
+    setStoredActiveFamilyId(fetchedFamilies[0].id);
+    return fetchedFamilies[0].id;
+  }
+
+  setStoredActiveFamilyId(null);
+  return null;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }): React.ReactElement {
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [user, setUser] = useState<UserSummaryDto | null>(null);
@@ -96,8 +87,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
   const [families, setFamilies] = useState<FamilyResponseDto[]>([]);
   const [activeFamilyId, setActiveFamilyId] = useState<string | null>(null);
 
-  const logout = useCallback((): void => {
-    setStoredToken(null);
+  // Resets client-side session state. Does not itself notify the server —
+  // the httpOnly session cookie (if any) is cleared separately by logout().
+  const clearLocalSession = useCallback((): void => {
     setStoredActiveFamilyId(null);
     setApiAuthToken(null);
     setUser(null);
@@ -107,16 +99,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
     setStatus('unauthenticated');
   }, []);
 
+  const logout = useCallback((): void => {
+    api.post('/auth/logout').catch(() => {
+      // Best-effort: local state is cleared regardless of network failure.
+    });
+    clearLocalSession();
+  }, [clearLocalSession]);
+
   const refreshSession = useCallback(async (): Promise<void> => {
-    const currentToken = getStoredToken() ?? getApiAuthToken();
-    if (!currentToken) {
-      logout();
-      return;
-    }
-
-    setApiAuthToken(currentToken);
-    setToken(currentToken);
-
     try {
       const [meResponse, familiesResponse] = await Promise.all([
         api.get<UserSummaryDto>('/auth/me'),
@@ -126,41 +116,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       setUser(meResponse);
       const fetchedFamilies = Array.isArray(familiesResponse) ? familiesResponse : [];
       setFamilies(fetchedFamilies);
-
-      const storedFamilyId = getStoredActiveFamilyId();
-      let selectedFamilyId: string | null = null;
-
-      if (storedFamilyId && fetchedFamilies.some((f) => f.id === storedFamilyId)) {
-        selectedFamilyId = storedFamilyId;
-      } else if (fetchedFamilies.length > 0 && fetchedFamilies[0]) {
-        selectedFamilyId = fetchedFamilies[0].id;
-        setStoredActiveFamilyId(selectedFamilyId);
-      } else {
-        selectedFamilyId = null;
-        setStoredActiveFamilyId(null);
-      }
-
-      setActiveFamilyId(selectedFamilyId);
+      setActiveFamilyId(selectDefaultFamilyId(fetchedFamilies));
       setStatus('authenticated');
     } catch (err: unknown) {
+      // A session cookie may simply not exist yet (first visit) or may have
+      // expired — either way, the correct outcome is "not logged in", not
+      // an uncaught rejection.
       if (err instanceof ApiError && err.statusCode === 401) {
-        logout();
+        clearLocalSession();
         return;
       }
-      throw err;
+      clearLocalSession();
     }
-  }, [logout]);
+  }, [clearLocalSession]);
 
   const login = useCallback(
     async (credentials: LoginDto): Promise<void> => {
       const res = await api.post<AuthResponseDto>('/auth/login', credentials);
-      const accessToken = res.accessToken;
-      const loggedUser = res.user;
-
-      setStoredToken(accessToken);
-      setApiAuthToken(accessToken);
-      setToken(accessToken);
-      setUser(loggedUser);
+      setApiAuthToken(res.accessToken);
+      setToken(res.accessToken);
+      setUser(res.user);
 
       let fetchedFamilies: FamilyResponseDto[] = [];
       try {
@@ -171,21 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       }
 
       setFamilies(fetchedFamilies);
-
-      const storedFamilyId = getStoredActiveFamilyId();
-      let selectedFamilyId: string | null = null;
-
-      if (storedFamilyId && fetchedFamilies.some((f) => f.id === storedFamilyId)) {
-        selectedFamilyId = storedFamilyId;
-      } else if (fetchedFamilies.length > 0 && fetchedFamilies[0]) {
-        selectedFamilyId = fetchedFamilies[0].id;
-        setStoredActiveFamilyId(selectedFamilyId);
-      } else {
-        selectedFamilyId = null;
-        setStoredActiveFamilyId(null);
-      }
-
-      setActiveFamilyId(selectedFamilyId);
+      setActiveFamilyId(selectDefaultFamilyId(fetchedFamilies));
       setStatus('authenticated');
     },
     [],
@@ -194,13 +155,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
   const register = useCallback(
     async (data: RegisterGuardianDto): Promise<void> => {
       const res = await api.post<AuthResponseDto>('/auth/register', data);
-      const accessToken = res.accessToken;
-      const registeredUser = res.user;
-
-      setStoredToken(accessToken);
-      setApiAuthToken(accessToken);
-      setToken(accessToken);
-      setUser(registeredUser);
+      setApiAuthToken(res.accessToken);
+      setToken(res.accessToken);
+      setUser(res.user);
       setFamilies([]);
       setActiveFamilyId(null);
       setStoredActiveFamilyId(null);
@@ -228,7 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
 
   useEffect(() => {
     const handleUnauthorized = () => {
-      logout();
+      clearLocalSession();
     };
 
     if (typeof window !== 'undefined') {
@@ -237,26 +194,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
         window.removeEventListener('auth:unauthorized', handleUnauthorized);
       };
     }
-  }, [logout]);
+  }, [clearLocalSession]);
 
+  // The session lives in an httpOnly cookie the browser attaches
+  // automatically (see apiClient's `credentials: 'include'`) — it can't be
+  // inspected from JS, so the only way to know whether a session exists is
+  // to ask the server.
   useEffect(() => {
-    const storedToken = getStoredToken();
-    if (!storedToken) {
-      setStatus('unauthenticated');
-      return;
-    }
-
-    setApiAuthToken(storedToken);
-    setToken(storedToken);
-
-    refreshSession().catch((err: unknown) => {
-      if (err instanceof ApiError && err.statusCode === 401) {
-        logout();
-      } else {
-        setStatus('unauthenticated');
-      }
-    });
-  }, [refreshSession, logout]);
+    refreshSession();
+  }, [refreshSession]);
 
   const activeFamily = useMemo<FamilyResponseDto | null>(() => {
     if (!activeFamilyId) return null;
@@ -319,4 +265,3 @@ export function useAuth(): AuthContextValue {
 export function useOptionalAuth(): AuthContextValue | null {
   return useContext(AuthContext);
 }
-

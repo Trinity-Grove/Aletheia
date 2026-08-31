@@ -28,13 +28,12 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('general');
   const [loading, setLoading] = useState(true);
 
-  // Initial Load: token, family, learners, settings, notifications
+  // Initial Load: family, learners, settings, notifications
   useEffect(() => {
     async function loadBaseData() {
       try {
-        const token = localStorage.getItem('token');
         const storedFamilyId = localStorage.getItem('familyId');
-        if (!token || !storedFamilyId) {
+        if (!storedFamilyId) {
           setLoading(false);
           return;
         }
@@ -42,7 +41,7 @@ export default function SettingsPage() {
 
         // Fetch learners
         const learnersRes = await fetch(`/api/v1/families/${storedFamilyId}/learners`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (learnersRes.ok) {
           const lData = await learnersRes.json();
@@ -51,7 +50,7 @@ export default function SettingsPage() {
 
         // Fetch settings
         const settingsRes = await fetch(`/api/v1/families/${storedFamilyId}/settings`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (settingsRes.ok) {
           const sData = await settingsRes.json();
@@ -60,7 +59,7 @@ export default function SettingsPage() {
 
         // Fetch notifications
         const notifRes = await fetch(`/api/v1/families/${storedFamilyId}/notifications`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (notifRes.ok) {
           const nData = await notifRes.json();
@@ -69,7 +68,7 @@ export default function SettingsPage() {
 
         // Fetch unread count
         const countRes = await fetch(`/api/v1/families/${storedFamilyId}/notifications/unread-count`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (countRes.ok) {
           const cData = await countRes.json();
@@ -78,7 +77,7 @@ export default function SettingsPage() {
 
         // Fetch export jobs
         const exportJobsRes = await fetch(`/api/v1/families/${storedFamilyId}/export`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (exportJobsRes.ok) {
           const jobsData = await exportJobsRes.json();
@@ -96,9 +95,8 @@ export default function SettingsPage() {
   const refreshNotifications = useCallback(async () => {
     if (!familyId) return;
     try {
-      const token = localStorage.getItem('token');
       const notifRes = await fetch(`/api/v1/families/${familyId}/notifications`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
       });
       if (notifRes.ok) {
         const nData = await notifRes.json();
@@ -106,7 +104,7 @@ export default function SettingsPage() {
       }
 
       const countRes = await fetch(`/api/v1/families/${familyId}/notifications/unread-count`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
       });
       if (countRes.ok) {
         const cData = await countRes.json();
@@ -120,13 +118,10 @@ export default function SettingsPage() {
   // Actions
   const handleSaveSettings = async (dto: UpdateFamilySettingsDto) => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
     const res = await fetch(`/api/v1/families/${familyId}/settings`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
       body: JSON.stringify(dto),
     });
 
@@ -143,9 +138,8 @@ export default function SettingsPage() {
     if (!familyId) {
       throw new Error('Família não autenticada');
     }
-    const token = localStorage.getItem('token');
     const res = await fetch(`/api/v1/families/${familyId}/export/package`, {
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
     });
 
     if (!res.ok) {
@@ -158,10 +152,9 @@ export default function SettingsPage() {
 
   const handleMarkNotificationAsRead = async (id: string) => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
     const res = await fetch(`/api/v1/families/${familyId}/notifications/${id}/read`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
     });
     if (res.ok) {
       await refreshNotifications();
@@ -170,10 +163,9 @@ export default function SettingsPage() {
 
   const handleMarkAllNotificationsAsRead = async () => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
     const res = await fetch(`/api/v1/families/${familyId}/notifications/read-all`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
     });
     if (res.ok) {
       await refreshNotifications();

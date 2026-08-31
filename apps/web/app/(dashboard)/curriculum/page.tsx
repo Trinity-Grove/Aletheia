@@ -30,9 +30,8 @@ export default function CurriculumPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const token = localStorage.getItem("token");
         const storedFamilyId = localStorage.getItem("familyId");
-        if (!token || !storedFamilyId) {
+        if (!storedFamilyId) {
           setLoading(false);
           return;
         }
@@ -40,7 +39,7 @@ export default function CurriculumPage() {
 
         // Load learners
         const learnersRes = await fetch(`/api/v1/families/${storedFamilyId}/learners`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (learnersRes.ok) {
           const lData = await learnersRes.json();
@@ -54,7 +53,7 @@ export default function CurriculumPage() {
 
         // Load academic years
         const yearsRes = await fetch(`/api/v1/families/${storedFamilyId}/curriculum/academic-years`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (yearsRes.ok) {
           const yData = await yearsRes.json();
@@ -69,7 +68,7 @@ export default function CurriculumPage() {
 
         // Load subjects
         const subjectsRes = await fetch(`/api/v1/families/${storedFamilyId}/curriculum/subjects`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (subjectsRes.ok) {
           const sData = await subjectsRes.json();
@@ -90,12 +89,11 @@ export default function CurriculumPage() {
     async function loadLearnerObjectives() {
       if (!familyId || !activeYearId) return;
       try {
-        const token = localStorage.getItem("token");
         const queryParams = new URLSearchParams({ academicYearId: activeYearId });
         if (activeLearnerId) queryParams.append("learnerId", activeLearnerId);
 
         const objRes = await fetch(`/api/v1/families/${familyId}/curriculum/objectives?${queryParams.toString()}`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (objRes.ok) {
           const oData = await objRes.json();
@@ -104,7 +102,7 @@ export default function CurriculumPage() {
 
         if (activeLearnerId) {
           const planRes = await fetch(`/api/v1/families/${familyId}/curriculum/plans?learnerId=${activeLearnerId}&academicYearId=${activeYearId}`, {
-            headers: { Authorization: `Bearer ${token}` },
+            credentials: 'include',
           });
           if (planRes.ok) {
             const pData = await planRes.json();
@@ -122,26 +120,26 @@ export default function CurriculumPage() {
 
   const handleApplyTemplate = async (template: PedagogicalFramework) => {
     if (!familyId || !activeLearnerId || !activeYearId) return;
-    const token = localStorage.getItem("token");
     await fetch(`/api/v1/families/${familyId}/curriculum/templates/apply`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: 'include',
       body: JSON.stringify({ learnerId: activeLearnerId, academicYearId: activeYearId, template }),
     });
 
     // Refresh subjects & objectives
-    const sRes = await fetch(`/api/v1/families/${familyId}/curriculum/subjects`, { headers: { Authorization: `Bearer ${token}` } });
+    const sRes = await fetch(`/api/v1/families/${familyId}/curriculum/subjects`, { credentials: 'include' });
     if (sRes.ok) setSubjects(await sRes.json());
-    const oRes = await fetch(`/api/v1/families/${familyId}/curriculum/objectives?learnerId=${activeLearnerId}&academicYearId=${activeYearId}`, { headers: { Authorization: `Bearer ${token}` } });
+    const oRes = await fetch(`/api/v1/families/${familyId}/curriculum/objectives?learnerId=${activeLearnerId}&academicYearId=${activeYearId}`, { credentials: 'include' });
     if (oRes.ok) setObjectives(await oRes.json());
   };
 
   const handleCreateSubject = async (dto: CreateSubjectDto) => {
     if (!familyId) return;
-    const token = localStorage.getItem("token");
     const res = await fetch(`/api/v1/families/${familyId}/curriculum/subjects`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: 'include',
       body: JSON.stringify(dto),
     });
     if (res.ok) {
@@ -152,10 +150,10 @@ export default function CurriculumPage() {
 
   const handleCreateObjective = async (dto: CreateObjectiveDto) => {
     if (!familyId) return;
-    const token = localStorage.getItem("token");
     const res = await fetch(`/api/v1/families/${familyId}/curriculum/objectives`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: 'include',
       body: JSON.stringify(dto),
     });
     if (res.ok) {
@@ -166,10 +164,10 @@ export default function CurriculumPage() {
 
   const handleToggleObjectiveStatus = async (objectiveId: string, nextStatus: ObjectiveStatus) => {
     if (!familyId) return;
-    const token = localStorage.getItem("token");
     const res = await fetch(`/api/v1/families/${familyId}/curriculum/objectives/${objectiveId}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: 'include',
       body: JSON.stringify({ status: nextStatus }),
     });
     if (res.ok) {
@@ -180,10 +178,9 @@ export default function CurriculumPage() {
 
   const handleDeleteObjective = async (objectiveId: string) => {
     if (!familyId) return;
-    const token = localStorage.getItem("token");
     const res = await fetch(`/api/v1/families/${familyId}/curriculum/objectives/${objectiveId}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
     });
     if (res.ok) {
       setObjectives((prev) => prev.filter((o) => o.id !== objectiveId));

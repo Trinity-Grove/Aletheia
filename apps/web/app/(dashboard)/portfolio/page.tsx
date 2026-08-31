@@ -25,13 +25,12 @@ export default function PortfolioPage() {
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<PortfolioItemResponseDto | null>(null);
 
-  // Initial Load: token, family, learners, subjects, records
+  // Initial Load: family, learners, subjects, records
   useEffect(() => {
     async function loadBaseData() {
       try {
-        const token = localStorage.getItem('token');
         const storedFamilyId = localStorage.getItem('familyId');
-        if (!token || !storedFamilyId) {
+        if (!storedFamilyId) {
           setLoading(false);
           return;
         }
@@ -39,7 +38,7 @@ export default function PortfolioPage() {
 
         // Learners
         const learnersRes = await fetch(`/api/v1/families/${storedFamilyId}/learners`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (learnersRes.ok) {
           const lData = await learnersRes.json();
@@ -48,7 +47,7 @@ export default function PortfolioPage() {
 
         // Subjects
         const subjectsRes = await fetch(`/api/v1/families/${storedFamilyId}/curriculum/subjects`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (subjectsRes.ok) {
           const sData = await subjectsRes.json();
@@ -57,7 +56,7 @@ export default function PortfolioPage() {
 
         // Records (for linking)
         const recordsRes = await fetch(`/api/v1/families/${storedFamilyId}/records`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (recordsRes.ok) {
           const rData = await recordsRes.json();
@@ -76,13 +75,12 @@ export default function PortfolioPage() {
   const fetchPortfolioItems = useCallback(async () => {
     if (!familyId) return;
     try {
-      const token = localStorage.getItem('token');
       const params = new URLSearchParams();
       if (activeLearnerId) {
         params.append('learnerId', activeLearnerId);
       }
       const res = await fetch(`/api/v1/families/${familyId}/portfolio?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
       });
       if (res.ok) {
         const data = await res.json();
@@ -100,15 +98,12 @@ export default function PortfolioPage() {
   // Actions
   const handleSaveItem = async (dto: CreatePortfolioItemDto) => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
 
     if (itemToEdit) {
       const res = await fetch(`/api/v1/families/${familyId}/portfolio/${itemToEdit.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
         body: JSON.stringify(dto),
       });
       if (!res.ok) {
@@ -118,10 +113,8 @@ export default function PortfolioPage() {
     } else {
       const res = await fetch(`/api/v1/families/${familyId}/portfolio`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
         body: JSON.stringify(dto),
       });
       if (!res.ok) {
@@ -134,10 +127,9 @@ export default function PortfolioPage() {
 
   const handleDeleteItem = async (itemId: string) => {
     if (!familyId) return;
-    const token = localStorage.getItem('token');
     const res = await fetch(`/api/v1/families/${familyId}/portfolio/${itemId}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
     });
     if (res.ok) {
       await fetchPortfolioItems();
