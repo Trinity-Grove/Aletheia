@@ -13,7 +13,7 @@ describe('Health readiness with PostgreSQL', () => {
     await app.close();
   });
 
-  it('reports the real PostgreSQL probe as up', async () => {
+  it('reports the real PostgreSQL probe as up and unwired optional dependencies as not_configured', async () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/health/ready',
@@ -21,11 +21,11 @@ describe('Health readiness with PostgreSQL', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({
-      status: 'degraded',
+      status: 'ready',
       dependencies: {
         postgres: 'up',
-        redis: 'degraded',
-        objectStorage: 'degraded',
+        redis: 'not_configured',
+        objectStorage: 'not_configured',
       },
     });
   });

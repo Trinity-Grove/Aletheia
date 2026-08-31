@@ -129,23 +129,6 @@ describe('Health liveness endpoint', () => {
     });
   });
 
-  it('GET /api/v1/health/ready reports not_configured (not degraded) for unwired optional dependencies', async () => {
-    const response = await app.inject({
-      method: 'GET',
-      url: '/api/v1/health/ready',
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({
-      status: 'ready',
-      dependencies: {
-        postgres: 'up',
-        redis: 'not_configured',
-        objectStorage: 'not_configured',
-      },
-    });
-  });
-
   it('GET /api/docs serves the Swagger UI', async () => {
     const response = await app.inject({
       method: 'GET',

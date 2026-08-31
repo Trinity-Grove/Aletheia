@@ -78,6 +78,27 @@ describe('Health readiness endpoint', () => {
     });
   });
 
+  it('returns 200 and ready when optional dependencies are not configured', async () => {
+    postgres.state = 'up';
+    redis.state = 'not_configured';
+    objectStorage.state = 'not_configured';
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/health/ready',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      status: 'ready',
+      dependencies: {
+        postgres: 'up',
+        redis: 'not_configured',
+        objectStorage: 'not_configured',
+      },
+    });
+  });
+
   it('returns 200 when optional dependencies are unavailable', async () => {
     postgres.state = 'up';
     redis.state = 'degraded';
