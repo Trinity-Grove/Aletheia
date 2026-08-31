@@ -23,12 +23,11 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
 
     async function loadLearners() {
       try {
-        const token = localStorage.getItem('token');
         const familyId = localStorage.getItem('familyId');
-        if (!token || !familyId) return;
+        if (!familyId) return;
 
         const res = await fetch(`/api/v1/families/${familyId}/learners`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (res.ok) {
           setLearners(await res.json());
@@ -54,16 +53,15 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
 
   const handleToggleArchive = (learner: LearnerResponseDto) => {
     void (async () => {
-      const token = localStorage.getItem('token');
       const familyId = localStorage.getItem('familyId');
-      if (!token || !familyId) return;
+      if (!familyId) return;
 
       const isArchived = Boolean(learner.archivedAt);
       const action = isArchived ? 'reactivate' : 'archive';
       try {
         const res = await fetch(`/api/v1/families/${familyId}/learners/${learner.id}/${action}`, {
           method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
@@ -79,9 +77,8 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
   };
 
   const handleSubmitForm = async (data: CreateLearnerDto) => {
-    const token = localStorage.getItem('token');
     const familyId = localStorage.getItem('familyId');
-    if (!token || !familyId) {
+    if (!familyId) {
       throw new Error('Sessão inválida. Faça login novamente.');
     }
 
@@ -92,7 +89,8 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
 
     const res = await fetch(url, {
       method: isEditing ? 'PATCH' : 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(data),
     });
 

@@ -17,6 +17,7 @@ test.describe('Real Family MVP End-to-End Journey', () => {
     const lessonId = '44444444-4444-4444-a444-444444444444';
 
     let isLessonCompleted = false;
+    let isLearnerCreated = false;
 
     // Set up hermetic API route mocks
     await page.route('**/api/v1/auth/register', async (route) => {
@@ -104,6 +105,7 @@ test.describe('Real Family MVP End-to-End Journey', () => {
 
     await page.route(`**/api/v1/families/${familyId}/learners**`, async (route) => {
       if (route.request().method() === 'POST') {
+        isLearnerCreated = true;
         await route.fulfill({
           status: 201,
           contentType: 'application/json',
@@ -128,24 +130,26 @@ test.describe('Real Family MVP End-to-End Journey', () => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          json: [
-            {
-              id: learnerId,
-              familyId,
-              firstName: learnerName,
-              lastName: null,
-              preferredName: learnerName,
-              birthDate: '2018-05-15',
-              stage: 'PRIMARY_GRAMMAR',
-              customGrade: null,
-              avatarColor: '#3B82F6',
-              specialNeeds: null,
-              notes: null,
-              archivedAt: null,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-          ],
+          json: isLearnerCreated
+            ? [
+                {
+                  id: learnerId,
+                  familyId,
+                  firstName: learnerName,
+                  lastName: null,
+                  preferredName: learnerName,
+                  birthDate: '2018-05-15',
+                  stage: 'PRIMARY_GRAMMAR',
+                  customGrade: null,
+                  avatarColor: '#3B82F6',
+                  specialNeeds: null,
+                  notes: null,
+                  archivedAt: null,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                },
+              ]
+            : [],
         });
       }
     });
