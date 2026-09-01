@@ -19,6 +19,7 @@ import { PasswordHasher } from './password.hasher.js';
 import { UserRepository } from '../infrastructure/user.repository.js';
 import { RefreshTokenRepository } from '../infrastructure/refresh-token.repository.js';
 import { EmailVerificationTokenRepository } from '../infrastructure/email-verification-token.repository.js';
+import { PasswordResetTokenRepository } from '../infrastructure/password-reset-token.repository.js';
 import { MAIL_SENDER, type MailSender } from '../../../platform/mail/mail-sender.js';
 import { ENVIRONMENT, type Environment } from '../../../platform/config/environment.js';
 import type { AuthenticatedUserPayload, IdentityPublicApi } from './public-api.js';
@@ -40,6 +41,7 @@ export class AuthService implements IdentityPublicApi {
     private readonly jwtService: JwtService,
     private readonly refreshTokenRepository: RefreshTokenRepository,
     private readonly emailVerificationTokenRepository: EmailVerificationTokenRepository,
+    private readonly passwordResetTokenRepository: PasswordResetTokenRepository,
     @Inject(MAIL_SENDER) private readonly mailSender: MailSender,
     @Inject(ENVIRONMENT) private readonly environment: Environment,
   ) {}
@@ -150,6 +152,45 @@ export class AuthService implements IdentityPublicApi {
     await this.sendVerificationEmail(user.id, user.email, user.fullName);
   }
 
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) {
+      // Doesn't reveal whether the account exists — the caller sees the
+      // same outcome either way.
+      return;
+    }
+
+    await this.sendPasswordResetEmail(user.id, user.email, user.fullName);
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const policyResult = PasswordPolicy.validate(newPassword);
+    if (!policyResult.valid) {
+      throw new BadRequestException(policyResult.reason);
+    }
+
+    const record = await this.passwordResetTokenRepository.findByToken(token);
+    if (!record) {
+      throw new BadRequestException('Invalid reset token.');
+    }
+
+    if (record.usedAt) {
+      throw new BadRequestException('This reset link has already been used.');
+    }
+
+    if (record.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('This reset link has expired.');
+    }
+
+    await this.passwordResetTokenRepository.markUsed(record.id);
+    const passwordHash = this.passwordHasher.hash(newPassword);
+    await this.userRepository.updatePassword(record.userId, passwordHash);
+
+    // Resetting the password is a critical account event — every existing
+    // session (and any leaked/stale refresh token) must stop working.
+    await this.refreshTokenRepository.revokeAllForUser(record.userId);
+  }
+
   async verifyToken(token: string): Promise<AuthenticatedUserPayload | null> {
     try {
       const decoded = await this.jwtService.verifyAsync<{ sub: string; email: string }>(token);
@@ -204,6 +245,30 @@ export class AuthService implements IdentityPublicApi {
       // A failed send must never block registration/login — the account is
       // fully usable unverified, and the user can request a new link later.
       this.logger.error(`Failed to send verification email to ${email}`, error as Error);
+    }
+  }
+
+  private async sendPasswordResetEmail(userId: string, email: string, fullName: string): Promise<void> {
+    const { token } = await this.passwordResetTokenRepository.issue(userId);
+    const resetLink = `${this.environment.webOrigin}/reset-password?token=${token}`;
+
+    try {
+      await this.mailSender.send({
+        to: email,
+        subject: 'Redefina sua senha no Aletheia',
+        text:
+          `Olá, ${fullName}! Recebemos um pedido para redefinir sua senha. ` +
+          `Acesse: ${resetLink}\n\nEste link expira em 1 hora. Se você não solicitou isso, ignore este e-mail.`,
+        html:
+          `<p>Olá, ${fullName}!</p>` +
+          `<p>Recebemos um pedido para redefinir sua senha. Clique no link abaixo para continuar:</p>` +
+          `<p><a href="${resetLink}">${resetLink}</a></p>` +
+          `<p>Este link expira em 1 hora. Se você não solicitou isso, pode ignorar este e-mail com segurança.</p>`,
+      });
+    } catch (error) {
+      // Same reasoning as sendVerificationEmail: a failed send must never
+      // surface to the caller, which would leak whether the account exists.
+      this.logger.error(`Failed to send password reset email to ${email}`, error as Error);
     }
   }
 }

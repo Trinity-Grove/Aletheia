@@ -4,6 +4,9 @@ import { test, expect } from "@playwright/test";
 const routes = [
   { path: "/login", name: "Login" },
   { path: "/register", name: "Register" },
+  { path: "/forgot-password", name: "Forgot Password" },
+  { path: "/reset-password", name: "Reset Password (no token)" },
+  { path: "/reset-password?token=some-token", name: "Reset Password (with token)" },
   { path: "/onboarding", name: "Onboarding" },
   { path: "/", name: "Dashboard" },
   { path: "/learners", name: "Learners" },

@@ -63,4 +63,11 @@ export class UserRepository {
       data: { emailVerifiedAt: new Date() },
     });
   }
+
+  async updatePassword(id: string, passwordHash: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: { passwordHash },
+    });
+  }
 }

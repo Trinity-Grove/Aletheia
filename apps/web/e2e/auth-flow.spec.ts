@@ -117,6 +117,46 @@ test.describe('Authentication & Onboarding Web Smoke Tests', () => {
     await expect(page.getByTestId('learner-submit-btn')).toBeVisible();
   });
 
+  test('completes the forgot-password to reset-password happy path', async ({ page }) => {
+    let forgotPasswordCalledWith: unknown;
+    await page.route('**/api/v1/auth/forgot-password', async (route) => {
+      forgotPasswordCalledWith = route.request().postDataJSON();
+      await route.fulfill({ json: { success: true } });
+    });
+
+    await page.goto('/login');
+    await page.getByText('Esqueceu sua senha?').click();
+    await expect(page).toHaveURL(/.*forgot-password/);
+
+    await page.getByTestId('forgot-password-email-input').fill('guardian@example.com');
+    await page.getByTestId('forgot-password-button').click();
+
+    await expect(page.getByTestId('forgot-password-success')).toBeVisible();
+    expect(forgotPasswordCalledWith).toEqual({ email: 'guardian@example.com' });
+
+    let resetPasswordCalledWith: unknown;
+    await page.route('**/api/v1/auth/reset-password', async (route) => {
+      resetPasswordCalledWith = route.request().postDataJSON();
+      await route.fulfill({ json: { success: true } });
+    });
+
+    await page.goto('/reset-password?token=e2e-test-token');
+    await page.getByTestId('reset-password-new-input').fill('brandNewPassword123');
+    await page.getByTestId('reset-password-confirm-input').fill('brandNewPassword123');
+    await page.getByTestId('reset-password-button').click();
+
+    await expect(page.getByTestId('reset-password-success')).toBeVisible();
+    expect(resetPasswordCalledWith).toEqual({
+      token: 'e2e-test-token',
+      newPassword: 'brandNewPassword123',
+    });
+  });
+
+  test('shows an invalid-link state when reset-password is opened without a token', async ({ page }) => {
+    await page.goto('/reset-password');
+    await expect(page.getByTestId('reset-password-invalid-link')).toBeVisible();
+  });
+
   test('redirects an anonymous visitor away from a protected route to /login with a return path', async ({ page }) => {
     await page.route('**/api/v1/auth/me', async (route) => {
       await route.fulfill({ status: 401, json: { statusCode: 401, message: 'Missing session cookie or Authorization header.' } });

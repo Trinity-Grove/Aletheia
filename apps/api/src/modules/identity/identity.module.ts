@@ -6,6 +6,7 @@ import { IDENTITY_PUBLIC_API } from './application/public-api.js';
 import { UserRepository } from './infrastructure/user.repository.js';
 import { RefreshTokenRepository } from './infrastructure/refresh-token.repository.js';
 import { EmailVerificationTokenRepository } from './infrastructure/email-verification-token.repository.js';
+import { PasswordResetTokenRepository } from './infrastructure/password-reset-token.repository.js';
 import { AuthController } from './presentation/auth.controller.js';
 import { JwtAuthGuard } from '../../platform/auth/index.js';
 import { ENVIRONMENT, type Environment } from '../../platform/config/environment.js';
@@ -31,6 +32,7 @@ import { MailModule } from '../../platform/mail/mail.module.js';
     UserRepository,
     RefreshTokenRepository,
     EmailVerificationTokenRepository,
+    PasswordResetTokenRepository,
     AuthService,
     JwtAuthGuard,
     {

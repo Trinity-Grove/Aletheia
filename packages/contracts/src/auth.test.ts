@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
   authResponseSchema,
+  forgotPasswordSchema,
   loginSchema,
   registerGuardianSchema,
+  resetPasswordSchema,
   userSummarySchema,
   type AuthResponseDto,
+  type ForgotPasswordDto,
   type LoginDto,
   type RegisterGuardianDto,
+  type ResetPasswordDto,
   type UserSummaryDto,
 } from './auth.js';
 
@@ -99,6 +103,36 @@ describe('auth contracts', () => {
 
       const authResult = authResponseSchema.safeParse(authResponse);
       expect(authResult.success).toBe(true);
+    });
+  });
+
+  describe('forgotPasswordSchema', () => {
+    it('validates a valid email', () => {
+      const payload: ForgotPasswordDto = { email: 'guardian@example.com' };
+      expect(forgotPasswordSchema.safeParse(payload).success).toBe(true);
+    });
+
+    it('rejects an invalid email', () => {
+      expect(forgotPasswordSchema.safeParse({ email: 'not-an-email' }).success).toBe(false);
+    });
+  });
+
+  describe('resetPasswordSchema', () => {
+    it('validates a valid token and password', () => {
+      const payload: ResetPasswordDto = { token: 'abc123', newPassword: 'newSecurePassword1' };
+      expect(resetPasswordSchema.safeParse(payload).success).toBe(true);
+    });
+
+    it('rejects a short new password', () => {
+      expect(
+        resetPasswordSchema.safeParse({ token: 'abc123', newPassword: 'short' }).success,
+      ).toBe(false);
+    });
+
+    it('rejects an empty token', () => {
+      expect(
+        resetPasswordSchema.safeParse({ token: '', newPassword: 'newSecurePassword1' }).success,
+      ).toBe(false);
     });
   });
 });
