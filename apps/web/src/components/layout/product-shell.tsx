@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   AletheiaIcon,
   AppShell,
+  EmptyState,
   type NavigationItem,
   type NavigationLinkRenderer,
 } from '@aletheia/ui';
@@ -53,6 +54,15 @@ const NAV_ITEM_PERMISSIONS: Partial<Record<NavigationItem['id'], PermissionActio
   reports: 'generate_transcripts',
   settings: 'edit_settings',
 };
+
+// Same permission map as NAV_ITEM_PERMISSIONS, keyed by href instead of nav
+// id — lets a directly-visited URL (not just the nav link) be gated, since
+// hiding a nav item alone doesn't stop someone from typing the path in.
+const PATH_PERMISSIONS: Partial<Record<string, PermissionAction>> = Object.fromEntries(
+  MAIN_NAV_ITEMS
+    .filter((item) => NAV_ITEM_PERMISSIONS[item.id] !== undefined)
+    .map((item) => [item.href, NAV_ITEM_PERMISSIONS[item.id] as PermissionAction]),
+);
 
 export interface UserProfileSummary {
   id?: string | undefined;
@@ -198,6 +208,16 @@ export function ProductShell({
         : undefined;
 
   const permissions = getPermissions(activeRole);
+
+  // A hidden nav item only stops navigation via the menu — it doesn't stop
+  // someone from typing the URL directly. Gate the page content itself too,
+  // with an accessible state that says nothing about what the page holds.
+  const requiredPermission = PATH_PERMISSIONS[activePath];
+  const accessDenied =
+    requiredPermission !== undefined &&
+    profileUser !== undefined &&
+    !permissions.can(requiredPermission);
+
   const navigationItems = MAIN_NAV_ITEMS
     .filter((item) => {
       const requiredPermission = NAV_ITEM_PERMISSIONS[item.id];
@@ -252,7 +272,16 @@ export function ProductShell({
       topbarActions={topbarActions}
       {...(userProfile !== undefined ? { userProfile } : {})}
     >
-      {children}
+      {accessDenied ? (
+        <div data-testid="access-denied-state">
+          <EmptyState
+            title="Acesso restrito"
+            description="Você não tem permissão para acessar esta página."
+          />
+        </div>
+      ) : (
+        children
+      )}
     </AppShell>
   );
 
