@@ -1,4 +1,4 @@
-import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
@@ -73,6 +73,19 @@ describe('Identity Auth E2E', () => {
     jest.spyOn(authService, 'resetPassword').mockImplementation(async (token) => {
       if (token !== 'valid-reset-token') {
         throw new BadRequestException('Invalid reset token.');
+      }
+    });
+    jest.spyOn(authService, 'changePassword').mockImplementation(async (_userId, currentPassword) => {
+      if (currentPassword !== 'correctCurrentPassword') {
+        throw new UnauthorizedException('Current password is incorrect.');
+      }
+    });
+    jest.spyOn(authService, 'changeEmail').mockImplementation(async (_userId, currentPassword, newEmail) => {
+      if (currentPassword !== 'correctCurrentPassword') {
+        throw new UnauthorizedException('Current password is incorrect.');
+      }
+      if (newEmail === 'taken@example.com') {
+        throw new ConflictException('A user with this email already exists.');
       }
     });
     jest.spyOn(authService, 'verifyToken').mockImplementation(async (token) => {
@@ -262,5 +275,63 @@ describe('Identity Auth E2E', () => {
       .post('/api/v1/auth/reset-password')
       .send({ token: 'valid-reset-token', newPassword: 'short' })
       .expect(400);
+  });
+
+  it('POST /api/v1/auth/change-password requires authentication', async () => {
+    await supertest(app.getHttpServer())
+      .post('/api/v1/auth/change-password')
+      .send({ currentPassword: 'correctCurrentPassword', newPassword: 'brandNewPassword123' })
+      .expect(401);
+  });
+
+  it('POST /api/v1/auth/change-password succeeds with the correct current password', async () => {
+    const response = await supertest(app.getHttpServer())
+      .post('/api/v1/auth/change-password')
+      .set('Authorization', 'Bearer fake-jwt-token-12345')
+      .send({ currentPassword: 'correctCurrentPassword', newPassword: 'brandNewPassword123' })
+      .expect(200);
+
+    expect(response.body).toEqual({ success: true });
+  });
+
+  it('POST /api/v1/auth/change-password returns 401 for an incorrect current password', async () => {
+    await supertest(app.getHttpServer())
+      .post('/api/v1/auth/change-password')
+      .set('Authorization', 'Bearer fake-jwt-token-12345')
+      .send({ currentPassword: 'wrongPassword', newPassword: 'brandNewPassword123' })
+      .expect(401);
+  });
+
+  it('POST /api/v1/auth/change-email requires authentication', async () => {
+    await supertest(app.getHttpServer())
+      .post('/api/v1/auth/change-email')
+      .send({ currentPassword: 'correctCurrentPassword', newEmail: 'new@example.com' })
+      .expect(401);
+  });
+
+  it('POST /api/v1/auth/change-email succeeds with the correct current password', async () => {
+    const response = await supertest(app.getHttpServer())
+      .post('/api/v1/auth/change-email')
+      .set('Authorization', 'Bearer fake-jwt-token-12345')
+      .send({ currentPassword: 'correctCurrentPassword', newEmail: 'new@example.com' })
+      .expect(200);
+
+    expect(response.body).toEqual({ success: true });
+  });
+
+  it('POST /api/v1/auth/change-email returns 401 for an incorrect current password', async () => {
+    await supertest(app.getHttpServer())
+      .post('/api/v1/auth/change-email')
+      .set('Authorization', 'Bearer fake-jwt-token-12345')
+      .send({ currentPassword: 'wrongPassword', newEmail: 'new@example.com' })
+      .expect(401);
+  });
+
+  it('POST /api/v1/auth/change-email returns 409 when the email is already in use', async () => {
+    await supertest(app.getHttpServer())
+      .post('/api/v1/auth/change-email')
+      .set('Authorization', 'Bearer fake-jwt-token-12345')
+      .send({ currentPassword: 'correctCurrentPassword', newEmail: 'taken@example.com' })
+      .expect(409);
   });
 });

@@ -96,6 +96,28 @@ describe('AuthService', () => {
           }
         }
       },
+      updateEmail: async (id: string, email: string) => {
+        // Find the entry first, then mutate the map — deleting and
+        // inserting while iterating a live Map risks revisiting the newly
+        // inserted entry (same id) and looping forever.
+        const match = [...fakeUsers.entries()].find(([, user]) => user.id === id);
+        if (match) {
+          const [oldEmail, user] = match;
+          fakeUsers.delete(oldEmail);
+          fakeUsers.set(
+            email,
+            new UserEntity({
+              id: user.id,
+              email,
+              passwordHash: user.passwordHash,
+              fullName: user.fullName,
+              emailVerifiedAt: null,
+              createdAt: user.createdAt,
+              updatedAt: user.updatedAt,
+            }),
+          );
+        }
+      },
     } as unknown as UserRepository;
 
     fakeRefreshTokens = new Map();
@@ -547,6 +569,135 @@ describe('AuthService', () => {
       await expect(
         authService.resetPassword(token.plainToken, 'newPassword456'),
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('changePassword', () => {
+    it('updates the password when the current password is correct', async () => {
+      await authService.register({
+        email: 'change-pw@example.com',
+        fullName: 'User',
+        password: 'oldPassword123',
+      });
+
+      await authService.changePassword('user-uuid-1', 'oldPassword123', 'newPassword456');
+
+      await expect(
+        authService.login({ email: 'change-pw@example.com', password: 'oldPassword123' }),
+      ).rejects.toThrow(UnauthorizedException);
+      const loginResult = await authService.login({
+        email: 'change-pw@example.com',
+        password: 'newPassword456',
+      });
+      expect(loginResult.accessToken).toBeDefined();
+    });
+
+    it('revokes every existing refresh token', async () => {
+      const { refreshToken } = await authService.register({
+        email: 'change-pw-revoke@example.com',
+        fullName: 'User',
+        password: 'oldPassword123',
+      });
+
+      await authService.changePassword('user-uuid-1', 'oldPassword123', 'newPassword456');
+
+      await expect(authService.refresh(refreshToken)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects an incorrect current password', async () => {
+      await authService.register({
+        email: 'change-pw-wrong@example.com',
+        fullName: 'User',
+        password: 'oldPassword123',
+      });
+
+      await expect(
+        authService.changePassword('user-uuid-1', 'wrongPassword', 'newPassword456'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects a weak new password', async () => {
+      await authService.register({
+        email: 'change-pw-weak@example.com',
+        fullName: 'User',
+        password: 'oldPassword123',
+      });
+
+      await expect(
+        authService.changePassword('user-uuid-1', 'oldPassword123', 'short'),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('changeEmail', () => {
+    it('updates the email, resets verification, and sends a new verification email', async () => {
+      await authService.register({
+        email: 'change-email@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+      sentEmails.length = 0;
+
+      await authService.changeEmail('user-uuid-1', 'password12345', 'new-address@example.com');
+
+      const profile = await authService.getProfile('user-uuid-1');
+      expect(profile.email).toBe('new-address@example.com');
+      expect(profile.emailVerified).toBe(false);
+      expect(sentEmails).toHaveLength(1);
+      expect(sentEmails[0]!.to).toBe('new-address@example.com');
+    });
+
+    it('revokes every existing refresh token', async () => {
+      const { refreshToken } = await authService.register({
+        email: 'change-email-revoke@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+
+      await authService.changeEmail('user-uuid-1', 'password12345', 'new-address-2@example.com');
+
+      await expect(authService.refresh(refreshToken)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects an incorrect current password', async () => {
+      await authService.register({
+        email: 'change-email-wrong@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+
+      await expect(
+        authService.changeEmail('user-uuid-1', 'wrongPassword', 'new-address-3@example.com'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects changing to the same email', async () => {
+      await authService.register({
+        email: 'change-email-same@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+
+      await expect(
+        authService.changeEmail('user-uuid-1', 'password12345', 'change-email-same@example.com'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects an email already used by another account', async () => {
+      await authService.register({
+        email: 'change-email-taken@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+      await authService.register({
+        email: 'change-email-target@example.com',
+        fullName: 'Other User',
+        password: 'password12345',
+      });
+
+      await expect(
+        authService.changeEmail('user-uuid-1', 'password12345', 'change-email-target@example.com'),
+      ).rejects.toThrow(ConflictException);
     });
   });
 });

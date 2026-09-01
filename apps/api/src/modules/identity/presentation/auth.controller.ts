@@ -14,12 +14,16 @@ import {
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
 import {
+  changeEmailSchema,
+  changePasswordSchema,
   forgotPasswordSchema,
   loginSchema,
   registerGuardianSchema,
   resetPasswordSchema,
   verifyEmailSchema,
   type AuthResponseDto,
+  type ChangeEmailDto,
+  type ChangePasswordDto,
   type ForgotPasswordDto,
   type LoginDto,
   type RegisterGuardianDto,
@@ -170,6 +174,39 @@ export class AuthController {
     @Body(new ZodValidationPipe(resetPasswordSchema)) body: ResetPasswordDto,
   ): Promise<{ success: true }> {
     await this.authService.resetPassword(body.token, body.newPassword);
+    return { success: true };
+  }
+
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Change the authenticated guardian password, revoking every other session' })
+  @ApiResponse({ status: 200, description: 'Password changed.' })
+  @ApiResponse({ status: 400, description: 'Weak new password.' })
+  @ApiResponse({ status: 401, description: 'Current password incorrect, or not authenticated.' })
+  async changePassword(
+    @Req() req: { user: { userId: string } },
+    @Body(new ZodValidationPipe(changePasswordSchema)) body: ChangePasswordDto,
+  ): Promise<{ success: true }> {
+    await this.authService.changePassword(req.user.userId, body.currentPassword, body.newPassword);
+    return { success: true };
+  }
+
+  @Post('change-email')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Change the authenticated guardian email, requiring re-verification' })
+  @ApiResponse({ status: 200, description: 'Email changed; a new verification email was sent.' })
+  @ApiResponse({ status: 400, description: 'Invalid email, or same as the current one.' })
+  @ApiResponse({ status: 401, description: 'Current password incorrect, or not authenticated.' })
+  @ApiResponse({ status: 409, description: 'Email already in use.' })
+  async changeEmail(
+    @Req() req: { user: { userId: string } },
+    @Body(new ZodValidationPipe(changeEmailSchema)) body: ChangeEmailDto,
+  ): Promise<{ success: true }> {
+    await this.authService.changeEmail(req.user.userId, body.currentPassword, body.newEmail);
     return { success: true };
   }
 

@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
   authResponseSchema,
+  changeEmailSchema,
+  changePasswordSchema,
   forgotPasswordSchema,
   loginSchema,
   registerGuardianSchema,
   resetPasswordSchema,
   userSummarySchema,
   type AuthResponseDto,
+  type ChangeEmailDto,
+  type ChangePasswordDto,
   type ForgotPasswordDto,
   type LoginDto,
   type RegisterGuardianDto,
@@ -132,6 +136,44 @@ describe('auth contracts', () => {
     it('rejects an empty token', () => {
       expect(
         resetPasswordSchema.safeParse({ token: '', newPassword: 'newSecurePassword1' }).success,
+      ).toBe(false);
+    });
+  });
+
+  describe('changePasswordSchema', () => {
+    it('validates a valid current and new password', () => {
+      const payload: ChangePasswordDto = { currentPassword: 'oldPassword1', newPassword: 'newSecurePassword1' };
+      expect(changePasswordSchema.safeParse(payload).success).toBe(true);
+    });
+
+    it('rejects a short new password', () => {
+      expect(
+        changePasswordSchema.safeParse({ currentPassword: 'oldPassword1', newPassword: 'short' }).success,
+      ).toBe(false);
+    });
+
+    it('rejects an empty current password', () => {
+      expect(
+        changePasswordSchema.safeParse({ currentPassword: '', newPassword: 'newSecurePassword1' }).success,
+      ).toBe(false);
+    });
+  });
+
+  describe('changeEmailSchema', () => {
+    it('validates a valid current password and new email', () => {
+      const payload: ChangeEmailDto = { currentPassword: 'oldPassword1', newEmail: 'new@example.com' };
+      expect(changeEmailSchema.safeParse(payload).success).toBe(true);
+    });
+
+    it('rejects an invalid new email', () => {
+      expect(
+        changeEmailSchema.safeParse({ currentPassword: 'oldPassword1', newEmail: 'not-an-email' }).success,
+      ).toBe(false);
+    });
+
+    it('rejects an empty current password', () => {
+      expect(
+        changeEmailSchema.safeParse({ currentPassword: '', newEmail: 'new@example.com' }).success,
       ).toBe(false);
     });
   });

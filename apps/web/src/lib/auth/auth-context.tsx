@@ -10,6 +10,8 @@ import React, {
 } from 'react';
 import type {
   AuthResponseDto,
+  ChangeEmailDto,
+  ChangePasswordDto,
   FamilyResponseDto,
   FamilyRole,
   LoginDto,
@@ -34,6 +36,8 @@ export interface AuthContextValue {
   selectFamily: (_familyId: string) => void;
   refreshSession: () => Promise<void>;
   setActiveFamilyFromCreated: (_family: FamilyResponseDto) => void;
+  changePassword: (_data: ChangePasswordDto) => Promise<void>;
+  changeEmail: (_data: ChangeEmailDto) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -171,6 +175,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
     setStoredActiveFamilyId(familyId);
   }, []);
 
+  const changePassword = useCallback(async (data: ChangePasswordDto): Promise<void> => {
+    await api.post('/auth/change-password', data);
+    // The server revoked every other refresh token, but the current access
+    // token/cookie is untouched — no local session change needed here.
+  }, []);
+
+  const changeEmail = useCallback(
+    async (data: ChangeEmailDto): Promise<void> => {
+      await api.post('/auth/change-email', data);
+      // Email + verification status changed server-side — refetch rather
+      // than guess at the new emailVerified state locally.
+      await refreshSession();
+    },
+    [refreshSession],
+  );
+
   const setActiveFamilyFromCreated = useCallback((family: FamilyResponseDto): void => {
     setFamilies((prev) => {
       const exists = prev.some((f) => f.id === family.id);
@@ -233,6 +253,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       selectFamily,
       refreshSession,
       setActiveFamilyFromCreated,
+      changePassword,
+      changeEmail,
     }),
     [
       status,
@@ -248,6 +270,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       selectFamily,
       refreshSession,
       setActiveFamilyFromCreated,
+      changePassword,
+      changeEmail,
     ],
   );
 

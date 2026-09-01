@@ -9,6 +9,7 @@ import type {
 import { FamilyGeneralSettings } from '../src/components/settings/family-general-settings';
 import { NotificationPreferences } from '../src/components/settings/notification-preferences';
 import { DataBackupCard } from '../src/components/settings/data-backup-card';
+import { AccountSecuritySettings } from '../src/components/settings/account-security-settings';
 import { NotificationBell } from '../src/components/layout/notification-bell';
 import { AuthProvider } from '../src/lib/auth/rbac-context';
 
@@ -359,6 +360,124 @@ describe('Settings Hub, Notification Center & Data Backup Web Components', () =>
       fireEvent.click(screen.getByTestId('notification-bell-btn'));
       expect(screen.getByTestId('notifications-empty')).toBeDefined();
       expect(screen.getByText(/Nenhuma notificação no momento/i)).toBeDefined();
+    });
+  });
+
+  describe('AccountSecuritySettings', () => {
+    it('validates and submits a password change, showing success feedback', async () => {
+      const onChangePassword = vi.fn().mockResolvedValue(undefined);
+      const onChangeEmail = vi.fn();
+
+      render(
+        <AccountSecuritySettings
+          currentEmail="guardian@aletheia.edu"
+          onChangePassword={onChangePassword}
+          onChangeEmail={onChangeEmail}
+        />,
+      );
+
+      fireEvent.click(screen.getByTestId('change-password-button'));
+      expect(screen.getByTestId('change-password-error')).toHaveTextContent(
+        'Por favor, preencha todos os campos obrigatórios.',
+      );
+      expect(onChangePassword).not.toHaveBeenCalled();
+
+      fireEvent.change(screen.getByTestId('current-password-for-pw-input'), {
+        target: { value: 'oldPassword123' },
+      });
+      fireEvent.change(screen.getByTestId('new-password-input'), { target: { value: 'short' } });
+      fireEvent.change(screen.getByTestId('confirm-new-password-input'), { target: { value: 'short' } });
+      fireEvent.click(screen.getByTestId('change-password-button'));
+      expect(screen.getByTestId('change-password-error')).toHaveTextContent(
+        'A nova senha deve conter no mínimo 8 caracteres.',
+      );
+
+      fireEvent.change(screen.getByTestId('new-password-input'), { target: { value: 'newPassword456' } });
+      fireEvent.change(screen.getByTestId('confirm-new-password-input'), { target: { value: 'mismatch456' } });
+      fireEvent.click(screen.getByTestId('change-password-button'));
+      expect(screen.getByTestId('change-password-error')).toHaveTextContent('As senhas não conferem.');
+
+      fireEvent.change(screen.getByTestId('confirm-new-password-input'), { target: { value: 'newPassword456' } });
+      fireEvent.click(screen.getByTestId('change-password-button'));
+
+      await waitFor(() => {
+        expect(onChangePassword).toHaveBeenCalledWith({
+          currentPassword: 'oldPassword123',
+          newPassword: 'newPassword456',
+        });
+      });
+      expect(await screen.findByTestId('change-password-success')).toBeDefined();
+    });
+
+    it('shows an error when the password change fails', async () => {
+      const onChangePassword = vi.fn().mockRejectedValue(new Error('Senha atual incorreta.'));
+
+      render(
+        <AccountSecuritySettings
+          currentEmail="guardian@aletheia.edu"
+          onChangePassword={onChangePassword}
+          onChangeEmail={vi.fn()}
+        />,
+      );
+
+      fireEvent.change(screen.getByTestId('current-password-for-pw-input'), { target: { value: 'wrong' } });
+      fireEvent.change(screen.getByTestId('new-password-input'), { target: { value: 'newPassword456' } });
+      fireEvent.change(screen.getByTestId('confirm-new-password-input'), { target: { value: 'newPassword456' } });
+      fireEvent.click(screen.getByTestId('change-password-button'));
+
+      expect(await screen.findByTestId('change-password-error')).toHaveTextContent('Senha atual incorreta.');
+    });
+
+    it('validates and submits an email change, showing success feedback', async () => {
+      const onChangeEmail = vi.fn().mockResolvedValue(undefined);
+
+      render(
+        <AccountSecuritySettings
+          currentEmail="guardian@aletheia.edu"
+          onChangePassword={vi.fn()}
+          onChangeEmail={onChangeEmail}
+        />,
+      );
+
+      expect(screen.getByTestId('change-email-card')).toHaveTextContent('guardian@aletheia.edu');
+
+      fireEvent.click(screen.getByTestId('change-email-button'));
+      expect(screen.getByTestId('change-email-error')).toHaveTextContent(
+        'Por favor, preencha todos os campos obrigatórios.',
+      );
+
+      fireEvent.change(screen.getByTestId('current-password-for-email-input'), {
+        target: { value: 'password123' },
+      });
+      fireEvent.change(screen.getByTestId('new-email-input'), { target: { value: 'new@aletheia.edu' } });
+      fireEvent.click(screen.getByTestId('change-email-button'));
+
+      await waitFor(() => {
+        expect(onChangeEmail).toHaveBeenCalledWith({
+          currentPassword: 'password123',
+          newEmail: 'new@aletheia.edu',
+        });
+      });
+      expect(await screen.findByTestId('change-email-success')).toBeDefined();
+    });
+
+    it('shows an error when the email change fails', async () => {
+      const onChangeEmail = vi.fn().mockRejectedValue(new Error('E-mail já está em uso.'));
+
+      render(
+        <AccountSecuritySettings
+          onChangePassword={vi.fn()}
+          onChangeEmail={onChangeEmail}
+        />,
+      );
+
+      fireEvent.change(screen.getByTestId('current-password-for-email-input'), {
+        target: { value: 'password123' },
+      });
+      fireEvent.change(screen.getByTestId('new-email-input'), { target: { value: 'taken@aletheia.edu' } });
+      fireEvent.click(screen.getByTestId('change-email-button'));
+
+      expect(await screen.findByTestId('change-email-error')).toHaveTextContent('E-mail já está em uso.');
     });
   });
 });

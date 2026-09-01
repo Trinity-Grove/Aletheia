@@ -327,6 +327,8 @@ describe('ProductShell adapter', () => {
       selectFamily: vi.fn(),
       refreshSession: vi.fn(),
       setActiveFamilyFromCreated: vi.fn(),
+      changePassword: vi.fn(),
+      changeEmail: vi.fn(),
     };
 
     render(
@@ -359,6 +361,8 @@ describe('ProductShell adapter', () => {
       selectFamily: vi.fn(),
       refreshSession: vi.fn(),
       setActiveFamilyFromCreated: vi.fn(),
+      changePassword: vi.fn(),
+      changeEmail: vi.fn(),
     };
 
     render(
@@ -391,6 +395,8 @@ describe('ProductShell adapter', () => {
       selectFamily: vi.fn(),
       refreshSession: vi.fn(),
       setActiveFamilyFromCreated: vi.fn(),
+      changePassword: vi.fn(),
+      changeEmail: vi.fn(),
     };
 
     render(
