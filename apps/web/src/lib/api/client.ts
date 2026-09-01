@@ -26,6 +26,33 @@ export function getApiAuthToken(): string | null {
   return currentAuthToken;
 }
 
+// Paths that must never trigger a silent refresh-and-retry: a 401 from any
+// of these means "these credentials/token are actually invalid", not
+// "the access token merely expired," so refreshing and retrying would just
+// mask the real failure (or infinitely recurse, for /auth/refresh itself).
+const REFRESH_EXEMPT_PATHS = new Set(['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout']);
+
+let inFlightRefresh: Promise<boolean> | null = null;
+
+async function refreshSessionOnce(): Promise<boolean> {
+  if (!inFlightRefresh) {
+    inFlightRefresh = (async () => {
+      try {
+        const response = await fetch(resolveUrl('/auth/refresh'), {
+          method: 'POST',
+          credentials: 'include',
+        });
+        return response.ok;
+      } catch {
+        return false;
+      } finally {
+        inFlightRefresh = null;
+      }
+    })();
+  }
+  return inFlightRefresh;
+}
+
 function resolveUrl(
   path: string,
   params?: Record<string, string | number | boolean | undefined>,
@@ -95,7 +122,14 @@ async function request<T>(
     ...(formattedBody !== undefined ? { body: formattedBody } : {}),
   };
 
-  const response = await fetch(url, fetchInit);
+  let response = await fetch(url, fetchInit);
+
+  if (response.status === 401 && !REFRESH_EXEMPT_PATHS.has(path)) {
+    const refreshed = await refreshSessionOnce();
+    if (refreshed) {
+      response = await fetch(url, fetchInit);
+    }
+  }
 
   if (!response.ok) {
     let errorTitle = response.statusText || 'Error';

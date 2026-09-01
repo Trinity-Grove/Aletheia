@@ -4,12 +4,18 @@ import { AuthService } from './auth.service.js';
 import { PasswordHasher } from './password.hasher.js';
 import { UserRepository } from '../infrastructure/user.repository.js';
 import { UserEntity } from '../domain/user.entity.js';
+import type {
+  RefreshTokenRecord,
+  RefreshTokenRepository,
+} from '../infrastructure/refresh-token.repository.js';
 
 describe('AuthService', () => {
   let authService: AuthService;
   let fakeUsers: Map<string, UserEntity>;
   let hasher: PasswordHasher;
   let jwtService: JwtService;
+  let fakeRefreshTokens: Map<string, RefreshTokenRecord & { plainToken: string }>;
+  let refreshTokenRepository: RefreshTokenRepository;
 
   beforeEach(() => {
     fakeUsers = new Map();
@@ -38,7 +44,38 @@ describe('AuthService', () => {
       },
     } as unknown as UserRepository;
 
-    authService = new AuthService(mockRepo, hasher, jwtService);
+    fakeRefreshTokens = new Map();
+    let sequence = 0;
+    refreshTokenRepository = {
+      issue: async (userId: string) => {
+        sequence += 1;
+        const token = `refresh-token-${sequence}`;
+        fakeRefreshTokens.set(token, {
+          id: `rt-${sequence}`,
+          userId,
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          revokedAt: null,
+          plainToken: token,
+        });
+        return { token, expiresAt: fakeRefreshTokens.get(token)!.expiresAt };
+      },
+      findByToken: async (token: string) => fakeRefreshTokens.get(token) ?? null,
+      revokeByToken: async (token: string) => {
+        const record = fakeRefreshTokens.get(token);
+        if (record && !record.revokedAt) {
+          record.revokedAt = new Date();
+        }
+      },
+      revokeAllForUser: async (userId: string) => {
+        for (const record of fakeRefreshTokens.values()) {
+          if (record.userId === userId && !record.revokedAt) {
+            record.revokedAt = new Date();
+          }
+        }
+      },
+    } as unknown as RefreshTokenRepository;
+
+    authService = new AuthService(mockRepo, hasher, jwtService, refreshTokenRepository);
   });
 
   it('rejects passwords shorter than 8 characters', async () => {
@@ -51,7 +88,7 @@ describe('AuthService', () => {
     ).rejects.toThrow(BadRequestException);
   });
 
-  it('registers a guardian and returns accessToken + user summary', async () => {
+  it('registers a guardian and returns accessToken + refreshToken + user summary', async () => {
     const result = await authService.register({
       email: 'guardian@example.com',
       fullName: 'Faithful Guardian',
@@ -59,6 +96,7 @@ describe('AuthService', () => {
     });
 
     expect(result.accessToken).toBeDefined();
+    expect(result.refreshToken).toBeDefined();
     expect(result.user.email).toBe('guardian@example.com');
     expect(result.user.fullName).toBe('Faithful Guardian');
   });
@@ -108,5 +146,68 @@ describe('AuthService', () => {
         password: 'incorrectPassword',
       }),
     ).rejects.toThrow(UnauthorizedException);
+  });
+
+  describe('refresh', () => {
+    it('exchanges a valid refresh token for a new access/refresh pair and rotates the old one', async () => {
+      const { refreshToken } = await authService.register({
+        email: 'refresh@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+
+      const refreshed = await authService.refresh(refreshToken);
+
+      expect(refreshed.accessToken).toBeDefined();
+      expect(refreshed.refreshToken).toBeDefined();
+      expect(refreshed.refreshToken).not.toBe(refreshToken);
+      expect(fakeRefreshTokens.get(refreshToken)?.revokedAt).not.toBeNull();
+    });
+
+    it('rejects an unknown refresh token', async () => {
+      await expect(authService.refresh('not-a-real-token')).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects an expired refresh token', async () => {
+      const { refreshToken } = await authService.register({
+        email: 'expired@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+      fakeRefreshTokens.get(refreshToken)!.expiresAt = new Date(Date.now() - 1000);
+
+      await expect(authService.refresh(refreshToken)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('treats reuse of an already-rotated refresh token as compromised and revokes the whole session family', async () => {
+      const { refreshToken } = await authService.register({
+        email: 'reuse@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+
+      const first = await authService.refresh(refreshToken);
+
+      // Replaying the now-rotated-out original token should fail...
+      await expect(authService.refresh(refreshToken)).rejects.toThrow(UnauthorizedException);
+
+      // ...and the legitimate successor issued by the first refresh should
+      // have been revoked too, as a precaution against token theft.
+      await expect(authService.refresh(first.refreshToken)).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('revokeRefreshToken', () => {
+    it('invalidates the token so it can no longer be refreshed', async () => {
+      const { refreshToken } = await authService.register({
+        email: 'logout@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+
+      await authService.revokeRefreshToken(refreshToken);
+
+      await expect(authService.refresh(refreshToken)).rejects.toThrow(UnauthorizedException);
+    });
   });
 });

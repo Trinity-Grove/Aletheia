@@ -8,6 +8,7 @@ import {
   Post,
   Req,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
@@ -20,14 +21,21 @@ import {
   type RegisterGuardianDto,
   type UserSummaryDto,
 } from '@aletheia/contracts';
-import { AuthService } from '../application/auth.service.js';
+import { AuthService, type AuthSession } from '../application/auth.service.js';
 import { JwtAuthGuard } from '../../../platform/auth/index.js';
 import {
+  REFRESH_COOKIE_NAME,
+  clearRefreshCookie,
   clearSessionCookie,
+  setRefreshCookie,
   setSessionCookie,
 } from '../../../platform/auth/session-cookie.js';
 import { ENVIRONMENT, type Environment } from '../../../platform/config/environment.js';
 import { ZodValidationPipe } from '../../../platform/validation/index.js';
+
+interface RequestWithCookies {
+  cookies?: Record<string, string | undefined>;
+}
 
 @ApiTags('Auth')
 @Controller({ path: 'auth', version: '1' })
@@ -47,9 +55,8 @@ export class AuthController {
     @Body(new ZodValidationPipe(registerGuardianSchema)) body: RegisterGuardianDto,
     @Res({ passthrough: true }) reply: FastifyReply,
   ): Promise<AuthResponseDto> {
-    const result = await this.authService.register(body);
-    setSessionCookie(reply, result.accessToken, this.environment);
-    return result;
+    const session = await this.authService.register(body);
+    return this.commitSession(reply, session);
   }
 
   @Post('login')
@@ -61,17 +68,42 @@ export class AuthController {
     @Body(new ZodValidationPipe(loginSchema)) body: LoginDto,
     @Res({ passthrough: true }) reply: FastifyReply,
   ): Promise<AuthResponseDto> {
-    const result = await this.authService.login(body);
-    setSessionCookie(reply, result.accessToken, this.environment);
-    return result;
+    const session = await this.authService.login(body);
+    return this.commitSession(reply, session);
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Exchange a refresh token cookie for a new access/refresh pair' })
+  @ApiResponse({ status: 200, description: 'Session refreshed.' })
+  @ApiResponse({ status: 401, description: 'Missing, invalid, or reused refresh token.' })
+  async refresh(
+    @Req() request: RequestWithCookies,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<AuthResponseDto> {
+    const refreshToken = request.cookies?.[REFRESH_COOKIE_NAME];
+    if (!refreshToken) {
+      throw new UnauthorizedException('Missing refresh token.');
+    }
+
+    const session = await this.authService.refresh(refreshToken);
+    return this.commitSession(reply, session);
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Clear the session cookie' })
+  @ApiOperation({ summary: 'Revoke the refresh token and clear session cookies' })
   @ApiResponse({ status: 200, description: 'Session cleared.' })
-  logout(@Res({ passthrough: true }) reply: FastifyReply): { success: true } {
+  async logout(
+    @Req() request: RequestWithCookies,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<{ success: true }> {
+    const refreshToken = request.cookies?.[REFRESH_COOKIE_NAME];
+    if (refreshToken) {
+      await this.authService.revokeRefreshToken(refreshToken);
+    }
     clearSessionCookie(reply);
+    clearRefreshCookie(reply);
     return { success: true };
   }
 
@@ -83,5 +115,11 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async me(@Req() req: { user: { userId: string } }): Promise<UserSummaryDto> {
     return this.authService.getProfile(req.user.userId);
+  }
+
+  private commitSession(reply: FastifyReply, session: AuthSession): AuthResponseDto {
+    setSessionCookie(reply, session.accessToken, this.environment);
+    setRefreshCookie(reply, session.refreshToken, this.environment);
+    return { accessToken: session.accessToken, user: session.user };
   }
 }
