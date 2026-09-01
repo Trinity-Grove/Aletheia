@@ -123,6 +123,29 @@ describe('ProductShell adapter', () => {
     expect(screen.queryByRole('link', { name: 'Configurações' })).not.toBeInTheDocument();
   });
 
+  it('shows an accessible access-denied state instead of page content when a role without permission opens a gated route directly', () => {
+    render(
+      <ProductShell currentPath="/reports" user={{ name: 'Helena Educadora', role: 'EDUCATOR' }}>
+        <p>Dados de relatórios do educando</p>
+      </ProductShell>,
+    );
+
+    expect(screen.getByTestId('access-denied-state')).toBeInTheDocument();
+    expect(screen.getByText('Acesso restrito')).toBeInTheDocument();
+    expect(screen.queryByText('Dados de relatórios do educando')).not.toBeInTheDocument();
+  });
+
+  it('renders page content as usual for a role that has permission for the gated route', () => {
+    render(
+      <ProductShell currentPath="/reports" user={{ name: 'Helena Guardiã', role: 'OWNER_GUARDIAN' }}>
+        <p>Dados de relatórios do educando</p>
+      </ProductShell>,
+    );
+
+    expect(screen.queryByTestId('access-denied-state')).not.toBeInTheDocument();
+    expect(screen.getByText('Dados de relatórios do educando')).toBeInTheDocument();
+  });
+
   it('uses an explicit user as the descendant auth context over a conflicting outer provider', () => {
     render(
       <AuthProvider
