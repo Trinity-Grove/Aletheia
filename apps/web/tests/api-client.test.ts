@@ -413,6 +413,67 @@ describe('Centralized HTTP API Client (apiClient)', () => {
       expect(dispatchedEvent.type).toBe('auth:unauthorized');
     });
 
+    it('silently refreshes the session and retries once on a 401, returning the retried result', async () => {
+      const mockFetch = vi.fn().mockImplementation((url: string) => {
+        if (url === '/api/v1/auth/refresh') {
+          return Promise.resolve(new Response(null, { status: 200 }));
+        }
+        if (url === '/api/v1/protected') {
+          const alreadyRetried = mockFetch.mock.calls.filter(
+            (call) => call[0] === '/api/v1/protected',
+          ).length > 1;
+          if (alreadyRetried) {
+            return Promise.resolve(
+              new Response(JSON.stringify({ data: 'ok' }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            );
+          }
+          return Promise.resolve(
+            new Response(JSON.stringify({ statusCode: 401 }), { status: 401 }),
+          );
+        }
+        throw new Error(`Unexpected fetch to ${url}`);
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await api.get<{ data: string }>('/protected');
+
+      expect(result).toEqual({ data: 'ok' });
+      expect(mockFetch).toHaveBeenCalledWith('/api/v1/auth/refresh', expect.objectContaining({
+        method: 'POST',
+        credentials: 'include',
+      }));
+      const protectedCalls = mockFetch.mock.calls.filter((call) => call[0] === '/api/v1/protected');
+      expect(protectedCalls).toHaveLength(2);
+    });
+
+    it('does not attempt a refresh for auth bootstrap endpoints on 401', async () => {
+      const mockFetch = vi.fn().mockImplementation(() =>
+        Promise.resolve(new Response(JSON.stringify({ statusCode: 401 }), { status: 401 })),
+      );
+      vi.stubGlobal('fetch', mockFetch);
+
+      await expect(api.post('/auth/login', { email: 'a@b.com', password: 'x' })).rejects.toThrow(ApiError);
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('propagates the original 401 when the silent refresh itself fails', async () => {
+      const mockFetch = vi.fn().mockImplementation((url: string) => {
+        if (url === '/api/v1/auth/refresh') {
+          return Promise.resolve(new Response(null, { status: 401 }));
+        }
+        return Promise.resolve(new Response(JSON.stringify({ statusCode: 401 }), { status: 401 }));
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      await expect(api.get('/protected')).rejects.toThrow(ApiError);
+      const protectedCalls = mockFetch.mock.calls.filter((call) => call[0] === '/api/v1/protected');
+      expect(protectedCalls).toHaveLength(1);
+    });
+
     it('handles non-JSON error response gracefully', async () => {
       const mockFetch = vi.fn().mockImplementation(() =>
         Promise.resolve(

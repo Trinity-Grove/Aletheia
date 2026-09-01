@@ -17,6 +17,8 @@ describe('Identity Auth E2E', () => {
       tokenStore = 'fake-jwt-token-12345';
       return {
         accessToken: tokenStore,
+        refreshToken: 'fake-refresh-token-12345',
+        refreshTokenExpiresAt: new Date(Date.now() + 86400000),
         user: {
           id: '11111111-1111-1111-1111-111111111111',
           email: dto.email,
@@ -31,6 +33,8 @@ describe('Identity Auth E2E', () => {
       }
       return {
         accessToken: 'fake-jwt-token-12345',
+        refreshToken: 'fake-refresh-token-12345',
+        refreshTokenExpiresAt: new Date(Date.now() + 86400000),
         user: {
           id: '11111111-1111-1111-1111-111111111111',
           email: dto.email,
@@ -39,6 +43,23 @@ describe('Identity Auth E2E', () => {
         },
       };
     });
+    jest.spyOn(authService, 'refresh').mockImplementation(async (token) => {
+      if (token !== 'fake-refresh-token-12345') {
+        throw new UnauthorizedException('Invalid refresh token.');
+      }
+      return {
+        accessToken: 'rotated-jwt-token-67890',
+        refreshToken: 'rotated-refresh-token-67890',
+        refreshTokenExpiresAt: new Date(Date.now() + 86400000),
+        user: {
+          id: '11111111-1111-1111-1111-111111111111',
+          email: 'guardian@test.com',
+          fullName: 'Test Guardian',
+          createdAt: new Date().toISOString(),
+        },
+      };
+    });
+    jest.spyOn(authService, 'revokeRefreshToken').mockResolvedValue(undefined);
     jest.spyOn(authService, 'verifyToken').mockImplementation(async (token) => {
       if (token === 'fake-jwt-token-12345') {
         return {
@@ -77,6 +98,11 @@ describe('Identity Auth E2E', () => {
 
     expect(response.body.accessToken).toBe('fake-jwt-token-12345');
     expect(response.body.user.email).toBe('guardian@test.com');
+    // The refresh token is cookie-only — it must never be exposed in the body.
+    expect(response.body.refreshToken).toBeUndefined();
+    const cookies = [response.headers['set-cookie']].flat().join(';');
+    expect(cookies).toContain('aletheia_session=');
+    expect(cookies).toContain('aletheia_refresh=');
   });
 
   it('POST /api/v1/auth/login logs in guardian', async () => {
@@ -105,5 +131,43 @@ describe('Identity Auth E2E', () => {
     await supertest(app.getHttpServer())
       .get('/api/v1/auth/me')
       .expect(401);
+  });
+
+  it('POST /api/v1/auth/refresh exchanges a valid refresh cookie for a new pair', async () => {
+    const response = await supertest(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .set('Cookie', 'aletheia_refresh=fake-refresh-token-12345')
+      .expect(200);
+
+    expect(response.body.accessToken).toBe('rotated-jwt-token-67890');
+    expect(response.body.refreshToken).toBeUndefined();
+    const cookies = [response.headers['set-cookie']].flat().join(';');
+    expect(cookies).toContain('aletheia_session=rotated-jwt-token-67890');
+    expect(cookies).toContain('aletheia_refresh=rotated-refresh-token-67890');
+  });
+
+  it('POST /api/v1/auth/refresh returns 401 without a refresh cookie', async () => {
+    await supertest(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .expect(401);
+  });
+
+  it('POST /api/v1/auth/refresh returns 401 for an invalid refresh cookie', async () => {
+    await supertest(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .set('Cookie', 'aletheia_refresh=not-a-real-token')
+      .expect(401);
+  });
+
+  it('POST /api/v1/auth/logout revokes the refresh token and clears both cookies', async () => {
+    const response = await supertest(app.getHttpServer())
+      .post('/api/v1/auth/logout')
+      .set('Cookie', 'aletheia_refresh=fake-refresh-token-12345')
+      .expect(200);
+
+    expect(response.body).toEqual({ success: true });
+    const cookies = [response.headers['set-cookie']].flat().join(';');
+    expect(cookies).toContain('aletheia_session=;');
+    expect(cookies).toContain('aletheia_refresh=;');
   });
 });
