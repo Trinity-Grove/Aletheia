@@ -60,6 +60,8 @@ describe('OnboardingPage persistence and navigation', () => {
       selectFamily: vi.fn(),
       refreshSession: vi.fn(),
       setActiveFamilyFromCreated: vi.fn(),
+      changePassword: vi.fn(),
+      changeEmail: vi.fn(),
     };
   });
 

@@ -191,6 +191,58 @@ export class AuthService implements IdentityPublicApi {
     await this.refreshTokenRepository.revokeAllForUser(record.userId);
   }
 
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    const isValid = this.passwordHasher.verify(currentPassword, user.passwordHash);
+    if (!isValid) {
+      throw new UnauthorizedException('Current password is incorrect.');
+    }
+
+    const policyResult = PasswordPolicy.validate(newPassword);
+    if (!policyResult.valid) {
+      throw new BadRequestException(policyResult.reason);
+    }
+
+    const passwordHash = this.passwordHasher.hash(newPassword);
+    await this.userRepository.updatePassword(userId, passwordHash);
+
+    // Same policy as resetPassword: a changed password invalidates every
+    // other session.
+    await this.refreshTokenRepository.revokeAllForUser(userId);
+  }
+
+  async changeEmail(userId: string, currentPassword: string, newEmail: string): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    const isValid = this.passwordHasher.verify(currentPassword, user.passwordHash);
+    if (!isValid) {
+      throw new UnauthorizedException('Current password is incorrect.');
+    }
+
+    const normalizedEmail = newEmail.toLowerCase().trim();
+    if (normalizedEmail === user.email) {
+      throw new BadRequestException('This is already your current email address.');
+    }
+
+    const existing = await this.userRepository.findByEmail(normalizedEmail);
+    if (existing) {
+      throw new ConflictException('A user with this email already exists.');
+    }
+
+    await this.userRepository.updateEmail(userId, normalizedEmail);
+    // The account's login identity changed — every other session must
+    // re-authenticate, same as a password change.
+    await this.refreshTokenRepository.revokeAllForUser(userId);
+    await this.sendVerificationEmail(userId, normalizedEmail, user.fullName);
+  }
+
   async verifyToken(token: string): Promise<AuthenticatedUserPayload | null> {
     try {
       const decoded = await this.jwtService.verifyAsync<{ sub: string; email: string }>(token);

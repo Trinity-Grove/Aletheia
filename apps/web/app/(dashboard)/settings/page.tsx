@@ -14,10 +14,13 @@ import { ProductShell } from '../../../src/components/layout/product-shell';
 import { FamilyGeneralSettings } from '../../../src/components/settings/family-general-settings';
 import { NotificationPreferences } from '../../../src/components/settings/notification-preferences';
 import { DataBackupCard } from '../../../src/components/settings/data-backup-card';
+import { AccountSecuritySettings } from '../../../src/components/settings/account-security-settings';
+import { useAuth } from '../../../src/lib/auth/auth-context';
 
-type ActiveTab = 'general' | 'notifications' | 'backup';
+type ActiveTab = 'general' | 'notifications' | 'backup' | 'account';
 
 export default function SettingsPage() {
+  const { user, changePassword, changeEmail } = useAuth();
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
   const [activeLearnerId, setActiveLearnerId] = useState<string | null>(null);
@@ -266,6 +269,28 @@ export default function SettingsPage() {
             <AletheiaIcon name="shield-check" size="sm" />
             <span>Backup & Soberania de Dados</span>
           </button>
+
+          <button
+            type="button"
+            data-testid="tab-account-security"
+            onClick={() => setActiveTab('account')}
+            style={{
+              padding: '0.75rem 1.25rem',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'account' ? '2px solid var(--forest)' : '2px solid transparent',
+              color: activeTab === 'account' ? 'var(--forest)' : 'var(--text-secondary)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            <AletheiaIcon name="lock" size="sm" />
+            <span>Conta & Segurança</span>
+          </button>
         </div>
 
         {loading ? (
@@ -292,6 +317,14 @@ export default function SettingsPage() {
               <DataBackupCard
                 exportJobs={exportJobs}
                 onExportPackage={handleExportFullPackage}
+              />
+            )}
+
+            {activeTab === 'account' && (
+              <AccountSecuritySettings
+                currentEmail={user?.email}
+                onChangePassword={changePassword}
+                onChangeEmail={changeEmail}
               />
             )}
           </div>

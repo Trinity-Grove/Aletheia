@@ -70,4 +70,13 @@ export class UserRepository {
       data: { passwordHash },
     });
   }
+
+  async updateEmail(id: string, email: string): Promise<void> {
+    // A changed email is unverified until the owner proves they control the
+    // new address — never carry over the old verification.
+    await this.prisma.user.update({
+      where: { id },
+      data: { email, emailVerifiedAt: null },
+    });
+  }
 }

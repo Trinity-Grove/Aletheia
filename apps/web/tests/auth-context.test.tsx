@@ -293,6 +293,77 @@ describe('AuthContext and useAuth', () => {
     expect(getApiAuthToken()).toBeNull();
   });
 
+  it('changes the password without altering local session state', async () => {
+    vi.spyOn(api, 'get').mockImplementation(async (path: string) => {
+      if (path === '/auth/me') return mockUser;
+      if (path === '/families/mine') return [mockFamily1];
+      throw new Error(`Unexpected path: ${path}`);
+    });
+    const postSpy = vi.spyOn(api, 'post').mockResolvedValue({ success: true });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AuthProvider>{children}</AuthProvider>
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.status).toBe('authenticated');
+    });
+
+    await act(async () => {
+      await result.current.changePassword({
+        currentPassword: 'oldPassword123',
+        newPassword: 'newPassword456',
+      });
+    });
+
+    expect(postSpy).toHaveBeenCalledWith('/auth/change-password', {
+      currentPassword: 'oldPassword123',
+      newPassword: 'newPassword456',
+    });
+    expect(result.current.status).toBe('authenticated');
+    expect(result.current.user).toEqual(mockUser);
+  });
+
+  it('changes the email and refetches the profile to reflect the new address', async () => {
+    const updatedUser: UserSummaryDto = { ...mockUser, email: 'new@example.com', emailVerified: false };
+    let meCallCount = 0;
+
+    vi.spyOn(api, 'get').mockImplementation(async (path: string) => {
+      if (path === '/auth/me') {
+        meCallCount += 1;
+        return meCallCount > 1 ? updatedUser : mockUser;
+      }
+      if (path === '/families/mine') return [mockFamily1];
+      throw new Error(`Unexpected path: ${path}`);
+    });
+    const postSpy = vi.spyOn(api, 'post').mockResolvedValue({ success: true });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AuthProvider>{children}</AuthProvider>
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.status).toBe('authenticated');
+    });
+
+    await act(async () => {
+      await result.current.changeEmail({
+        currentPassword: 'password123',
+        newEmail: 'new@example.com',
+      });
+    });
+
+    expect(postSpy).toHaveBeenCalledWith('/auth/change-email', {
+      currentPassword: 'password123',
+      newEmail: 'new@example.com',
+    });
+    expect(result.current.user?.email).toBe('new@example.com');
+  });
+
   it('selects a different active family and updates activeRole and localStorage', async () => {
     vi.spyOn(api, 'get').mockImplementation(async (path: string) => {
       if (path === '/auth/me') return mockUser;
