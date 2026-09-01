@@ -16,6 +16,7 @@ export class UserRepository {
       email: user.email,
       passwordHash: user.passwordHash,
       fullName: user.fullName,
+      emailVerifiedAt: user.emailVerifiedAt,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     });
@@ -31,6 +32,7 @@ export class UserRepository {
       email: user.email,
       passwordHash: user.passwordHash,
       fullName: user.fullName,
+      emailVerifiedAt: user.emailVerifiedAt,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     });
@@ -49,8 +51,16 @@ export class UserRepository {
       email: created.email,
       passwordHash: created.passwordHash,
       fullName: created.fullName,
+      emailVerifiedAt: created.emailVerifiedAt,
       createdAt: created.createdAt,
       updatedAt: created.updatedAt,
+    });
+  }
+
+  async markEmailVerified(id: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: { emailVerifiedAt: new Date() },
     });
   }
 }

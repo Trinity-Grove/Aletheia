@@ -4,6 +4,7 @@ export const userSummarySchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
   fullName: z.string().min(1),
+  emailVerified: z.boolean(),
   createdAt: z.string(),
 });
 
@@ -30,3 +31,9 @@ export const authResponseSchema = z.object({
 });
 
 export type AuthResponseDto = z.infer<typeof authResponseSchema>;
+
+export const verifyEmailSchema = z.object({
+  token: z.string().min(1),
+});
+
+export type VerifyEmailDto = z.infer<typeof verifyEmailSchema>;

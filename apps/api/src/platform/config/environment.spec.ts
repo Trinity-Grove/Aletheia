@@ -77,6 +77,37 @@ describe('parseEnvironment', () => {
     });
   });
 
+  it('defaults mail configuration to the console fallback sender', () => {
+    expect(
+      parseEnvironment({
+        NODE_ENV: 'test',
+        DATABASE_URL: 'postgresql://user:pass@localhost:5432/aletheia',
+        JWT_SECRET: validJwtSecret,
+      }),
+    ).toMatchObject({
+      resendApiKey: null,
+      mailFromAddress: 'Aletheia <onboarding@resend.dev>',
+      webOrigin: 'http://localhost:3000',
+    });
+  });
+
+  it('maps a configured Resend API key and mail settings', () => {
+    expect(
+      parseEnvironment({
+        NODE_ENV: 'production',
+        DATABASE_URL: 'postgresql://user:pass@localhost:5432/aletheia',
+        JWT_SECRET: validJwtSecret,
+        RESEND_API_KEY: 're_test_key_123',
+        MAIL_FROM_ADDRESS: 'Aletheia <hello@aletheia.family>',
+        WEB_ORIGIN: 'https://app.aletheia.family',
+      }),
+    ).toMatchObject({
+      resendApiKey: 're_test_key_123',
+      mailFromAddress: 'Aletheia <hello@aletheia.family>',
+      webOrigin: 'https://app.aletheia.family',
+    });
+  });
+
   it('maps fully configured optional infrastructure', () => {
     expect(
       parseEnvironment({
@@ -96,6 +127,9 @@ describe('parseEnvironment', () => {
       redisUrl: 'redis://cache:6379',
       jwtSecret: validJwtSecret,
       corsOrigins: ['https://app.example.com'],
+      resendApiKey: null,
+      mailFromAddress: 'Aletheia <onboarding@resend.dev>',
+      webOrigin: 'http://localhost:3000',
       objectStorage: {
         endpoint: 'https://objects.example.com',
         accessKey: 'access-key',

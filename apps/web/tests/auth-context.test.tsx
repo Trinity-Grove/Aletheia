@@ -14,6 +14,7 @@ describe('AuthContext and useAuth', () => {
     id: 'user-uuid-1',
     email: 'guardian@example.com',
     fullName: 'Guardian Silva',
+    emailVerified: false,
     createdAt: '2026-08-30T00:00:00.000Z',
   };
 

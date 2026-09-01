@@ -213,6 +213,10 @@ export function ProductShell({
         id: profileUser.id ?? 'user',
         email: profileUser.email ?? '',
         fullName: profileUser.name ?? profileUser.email ?? 'Usuário',
+        // This is a structural adapter for the RBAC provider, not a
+        // real verification-status carrier — email verification is read
+        // from authContext.user directly wherever it actually matters.
+        emailVerified: true,
         createdAt: new Date().toISOString(),
       }
     : null;

@@ -16,10 +16,12 @@ import type { FastifyReply } from 'fastify';
 import {
   loginSchema,
   registerGuardianSchema,
+  verifyEmailSchema,
   type AuthResponseDto,
   type LoginDto,
   type RegisterGuardianDto,
   type UserSummaryDto,
+  type VerifyEmailDto,
 } from '@aletheia/contracts';
 import { AuthService, type AuthSession } from '../application/auth.service.js';
 import { JwtAuthGuard } from '../../../platform/auth/index.js';
@@ -115,6 +117,30 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async me(@Req() req: { user: { userId: string } }): Promise<UserSummaryDto> {
     return this.authService.getProfile(req.user.userId);
+  }
+
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Confirm an email address using the token from the verification link' })
+  @ApiResponse({ status: 200, description: 'Email confirmed.' })
+  @ApiResponse({ status: 400, description: 'Invalid, expired, or already-used token.' })
+  async verifyEmail(
+    @Body(new ZodValidationPipe(verifyEmailSchema)) body: VerifyEmailDto,
+  ): Promise<{ success: true }> {
+    await this.authService.verifyEmail(body.token);
+    return { success: true };
+  }
+
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Resend the email verification link to the authenticated guardian' })
+  @ApiResponse({ status: 200, description: 'A new verification email was sent, if the account still needs one.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  async resendVerification(@Req() req: { user: { userId: string } }): Promise<{ success: true }> {
+    await this.authService.resendVerificationEmail(req.user.userId);
+    return { success: true };
   }
 
   private commitSession(reply: FastifyReply, session: AuthSession): AuthResponseDto {

@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
@@ -23,6 +23,7 @@ describe('Identity Auth E2E', () => {
           id: '11111111-1111-1111-1111-111111111111',
           email: dto.email,
           fullName: dto.fullName,
+          emailVerified: false,
           createdAt: new Date().toISOString(),
         },
       };
@@ -39,6 +40,7 @@ describe('Identity Auth E2E', () => {
           id: '11111111-1111-1111-1111-111111111111',
           email: dto.email,
           fullName: 'Test Guardian',
+          emailVerified: false,
           createdAt: new Date().toISOString(),
         },
       };
@@ -55,11 +57,18 @@ describe('Identity Auth E2E', () => {
           id: '11111111-1111-1111-1111-111111111111',
           email: 'guardian@test.com',
           fullName: 'Test Guardian',
+          emailVerified: false,
           createdAt: new Date().toISOString(),
         },
       };
     });
     jest.spyOn(authService, 'revokeRefreshToken').mockResolvedValue(undefined);
+    jest.spyOn(authService, 'verifyEmail').mockImplementation(async (token) => {
+      if (token !== 'valid-verification-token') {
+        throw new BadRequestException('Invalid verification token.');
+      }
+    });
+    jest.spyOn(authService, 'resendVerificationEmail').mockResolvedValue(undefined);
     jest.spyOn(authService, 'verifyToken').mockImplementation(async (token) => {
       if (token === 'fake-jwt-token-12345') {
         return {
@@ -74,6 +83,7 @@ describe('Identity Auth E2E', () => {
         id: userId,
         email: 'guardian@test.com',
         fullName: 'Test Guardian',
+        emailVerified: false,
         createdAt: new Date().toISOString(),
       };
     });
@@ -169,5 +179,43 @@ describe('Identity Auth E2E', () => {
     const cookies = [response.headers['set-cookie']].flat().join(';');
     expect(cookies).toContain('aletheia_session=;');
     expect(cookies).toContain('aletheia_refresh=;');
+  });
+
+  it('POST /api/v1/auth/verify-email confirms the account with a valid token', async () => {
+    const response = await supertest(app.getHttpServer())
+      .post('/api/v1/auth/verify-email')
+      .send({ token: 'valid-verification-token' })
+      .expect(200);
+
+    expect(response.body).toEqual({ success: true });
+  });
+
+  it('POST /api/v1/auth/verify-email returns 400 for an invalid token', async () => {
+    await supertest(app.getHttpServer())
+      .post('/api/v1/auth/verify-email')
+      .send({ token: 'not-a-real-token' })
+      .expect(400);
+  });
+
+  it('POST /api/v1/auth/verify-email returns 400 when the token is missing', async () => {
+    await supertest(app.getHttpServer())
+      .post('/api/v1/auth/verify-email')
+      .send({})
+      .expect(400);
+  });
+
+  it('POST /api/v1/auth/resend-verification requires authentication', async () => {
+    await supertest(app.getHttpServer())
+      .post('/api/v1/auth/resend-verification')
+      .expect(401);
+  });
+
+  it('POST /api/v1/auth/resend-verification succeeds when authenticated', async () => {
+    const response = await supertest(app.getHttpServer())
+      .post('/api/v1/auth/resend-verification')
+      .set('Authorization', 'Bearer fake-jwt-token-12345')
+      .expect(200);
+
+    expect(response.body).toEqual({ success: true });
   });
 });
