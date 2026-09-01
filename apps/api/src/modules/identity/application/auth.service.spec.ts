@@ -12,6 +12,10 @@ import type {
   EmailVerificationTokenRecord,
   EmailVerificationTokenRepository,
 } from '../infrastructure/email-verification-token.repository.js';
+import type {
+  PasswordResetTokenRecord,
+  PasswordResetTokenRepository,
+} from '../infrastructure/password-reset-token.repository.js';
 import type { MailMessage, MailSender } from '../../../platform/mail/mail-sender.js';
 import type { Environment } from '../../../platform/config/environment.js';
 
@@ -24,6 +28,8 @@ describe('AuthService', () => {
   let refreshTokenRepository: RefreshTokenRepository;
   let fakeVerificationTokens: Map<string, EmailVerificationTokenRecord & { plainToken: string }>;
   let emailVerificationTokenRepository: EmailVerificationTokenRepository;
+  let fakePasswordResetTokens: Map<string, PasswordResetTokenRecord & { plainToken: string }>;
+  let passwordResetTokenRepository: PasswordResetTokenRepository;
   let sentEmails: MailMessage[];
   let mailSender: MailSender;
   let environment: Environment;
@@ -65,6 +71,24 @@ describe('AuthService', () => {
                 passwordHash: user.passwordHash,
                 fullName: user.fullName,
                 emailVerifiedAt: new Date(),
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+              }),
+            );
+          }
+        }
+      },
+      updatePassword: async (id: string, passwordHash: string) => {
+        for (const [email, user] of fakeUsers.entries()) {
+          if (user.id === id) {
+            fakeUsers.set(
+              email,
+              new UserEntity({
+                id: user.id,
+                email: user.email,
+                passwordHash,
+                fullName: user.fullName,
+                emailVerifiedAt: user.emailVerifiedAt,
                 createdAt: user.createdAt,
                 updatedAt: user.updatedAt,
               }),
@@ -130,6 +154,31 @@ describe('AuthService', () => {
       },
     } as unknown as EmailVerificationTokenRepository;
 
+    fakePasswordResetTokens = new Map();
+    let resetSequence = 0;
+    passwordResetTokenRepository = {
+      issue: async (userId: string) => {
+        resetSequence += 1;
+        const token = `reset-token-${resetSequence}`;
+        fakePasswordResetTokens.set(token, {
+          id: `prt-${resetSequence}`,
+          userId,
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+          usedAt: null,
+          plainToken: token,
+        });
+        return { token, expiresAt: fakePasswordResetTokens.get(token)!.expiresAt };
+      },
+      findByToken: async (token: string) => fakePasswordResetTokens.get(token) ?? null,
+      markUsed: async (id: string) => {
+        for (const record of fakePasswordResetTokens.values()) {
+          if (record.id === id) {
+            record.usedAt = new Date();
+          }
+        }
+      },
+    } as unknown as PasswordResetTokenRepository;
+
     sentEmails = [];
     mailSender = {
       send: async (message: MailMessage) => {
@@ -145,6 +194,7 @@ describe('AuthService', () => {
       jwtService,
       refreshTokenRepository,
       emailVerificationTokenRepository,
+      passwordResetTokenRepository,
       mailSender,
       environment,
     );
@@ -383,6 +433,120 @@ describe('AuthService', () => {
       await authService.resendVerificationEmail('user-uuid-1');
 
       expect(sentEmails).toHaveLength(0);
+    });
+  });
+
+  describe('forgotPassword', () => {
+    it('sends a password reset email for an existing account', async () => {
+      await authService.register({
+        email: 'forgot@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+      sentEmails.length = 0;
+
+      await authService.forgotPassword('forgot@example.com');
+
+      expect(sentEmails).toHaveLength(1);
+      expect(sentEmails[0]!.to).toBe('forgot@example.com');
+      expect(sentEmails[0]!.text).toContain('http://localhost:3000/reset-password?token=');
+    });
+
+    it('does nothing observable for an unknown email (anti-enumeration)', async () => {
+      await expect(
+        authService.forgotPassword('nobody@example.com'),
+      ).resolves.toBeUndefined();
+
+      expect(sentEmails).toHaveLength(0);
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('updates the password, allows login with the new password, and rejects the old one', async () => {
+      await authService.register({
+        email: 'reset@example.com',
+        fullName: 'User',
+        password: 'oldPassword123',
+      });
+      await authService.forgotPassword('reset@example.com');
+      const [, token] = [...fakePasswordResetTokens.entries()][0]!;
+
+      await authService.resetPassword(token.plainToken, 'newPassword456');
+
+      await expect(
+        authService.login({ email: 'reset@example.com', password: 'oldPassword123' }),
+      ).rejects.toThrow(UnauthorizedException);
+
+      const loginResult = await authService.login({
+        email: 'reset@example.com',
+        password: 'newPassword456',
+      });
+      expect(loginResult.accessToken).toBeDefined();
+    });
+
+    it('revokes every existing refresh token for the user', async () => {
+      const { refreshToken } = await authService.register({
+        email: 'reset-revoke@example.com',
+        fullName: 'User',
+        password: 'oldPassword123',
+      });
+      await authService.forgotPassword('reset-revoke@example.com');
+      const [, token] = [...fakePasswordResetTokens.entries()][0]!;
+
+      await authService.resetPassword(token.plainToken, 'newPassword456');
+
+      await expect(authService.refresh(refreshToken)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects a weak new password', async () => {
+      await authService.register({
+        email: 'reset-weak@example.com',
+        fullName: 'User',
+        password: 'oldPassword123',
+      });
+      await authService.forgotPassword('reset-weak@example.com');
+      const [, token] = [...fakePasswordResetTokens.entries()][0]!;
+
+      await expect(authService.resetPassword(token.plainToken, 'short')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('rejects an unknown token', async () => {
+      await expect(
+        authService.resetPassword('not-a-real-token', 'newPassword456'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects a token that was already used', async () => {
+      await authService.register({
+        email: 'reset-twice@example.com',
+        fullName: 'User',
+        password: 'oldPassword123',
+      });
+      await authService.forgotPassword('reset-twice@example.com');
+      const [, token] = [...fakePasswordResetTokens.entries()][0]!;
+
+      await authService.resetPassword(token.plainToken, 'newPassword456');
+
+      await expect(
+        authService.resetPassword(token.plainToken, 'anotherPassword789'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects an expired token', async () => {
+      await authService.register({
+        email: 'reset-expired@example.com',
+        fullName: 'User',
+        password: 'oldPassword123',
+      });
+      await authService.forgotPassword('reset-expired@example.com');
+      const [, token] = [...fakePasswordResetTokens.entries()][0]!;
+      token.expiresAt = new Date(Date.now() - 1000);
+
+      await expect(
+        authService.resetPassword(token.plainToken, 'newPassword456'),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

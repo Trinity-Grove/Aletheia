@@ -46,6 +46,11 @@ export default function LoginPage() {
 
         <div className="auth-footer">
           <p>
+            <Link href="/forgot-password" className="auth-link">
+              Esqueceu sua senha?
+            </Link>
+          </p>
+          <p>
             Ainda não possui conta de guardião?{' '}
             <Link href="/register" className="auth-link">
               Cadastre-se aqui

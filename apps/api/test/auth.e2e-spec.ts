@@ -69,6 +69,12 @@ describe('Identity Auth E2E', () => {
       }
     });
     jest.spyOn(authService, 'resendVerificationEmail').mockResolvedValue(undefined);
+    jest.spyOn(authService, 'forgotPassword').mockResolvedValue(undefined);
+    jest.spyOn(authService, 'resetPassword').mockImplementation(async (token) => {
+      if (token !== 'valid-reset-token') {
+        throw new BadRequestException('Invalid reset token.');
+      }
+    });
     jest.spyOn(authService, 'verifyToken').mockImplementation(async (token) => {
       if (token === 'fake-jwt-token-12345') {
         return {
@@ -217,5 +223,44 @@ describe('Identity Auth E2E', () => {
       .expect(200);
 
     expect(response.body).toEqual({ success: true });
+  });
+
+  it('POST /api/v1/auth/forgot-password always returns success', async () => {
+    const response = await supertest(app.getHttpServer())
+      .post('/api/v1/auth/forgot-password')
+      .send({ email: 'someone@example.com' })
+      .expect(200);
+
+    expect(response.body).toEqual({ success: true });
+  });
+
+  it('POST /api/v1/auth/forgot-password returns 400 for an invalid email', async () => {
+    await supertest(app.getHttpServer())
+      .post('/api/v1/auth/forgot-password')
+      .send({ email: 'not-an-email' })
+      .expect(400);
+  });
+
+  it('POST /api/v1/auth/reset-password resets the password with a valid token', async () => {
+    const response = await supertest(app.getHttpServer())
+      .post('/api/v1/auth/reset-password')
+      .send({ token: 'valid-reset-token', newPassword: 'brandNewPassword123' })
+      .expect(200);
+
+    expect(response.body).toEqual({ success: true });
+  });
+
+  it('POST /api/v1/auth/reset-password returns 400 for an invalid token', async () => {
+    await supertest(app.getHttpServer())
+      .post('/api/v1/auth/reset-password')
+      .send({ token: 'not-a-real-token', newPassword: 'brandNewPassword123' })
+      .expect(400);
+  });
+
+  it('POST /api/v1/auth/reset-password returns 400 for a weak new password', async () => {
+    await supertest(app.getHttpServer())
+      .post('/api/v1/auth/reset-password')
+      .send({ token: 'valid-reset-token', newPassword: 'short' })
+      .expect(400);
   });
 });

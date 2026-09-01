@@ -14,12 +14,16 @@ import {
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
 import {
+  forgotPasswordSchema,
   loginSchema,
   registerGuardianSchema,
+  resetPasswordSchema,
   verifyEmailSchema,
   type AuthResponseDto,
+  type ForgotPasswordDto,
   type LoginDto,
   type RegisterGuardianDto,
+  type ResetPasswordDto,
   type UserSummaryDto,
   type VerifyEmailDto,
 } from '@aletheia/contracts';
@@ -140,6 +144,32 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async resendVerification(@Req() req: { user: { userId: string } }): Promise<{ success: true }> {
     await this.authService.resendVerificationEmail(req.user.userId);
+    return { success: true };
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request a password reset link for the given email' })
+  @ApiResponse({
+    status: 200,
+    description: 'Always returns success, whether or not an account exists for this email.',
+  })
+  async forgotPassword(
+    @Body(new ZodValidationPipe(forgotPasswordSchema)) body: ForgotPasswordDto,
+  ): Promise<{ success: true }> {
+    await this.authService.forgotPassword(body.email);
+    return { success: true };
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reset the account password using the token from the reset link' })
+  @ApiResponse({ status: 200, description: 'Password updated.' })
+  @ApiResponse({ status: 400, description: 'Invalid, expired, or already-used token; or a weak password.' })
+  async resetPassword(
+    @Body(new ZodValidationPipe(resetPasswordSchema)) body: ResetPasswordDto,
+  ): Promise<{ success: true }> {
+    await this.authService.resetPassword(body.token, body.newPassword);
     return { success: true };
   }
 
