@@ -6,6 +6,17 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { LoginForm } from '../../../src/components/auth/login-form';
 import { useAuth } from '../../../src/lib/auth/auth-context';
 
+// Only ever follow a same-origin, relative redirect target. A `redirect`
+// query param is attacker-controllable (e.g. a crafted link), so an
+// absolute or protocol-relative value (`https://evil.com`, `//evil.com`)
+// must never be honored — that would be an open redirect.
+export function sanitizeRedirectTarget(value: string | null | undefined): string {
+  if (!value || !value.startsWith('/') || value.startsWith('//')) {
+    return '/';
+  }
+  return value;
+}
+
 function LoginFormWrapper() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -13,7 +24,7 @@ function LoginFormWrapper() {
 
   const handleLogin = async (data: { email: string; password: string }) => {
     await login(data);
-    const redirectParam = searchParams?.get('redirect') || '/';
+    const redirectParam = sanitizeRedirectTarget(searchParams?.get('redirect'));
     router.push(redirectParam);
   };
 
