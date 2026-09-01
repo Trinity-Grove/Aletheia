@@ -7,6 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// Reserved for a transactional outbox pattern (reliable domain event
+/// delivery). No application code writes to or reads from this table yet —
+/// see https://github.com/Trinity-Grove/Aletheia/issues/47 for the decision
+/// to either wire it up or remove it.
 model OutboxMessage {
   id             String    @id @db.Uuid
   eventType      String    @map("event_type")
