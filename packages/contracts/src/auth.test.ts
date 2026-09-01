@@ -85,6 +85,7 @@ describe('auth contracts', () => {
         id: '123e4567-e89b-12d3-a456-426614174000',
         email: 'guardian@example.com',
         fullName: 'Jane Doe',
+        emailVerified: false,
         createdAt: '2026-08-23T12:00:00.000Z',
       };
 

@@ -6,6 +6,9 @@ export interface Environment {
   redisUrl: string | null;
   jwtSecret: string;
   corsOrigins: string[];
+  resendApiKey: string | null;
+  mailFromAddress: string;
+  webOrigin: string;
   objectStorage: {
     endpoint: string;
     accessKey: string;
@@ -45,6 +48,9 @@ const environmentSchema = z
         .min(16, 'JWT_SECRET is required and must be at least 16 characters long'),
     ),
     CORS_ORIGIN: optionalValue,
+    RESEND_API_KEY: optionalValue,
+    MAIL_FROM_ADDRESS: optionalValue,
+    WEB_ORIGIN: optionalUrl,
     REDIS_URL: optionalUrl,
     S3_ENDPOINT: optionalUrl,
     S3_ACCESS_KEY: optionalValue,
@@ -84,6 +90,9 @@ const environmentSchema = z
             .map((origin) => origin.trim())
             .filter((origin) => origin.length > 0)
         : ['http://localhost:3000'],
+      resendApiKey: environment.RESEND_API_KEY ?? null,
+      mailFromAddress: environment.MAIL_FROM_ADDRESS ?? 'Aletheia <onboarding@resend.dev>',
+      webOrigin: environment.WEB_ORIGIN ?? 'http://localhost:3000',
       objectStorage: environment.S3_ENDPOINT
         ? {
             endpoint: environment.S3_ENDPOINT,

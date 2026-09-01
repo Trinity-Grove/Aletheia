@@ -132,6 +132,7 @@ describe('ProductShell adapter', () => {
           id: 'outer-user',
           email: 'outer@aletheia.edu',
           fullName: 'Outer Guardian',
+          emailVerified: false,
           createdAt: '2026-01-01T00:00:00.000Z',
         }}
       >
@@ -171,6 +172,7 @@ describe('ProductShell adapter', () => {
           id: 'context-user',
           email: 'context@aletheia.edu',
           fullName: 'Guardião do Contexto',
+          emailVerified: false,
           createdAt: '2026-01-01T00:00:00.000Z',
         }}
       >
@@ -282,6 +284,7 @@ describe('ProductShell adapter', () => {
         id: 'real-user-1',
         email: 'real.guardian@aletheia.edu',
         fullName: 'Guardião Real',
+        emailVerified: false,
         createdAt: '2026-08-30T00:00:00.000Z',
       },
       token: 'jwt-token',

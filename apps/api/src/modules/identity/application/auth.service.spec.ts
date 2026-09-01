@@ -8,6 +8,12 @@ import type {
   RefreshTokenRecord,
   RefreshTokenRepository,
 } from '../infrastructure/refresh-token.repository.js';
+import type {
+  EmailVerificationTokenRecord,
+  EmailVerificationTokenRepository,
+} from '../infrastructure/email-verification-token.repository.js';
+import type { MailMessage, MailSender } from '../../../platform/mail/mail-sender.js';
+import type { Environment } from '../../../platform/config/environment.js';
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -16,6 +22,11 @@ describe('AuthService', () => {
   let jwtService: JwtService;
   let fakeRefreshTokens: Map<string, RefreshTokenRecord & { plainToken: string }>;
   let refreshTokenRepository: RefreshTokenRepository;
+  let fakeVerificationTokens: Map<string, EmailVerificationTokenRecord & { plainToken: string }>;
+  let emailVerificationTokenRepository: EmailVerificationTokenRepository;
+  let sentEmails: MailMessage[];
+  let mailSender: MailSender;
+  let environment: Environment;
 
   beforeEach(() => {
     fakeUsers = new Map();
@@ -36,22 +47,41 @@ describe('AuthService', () => {
           email: data.email.toLowerCase().trim(),
           passwordHash: data.passwordHash,
           fullName: data.fullName,
+          emailVerifiedAt: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         });
         fakeUsers.set(entity.email, entity);
         return entity;
       },
+      markEmailVerified: async (id: string) => {
+        for (const [email, user] of fakeUsers.entries()) {
+          if (user.id === id) {
+            fakeUsers.set(
+              email,
+              new UserEntity({
+                id: user.id,
+                email: user.email,
+                passwordHash: user.passwordHash,
+                fullName: user.fullName,
+                emailVerifiedAt: new Date(),
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+              }),
+            );
+          }
+        }
+      },
     } as unknown as UserRepository;
 
     fakeRefreshTokens = new Map();
-    let sequence = 0;
+    let refreshSequence = 0;
     refreshTokenRepository = {
       issue: async (userId: string) => {
-        sequence += 1;
-        const token = `refresh-token-${sequence}`;
+        refreshSequence += 1;
+        const token = `refresh-token-${refreshSequence}`;
         fakeRefreshTokens.set(token, {
-          id: `rt-${sequence}`,
+          id: `rt-${refreshSequence}`,
           userId,
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
           revokedAt: null,
@@ -75,7 +105,49 @@ describe('AuthService', () => {
       },
     } as unknown as RefreshTokenRepository;
 
-    authService = new AuthService(mockRepo, hasher, jwtService, refreshTokenRepository);
+    fakeVerificationTokens = new Map();
+    let verificationSequence = 0;
+    emailVerificationTokenRepository = {
+      issue: async (userId: string) => {
+        verificationSequence += 1;
+        const token = `verify-token-${verificationSequence}`;
+        fakeVerificationTokens.set(token, {
+          id: `evt-${verificationSequence}`,
+          userId,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          usedAt: null,
+          plainToken: token,
+        });
+        return { token, expiresAt: fakeVerificationTokens.get(token)!.expiresAt };
+      },
+      findByToken: async (token: string) => fakeVerificationTokens.get(token) ?? null,
+      markUsed: async (id: string) => {
+        for (const record of fakeVerificationTokens.values()) {
+          if (record.id === id) {
+            record.usedAt = new Date();
+          }
+        }
+      },
+    } as unknown as EmailVerificationTokenRepository;
+
+    sentEmails = [];
+    mailSender = {
+      send: async (message: MailMessage) => {
+        sentEmails.push(message);
+      },
+    };
+
+    environment = { webOrigin: 'http://localhost:3000' } as Environment;
+
+    authService = new AuthService(
+      mockRepo,
+      hasher,
+      jwtService,
+      refreshTokenRepository,
+      emailVerificationTokenRepository,
+      mailSender,
+      environment,
+    );
   });
 
   it('rejects passwords shorter than 8 characters', async () => {
@@ -99,6 +171,33 @@ describe('AuthService', () => {
     expect(result.refreshToken).toBeDefined();
     expect(result.user.email).toBe('guardian@example.com');
     expect(result.user.fullName).toBe('Faithful Guardian');
+    expect(result.user.emailVerified).toBe(false);
+  });
+
+  it('sends a verification email on registration with a working link', async () => {
+    await authService.register({
+      email: 'guardian@example.com',
+      fullName: 'Faithful Guardian',
+      password: 'strongPassword123!',
+    });
+
+    expect(sentEmails).toHaveLength(1);
+    expect(sentEmails[0]!.to).toBe('guardian@example.com');
+    expect(sentEmails[0]!.text).toContain('http://localhost:3000/verify-email?token=');
+  });
+
+  it('does not fail registration when the mail sender throws', async () => {
+    mailSender.send = async () => {
+      throw new Error('Resend is down');
+    };
+
+    await expect(
+      authService.register({
+        email: 'guardian@example.com',
+        fullName: 'Faithful Guardian',
+        password: 'strongPassword123!',
+      }),
+    ).resolves.toMatchObject({ user: { email: 'guardian@example.com' } });
   });
 
   it('rejects duplicate email registration', async () => {
@@ -208,6 +307,82 @@ describe('AuthService', () => {
       await authService.revokeRefreshToken(refreshToken);
 
       await expect(authService.refresh(refreshToken)).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('verifyEmail', () => {
+    it('marks the account verified when the token is valid', async () => {
+      await authService.register({
+        email: 'verify@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+      const [, token] = [...fakeVerificationTokens.entries()][0]!;
+
+      await authService.verifyEmail(token.plainToken);
+
+      const profile = await authService.getProfile('user-uuid-1');
+      expect(profile.emailVerified).toBe(true);
+    });
+
+    it('rejects an unknown token', async () => {
+      await expect(authService.verifyEmail('not-a-real-token')).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects a token that was already used', async () => {
+      await authService.register({
+        email: 'verify-twice@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+      const [, token] = [...fakeVerificationTokens.entries()][0]!;
+
+      await authService.verifyEmail(token.plainToken);
+
+      await expect(authService.verifyEmail(token.plainToken)).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects an expired token', async () => {
+      await authService.register({
+        email: 'verify-expired@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+      const [, token] = [...fakeVerificationTokens.entries()][0]!;
+      token.expiresAt = new Date(Date.now() - 1000);
+
+      await expect(authService.verifyEmail(token.plainToken)).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('resendVerificationEmail', () => {
+    it('sends a new verification email for an unverified account', async () => {
+      await authService.register({
+        email: 'resend@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+      sentEmails.length = 0;
+
+      await authService.resendVerificationEmail('user-uuid-1');
+
+      expect(sentEmails).toHaveLength(1);
+      expect(sentEmails[0]!.to).toBe('resend@example.com');
+    });
+
+    it('does nothing for an already-verified account', async () => {
+      await authService.register({
+        email: 'already-verified@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+      const [, token] = [...fakeVerificationTokens.entries()][0]!;
+      await authService.verifyEmail(token.plainToken);
+      sentEmails.length = 0;
+
+      await authService.resendVerificationEmail('user-uuid-1');
+
+      expect(sentEmails).toHaveLength(0);
     });
   });
 });

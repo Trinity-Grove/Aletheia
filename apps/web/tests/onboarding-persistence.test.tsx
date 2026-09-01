@@ -46,6 +46,7 @@ describe('OnboardingPage persistence and navigation', () => {
         id: 'user-1',
         email: 'guardian@aletheia.edu',
         fullName: 'Guardian Silva',
+        emailVerified: false,
         createdAt: '2026-08-30T00:00:00.000Z',
       },
       token: 'jwt-mock-token',

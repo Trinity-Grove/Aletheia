@@ -1,7 +1,9 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -16,6 +18,9 @@ import { PasswordPolicy } from '../domain/password-policy.js';
 import { PasswordHasher } from './password.hasher.js';
 import { UserRepository } from '../infrastructure/user.repository.js';
 import { RefreshTokenRepository } from '../infrastructure/refresh-token.repository.js';
+import { EmailVerificationTokenRepository } from '../infrastructure/email-verification-token.repository.js';
+import { MAIL_SENDER, type MailSender } from '../../../platform/mail/mail-sender.js';
+import { ENVIRONMENT, type Environment } from '../../../platform/config/environment.js';
 import type { AuthenticatedUserPayload, IdentityPublicApi } from './public-api.js';
 
 const ACCESS_TOKEN_TTL = '1h';
@@ -27,11 +32,16 @@ export interface AuthSession extends AuthResponseDto {
 
 @Injectable()
 export class AuthService implements IdentityPublicApi {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly userRepository: UserRepository,
     private readonly passwordHasher: PasswordHasher,
     private readonly jwtService: JwtService,
     private readonly refreshTokenRepository: RefreshTokenRepository,
+    private readonly emailVerificationTokenRepository: EmailVerificationTokenRepository,
+    @Inject(MAIL_SENDER) private readonly mailSender: MailSender,
+    @Inject(ENVIRONMENT) private readonly environment: Environment,
   ) {}
 
   async register(dto: RegisterGuardianDto): Promise<AuthSession> {
@@ -51,6 +61,8 @@ export class AuthService implements IdentityPublicApi {
       fullName: dto.fullName,
       passwordHash,
     });
+
+    await this.sendVerificationEmail(user.id, user.email, user.fullName);
 
     return this.issueSession(user.id, user.email, user.toDto());
   }
@@ -109,6 +121,35 @@ export class AuthService implements IdentityPublicApi {
     return user.toDto();
   }
 
+  async verifyEmail(token: string): Promise<void> {
+    const record = await this.emailVerificationTokenRepository.findByToken(token);
+    if (!record) {
+      throw new BadRequestException('Invalid verification token.');
+    }
+
+    if (record.usedAt) {
+      throw new BadRequestException('This verification link has already been used.');
+    }
+
+    if (record.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('This verification link has expired.');
+    }
+
+    await this.emailVerificationTokenRepository.markUsed(record.id);
+    await this.userRepository.markEmailVerified(record.userId);
+  }
+
+  async resendVerificationEmail(userId: string): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user || user.emailVerifiedAt) {
+      // Doesn't reveal which case applied — an already-verified account and
+      // a request from a defunct user look identical to the caller.
+      return;
+    }
+
+    await this.sendVerificationEmail(user.id, user.email, user.fullName);
+  }
+
   async verifyToken(token: string): Promise<AuthenticatedUserPayload | null> {
     try {
       const decoded = await this.jwtService.verifyAsync<{ sub: string; email: string }>(token);
@@ -142,5 +183,27 @@ export class AuthService implements IdentityPublicApi {
       refreshToken: refreshToken.token,
       refreshTokenExpiresAt: refreshToken.expiresAt,
     };
+  }
+
+  private async sendVerificationEmail(userId: string, email: string, fullName: string): Promise<void> {
+    const { token } = await this.emailVerificationTokenRepository.issue(userId);
+    const verificationLink = `${this.environment.webOrigin}/verify-email?token=${token}`;
+
+    try {
+      await this.mailSender.send({
+        to: email,
+        subject: 'Confirme seu e-mail no Aletheia',
+        text: `Olá, ${fullName}! Confirme seu e-mail acessando: ${verificationLink}\n\nEste link expira em 24 horas.`,
+        html:
+          `<p>Olá, ${fullName}!</p>` +
+          `<p>Confirme seu e-mail clicando no link abaixo:</p>` +
+          `<p><a href="${verificationLink}">${verificationLink}</a></p>` +
+          `<p>Este link expira em 24 horas.</p>`,
+      });
+    } catch (error) {
+      // A failed send must never block registration/login — the account is
+      // fully usable unverified, and the user can request a new link later.
+      this.logger.error(`Failed to send verification email to ${email}`, error as Error);
+    }
   }
 }
