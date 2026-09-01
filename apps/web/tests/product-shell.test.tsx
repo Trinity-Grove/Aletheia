@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import React, { useState } from 'react';
 import type { LearnerSummaryDto, NotificationItemResponseDto } from '@aletheia/contracts';
@@ -6,10 +6,14 @@ import { ProductShell, LearnerFocusSwitcher } from '../src/components/product-sh
 import { AuthProvider, useAuthRole } from '../src/lib/auth/rbac-context';
 import { AuthContext, type AuthContextValue } from '../src/lib/auth/auth-context';
 
-const nextNavigation = vi.hoisted(() => ({ pathname: '/' }));
+const nextNavigation = vi.hoisted(() => ({
+  pathname: '/',
+  routerReplace: vi.fn(),
+}));
 
 vi.mock('next/navigation', () => ({
   usePathname: () => nextNavigation.pathname,
+  useRouter: () => ({ replace: nextNavigation.routerReplace, push: vi.fn() }),
 }));
 
 vi.mock('next/link', () => ({
@@ -65,6 +69,7 @@ describe('ProductShell adapter', () => {
   afterEach(() => {
     cleanup();
     nextNavigation.pathname = '/';
+    nextNavigation.routerReplace.mockClear();
   });
 
   it('maps the current path into the shared desktop shell landmarks', () => {
@@ -341,6 +346,39 @@ describe('ProductShell adapter', () => {
     const loadingContainer = screen.getByTestId('product-shell-loading');
     expect(loadingContainer).toHaveAttribute('aria-busy', 'true');
     expect(screen.getByText('Conteúdo Carregando')).toBeInTheDocument();
+  });
+
+  it('redirects to /login with a return path and never renders page content when the session resolves to unauthenticated', async () => {
+    nextNavigation.pathname = '/learners';
+
+    const mockUnauthenticatedContext: AuthContextValue = {
+      status: 'unauthenticated',
+      user: null,
+      token: null,
+      activeFamilyId: null,
+      activeFamily: null,
+      families: [],
+      activeRole: null,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      selectFamily: vi.fn(),
+      refreshSession: vi.fn(),
+      setActiveFamilyFromCreated: vi.fn(),
+    };
+
+    render(
+      <AuthContext.Provider value={mockUnauthenticatedContext}>
+        <ProductShell>
+          <p>Dados privados do educando</p>
+        </ProductShell>
+      </AuthContext.Provider>,
+    );
+
+    await waitFor(() => {
+      expect(nextNavigation.routerReplace).toHaveBeenCalledWith('/login?redirect=%2Flearners');
+    });
+    expect(screen.queryByText('Dados privados do educando')).not.toBeInTheDocument();
   });
 });
 

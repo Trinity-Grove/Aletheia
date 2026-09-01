@@ -8,6 +8,11 @@ import { LearnerFormModal } from '../src/components/learners/learner-form-modal'
 import { LearnersList } from '../src/components/learners/learners-list';
 import LearnersPage from '../app/(dashboard)/learners/page';
 
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/learners',
+  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+}));
+
 const mockLearner: LearnerResponseDto = {
   id: 'a0000000-0000-0000-0000-000000000001',
   familyId: 'f0000000-0000-0000-0000-000000000001',

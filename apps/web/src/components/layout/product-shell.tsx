@@ -1,8 +1,8 @@
 'use client';
 
-import React, { type ReactNode } from 'react';
+import React, { type ReactNode, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   AletheiaIcon,
   AppShell,
@@ -89,9 +89,28 @@ export function ProductShell({
   currentPath,
 }: ProductShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const authContext = useOptionalAuth();
   const existingRbac = useAuthRole();
   const activePath = currentPath ?? pathname;
+
+  // Only redirect when this shell is actually driven by the real session
+  // (no explicit `user` prop and no outer RBAC override) — same escape
+  // hatch the loading branch below uses, so storybook/tests that inject a
+  // user directly are unaffected. `/` is exempt: it deliberately doubles as
+  // a public, no-data landing shell for anonymous visitors (see
+  // e2e/foundation.spec.ts) rather than a page that requires a session.
+  const shouldRedirectAnonymous =
+    authContext?.status === 'unauthenticated' &&
+    user === undefined &&
+    !existingRbac?.user &&
+    activePath !== '/';
+
+  useEffect(() => {
+    if (shouldRedirectAnonymous) {
+      router.replace(`/login?redirect=${encodeURIComponent(activePath)}`);
+    }
+  }, [shouldRedirectAnonymous, router, activePath]);
 
   const topbarActions = (
     <div className="product-shell-topbar-actions">
@@ -133,6 +152,12 @@ export function ProductShell({
         </AppShell>
       </div>
     );
+  }
+
+  // No session: redirect (above, in the effect) instead of ever rendering
+  // this page's real content or data for an anonymous visitor.
+  if (shouldRedirectAnonymous) {
+    return <div className="product-shell-loading" aria-busy="true" data-testid="product-shell-redirecting" />;
   }
 
   // Derive active role truthfully (no hardcoded fallback)

@@ -19,6 +19,11 @@ import { RecordsJournalView } from '../src/components/records/records-journal-vi
 import { AttendanceTrackerView } from '../src/components/reports/attendance-tracker-view';
 import { AuthProvider } from '../src/lib/auth/rbac-context';
 
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/',
+  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+}));
+
 const mockLearners: LearnerSummaryDto[] = [
   {
     id: 'l-001',

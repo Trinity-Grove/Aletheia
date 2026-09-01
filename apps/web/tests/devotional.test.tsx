@@ -8,6 +8,11 @@ import { DevotionalFormModal } from '../src/components/devotional/devotional-for
 import { PrayerJournal } from '../src/components/devotional/prayer-journal';
 import DevotionalPage from '../app/(dashboard)/devotional/page';
 
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/devotional',
+  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+}));
+
 const mockDevotional: DailyDevotionalResponseDto = {
   id: 'd0000000-0000-0000-0000-000000000001',
   familyId: 'f0000000-0000-0000-0000-000000000001',
