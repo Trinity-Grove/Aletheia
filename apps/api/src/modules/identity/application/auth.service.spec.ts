@@ -294,7 +294,7 @@ describe('AuthService', () => {
     ).resolves.toMatchObject({ user: { email: 'guardian@example.com' } });
   });
 
-  it('rejects duplicate email registration', async () => {
+  it('rejects duplicate email registration with a generic, non-revealing message', async () => {
     await authService.register({
       email: 'duplicate@example.com',
       fullName: 'First',
@@ -307,7 +307,24 @@ describe('AuthService', () => {
         fullName: 'Second',
         password: 'password123',
       }),
-    ).rejects.toThrow(ConflictException);
+    ).rejects.toThrow(BadRequestException);
+
+    // Anti-enumeration: the message must not confirm an account exists —
+    // a caller probing emails should see the same shape of error a weak
+    // password already produces, not a distinct "already exists" signal.
+    expect.assertions(4);
+    try {
+      await authService.register({
+        email: 'duplicate@example.com',
+        fullName: 'Second',
+        password: 'password123',
+      });
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      const message = (error as BadRequestException).message;
+      expect(message.toLowerCase()).not.toContain('already exist');
+      expect(message.toLowerCase()).not.toContain('já existe');
+    }
   });
 
   it('authenticates valid credentials on login', async () => {

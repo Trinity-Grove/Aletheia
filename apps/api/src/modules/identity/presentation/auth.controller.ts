@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { FastifyReply } from 'fastify';
 import {
   changeEmailSchema,
@@ -58,10 +59,10 @@ export class AuthController {
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiOperation({ summary: 'Register a new guardian account' })
   @ApiResponse({ status: 201, description: 'Guardian successfully registered.' })
-  @ApiResponse({ status: 400, description: 'Invalid input or weak password.' })
-  @ApiResponse({ status: 409, description: 'Email already in use.' })
+  @ApiResponse({ status: 400, description: 'Invalid input, weak password, or email unavailable.' })
   async register(
     @Body(new ZodValidationPipe(registerGuardianSchema)) body: RegisterGuardianDto,
     @Res({ passthrough: true }) reply: FastifyReply,
