@@ -302,20 +302,19 @@ describe('ProductShell Integration', () => {
     expect(screen.getAllByText('Guardião Principal')[0]).toBeInTheDocument();
   });
 
-  it('supports mobile responsive navigation and backdrop', () => {
+  it('supports mobile responsive navigation via the tab bar and Mais sheet', () => {
     render(
       <ProductShell>
         <div>Mobile Content</div>
       </ProductShell>
     );
 
-    const mobileToggle = screen.getByTestId('appshell-mobile-menu-btn');
-    fireEvent.click(mobileToggle);
-    expect(screen.getByTestId('appshell-mobile-navigation')).toBeInTheDocument();
-    expect(screen.getByTestId('appshell-mobile-backdrop')).toBeInTheDocument();
+    const moreButton = screen.getByRole('button', { name: 'Mais' });
+    fireEvent.click(moreButton);
+    expect(screen.getByRole('dialog', { name: 'Mais opções' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId('appshell-mobile-backdrop'));
-    expect(screen.queryByTestId('appshell-mobile-navigation')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('drawer-backdrop'));
+    expect(screen.queryByRole('dialog', { name: 'Mais opções' })).not.toBeInTheDocument();
   });
 });
 

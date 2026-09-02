@@ -88,10 +88,13 @@ describe('ProductShell adapter', () => {
     expect(screen.getByRole('banner')).toBeInTheDocument();
     expect(screen.getByRole('main')).toHaveTextContent('Conteúdo');
     expect(screen.getByRole('link', { name: 'Currículo' })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('link', { name: 'Educandos' })).not.toHaveAttribute('aria-current');
+    // 'Educandos' is also a primary tab-bar item, so it renders twice (sidebar
+    // + tab bar); scope to the desktop sidebar link by testid like the other
+    // tests in this file do for items that overlap the tab bar.
+    expect(screen.getByTestId('appshell-nav-learners')).not.toHaveAttribute('aria-current');
   });
 
-  it('derives the active route from Next and renders Next-integrated desktop and mobile links', () => {
+  it('derives the active route from Next and renders Next-integrated desktop and overflow-sheet links', () => {
     nextNavigation.pathname = '/curriculum';
 
     render(
@@ -104,11 +107,30 @@ describe('ProductShell adapter', () => {
     expect(desktopLink).toHaveAttribute('aria-current', 'page');
     expect(desktopLink).toHaveAttribute('data-next-link', 'true');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Abrir navegação' }));
-    const mobileNavigation = screen.getByRole('dialog', { name: 'Navegação móvel' });
-    const mobileLink = within(mobileNavigation).getByRole('link', { name: 'Currículo' });
-    expect(mobileLink).toHaveAttribute('aria-current', 'page');
-    expect(mobileLink).toHaveAttribute('data-next-link', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Mais' }));
+    const moreSheet = screen.getByRole('dialog', { name: 'Mais opções' });
+    const overflowLink = within(moreSheet).getByRole('link', { name: 'Currículo' });
+    expect(overflowLink).toHaveAttribute('aria-current', 'page');
+    expect(overflowLink).toHaveAttribute('data-next-link', 'true');
+  });
+
+  it('splits navigation into four primary tab-bar items and the rest as overflow', () => {
+    render(
+      <ProductShell>
+        <p>Conteúdo</p>
+      </ProductShell>,
+    );
+
+    expect(screen.getByTestId('appshell-tab-bar-home')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-tab-bar-devotional')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-tab-bar-schedule')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-tab-bar-learners')).toBeInTheDocument();
+    expect(screen.queryByTestId('appshell-tab-bar-curriculum')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mais' }));
+    const moreSheet = screen.getByRole('dialog', { name: 'Mais opções' });
+    expect(within(moreSheet).getByRole('link', { name: 'Currículo' })).toBeInTheDocument();
+    expect(within(moreSheet).queryByRole('link', { name: 'Início' })).not.toBeInTheDocument();
   });
 
   it('filters guardian-only navigation items using the active role permissions', () => {
@@ -244,33 +266,33 @@ describe('ProductShell adapter', () => {
     }
   });
 
-  it('opens the shared mobile navigation from the topbar control', () => {
+  it('opens the Mais overflow sheet from the tab bar', () => {
     render(
       <ProductShell>
         <p>Conteúdo mobile</p>
       </ProductShell>,
     );
 
-    const menuButton = screen.getByRole('button', { name: 'Abrir navegação' });
-    expect(menuButton).toHaveAttribute('aria-expanded', 'false');
-    fireEvent.click(menuButton);
+    const moreButton = screen.getByRole('button', { name: 'Mais' });
+    expect(moreButton).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(moreButton);
 
-    expect(menuButton).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('dialog', { name: 'Navegação móvel' })).toBeInTheDocument();
+    expect(moreButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('dialog', { name: 'Mais opções' })).toBeInTheDocument();
   });
 
-  it('renders the profile inside shared mobile navigation', () => {
+  it('renders the profile inside the Mais overflow sheet', () => {
     render(
       <ProductShell user={{ name: 'Wendel Silva', email: 'wendel@aletheia.edu', role: 'OWNER_GUARDIAN' }}>
         <p>Conteúdo mobile</p>
       </ProductShell>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Abrir navegação' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Mais' }));
 
-    const mobileNavigation = screen.getByRole('dialog', { name: 'Navegação móvel' });
-    expect(within(mobileNavigation).getByText('Wendel Silva')).toBeInTheDocument();
-    expect(within(mobileNavigation).getByText('Guardião Principal')).toBeInTheDocument();
+    const moreSheet = screen.getByRole('dialog', { name: 'Mais opções' });
+    expect(within(moreSheet).getByText('Wendel Silva')).toBeInTheDocument();
+    expect(within(moreSheet).getByText('Guardião Principal')).toBeInTheDocument();
   });
 
   it('collapses profile details while retaining the desktop avatar', () => {
