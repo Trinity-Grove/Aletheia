@@ -10,9 +10,10 @@ export interface DrawerProps {
   description?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  position?: 'right' | 'left';
+  position?: 'right' | 'left' | 'bottom';
   size?: 'sm' | 'md' | 'lg';
   ariaLabel?: string | undefined;
+  id?: string;
 }
 
 const SIZE_CLASSES = {
@@ -34,6 +35,7 @@ export function Drawer({
   position = 'right',
   size = 'md',
   ariaLabel = 'Gaveta lateral',
+  id,
 }: DrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
@@ -105,7 +107,7 @@ export function Drawer({
 
   return (
     <div
-      className="ui-drawer-backdrop"
+      className={`ui-drawer-backdrop ${position === 'bottom' ? 'ui-drawer-backdrop--bottom' : ''}`.trim()}
       data-testid="drawer-backdrop"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -115,6 +117,7 @@ export function Drawer({
     >
       <div
         ref={drawerRef}
+        id={id}
         role="dialog"
         aria-modal="true"
         aria-labelledby={hasTitle ? titleId : undefined}

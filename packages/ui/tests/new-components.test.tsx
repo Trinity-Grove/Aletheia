@@ -146,6 +146,18 @@ describe('New UI Components & Patterns', () => {
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
+
+    it('renders a bottom-anchored variant with a stable id when requested', () => {
+      render(
+        <Drawer isOpen={true} onClose={() => {}} position="bottom" id="more-sheet-test">
+          <p>Conteúdo do painel inferior</p>
+        </Drawer>
+      );
+
+      const container = screen.getByTestId('drawer-container');
+      expect(container).toHaveClass('ui-drawer--bottom');
+      expect(container).toHaveAttribute('id', 'more-sheet-test');
+    });
   });
 
   describe('Dropdown', () => {
