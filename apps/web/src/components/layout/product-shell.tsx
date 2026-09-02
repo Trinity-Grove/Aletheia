@@ -42,7 +42,6 @@ export const MAIN_NAV_ITEMS: NavigationItem[] = [
   { id: 'portfolio', label: 'Portfólio', href: '/portfolio', icon: <AletheiaIcon name="folder-heart" size={18} /> },
   { id: 'attendance', label: 'Frequência', href: '/attendance', icon: <AletheiaIcon name="clipboard-check" size={18} /> },
   { id: 'reports', label: 'Relatórios', href: '/reports', icon: <AletheiaIcon name="bar-chart-3" size={18} /> },
-  { id: 'design-system', label: 'Design System', href: '/design-system', icon: <AletheiaIcon name="palette" size={18} /> },
   { id: 'settings', label: 'Configurações', href: '/settings', icon: <AletheiaIcon name="settings" size={18} /> },
 ];
 

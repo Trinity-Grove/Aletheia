@@ -92,7 +92,6 @@ export function WeeklyRoutineGrid({
             style={{
               padding: '0.45rem 1rem',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: 'var(--color-indigo-700)',
               color: 'var(--text-inverse)',
               border: 'none',
               fontSize: '0.8125rem',
@@ -270,8 +269,14 @@ export function WeeklyRoutineGrid({
                                 fontSize: '0.6875rem',
                                 padding: '0.125rem 0.375rem',
                                 borderRadius: 'var(--radius-sm)',
-                                backgroundColor: 'var(--sage-soft)',
-                                color: 'var(--text-secondary)',
+                                // Tint the pill with the subject's own color when it
+                                // has one, so each discipline reads as its own visual
+                                // identity — falls back to the neutral sage pill
+                                // otherwise (e.g. routine blocks with no subject).
+                                backgroundColor: subInfo?.color
+                                  ? `color-mix(in srgb, ${subInfo.color} 16%, white)`
+                                  : 'var(--sage-soft)',
+                                color: subInfo?.color || 'var(--text-secondary)',
                                 fontWeight: 500,
                                 display: 'inline-flex',
                                 alignItems: 'center',

@@ -164,7 +164,6 @@ export function DailyAgendaView({
                 padding: '0.45rem 1rem',
                 borderRadius: 'var(--radius-md)',
                 border: 'none',
-                backgroundColor: 'var(--color-indigo-700)',
                 color: 'var(--text-inverse)',
                 fontSize: '0.8125rem',
                 fontWeight: 600,
@@ -290,8 +289,7 @@ export function DailyAgendaView({
                 style={{
                   padding: '0.5rem 1.25rem',
                   borderRadius: 'var(--radius-md)',
-                  backgroundColor: 'var(--color-indigo-700)',
-                  color: 'var(--text-inverse)',
+                    color: 'var(--text-inverse)',
                   fontSize: '0.875rem',
                   fontWeight: 600,
                   border: 'none',
