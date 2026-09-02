@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { AletheiaIcon } from '@aletheia/ui';
 import type {
+  AccountAuditLogEntryDto,
   DataExportJobResponseDto,
   FamilyDataExportPackageDto,
   FamilySettingsResponseDto,
@@ -15,12 +16,18 @@ import { FamilyGeneralSettings } from '../../../src/components/settings/family-g
 import { NotificationPreferences } from '../../../src/components/settings/notification-preferences';
 import { DataBackupCard } from '../../../src/components/settings/data-backup-card';
 import { AccountSecuritySettings } from '../../../src/components/settings/account-security-settings';
+import { AccountActivityLog } from '../../../src/components/settings/account-activity-log';
 import { useAuth } from '../../../src/lib/auth/auth-context';
+import { api } from '../../../src/lib/api';
 
 type ActiveTab = 'general' | 'notifications' | 'backup' | 'account';
 
 export default function SettingsPage() {
   const { user, changePassword, changeEmail } = useAuth();
+  const fetchAuditLog = useCallback(
+    () => api.get<AccountAuditLogEntryDto[]>('/auth/audit-log'),
+    [],
+  );
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
   const [activeLearnerId, setActiveLearnerId] = useState<string | null>(null);
@@ -321,11 +328,14 @@ export default function SettingsPage() {
             )}
 
             {activeTab === 'account' && (
-              <AccountSecuritySettings
-                currentEmail={user?.email}
-                onChangePassword={changePassword}
-                onChangeEmail={changeEmail}
-              />
+              <div style={{ display: 'grid', gap: '1.5rem' }}>
+                <AccountSecuritySettings
+                  currentEmail={user?.email}
+                  onChangePassword={changePassword}
+                  onChangeEmail={changeEmail}
+                />
+                <AccountActivityLog fetchAuditLog={fetchAuditLog} />
+              </div>
             )}
           </div>
         )}

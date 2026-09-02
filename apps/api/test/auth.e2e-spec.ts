@@ -88,6 +88,12 @@ describe('Identity Auth E2E', () => {
         throw new ConflictException('A user with this email already exists.');
       }
     });
+    jest.spyOn(authService, 'getAuditLog').mockImplementation(async (_userId) => {
+      return [
+        { id: 'audit-1', eventType: 'LOGIN_SUCCEEDED', createdAt: new Date().toISOString() },
+        { id: 'audit-2', eventType: 'PASSWORD_CHANGED', createdAt: new Date().toISOString() },
+      ];
+    });
     jest.spyOn(authService, 'verifyToken').mockImplementation(async (token) => {
       if (token === 'fake-jwt-token-12345') {
         return {
@@ -333,5 +339,21 @@ describe('Identity Auth E2E', () => {
       .set('Authorization', 'Bearer fake-jwt-token-12345')
       .send({ currentPassword: 'correctCurrentPassword', newEmail: 'taken@example.com' })
       .expect(409);
+  });
+
+  it('GET /api/v1/auth/audit-log requires authentication', async () => {
+    await supertest(app.getHttpServer()).get('/api/v1/auth/audit-log').expect(401);
+  });
+
+  it('GET /api/v1/auth/audit-log returns recent entries when authenticated', async () => {
+    const response = await supertest(app.getHttpServer())
+      .get('/api/v1/auth/audit-log')
+      .set('Authorization', 'Bearer fake-jwt-token-12345')
+      .expect(200);
+
+    expect(response.body).toEqual([
+      { id: 'audit-1', eventType: 'LOGIN_SUCCEEDED', createdAt: expect.any(String) },
+      { id: 'audit-2', eventType: 'PASSWORD_CHANGED', createdAt: expect.any(String) },
+    ]);
   });
 });

@@ -2,6 +2,7 @@ import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type {
+  AccountAuditLogEntryDto,
   FamilyDataExportPackageDto,
   FamilySettingsResponseDto,
   NotificationItemResponseDto,
@@ -10,6 +11,7 @@ import { FamilyGeneralSettings } from '../src/components/settings/family-general
 import { NotificationPreferences } from '../src/components/settings/notification-preferences';
 import { DataBackupCard } from '../src/components/settings/data-backup-card';
 import { AccountSecuritySettings } from '../src/components/settings/account-security-settings';
+import { AccountActivityLog } from '../src/components/settings/account-activity-log';
 import { NotificationBell } from '../src/components/layout/notification-bell';
 import { AuthProvider } from '../src/lib/auth/rbac-context';
 
@@ -478,6 +480,48 @@ describe('Settings Hub, Notification Center & Data Backup Web Components', () =>
       fireEvent.click(screen.getByTestId('change-email-button'));
 
       expect(await screen.findByTestId('change-email-error')).toHaveTextContent('E-mail já está em uso.');
+    });
+  });
+
+  describe('AccountActivityLog', () => {
+    const mockEntries: AccountAuditLogEntryDto[] = [
+      { id: 'audit-1', eventType: 'LOGIN_SUCCEEDED', createdAt: '2026-08-30T10:00:00.000Z' },
+      { id: 'audit-2', eventType: 'PASSWORD_CHANGED', createdAt: '2026-08-29T08:30:00.000Z' },
+    ];
+
+    it('shows a loading state, then renders entries with human-readable labels', async () => {
+      let resolveFetch!: (value: AccountAuditLogEntryDto[]) => void;
+      const fetchAuditLog = vi.fn(
+        () => new Promise<AccountAuditLogEntryDto[]>((resolve) => { resolveFetch = resolve; }),
+      );
+
+      render(<AccountActivityLog fetchAuditLog={fetchAuditLog} />);
+
+      expect(screen.getByTestId('account-activity-log-loading')).toBeInTheDocument();
+
+      resolveFetch(mockEntries);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('account-activity-item-audit-1')).toHaveTextContent('Login realizado');
+      });
+      expect(screen.getByTestId('account-activity-item-audit-2')).toHaveTextContent('Senha alterada');
+      expect(screen.queryByTestId('account-activity-log-loading')).not.toBeInTheDocument();
+    });
+
+    it('shows an empty state when there are no entries', async () => {
+      const fetchAuditLog = vi.fn().mockResolvedValue([]);
+
+      render(<AccountActivityLog fetchAuditLog={fetchAuditLog} />);
+
+      expect(await screen.findByText('Nenhuma atividade registrada')).toBeInTheDocument();
+    });
+
+    it('shows an error message when the fetch fails', async () => {
+      const fetchAuditLog = vi.fn().mockRejectedValue(new Error('Falha de rede.'));
+
+      render(<AccountActivityLog fetchAuditLog={fetchAuditLog} />);
+
+      expect(await screen.findByTestId('account-activity-log-error')).toHaveTextContent('Falha de rede.');
     });
   });
 });
