@@ -814,7 +814,7 @@
 .ui-appshell-sidebar {
   width: var(--ui-navigation-sidebar-width);
   background-color: var(--ui-navigation-sidebar-background);
-  border-right: 1px solid var(--ui-border-default);
+  border-right: 1px solid var(--forest);
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -834,7 +834,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--ui-border-default);
+  border-bottom: 1px solid var(--forest);
   min-height: var(--ui-navigation-header-height);
 }
 .ui-sidebar-brand,
@@ -854,23 +854,23 @@
   font-family: var(--ui-font-serif);
   font-weight: 700;
   font-size: 1.125rem;
-  color: var(--ui-text-brand);
+  color: var(--ivory);
   line-height: 1.2;
 }
 .ui-sidebar-brand-subtitle,
 .ui-appshell-brand-subtitle {
   font-size: 0.6875rem;
-  color: var(--ui-text-secondary);
+  color: var(--sage);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 .ui-sidebar-collapse-toggle,
 .ui-appshell-collapse-toggle {
   background: transparent;
-  border: 1px solid var(--ui-border-default);
+  border: 1px solid var(--forest);
   border-radius: var(--ui-radius-sm);
   padding: calc(var(--ui-space-8) / 8);
-  color: var(--ui-text-secondary);
+  color: var(--sage);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -936,6 +936,10 @@
   color: var(--ui-navigation-link-foreground-active);
   box-shadow: var(--ui-elevation-raised);
 }
+.ui-sidebar-navigation-link--active .ui-sidebar-navigation-icon,
+.ui-appshell-nav-link--active .ui-appshell-nav-icon {
+  color: var(--ui-navigation-link-icon-foreground-active);
+}
 .ui-sidebar-navigation-icon,
 .ui-appshell-nav-icon {
   display: inline-flex;
@@ -954,8 +958,8 @@
 .ui-sidebar-footer,
 .ui-appshell-sidebar-footer {
   padding: calc(var(--ui-space-8) / 2);
-  border-top: 1px solid var(--ui-border-default);
-  background-color: var(--ui-surface-subtle);
+  border-top: 1px solid var(--forest-dark);
+  background-color: var(--forest);
 }
 .ui-appshell-main-wrapper {
   flex: 1;

@@ -49,13 +49,14 @@
   --ui-navigation-sidebar-width: var(--ui-layout-sidebar-width);
   --ui-navigation-sidebar-collapsed-width: var(--ui-layout-sidebar-collapsed-width);
   --ui-navigation-header-height: var(--ui-layout-header-height);
-  --ui-navigation-sidebar-background: var(--ui-surface-default);
+  --ui-navigation-sidebar-background: var(--forest-2);
   --ui-navigation-header-background: var(--ui-surface-header-translucent);
-  --ui-navigation-link-foreground: var(--ui-text-secondary);
-  --ui-navigation-link-foreground-hover: var(--ui-text-brand);
-  --ui-navigation-link-background-hover: var(--ui-surface-hover);
-  --ui-navigation-link-background-active: var(--ui-action-primary-background);
-  --ui-navigation-link-foreground-active: var(--ui-action-primary-foreground);
+  --ui-navigation-link-foreground: var(--sage);
+  --ui-navigation-link-foreground-hover: var(--ivory);
+  --ui-navigation-link-background-hover: var(--forest);
+  --ui-navigation-link-background-active: var(--forest);
+  --ui-navigation-link-foreground-active: var(--ivory);
+  --ui-navigation-link-icon-foreground-active: var(--gold-muted);
 
   --ui-daily-journey-block-spacing: var(--ui-space-6);
   --ui-daily-journey-subtitle-font-size: var(--ui-font-size-base);
