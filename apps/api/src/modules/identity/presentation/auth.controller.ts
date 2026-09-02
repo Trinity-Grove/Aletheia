@@ -21,6 +21,7 @@ import {
   registerGuardianSchema,
   resetPasswordSchema,
   verifyEmailSchema,
+  type AccountAuditLogEntryDto,
   type AuthResponseDto,
   type ChangeEmailDto,
   type ChangePasswordDto,
@@ -208,6 +209,16 @@ export class AuthController {
   ): Promise<{ success: true }> {
     await this.authService.changeEmail(req.user.userId, body.currentPassword, body.newEmail);
     return { success: true };
+  }
+
+  @Get('audit-log')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List recent sensitive account events for the authenticated guardian' })
+  @ApiResponse({ status: 200, description: 'Recent audit log entries, most recent first.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  async getAuditLog(@Req() req: { user: { userId: string } }): Promise<AccountAuditLogEntryDto[]> {
+    return this.authService.getAuditLog(req.user.userId);
   }
 
   private commitSession(reply: FastifyReply, session: AuthSession): AuthResponseDto {

@@ -16,8 +16,13 @@ import type {
   PasswordResetTokenRecord,
   PasswordResetTokenRepository,
 } from '../infrastructure/password-reset-token.repository.js';
+import type {
+  AccountAuditLogRecord,
+  AccountAuditLogRepository,
+} from '../infrastructure/account-audit-log.repository.js';
 import type { MailMessage, MailSender } from '../../../platform/mail/mail-sender.js';
 import type { Environment } from '../../../platform/config/environment.js';
+import type { AccountAuditEventType } from '@aletheia/contracts';
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -30,6 +35,8 @@ describe('AuthService', () => {
   let emailVerificationTokenRepository: EmailVerificationTokenRepository;
   let fakePasswordResetTokens: Map<string, PasswordResetTokenRecord & { plainToken: string }>;
   let passwordResetTokenRepository: PasswordResetTokenRepository;
+  let auditLog: (AccountAuditLogRecord & { userId: string })[];
+  let accountAuditLogRepository: AccountAuditLogRepository;
   let sentEmails: MailMessage[];
   let mailSender: MailSender;
   let environment: Environment;
@@ -201,6 +208,20 @@ describe('AuthService', () => {
       },
     } as unknown as PasswordResetTokenRepository;
 
+    auditLog = [];
+    let auditSequence = 0;
+    accountAuditLogRepository = {
+      record: async (userId: string, eventType: AccountAuditEventType) => {
+        auditSequence += 1;
+        auditLog.push({ id: `audit-${auditSequence}`, userId, eventType, createdAt: new Date() });
+      },
+      listForUser: async (userId: string) =>
+        auditLog
+          .filter((entry) => entry.userId === userId)
+          .slice()
+          .reverse(),
+    } as unknown as AccountAuditLogRepository;
+
     sentEmails = [];
     mailSender = {
       send: async (message: MailMessage) => {
@@ -217,6 +238,7 @@ describe('AuthService', () => {
       refreshTokenRepository,
       emailVerificationTokenRepository,
       passwordResetTokenRepository,
+      accountAuditLogRepository,
       mailSender,
       environment,
     );
@@ -698,6 +720,113 @@ describe('AuthService', () => {
       await expect(
         authService.changeEmail('user-uuid-1', 'password12345', 'change-email-target@example.com'),
       ).rejects.toThrow(ConflictException);
+    });
+  });
+
+  describe('audit log', () => {
+    it('records LOGIN_SUCCEEDED and LOGIN_FAILED', async () => {
+      await authService.register({
+        email: 'audit-login@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+      auditLog.length = 0;
+
+      await expect(
+        authService.login({ email: 'audit-login@example.com', password: 'wrongPassword' }),
+      ).rejects.toThrow(UnauthorizedException);
+      await authService.login({ email: 'audit-login@example.com', password: 'password12345' });
+
+      const eventTypes = auditLog.map((entry) => entry.eventType);
+      expect(eventTypes).toEqual(['LOGIN_FAILED', 'LOGIN_SUCCEEDED']);
+    });
+
+    it('records LOGOUT with the correct userId', async () => {
+      const { refreshToken } = await authService.register({
+        email: 'audit-logout@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+      auditLog.length = 0;
+
+      await authService.revokeRefreshToken(refreshToken);
+
+      expect(auditLog.map((entry) => entry.eventType)).toEqual(['LOGOUT']);
+      expect(auditLog[0]!.userId).toBe('user-uuid-1');
+    });
+
+    it('records REFRESH_TOKEN_REUSE_DETECTED on a replayed refresh token', async () => {
+      const { refreshToken } = await authService.register({
+        email: 'audit-reuse@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+      await authService.refresh(refreshToken);
+      auditLog.length = 0;
+
+      await expect(authService.refresh(refreshToken)).rejects.toThrow(UnauthorizedException);
+
+      expect(auditLog.map((entry) => entry.eventType)).toEqual(['REFRESH_TOKEN_REUSE_DETECTED']);
+    });
+
+    it('records EMAIL_VERIFIED, PASSWORD_RESET_REQUESTED/COMPLETED, PASSWORD_CHANGED, and EMAIL_CHANGED', async () => {
+      await authService.register({
+        email: 'audit-full@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+      const [, verifyToken] = [...fakeVerificationTokens.entries()][0]!;
+      auditLog.length = 0;
+
+      await authService.verifyEmail(verifyToken.plainToken);
+      await authService.forgotPassword('audit-full@example.com');
+      const [, resetToken] = [...fakePasswordResetTokens.entries()][0]!;
+      await authService.resetPassword(resetToken.plainToken, 'resetPassword456');
+      await authService.changePassword('user-uuid-1', 'resetPassword456', 'changedPassword789');
+      await authService.changeEmail('user-uuid-1', 'changedPassword789', 'audit-full-new@example.com');
+
+      expect(auditLog.map((entry) => entry.eventType)).toEqual([
+        'EMAIL_VERIFIED',
+        'PASSWORD_RESET_REQUESTED',
+        'PASSWORD_RESET_COMPLETED',
+        'PASSWORD_CHANGED',
+        'EMAIL_CHANGED',
+      ]);
+    });
+
+    it('does not fail the underlying action when audit recording throws', async () => {
+      await authService.register({
+        email: 'audit-broken@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+      accountAuditLogRepository.record = async () => {
+        throw new Error('Audit store is down');
+      };
+
+      await expect(
+        authService.login({ email: 'audit-broken@example.com', password: 'password12345' }),
+      ).resolves.toMatchObject({ user: { email: 'audit-broken@example.com' } });
+    });
+  });
+
+  describe('getAuditLog', () => {
+    it('returns the most recent entries for the user, most recent first', async () => {
+      await authService.register({
+        email: 'audit-list@example.com',
+        fullName: 'User',
+        password: 'password12345',
+      });
+      auditLog.length = 0;
+
+      await authService.login({ email: 'audit-list@example.com', password: 'password12345' });
+      await authService.changePassword('user-uuid-1', 'password12345', 'newPassword456');
+
+      const entries = await authService.getAuditLog('user-uuid-1');
+
+      expect(entries.map((entry) => entry.eventType)).toEqual(['PASSWORD_CHANGED', 'LOGIN_SUCCEEDED']);
+      expect(entries[0]!.id).toBeDefined();
+      expect(entries[0]!.createdAt).toBeDefined();
     });
   });
 });

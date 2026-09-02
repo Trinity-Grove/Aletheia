@@ -64,3 +64,25 @@ export const changeEmailSchema = z.object({
 });
 
 export type ChangeEmailDto = z.infer<typeof changeEmailSchema>;
+
+export const accountAuditEventTypeSchema = z.enum([
+  'LOGIN_SUCCEEDED',
+  'LOGIN_FAILED',
+  'LOGOUT',
+  'PASSWORD_CHANGED',
+  'PASSWORD_RESET_REQUESTED',
+  'PASSWORD_RESET_COMPLETED',
+  'EMAIL_CHANGED',
+  'EMAIL_VERIFIED',
+  'REFRESH_TOKEN_REUSE_DETECTED',
+]);
+
+export type AccountAuditEventType = z.infer<typeof accountAuditEventTypeSchema>;
+
+export const accountAuditLogEntrySchema = z.object({
+  id: z.string().uuid(),
+  eventType: accountAuditEventTypeSchema,
+  createdAt: z.string(),
+});
+
+export type AccountAuditLogEntryDto = z.infer<typeof accountAuditLogEntrySchema>;

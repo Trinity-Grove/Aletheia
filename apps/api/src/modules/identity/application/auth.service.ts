@@ -9,6 +9,8 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type {
+  AccountAuditEventType,
+  AccountAuditLogEntryDto,
   AuthResponseDto,
   LoginDto,
   RegisterGuardianDto,
@@ -20,6 +22,7 @@ import { UserRepository } from '../infrastructure/user.repository.js';
 import { RefreshTokenRepository } from '../infrastructure/refresh-token.repository.js';
 import { EmailVerificationTokenRepository } from '../infrastructure/email-verification-token.repository.js';
 import { PasswordResetTokenRepository } from '../infrastructure/password-reset-token.repository.js';
+import { AccountAuditLogRepository } from '../infrastructure/account-audit-log.repository.js';
 import { MAIL_SENDER, type MailSender } from '../../../platform/mail/mail-sender.js';
 import { ENVIRONMENT, type Environment } from '../../../platform/config/environment.js';
 import type { AuthenticatedUserPayload, IdentityPublicApi } from './public-api.js';
@@ -42,6 +45,7 @@ export class AuthService implements IdentityPublicApi {
     private readonly refreshTokenRepository: RefreshTokenRepository,
     private readonly emailVerificationTokenRepository: EmailVerificationTokenRepository,
     private readonly passwordResetTokenRepository: PasswordResetTokenRepository,
+    private readonly accountAuditLogRepository: AccountAuditLogRepository,
     @Inject(MAIL_SENDER) private readonly mailSender: MailSender,
     @Inject(ENVIRONMENT) private readonly environment: Environment,
   ) {}
@@ -77,9 +81,11 @@ export class AuthService implements IdentityPublicApi {
 
     const isValid = this.passwordHasher.verify(dto.password, user.passwordHash);
     if (!isValid) {
+      await this.recordAuditEvent(user.id, 'LOGIN_FAILED');
       throw new UnauthorizedException('Invalid email or password.');
     }
 
+    await this.recordAuditEvent(user.id, 'LOGIN_SUCCEEDED');
     return this.issueSession(user.id, user.email, user.toDto());
   }
 
@@ -94,6 +100,7 @@ export class AuthService implements IdentityPublicApi {
       // either the previous response was replayed or the token leaked —
       // either way, the whole session family is no longer trustworthy.
       await this.refreshTokenRepository.revokeAllForUser(record.userId);
+      await this.recordAuditEvent(record.userId, 'REFRESH_TOKEN_REUSE_DETECTED');
       throw new UnauthorizedException('Refresh token has already been used.');
     }
 
@@ -112,7 +119,11 @@ export class AuthService implements IdentityPublicApi {
   }
 
   async revokeRefreshToken(refreshToken: string): Promise<void> {
+    const record = await this.refreshTokenRepository.findByToken(refreshToken);
     await this.refreshTokenRepository.revokeByToken(refreshToken);
+    if (record) {
+      await this.recordAuditEvent(record.userId, 'LOGOUT');
+    }
   }
 
   async getProfile(userId: string): Promise<UserSummaryDto> {
@@ -139,6 +150,7 @@ export class AuthService implements IdentityPublicApi {
 
     await this.emailVerificationTokenRepository.markUsed(record.id);
     await this.userRepository.markEmailVerified(record.userId);
+    await this.recordAuditEvent(record.userId, 'EMAIL_VERIFIED');
   }
 
   async resendVerificationEmail(userId: string): Promise<void> {
@@ -160,6 +172,7 @@ export class AuthService implements IdentityPublicApi {
       return;
     }
 
+    await this.recordAuditEvent(user.id, 'PASSWORD_RESET_REQUESTED');
     await this.sendPasswordResetEmail(user.id, user.email, user.fullName);
   }
 
@@ -189,6 +202,7 @@ export class AuthService implements IdentityPublicApi {
     // Resetting the password is a critical account event — every existing
     // session (and any leaked/stale refresh token) must stop working.
     await this.refreshTokenRepository.revokeAllForUser(record.userId);
+    await this.recordAuditEvent(record.userId, 'PASSWORD_RESET_COMPLETED');
   }
 
   async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
@@ -213,6 +227,7 @@ export class AuthService implements IdentityPublicApi {
     // Same policy as resetPassword: a changed password invalidates every
     // other session.
     await this.refreshTokenRepository.revokeAllForUser(userId);
+    await this.recordAuditEvent(userId, 'PASSWORD_CHANGED');
   }
 
   async changeEmail(userId: string, currentPassword: string, newEmail: string): Promise<void> {
@@ -240,7 +255,17 @@ export class AuthService implements IdentityPublicApi {
     // The account's login identity changed — every other session must
     // re-authenticate, same as a password change.
     await this.refreshTokenRepository.revokeAllForUser(userId);
+    await this.recordAuditEvent(userId, 'EMAIL_CHANGED');
     await this.sendVerificationEmail(userId, normalizedEmail, user.fullName);
+  }
+
+  async getAuditLog(userId: string): Promise<AccountAuditLogEntryDto[]> {
+    const entries = await this.accountAuditLogRepository.listForUser(userId);
+    return entries.map((entry) => ({
+      id: entry.id,
+      eventType: entry.eventType,
+      createdAt: entry.createdAt.toISOString(),
+    }));
   }
 
   async verifyToken(token: string): Promise<AuthenticatedUserPayload | null> {
@@ -276,6 +301,16 @@ export class AuthService implements IdentityPublicApi {
       refreshToken: refreshToken.token,
       refreshTokenExpiresAt: refreshToken.expiresAt,
     };
+  }
+
+  private async recordAuditEvent(userId: string, eventType: AccountAuditEventType): Promise<void> {
+    try {
+      await this.accountAuditLogRepository.record(userId, eventType);
+    } catch (error) {
+      // Same reasoning as the mail helpers below: a broken audit log must
+      // never block the actual auth flow it's trying to record.
+      this.logger.error(`Failed to record audit event ${eventType} for user ${userId}`, error as Error);
+    }
   }
 
   private async sendVerificationEmail(userId: string, email: string, fullName: string): Promise<void> {

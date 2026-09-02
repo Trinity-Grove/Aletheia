@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  accountAuditLogEntrySchema,
   authResponseSchema,
   changeEmailSchema,
   changePasswordSchema,
@@ -8,6 +9,7 @@ import {
   registerGuardianSchema,
   resetPasswordSchema,
   userSummarySchema,
+  type AccountAuditLogEntryDto,
   type AuthResponseDto,
   type ChangeEmailDto,
   type ChangePasswordDto,
@@ -174,6 +176,27 @@ describe('auth contracts', () => {
     it('rejects an empty current password', () => {
       expect(
         changeEmailSchema.safeParse({ currentPassword: '', newEmail: 'new@example.com' }).success,
+      ).toBe(false);
+    });
+  });
+
+  describe('accountAuditLogEntrySchema', () => {
+    it('validates a valid audit log entry', () => {
+      const payload: AccountAuditLogEntryDto = {
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        eventType: 'LOGIN_SUCCEEDED',
+        createdAt: '2026-08-23T12:00:00.000Z',
+      };
+      expect(accountAuditLogEntrySchema.safeParse(payload).success).toBe(true);
+    });
+
+    it('rejects an unknown event type', () => {
+      expect(
+        accountAuditLogEntrySchema.safeParse({
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          eventType: 'NOT_A_REAL_EVENT',
+          createdAt: '2026-08-23T12:00:00.000Z',
+        }).success,
       ).toBe(false);
     });
   });
