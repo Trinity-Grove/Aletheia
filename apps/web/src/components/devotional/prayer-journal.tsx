@@ -149,7 +149,6 @@ export function PrayerJournal({
               fontWeight: 600,
               borderRadius: 'var(--radius-md)',
               border: 'none',
-              backgroundColor: 'var(--color-indigo-700)',
               color: 'var(--text-inverse)',
               cursor: 'pointer',
               boxShadow: 'var(--shadow-sm)',
@@ -783,7 +782,6 @@ export function PrayerJournal({
                     fontWeight: 600,
                     borderRadius: 'var(--radius-sm)',
                     border: 'none',
-                    backgroundColor: 'var(--color-indigo-700)',
                     color: 'var(--text-inverse)',
                     cursor: 'pointer',
                   }}
