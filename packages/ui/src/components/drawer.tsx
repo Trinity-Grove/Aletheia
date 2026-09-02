@@ -13,7 +13,7 @@ export interface DrawerProps {
   position?: 'right' | 'left' | 'bottom';
   size?: 'sm' | 'md' | 'lg';
   ariaLabel?: string | undefined;
-  id?: string;
+  id?: string | undefined;
 }
 
 const SIZE_CLASSES = {

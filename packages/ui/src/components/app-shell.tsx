@@ -6,7 +6,7 @@ import { Sidebar } from './sidebar.js';
 import { TabBar } from './tab-bar.js';
 import { Topbar } from './topbar.js';
 
-const MOBILE_NAVIGATION_MEDIA_QUERY = '(max-width: 1024px)';
+const MOBILE_TAB_BAR_MEDIA_QUERY = '(max-width: 1024px)';
 
 export interface NavigationItem {
   id: string;
@@ -73,7 +73,7 @@ export function AppShell({
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') return;
 
-    const mobileViewport = window.matchMedia(MOBILE_NAVIGATION_MEDIA_QUERY);
+    const mobileViewport = window.matchMedia(MOBILE_TAB_BAR_MEDIA_QUERY);
     const handleViewportChange = (event: MediaQueryListEvent) => {
       if (!event.matches && isMoreSheetOpenRef.current) {
         moveFocusToDesktopNavigationRef.current = true;

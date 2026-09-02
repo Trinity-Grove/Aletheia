@@ -28,7 +28,7 @@ export function MobileMoreSheet({
   renderNavigationLink,
 }: MobileMoreSheetProps) {
   return (
-    <Drawer isOpen={open} onClose={onClose} position="bottom" ariaLabel={label} {...(id ? { id } : {})}>
+    <Drawer isOpen={open} onClose={onClose} position="bottom" ariaLabel={label} id={id}>
       <nav className="ui-more-sheet-menu" aria-label={label}>
         <ul className="ui-more-sheet-list">
           {items.map((item) => {

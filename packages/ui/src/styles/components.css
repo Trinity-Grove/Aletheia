@@ -505,7 +505,7 @@
   align-items: flex-end;
   justify-content: center;
 }
-.ui-drawer--bottom {
+.ui-drawer.ui-drawer--bottom {
   width: 100%;
   max-height: min(75vh, 32rem);
   border-radius: var(--ui-radius-lg) var(--ui-radius-lg) 0 0;
@@ -814,7 +814,7 @@
 .ui-appshell-sidebar {
   width: var(--ui-navigation-sidebar-width);
   background-color: var(--ui-navigation-sidebar-background);
-  border-right: 1px solid var(--forest);
+  border-right: 1px solid var(--ui-navigation-border);
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -834,7 +834,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--forest);
+  border-bottom: 1px solid var(--ui-navigation-border);
   min-height: var(--ui-navigation-header-height);
 }
 .ui-sidebar-brand,
@@ -854,23 +854,23 @@
   font-family: var(--ui-font-serif);
   font-weight: 700;
   font-size: 1.125rem;
-  color: var(--ivory);
+  color: var(--ui-navigation-brand-title-foreground);
   line-height: 1.2;
 }
 .ui-sidebar-brand-subtitle,
 .ui-appshell-brand-subtitle {
   font-size: 0.6875rem;
-  color: var(--sage);
+  color: var(--ui-navigation-brand-subtitle-foreground);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 .ui-sidebar-collapse-toggle,
 .ui-appshell-collapse-toggle {
   background: transparent;
-  border: 1px solid var(--forest);
+  border: 1px solid var(--ui-navigation-border);
   border-radius: var(--ui-radius-sm);
   padding: calc(var(--ui-space-8) / 8);
-  color: var(--sage);
+  color: var(--ui-navigation-link-foreground);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -958,8 +958,8 @@
 .ui-sidebar-footer,
 .ui-appshell-sidebar-footer {
   padding: calc(var(--ui-space-8) / 2);
-  border-top: 1px solid var(--forest-dark);
-  background-color: var(--forest);
+  border-top: 1px solid var(--ui-navigation-footer-border);
+  background-color: var(--ui-navigation-footer-background);
 }
 .ui-appshell-main-wrapper {
   flex: 1;
@@ -1020,8 +1020,9 @@
   right: 0;
   bottom: 0;
   z-index: 40;
+  min-height: var(--ui-tab-bar-height);
   background-color: var(--ui-navigation-sidebar-background);
-  border-top: 1px solid var(--forest);
+  border-top: 1px solid var(--ui-navigation-border);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .ui-tab-bar-list {
@@ -1125,6 +1126,9 @@
   .ui-tab-bar,
   .ui-appshell-tab-bar {
     display: flex;
+  }
+  .ui-appshell-content {
+    padding-bottom: calc(var(--ui-tab-bar-height) + env(safe-area-inset-bottom, 0px));
   }
   .ui-sidebar-collapse-toggle,
   .ui-appshell-collapse-toggle {

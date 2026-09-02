@@ -49,14 +49,20 @@
   --ui-navigation-sidebar-width: var(--ui-layout-sidebar-width);
   --ui-navigation-sidebar-collapsed-width: var(--ui-layout-sidebar-collapsed-width);
   --ui-navigation-header-height: var(--ui-layout-header-height);
-  --ui-navigation-sidebar-background: var(--forest-2);
+  --ui-tab-bar-height: 3.75rem;
+  --ui-navigation-sidebar-background: var(--forest-2, #0c3028);
+  --ui-navigation-border: var(--forest, #123f34);
+  --ui-navigation-brand-title-foreground: var(--ivory, #fbf8ef);
+  --ui-navigation-brand-subtitle-foreground: var(--sage-light, #dce6dc);
+  --ui-navigation-footer-background: var(--forest, #123f34);
+  --ui-navigation-footer-border: var(--forest-dark, #08251f);
   --ui-navigation-header-background: var(--ui-surface-header-translucent);
-  --ui-navigation-link-foreground: var(--sage);
-  --ui-navigation-link-foreground-hover: var(--ivory);
-  --ui-navigation-link-background-hover: var(--forest);
-  --ui-navigation-link-background-active: var(--forest);
-  --ui-navigation-link-foreground-active: var(--ivory);
-  --ui-navigation-link-icon-foreground-active: var(--gold-muted);
+  --ui-navigation-link-foreground: var(--sage-light, #dce6dc);
+  --ui-navigation-link-foreground-hover: var(--ivory, #fbf8ef);
+  --ui-navigation-link-background-hover: var(--forest, #123f34);
+  --ui-navigation-link-background-active: var(--forest, #123f34);
+  --ui-navigation-link-foreground-active: var(--ivory, #fbf8ef);
+  --ui-navigation-link-icon-foreground-active: var(--gold-muted, #d7bf79);
 
   --ui-daily-journey-block-spacing: var(--ui-space-6);
   --ui-daily-journey-subtitle-font-size: var(--ui-font-size-base);
