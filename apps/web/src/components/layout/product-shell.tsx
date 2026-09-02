@@ -107,14 +107,12 @@ export function ProductShell({
   // Only redirect when this shell is actually driven by the real session
   // (no explicit `user` prop and no outer RBAC override) — same escape
   // hatch the loading branch below uses, so storybook/tests that inject a
-  // user directly are unaffected. `/` is exempt: it deliberately doubles as
-  // a public, no-data landing shell for anonymous visitors (see
-  // e2e/foundation.spec.ts) rather than a page that requires a session.
+  // user directly are unaffected. Every route, including `/`, requires a
+  // session — there is no public, unauthenticated landing shell.
   const shouldRedirectAnonymous =
     authContext?.status === 'unauthenticated' &&
     user === undefined &&
-    !existingRbac?.user &&
-    activePath !== '/';
+    !existingRbac?.user;
 
   useEffect(() => {
     if (shouldRedirectAnonymous) {

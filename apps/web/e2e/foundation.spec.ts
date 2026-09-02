@@ -1,13 +1,12 @@
 import { expect, test } from '@playwright/test';
 
-test('family-facing shell loads without fabricated data', async ({ page }) => {
+test('redirects an anonymous visitor away from the home route to /login with a return path', async ({ page }) => {
+  await page.route('**/api/v1/auth/me', async (route) => {
+    await route.fulfill({ status: 401, json: { statusCode: 401, message: 'Missing session cookie or Authorization header.' } });
+  });
+
   await page.goto('/');
 
-  await expect(page.getByTestId('appshell-sidebar')).toContainText('Aletheia');
-  await expect(
-    page.getByRole('heading', {
-      name: 'Faithful learning, thoughtfully guided.',
-    }),
-  ).toBeVisible();
-  await expect(page.getByText(/alunos ativos|progresso médio/i)).toHaveCount(0);
+  await expect(page).toHaveURL(/\/login\?redirect=%2F$/);
+  await expect(page.getByTestId('login-form')).toBeVisible();
 });
