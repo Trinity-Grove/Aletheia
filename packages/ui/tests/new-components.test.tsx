@@ -11,6 +11,7 @@ import {
   Sidebar,
   Topbar,
   MobileNavigation,
+  TabBar,
   DailyJourney,
   ActivityList,
 } from '../src/index.js';
@@ -157,6 +158,68 @@ describe('New UI Components & Patterns', () => {
       const container = screen.getByTestId('drawer-container');
       expect(container).toHaveClass('ui-drawer--bottom');
       expect(container).toHaveAttribute('id', 'more-sheet-test');
+    });
+  });
+
+  describe('TabBar', () => {
+    const primaryItems = [
+      { id: 'home', label: 'Início', href: '/', icon: <span aria-hidden="true">H</span>, active: true },
+      { id: 'devotional', label: 'Devocional', href: '/devotional', icon: <span aria-hidden="true">D</span> },
+    ];
+
+    it('renders the primary items as links and a Mais button reflecting sheet state', () => {
+      const onOpenMore = vi.fn();
+      const { rerender } = render(
+        <TabBar
+          items={primaryItems}
+          moreActive={false}
+          moreOpen={false}
+          onOpenMore={onOpenMore}
+          moreControlsId="more-sheet-id"
+        />
+      );
+
+      expect(screen.getByRole('link', { name: 'Início' })).toHaveAttribute('aria-current', 'page');
+      expect(screen.getByRole('link', { name: 'Devocional' })).not.toHaveAttribute('aria-current');
+
+      const moreButton = screen.getByRole('button', { name: 'Mais' });
+      expect(moreButton).toHaveAttribute('aria-haspopup', 'dialog');
+      expect(moreButton).toHaveAttribute('aria-expanded', 'false');
+      expect(moreButton).toHaveAttribute('aria-controls', 'more-sheet-id');
+      expect(moreButton).not.toHaveClass('ui-tab-bar-link--active');
+
+      fireEvent.click(moreButton);
+      expect(onOpenMore).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <TabBar
+          items={primaryItems}
+          moreActive={true}
+          moreOpen={true}
+          onOpenMore={onOpenMore}
+          moreControlsId="more-sheet-id"
+        />
+      );
+      expect(screen.getByRole('button', { name: 'Mais' })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('button', { name: 'Mais' })).toHaveClass('ui-tab-bar-link--active');
+    });
+
+    it('forwards an injected navigation link renderer', () => {
+      render(
+        <TabBar
+          items={primaryItems}
+          moreActive={false}
+          moreOpen={false}
+          onOpenMore={() => {}}
+          renderNavigationLink={({ href, ...linkProps }) => (
+            <a {...linkProps} href={`/adapted${href}`} data-adapted-link="true" />
+          )}
+        />
+      );
+
+      const link = screen.getByRole('link', { name: 'Início' });
+      expect(link).toHaveAttribute('href', '/adapted/');
+      expect(link).toHaveAttribute('data-adapted-link', 'true');
     });
   });
 
