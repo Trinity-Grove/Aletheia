@@ -650,6 +650,10 @@ p.page-subtitle {
   white-space: nowrap;
 }
 
+.ui-sidebar-footer .product-shell-user-name {
+  color: var(--ivory);
+}
+
 .product-shell-user-role {
   margin-top: calc(var(--ui-space-8) / 8);
 }

@@ -1,36 +1,23 @@
 'use client';
 
 import React from 'react';
-import { Menu } from 'lucide-react';
 
 export interface TopbarProps {
-  onOpenNavigation: () => void;
+  brandLogo?: React.ReactNode;
+  brandTitle?: React.ReactNode;
   actions?: React.ReactNode;
-  navigationOpen?: boolean;
-  navigationControlsId?: string;
 }
 
-export function Topbar({
-  onOpenNavigation,
-  actions,
-  navigationOpen = false,
-  navigationControlsId,
-}: TopbarProps) {
+export function Topbar({ brandLogo, brandTitle, actions }: TopbarProps) {
   return (
     <header className="ui-topbar ui-appshell-topbar" data-testid="appshell-topbar">
-      <div className="ui-topbar-navigation-control ui-appshell-topbar-left">
-        <button
-          type="button"
-          className="ui-topbar-menu-button ui-appshell-mobile-menu-btn"
-          onClick={onOpenNavigation}
-          aria-label="Abrir navegação"
-          aria-haspopup="dialog"
-          aria-expanded={navigationOpen}
-          aria-controls={navigationControlsId}
-          data-testid="appshell-mobile-menu-btn"
-        >
-          <Menu size={20} aria-hidden="true" />
-        </button>
+      <div className="ui-topbar-brand ui-appshell-topbar-left" data-testid="appshell-topbar-brand">
+        {brandLogo && (
+          <span className="ui-topbar-brand-logo" aria-hidden="true">
+            {brandLogo}
+          </span>
+        )}
+        {brandTitle && <span className="ui-topbar-brand-title">{brandTitle}</span>}
       </div>
 
       <div className="ui-topbar-actions ui-appshell-topbar-right" data-testid="appshell-topbar-actions">

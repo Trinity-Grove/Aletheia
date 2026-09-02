@@ -45,6 +45,13 @@ export const MAIN_NAV_ITEMS: NavigationItem[] = [
   { id: 'settings', label: 'Configurações', href: '/settings', icon: <AletheiaIcon name="settings" size={18} /> },
 ];
 
+const PRIMARY_NAV_ITEM_IDS: ReadonlyArray<NavigationItem['id']> = [
+  'home',
+  'devotional',
+  'schedule',
+  'learners',
+];
+
 const renderNextNavigationLink: NavigationLinkRenderer = (linkProps) => (
   <Link {...(linkProps as React.ComponentProps<typeof Link>)} href={linkProps.href} />
 );
@@ -152,6 +159,7 @@ export function ProductShell({
           brandSubtitle="Trinity Grove"
           brandLogo={<span className="product-shell-brand-logo">ἀ</span>}
           navigationItems={[]}
+          primaryNavigationItems={[]}
           renderNavigationLink={renderNextNavigationLink}
           topbarActions={topbarActions}
         >
@@ -225,6 +233,10 @@ export function ProductShell({
       active: activePath === item.href,
     }));
 
+  const primaryNavigationItems = PRIMARY_NAV_ITEM_IDS
+    .map((id) => navigationItems.find((item) => item.id === id))
+    .filter((item): item is NavigationItem => item !== undefined);
+
   const authUser: UserSummaryDto | null = profileUser
     ? {
         id: profileUser.id ?? 'user',
@@ -265,6 +277,7 @@ export function ProductShell({
       brandSubtitle="Trinity Grove"
       brandLogo={<span className="product-shell-brand-logo">ἀ</span>}
       navigationItems={navigationItems}
+      primaryNavigationItems={primaryNavigationItems}
       renderNavigationLink={renderNextNavigationLink}
       topbarActions={topbarActions}
       {...(userProfile !== undefined ? { userProfile } : {})}

@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { MobileNavigation } from './mobile-navigation.js';
+import { MobileMoreSheet } from './mobile-more-sheet.js';
 import { Sidebar } from './sidebar.js';
+import { TabBar } from './tab-bar.js';
 import { Topbar } from './topbar.js';
 
-const MOBILE_NAVIGATION_MEDIA_QUERY = '(max-width: 1024px)';
+const MOBILE_TAB_BAR_MEDIA_QUERY = '(max-width: 1024px)';
 
 export interface NavigationItem {
   id: string;
@@ -34,6 +35,7 @@ export interface AppShellProps {
   brandSubtitle?: React.ReactNode;
   brandLogo?: React.ReactNode;
   navigationItems: NavigationItem[];
+  primaryNavigationItems: NavigationItem[];
   topbarActions?: React.ReactNode;
   userProfile?: AppShellUserProfile;
   renderNavigationLink?: NavigationLinkRenderer | undefined;
@@ -46,30 +48,36 @@ export function AppShell({
   brandSubtitle = 'Educação Domiciliar',
   brandLogo,
   navigationItems,
+  primaryNavigationItems,
   topbarActions,
   userProfile,
   renderNavigationLink,
   className = '',
 }: AppShellProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const mobileNavigationId = useId();
+  const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
+  const moreSheetId = useId();
   const shellRef = useRef<HTMLDivElement>(null);
-  const isMobileMenuOpenRef = useRef(isMobileMenuOpen);
+  const isMoreSheetOpenRef = useRef(isMoreSheetOpen);
   const moveFocusToDesktopNavigationRef = useRef(false);
-  isMobileMenuOpenRef.current = isMobileMenuOpen;
+  isMoreSheetOpenRef.current = isMoreSheetOpen;
   const shellClassName = `ui-appshell ${isSidebarCollapsed ? 'ui-appshell--collapsed' : ''} ${className}`.trim();
   const renderUserProfile = (collapsed: boolean) =>
     typeof userProfile === 'function' ? userProfile(collapsed) : userProfile;
 
+  const overflowItems = navigationItems.filter(
+    (item) => !primaryNavigationItems.some((primary) => primary.id === item.id),
+  );
+  const moreActive = overflowItems.some((item) => item.active === true);
+
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') return;
 
-    const mobileViewport = window.matchMedia(MOBILE_NAVIGATION_MEDIA_QUERY);
+    const mobileViewport = window.matchMedia(MOBILE_TAB_BAR_MEDIA_QUERY);
     const handleViewportChange = (event: MediaQueryListEvent) => {
-      if (!event.matches && isMobileMenuOpenRef.current) {
+      if (!event.matches && isMoreSheetOpenRef.current) {
         moveFocusToDesktopNavigationRef.current = true;
-        setIsMobileMenuOpen(false);
+        setIsMoreSheetOpen(false);
       }
     };
 
@@ -78,23 +86,23 @@ export function AppShell({
   }, []);
 
   useEffect(() => {
-    if (isMobileMenuOpen || !moveFocusToDesktopNavigationRef.current) return;
+    if (isMoreSheetOpen || !moveFocusToDesktopNavigationRef.current) return;
 
     moveFocusToDesktopNavigationRef.current = false;
     const desktopNavigationTarget = shellRef.current?.querySelector<HTMLElement>(
       '.ui-sidebar-navigation-link[aria-current="page"], .ui-sidebar-navigation-link',
     );
     desktopNavigationTarget?.focus();
-  }, [isMobileMenuOpen]);
+  }, [isMoreSheetOpen]);
 
-  const openMobileNavigation = () => {
+  const openMoreSheet = () => {
     moveFocusToDesktopNavigationRef.current = false;
-    setIsMobileMenuOpen(true);
+    setIsMoreSheetOpen(true);
   };
 
-  const closeMobileNavigation = () => {
+  const closeMoreSheet = () => {
     moveFocusToDesktopNavigationRef.current = false;
-    setIsMobileMenuOpen(false);
+    setIsMoreSheetOpen(false);
   };
 
   return (
@@ -115,12 +123,7 @@ export function AppShell({
       />
 
       <div className="ui-appshell-main-wrapper">
-        <Topbar
-          onOpenNavigation={openMobileNavigation}
-          actions={topbarActions}
-          navigationOpen={isMobileMenuOpen}
-          navigationControlsId={mobileNavigationId}
-        />
+        <Topbar brandLogo={brandLogo} brandTitle={brandTitle} actions={topbarActions} />
 
         <main
           id="appshell-main-content"
@@ -132,12 +135,21 @@ export function AppShell({
         </main>
       </div>
 
-      <MobileNavigation
-        id={mobileNavigationId}
-        open={isMobileMenuOpen}
-        onClose={closeMobileNavigation}
-        items={navigationItems}
-        label="Navegação móvel"
+      <TabBar
+        items={primaryNavigationItems}
+        moreActive={moreActive}
+        moreOpen={isMoreSheetOpen}
+        onOpenMore={openMoreSheet}
+        moreControlsId={moreSheetId}
+        renderNavigationLink={renderNavigationLink}
+      />
+
+      <MobileMoreSheet
+        id={moreSheetId}
+        open={isMoreSheetOpen}
+        onClose={closeMoreSheet}
+        items={overflowItems}
+        label="Mais opções"
         userProfile={renderUserProfile(false)}
         renderNavigationLink={renderNavigationLink}
       />

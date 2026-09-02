@@ -10,7 +10,8 @@ import {
   AppShell,
   Sidebar,
   Topbar,
-  MobileNavigation,
+  TabBar,
+  MobileMoreSheet,
   DailyJourney,
   ActivityList,
 } from '../src/index.js';
@@ -145,6 +146,138 @@ describe('New UI Components & Patterns', () => {
       fireEvent.click(screen.getByTestId('drawer-backdrop'));
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('renders a bottom-anchored variant with a stable id when requested', () => {
+      render(
+        <Drawer isOpen={true} onClose={() => {}} position="bottom" id="more-sheet-test">
+          <p>Conteúdo do painel inferior</p>
+        </Drawer>
+      );
+
+      const container = screen.getByTestId('drawer-container');
+      expect(container).toHaveClass('ui-drawer--bottom');
+      expect(container).toHaveAttribute('id', 'more-sheet-test');
+    });
+  });
+
+  describe('TabBar', () => {
+    const primaryItems = [
+      { id: 'home', label: 'Início', href: '/', icon: <span aria-hidden="true">H</span>, active: true },
+      { id: 'devotional', label: 'Devocional', href: '/devotional', icon: <span aria-hidden="true">D</span> },
+    ];
+
+    it('renders the primary items as links and a Mais button reflecting sheet state', () => {
+      const onOpenMore = vi.fn();
+      const { rerender } = render(
+        <TabBar
+          items={primaryItems}
+          moreActive={false}
+          moreOpen={false}
+          onOpenMore={onOpenMore}
+          moreControlsId="more-sheet-id"
+        />
+      );
+
+      expect(screen.getByRole('link', { name: 'Início' })).toHaveAttribute('aria-current', 'page');
+      expect(screen.getByRole('link', { name: 'Devocional' })).not.toHaveAttribute('aria-current');
+
+      const moreButton = screen.getByRole('button', { name: 'Mais' });
+      expect(moreButton).toHaveAttribute('aria-haspopup', 'dialog');
+      expect(moreButton).toHaveAttribute('aria-expanded', 'false');
+      expect(moreButton).toHaveAttribute('aria-controls', 'more-sheet-id');
+      expect(moreButton).not.toHaveClass('ui-tab-bar-link--active');
+
+      fireEvent.click(moreButton);
+      expect(onOpenMore).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <TabBar
+          items={primaryItems}
+          moreActive={true}
+          moreOpen={true}
+          onOpenMore={onOpenMore}
+          moreControlsId="more-sheet-id"
+        />
+      );
+      expect(screen.getByRole('button', { name: 'Mais' })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('button', { name: 'Mais' })).toHaveClass('ui-tab-bar-link--active');
+    });
+
+    it('forwards an injected navigation link renderer', () => {
+      render(
+        <TabBar
+          items={primaryItems}
+          moreActive={false}
+          moreOpen={false}
+          onOpenMore={() => {}}
+          renderNavigationLink={({ href, ...linkProps }) => (
+            <a {...linkProps} href={`/adapted${href}`} data-adapted-link="true" />
+          )}
+        />
+      );
+
+      const link = screen.getByRole('link', { name: 'Início' });
+      expect(link).toHaveAttribute('href', '/adapted/');
+      expect(link).toHaveAttribute('data-adapted-link', 'true');
+    });
+  });
+
+  describe('MobileMoreSheet', () => {
+    const overflowItems = [
+      { id: 'curriculum', label: 'Currículo', href: '/curriculum', icon: <span aria-hidden="true">C</span>, active: true },
+      { id: 'reports', label: 'Relatórios', href: '/reports', icon: <span aria-hidden="true">R</span> },
+    ];
+
+    it('is absent when closed and renders the overflow items with active state when open', () => {
+      const onClose = vi.fn();
+      const { rerender } = render(
+        <MobileMoreSheet items={overflowItems} open={false} onClose={onClose} />
+      );
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+      rerender(<MobileMoreSheet items={overflowItems} open={true} onClose={onClose} id="more-sheet" />);
+
+      const dialog = screen.getByRole('dialog', { name: 'Mais opções' });
+      expect(dialog).toHaveAttribute('id', 'more-sheet');
+      expect(within(dialog).getByRole('link', { name: 'Currículo' })).toHaveAttribute('aria-current', 'page');
+      expect(within(dialog).getByRole('link', { name: 'Relatórios' })).not.toHaveAttribute('aria-current');
+    });
+
+    it('closes when an item link is activated and shows the user profile slot', () => {
+      const onClose = vi.fn();
+      render(
+        <MobileMoreSheet
+          items={overflowItems}
+          open={true}
+          onClose={onClose}
+          userProfile={<span>Wendel Silva</span>}
+        />
+      );
+
+      expect(screen.getByText('Wendel Silva')).toBeInTheDocument();
+
+      const link = screen.getByRole('link', { name: 'Relatórios' });
+      link.addEventListener('click', (event) => event.preventDefault());
+      fireEvent.click(link);
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('forwards an injected navigation link renderer', () => {
+      render(
+        <MobileMoreSheet
+          items={overflowItems}
+          open={true}
+          onClose={() => {}}
+          renderNavigationLink={({ href, ...linkProps }) => (
+            <a {...linkProps} href={`/adapted${href}`} data-adapted-link="true" />
+          )}
+        />
+      );
+
+      const link = screen.getByRole('link', { name: 'Currículo' });
+      expect(link).toHaveAttribute('href', '/adapted/curriculum');
+      expect(link).toHaveAttribute('data-adapted-link', 'true');
     });
   });
 
@@ -411,93 +544,41 @@ describe('New UI Components & Patterns', () => {
       expect(screen.getByRole('button', { name: 'Expandir barra lateral' })).toBeInTheDocument();
     });
 
-    it('exports a topbar banner with a named mobile navigation control and actions', () => {
-      const onOpenNavigation = vi.fn();
+    it('exports a topbar banner with a brand mark and actions', () => {
       render(
-        <Topbar onOpenNavigation={onOpenNavigation} actions={<button type="button">Perfil</button>} />
+        <Topbar
+          brandLogo={<span aria-hidden="true">ἀ</span>}
+          brandTitle="Aletheia"
+          actions={<button type="button">Perfil</button>}
+        />
       );
 
       expect(screen.getByRole('banner')).toBeInTheDocument();
-      fireEvent.click(screen.getByRole('button', { name: 'Abrir navegação' }));
-      expect(onOpenNavigation).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('appshell-topbar-brand')).toHaveTextContent('Aletheia');
       expect(screen.getByRole('button', { name: 'Perfil' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Abrir navegação' })).not.toBeInTheDocument();
     });
 
-    it('exports mobile navigation that is absent when closed and closes from its controls', () => {
+    it('is absent when closed and opens the Mais sheet from the tab bar', () => {
       const onClose = vi.fn();
       const { rerender } = render(
-        <MobileNavigation
-          items={navigationItems}
-          open={false}
-          onClose={onClose}
-          label="Navegação móvel"
-        />
+        <MobileMoreSheet items={navigationItems} open={false} onClose={onClose} label="Mais opções" />
       );
-
-      expect(screen.queryByRole('dialog', { name: 'Navegação móvel' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('dialog', { name: 'Mais opções' })).not.toBeInTheDocument();
 
       rerender(
-        <MobileNavigation
-          items={navigationItems}
-          open={true}
-          onClose={onClose}
-          label="Navegação móvel"
-        />
+        <MobileMoreSheet items={navigationItems} open={true} onClose={onClose} label="Mais opções" />
       );
-      expect(screen.getByRole('dialog', { name: 'Navegação móvel' })).toBeInTheDocument();
-      expect(screen.getByRole('navigation', { name: 'Navegação móvel' })).toBeInTheDocument();
+      expect(screen.getByRole('dialog', { name: 'Mais opções' })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'Início' })).toHaveAttribute('aria-current', 'page');
-
-      fireEvent.click(screen.getByRole('button', { name: 'Fechar navegação' }));
-      expect(onClose).toHaveBeenCalledTimes(1);
-
-      const learnersLink = screen.getByRole('link', { name: 'Educandos' });
-      learnersLink.addEventListener('click', (event) => event.preventDefault());
-      fireEvent.click(learnersLink);
-      expect(onClose).toHaveBeenCalledTimes(2);
     });
 
-    it('moves focus into mobile navigation, closes on Escape, and restores the opener', () => {
-      function MobileNavigationHarness() {
-        const [open, setOpen] = React.useState(false);
-        return (
-          <>
-            <button type="button" onClick={() => setOpen(true)}>Abrir painel</button>
-            <MobileNavigation
-              items={navigationItems}
-              open={open}
-              onClose={() => setOpen(false)}
-              label="Navegação móvel"
-            />
-          </>
-        );
-      }
-
-      document.body.style.overflow = 'scroll';
-      render(<MobileNavigationHarness />);
-      const opener = screen.getByRole('button', { name: 'Abrir painel' });
-      opener.focus();
-      fireEvent.click(opener);
-
-      const closeButton = screen.getByRole('button', { name: 'Fechar navegação' });
-      const lastLink = screen.getByRole('link', { name: 'Educandos' });
-      expect(document.body.style.overflow).toBe('hidden');
-      expect(closeButton).toHaveFocus();
-      fireEvent.keyDown(closeButton, { key: 'Tab', shiftKey: true });
-      expect(lastLink).toHaveFocus();
-      fireEvent.keyDown(lastLink, { key: 'Tab' });
-      expect(closeButton).toHaveFocus();
-      fireEvent.keyDown(document, { key: 'Escape' });
-      expect(screen.queryByRole('dialog', { name: 'Navegação móvel' })).not.toBeInTheDocument();
-      expect(opener).toHaveFocus();
-      expect(document.body.style.overflow).toBe('scroll');
-    });
-
-    it('composes responsive navigation, topbar, and content while owning their UI state', () => {
+    it('composes the sidebar, topbar, tab bar, and content while owning their UI state', () => {
       render(
         <AppShell
           brandTitle="Aletheia Test"
           navigationItems={navigationItems}
+          primaryNavigationItems={[navigationItems[0]!]}
           topbarActions={<button type="button">Perfil</button>}
         >
           <div>Conteúdo Principal</div>
@@ -507,21 +588,24 @@ describe('New UI Components & Patterns', () => {
       expect(screen.getByTestId('app-shell')).toBeInTheDocument();
       expect(screen.getByTestId('appshell-sidebar')).toBeInTheDocument();
       expect(screen.getByTestId('appshell-topbar')).toBeInTheDocument();
+      expect(screen.getByTestId('appshell-tab-bar')).toBeInTheDocument();
       expect(screen.getByTestId('appshell-nav-home')).toHaveAttribute('aria-current', 'page');
       expect(screen.getByText('Conteúdo Principal')).toBeInTheDocument();
 
-      const openButton = screen.getByRole('button', { name: 'Abrir navegação' });
-      fireEvent.click(openButton);
-      const mobileNavigation = screen.getByRole('dialog', { name: 'Navegação móvel' });
-      expect(openButton).toHaveAttribute('aria-controls', mobileNavigation.id);
-      fireEvent.click(screen.getByRole('button', { name: 'Fechar navegação' }));
-      expect(screen.queryByRole('dialog', { name: 'Navegação móvel' })).not.toBeInTheDocument();
+      const moreButton = screen.getByRole('button', { name: 'Mais' });
+      fireEvent.click(moreButton);
+      const moreSheet = screen.getByRole('dialog', { name: 'Mais opções' });
+      expect(moreButton).toHaveAttribute('aria-controls', moreSheet.id);
+      // The one primary item (Início) must not be duplicated inside the overflow sheet.
+      expect(within(moreSheet).queryByRole('link', { name: 'Início' })).not.toBeInTheDocument();
+      expect(within(moreSheet).getByRole('link', { name: 'Educandos' })).toBeInTheDocument();
     });
 
-    it('forwards an injected navigation link renderer to desktop and mobile navigation', () => {
+    it('forwards an injected navigation link renderer to desktop, tab bar, and overflow sheet', () => {
       render(
         <AppShell
           navigationItems={navigationItems}
+          primaryNavigationItems={[navigationItems[1]!]}
           renderNavigationLink={({ href, ...linkProps }) => (
             <a {...linkProps} href={`/adapted${href}`} data-adapted-link="true" />
           )}
@@ -532,16 +616,19 @@ describe('New UI Components & Patterns', () => {
 
       const desktopLink = screen.getByTestId('appshell-nav-home');
       expect(desktopLink).toHaveAttribute('href', '/adapted/');
-      expect(desktopLink).toHaveAttribute('data-adapted-link', 'true');
 
-      fireEvent.click(screen.getByRole('button', { name: 'Abrir navegação' }));
-      const mobileNavigation = screen.getByRole('dialog', { name: 'Navegação móvel' });
-      const mobileLink = within(mobileNavigation).getByRole('link', { name: 'Início' });
-      expect(mobileLink).toHaveAttribute('href', '/adapted/');
-      expect(mobileLink).toHaveAttribute('data-adapted-link', 'true');
+      const tabBarLink = screen.getByTestId('appshell-tab-bar-learners');
+      expect(tabBarLink).toHaveAttribute('href', '/adapted/learners');
+      expect(tabBarLink).toHaveAttribute('data-adapted-link', 'true');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Mais' }));
+      const moreSheet = screen.getByRole('dialog');
+      const overflowLink = within(moreSheet).getByRole('link', { name: 'Início' });
+      expect(overflowLink).toHaveAttribute('href', '/adapted/');
+      expect(overflowLink).toHaveAttribute('data-adapted-link', 'true');
     });
 
-    it('closes mobile navigation and moves focus into desktop navigation beyond the breakpoint', () => {
+    it('closes an open Mais sheet and moves focus into desktop navigation beyond the breakpoint', () => {
       let matches = true;
       const listeners = new Set<(event: MediaQueryListEvent) => void>();
       const mediaQueryList = {
@@ -570,18 +657,14 @@ describe('New UI Components & Patterns', () => {
       try {
         document.body.style.overflow = 'scroll';
         render(
-          <AppShell
-            navigationItems={navigationItems}
-            topbarActions={<button type="button">Perfil</button>}
-          >
+          <AppShell navigationItems={navigationItems} primaryNavigationItems={[navigationItems[0]!]}>
             <div>Conteúdo Principal</div>
           </AppShell>
         );
 
-        const opener = screen.getByRole('button', { name: 'Abrir navegação' });
-        opener.focus();
-        fireEvent.click(opener);
-        expect(screen.getByRole('dialog', { name: 'Navegação móvel' })).toBeInTheDocument();
+        const moreButton = screen.getByRole('button', { name: 'Mais' });
+        fireEvent.click(moreButton);
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
         expect(document.body.style.overflow).toBe('hidden');
 
         act(() => {
@@ -590,10 +673,10 @@ describe('New UI Components & Patterns', () => {
         });
 
         expect(matchMedia).toHaveBeenCalledWith('(max-width: 1024px)');
-        expect(screen.queryByRole('dialog', { name: 'Navegação móvel' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
         expect(document.body.style.overflow).toBe('scroll');
         expect(screen.getByTestId('appshell-nav-home')).toHaveFocus();
-        expect(opener).not.toHaveFocus();
+        expect(moreButton).not.toHaveFocus();
       } finally {
         Object.defineProperty(window, 'matchMedia', {
           configurable: true,

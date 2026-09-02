@@ -4,7 +4,8 @@ import { Home, Users, BookOpen, Calendar, Settings, Bell, User } from "lucide-re
 import { AppShell, type NavigationItem } from "../components/app-shell.js";
 import { Sidebar } from "../components/sidebar.js";
 import { Topbar } from "../components/topbar.js";
-import { MobileNavigation } from "../components/mobile-navigation.js";
+import { TabBar } from "../components/tab-bar.js";
+import { MobileMoreSheet } from "../components/mobile-more-sheet.js";
 import { IconButton } from "../components/icon-button.js";
 import { Badge } from "../components/badge.js";
 
@@ -13,7 +14,7 @@ const meta: Meta = {
   parameters: {
     docs: {
       description: {
-        component: "Responsive navigation hierarchy comprising AppShell, Sidebar, Topbar, and MobileNavigation drawer.",
+        component: "Responsive navigation hierarchy: AppShell composes a desktop Sidebar with a mobile TabBar (4 primary items) plus a MobileMoreSheet for the overflow.",
       },
     },
   },
@@ -29,12 +30,15 @@ const navigationItems: NavigationItem[] = [
   { id: "settings", label: "Configurações", href: "/settings", icon: <Settings size={18} /> },
 ];
 
+const primaryNavigationItems = navigationItems.slice(0, 2);
+
 export const AppShellComplete = () => (
   <div style={{ height: "600px", border: "1px solid var(--border-light)", borderRadius: "8px", overflow: "hidden" }}>
     <AppShell
       brandTitle="Aletheia"
       brandSubtitle="Família Santos"
       navigationItems={navigationItems}
+      primaryNavigationItems={primaryNavigationItems}
       topbarActions={
         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
           <IconButton aria-label="Notificações" size="sm">
@@ -99,7 +103,8 @@ export const SidebarOnly = () => {
 export const TopbarOnly = () => (
   <div style={{ border: "1px solid var(--border-light)", borderRadius: "8px" }}>
     <Topbar
-      onOpenNavigation={() => alert("Abrir navegação mobile")}
+      brandLogo={<span>ἀ</span>}
+      brandTitle="Aletheia"
       actions={
         <div style={{ display: "flex", gap: "0.5rem" }}>
           <IconButton aria-label="Notificações" size="sm">
@@ -111,20 +116,27 @@ export const TopbarOnly = () => (
   </div>
 );
 
-export const MobileNavigationDrawer = () => {
+export const MobileTabBar = () => (
+  <div style={{ position: "relative", height: "120px", border: "1px solid var(--border-light)", borderRadius: "8px", overflow: "hidden" }}>
+    <TabBar
+      items={primaryNavigationItems}
+      moreActive={false}
+      moreOpen={false}
+      onOpenMore={() => alert("Abrir Mais")}
+    />
+  </div>
+);
+
+export const MobileMoreSheetStory = () => {
   const [open, setOpen] = useState(false);
+  const overflowItems = navigationItems.slice(2);
 
   return (
     <div>
       <button type="button" onClick={() => setOpen(true)}>
-        Abrir Menu Mobile
+        Abrir Mais
       </button>
-      <MobileNavigation
-        open={open}
-        onClose={() => setOpen(false)}
-        items={navigationItems}
-        label="Navegação móvel"
-      />
+      <MobileMoreSheet open={open} onClose={() => setOpen(false)} items={overflowItems} />
     </div>
   );
 };
