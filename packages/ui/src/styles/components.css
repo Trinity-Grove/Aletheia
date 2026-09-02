@@ -887,12 +887,10 @@
 }
 .ui-sidebar-collapse-toggle:focus-visible,
 .ui-sidebar-navigation-link:focus-visible,
-.ui-topbar-menu-button:focus-visible,
 .ui-mobile-navigation-close:focus-visible,
 .ui-mobile-navigation-link:focus-visible,
 .ui-appshell-collapse-toggle:focus-visible,
-.ui-appshell-nav-link:focus-visible,
-.ui-appshell-mobile-menu-btn:focus-visible {
+.ui-appshell-nav-link:focus-visible {
   outline: var(--ui-focus-ring-width) solid var(--ui-focus-ring-color);
   outline-offset: var(--ui-focus-ring-offset);
 }
@@ -979,15 +977,22 @@
   justify-content: space-between;
   padding: 0 calc(var(--ui-space-12) / 2);
 }
-.ui-topbar-menu-button,
-.ui-appshell-mobile-menu-btn {
+.ui-topbar-brand,
+.ui-appshell-topbar-left {
   display: none;
-  background: transparent;
-  border: 1px solid var(--ui-border-default);
-  border-radius: var(--ui-radius-md);
-  padding: calc(var(--ui-space-8) / 4);
+  align-items: center;
+  gap: calc(var(--ui-space-12) / 4);
+}
+.ui-topbar-brand-logo {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.25rem;
+}
+.ui-topbar-brand-title {
+  font-family: var(--ui-font-serif);
+  font-weight: 700;
+  font-size: 1.0625rem;
   color: var(--ui-text-brand);
-  cursor: pointer;
 }
 .ui-topbar-actions,
 .ui-appshell-topbar-right {
@@ -1212,9 +1217,9 @@
 }
 
 @media (max-width: 1024px) {
-  .ui-topbar-menu-button,
-  .ui-appshell-mobile-menu-btn {
-    display: inline-flex;
+  .ui-topbar-brand,
+  .ui-appshell-topbar-left {
+    display: flex;
   }
   .ui-sidebar,
   .ui-appshell-sidebar {

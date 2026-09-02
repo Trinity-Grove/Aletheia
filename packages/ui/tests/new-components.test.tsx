@@ -545,16 +545,19 @@ describe('New UI Components & Patterns', () => {
       expect(screen.getByRole('button', { name: 'Expandir barra lateral' })).toBeInTheDocument();
     });
 
-    it('exports a topbar banner with a named mobile navigation control and actions', () => {
-      const onOpenNavigation = vi.fn();
+    it('exports a topbar banner with a brand mark and actions', () => {
       render(
-        <Topbar onOpenNavigation={onOpenNavigation} actions={<button type="button">Perfil</button>} />
+        <Topbar
+          brandLogo={<span aria-hidden="true">ἀ</span>}
+          brandTitle="Aletheia"
+          actions={<button type="button">Perfil</button>}
+        />
       );
 
       expect(screen.getByRole('banner')).toBeInTheDocument();
-      fireEvent.click(screen.getByRole('button', { name: 'Abrir navegação' }));
-      expect(onOpenNavigation).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('appshell-topbar-brand')).toHaveTextContent('Aletheia');
       expect(screen.getByRole('button', { name: 'Perfil' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Abrir navegação' })).not.toBeInTheDocument();
     });
 
     it('exports mobile navigation that is absent when closed and closes from its controls', () => {
