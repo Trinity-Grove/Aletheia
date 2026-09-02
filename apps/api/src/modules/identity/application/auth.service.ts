@@ -58,7 +58,14 @@ export class AuthService implements IdentityPublicApi {
 
     const existing = await this.userRepository.findByEmail(dto.email);
     if (existing) {
-      throw new ConflictException('A user with this email already exists.');
+      // Anti-enumeration: hash a throwaway value so this branch costs
+      // roughly the same as the real create path below — otherwise a
+      // caller can tell an email is taken just from how fast we reply.
+      // The message deliberately doesn't confirm the account exists,
+      // and the exception type matches the weak-password rejection
+      // above rather than a distinctive 409.
+      this.passwordHasher.hash(dto.password);
+      throw new BadRequestException('Não foi possível concluir o cadastro com os dados fornecidos.');
     }
 
     const passwordHash = this.passwordHasher.hash(dto.password);
