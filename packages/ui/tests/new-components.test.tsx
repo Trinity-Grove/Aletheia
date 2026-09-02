@@ -12,6 +12,7 @@ import {
   Topbar,
   MobileNavigation,
   TabBar,
+  MobileMoreSheet,
   DailyJourney,
   ActivityList,
 } from '../src/index.js';
@@ -219,6 +220,64 @@ describe('New UI Components & Patterns', () => {
 
       const link = screen.getByRole('link', { name: 'Início' });
       expect(link).toHaveAttribute('href', '/adapted/');
+      expect(link).toHaveAttribute('data-adapted-link', 'true');
+    });
+  });
+
+  describe('MobileMoreSheet', () => {
+    const overflowItems = [
+      { id: 'curriculum', label: 'Currículo', href: '/curriculum', icon: <span aria-hidden="true">C</span>, active: true },
+      { id: 'reports', label: 'Relatórios', href: '/reports', icon: <span aria-hidden="true">R</span> },
+    ];
+
+    it('is absent when closed and renders the overflow items with active state when open', () => {
+      const onClose = vi.fn();
+      const { rerender } = render(
+        <MobileMoreSheet items={overflowItems} open={false} onClose={onClose} />
+      );
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+      rerender(<MobileMoreSheet items={overflowItems} open={true} onClose={onClose} id="more-sheet" />);
+
+      const dialog = screen.getByRole('dialog', { name: 'Mais opções' });
+      expect(dialog).toHaveAttribute('id', 'more-sheet');
+      expect(within(dialog).getByRole('link', { name: 'Currículo' })).toHaveAttribute('aria-current', 'page');
+      expect(within(dialog).getByRole('link', { name: 'Relatórios' })).not.toHaveAttribute('aria-current');
+    });
+
+    it('closes when an item link is activated and shows the user profile slot', () => {
+      const onClose = vi.fn();
+      render(
+        <MobileMoreSheet
+          items={overflowItems}
+          open={true}
+          onClose={onClose}
+          userProfile={<span>Wendel Silva</span>}
+        />
+      );
+
+      expect(screen.getByText('Wendel Silva')).toBeInTheDocument();
+
+      const link = screen.getByRole('link', { name: 'Relatórios' });
+      link.addEventListener('click', (event) => event.preventDefault());
+      fireEvent.click(link);
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('forwards an injected navigation link renderer', () => {
+      render(
+        <MobileMoreSheet
+          items={overflowItems}
+          open={true}
+          onClose={() => {}}
+          renderNavigationLink={({ href, ...linkProps }) => (
+            <a {...linkProps} href={`/adapted${href}`} data-adapted-link="true" />
+          )}
+        />
+      );
+
+      const link = screen.getByRole('link', { name: 'Currículo' });
+      expect(link).toHaveAttribute('href', '/adapted/curriculum');
       expect(link).toHaveAttribute('data-adapted-link', 'true');
     });
   });

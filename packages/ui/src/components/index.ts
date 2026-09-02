@@ -23,5 +23,6 @@ export * from './app-shell.js';
 export * from './sidebar.js';
 export * from './topbar.js';
 export * from './tab-bar.js';
+export * from './mobile-more-sheet.js';
 export * from './mobile-navigation.js';
 export * from './icon.js';

@@ -1057,6 +1057,53 @@
 .ui-tab-bar-label {
   white-space: nowrap;
 }
+.ui-more-sheet-list {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--ui-space-8) / 8);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.ui-more-sheet-link {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--ui-space-12) / 4);
+  padding: calc(var(--ui-space-10) / 4) calc(var(--ui-space-12) / 4);
+  color: var(--ui-text-secondary);
+  font-family: var(--ui-font-sans);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: var(--ui-radius-md);
+  transition:
+    background-color var(--ui-motion-duration-fast) var(--ui-motion-easing-default),
+    color var(--ui-motion-duration-fast) var(--ui-motion-easing-default);
+}
+.ui-more-sheet-link:hover {
+  color: var(--ui-text-brand);
+  background-color: var(--ui-surface-hover);
+}
+.ui-more-sheet-link--active {
+  color: var(--ui-action-primary-foreground);
+  background-color: var(--ui-action-primary-background);
+}
+.ui-more-sheet-icon {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+.ui-more-sheet-label {
+  flex: 1;
+}
+.ui-more-sheet-badge {
+  font-size: 0.6875rem;
+}
+.ui-more-sheet-profile {
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ui-border-default);
+}
 .ui-mobile-navigation-layer {
   display: none;
   position: fixed;
