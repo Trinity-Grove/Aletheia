@@ -68,7 +68,12 @@ export function SubjectCard({
                 width: '28px',
                 height: '28px',
                 borderRadius: 'var(--radius-sm)',
-                backgroundColor: 'var(--sage-soft)',
+                // Tint the chip itself with the subject's own color, not just
+                // the icon glyph — gives each discipline a distinct identity
+                // at a glance instead of every chip looking the same.
+                backgroundColor: subject.color
+                  ? `color-mix(in srgb, ${subject.color} 16%, white)`
+                  : 'var(--sage-soft)',
                 color: subjectColor,
                 display: 'inline-flex',
                 alignItems: 'center',
