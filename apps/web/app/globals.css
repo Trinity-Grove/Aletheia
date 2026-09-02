@@ -684,6 +684,18 @@ p.page-subtitle {
   margin-bottom: 2rem;
 }
 
+.devotional-page-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.2fr);
+  gap: 2rem;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .devotional-page-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .dashboard-page-module-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

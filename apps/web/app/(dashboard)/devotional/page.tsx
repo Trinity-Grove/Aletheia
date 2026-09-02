@@ -181,7 +181,7 @@ export default function DevotionalPage({
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1.2fr)', gap: '2rem', alignItems: 'start' }}>
+        <div className="devotional-page-grid">
           <div>
             <DevotionalView
               currentDate={currentDate}
