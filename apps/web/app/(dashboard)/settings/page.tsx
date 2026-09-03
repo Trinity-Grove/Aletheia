@@ -6,13 +6,17 @@ import type {
   AccountAuditLogEntryDto,
   DataExportJobResponseDto,
   FamilyDataExportPackageDto,
+  FamilyInvitationDto,
+  FamilyMemberDto,
   FamilySettingsResponseDto,
+  InviteGuardianDto,
   LearnerSummaryDto,
   NotificationItemResponseDto,
   UpdateFamilySettingsDto,
 } from '@aletheia/contracts';
 import { ProductShell } from '../../../src/components/layout/product-shell';
 import { FamilyGeneralSettings } from '../../../src/components/settings/family-general-settings';
+import { FamilyMembersSettings } from '../../../src/components/settings/family-members-settings';
 import { NotificationPreferences } from '../../../src/components/settings/notification-preferences';
 import { DataBackupCard } from '../../../src/components/settings/data-backup-card';
 import { AccountSecuritySettings } from '../../../src/components/settings/account-security-settings';
@@ -20,7 +24,7 @@ import { AccountActivityLog } from '../../../src/components/settings/account-act
 import { useAuth } from '../../../src/lib/auth/auth-context';
 import { api } from '../../../src/lib/api';
 
-type ActiveTab = 'general' | 'notifications' | 'backup' | 'account';
+type ActiveTab = 'general' | 'family' | 'notifications' | 'backup' | 'account';
 
 export default function SettingsPage() {
   const { user, changePassword, changeEmail, refreshSession } = useAuth();
@@ -32,6 +36,8 @@ export default function SettingsPage() {
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
   const [activeLearnerId, setActiveLearnerId] = useState<string | null>(null);
   const [settings, setSettings] = useState<FamilySettingsResponseDto | null>(null);
+  const [members, setMembers] = useState<FamilyMemberDto[]>([]);
+  const [invitations, setInvitations] = useState<FamilyInvitationDto[]>([]);
   const [notifications, setNotifications] = useState<NotificationItemResponseDto[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [exportJobs, setExportJobs] = useState<DataExportJobResponseDto[]>([]);
@@ -65,6 +71,24 @@ export default function SettingsPage() {
         if (settingsRes.ok) {
           const sData = await settingsRes.json();
           setSettings(sData);
+        }
+
+        // Fetch family members
+        const familyRes = await fetch(`/api/v1/families/${storedFamilyId}`, {
+          credentials: 'include',
+        });
+        if (familyRes.ok) {
+          const fData = await familyRes.json();
+          setMembers(fData.members ?? []);
+        }
+
+        // Fetch pending invitations
+        const invitationsRes = await fetch(`/api/v1/families/${storedFamilyId}/invitations`, {
+          credentials: 'include',
+        });
+        if (invitationsRes.ok) {
+          const iData = await invitationsRes.json();
+          setInvitations(iData);
         }
 
         // Fetch notifications
@@ -160,6 +184,38 @@ export default function SettingsPage() {
     return res.json();
   };
 
+  const handleInviteGuardian = async (dto: InviteGuardianDto) => {
+    if (!familyId) return;
+    const res = await fetch(`/api/v1/families/${familyId}/invitations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(dto),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Falha ao enviar o convite');
+    }
+
+    const invitation: FamilyInvitationDto = await res.json();
+    setInvitations((prev) => [...prev, invitation]);
+  };
+
+  const handleCancelInvitation = async (id: string) => {
+    const res = await fetch(`/api/v1/invitations/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Falha ao cancelar o convite');
+    }
+
+    setInvitations((prev) => prev.filter((invitation) => invitation.id !== id));
+  };
+
   const handleMarkNotificationAsRead = async (id: string) => {
     if (!familyId) return;
     const res = await fetch(`/api/v1/families/${familyId}/notifications/${id}/read`, {
@@ -231,6 +287,28 @@ export default function SettingsPage() {
           >
             <AletheiaIcon name="building-2" size="sm" />
             <span>Identidade & Geral</span>
+          </button>
+
+          <button
+            type="button"
+            data-testid="tab-family-members"
+            onClick={() => setActiveTab('family')}
+            style={{
+              padding: '0.75rem 1.25rem',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'family' ? '2px solid var(--forest)' : '2px solid transparent',
+              color: activeTab === 'family' ? 'var(--forest)' : 'var(--text-secondary)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            <AletheiaIcon name="users" size="sm" />
+            <span>Família & Responsáveis</span>
           </button>
 
           <button
@@ -310,6 +388,15 @@ export default function SettingsPage() {
               <FamilyGeneralSettings
                 settings={settings}
                 onSave={handleSaveSettings}
+              />
+            )}
+
+            {activeTab === 'family' && (
+              <FamilyMembersSettings
+                members={members}
+                invitations={invitations}
+                onInvite={handleInviteGuardian}
+                onCancelInvitation={handleCancelInvitation}
               />
             )}
 

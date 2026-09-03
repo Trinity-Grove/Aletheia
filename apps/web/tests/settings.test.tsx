@@ -4,10 +4,13 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type {
   AccountAuditLogEntryDto,
   FamilyDataExportPackageDto,
+  FamilyInvitationDto,
+  FamilyMemberDto,
   FamilySettingsResponseDto,
   NotificationItemResponseDto,
 } from '@aletheia/contracts';
 import { FamilyGeneralSettings } from '../src/components/settings/family-general-settings';
+import { FamilyMembersSettings } from '../src/components/settings/family-members-settings';
 import { NotificationPreferences } from '../src/components/settings/notification-preferences';
 import { DataBackupCard } from '../src/components/settings/data-backup-card';
 import { AccountSecuritySettings } from '../src/components/settings/account-security-settings';
@@ -609,6 +612,139 @@ describe('Settings Hub, Notification Center & Data Backup Web Components', () =>
       );
       await waitFor(() => expect(onMfaStateChanged).toHaveBeenCalled());
       expect(await screen.findByTestId('mfa-success')).toBeDefined();
+    });
+  });
+
+  describe('FamilyMembersSettings', () => {
+    const mockMembers: FamilyMemberDto[] = [
+      {
+        id: 'member-1',
+        familyId: '11111111-1111-1111-1111-111111111111',
+        userId: 'user-1',
+        role: 'OWNER_GUARDIAN',
+        user: {
+          id: 'user-1',
+          email: 'guardian@aletheia.edu',
+          fullName: 'Jane Doe',
+          emailVerified: true,
+          mfaEnabled: false,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+        createdAt: '2026-01-01T00:00:00.000Z',
+      },
+    ];
+
+    const mockInvitations: FamilyInvitationDto[] = [
+      {
+        id: 'invitation-1',
+        familyId: '11111111-1111-1111-1111-111111111111',
+        email: 'pending@aletheia.edu',
+        role: 'EDUCATOR',
+        invitedBy: 'user-1',
+        expiresAt: '2026-02-01T00:00:00.000Z',
+        createdAt: '2026-01-15T00:00:00.000Z',
+      },
+    ];
+
+    it('renders members and pending invitations', () => {
+      render(
+        <AuthProvider role="OWNER_GUARDIAN">
+          <FamilyMembersSettings
+            members={mockMembers}
+            invitations={mockInvitations}
+            onInvite={vi.fn()}
+            onCancelInvitation={vi.fn()}
+          />
+        </AuthProvider>,
+      );
+
+      expect(screen.getByTestId('family-member-member-1')).toHaveTextContent('Jane Doe');
+      expect(screen.getByTestId('pending-invitation-invitation-1')).toHaveTextContent('pending@aletheia.edu');
+    });
+
+    it('sends an invitation and shows success feedback', async () => {
+      const onInvite = vi.fn().mockResolvedValue(undefined);
+
+      render(
+        <AuthProvider role="OWNER_GUARDIAN">
+          <FamilyMembersSettings
+            members={mockMembers}
+            invitations={[]}
+            onInvite={onInvite}
+            onCancelInvitation={vi.fn()}
+          />
+        </AuthProvider>,
+      );
+
+      fireEvent.change(screen.getByTestId('invite-guardian-email-input'), {
+        target: { value: 'new-guardian@aletheia.edu' },
+      });
+      fireEvent.change(screen.getByTestId('invite-guardian-role-select'), {
+        target: { value: 'CO_GUARDIAN' },
+      });
+      fireEvent.click(screen.getByTestId('invite-guardian-submit-button'));
+
+      await waitFor(() =>
+        expect(onInvite).toHaveBeenCalledWith({ email: 'new-guardian@aletheia.edu', role: 'CO_GUARDIAN' }),
+      );
+      expect(await screen.findByTestId('invite-guardian-success')).toBeDefined();
+    });
+
+    it('shows an error when the invitation fails', async () => {
+      const onInvite = vi.fn().mockRejectedValue(new Error('E-mail já convidado.'));
+
+      render(
+        <AuthProvider role="OWNER_GUARDIAN">
+          <FamilyMembersSettings
+            members={mockMembers}
+            invitations={[]}
+            onInvite={onInvite}
+            onCancelInvitation={vi.fn()}
+          />
+        </AuthProvider>,
+      );
+
+      fireEvent.change(screen.getByTestId('invite-guardian-email-input'), {
+        target: { value: 'dup@aletheia.edu' },
+      });
+      fireEvent.click(screen.getByTestId('invite-guardian-submit-button'));
+
+      expect(await screen.findByTestId('invite-guardian-error')).toHaveTextContent('E-mail já convidado.');
+    });
+
+    it('cancels a pending invitation', async () => {
+      const onCancelInvitation = vi.fn().mockResolvedValue(undefined);
+
+      render(
+        <AuthProvider role="OWNER_GUARDIAN">
+          <FamilyMembersSettings
+            members={mockMembers}
+            invitations={mockInvitations}
+            onInvite={vi.fn()}
+            onCancelInvitation={onCancelInvitation}
+          />
+        </AuthProvider>,
+      );
+
+      fireEvent.click(screen.getByTestId('cancel-invitation-invitation-1'));
+
+      await waitFor(() => expect(onCancelInvitation).toHaveBeenCalledWith('invitation-1'));
+    });
+
+    it('hides invite form and cancel action for EDUCATOR role', () => {
+      render(
+        <AuthProvider role="EDUCATOR">
+          <FamilyMembersSettings
+            members={mockMembers}
+            invitations={mockInvitations}
+            onInvite={vi.fn()}
+            onCancelInvitation={vi.fn()}
+          />
+        </AuthProvider>,
+      );
+
+      expect(screen.queryByTestId('invite-guardian-card')).toBeNull();
+      expect(screen.queryByTestId('cancel-invitation-invitation-1')).toBeNull();
     });
   });
 
