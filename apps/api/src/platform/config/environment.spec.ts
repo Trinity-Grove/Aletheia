@@ -8,6 +8,16 @@ import {
   parseEnvironment,
 } from './environment.js';
 
+// AppModule pulls in IdentityModule -> AuthService -> otplib transitively.
+// otplib v13 ships ESM-only runtime deps that ts-jest can't transform, so
+// this suite mocks it the same way auth.service.spec.ts does — it only
+// needs DI wiring to succeed, never real TOTP math.
+jest.mock('otplib', () => ({
+  generateSecret: jest.fn(() => 'FAKESECRET'),
+  generateURI: jest.fn(() => 'otpauth://totp/Aletheia:user?secret=FAKESECRET'),
+  verifySync: jest.fn(() => ({ valid: false, delta: undefined })),
+}));
+
 @Injectable()
 class EnvironmentConsumer {
   readonly environment: Environment;
