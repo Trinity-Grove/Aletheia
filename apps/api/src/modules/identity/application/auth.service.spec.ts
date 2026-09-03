@@ -21,7 +21,10 @@ import type {
   AccountAuditLogRecord,
   AccountAuditLogRepository,
 } from '../infrastructure/account-audit-log.repository.js';
-import type { MfaRepository } from '../infrastructure/mfa.repository.js';
+import type { MfaSecretRepository } from '../infrastructure/mfa-secret.repository.js';
+import type { MfaRecoveryCodeRepository } from '../infrastructure/mfa-recovery-code.repository.js';
+import type { MfaSetupChallengeRepository } from '../infrastructure/mfa-setup-challenge.repository.js';
+import type { MfaLoginChallengeRepository } from '../infrastructure/mfa-login-challenge.repository.js';
 import { TotpSecretCipher } from '../../../platform/security/totp-secret-cipher.js';
 import { hashRecoveryCode } from '../../../platform/security/totp.js';
 import type { MailMessage, MailSender } from '../../../platform/mail/mail-sender.js';
@@ -54,7 +57,10 @@ describe('AuthService', () => {
   let sentEmails: MailMessage[];
   let mailSender: MailSender;
   let environment: Environment;
-  let mfaRepository: MfaRepository;
+  let mfaSecretRepository: MfaSecretRepository;
+  let mfaRecoveryCodeRepository: MfaRecoveryCodeRepository;
+  let mfaSetupChallengeRepository: MfaSetupChallengeRepository;
+  let mfaLoginChallengeRepository: MfaLoginChallengeRepository;
   let totpSecretCipher: TotpSecretCipher;
   let fakeSetupChallenges: Map<
     string,
@@ -295,56 +301,31 @@ describe('AuthService', () => {
     };
     let setupSequence = 0;
     let loginSequence = 0;
-    mfaRepository = {
-      findSecretForUser: async (userId: string) =>
-        fakeMfaSecrets.get(userId) ?? null,
-      findSetupChallenge: async (userId: string) =>
-        fakeSetupChallenges.get(userId) ?? null,
-      upsertSetupChallenge: async (data: {
-        userId: string;
-        encryptedSecret: string;
-        recoveryCodeHashes: string[];
-        expiresAt: Date;
-      }) => {
-        fakeSetupChallenges.set(data.userId, { ...data, id: `sc-${++setupSequence}` });
-      },
-      issueLoginChallenge: async (userId: string) => {
-        const token = `mfa-challenge-token-${++loginSequence}`;
-        fakeLoginChallenges.set(token, {
-          id: `lc-${loginSequence}`,
+
+    mfaSecretRepository = {
+      findByUserId: async (userId: string) => fakeMfaSecrets.get(userId) ?? null,
+      activateMfa: async (
+        userId: string,
+        encryptedSecret: string,
+        recoveryCodeHashes: string[],
+      ) => {
+        fakeMfaSecrets.set(userId, { userId, encryptedSecret, createdAt: new Date() });
+        fakeRecoveryCodes.set(
           userId,
-          attemptCount: 0,
-          expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-        });
-        return { token, expiresAt: new Date(Date.now() + 10 * 60 * 1000) };
+          recoveryCodeHashes.map((codeHash: string) => ({ userId, codeHash, usedAt: null })),
+        );
+        fakeSetupChallenges.delete(userId);
+        setUserMfa(true, userId);
       },
-      findLoginChallengeByToken: async (token: string) =>
-        fakeLoginChallenges.get(token) ?? null,
-      deleteLoginChallenge: async (id: string) => {
-        for (const [token, record] of fakeLoginChallenges.entries()) {
-          if (record.id === id) fakeLoginChallenges.delete(token);
-        }
+      deactivateMfa: async (userId: string) => {
+        fakeMfaSecrets.delete(userId);
+        fakeRecoveryCodes.delete(userId);
+        setUserMfa(false, userId);
       },
-      registerFailedLoginAttempt: async (id: string) => {
-        let found: { token: string; record: { attemptCount: number } } | null = null;
-        for (const [token, record] of fakeLoginChallenges.entries()) {
-          if (record.id === id) {
-            record.attemptCount += 1;
-            found = { token, record };
-          }
-        }
-        // Simulates the atomic cap: once the 5th attempt is reached the
-        // challenge is deleted and can no longer be used.
-        if (!found) {
-          return true;
-        }
-        if (found.record.attemptCount >= 5) {
-          fakeLoginChallenges.delete(found.token);
-          return true;
-        }
-        return false;
-      },
-      markRecoveryCodeUsed: async (userId: string, code: string) => {
+    } as unknown as MfaSecretRepository;
+
+    mfaRecoveryCodeRepository = {
+      markUsed: async (userId: string, code: string) => {
         const codeHash = hashRecoveryCode(code);
         const list = fakeRecoveryCodes.get(userId) ?? [];
         const idx = list.findIndex(
@@ -355,33 +336,52 @@ describe('AuthService', () => {
         fakeRecoveryCodes.set(userId, list);
         return true;
       },
-      confirmSetup: async (data: {
-        userId: string;
-        encryptedSecret: string;
-        recoveryCodeHashes: string[];
-        challengeId: string;
-      }) => {
-        fakeMfaSecrets.set(data.userId, {
-          userId: data.userId,
-          encryptedSecret: data.encryptedSecret,
-          createdAt: new Date(),
+    } as unknown as MfaRecoveryCodeRepository;
+
+    mfaSetupChallengeRepository = {
+      findByUserId: async (userId: string) => fakeSetupChallenges.get(userId) ?? null,
+      upsert: async (
+        userId: string,
+        encryptedSecret: string,
+        recoveryCodeHashes: string[],
+        expiresAt: Date,
+      ) => {
+        const record = { userId, encryptedSecret, recoveryCodeHashes, expiresAt, id: `sc-${++setupSequence}` };
+        fakeSetupChallenges.set(userId, record);
+        return record;
+      },
+    } as unknown as MfaSetupChallengeRepository;
+
+    mfaLoginChallengeRepository = {
+      issue: async (userId: string) => {
+        const token = `mfa-challenge-token-${++loginSequence}`;
+        fakeLoginChallenges.set(token, {
+          id: `lc-${loginSequence}`,
+          userId,
+          attemptCount: 0,
+          expiresAt: new Date(Date.now() + 10 * 60 * 1000),
         });
-        fakeRecoveryCodes.set(
-          data.userId,
-          data.recoveryCodeHashes.map((codeHash: string) => ({
-            userId: data.userId,
-            codeHash,
-            usedAt: null,
-          })),
-        );
-        setUserMfa(true, data.userId);
+        return { token, expiresAt: new Date(Date.now() + 10 * 60 * 1000) };
       },
-      disable: async (userId: string) => {
-        fakeMfaSecrets.delete(userId);
-        fakeRecoveryCodes.delete(userId);
-        setUserMfa(false, userId);
+      findByToken: async (token: string) => fakeLoginChallenges.get(token) ?? null,
+      deleteByToken: async (token: string) => {
+        fakeLoginChallenges.delete(token);
       },
-    } as unknown as MfaRepository;
+      recordFailedAttempt: async (token: string) => {
+        const record = fakeLoginChallenges.get(token);
+        // Simulates the atomic cap: once the 5th attempt is reached the
+        // challenge is deleted and can no longer be used.
+        if (!record) {
+          return { exhausted: true };
+        }
+        record.attemptCount += 1;
+        if (record.attemptCount >= 5) {
+          fakeLoginChallenges.delete(token);
+          return { exhausted: true };
+        }
+        return { exhausted: false };
+      },
+    } as unknown as MfaLoginChallengeRepository;
 
     totpSecretCipher = new TotpSecretCipher(
       '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
@@ -395,7 +395,10 @@ describe('AuthService', () => {
       emailVerificationTokenRepository,
       passwordResetTokenRepository,
       accountAuditLogRepository,
-      mfaRepository,
+      mfaSecretRepository,
+      mfaRecoveryCodeRepository,
+      mfaSetupChallengeRepository,
+      mfaLoginChallengeRepository,
       totpSecretCipher,
       mailSender,
       environment,

@@ -26,7 +26,10 @@ import { RefreshTokenRepository } from '../infrastructure/refresh-token.reposito
 import { EmailVerificationTokenRepository } from '../infrastructure/email-verification-token.repository.js';
 import { PasswordResetTokenRepository } from '../infrastructure/password-reset-token.repository.js';
 import { AccountAuditLogRepository } from '../infrastructure/account-audit-log.repository.js';
-import { MfaRepository } from '../infrastructure/mfa.repository.js';
+import { MfaSecretRepository } from '../infrastructure/mfa-secret.repository.js';
+import { MfaRecoveryCodeRepository } from '../infrastructure/mfa-recovery-code.repository.js';
+import { MfaSetupChallengeRepository } from '../infrastructure/mfa-setup-challenge.repository.js';
+import { MfaLoginChallengeRepository } from '../infrastructure/mfa-login-challenge.repository.js';
 import { TotpSecretCipher } from '../../../platform/security/totp-secret-cipher.js';
 import {
   buildOtpauthUri,
@@ -63,7 +66,10 @@ export class AuthService implements IdentityPublicApi {
     private readonly emailVerificationTokenRepository: EmailVerificationTokenRepository,
     private readonly passwordResetTokenRepository: PasswordResetTokenRepository,
     private readonly accountAuditLogRepository: AccountAuditLogRepository,
-    private readonly mfaRepository: MfaRepository,
+    private readonly mfaSecretRepository: MfaSecretRepository,
+    private readonly mfaRecoveryCodeRepository: MfaRecoveryCodeRepository,
+    private readonly mfaSetupChallengeRepository: MfaSetupChallengeRepository,
+    private readonly mfaLoginChallengeRepository: MfaLoginChallengeRepository,
     private readonly totpSecretCipher: TotpSecretCipher,
     @Inject(MAIL_SENDER) private readonly mailSender: MailSender,
     @Inject(ENVIRONMENT) private readonly environment: Environment,
@@ -112,7 +118,7 @@ export class AuthService implements IdentityPublicApi {
     }
 
     if (user.mfaEnabled) {
-      const challenge = await this.mfaRepository.issueLoginChallenge(user.id);
+      const challenge = await this.mfaLoginChallengeRepository.issue(user.id);
       return { mfaRequired: true, challengeToken: challenge.token };
     }
 
@@ -142,12 +148,12 @@ export class AuthService implements IdentityPublicApi {
 
     const encryptedSecret = this.totpSecretCipher.encrypt(secret);
 
-    await this.mfaRepository.upsertSetupChallenge({
+    await this.mfaSetupChallengeRepository.upsert(
       userId,
       encryptedSecret,
       recoveryCodeHashes,
-      expiresAt: new Date(Date.now() + SETUP_CHALLENGE_TTL_MS),
-    });
+      new Date(Date.now() + SETUP_CHALLENGE_TTL_MS),
+    );
 
     return {
       otpauthUri,
@@ -156,7 +162,7 @@ export class AuthService implements IdentityPublicApi {
   }
 
   async mfaConfirm(userId: string, code: string): Promise<void> {
-    const challenge = await this.mfaRepository.findSetupChallenge(userId);
+    const challenge = await this.mfaSetupChallengeRepository.findByUserId(userId);
     if (!challenge || challenge.expiresAt.getTime() < Date.now()) {
       throw new BadRequestException('No pending MFA setup, or it has expired. Start over.');
     }
@@ -173,12 +179,11 @@ export class AuthService implements IdentityPublicApi {
       throw new BadRequestException('Invalid code.');
     }
 
-    await this.mfaRepository.confirmSetup({
+    await this.mfaSecretRepository.activateMfa(
       userId,
-      encryptedSecret: challenge.encryptedSecret,
-      recoveryCodeHashes: challenge.recoveryCodeHashes,
-      challengeId: challenge.id,
-    });
+      challenge.encryptedSecret,
+      challenge.recoveryCodeHashes,
+    );
     await this.recordAuditEvent(userId, 'MFA_ENABLED');
   }
 
@@ -197,19 +202,19 @@ export class AuthService implements IdentityPublicApi {
       throw new BadRequestException('MFA is not enabled.');
     }
 
-    await this.mfaRepository.disable(userId);
+    await this.mfaSecretRepository.deactivateMfa(userId);
     await this.recordAuditEvent(userId, 'MFA_DISABLED');
   }
 
   async mfaVerify(dto: MfaVerifyDto): Promise<AuthSession> {
-    const challenge = await this.mfaRepository.findLoginChallengeByToken(
+    const challenge = await this.mfaLoginChallengeRepository.findByToken(
       dto.challengeToken,
     );
     if (!challenge || challenge.expiresAt.getTime() < Date.now()) {
       throw new NotFoundException('Invalid or expired login challenge.');
     }
 
-    const secretRecord = await this.mfaRepository.findSecretForUser(challenge.userId);
+    const secretRecord = await this.mfaSecretRepository.findByUserId(challenge.userId);
 
     let secretValid = false;
     if (secretRecord) {
@@ -223,7 +228,7 @@ export class AuthService implements IdentityPublicApi {
     }
 
     if (secretValid) {
-      await this.mfaRepository.deleteLoginChallenge(challenge.id);
+      await this.mfaLoginChallengeRepository.deleteByToken(dto.challengeToken);
       const user = await this.userRepository.findById(challenge.userId);
       if (!user) {
         throw new NotFoundException('User no longer exists.');
@@ -233,13 +238,13 @@ export class AuthService implements IdentityPublicApi {
     }
 
     // Fall back to a recovery code.
-    const recoveryUsed = await this.mfaRepository.markRecoveryCodeUsed(
+    const recoveryUsed = await this.mfaRecoveryCodeRepository.markUsed(
       challenge.userId,
       dto.code,
     );
 
     if (recoveryUsed) {
-      await this.mfaRepository.deleteLoginChallenge(challenge.id);
+      await this.mfaLoginChallengeRepository.deleteByToken(dto.challengeToken);
       const user = await this.userRepository.findById(challenge.userId);
       if (!user) {
         throw new NotFoundException('User no longer exists.');
@@ -250,7 +255,7 @@ export class AuthService implements IdentityPublicApi {
 
     // Both failed — record a challenge failure and enforce the attempt cap.
     await this.recordAuditEvent(challenge.userId, 'MFA_CHALLENGE_FAILED');
-    await this.mfaRepository.registerFailedLoginAttempt(challenge.id);
+    await this.mfaLoginChallengeRepository.recordFailedAttempt(dto.challengeToken);
     throw new BadRequestException('Invalid code.');
   }
 
