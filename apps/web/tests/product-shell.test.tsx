@@ -372,6 +372,82 @@ describe('ProductShell adapter', () => {
     expect(screen.getByTestId('appshell-user-profile')).toHaveTextContent('Guardião Principal');
   });
 
+  it('renders the Aletheia brand mark', () => {
+    render(
+      <ProductShell>
+        <p>Conteúdo</p>
+      </ProductShell>,
+    );
+
+    expect(screen.getByRole('img', { name: 'Aletheia' })).toBeInTheDocument();
+  });
+
+  it('renders breadcrumbs for a non-home route and omits them on home', () => {
+    const { rerender } = render(
+      <ProductShell currentPath="/curriculum">
+        <p>Conteúdo</p>
+      </ProductShell>,
+    );
+
+    const breadcrumbs = screen.getByTestId('breadcrumbs');
+    expect(within(breadcrumbs).getByRole('link', { name: 'Início' })).toHaveAttribute('href', '/');
+    expect(within(breadcrumbs).getByText('Currículo')).toHaveAttribute('aria-current', 'page');
+
+    rerender(
+      <ProductShell currentPath="/">
+        <p>Conteúdo</p>
+      </ProductShell>,
+    );
+
+    expect(screen.queryByTestId('breadcrumbs')).not.toBeInTheDocument();
+  });
+
+  it('signs out through the shell logout control', () => {
+    const logout = vi.fn();
+    const mockAuthContext: AuthContextValue = {
+      status: 'authenticated',
+      user: {
+        id: 'real-user-1',
+        email: 'real.guardian@aletheia.edu',
+        fullName: 'Guardião Real',
+        emailVerified: false,
+        mfaEnabled: false,
+        createdAt: '2026-08-30T00:00:00.000Z',
+      },
+      token: 'jwt-token',
+      activeFamilyId: 'real-fam-1',
+      activeFamily: {
+        id: 'real-fam-1',
+        name: 'Família Real',
+        countryCode: 'BRA',
+        createdAt: '2026-08-30T00:00:00.000Z',
+        updatedAt: '2026-08-30T00:00:00.000Z',
+      },
+      families: [],
+      activeRole: 'OWNER_GUARDIAN',
+      login: vi.fn(),
+      verifyMfa: vi.fn(),
+      register: vi.fn(),
+      logout,
+      selectFamily: vi.fn(),
+      refreshSession: vi.fn(),
+      setActiveFamilyFromCreated: vi.fn(),
+      changePassword: vi.fn(),
+      changeEmail: vi.fn(),
+    };
+
+    render(
+      <AuthContext.Provider value={mockAuthContext}>
+        <ProductShell>
+          <p>Conteúdo</p>
+        </ProductShell>
+      </AuthContext.Provider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
+    expect(logout).toHaveBeenCalledTimes(1);
+  });
+
   it('renders a loading shell with aria-busy="true" while auth is loading', () => {
     const mockLoadingContext: AuthContextValue = {
       status: 'loading',

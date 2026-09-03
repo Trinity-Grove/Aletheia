@@ -6,7 +6,11 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   AletheiaIcon,
   AppShell,
+  Breadcrumbs,
+  BrandMark,
   EmptyState,
+  IconButton,
+  type BreadcrumbItem,
   type NavigationItem,
   type NavigationLinkRenderer,
 } from '@aletheia/ui';
@@ -157,7 +161,7 @@ export function ProductShell({
           className="product-shell"
           brandTitle="Aletheia"
           brandSubtitle="Trinity Grove"
-          brandLogo={<span className="product-shell-brand-logo">ἀ</span>}
+          brandLogo={<BrandMark size={28} />}
           navigationItems={[]}
           primaryNavigationItems={[]}
           renderNavigationLink={renderNextNavigationLink}
@@ -237,6 +241,15 @@ export function ProductShell({
     .map((id) => navigationItems.find((item) => item.id === id))
     .filter((item): item is NavigationItem => item !== undefined);
 
+  const activeNavItem = MAIN_NAV_ITEMS.find((item) => item.href === activePath);
+  const breadcrumbItems: BreadcrumbItem[] =
+    activeNavItem && activeNavItem.id !== 'home'
+      ? [
+          { id: 'home', label: 'Início', href: '/' },
+          { id: activeNavItem.id, label: activeNavItem.label },
+        ]
+      : [];
+
   const authUser: UserSummaryDto | null = profileUser
     ? {
         id: profileUser.id ?? 'user',
@@ -267,6 +280,15 @@ export function ProductShell({
               )}
             </div>
           )}
+          {authContext?.logout && (
+            <IconButton
+              aria-label="Sair"
+              size="sm"
+              className="product-shell-logout-button"
+              onClick={() => authContext.logout()}
+              icon={<AletheiaIcon name="log-out" size={16} />}
+            />
+          )}
         </div>
       )
     : undefined;
@@ -276,13 +298,16 @@ export function ProductShell({
       className="product-shell"
       brandTitle="Aletheia"
       brandSubtitle="Trinity Grove"
-      brandLogo={<span className="product-shell-brand-logo">ἀ</span>}
+      brandLogo={<BrandMark size={28} />}
       navigationItems={navigationItems}
       primaryNavigationItems={primaryNavigationItems}
       renderNavigationLink={renderNextNavigationLink}
       topbarActions={topbarActions}
       {...(userProfile !== undefined ? { userProfile } : {})}
     >
+      {breadcrumbItems.length > 0 && (
+        <Breadcrumbs items={breadcrumbItems} renderLink={renderNextNavigationLink} />
+      )}
       {accessDenied ? (
         <div data-testid="access-denied-state">
           <EmptyState

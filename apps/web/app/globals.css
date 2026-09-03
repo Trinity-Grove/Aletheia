@@ -514,19 +514,13 @@ p.page-subtitle {
 }
 
 /* ProductShell application-specific slots inside the shared AppShell. */
-.product-shell-brand-logo {
-  width: 2rem;
-  height: 2rem;
-  border-radius: var(--ui-radius-full);
-  background-color: var(--ui-action-primary-background);
-  color: var(--ui-text-gold);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--ui-font-serif);
-  font-size: 1.25rem;
-  line-height: 1;
-  box-shadow: var(--ui-elevation-raised);
+.product-shell-logout-button {
+  color: var(--ui-text-secondary);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.ui-sidebar-footer .product-shell-logout-button {
+  color: var(--ivory);
 }
 
 .product-shell-topbar-actions,

@@ -12,6 +12,7 @@
     "pretest": "pnpm --filter @aletheia/contracts build && pnpm --filter @aletheia/ui build",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:e2e:visual": "playwright test --config=playwright-visual.config.ts",
     "pretypecheck": "pnpm --filter @aletheia/contracts build && pnpm --filter @aletheia/ui build",
     "typecheck": "next typegen && tsc --noEmit"
   },
