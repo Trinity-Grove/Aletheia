@@ -2,7 +2,6 @@ import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH_BYTES = 12;
-const AUTH_TAG_LENGTH_BYTES = 16;
 
 function toBuffer(keyHex: string): Buffer {
   return Buffer.from(keyHex, 'hex');
