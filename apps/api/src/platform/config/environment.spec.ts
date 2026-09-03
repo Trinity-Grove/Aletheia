@@ -32,6 +32,7 @@ class EnvironmentConsumerModule {}
 
 describe('parseEnvironment', () => {
   const validJwtSecret = 'unit_test_jwt_secret_key_1234567890';
+  const validMfaEncryptionKey = '0123456789abcdef'.repeat(4);
 
   it('rejects a missing database URL', () => {
     expect(() =>
@@ -64,6 +65,7 @@ describe('parseEnvironment', () => {
         NODE_ENV: 'test',
         DATABASE_URL: 'postgresql://user:pass@localhost:5432/aletheia',
         JWT_SECRET: validJwtSecret,
+        MFA_ENCRYPTION_KEY: validMfaEncryptionKey,
       }),
     ).toMatchObject({
       nodeEnv: 'test',
@@ -80,6 +82,7 @@ describe('parseEnvironment', () => {
         NODE_ENV: 'production',
         DATABASE_URL: 'postgresql://user:pass@localhost:5432/aletheia',
         JWT_SECRET: validJwtSecret,
+        MFA_ENCRYPTION_KEY: validMfaEncryptionKey,
         CORS_ORIGIN: 'https://app.example.com, https://admin.example.com ',
       }),
     ).toMatchObject({
@@ -93,6 +96,7 @@ describe('parseEnvironment', () => {
         NODE_ENV: 'test',
         DATABASE_URL: 'postgresql://user:pass@localhost:5432/aletheia',
         JWT_SECRET: validJwtSecret,
+        MFA_ENCRYPTION_KEY: validMfaEncryptionKey,
       }),
     ).toMatchObject({
       resendApiKey: null,
@@ -107,6 +111,7 @@ describe('parseEnvironment', () => {
         NODE_ENV: 'production',
         DATABASE_URL: 'postgresql://user:pass@localhost:5432/aletheia',
         JWT_SECRET: validJwtSecret,
+        MFA_ENCRYPTION_KEY: validMfaEncryptionKey,
         RESEND_API_KEY: 're_test_key_123',
         MAIL_FROM_ADDRESS: 'Aletheia <hello@aletheia.family>',
         WEB_ORIGIN: 'https://app.aletheia.family',
@@ -124,6 +129,7 @@ describe('parseEnvironment', () => {
         NODE_ENV: 'production',
         DATABASE_URL: 'postgresql://user:pass@db:5432/aletheia',
         JWT_SECRET: validJwtSecret,
+        MFA_ENCRYPTION_KEY: validMfaEncryptionKey,
         CORS_ORIGIN: 'https://app.example.com',
         REDIS_URL: 'redis://cache:6379',
         S3_ENDPOINT: 'https://objects.example.com',
@@ -136,6 +142,7 @@ describe('parseEnvironment', () => {
       databaseUrl: 'postgresql://user:pass@db:5432/aletheia',
       redisUrl: 'redis://cache:6379',
       jwtSecret: validJwtSecret,
+      mfaEncryptionKey: validMfaEncryptionKey,
       corsOrigins: ['https://app.example.com'],
       resendApiKey: null,
       mailFromAddress: 'Aletheia <onboarding@resend.dev>',
@@ -166,6 +173,7 @@ describe('parseEnvironment', () => {
           NODE_ENV: 'development',
           DATABASE_URL: 'postgresql://user:pass@localhost:5432/aletheia',
           JWT_SECRET: validJwtSecret,
+          MFA_ENCRYPTION_KEY: validMfaEncryptionKey,
           S3_ENDPOINT: 'http://localhost:9000',
           S3_ACCESS_KEY: 'access-key',
           S3_SECRET_KEY: 'secret-key',
