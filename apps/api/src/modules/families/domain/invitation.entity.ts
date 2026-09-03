@@ -6,7 +6,6 @@ export interface FamilyInvitationProps {
   familyId: string;
   email: string;
   role: FamilyRole;
-  token: string;
   invitedBy: string;
   expiresAt: Date;
   acceptedAt?: Date | null;
@@ -30,10 +29,6 @@ export class FamilyInvitationEntity {
 
   get role(): FamilyRole {
     return this.props.role;
-  }
-
-  get token(): string {
-    return this.props.token;
   }
 
   get invitedBy(): string {
@@ -60,13 +55,16 @@ export class FamilyInvitationEntity {
     return !!this.props.acceptedAt;
   }
 
-  toDto(): FamilyInvitationDto {
+  // `token` is only ever known in plaintext at the moment of creation — it's
+  // never persisted or read back, so it's passed in here rather than stored
+  // on the entity. Every other read (list, get) omits it entirely.
+  toDto(plainToken?: string): FamilyInvitationDto {
     return {
       id: this.id,
       familyId: this.familyId,
       email: this.email,
       role: this.role,
-      token: this.token,
+      ...(plainToken !== undefined ? { token: plainToken } : {}),
       invitedBy: this.invitedBy,
       expiresAt: this.expiresAt.toISOString(),
       acceptedAt: this.acceptedAt ? this.acceptedAt.toISOString() : null,

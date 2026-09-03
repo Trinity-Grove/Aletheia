@@ -1,7 +1,12 @@
+import { createHash } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../platform/database/prisma.service.js';
 import { FamilyInvitationEntity } from '../domain/invitation.entity.js';
 import type { FamilyRole } from '../domain/family-role.js';
+
+function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
 
 @Injectable()
 export class InvitationRepository {
@@ -20,7 +25,7 @@ export class InvitationRepository {
         familyId: data.familyId,
         email: data.email.toLowerCase().trim(),
         role: data.role,
-        token: data.token,
+        tokenHash: hashToken(data.token),
         invitedBy: data.invitedBy,
         expiresAt: data.expiresAt,
       },
@@ -31,7 +36,7 @@ export class InvitationRepository {
 
   async findByToken(token: string): Promise<FamilyInvitationEntity | null> {
     const inv = await this.prisma.familyInvitation.findUnique({
-      where: { token },
+      where: { tokenHash: hashToken(token) },
     });
     if (!inv) return null;
     return this.mapToEntity(inv);
@@ -94,7 +99,6 @@ export class InvitationRepository {
     familyId: string;
     email: string;
     role: string;
-    token: string;
     invitedBy: string;
     expiresAt: Date;
     acceptedAt: Date | null;
@@ -105,7 +109,6 @@ export class InvitationRepository {
       familyId: raw.familyId,
       email: raw.email,
       role: raw.role as FamilyRole,
-      token: raw.token,
       invitedBy: raw.invitedBy,
       expiresAt: raw.expiresAt,
       acceptedAt: raw.acceptedAt,

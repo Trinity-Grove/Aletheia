@@ -22,12 +22,14 @@ describe('InvitationService', () => {
           familyId: data.familyId,
           email: data.email,
           role: data.role,
-          token: data.token,
           invitedBy: data.invitedBy,
           expiresAt: data.expiresAt,
           createdAt: new Date(),
         });
-        fakeInvitations.set(entity.token, entity);
+        // The entity never carries the plaintext token (it's hashed before
+        // persisting), so the fake store is keyed by the token the caller
+        // generated, matching how the real repository hashes it for lookup.
+        fakeInvitations.set(data.token, entity);
         return entity;
       },
       findByToken: async (token: string) => fakeInvitations.get(token) ?? null,
@@ -37,6 +39,8 @@ describe('InvitationService', () => {
         }
         return null;
       },
+      findByFamilyId: async (familyId: string) =>
+        [...fakeInvitations.values()].filter((i) => i.familyId === familyId),
       accept: async (id: string) => {
         for (const [t, i] of fakeInvitations.entries()) {
           if (i.id === id) {
@@ -47,7 +51,6 @@ describe('InvitationService', () => {
                 familyId: i.familyId,
                 email: i.email,
                 role: i.role,
-                token: i.token,
                 invitedBy: i.invitedBy,
                 expiresAt: i.expiresAt,
                 acceptedAt: new Date(),
@@ -116,5 +119,42 @@ describe('InvitationService', () => {
     await expect(
       service.acceptInvitation('user-2', 'non-existent-token'),
     ).rejects.toThrow(NotFoundException);
+  });
+
+  it('rejects an expired invitation token', async () => {
+    const inv = await service.createInvitation('owner-1', 'family-1', {
+      email: 'coguardian@test.com',
+      role: 'CO_GUARDIAN',
+    });
+
+    const stored = fakeInvitations.get(inv.token!)!;
+    fakeInvitations.set(
+      inv.token!,
+      new FamilyInvitationEntity({
+        id: stored.id,
+        familyId: stored.familyId,
+        email: stored.email,
+        role: stored.role,
+        invitedBy: stored.invitedBy,
+        expiresAt: new Date(Date.now() - 1000),
+        createdAt: stored.createdAt,
+      }),
+    );
+
+    await expect(
+      service.acceptInvitation('user-2', inv.token!),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('never includes the invitation token when listing', async () => {
+    await service.createInvitation('owner-1', 'family-1', {
+      email: 'coguardian@test.com',
+      role: 'CO_GUARDIAN',
+    });
+
+    const list = await service.listInvitations('owner-1', 'family-1');
+
+    expect(list).toHaveLength(1);
+    expect(list[0]!.token).toBeUndefined();
   });
 });

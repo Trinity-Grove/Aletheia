@@ -211,7 +211,7 @@ model FamilyInvitation {
   familyId   String    @map("family_id") @db.Uuid
   email      String
   role       String
-  token      String    @unique
+  tokenHash  String    @unique @map("token_hash")
   invitedBy  String    @map("invited_by") @db.Uuid
   expiresAt  DateTime  @map("expires_at") @db.Timestamptz
   acceptedAt DateTime? @map("accepted_at") @db.Timestamptz
@@ -221,7 +221,7 @@ model FamilyInvitation {
 
   @@index([familyId])
   @@index([email])
-  @@index([token])
+  @@index([tokenHash])
   @@map("family_invitations")
 }
 

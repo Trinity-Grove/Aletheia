@@ -38,7 +38,7 @@ export class InvitationService {
       expiresAt,
     });
 
-    return invitation.toDto();
+    return invitation.toDto(token);
   }
 
   async acceptInvitation(currentUserId: string, token: string): Promise<{ success: boolean; familyId: string }> {
