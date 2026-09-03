@@ -45,6 +45,31 @@ describe('CSS token layer contract', () => {
     expect(componentStyles).not.toMatch(/var\(--primitive-/);
   });
 
+  it('aliases the raw brand-palette names apps/web consumes directly (issue #25)', async () => {
+    const semantic = await readStyleFile('tokens-semantic.css');
+
+    for (const [alias, primitiveRef] of [
+      ['--forest', '--primitive-color-forest-700'],
+      ['--forest-2', '--primitive-color-forest-800'],
+      ['--forest-dark', '--primitive-color-forest-900'],
+      ['--sage', '--primitive-color-sage-500'],
+      ['--sage-light', '--primitive-color-sage-200'],
+      ['--sage-soft', '--primitive-color-sage-100'],
+      ['--gold', '--primitive-color-gold-500'],
+      ['--gold-soft', '--primitive-color-gold-200'],
+      ['--gold-muted', '--primitive-color-gold-300'],
+      ['--ivory', '--primitive-color-ivory'],
+      ['--paper', '--primitive-color-paper'],
+      ['--ink', '--primitive-color-ink'],
+      ['--muted', '--primitive-color-muted'],
+      ['--line', '--primitive-color-border-light'],
+      ['--line-strong', '--primitive-color-border-medium'],
+    ] as const) {
+      const declaration = new RegExp(`${alias}:\\s*var\\(${primitiveRef}\\);`);
+      expect(semantic, `expected ${alias} to alias var(${primitiveRef})`).toMatch(declaration);
+    }
+  });
+
   it('uses drawer and dropdown component contracts instead of legacy aliases', async () => {
     const [component, componentStyles] = await Promise.all([
       readStyleFile('tokens-component.css'),
