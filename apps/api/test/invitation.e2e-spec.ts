@@ -50,7 +50,6 @@ describe('Invitations E2E', () => {
       familyId: familyBId,
       email: 'someone@test.com',
       role: 'CO_GUARDIAN',
-      token: 'token-family-b-1',
       invitedBy: guardianBUserId,
       expiresAt: new Date(Date.now() + 86400000),
       acceptedAt: null,
