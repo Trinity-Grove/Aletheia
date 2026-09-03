@@ -5,6 +5,7 @@ export const userSummarySchema = z.object({
   email: z.string().email(),
   fullName: z.string().min(1),
   emailVerified: z.boolean(),
+  mfaEnabled: z.boolean(),
   createdAt: z.string(),
 });
 
@@ -75,6 +76,9 @@ export const accountAuditEventTypeSchema = z.enum([
   'EMAIL_CHANGED',
   'EMAIL_VERIFIED',
   'REFRESH_TOKEN_REUSE_DETECTED',
+  'MFA_ENABLED',
+  'MFA_DISABLED',
+  'MFA_CHALLENGE_FAILED',
 ]);
 
 export type AccountAuditEventType = z.infer<typeof accountAuditEventTypeSchema>;
@@ -86,3 +90,40 @@ export const accountAuditLogEntrySchema = z.object({
 });
 
 export type AccountAuditLogEntryDto = z.infer<typeof accountAuditLogEntrySchema>;
+
+export const mfaSetupRequestSchema = z.object({ password: z.string().min(1) });
+
+export type MfaSetupRequestDto = z.infer<typeof mfaSetupRequestSchema>;
+
+export const mfaSetupResponseSchema = z.object({
+  otpauthUri: z.string().min(1),
+  recoveryCodes: z.array(z.string()).length(10),
+});
+
+export type MfaSetupResponseDto = z.infer<typeof mfaSetupResponseSchema>;
+
+export const mfaConfirmSchema = z.object({ code: z.string().min(1) });
+
+export type MfaConfirmDto = z.infer<typeof mfaConfirmSchema>;
+
+export const mfaDisableSchema = z.object({ password: z.string().min(1) });
+
+export type MfaDisableDto = z.infer<typeof mfaDisableSchema>;
+
+export const mfaVerifySchema = z.object({
+  challengeToken: z.string().min(1),
+  code: z.string().min(1),
+});
+
+export type MfaVerifyDto = z.infer<typeof mfaVerifySchema>;
+
+export const mfaChallengeIssuedSchema = z.object({
+  mfaRequired: z.literal(true),
+  challengeToken: z.string().min(1),
+});
+
+export type MfaChallengeIssuedDto = z.infer<typeof mfaChallengeIssuedSchema>;
+
+export const loginResultSchema = z.union([authResponseSchema, mfaChallengeIssuedSchema]);
+
+export type LoginResultDto = z.infer<typeof loginResultSchema>;

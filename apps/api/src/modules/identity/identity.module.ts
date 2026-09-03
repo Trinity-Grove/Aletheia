@@ -8,11 +8,16 @@ import { RefreshTokenRepository } from './infrastructure/refresh-token.repositor
 import { EmailVerificationTokenRepository } from './infrastructure/email-verification-token.repository.js';
 import { PasswordResetTokenRepository } from './infrastructure/password-reset-token.repository.js';
 import { AccountAuditLogRepository } from './infrastructure/account-audit-log.repository.js';
+import { MfaSecretRepository } from './infrastructure/mfa-secret.repository.js';
+import { MfaRecoveryCodeRepository } from './infrastructure/mfa-recovery-code.repository.js';
+import { MfaSetupChallengeRepository } from './infrastructure/mfa-setup-challenge.repository.js';
+import { MfaLoginChallengeRepository } from './infrastructure/mfa-login-challenge.repository.js';
 import { AuthController } from './presentation/auth.controller.js';
 import { JwtAuthGuard } from '../../platform/auth/index.js';
 import { ENVIRONMENT, type Environment } from '../../platform/config/environment.js';
 import { DatabaseModule } from '../../platform/database/database.module.js';
 import { MailModule } from '../../platform/mail/mail.module.js';
+import { TotpSecretCipher } from '../../platform/security/totp-secret-cipher.js';
 
 @Global()
 @Module({
@@ -35,8 +40,18 @@ import { MailModule } from '../../platform/mail/mail.module.js';
     EmailVerificationTokenRepository,
     PasswordResetTokenRepository,
     AccountAuditLogRepository,
+    MfaSecretRepository,
+    MfaRecoveryCodeRepository,
+    MfaSetupChallengeRepository,
+    MfaLoginChallengeRepository,
     AuthService,
     JwtAuthGuard,
+    {
+      provide: TotpSecretCipher,
+      useFactory: (environment: Environment) =>
+        new TotpSecretCipher(environment.mfaEncryptionKey),
+      inject: [ENVIRONMENT],
+    },
     {
       provide: IDENTITY_PUBLIC_API,
       useExisting: AuthService,

@@ -23,7 +23,7 @@ import { api } from '../../../src/lib/api';
 type ActiveTab = 'general' | 'notifications' | 'backup' | 'account';
 
 export default function SettingsPage() {
-  const { user, changePassword, changeEmail } = useAuth();
+  const { user, changePassword, changeEmail, refreshSession } = useAuth();
   const fetchAuditLog = useCallback(
     () => api.get<AccountAuditLogEntryDto[]>('/auth/audit-log'),
     [],
@@ -331,8 +331,10 @@ export default function SettingsPage() {
               <div style={{ display: 'grid', gap: '1.5rem' }}>
                 <AccountSecuritySettings
                   currentEmail={user?.email}
+                  mfaEnabled={user?.mfaEnabled ?? false}
                   onChangePassword={changePassword}
                   onChangeEmail={changeEmail}
+                  onMfaStateChanged={refreshSession}
                 />
                 <AccountActivityLog fetchAuditLog={fetchAuditLog} />
               </div>

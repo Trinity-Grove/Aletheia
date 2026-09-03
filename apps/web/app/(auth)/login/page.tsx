@@ -1,9 +1,10 @@
 'use client';
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LoginForm } from '../../../src/components/auth/login-form';
+import { MfaVerifyForm } from '../../../src/components/auth/mfa-verify-form';
 import { useAuth } from '../../../src/lib/auth/auth-context';
 
 // Only ever follow a same-origin, relative redirect target. A `redirect`
@@ -20,13 +21,59 @@ export function sanitizeRedirectTarget(value: string | null | undefined): string
 function LoginFormWrapper() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
+  const { login, verifyMfa } = useAuth();
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
 
-  const handleLogin = async (data: { email: string; password: string }) => {
-    await login(data);
+  const redirectTo = () => {
     const redirectParam = sanitizeRedirectTarget(searchParams?.get('redirect'));
     router.push(redirectParam);
   };
+
+  const handleLogin = async (data: { email: string; password: string }) => {
+    const result = await login(data);
+    if ('mfaRequired' in result) {
+      // Paused: no session exists yet. Show the second-factor screen.
+      setChallengeToken(result.challengeToken);
+      return;
+    }
+    redirectTo();
+  };
+
+  const handleVerify = async (data: { code: string }) => {
+    if (!challengeToken) {
+      throw new Error('Sessão de verificação expirada. Entre novamente.');
+    }
+    await verifyMfa({ challengeToken, code: data.code });
+    redirectTo();
+  };
+
+  if (challengeToken) {
+    return (
+      <>
+        <MfaVerifyForm onSubmit={handleVerify} />
+        <button
+          type="button"
+          data-testid="mfa-back-button"
+          onClick={() => setChallengeToken(null)}
+          style={{
+            width: '100%',
+            marginTop: '0.75rem',
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 600,
+            fontSize: '0.9375rem',
+            padding: '0.75rem 1.5rem',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--forest)',
+            background: 'transparent',
+            color: 'var(--forest)',
+            cursor: 'pointer',
+          }}
+        >
+          Voltar para o login
+        </button>
+      </>
+    );
+  }
 
   return <LoginForm onSubmit={handleLogin} />;
 }

@@ -2,7 +2,8 @@
   "extensionsToTreatAsEsm": [".ts"],
   "moduleNameMapper": {
     "^(\\.{1,2}/.*)\\.js$": "$1",
-    "^@aletheia/contracts$": "<rootDir>/../../packages/contracts/src/index.ts"
+    "^@aletheia/contracts$": "<rootDir>/../../packages/contracts/src/index.ts",
+    "^otplib$": "<rootDir>/test/mocks/otplib.ts"
   },
   "rootDir": "..",
   "testRegex": ".*\\.e2e-spec\\.ts$",

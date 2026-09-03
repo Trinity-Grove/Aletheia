@@ -13,6 +13,9 @@ import type {
   AccountAuditLogEntryDto,
   AuthResponseDto,
   LoginDto,
+  MfaChallengeIssuedDto,
+  MfaSetupResponseDto,
+  MfaVerifyDto,
   RegisterGuardianDto,
   UserSummaryDto,
 } from '@aletheia/contracts';
@@ -23,11 +26,28 @@ import { RefreshTokenRepository } from '../infrastructure/refresh-token.reposito
 import { EmailVerificationTokenRepository } from '../infrastructure/email-verification-token.repository.js';
 import { PasswordResetTokenRepository } from '../infrastructure/password-reset-token.repository.js';
 import { AccountAuditLogRepository } from '../infrastructure/account-audit-log.repository.js';
+import { MfaSecretRepository } from '../infrastructure/mfa-secret.repository.js';
+import { MfaRecoveryCodeRepository } from '../infrastructure/mfa-recovery-code.repository.js';
+import { MfaSetupChallengeRepository } from '../infrastructure/mfa-setup-challenge.repository.js';
+import { MfaLoginChallengeRepository } from '../infrastructure/mfa-login-challenge.repository.js';
+import { TotpSecretCipher } from '../../../platform/security/totp-secret-cipher.js';
+import {
+  buildOtpauthUri,
+  formatRecoveryCode,
+  generateRecoveryCodes,
+  generateTotpSecret,
+  hashRecoveryCode,
+  verifyTotpToken,
+} from '../../../platform/security/totp.js';
 import { MAIL_SENDER, type MailSender } from '../../../platform/mail/mail-sender.js';
 import { ENVIRONMENT, type Environment } from '../../../platform/config/environment.js';
 import type { AuthenticatedUserPayload, IdentityPublicApi } from './public-api.js';
 
 const ACCESS_TOKEN_TTL = '1h';
+const SETUP_CHALLENGE_TTL_MS = 10 * 60 * 1000;
+const RECOVERY_CODES_COUNT = 10;
+
+export type LoginResult = AuthSession | MfaChallengeIssuedDto;
 
 export interface AuthSession extends AuthResponseDto {
   refreshToken: string;
@@ -46,6 +66,11 @@ export class AuthService implements IdentityPublicApi {
     private readonly emailVerificationTokenRepository: EmailVerificationTokenRepository,
     private readonly passwordResetTokenRepository: PasswordResetTokenRepository,
     private readonly accountAuditLogRepository: AccountAuditLogRepository,
+    private readonly mfaSecretRepository: MfaSecretRepository,
+    private readonly mfaRecoveryCodeRepository: MfaRecoveryCodeRepository,
+    private readonly mfaSetupChallengeRepository: MfaSetupChallengeRepository,
+    private readonly mfaLoginChallengeRepository: MfaLoginChallengeRepository,
+    private readonly totpSecretCipher: TotpSecretCipher,
     @Inject(MAIL_SENDER) private readonly mailSender: MailSender,
     @Inject(ENVIRONMENT) private readonly environment: Environment,
   ) {}
@@ -80,7 +105,7 @@ export class AuthService implements IdentityPublicApi {
     return this.issueSession(user.id, user.email, user.toDto());
   }
 
-  async login(dto: LoginDto): Promise<AuthSession> {
+  async login(dto: LoginDto): Promise<LoginResult> {
     const user = await this.userRepository.findByEmail(dto.email);
     if (!user) {
       throw new UnauthorizedException('Invalid email or password.');
@@ -92,8 +117,146 @@ export class AuthService implements IdentityPublicApi {
       throw new UnauthorizedException('Invalid email or password.');
     }
 
+    if (user.mfaEnabled) {
+      const challenge = await this.mfaLoginChallengeRepository.issue(user.id);
+      return { mfaRequired: true, challengeToken: challenge.token };
+    }
+
     await this.recordAuditEvent(user.id, 'LOGIN_SUCCEEDED');
     return this.issueSession(user.id, user.email, user.toDto());
+  }
+
+  async mfaSetup(userId: string, password: string): Promise<MfaSetupResponseDto> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    const isValid = this.passwordHasher.verify(password, user.passwordHash);
+    if (!isValid) {
+      throw new UnauthorizedException('Current password is incorrect.');
+    }
+
+    if (user.mfaEnabled) {
+      throw new BadRequestException('MFA is already enabled.');
+    }
+
+    const secret = generateTotpSecret();
+    const otpauthUri = buildOtpauthUri(user.email, secret);
+    const recoveryCodes = generateRecoveryCodes(RECOVERY_CODES_COUNT);
+    const recoveryCodeHashes = recoveryCodes.map(hashRecoveryCode);
+
+    const encryptedSecret = this.totpSecretCipher.encrypt(secret);
+
+    await this.mfaSetupChallengeRepository.upsert(
+      userId,
+      encryptedSecret,
+      recoveryCodeHashes,
+      new Date(Date.now() + SETUP_CHALLENGE_TTL_MS),
+    );
+
+    return {
+      otpauthUri,
+      recoveryCodes: recoveryCodes.map(formatRecoveryCode),
+    };
+  }
+
+  async mfaConfirm(userId: string, code: string): Promise<void> {
+    const challenge = await this.mfaSetupChallengeRepository.findByUserId(userId);
+    if (!challenge || challenge.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('No pending MFA setup, or it has expired. Start over.');
+    }
+
+    let secret: string;
+    try {
+      secret = this.totpSecretCipher.decrypt(challenge.encryptedSecret);
+    } catch {
+      throw new BadRequestException('Invalid code.');
+    }
+
+    if (!verifyTotpToken(code, secret)) {
+      await this.recordAuditEvent(userId, 'MFA_CHALLENGE_FAILED');
+      throw new BadRequestException('Invalid code.');
+    }
+
+    await this.mfaSecretRepository.activateMfa(
+      userId,
+      challenge.encryptedSecret,
+      challenge.recoveryCodeHashes,
+    );
+    await this.recordAuditEvent(userId, 'MFA_ENABLED');
+  }
+
+  async mfaDisable(userId: string, password: string): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    const isValid = this.passwordHasher.verify(password, user.passwordHash);
+    if (!isValid) {
+      throw new UnauthorizedException('Current password is incorrect.');
+    }
+
+    if (!user.mfaEnabled) {
+      throw new BadRequestException('MFA is not enabled.');
+    }
+
+    await this.mfaSecretRepository.deactivateMfa(userId);
+    await this.recordAuditEvent(userId, 'MFA_DISABLED');
+  }
+
+  async mfaVerify(dto: MfaVerifyDto): Promise<AuthSession> {
+    const challenge = await this.mfaLoginChallengeRepository.findByToken(
+      dto.challengeToken,
+    );
+    if (!challenge || challenge.expiresAt.getTime() < Date.now()) {
+      throw new NotFoundException('Invalid or expired login challenge.');
+    }
+
+    const secretRecord = await this.mfaSecretRepository.findByUserId(challenge.userId);
+
+    let secretValid = false;
+    if (secretRecord) {
+      let secret: string;
+      try {
+        secret = this.totpSecretCipher.decrypt(secretRecord.encryptedSecret);
+        secretValid = verifyTotpToken(dto.code, secret);
+      } catch {
+        secretValid = false;
+      }
+    }
+
+    if (secretValid) {
+      await this.mfaLoginChallengeRepository.deleteByToken(dto.challengeToken);
+      const user = await this.userRepository.findById(challenge.userId);
+      if (!user) {
+        throw new NotFoundException('User no longer exists.');
+      }
+      await this.recordAuditEvent(challenge.userId, 'LOGIN_SUCCEEDED');
+      return this.issueSession(user.id, user.email, user.toDto());
+    }
+
+    // Fall back to a recovery code.
+    const recoveryUsed = await this.mfaRecoveryCodeRepository.markUsed(
+      challenge.userId,
+      dto.code,
+    );
+
+    if (recoveryUsed) {
+      await this.mfaLoginChallengeRepository.deleteByToken(dto.challengeToken);
+      const user = await this.userRepository.findById(challenge.userId);
+      if (!user) {
+        throw new NotFoundException('User no longer exists.');
+      }
+      await this.recordAuditEvent(challenge.userId, 'LOGIN_SUCCEEDED');
+      return this.issueSession(user.id, user.email, user.toDto());
+    }
+
+    // Both failed — record a challenge failure and enforce the attempt cap.
+    await this.recordAuditEvent(challenge.userId, 'MFA_CHALLENGE_FAILED');
+    await this.mfaLoginChallengeRepository.recordFailedAttempt(dto.challengeToken);
+    throw new BadRequestException('Invalid code.');
   }
 
   async refresh(refreshToken: string): Promise<AuthSession> {

@@ -15,6 +15,8 @@ import type {
   FamilyResponseDto,
   FamilyRole,
   LoginDto,
+  LoginResultDto,
+  MfaVerifyDto,
   RegisterGuardianDto,
   UserSummaryDto,
 } from '@aletheia/contracts';
@@ -30,7 +32,8 @@ export interface AuthContextValue {
   activeFamily: FamilyResponseDto | null;
   families: FamilyResponseDto[];
   activeRole: FamilyRole | null;
-  login: (_credentials: LoginDto) => Promise<void>;
+  login: (_credentials: LoginDto) => Promise<LoginResultDto>;
+  verifyMfa: (_data: MfaVerifyDto) => Promise<void>;
   register: (_data: RegisterGuardianDto) => Promise<void>;
   logout: () => void;
   selectFamily: (_familyId: string) => void;
@@ -135,8 +138,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
   }, [clearLocalSession]);
 
   const login = useCallback(
-    async (credentials: LoginDto): Promise<void> => {
-      const res = await api.post<AuthResponseDto>('/auth/login', credentials);
+    async (credentials: LoginDto): Promise<LoginResultDto> => {
+      const res = await api.post<LoginResultDto>('/auth/login', credentials);
+
+      // MFA enabled: login is paused mid-way. No session state is created
+      // (the server issued no cookies/token); the caller must complete the
+      // second factor via verifyMfa with the returned challenge token.
+      if ('mfaRequired' in res) {
+        return res;
+      }
+
       setApiAuthToken(res.accessToken);
       setToken(res.accessToken);
       setUser(res.user);
@@ -152,9 +163,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       setFamilies(fetchedFamilies);
       setActiveFamilyId(selectDefaultFamilyId(fetchedFamilies));
       setStatus('authenticated');
+      return res;
     },
     [],
   );
+
+  const verifyMfa = useCallback(async (data: MfaVerifyDto): Promise<void> => {
+    const res = await api.post<AuthResponseDto>('/auth/mfa/verify', data);
+    setApiAuthToken(res.accessToken);
+    setToken(res.accessToken);
+    setUser(res.user);
+
+    let fetchedFamilies: FamilyResponseDto[] = [];
+    try {
+      const familiesRes = await api.get<FamilyResponseDto[]>('/families/mine');
+      fetchedFamilies = Array.isArray(familiesRes) ? familiesRes : [];
+    } catch {
+      fetchedFamilies = [];
+    }
+
+    setFamilies(fetchedFamilies);
+    setActiveFamilyId(selectDefaultFamilyId(fetchedFamilies));
+    setStatus('authenticated');
+  }, []);
 
   const register = useCallback(
     async (data: RegisterGuardianDto): Promise<void> => {
@@ -248,6 +279,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       families,
       activeRole,
       login,
+      verifyMfa,
       register,
       logout,
       selectFamily,
@@ -265,6 +297,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       families,
       activeRole,
       login,
+      verifyMfa,
       register,
       logout,
       selectFamily,

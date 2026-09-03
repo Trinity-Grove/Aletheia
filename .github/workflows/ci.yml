@@ -22,6 +22,7 @@ jobs:
       CI: true
       DATABASE_URL: postgresql://quality:quality@127.0.0.1:1/aletheia
       JWT_SECRET: quality_ci_jwt_secret_not_a_real_secret
+      MFA_ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
 
     steps:
       - name: Check out repository
@@ -102,6 +103,7 @@ jobs:
       CI: true
       DATABASE_URL: postgresql://aletheia_ci:ci_only_not_a_secret@127.0.0.1:5432/aletheia_ci?schema=public
       JWT_SECRET: postgres_integration_ci_jwt_secret_not_a_real_secret
+      MFA_ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
     services:
       postgres:
         image: postgres:17

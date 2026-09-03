@@ -96,6 +96,7 @@ describe('auth contracts', () => {
         email: 'guardian@example.com',
         fullName: 'Jane Doe',
         emailVerified: false,
+        mfaEnabled: false,
         createdAt: '2026-08-23T12:00:00.000Z',
       };
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { LoginForm } from '../src/components/auth/login-form';
+import { MfaVerifyForm } from '../src/components/auth/mfa-verify-form';
 import { RegisterForm } from '../src/components/auth/register-form';
 import { ForgotPasswordForm } from '../src/components/auth/forgot-password-form';
 import { ResetPasswordForm } from '../src/components/auth/reset-password-form';
@@ -61,6 +62,36 @@ describe('Auth Forms Component Tests', () => {
       });
       expect(submitBtn).not.toBeDisabled();
       expect(submitBtn).toHaveTextContent('Entrar');
+    });
+  });
+
+  describe('MfaVerifyForm', () => {
+    it('renders MfaVerifyForm and submits the code', async () => {
+      const handleSubmit = vi.fn();
+      render(<MfaVerifyForm onSubmit={handleSubmit} />);
+
+      expect(screen.getByTestId('mfa-verify-form')).toBeInTheDocument();
+      expect(screen.getByTestId('mfa-code-input')).toBeInTheDocument();
+
+      const submitBtn = screen.getByTestId('mfa-verify-button');
+      fireEvent.click(submitBtn);
+
+      fireEvent.change(screen.getByTestId('mfa-code-input'), { target: { value: '123456' } });
+      fireEvent.click(submitBtn);
+
+      expect(handleSubmit).toHaveBeenCalledWith({ code: '123456' });
+    });
+
+    it('displays an error message when onSubmit throws', async () => {
+      const handleSubmit = vi.fn().mockRejectedValue(new Error('Código inválido.'));
+      render(<MfaVerifyForm onSubmit={handleSubmit} />);
+
+      fireEvent.change(screen.getByTestId('mfa-code-input'), { target: { value: '000000' } });
+      fireEvent.click(screen.getByTestId('mfa-verify-button'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('mfa-verify-error')).toHaveTextContent('Código inválido.');
+      });
     });
   });
 
