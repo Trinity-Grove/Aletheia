@@ -1012,6 +1012,55 @@
   width: 100%;
   margin: 0 auto;
 }
+
+/* --------------------------------------------------------------------------
+   UI Breadcrumbs
+   -------------------------------------------------------------------------- */
+.ui-breadcrumbs {
+  margin-bottom: var(--ui-space-8);
+}
+.ui-breadcrumbs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--ui-space-8) / 4);
+  font-size: 0.8125rem;
+}
+.ui-breadcrumbs-item {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--ui-space-8) / 4);
+}
+.ui-breadcrumbs-link {
+  color: var(--ui-text-secondary);
+  text-decoration: none;
+  border-radius: var(--ui-radius-sm);
+}
+.ui-breadcrumbs-link:hover {
+  color: var(--ui-text-brand);
+  text-decoration: underline;
+}
+.ui-breadcrumbs-link:focus-visible {
+  outline: var(--ui-focus-ring-width) solid var(--ui-focus-ring-color);
+  outline-offset: var(--ui-focus-ring-offset);
+}
+.ui-breadcrumbs-current {
+  color: var(--ui-text-primary);
+  font-weight: 600;
+}
+.ui-breadcrumbs-separator {
+  color: var(--ui-text-disabled);
+}
+
+/* --------------------------------------------------------------------------
+   UI Brand Mark
+   -------------------------------------------------------------------------- */
+.ui-brand-mark {
+  flex-shrink: 0;
+}
 .ui-tab-bar,
 .ui-appshell-tab-bar {
   display: none;
@@ -1052,6 +1101,9 @@
   background: transparent;
   border: none;
   cursor: pointer;
+}
+.ui-tab-bar-link:hover {
+  color: var(--ui-navigation-link-foreground-hover);
 }
 .ui-tab-bar-link--active {
   color: var(--ui-navigation-link-foreground-active);
