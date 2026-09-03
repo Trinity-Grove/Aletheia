@@ -5,6 +5,7 @@ export interface Environment {
   databaseUrl: string;
   redisUrl: string | null;
   jwtSecret: string;
+  mfaEncryptionKey: string;
   corsOrigins: string[];
   resendApiKey: string | null;
   mailFromAddress: string;
@@ -47,6 +48,13 @@ const environmentSchema = z
         .trim()
         .min(16, 'JWT_SECRET is required and must be at least 16 characters long'),
     ),
+    MFA_ENCRYPTION_KEY: z.preprocess(
+      (value) => value ?? '',
+      z
+        .string()
+        .trim()
+        .regex(/^[0-9a-f]{64}$/i, 'MFA_ENCRYPTION_KEY is required and must be a 64-character hex string (32 bytes)'),
+    ),
     CORS_ORIGIN: optionalValue,
     RESEND_API_KEY: optionalValue,
     MAIL_FROM_ADDRESS: optionalValue,
@@ -85,6 +93,7 @@ const environmentSchema = z
       databaseUrl: environment.DATABASE_URL,
       redisUrl: environment.REDIS_URL ?? null,
       jwtSecret: environment.JWT_SECRET,
+      mfaEncryptionKey: environment.MFA_ENCRYPTION_KEY,
       corsOrigins: environment.CORS_ORIGIN
         ? environment.CORS_ORIGIN.split(',')
             .map((origin) => origin.trim())

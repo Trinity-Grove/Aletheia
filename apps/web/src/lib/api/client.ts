@@ -30,7 +30,13 @@ export function getApiAuthToken(): string | null {
 // of these means "these credentials/token are actually invalid", not
 // "the access token merely expired," so refreshing and retrying would just
 // mask the real failure (or infinitely recurse, for /auth/refresh itself).
-const REFRESH_EXEMPT_PATHS = new Set(['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout']);
+const REFRESH_EXEMPT_PATHS = new Set([
+  '/auth/login',
+  '/auth/register',
+  '/auth/refresh',
+  '/auth/logout',
+  '/auth/mfa/verify',
+]);
 
 let inFlightRefresh: Promise<boolean> | null = null;
 

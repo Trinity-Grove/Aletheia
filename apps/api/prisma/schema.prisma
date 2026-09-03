@@ -31,6 +31,7 @@ model User {
   passwordHash            String                    @map("password_hash")
   fullName                String                    @map("full_name")
   emailVerifiedAt         DateTime?                 @map("email_verified_at") @db.Timestamptz
+  mfaEnabled              Boolean                   @default(false) @map("mfa_enabled")
   createdAt               DateTime                  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt               DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
   memberships             FamilyMember[]
@@ -40,6 +41,10 @@ model User {
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens     PasswordResetToken[]
   auditLogEntries         AccountAuditLogEntry[]
+  mfaSecret               MfaSecret?
+  mfaRecoveryCodes        MfaRecoveryCode[]
+  mfaSetupChallenges      MfaSetupChallenge[]
+  mfaLoginChallenges      MfaLoginChallenge[]
 
   @@map("users")
 }
@@ -54,6 +59,9 @@ enum AccountAuditEventType {
   EMAIL_CHANGED
   EMAIL_VERIFIED
   REFRESH_TOKEN_REUSE_DETECTED
+  MFA_ENABLED
+  MFA_DISABLED
+  MFA_CHALLENGE_FAILED
 
   @@map("account_audit_event_types")
 }
@@ -107,6 +115,54 @@ model RefreshToken {
 
   @@index([userId])
   @@map("refresh_tokens")
+}
+
+model MfaSecret {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @unique @map("user_id") @db.Uuid
+  encryptedSecret String   @map("encrypted_secret")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("mfa_secrets")
+}
+
+model MfaRecoveryCode {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  codeHash  String    @map("code_hash")
+  usedAt    DateTime? @map("used_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("mfa_recovery_codes")
+}
+
+model MfaSetupChallenge {
+  id                 String   @id @default(uuid()) @db.Uuid
+  userId             String   @unique @map("user_id") @db.Uuid
+  encryptedSecret    String   @map("encrypted_secret")
+  recoveryCodeHashes String[] @map("recovery_code_hashes")
+  expiresAt          DateTime @map("expires_at") @db.Timestamptz
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("mfa_setup_challenges")
+}
+
+model MfaLoginChallenge {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  tokenHash    String   @unique @map("token_hash")
+  attemptCount Int      @default(0) @map("attempt_count")
+  expiresAt    DateTime @map("expires_at") @db.Timestamptz
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("mfa_login_challenges")
 }
 
 model Family {

@@ -15,6 +15,7 @@ describe('AuthContext and useAuth', () => {
     email: 'guardian@example.com',
     fullName: 'Guardian Silva',
     emailVerified: false,
+    mfaEnabled: false,
     createdAt: '2026-08-30T00:00:00.000Z',
   };
 
@@ -211,6 +212,59 @@ describe('AuthContext and useAuth', () => {
     expect(localStorage.getItem('aletheia_token')).toBeNull();
     expect(localStorage.getItem('token')).toBeNull();
     expect(getApiAuthToken()).toBe('new-login-token-456');
+  });
+
+  it('pauses login when MFA is required and completes it via verifyMfa', async () => {
+    const authResponse: AuthResponseDto = {
+      accessToken: 'verified-token-123',
+      user: mockUser,
+    };
+    const mfaChallenge = { mfaRequired: true, challengeToken: 'challenge-token-abc' };
+
+    vi.spyOn(api, 'get')
+      .mockRejectedValueOnce(new ApiError(401, 'Unauthorized', 'No session'))
+      .mockResolvedValue([mockFamily1]);
+    const postSpy = vi
+      .spyOn(api, 'post')
+      .mockResolvedValueOnce(mfaChallenge)
+      .mockResolvedValueOnce(authResponse);
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AuthProvider>{children}</AuthProvider>
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.status).toBe('unauthenticated');
+    });
+
+    await act(async () => {
+      const loginResult = await result.current.login({
+        email: 'guardian@example.com',
+        password: 'secretPassword123',
+      });
+      expect(loginResult).toEqual(mfaChallenge);
+    });
+
+    // A challenge is issued, but no session exists yet.
+    expect(result.current.status).toBe('unauthenticated');
+    expect(result.current.token).toBeNull();
+    expect(result.current.user).toBeNull();
+
+    await act(async () => {
+      await result.current.verifyMfa({ challengeToken: 'challenge-token-abc', code: '123456' });
+    });
+
+    expect(postSpy).toHaveBeenCalledWith('/auth/mfa/verify', {
+      challengeToken: 'challenge-token-abc',
+      code: '123456',
+    });
+    expect(result.current.status).toBe('authenticated');
+    expect(result.current.token).toBe('verified-token-123');
+    expect(result.current.families).toEqual([mockFamily1]);
+    expect(result.current.activeRole).toBe('OWNER_GUARDIAN');
+    expect(getApiAuthToken()).toBe('verified-token-123');
   });
 
   it('registers successfully and sets authenticated state with empty families', async () => {

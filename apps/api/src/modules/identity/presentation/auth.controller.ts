@@ -19,6 +19,10 @@ import {
   changePasswordSchema,
   forgotPasswordSchema,
   loginSchema,
+  mfaConfirmSchema,
+  mfaDisableSchema,
+  mfaSetupRequestSchema,
+  mfaVerifySchema,
   registerGuardianSchema,
   resetPasswordSchema,
   verifyEmailSchema,
@@ -28,6 +32,12 @@ import {
   type ChangePasswordDto,
   type ForgotPasswordDto,
   type LoginDto,
+  type LoginResultDto,
+  type MfaConfirmDto,
+  type MfaDisableDto,
+  type MfaSetupRequestDto,
+  type MfaSetupResponseDto,
+  type MfaVerifyDto,
   type RegisterGuardianDto,
   type ResetPasswordDto,
   type UserSummaryDto,
@@ -79,8 +89,81 @@ export class AuthController {
   async login(
     @Body(new ZodValidationPipe(loginSchema)) body: LoginDto,
     @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<LoginResultDto> {
+    const result = await this.authService.login(body);
+
+    // A user with MFA enabled gets a challenge, not a session — keep the
+    // response free of any cookie so nothing resembling a session exists
+    // until the second factor is verified in /auth/mfa/verify.
+    if ('mfaRequired' in result) {
+      return { mfaRequired: true, challengeToken: result.challengeToken };
+    }
+
+    return this.commitSession(reply, result);
+  }
+
+  @Post('mfa/setup')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Start MFA setup: generate a TOTP secret and recovery codes' })
+  @ApiResponse({ status: 200, description: 'Returns the otpauth URI and 10 recovery codes.' })
+  @ApiResponse({ status: 400, description: 'MFA is already enabled, or setup is not allowed.' })
+  @ApiResponse({ status: 401, description: 'Current password incorrect, or not authenticated.' })
+  async mfaSetup(
+    @Req() req: { user: { userId: string } },
+    @Body(new ZodValidationPipe(mfaSetupRequestSchema)) body: MfaSetupRequestDto,
+  ): Promise<MfaSetupResponseDto> {
+    return this.authService.mfaSetup(req.user.userId, body.password);
+  }
+
+  @Post('mfa/confirm')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Confirm MFA setup by verifying the first TOTP code' })
+  @ApiResponse({ status: 200, description: 'MFA enabled.' })
+  @ApiResponse({ status: 400, description: 'Invalid code, or setup expired/not started.' })
+  @ApiResponse({ status: 401, description: 'Not authenticated.' })
+  async mfaConfirm(
+    @Req() req: { user: { userId: string } },
+    @Body(new ZodValidationPipe(mfaConfirmSchema)) body: MfaConfirmDto,
+  ): Promise<{ success: true }> {
+    await this.authService.mfaConfirm(req.user.userId, body.code);
+    return { success: true };
+  }
+
+  @Post('mfa/disable')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Disable MFA for the authenticated guardian' })
+  @ApiResponse({ status: 200, description: 'MFA disabled.' })
+  @ApiResponse({ status: 400, description: 'MFA is not enabled.' })
+  @ApiResponse({ status: 401, description: 'Current password incorrect, or not authenticated.' })
+  async mfaDisable(
+    @Req() req: { user: { userId: string } },
+    @Body(new ZodValidationPipe(mfaDisableSchema)) body: MfaDisableDto,
+  ): Promise<{ success: true }> {
+    await this.authService.mfaDisable(req.user.userId, body.password);
+    return { success: true };
+  }
+
+  @Post('mfa/verify')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Complete a two-step login with a TOTP code or recovery code' })
+  @ApiResponse({ status: 200, description: 'Login completed; a full session is issued.' })
+  @ApiResponse({ status: 400, description: 'Invalid code, or challenge exhausted.' })
+  @ApiResponse({ status: 404, description: 'Invalid or expired login challenge.' })
+  async mfaVerify(
+    @Body(new ZodValidationPipe(mfaVerifySchema)) body: MfaVerifyDto,
+    @Res({ passthrough: true }) reply: FastifyReply,
   ): Promise<AuthResponseDto> {
-    const session = await this.authService.login(body);
+    const session = await this.authService.mfaVerify(body);
     return this.commitSession(reply, session);
   }
 

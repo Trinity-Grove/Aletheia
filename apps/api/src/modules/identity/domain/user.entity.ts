@@ -4,6 +4,7 @@ export interface UserProps {
   passwordHash: string;
   fullName: string;
   emailVerifiedAt: Date | null;
+  mfaEnabled: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,6 +32,10 @@ export class UserEntity {
     return this.props.emailVerifiedAt;
   }
 
+  get mfaEnabled(): boolean {
+    return this.props.mfaEnabled;
+  }
+
   get createdAt(): Date {
     return this.props.createdAt;
   }
@@ -45,6 +50,7 @@ export class UserEntity {
       email: this.email,
       fullName: this.fullName,
       emailVerified: this.emailVerifiedAt !== null,
+      mfaEnabled: this.mfaEnabled,
       createdAt: this.createdAt.toISOString(),
     };
   }

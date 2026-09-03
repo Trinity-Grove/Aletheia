@@ -1,5 +1,5 @@
 import React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type {
   AccountAuditLogEntryDto,
@@ -14,6 +14,14 @@ import { AccountSecuritySettings } from '../src/components/settings/account-secu
 import { AccountActivityLog } from '../src/components/settings/account-activity-log';
 import { NotificationBell } from '../src/components/layout/notification-bell';
 import { AuthProvider } from '../src/lib/auth/rbac-context';
+import { api } from '../src/lib/api';
+import QRCode from 'qrcode';
+
+vi.mock('qrcode', () => ({
+  default: { toDataURL: vi.fn() },
+}));
+
+const mockQrToDataURL = QRCode.toDataURL as ReturnType<typeof vi.fn>;
 
 const mockSettings: FamilySettingsResponseDto = {
   id: '00000000-0000-0000-0000-000000000001',
@@ -480,6 +488,127 @@ describe('Settings Hub, Notification Center & Data Backup Web Components', () =>
       fireEvent.click(screen.getByTestId('change-email-button'));
 
       expect(await screen.findByTestId('change-email-error')).toHaveTextContent('E-mail já está em uso.');
+    });
+  });
+
+  describe('AccountSecuritySettings MFA (two-factor authentication)', () => {
+    beforeEach(() => {
+      vi.restoreAllMocks();
+      mockQrToDataURL.mockImplementation(
+        (_text: unknown, _opts: unknown, cb: (err: null, url: string) => void) => {
+          cb(null, 'data:image/png;base64,FAKE');
+        },
+      );
+    });
+
+    const mockSetupResponse = {
+      otpauthUri: 'otpauth://totp/Aletheia:guardian@aletheia.edu?secret=MOCKSECRET&issuer=Aletheia',
+      recoveryCodes: [
+        'ABCD-EFGH',
+        'WXYZ-2345',
+        'ABCD-2345',
+        'WXYZ-EFGH',
+        'ABCD-5678',
+        'WXYZ-9012',
+        'ABCD-1234',
+        'WXYZ-3456',
+        'ABCD-7890',
+        'WXYZ-0123',
+      ],
+    };
+
+    it('enables 2FA through password confirm, QR + recovery codes, then code confirm', async () => {
+      const onMfaStateChanged = vi.fn().mockResolvedValue(undefined);
+      const postSpy = vi
+        .spyOn(api, 'post')
+        .mockResolvedValueOnce(mockSetupResponse)
+        .mockResolvedValueOnce(undefined);
+
+      render(
+        <AccountSecuritySettings
+          currentEmail="guardian@aletheia.edu"
+          mfaEnabled={false}
+          onChangePassword={vi.fn()}
+          onChangeEmail={vi.fn()}
+          onMfaStateChanged={onMfaStateChanged}
+        />,
+      );
+
+      expect(screen.getByTestId('mfa-status')).toHaveTextContent('Desativado');
+
+      fireEvent.click(screen.getByTestId('mfa-enable-button'));
+      fireEvent.change(screen.getByTestId('mfa-setup-password-input'), { target: { value: 'password123' } });
+      fireEvent.click(screen.getByTestId('mfa-setup-submit-button'));
+
+      expect(await screen.findByTestId('mfa-qr-image')).toHaveAttribute(
+        'src',
+        'data:image/png;base64,FAKE',
+      );
+      expect(screen.getByTestId('mfa-recovery-codes')).toHaveTextContent('ABCD-EFGH');
+
+      fireEvent.change(screen.getByTestId('mfa-confirm-code-input'), { target: { value: '123456' } });
+      fireEvent.click(screen.getByTestId('mfa-confirm-button'));
+
+      await waitFor(() => {
+        expect(postSpy).toHaveBeenNthCalledWith(1, '/auth/mfa/setup', { password: 'password123' });
+        expect(postSpy).toHaveBeenNthCalledWith(2, '/auth/mfa/confirm', { code: '123456' });
+      });
+      await waitFor(() => expect(onMfaStateChanged).toHaveBeenCalled());
+      expect(await screen.findByTestId('mfa-success')).toBeDefined();
+    });
+
+    it('shows the recovery codes and an error when the confirmation code is rejected', async () => {
+      const postSpy = vi
+        .spyOn(api, 'post')
+        .mockResolvedValueOnce(mockSetupResponse)
+        .mockRejectedValueOnce(new Error('Código inválido.'));
+
+      render(
+        <AccountSecuritySettings
+          currentEmail="guardian@aletheia.edu"
+          onChangePassword={vi.fn()}
+          onChangeEmail={vi.fn()}
+        />,
+      );
+
+      fireEvent.click(screen.getByTestId('mfa-enable-button'));
+      fireEvent.change(screen.getByTestId('mfa-setup-password-input'), { target: { value: 'password123' } });
+      fireEvent.click(screen.getByTestId('mfa-setup-submit-button'));
+
+      await screen.findByTestId('mfa-confirm-code-input');
+      expect(screen.getByTestId('mfa-recovery-codes').children.length).toBe(10);
+
+      fireEvent.change(screen.getByTestId('mfa-confirm-code-input'), { target: { value: '000000' } });
+      fireEvent.click(screen.getByTestId('mfa-confirm-button'));
+
+      expect(await screen.findByTestId('mfa-confirm-error')).toHaveTextContent('Código inválido.');
+      expect(postSpy).toHaveBeenCalledWith('/auth/mfa/confirm', { code: '000000' });
+    });
+
+    it('disables 2FA after confirming the current password', async () => {
+      const onMfaStateChanged = vi.fn().mockResolvedValue(undefined);
+      const postSpy = vi.spyOn(api, 'post').mockResolvedValue(undefined);
+
+      render(
+        <AccountSecuritySettings
+          currentEmail="guardian@aletheia.edu"
+          mfaEnabled
+          onChangePassword={vi.fn()}
+          onChangeEmail={vi.fn()}
+          onMfaStateChanged={onMfaStateChanged}
+        />,
+      );
+
+      expect(screen.getByTestId('mfa-status')).toHaveTextContent('Ativo');
+
+      fireEvent.change(screen.getByTestId('mfa-disable-password-input'), { target: { value: 'password123' } });
+      fireEvent.click(screen.getByTestId('mfa-disable-button'));
+
+      await waitFor(() =>
+        expect(postSpy).toHaveBeenCalledWith('/auth/mfa/disable', { password: 'password123' }),
+      );
+      await waitFor(() => expect(onMfaStateChanged).toHaveBeenCalled());
+      expect(await screen.findByTestId('mfa-success')).toBeDefined();
     });
   });
 

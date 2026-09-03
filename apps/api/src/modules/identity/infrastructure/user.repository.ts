@@ -17,6 +17,7 @@ export class UserRepository {
       passwordHash: user.passwordHash,
       fullName: user.fullName,
       emailVerifiedAt: user.emailVerifiedAt,
+      mfaEnabled: user.mfaEnabled,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     });
@@ -33,6 +34,7 @@ export class UserRepository {
       passwordHash: user.passwordHash,
       fullName: user.fullName,
       emailVerifiedAt: user.emailVerifiedAt,
+      mfaEnabled: user.mfaEnabled,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     });
@@ -52,6 +54,7 @@ export class UserRepository {
       passwordHash: created.passwordHash,
       fullName: created.fullName,
       emailVerifiedAt: created.emailVerifiedAt,
+      mfaEnabled: created.mfaEnabled,
       createdAt: created.createdAt,
       updatedAt: created.updatedAt,
     });

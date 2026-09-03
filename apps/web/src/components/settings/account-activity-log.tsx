@@ -16,9 +16,12 @@ const EVENT_LABELS: Record<AccountAuditEventType, string> = {
   PASSWORD_RESET_REQUESTED: 'Redefinição de senha solicitada',
   PASSWORD_RESET_COMPLETED: 'Senha redefinida por link de e-mail',
   EMAIL_CHANGED: 'E-mail alterado',
-  EMAIL_VERIFIED: 'E-mail verificado',
-  REFRESH_TOKEN_REUSE_DETECTED: 'Atividade suspeita detectada — sessões encerradas por segurança',
-};
+   EMAIL_VERIFIED: 'E-mail verificado',
+   REFRESH_TOKEN_REUSE_DETECTED: 'Atividade suspeita detectada — sessões encerradas por segurança',
+   MFA_ENABLED: 'Autenticação de dois fatores ativada',
+   MFA_DISABLED: 'Autenticação de dois fatores desativada',
+   MFA_CHALLENGE_FAILED: 'Código de autenticação de dois fatores inválido',
+ };
 
 function formatEntryDate(createdAt: string): string {
   return new Date(createdAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });

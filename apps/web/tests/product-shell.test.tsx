@@ -178,6 +178,7 @@ describe('ProductShell adapter', () => {
           email: 'outer@aletheia.edu',
           fullName: 'Outer Guardian',
           emailVerified: false,
+          mfaEnabled: false,
           createdAt: '2026-01-01T00:00:00.000Z',
         }}
       >
@@ -218,6 +219,7 @@ describe('ProductShell adapter', () => {
           email: 'context@aletheia.edu',
           fullName: 'Guardião do Contexto',
           emailVerified: false,
+          mfaEnabled: false,
           createdAt: '2026-01-01T00:00:00.000Z',
         }}
       >
@@ -330,6 +332,7 @@ describe('ProductShell adapter', () => {
         email: 'real.guardian@aletheia.edu',
         fullName: 'Guardião Real',
         emailVerified: false,
+        mfaEnabled: false,
         createdAt: '2026-08-30T00:00:00.000Z',
       },
       token: 'jwt-token',
@@ -344,6 +347,7 @@ describe('ProductShell adapter', () => {
       families: [],
       activeRole: 'OWNER_GUARDIAN',
       login: vi.fn(),
+      verifyMfa: vi.fn(),
       register: vi.fn(),
       logout: vi.fn(),
       selectFamily: vi.fn(),
@@ -378,6 +382,7 @@ describe('ProductShell adapter', () => {
       families: [],
       activeRole: null,
       login: vi.fn(),
+      verifyMfa: vi.fn(),
       register: vi.fn(),
       logout: vi.fn(),
       selectFamily: vi.fn(),
@@ -412,6 +417,7 @@ describe('ProductShell adapter', () => {
       families: [],
       activeRole: null,
       login: vi.fn(),
+      verifyMfa: vi.fn(),
       register: vi.fn(),
       logout: vi.fn(),
       selectFamily: vi.fn(),

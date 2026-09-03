@@ -1,6 +1,7 @@
 import { JwtService } from '@nestjs/jwt';
-import { BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
-import { AuthService } from './auth.service.js';
+import { BadRequestException, ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { verifySync } from 'otplib';
+import { AuthService, type AuthSession, type LoginResult } from './auth.service.js';
 import { PasswordHasher } from './password.hasher.js';
 import { UserRepository } from '../infrastructure/user.repository.js';
 import { UserEntity } from '../domain/user.entity.js';
@@ -20,9 +21,22 @@ import type {
   AccountAuditLogRecord,
   AccountAuditLogRepository,
 } from '../infrastructure/account-audit-log.repository.js';
+import type { MfaRepository } from '../infrastructure/mfa.repository.js';
+import { TotpSecretCipher } from '../../../platform/security/totp-secret-cipher.js';
+import { hashRecoveryCode } from '../../../platform/security/totp.js';
 import type { MailMessage, MailSender } from '../../../platform/mail/mail-sender.js';
 import type { Environment } from '../../../platform/config/environment.js';
 import type { AccountAuditEventType } from '@aletheia/contracts';
+
+// otplib v13 ships ESM-only runtime deps that ts-jest can't transform. The
+// unit tests assert service orchestration, not real TOTP math (that's the
+// integration suite), so mock the library and drive verifyTotpToken's
+// outcome by controlling verifySync per test.
+jest.mock('otplib', () => ({
+  generateSecret: jest.fn(() => 'FAKESECRET'),
+  generateURI: jest.fn(() => 'otpauth://totp/Aletheia:user?secret=FAKESECRET'),
+  verifySync: jest.fn(() => ({ valid: false, delta: undefined })),
+}));
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -40,6 +54,28 @@ describe('AuthService', () => {
   let sentEmails: MailMessage[];
   let mailSender: MailSender;
   let environment: Environment;
+  let mfaRepository: MfaRepository;
+  let totpSecretCipher: TotpSecretCipher;
+  let fakeSetupChallenges: Map<
+    string,
+    { id: string; encryptedSecret: string; recoveryCodeHashes: string[]; expiresAt: Date }
+  >;
+  let fakeLoginChallenges: Map<
+    string,
+    { id: string; userId: string; attemptCount: number; expiresAt: Date }
+  >;
+  let fakeMfaSecrets: Map<
+    string,
+    { userId: string; encryptedSecret: string; createdAt: Date }
+  >;
+  let fakeRecoveryCodes: Map<string, Array<{ userId: string; codeHash: string; usedAt: Date | null }>>;
+  let setUserMfa: (mfaEnabled: boolean, userId?: string) => void;
+
+  function expectAuthSession(result: LoginResult): asserts result is AuthSession {
+    if (!('accessToken' in result)) {
+      throw new Error('Expected an AuthSession, but login returned an MFA challenge.');
+    }
+  }
 
   beforeEach(() => {
     fakeUsers = new Map();
@@ -61,6 +97,7 @@ describe('AuthService', () => {
           passwordHash: data.passwordHash,
           fullName: data.fullName,
           emailVerifiedAt: null,
+          mfaEnabled: false,
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -78,6 +115,7 @@ describe('AuthService', () => {
                 passwordHash: user.passwordHash,
                 fullName: user.fullName,
                 emailVerifiedAt: new Date(),
+                mfaEnabled: user.mfaEnabled,
                 createdAt: user.createdAt,
                 updatedAt: user.updatedAt,
               }),
@@ -96,6 +134,7 @@ describe('AuthService', () => {
                 passwordHash,
                 fullName: user.fullName,
                 emailVerifiedAt: user.emailVerifiedAt,
+                mfaEnabled: user.mfaEnabled,
                 createdAt: user.createdAt,
                 updatedAt: user.updatedAt,
               }),
@@ -119,6 +158,7 @@ describe('AuthService', () => {
               passwordHash: user.passwordHash,
               fullName: user.fullName,
               emailVerifiedAt: null,
+              mfaEnabled: user.mfaEnabled,
               createdAt: user.createdAt,
               updatedAt: user.updatedAt,
             }),
@@ -231,6 +271,122 @@ describe('AuthService', () => {
 
     environment = { webOrigin: 'http://localhost:3000' } as Environment;
 
+    fakeSetupChallenges = new Map();
+    fakeLoginChallenges = new Map();
+    fakeMfaSecrets = new Map();
+    fakeRecoveryCodes = new Map();
+    setUserMfa = (mfaEnabled: boolean, userId: string = 'user-uuid-1') => {
+      const match = [...fakeUsers.entries()].find(([, user]) => user.id === userId);
+      if (!match) return;
+      const [email, user] = match;
+      fakeUsers.set(
+        email,
+        new UserEntity({
+          id: user.id,
+          email: user.email,
+          passwordHash: user.passwordHash,
+          fullName: user.fullName,
+          emailVerifiedAt: user.emailVerifiedAt,
+          mfaEnabled,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        }),
+      );
+    };
+    let setupSequence = 0;
+    let loginSequence = 0;
+    mfaRepository = {
+      findSecretForUser: async (userId: string) =>
+        fakeMfaSecrets.get(userId) ?? null,
+      findSetupChallenge: async (userId: string) =>
+        fakeSetupChallenges.get(userId) ?? null,
+      upsertSetupChallenge: async (data: {
+        userId: string;
+        encryptedSecret: string;
+        recoveryCodeHashes: string[];
+        expiresAt: Date;
+      }) => {
+        fakeSetupChallenges.set(data.userId, { ...data, id: `sc-${++setupSequence}` });
+      },
+      issueLoginChallenge: async (userId: string) => {
+        const token = `mfa-challenge-token-${++loginSequence}`;
+        fakeLoginChallenges.set(token, {
+          id: `lc-${loginSequence}`,
+          userId,
+          attemptCount: 0,
+          expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        });
+        return { token, expiresAt: new Date(Date.now() + 10 * 60 * 1000) };
+      },
+      findLoginChallengeByToken: async (token: string) =>
+        fakeLoginChallenges.get(token) ?? null,
+      deleteLoginChallenge: async (id: string) => {
+        for (const [token, record] of fakeLoginChallenges.entries()) {
+          if (record.id === id) fakeLoginChallenges.delete(token);
+        }
+      },
+      registerFailedLoginAttempt: async (id: string) => {
+        let found: { token: string; record: { attemptCount: number } } | null = null;
+        for (const [token, record] of fakeLoginChallenges.entries()) {
+          if (record.id === id) {
+            record.attemptCount += 1;
+            found = { token, record };
+          }
+        }
+        // Simulates the atomic cap: once the 5th attempt is reached the
+        // challenge is deleted and can no longer be used.
+        if (!found) {
+          return true;
+        }
+        if (found.record.attemptCount >= 5) {
+          fakeLoginChallenges.delete(found.token);
+          return true;
+        }
+        return false;
+      },
+      markRecoveryCodeUsed: async (userId: string, code: string) => {
+        const codeHash = hashRecoveryCode(code);
+        const list = fakeRecoveryCodes.get(userId) ?? [];
+        const idx = list.findIndex(
+          (entry) => entry.codeHash === codeHash && !entry.usedAt,
+        );
+        if (idx === -1) return false;
+        list[idx]!.usedAt = new Date();
+        fakeRecoveryCodes.set(userId, list);
+        return true;
+      },
+      confirmSetup: async (data: {
+        userId: string;
+        encryptedSecret: string;
+        recoveryCodeHashes: string[];
+        challengeId: string;
+      }) => {
+        fakeMfaSecrets.set(data.userId, {
+          userId: data.userId,
+          encryptedSecret: data.encryptedSecret,
+          createdAt: new Date(),
+        });
+        fakeRecoveryCodes.set(
+          data.userId,
+          data.recoveryCodeHashes.map((codeHash: string) => ({
+            userId: data.userId,
+            codeHash,
+            usedAt: null,
+          })),
+        );
+        setUserMfa(true, data.userId);
+      },
+      disable: async (userId: string) => {
+        fakeMfaSecrets.delete(userId);
+        fakeRecoveryCodes.delete(userId);
+        setUserMfa(false, userId);
+      },
+    } as unknown as MfaRepository;
+
+    totpSecretCipher = new TotpSecretCipher(
+      '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+    );
+
     authService = new AuthService(
       mockRepo,
       hasher,
@@ -239,6 +395,8 @@ describe('AuthService', () => {
       emailVerificationTokenRepository,
       passwordResetTokenRepository,
       accountAuditLogRepository,
+      mfaRepository,
+      totpSecretCipher,
       mailSender,
       environment,
     );
@@ -339,6 +497,7 @@ describe('AuthService', () => {
       password: 'securePassword888',
     });
 
+    expectAuthSession(loginResult);
     expect(loginResult.accessToken).toBeDefined();
     expect(loginResult.user.email).toBe('login@example.com');
   });
@@ -542,6 +701,7 @@ describe('AuthService', () => {
         email: 'reset@example.com',
         password: 'newPassword456',
       });
+      expectAuthSession(loginResult);
       expect(loginResult.accessToken).toBeDefined();
     });
 
@@ -628,6 +788,7 @@ describe('AuthService', () => {
         email: 'change-pw@example.com',
         password: 'newPassword456',
       });
+      expectAuthSession(loginResult);
       expect(loginResult.accessToken).toBeDefined();
     });
 
@@ -844,6 +1005,202 @@ describe('AuthService', () => {
       expect(entries.map((entry) => entry.eventType)).toEqual(['PASSWORD_CHANGED', 'LOGIN_SUCCEEDED']);
       expect(entries[0]!.id).toBeDefined();
       expect(entries[0]!.createdAt).toBeDefined();
+    });
+  });
+
+  describe('MFA (TOTP)', () => {
+    async function makeMfaUser() {
+      await authService.register({
+        email: 'mfa@example.com',
+        fullName: 'MFA User',
+        password: 'password12345',
+      });
+      return 'user-uuid-1';
+    }
+
+    function challengeOf(result: Awaited<ReturnType<AuthService['login']>>) {
+      if (!('challengeToken' in result)) {
+        throw new Error('Expected an MFA login challenge.');
+      }
+      return result;
+    }
+
+    beforeEach(() => {
+      (verifySync as jest.Mock).mockReturnValue({ valid: false, delta: undefined });
+    });
+
+    it('mfaSetup returns an otpauth URI + recovery codes and stores a pending challenge', async () => {
+      const userId = await makeMfaUser();
+
+      const result = await authService.mfaSetup(userId, 'password12345');
+
+      expect(result.otpauthUri).toContain('otpauth://totp/');
+      expect(result.recoveryCodes).toHaveLength(10);
+      expect(fakeSetupChallenges.has(userId)).toBe(true);
+    });
+
+    it('mfaSetup rejects an incorrect password', async () => {
+      const userId = await makeMfaUser();
+
+      await expect(authService.mfaSetup(userId, 'wrongpass123')).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('mfaSetup rejects when MFA is already enabled', async () => {
+      const userId = await makeMfaUser();
+      setUserMfa(true, userId);
+
+      await expect(authService.mfaSetup(userId, 'password12345')).rejects.toThrow(BadRequestException);
+    });
+
+    it('mfaConfirm enables MFA and stores the secret + recovery codes after a valid code', async () => {
+      const userId = await makeMfaUser();
+      await authService.mfaSetup(userId, 'password12345');
+      (verifySync as jest.Mock).mockReturnValue({ valid: true, delta: 0 });
+
+      await authService.mfaConfirm(userId, '123456');
+
+      expect(([...fakeUsers.values()][0]!).mfaEnabled).toBe(true);
+      expect(fakeMfaSecrets.has(userId)).toBe(true);
+      expect(fakeRecoveryCodes.has(userId)).toBe(true);
+      expect(auditLog.map((entry) => entry.eventType)).toContain('MFA_ENABLED');
+    });
+
+    it('mfaConfirm rejects an invalid code', async () => {
+      const userId = await makeMfaUser();
+      await authService.mfaSetup(userId, 'password12345');
+
+      await expect(authService.mfaConfirm(userId, '000000')).rejects.toThrow(BadRequestException);
+    });
+
+    it('mfaConfirm rejects when no pending challenge exists', async () => {
+      const userId = await makeMfaUser();
+
+      await expect(authService.mfaConfirm(userId, '123456')).rejects.toThrow(BadRequestException);
+    });
+
+    it('mfaDisable requires the current password and clears MFA state', async () => {
+      const userId = await makeMfaUser();
+      setUserMfa(true, userId);
+      fakeMfaSecrets.set(userId, { userId, encryptedSecret: 'enc', createdAt: new Date() });
+      fakeRecoveryCodes.set(userId, [{ userId, codeHash: 'h', usedAt: null }]);
+
+      await authService.mfaDisable(userId, 'password12345');
+
+      expect(fakeMfaSecrets.has(userId)).toBe(false);
+      expect(fakeRecoveryCodes.has(userId)).toBe(false);
+      expect(([...fakeUsers.values()][0]!).mfaEnabled).toBe(false);
+      expect(auditLog.map((entry) => entry.eventType)).toContain('MFA_DISABLED');
+    });
+
+    it('mfaDisable rejects an incorrect password', async () => {
+      const userId = await makeMfaUser();
+      setUserMfa(true, userId);
+
+      await expect(authService.mfaDisable(userId, 'wrongpass123')).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('mfaDisable rejects when MFA is not enabled', async () => {
+      const userId = await makeMfaUser();
+
+      await expect(authService.mfaDisable(userId, 'password12345')).rejects.toThrow(BadRequestException);
+    });
+
+    it('login returns a login challenge instead of a session when MFA is enabled', async () => {
+      await makeMfaUser();
+      setUserMfa(true);
+
+      const result = await authService.login({
+        email: 'mfa@example.com',
+        password: 'password12345',
+      });
+
+      expect('challengeToken' in result).toBe(true);
+      expect('accessToken' in result).toBe(false);
+    });
+
+    it('mfaVerify completes login with a valid TOTP code and destroys the challenge', async () => {
+      const userId = await makeMfaUser();
+      await authService.mfaSetup(userId, 'password12345');
+      (verifySync as jest.Mock).mockReturnValue({ valid: true, delta: 0 });
+      await authService.mfaConfirm(userId, '123456');
+
+      const challenge = challengeOf(
+        await authService.login({ email: 'mfa@example.com', password: 'password12345' }),
+      );
+      const session = await authService.mfaVerify({
+        challengeToken: challenge.challengeToken,
+        code: '123456',
+      });
+
+      expect(session.accessToken).toBeDefined();
+      expect(session.user.email).toBe('mfa@example.com');
+      expect(fakeLoginChallenges.size).toBe(0);
+    });
+
+    it('mfaVerify completes login with a recovery code, which is single-use', async () => {
+      const userId = await makeMfaUser();
+      const setup = await authService.mfaSetup(userId, 'password12345');
+      (verifySync as jest.Mock).mockReturnValue({ valid: true, delta: 0 });
+      await authService.mfaConfirm(userId, '123456');
+      // Force the recovery-code fallback rather than the TOTP path.
+      (verifySync as jest.Mock).mockReturnValue({ valid: false, delta: undefined });
+
+      const code = setup.recoveryCodes[0]!;
+
+      const firstChallenge = challengeOf(
+        await authService.login({ email: 'mfa@example.com', password: 'password12345' }),
+      );
+      const session = await authService.mfaVerify({
+        challengeToken: firstChallenge.challengeToken,
+        code,
+      });
+      expect(session.accessToken).toBeDefined();
+
+      const secondChallenge = challengeOf(
+        await authService.login({ email: 'mfa@example.com', password: 'password12345' }),
+      );
+      await expect(
+        authService.mfaVerify({ challengeToken: secondChallenge.challengeToken, code }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('mfaVerify rejects an invalid code with no MFA secret', async () => {
+      await makeMfaUser();
+      setUserMfa(true);
+
+      const challenge = challengeOf(
+        await authService.login({ email: 'mfa@example.com', password: 'password12345' }),
+      );
+
+      await expect(
+        authService.mfaVerify({ challengeToken: challenge.challengeToken, code: '000000' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('mfaVerify rejects an unknown or expired login challenge', async () => {
+      await makeMfaUser();
+
+      await expect(
+        authService.mfaVerify({ challengeToken: 'does-not-exist', code: '123456' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('mfaVerify destroys the challenge after 5 failed attempts', async () => {
+      const userId = await makeMfaUser();
+      setUserMfa(true);
+      fakeMfaSecrets.set(userId, { userId, encryptedSecret: 'enc', createdAt: new Date() });
+
+      const challenge = challengeOf(
+        await authService.login({ email: 'mfa@example.com', password: 'password12345' }),
+      );
+
+      for (let i = 0; i < 5; i += 1) {
+        await expect(
+          authService.mfaVerify({ challengeToken: challenge.challengeToken, code: '000000' }),
+        ).rejects.toThrow(BadRequestException);
+      }
+
+      expect(fakeLoginChallenges.size).toBe(0);
     });
   });
 });

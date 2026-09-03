@@ -246,6 +246,7 @@ export function ProductShell({
         // real verification-status carrier — email verification is read
         // from authContext.user directly wherever it actually matters.
         emailVerified: true,
+        mfaEnabled: true,
         createdAt: new Date().toISOString(),
       }
     : null;
