@@ -2,6 +2,8 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import React from 'react';
 import { AletheiaIcon, ICON_SIZES, ICON_NAMES, type IconName } from '../src/index.js';
+import { resolveIcon } from '../src/components/icon.js';
+import { HelpCircle } from 'lucide-react';
 
 describe('AletheiaIcon Component', () => {
   afterEach(cleanup);
@@ -125,6 +127,10 @@ describe('AletheiaIcon Component', () => {
         'portfolio',
         'attendance',
         'reports',
+        'familia',
+        'estudante',
+        'oracao',
+        'configuracoes',
       ];
 
       for (const alias of domainAliases) {
@@ -218,6 +224,20 @@ describe('AletheiaIcon Component', () => {
         lg: 24,
         xl: 32,
       });
+    });
+
+    it('never silently falls back to HelpCircle for a declared catalog name', () => {
+      // resolveIcon() falls back to HelpCircle for any unresolvable name
+      // instead of throwing, so a typo'd or removed registry key would
+      // otherwise still render successfully (just as the wrong glyph) and
+      // pass every other test in this file undetected. This is the actual
+      // regression the catalog needs protection against.
+      for (const iconName of ICON_NAMES) {
+        if (iconName === 'help-circle' || iconName === 'HelpCircle') continue;
+        expect(resolveIcon(iconName), `"${iconName}" resolved to the HelpCircle fallback`).not.toBe(
+          HelpCircle,
+        );
+      }
     });
   });
 });

@@ -1,96 +1,10 @@
-/* Trinity Grove & Aletheia Official Brand Design Tokens */
+/* Design tokens (colors, typography, spacing, radii, shadows) come from
+   @aletheia/ui's layered token system, imported in app/layout.tsx before
+   this file. See packages/ui/src/styles/tokens-semantic.css's
+   "Compatibility aliases" block for every --forest/--bg-*/--text-*/
+   --shadow-*/--radius-* name consumed below. */
 :root {
   color-scheme: light;
-  
-  /* Trinity Grove Official Palette */
-  --forest: #123f34;
-  --forest-2: #0c3028;
-  --forest-dark: #08251f;
-  --sage: #78937f;
-  --sage-light: #dce6dc;
-  --sage-soft: #eef1e8;
-  --gold: #d3a526;
-  --gold-soft: #f3e5b6;
-  --gold-muted: #d7bf79;
-  --ivory: #fbf8ef;
-  --paper: #fffdf7;
-  --ink: #17312a;
-  --muted: #5c6f67;
-  --line: rgba(18, 63, 52, 0.14);
-  --line-strong: rgba(18, 63, 52, 0.24);
-  
-  /* Status Colors */
-  --color-emerald-700: #123f34;
-  --color-emerald-600: #1b5346;
-  --color-emerald-100: #dce6dc;
-  --color-emerald-50: #f1f6f1;
-  
-  --color-amber-700: #b48517;
-  --color-amber-600: #d3a526;
-  --color-amber-100: #f9f0d0;
-  --color-amber-50: #fefbf2;
-  
-  --color-rose-700: #9f2424;
-  --color-rose-600: #c53030;
-  --color-rose-100: #fde8e8;
-  --color-rose-50: #fdf2f2;
-  
-  --color-indigo-700: #1a445d;
-  --color-indigo-600: #245c7d;
-  --color-indigo-100: #dbeef7;
-  --color-indigo-50: #f0f7fb;
-
-  --color-slate-900: #17312a;
-  --color-slate-800: #23443b;
-  --color-slate-700: #36564c;
-  --color-slate-600: #5c6f67;
-  --color-slate-500: #78937f;
-  --color-slate-400: #a3b8aa;
-  --color-slate-300: #cad6ce;
-  --color-slate-200: #e2e8e3;
-  --color-slate-100: #eef1e8;
-  --color-slate-50: #fbf8ef;
-
-  /* Surfaces & Backgrounds */
-  --bg-parchment: var(--ivory);
-  --bg-canvas: #fbf8ef;
-  --bg-surface: #fffdf7;
-  --bg-surface-hover: #f5f2e6;
-
-  /* Typography */
-  --font-serif: var(--font-serif-next, "Libre Caslon Display", Georgia, serif);
-  --font-sans: var(--font-sans-next, "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
-
-  /* Text & Borders */
-  --text-primary: var(--ink);
-  --text-secondary: var(--muted);
-  --text-muted: #78937f;
-  --text-inverse: #ffffff;
-  --text-brand: var(--forest);
-  --text-gold: var(--gold);
-
-  --border-light: var(--line);
-  --border-medium: var(--line-strong);
-  --border-focus: var(--forest);
-
-  /* Shadows */
-  --shadow-sm: 0 2px 4px 0 rgba(18, 63, 52, 0.04);
-  --shadow-md: 0 6px 16px -2px rgba(18, 63, 52, 0.07), 0 2px 6px -1px rgba(18, 63, 52, 0.04);
-  --shadow-lg: 0 16px 32px -4px rgba(18, 63, 52, 0.09), 0 6px 12px -2px rgba(18, 63, 52, 0.04);
-  --shadow-xl: 0 24px 70px rgba(11, 47, 39, 0.13);
-  --shadow-inner: inset 0 2px 4px 0 rgba(18, 63, 52, 0.05);
-
-  /* Radius */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
-  --radius-xl: 14px;
-  --radius-full: 9999px;
-
-  /* Layout dimensions */
-  --sidebar-width: 17rem;
-  --sidebar-collapsed-width: 4.5rem;
-  --header-height: 4.5rem;
 }
 
 * {

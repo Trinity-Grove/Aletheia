@@ -36,6 +36,7 @@ import {
   Folder,
   FolderHeart,
   GraduationCap,
+  HandHeart,
   Heart,
   HelpCircle,
   Home,
@@ -179,6 +180,12 @@ const BASE_ICON_REGISTRY: Record<string, LucideIcon> = {
   portfolio: FolderHeart,
   attendance: ClipboardCheck,
   reports: BarChart3,
+
+  // Portuguese semantic domain aliases (issue #25 acceptance criteria)
+  familia: Users,
+  estudante: GraduationCap,
+  oracao: HandHeart,
+  configuracoes: Settings,
 
   // PascalCase & camelCase aliases
   Home: Home,
@@ -389,6 +396,10 @@ export const ICON_NAMES = [
   'portfolio',
   'attendance',
   'reports',
+  'familia',
+  'estudante',
+  'oracao',
+  'configuracoes',
   'Home',
   'Users',
   'BookOpen',
@@ -478,7 +489,9 @@ export const ICON_NAMES = [
 
 export type IconName = (typeof ICON_NAMES)[number] | (string & {});
 
-function resolveIcon(name: string): LucideIcon {
+// Exported for test-only use (catalog regression coverage) — not part of
+// the component's public API surface.
+export function resolveIcon(name: string): LucideIcon {
   if (BASE_ICON_REGISTRY[name]) {
     return BASE_ICON_REGISTRY[name];
   }
@@ -524,7 +537,7 @@ export const AletheiaIcon = forwardRef<SVGSVGElement, AletheiaIconProps>(
       size = 'md',
       className = '',
       color,
-      strokeWidth = 2,
+      strokeWidth = 1.75,
       label,
       'aria-label': ariaLabel,
       'aria-hidden': ariaHidden,

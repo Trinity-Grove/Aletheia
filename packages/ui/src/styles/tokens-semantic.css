@@ -243,4 +243,23 @@
   --color-slate-200: var(--primitive-color-slate-200);
   --color-slate-100: var(--primitive-color-slate-100);
   --color-slate-50: var(--primitive-color-slate-50);
+
+  /* Raw brand-palette aliases (issue #25 — apps/web previously redeclared
+     these under the same names with hardcoded hex in its own globals.css,
+     duplicating this system instead of sourcing from it). */
+  --forest: var(--primitive-color-forest-700);
+  --forest-2: var(--primitive-color-forest-800);
+  --forest-dark: var(--primitive-color-forest-900);
+  --sage: var(--primitive-color-sage-500);
+  --sage-light: var(--primitive-color-sage-200);
+  --sage-soft: var(--primitive-color-sage-100);
+  --gold: var(--primitive-color-gold-500);
+  --gold-soft: var(--primitive-color-gold-200);
+  --gold-muted: var(--primitive-color-gold-300);
+  --ivory: var(--primitive-color-ivory);
+  --paper: var(--primitive-color-paper);
+  --ink: var(--primitive-color-ink);
+  --muted: var(--primitive-color-muted);
+  --line: var(--primitive-color-border-light);
+  --line-strong: var(--primitive-color-border-medium);
 }
