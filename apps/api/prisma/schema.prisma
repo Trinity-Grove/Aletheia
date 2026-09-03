@@ -161,7 +161,6 @@ model MfaLoginChallenge {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([tokenHash])
   @@map("mfa_login_challenges")
 }
 
