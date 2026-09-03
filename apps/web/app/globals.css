@@ -1,8 +1,8 @@
 /* Design tokens (colors, typography, spacing, radii, shadows) come from
    @aletheia/ui's layered token system, imported in app/layout.tsx before
    this file. See packages/ui/src/styles/tokens-semantic.css's
-   "Compatibility aliases" block for every --forest/--bg-*/--text-*/
-   --shadow-*/--radius-* name consumed below. */
+   "Compatibility aliases" block for every --forest, --bg-, --text-,
+   --shadow-, and --radius- name consumed below. */
 :root {
   color-scheme: light;
 }
