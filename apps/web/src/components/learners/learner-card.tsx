@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AletheiaIcon } from '@aletheia/ui';
+import { AletheiaIcon, Badge, Button, Card } from '@aletheia/ui';
 import type { EducationalStage, LearnerResponseDto } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 
@@ -40,25 +40,22 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
   const age = calculateAge(learner.birthDate);
 
   return (
-    <div
-      className={`learner-card ${isArchived ? 'learner-card-archived' : ''}`}
+    <Card
+      variant={isArchived ? 'flat' : 'default'}
+      shadow={isArchived ? 'none' : 'sm'}
       data-testid={`learner-card-${learner.id}`}
       style={{
-        backgroundColor: isArchived ? 'var(--sage-soft)' : 'var(--bg-surface)',
-        borderRadius: 'var(--radius-lg)',
-        border: isArchived ? '1.5px dashed var(--border-medium)' : '1px solid var(--border-light)',
-        boxShadow: isArchived ? 'none' : 'var(--shadow-sm)',
+        borderStyle: isArchived ? 'dashed' : 'solid',
         padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
         gap: '1rem',
         opacity: isArchived ? 0.75 : 1,
-        transition: 'all 0.2s ease-in-out',
         position: 'relative',
         overflow: 'hidden',
       }}
     >
-      {/* Top Accent Strip */}
+      {/* Top Accent Strip — bespoke, not a component: reflects the learner's own avatar color */}
       <div
         style={{
           position: 'absolute',
@@ -113,86 +110,31 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
         </div>
 
         {isArchived && (
-          <span
-            data-testid="learner-archived-chip"
-            style={{
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              backgroundColor: 'var(--sage-soft)',
-              color: 'var(--text-secondary)',
-              padding: '0.25rem 0.5rem',
-              borderRadius: 'var(--radius-full)',
-            }}
-          >
+          <Badge variant="slate" size="sm" data-testid="learner-archived-chip">
             Arquivado
-          </span>
+          </Badge>
         )}
       </div>
 
       {/* Badges and Stage Chips */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
-        {/* Stage Chip */}
-        <span
-          data-testid="learner-stage-chip"
-          style={{
-            padding: '0.25rem 0.625rem',
-            borderRadius: 'var(--radius-full)',
-            backgroundColor: 'var(--color-indigo-50)',
-            color: 'var(--color-indigo-700)',
-            fontWeight: 600,
-            fontSize: '0.75rem',
-            border: '1px solid var(--color-indigo-100)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.375rem',
-          }}
-        >
+        <Badge variant="indigo" size="sm" data-testid="learner-stage-chip">
           <AletheiaIcon name="sprout" size={12} />
           <span>{stageLabels[learner.stage] || learner.stage}</span>
-        </span>
+        </Badge>
 
-        {/* Custom Grade Pill */}
         {learner.customGrade && (
-          <span
-            data-testid="learner-grade-pill"
-            style={{
-              padding: '0.25rem 0.625rem',
-              borderRadius: 'var(--radius-full)',
-              backgroundColor: 'var(--sage-soft)',
-              color: 'var(--text-secondary)',
-              fontWeight: 600,
-              fontSize: '0.75rem',
-              border: '1px solid var(--border-light)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-            }}
-          >
+          <Badge variant="slate" size="sm" data-testid="learner-grade-pill">
             <AletheiaIcon name="book-open" size={12} />
             <span>{learner.customGrade}</span>
-          </span>
+          </Badge>
         )}
 
-        {/* Age / BirthDate Pill */}
         {learner.birthDate && (
-          <span
-            data-testid="learner-age-pill"
-            style={{
-              padding: '0.25rem 0.5rem',
-              borderRadius: 'var(--radius-full)',
-              backgroundColor: 'var(--sage-soft)',
-              color: 'var(--text-secondary)',
-              fontSize: '0.75rem',
-              fontWeight: 500,
-              border: '1px solid var(--border-light)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-            }}
-          >
+          <Badge variant="slate" size="sm" data-testid="learner-age-pill">
             <AletheiaIcon name="calendar" size={12} />
             <span>{age ? `${age} • ` : ''}Nascimento: {learner.birthDate}</span>
-          </span>
+          </Badge>
         )}
       </div>
 
@@ -253,47 +195,27 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
         }}
       >
         <Can action="manage_learners">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
             data-testid={`edit-learner-btn-${learner.id}`}
             onClick={() => onEdit?.(learner)}
-            className="btn btn-secondary ui-button ui-button--secondary ui-button--sm"
-            style={{
-              padding: '0.375rem 0.75rem',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-medium)',
-              backgroundColor: 'var(--bg-surface)',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-            }}
           >
             Editar
-          </button>
+          </Button>
         </Can>
 
         <Can action="delete_learner">
-          <button
-            type="button"
+          <Button
+            variant={isArchived ? 'primary' : 'danger'}
+            size="sm"
             data-testid={`archive-learner-btn-${learner.id}`}
             onClick={() => onToggleArchive?.(learner)}
-            className={`btn ${isArchived ? 'btn-success' : 'btn-outline-danger'} ui-button ui-button--sm`}
-            style={{
-              padding: '0.375rem 0.75rem',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              borderRadius: 'var(--radius-sm)',
-              border: isArchived ? '1px solid var(--color-emerald-600)' : '1px solid var(--color-rose-100)',
-              backgroundColor: isArchived ? 'var(--color-emerald-50)' : 'var(--color-rose-50)',
-              color: isArchived ? 'var(--color-emerald-700)' : 'var(--color-rose-600)',
-              cursor: 'pointer',
-            }}
           >
             {isArchived ? 'Reativar' : 'Arquivar'}
-          </button>
+          </Button>
         </Can>
       </div>
-    </div>
+    </Card>
   );
 }

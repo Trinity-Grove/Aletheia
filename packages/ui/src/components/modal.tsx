@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useId, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { IconButton } from './icon-button.js';

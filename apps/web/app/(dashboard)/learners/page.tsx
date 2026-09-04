@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { Alert, Button, useToast } from '@aletheia/ui';
 import type { CreateLearnerDto, LearnerResponseDto } from '@aletheia/contracts';
 import { ProductShell } from '../../../src/components/product-shell';
 import { LearnersList } from '../../../src/components/learners/learners-list';
@@ -12,11 +13,11 @@ export interface LearnersPageProps {
 }
 
 export default function LearnersPage({ initialLearners = [] }: LearnersPageProps) {
+  const { toast } = useToast();
   const [learners, setLearners] = useState<LearnerResponseDto[]>(initialLearners);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLearner, setEditingLearner] = useState<LearnerResponseDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialLearners.length > 0) return;
@@ -69,9 +70,15 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
         }
         const updated = await res.json();
         setLearners((prev) => prev.map((item) => (item.id === learner.id ? updated : item)));
-        setActionError(null);
+        toast({
+          variant: 'success',
+          title: isArchived ? 'Educando reativado.' : 'Educando arquivado.',
+        });
       } catch (err: unknown) {
-        setActionError(err instanceof Error ? err.message : 'Falha ao atualizar educando.');
+        toast({
+          variant: 'error',
+          title: err instanceof Error ? err.message : 'Falha ao atualizar educando.',
+        });
       }
     })();
   };
@@ -137,21 +144,16 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
           </div>
 
           <Can action="create_learner">
-            <button
-              type="button"
-              data-testid="add-learner-btn"
-              onClick={handleOpenCreate}
-              className="btn btn-primary ui-button ui-button--primary"
-            >
+            <Button data-testid="add-learner-btn" onClick={handleOpenCreate}>
               + Adicionar Educando
-            </button>
+            </Button>
           </Can>
         </div>
 
-        {(loadError || actionError) && (
-          <div className="alert alert-error" role="alert" style={{ marginBottom: '1.5rem' }}>
-            {loadError ?? actionError}
-          </div>
+        {loadError && (
+          <Alert variant="error" style={{ marginBottom: '1.5rem' }}>
+            {loadError}
+          </Alert>
         )}
 
         <LearnersList
