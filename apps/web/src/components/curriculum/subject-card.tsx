@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AletheiaIcon } from '@aletheia/ui';
+import { AletheiaIcon, Badge, Button, Card, IconButton } from '@aletheia/ui';
 import type { ObjectiveResponseDto, ObjectiveStatus, SubjectResponseDto } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 
@@ -31,27 +31,23 @@ export function SubjectCard({
     return 'NOT_STARTED';
   };
 
-  const getStatusBadge = (status: ObjectiveStatus) => {
+  const getStatusBadge = (status: ObjectiveStatus): { label: string; variant: 'emerald' | 'amber' | 'slate'; icon: React.ReactNode } => {
     switch (status) {
       case 'ACHIEVED':
-        return { label: 'Concluído', bg: 'var(--color-emerald-50)', text: 'var(--color-emerald-700)', border: 'var(--color-emerald-100)', icon: <AletheiaIcon name="check-circle-2" size={12} /> };
+        return { label: 'Concluído', variant: 'emerald', icon: <AletheiaIcon name="check-circle-2" size={12} /> };
       case 'IN_PROGRESS':
-        return { label: 'Em Andamento', bg: 'var(--color-amber-50)', text: 'var(--color-amber-700)', border: 'var(--color-amber-100)', icon: <AletheiaIcon name="clock" size={12} /> };
+        return { label: 'Em Andamento', variant: 'amber', icon: <AletheiaIcon name="clock" size={12} /> };
       case 'NOT_STARTED':
       default:
-        return { label: 'Não Iniciado', bg: 'var(--sage-soft)', text: 'var(--text-secondary)', border: 'var(--border-light)', icon: <AletheiaIcon name="circle" size={12} /> };
+        return { label: 'Não Iniciado', variant: 'slate', icon: <AletheiaIcon name="circle" size={12} /> };
     }
   };
 
   return (
-    <div
+    <Card
       data-testid={`subject-card-${subject.id}`}
       style={{
-        backgroundColor: 'var(--bg-surface)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border-light)',
         borderLeft: `5px solid ${subjectColor}`,
-        boxShadow: 'var(--shadow-sm)',
         padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
@@ -87,20 +83,12 @@ export function SubjectCard({
             </h3>
           </div>
 
-          <span
+          <Badge
             data-testid={`subject-count-badge-${subject.id}`}
-            style={{
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              padding: '0.2rem 0.5rem',
-              borderRadius: 'var(--radius-full)',
-              backgroundColor: percent === 100 ? 'var(--color-emerald-50)' : 'var(--sage-soft)',
-              color: percent === 100 ? 'var(--color-emerald-700)' : 'var(--text-secondary)',
-              border: percent === 100 ? '1px solid var(--color-emerald-100)' : '1px solid var(--border-light)',
-            }}
+            variant={percent === 100 ? 'emerald' : 'slate'}
           >
             {achieved}/{total} ({percent}%)
-          </span>
+          </Badge>
         </div>
 
         {subject.description && (
@@ -201,42 +189,21 @@ export function SubjectCard({
                     type="button"
                     data-testid={`status-toggle-btn-${obj.id}`}
                     onClick={() => onToggleStatus(obj.id, cycleStatus(obj.status))}
-                    style={{
-                      padding: '0.2rem 0.5rem',
-                      borderRadius: 'var(--radius-full)',
-                      border: `1px solid ${badge.border}`,
-                      backgroundColor: badge.bg,
-                      color: badge.text,
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                    }}
+                    className={`ui-badge ui-badge--${badge.variant} ui-badge--sm`}
+                    style={{ border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
                   >
                     <span>{badge.icon}</span> {badge.label}
                   </button>
 
                   <Can action="manage_curriculum">
-                    <button
-                      type="button"
+                    <IconButton
+                      size="sm"
                       data-testid={`delete-objective-btn-${obj.id}`}
                       onClick={() => onDeleteObjective(obj.id)}
-                      title="Excluir objetivo"
-                      style={{
-                        border: 'none',
-                        background: 'none',
-                        color: 'var(--text-muted)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '0 0.25rem',
-                      }}
                       aria-label="Excluir objetivo"
                     >
                       <AletheiaIcon name="x" size={14} />
-                    </button>
+                    </IconButton>
                   </Can>
                 </div>
               </div>
@@ -247,27 +214,16 @@ export function SubjectCard({
 
       {/* Footer / Add Objective button wrapped in RBAC */}
       <Can action="manage_curriculum">
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          size="sm"
           data-testid={`add-objective-btn-${subject.id}`}
           onClick={() => onAddObjective(subject.id)}
-          className="btn ui-button ui-button--outline ui-button--sm"
-          style={{
-            width: '100%',
-            padding: '0.45rem',
-            borderRadius: 'var(--radius-md)',
-            border: '1.5px dashed var(--border-medium)',
-            backgroundColor: 'var(--bg-surface)',
-            color: 'var(--text-secondary)',
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            marginTop: 'auto',
-          }}
+          style={{ width: '100%', marginTop: 'auto' }}
         >
           + Adicionar Objetivo
-        </button>
+        </Button>
       </Can>
-    </div>
+    </Card>
   );
 }

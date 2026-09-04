@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
+import { Alert } from "@aletheia/ui";
 import type {
   AcademicYearResponseDto,
   CreateObjectiveDto,
@@ -194,9 +195,9 @@ export default function CurriculumPage() {
       onSelectLearner={setActiveLearnerId}
     >
       {loadError && (
-        <div className="alert alert-error" role="alert" style={{ margin: "1rem" }}>
+        <Alert variant="error" style={{ margin: "1rem" }}>
           {loadError}
-        </div>
+        </Alert>
       )}
       {loading ? (
         <div style={{ padding: "2rem", textAlign: "center" }}>Carregando plano curricular...</div>
