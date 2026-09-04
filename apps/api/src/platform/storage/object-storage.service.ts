@@ -7,6 +7,7 @@ import {
   GetObjectCommand,
   HeadBucketCommand,
   HeadObjectCommand,
+  PutBucketCorsCommand,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
@@ -95,6 +96,33 @@ export class ObjectStorageService {
         // check above was a transient failure — the presigned PUT below
         // will surface a real error if the bucket genuinely isn't usable.
       }
+    }
+
+    // A presigned upload/download URL is consumed directly by the browser
+    // (see portfolio-item-modal.tsx's real file upload), not by this server
+    // — without a CORS rule allowing the web origin, that PUT/GET fails the
+    // browser's preflight before it ever reaches the object storage.
+    try {
+      await client.send(
+        new PutBucketCorsCommand({
+          Bucket: bucket,
+          CORSConfiguration: {
+            CORSRules: [
+              {
+                AllowedOrigins: [this.environment.webOrigin],
+                AllowedMethods: ['GET', 'PUT', 'HEAD'],
+                AllowedHeaders: ['*'],
+                ExposeHeaders: ['ETag'],
+                MaxAgeSeconds: 3000,
+              },
+            ],
+          },
+        }),
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Could not configure CORS on bucket "${bucket}" — direct browser uploads may fail: ${(err as Error).message}`,
+      );
     }
 
     this.bucketEnsured = true;

@@ -57,11 +57,27 @@ export default function CurriculumPage() {
           credentials: 'include',
         });
         if (yearsRes.ok) {
-          const yData = await yearsRes.json();
-          setYears(yData);
+          const yData: AcademicYearResponseDto[] = await yearsRes.json();
           if (yData.length > 0) {
-            const current = yData.find((y: AcademicYearResponseDto) => y.isCurrent) || yData[0];
+            setYears(yData);
+            const current = yData.find((y) => y.isCurrent) || yData[0]!;
             setActiveYearId(current.id);
+          } else {
+            // A brand-new family has no academic year yet — provision the
+            // current one instead of leaving activeYearId empty, which
+            // would silently break objective creation (it requires a real
+            // academicYearId).
+            const currentRes = await fetch(
+              `/api/v1/families/${storedFamilyId}/curriculum/academic-years/current`,
+              { credentials: 'include' },
+            );
+            if (currentRes.ok) {
+              const created: AcademicYearResponseDto = await currentRes.json();
+              setYears([created]);
+              setActiveYearId(created.id);
+            } else {
+              setLoadError("Não foi possível carregar os anos letivos.");
+            }
           }
         } else {
           setLoadError("Não foi possível carregar os anos letivos.");

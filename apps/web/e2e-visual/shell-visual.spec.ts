@@ -80,7 +80,7 @@ async function mockAuthenticatedFamily(page: import('@playwright/test').Page) {
         journey: { completedMinutes: 45, targetMinutes: 180, completedLessons: 1, totalLessons: 2, daySequence: 1 },
         activities: [
           {
-            id: 'lesson-1',
+            id: '44444444-4444-4444-a444-444444444444',
             title: 'Gramática Latina: Primeira Declinação',
             subjectName: 'Latim',
             scheduledTime: '09:00',
