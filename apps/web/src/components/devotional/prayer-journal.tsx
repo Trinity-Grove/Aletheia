@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AletheiaIcon } from '@aletheia/ui';
+import { AletheiaIcon, Alert, Badge, Button, EmptyState, Input, Modal, Select, Textarea } from '@aletheia/ui';
 import type { CreatePrayerDto, PrayerResponseDto, PrayerType } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 
@@ -11,6 +11,11 @@ export interface PrayerJournalProps {
   onAnswerPrayer: (_id: string, _answeredNote?: string) => Promise<void> | void;
   onArchivePrayer: (_id: string) => Promise<void> | void;
 }
+
+const PRAYER_TYPE_OPTIONS = [
+  { value: 'PETITION', label: 'Pedido de Oração (Petição / Intercessão)' },
+  { value: 'GRATITUDE', label: 'Gratidão / Louvor (Ação de Graças)' },
+];
 
 export function PrayerJournal({
   prayers,
@@ -112,24 +117,10 @@ export function PrayerJournal({
               Diário de Oração da Família
             </h2>
             {answeredCount > 0 && (
-              <span
-                data-testid="answered-prayers-counter"
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  backgroundColor: 'var(--color-emerald-50)',
-                  color: 'var(--color-emerald-700)',
-                  border: '1px solid var(--color-emerald-100)',
-                  padding: '0.125rem 0.5rem',
-                  borderRadius: 'var(--radius-full)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                }}
-              >
+              <Badge data-testid="answered-prayers-counter" variant="emerald">
                 <AletheiaIcon name="sparkles" size={12} />
                 <span>{answeredCount} respondida(s)</span>
-              </span>
+              </Badge>
             )}
           </div>
           <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
@@ -138,24 +129,9 @@ export function PrayerJournal({
         </div>
 
         <Can action="manage_devotional">
-          <button
-            type="button"
-            data-testid="new-prayer-btn"
-            onClick={() => handleOpenCreateModal(activeTab)}
-            className="btn btn-primary ui-button ui-button--primary ui-button--sm"
-            style={{
-              padding: '0.45rem 1rem',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              borderRadius: 'var(--radius-md)',
-              border: 'none',
-              color: 'var(--text-inverse)',
-              cursor: 'pointer',
-              boxShadow: 'var(--shadow-sm)',
-            }}
-          >
+          <Button size="sm" data-testid="new-prayer-btn" onClick={() => handleOpenCreateModal(activeTab)}>
             + Novo Registro
-          </button>
+          </Button>
         </Can>
       </div>
 
@@ -187,7 +163,7 @@ export function PrayerJournal({
         </div>
       )}
 
-      {/* Tabs */}
+      {/* Tabs — custom pattern, no Tabs component exists in @aletheia/ui yet */}
       <div
         style={{
           display: 'flex',
@@ -270,30 +246,16 @@ export function PrayerJournal({
 
       {/* Prayer list */}
       {activePrayers.length === 0 ? (
-        <div
+        <EmptyState
           data-testid="prayer-empty-state"
-          style={{
-            textAlign: 'center',
-            padding: '2.5rem 1rem',
-            backgroundColor: 'var(--sage-soft)',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px dashed var(--border-medium)',
-            color: 'var(--text-secondary)',
-            fontSize: '0.875rem',
-          }}
-        >
-          <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'center' }}>
-            <AletheiaIcon name="sparkles" size={32} style={{ color: 'var(--text-muted)' }} />
-          </div>
-          <p style={{ margin: 0, fontWeight: 500 }}>
-            {activeTab === 'PETITION'
+          icon={<AletheiaIcon name="sparkles" size={32} style={{ color: 'var(--text-muted)' }} />}
+          title={
+            activeTab === 'PETITION'
               ? 'Nenhum pedido de oração ativo no momento.'
-              : 'Nenhuma gratidão registrada ainda.'}
-          </p>
-          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-            Adicione um novo registro para que todos possam orar juntos.
-          </p>
-        </div>
+              : 'Nenhuma gratidão registrada ainda.'
+          }
+          description="Adicione um novo registro para que todos possam orar juntos."
+        />
       ) : (
         <div
           data-testid="prayer-list-grid"
@@ -331,37 +293,14 @@ export function PrayerJournal({
                   </h3>
 
                   {prayer.isAnswered ? (
-                    <span
-                      data-testid={`prayer-answered-badge-${prayer.id}`}
-                      style={{
-                        backgroundColor: 'var(--color-emerald-50)',
-                        color: 'var(--color-emerald-700)',
-                        border: '1px solid var(--color-emerald-100)',
-                        padding: '0.125rem 0.625rem',
-                        borderRadius: 'var(--radius-full)',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                      }}
-                    >
+                    <Badge data-testid={`prayer-answered-badge-${prayer.id}`} variant="emerald">
                       <AletheiaIcon name="sparkles" size={12} />
                       <span>Respondida!</span>
-                    </span>
+                    </Badge>
                   ) : (
-                    <span
-                      style={{
-                        backgroundColor: prayer.type === 'PETITION' ? 'var(--color-indigo-50)' : 'var(--color-emerald-50)',
-                        color: prayer.type === 'PETITION' ? 'var(--color-indigo-700)' : 'var(--color-emerald-700)',
-                        padding: '0.125rem 0.5rem',
-                        borderRadius: 'var(--radius-full)',
-                        fontSize: '0.6875rem',
-                        fontWeight: 600,
-                      }}
-                    >
+                    <Badge variant={prayer.type === 'PETITION' ? 'indigo' : 'emerald'} size="sm">
                       {prayer.type === 'PETITION' ? 'Em Oração' : 'Gratidão'}
-                    </span>
+                    </Badge>
                   )}
                 </div>
 
@@ -404,37 +343,25 @@ export function PrayerJournal({
               <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center', flexShrink: 0 }}>
                 {!prayer.isAnswered && (
                   <Can action="manage_devotional">
-                    <button
-                      type="button"
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       data-testid={`answer-prayer-btn-${prayer.id}`}
                       onClick={() => {
                         setAnsweringPrayerId(prayer.id);
                         setAnsweredNote('');
                       }}
-                      className="btn btn-secondary ui-button ui-button--secondary ui-button--sm"
-                      style={{
-                        padding: '0.3rem 0.625rem',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        color: 'var(--color-emerald-700)',
-                        borderColor: 'var(--color-emerald-100)',
-                        backgroundColor: 'var(--color-emerald-50)',
-                        borderRadius: 'var(--radius-sm)',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                      }}
+                      leftIcon={<AletheiaIcon name="check" size={12} />}
                     >
-                      <AletheiaIcon name="check" size={12} />
-                      <span>Marcar como Respondida</span>
-                    </button>
+                      Marcar como Respondida
+                    </Button>
                   </Can>
                 )}
 
                 <Can action="manage_devotional">
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     data-testid={`archive-prayer-btn-${prayer.id}`}
                     onClick={() => {
                       void (async () => {
@@ -445,19 +372,9 @@ export function PrayerJournal({
                         }
                       })();
                     }}
-                    className="btn btn-outline-danger ui-button ui-button--ghost ui-button--sm"
-                    style={{
-                      padding: '0.3rem 0.5rem',
-                      fontSize: '0.75rem',
-                      fontWeight: 500,
-                      color: 'var(--text-muted)',
-                      borderRadius: 'var(--radius-sm)',
-                      cursor: 'pointer',
-                      border: '1px solid transparent',
-                    }}
                   >
                     Arquivar
-                  </button>
+                  </Button>
                 </Can>
               </div>
             </div>
@@ -467,330 +384,85 @@ export function PrayerJournal({
 
       {/* Answering Prompt / Modal */}
       {answeringPrayerId && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          data-testid="answer-prayer-modal"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.5)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 60,
-            padding: '1rem',
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              borderRadius: 'var(--radius-lg)',
-              maxWidth: '480px',
-              width: '100%',
-              padding: '1.75rem',
-              boxShadow: 'var(--shadow-xl)',
-            }}
+        <div data-testid="answer-prayer-modal">
+          <Modal
+            isOpen={true}
+            onClose={() => setAnsweringPrayerId(null)}
+            title="Marcar Oração como Respondida"
+            description="Deseja registrar um testemunho ou nota de como Deus respondeu a esta oração na vida da família?"
+            footer={
+              <>
+                <Button variant="secondary" onClick={() => setAnsweringPrayerId(null)}>
+                  Cancelar
+                </Button>
+                <Button data-testid="confirm-answer-btn" onClick={handleConfirmAnswer}>
+                  Confirmar Resposta
+                </Button>
+              </>
+            }
           >
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <AletheiaIcon name="sparkles" size={20} style={{ color: 'var(--color-emerald-600)' }} />
-              <span>Marcar Oração como Respondida</span>
-            </h3>
-            <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              Deseja registrar um testemunho ou nota de como Deus respondeu a esta oração na vida da família?
-            </p>
-            <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-              <label
-                htmlFor="answered-note"
-                style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.375rem' }}
-              >
-                Nota de Agradecimento / Testemunho
-              </label>
-              <textarea
-                id="answered-note"
-                data-testid="answered-note-input"
-                rows={3}
-                value={answeredNote}
-                onChange={(e) => setAnsweredNote(e.target.value)}
-                placeholder="Ex: Deus supriu a nossa necessidade através de..."
-                style={{
-                  width: '100%',
-                  padding: '0.625rem 0.75rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border-medium)',
-                  fontSize: '0.875rem',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-              <button
-                type="button"
-                className="btn btn-secondary ui-button ui-button--secondary"
-                onClick={() => setAnsweringPrayerId(null)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-medium)',
-                  backgroundColor: 'var(--bg-surface)',
-                  cursor: 'pointer',
-                }}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                data-testid="confirm-answer-btn"
-                className="btn btn-primary ui-button ui-button--primary"
-                onClick={handleConfirmAnswer}
-                style={{
-                  padding: '0.5rem 1rem',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  borderRadius: 'var(--radius-sm)',
-                  border: 'none',
-                  backgroundColor: 'var(--color-emerald-600)',
-                  color: 'var(--text-inverse)',
-                  cursor: 'pointer',
-                }}
-              >
-                Confirmar Resposta
-              </button>
-            </div>
-          </div>
+            <Textarea
+              label="Nota de Agradecimento / Testemunho"
+              rows={3}
+              data-testid="answered-note-input"
+              value={answeredNote}
+              onChange={(e) => setAnsweredNote(e.target.value)}
+              placeholder="Ex: Deus supriu a nossa necessidade através de..."
+            />
+          </Modal>
         </div>
       )}
 
       {/* Creation Modal */}
       {isModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          data-testid="prayer-form-modal"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.5)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 60,
-            padding: '1rem',
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              borderRadius: 'var(--radius-lg)',
-              maxWidth: '520px',
-              width: '100%',
-              padding: '1.75rem',
-              boxShadow: 'var(--shadow-xl)',
-            }}
+        <div data-testid="prayer-form-modal">
+          <Modal
+            isOpen={true}
+            onClose={() => setIsModalOpen(false)}
+            title={newType === 'PETITION' ? 'Novo Pedido de Oração' : 'Nova Gratidão / Louvor'}
+            footer={
+              <>
+                <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={loading}>
+                  Cancelar
+                </Button>
+                <Button type="submit" form="prayer-form" data-testid="prayer-submit-btn" isLoading={loading}>
+                  Salvar
+                </Button>
+              </>
+            }
           >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '1.25rem',
-              }}
-            >
-              <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {newType === 'PETITION' ? (
-                  <>
-                    <AletheiaIcon name="heart" size={18} style={{ color: 'var(--color-indigo-700)' }} />
-                    <span>Novo Pedido de Oração</span>
-                  </>
-                ) : (
-                  <>
-                    <AletheiaIcon name="sparkles" size={18} style={{ color: 'var(--color-emerald-700)' }} />
-                    <span>Nova Gratidão / Louvor</span>
-                  </>
-                )}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-muted)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.25rem',
-                }}
-                aria-label="Fechar"
-              >
-                <AletheiaIcon name="x" size={18} />
-              </button>
-            </div>
-
             {error && (
-              <div
-                className="alert alert-error"
-                role="alert"
-                style={{
-                  marginBottom: '1rem',
-                  padding: '0.625rem 0.75rem',
-                  backgroundColor: 'var(--color-rose-50)',
-                  border: '1px solid var(--color-rose-100)',
-                  color: 'var(--color-rose-700)',
-                  borderRadius: 'var(--radius-md)',
-                  fontSize: '0.875rem',
-                }}
-              >
+              <Alert variant="error" style={{ marginBottom: '1rem' }}>
                 {error}
-              </div>
+              </Alert>
             )}
 
-            <form
-              onSubmit={handleCreateSubmit}
-              style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
-            >
-              <div className="form-group">
-                <label
-                  htmlFor="prayer-type"
-                  style={{
-                    display: 'block',
-                    fontSize: '0.8125rem',
-                    fontWeight: 600,
-                    color: 'var(--text-secondary)',
-                    marginBottom: '0.25rem',
-                  }}
-                >
-                  Tipo
-                </label>
-                <select
-                  id="prayer-type"
-                  value={newType}
-                  onChange={(e) => setNewType(e.target.value as PrayerType)}
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-medium)',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  <option value="PETITION">Pedido de Oração (Petição / Intercessão)</option>
-                  <option value="GRATITUDE">Gratidão / Louvor (Ação de Graças)</option>
-                </select>
-              </div>
+            <form id="prayer-form" onSubmit={handleCreateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <Select
+                label="Tipo"
+                value={newType}
+                onChange={(e) => setNewType(e.target.value as PrayerType)}
+                options={PRAYER_TYPE_OPTIONS}
+              />
 
-              <div className="form-group">
-                <label
-                  htmlFor="prayer-title"
-                  style={{
-                    display: 'block',
-                    fontSize: '0.8125rem',
-                    fontWeight: 600,
-                    color: 'var(--text-secondary)',
-                    marginBottom: '0.25rem',
-                  }}
-                >
-                  Título *
-                </label>
-                <input
-                  id="prayer-title"
-                  type="text"
-                  data-testid="prayer-title-input"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder={newType === 'PETITION' ? 'Ex: Saúde da vovó' : 'Ex: Bênção no trabalho'}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-medium)',
-                    fontSize: '0.875rem',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
+              <Input
+                label="Título *"
+                data-testid="prayer-title-input"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder={newType === 'PETITION' ? 'Ex: Saúde da vovó' : 'Ex: Bênção no trabalho'}
+              />
 
-              <div className="form-group">
-                <label
-                  htmlFor="prayer-description"
-                  style={{
-                    display: 'block',
-                    fontSize: '0.8125rem',
-                    fontWeight: 600,
-                    color: 'var(--text-secondary)',
-                    marginBottom: '0.25rem',
-                  }}
-                >
-                  Detalhes / Motivos
-                </label>
-                <textarea
-                  id="prayer-description"
-                  rows={3}
-                  data-testid="prayer-description-input"
-                  value={newDescription}
-                  onChange={(e) => setNewDescription(e.target.value)}
-                  placeholder="Descreva detalhes para oração em família..."
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-medium)',
-                    fontSize: '0.875rem',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  gap: '0.5rem',
-                  marginTop: '0.5rem',
-                }}
-              >
-                <button
-                  type="button"
-                  className="btn btn-secondary ui-button ui-button--secondary"
-                  onClick={() => setIsModalOpen(false)}
-                  disabled={loading}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-medium)',
-                    backgroundColor: 'var(--bg-surface)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  data-testid="prayer-submit-btn"
-                  className="btn btn-primary ui-button ui-button--primary"
-                  disabled={loading}
-                  style={{
-                    padding: '0.5rem 1.25rem',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    borderRadius: 'var(--radius-sm)',
-                    border: 'none',
-                    color: 'var(--text-inverse)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {loading ? 'Salvando...' : 'Salvar'}
-                </button>
-              </div>
+              <Textarea
+                label="Detalhes / Motivos"
+                rows={3}
+                data-testid="prayer-description-input"
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                placeholder="Descreva detalhes para oração em família..."
+              />
             </form>
-          </div>
+          </Modal>
         </div>
       )}
     </div>

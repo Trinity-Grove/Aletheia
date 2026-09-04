@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { Alert } from '@aletheia/ui';
 import type {
   CreatePrayerDto,
   DailyDevotionalResponseDto,
@@ -176,9 +177,9 @@ export default function DevotionalPage({
         </div>
 
         {loadError && (
-          <div className="alert alert-error" role="alert" style={{ marginBottom: '1.5rem' }}>
+          <Alert variant="error" style={{ marginBottom: '1.5rem' }}>
             {loadError}
-          </div>
+          </Alert>
         )}
 
         <div className="devotional-page-grid">
