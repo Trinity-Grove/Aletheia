@@ -83,8 +83,32 @@ export default function PortfolioPage() {
         credentials: 'include',
       });
       if (res.ok) {
-        const data = await res.json();
-        setPortfolioItems(data);
+        const data: PortfolioItemResponseDto[] = await res.json();
+        // A real file upload never populates `fileUrl` — that field is only
+        // ever the guardian-supplied external URL for LINK-type items. For
+        // everything else, the only way to view the uploaded file is a
+        // short-lived presigned GET URL fetched on demand, so resolve one
+        // per uploaded item before rendering (the gallery already knows how
+        // to render `fileUrl` for previews/links, it just never had one).
+        const withDownloadUrls = await Promise.all(
+          data.map(async (item) => {
+            if (item.fileUrl || !item.mimeType) return item;
+            try {
+              const dlRes = await fetch(
+                `/api/v1/families/${familyId}/portfolio/${item.id}/download-url`,
+                { credentials: 'include' },
+              );
+              if (dlRes.ok) {
+                const { downloadUrl } = await dlRes.json();
+                return { ...item, fileUrl: downloadUrl };
+              }
+            } catch {
+              // ignore — item just renders without a preview link
+            }
+            return item;
+          }),
+        );
+        setPortfolioItems(withDownloadUrls);
       }
     } catch {
       // ignore

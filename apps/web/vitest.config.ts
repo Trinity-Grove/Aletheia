@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
-    exclude: [...configDefaults.exclude, 'e2e/**', 'e2e-visual/**'],
+    exclude: [...configDefaults.exclude, 'e2e/**', 'e2e-visual/**', 'e2e-journey/**'],
     setupFiles: ['./vitest.setup.ts'],
   },
 });

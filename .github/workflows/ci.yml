@@ -89,6 +89,9 @@ jobs:
       - name: Run web end-to-end smoke test
         run: pnpm --filter @aletheia/web test:e2e
 
+      - name: Run shell visual regression
+        run: pnpm --filter @aletheia/web test:e2e:visual
+
       - name: Build production applications and packages
         run: pnpm build
 
@@ -182,6 +185,120 @@ jobs:
 
       - name: Build and start the distributable API
         run: pnpm test:distribution
+
+  homologation-journey:
+    name: Real golden-path homologation journey (#23)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: true
+      DATABASE_URL: postgresql://aletheia_journey:ci_only_not_a_secret@127.0.0.1:5432/aletheia_journey?schema=public
+      JWT_SECRET: journey_ci_jwt_secret_not_a_real_secret
+      MFA_ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+      S3_ENDPOINT: http://127.0.0.1:9000
+      S3_ACCESS_KEY: aletheia_journey
+      S3_SECRET_KEY: ci_only_not_a_secret
+      S3_BUCKET: aletheia-journey
+      CORS_ORIGIN: http://127.0.0.1:3000
+      WEB_ORIGIN: http://127.0.0.1:3000
+      PORT: 3001
+      API_PROXY_TARGET: http://127.0.0.1:3001
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: aletheia_journey
+          POSTGRES_USER: aletheia_journey
+          POSTGRES_PASSWORD: ci_only_not_a_secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aletheia_journey -d aletheia_journey"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      # Same rationale as the postgres-integration job: a real S3-compatible
+      # store is required for the journey's presigned-upload step, and
+      # GitHub Actions service containers can't override the minio image's
+      # command the way infra/compose.yaml does.
+      - name: Start MinIO
+        run: |
+          docker run -d --name minio \
+            -p 9000:9000 \
+            -e MINIO_ROOT_USER=aletheia_journey \
+            -e MINIO_ROOT_PASSWORD=ci_only_not_a_secret \
+            quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z server /data
+          for i in $(seq 1 20); do
+            if curl -sf http://127.0.0.1:9000/minio/health/live > /dev/null; then
+              echo "MinIO is ready."
+              exit 0
+            fi
+            echo "Waiting for MinIO to become ready ($i/20)..."
+            sleep 2
+          done
+          echo "::error::MinIO did not become ready in time."
+          docker logs minio
+          exit 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Activate declared pnpm version
+        run: |
+          corepack enable pnpm
+          corepack install
+          pnpm --version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm prisma:generate
+
+      - name: Deploy database migrations
+        run: pnpm --filter @aletheia/api prisma migrate deploy
+
+      - name: Build the API
+        run: pnpm --filter @aletheia/api build
+
+      - name: Start the API in the background
+        run: |
+          nohup node apps/api/dist/main.js > api-journey.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:3001/api/v1/health/live > /dev/null; then
+              echo "API is ready."
+              exit 0
+            fi
+            echo "Waiting for the API to become ready ($i/30)..."
+            sleep 2
+          done
+          echo "::error::API did not become ready in time."
+          cat api-journey.log
+          exit 1
+
+      - name: Install Playwright Chromium
+        run: pnpm --filter @aletheia/web exec playwright install --with-deps chromium
+
+      - name: Run the real golden-path journey
+        run: pnpm --filter @aletheia/web test:e2e:journey
+
+      - name: Upload journey failure artifacts
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: homologation-journey-results
+          path: |
+            apps/web/test-results
+            api-journey.log
+          retention-days: 7
 
   compose:
     name: Docker Compose health
