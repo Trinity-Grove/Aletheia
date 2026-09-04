@@ -7,24 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Reserved for a transactional outbox pattern (reliable domain event
-/// delivery). No application code writes to or reads from this table yet —
-/// see https://github.com/Trinity-Grove/Aletheia/issues/47 for the decision
-/// to either wire it up or remove it.
-model OutboxMessage {
-  id             String    @id @db.Uuid
-  eventType      String    @map("event_type")
-  aggregateType  String    @map("aggregate_type")
-  aggregateId    String    @map("aggregate_id") @db.Uuid
-  payload        Json
-  occurredAt     DateTime  @map("occurred_at") @db.Timestamptz
-  publishedAt    DateTime? @map("published_at") @db.Timestamptz
-  attempts       Int       @default(0)
-  idempotencyKey String    @unique @map("idempotency_key")
-
-  @@map("outbox_messages")
-}
-
 model User {
   id                      String                    @id @default(uuid()) @db.Uuid
   email                   String                    @unique
