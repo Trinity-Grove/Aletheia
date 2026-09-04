@@ -38,51 +38,58 @@ function sanitizeFileNameSegment(fileName: string): string {
  * development/CI, any S3-compatible provider in production) used for
  * portfolio evidence files. Every method operates on a `storageKey`, never
  * a raw filename — callers never construct keys themselves.
+ *
+ * Object storage is optional infrastructure like Redis and mail — this
+ * codebase's established invariant (see environment.spec.ts's "does not
+ * require optional infrastructure for API startup") is that the app must
+ * always be constructible without it. So this service never touches the
+ * network, or even validates config, until one of its methods is actually
+ * called — construction itself can never fail or block bootstrap.
  */
 @Injectable()
 export class ObjectStorageService {
   private readonly logger = new Logger(ObjectStorageService.name);
-  private readonly client: S3Client;
-  private readonly bucket: string;
+  private client: S3Client | undefined;
+  private bucket: string | undefined;
   private bucketEnsured = false;
 
-  constructor(@Inject(ENVIRONMENT) environment: Environment) {
-    if (!environment.objectStorage) {
-      // Unlike mail (which has a legitimate console-log fallback), there is
-      // no sensible no-op for file storage — fail fast at startup instead
-      // of failing confusingly on the first upload request.
-      throw new Error(
-        'ObjectStorageService requires S3_ENDPOINT/S3_ACCESS_KEY/S3_SECRET_KEY/S3_BUCKET to be configured.',
-      );
-    }
+  constructor(@Inject(ENVIRONMENT) private readonly environment: Environment) {}
 
-    this.bucket = environment.objectStorage.bucket;
-    this.client = new S3Client({
-      endpoint: environment.objectStorage.endpoint,
-      forcePathStyle: true,
-      region: 'us-east-1',
-      credentials: {
-        accessKeyId: environment.objectStorage.accessKey,
-        secretAccessKey: environment.objectStorage.secretKey,
-      },
-    });
+  private getClient(): { client: S3Client; bucket: string } {
+    if (!this.client || !this.bucket) {
+      if (!this.environment.objectStorage) {
+        throw new Error(
+          'Object storage is not configured (S3_ENDPOINT/S3_ACCESS_KEY/S3_SECRET_KEY/S3_BUCKET).',
+        );
+      }
+      this.bucket = this.environment.objectStorage.bucket;
+      this.client = new S3Client({
+        endpoint: this.environment.objectStorage.endpoint,
+        forcePathStyle: true,
+        region: 'us-east-1',
+        credentials: {
+          accessKeyId: this.environment.objectStorage.accessKey,
+          secretAccessKey: this.environment.objectStorage.secretKey,
+        },
+      });
+    }
+    return { client: this.client, bucket: this.bucket };
   }
 
-  // Deliberately NOT run at module init: the app boots (and every unrelated
-  // test suite instantiates this service transitively through RecordsModule)
-  // in environments with no reachable object storage at all — an eager
-  // network call here would hang or fail app bootstrap everywhere, not just
-  // upload requests. Ensured lazily, once, right before the one operation
-  // that actually needs the bucket to exist.
+  // Deliberately NOT run at construction or module init: ensured lazily,
+  // once, right before the one operation that actually needs the bucket to
+  // exist, so an environment with no reachable object storage never pays
+  // for (or fails on) a network call it never asked for.
   private async ensureBucket(): Promise<void> {
     if (this.bucketEnsured) return;
+    const { client, bucket } = this.getClient();
 
     try {
-      await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
+      await client.send(new HeadBucketCommand({ Bucket: bucket }));
     } catch {
       try {
-        await this.client.send(new CreateBucketCommand({ Bucket: this.bucket }));
-        this.logger.log(`Created object storage bucket "${this.bucket}".`);
+        await client.send(new CreateBucketCommand({ Bucket: bucket }));
+        this.logger.log(`Created object storage bucket "${bucket}".`);
       } catch {
         // Already exists (race, swallows BucketAlreadyOwnedByYou) or the
         // check above was a transient failure — the presigned PUT below
@@ -100,18 +107,20 @@ export class ObjectStorageService {
 
   async getPresignedUploadUrl(storageKey: string, contentType: string): Promise<{ uploadUrl: string; expiresAt: Date }> {
     await this.ensureBucket();
+    const { client, bucket } = this.getClient();
     const command = new PutObjectCommand({
-      Bucket: this.bucket,
+      Bucket: bucket,
       Key: storageKey,
       ContentType: contentType,
     });
-    const uploadUrl = await getSignedUrl(this.client, command, { expiresIn: UPLOAD_URL_TTL_SECONDS });
+    const uploadUrl = await getSignedUrl(client, command, { expiresIn: UPLOAD_URL_TTL_SECONDS });
     return { uploadUrl, expiresAt: new Date(Date.now() + UPLOAD_URL_TTL_SECONDS * 1000) };
   }
 
   async getPresignedDownloadUrl(storageKey: string): Promise<{ downloadUrl: string; expiresAt: Date }> {
-    const command = new GetObjectCommand({ Bucket: this.bucket, Key: storageKey });
-    const downloadUrl = await getSignedUrl(this.client, command, { expiresIn: DOWNLOAD_URL_TTL_SECONDS });
+    const { client, bucket } = this.getClient();
+    const command = new GetObjectCommand({ Bucket: bucket, Key: storageKey });
+    const downloadUrl = await getSignedUrl(client, command, { expiresIn: DOWNLOAD_URL_TTL_SECONDS });
     return { downloadUrl, expiresAt: new Date(Date.now() + DOWNLOAD_URL_TTL_SECONDS * 1000) };
   }
 
@@ -121,8 +130,9 @@ export class ObjectStorageService {
    * Returns null if the object doesn't exist (upload never completed).
    */
   async headObject(storageKey: string): Promise<StorageObjectMetadata | null> {
+    const { client, bucket } = this.getClient();
     try {
-      const result = await this.client.send(new HeadObjectCommand({ Bucket: this.bucket, Key: storageKey }));
+      const result = await client.send(new HeadObjectCommand({ Bucket: bucket, Key: storageKey }));
       return { contentType: result.ContentType, contentLength: result.ContentLength };
     } catch {
       return null;
@@ -130,7 +140,8 @@ export class ObjectStorageService {
   }
 
   async deleteObject(storageKey: string): Promise<void> {
-    await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: storageKey }));
+    const { client, bucket } = this.getClient();
+    await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: storageKey }));
   }
 
   /**
@@ -139,7 +150,8 @@ export class ObjectStorageService {
    * client-reported metadata.
    */
   async computeChecksumSha256(storageKey: string): Promise<string> {
-    const result = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: storageKey }));
+    const { client, bucket } = this.getClient();
+    const result = await client.send(new GetObjectCommand({ Bucket: bucket, Key: storageKey }));
     const body = result.Body as Readable;
     const hash = createHash('sha256');
 

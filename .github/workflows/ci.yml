@@ -122,28 +122,36 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
-      # Real S3-compatible storage for the portfolio evidence upload flow
-      # (issue #29's "testes de integração usam armazenamento S3
-      # compatível real" acceptance criterion) — GitHub Actions service
-      # containers can't override the image's command the way
-      # infra/compose.yaml does, so this relies on the image's default
-      # CMD already being `minio server /data`.
-      minio:
-        image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
-        env:
-          MINIO_ROOT_USER: aletheia_ci
-          MINIO_ROOT_PASSWORD: ci_only_not_a_secret
-        ports:
-          - 9000:9000
-        options: >-
-          --health-cmd "mc ready local"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+
+      # Real S3-compatible storage for the portfolio evidence upload flow
+      # (issue #29's "testes de integração usam armazenamento S3
+      # compatível real" acceptance criterion). Started with `docker run`
+      # rather than as a `services:` container: GitHub Actions service
+      # containers can't override an image's command the way
+      # infra/compose.yaml does, and the minio image's default CMD only
+      # prints usage — it requires the explicit `server /data` argument.
+      - name: Start MinIO
+        run: |
+          docker run -d --name minio \
+            -p 9000:9000 \
+            -e MINIO_ROOT_USER=aletheia_ci \
+            -e MINIO_ROOT_PASSWORD=ci_only_not_a_secret \
+            quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z server /data
+          for i in $(seq 1 20); do
+            if curl -sf http://127.0.0.1:9000/minio/health/live > /dev/null; then
+              echo "MinIO is ready."
+              exit 0
+            fi
+            echo "Waiting for MinIO to become ready ($i/20)..."
+            sleep 2
+          done
+          echo "::error::MinIO did not become ready in time."
+          docker logs minio
+          exit 1
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
