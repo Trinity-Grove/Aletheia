@@ -6,6 +6,7 @@ describe('ReportService', () => {
   let prisma: any;
   let reportRepo: any;
   let attendanceService: any;
+  let pdfRenderer: any;
 
   const FAMILY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
   const LEARNER_ID = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
@@ -40,6 +41,13 @@ describe('ReportService', () => {
           title: 'Academic Year 2026',
         }),
       },
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'u0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66',
+          fullName: 'Jane Guardian',
+          email: 'jane@example.com',
+        }),
+      },
       learningRecord: {
         findMany: jest.fn().mockResolvedValue([
           {
@@ -63,7 +71,7 @@ describe('ReportService', () => {
     };
 
     reportRepo = {
-      create: jest.fn().mockImplementation((familyId, dto, content) =>
+      create: jest.fn().mockImplementation((familyId, dto, content, generatedByUserId) =>
         Promise.resolve(
           new OfficialReportEntity(
             REPORT_ID,
@@ -79,6 +87,7 @@ describe('ReportService', () => {
             new Date(),
             'Alice',
             'Academic Year 2026',
+            generatedByUserId ?? null,
           ),
         ),
       ),
@@ -142,7 +151,14 @@ describe('ReportService', () => {
       }),
     };
 
-    service = new ReportService(prisma, reportRepo, attendanceService);
+    pdfRenderer = {
+      render: jest.fn().mockResolvedValue({
+        bytes: new Uint8Array([1, 2, 3]),
+        documentHash: 'a'.repeat(64),
+      }),
+    };
+
+    service = new ReportService(prisma, reportRepo, attendanceService, pdfRenderer);
   });
 
   describe('Generate Academic Transcript', () => {
@@ -175,6 +191,30 @@ describe('ReportService', () => {
             }),
           ]),
         }),
+        null,
+      );
+    });
+
+    it('records who generated the report when a user id is provided', async () => {
+      const USER_ID = 'u0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66';
+      await service.generateReport(
+        FAMILY_ID,
+        {
+          learnerId: LEARNER_ID,
+          academicYearId: YEAR_ID,
+          type: 'ACADEMIC_TRANSCRIPT',
+          title: 'Official Transcript 2026',
+          gradingScale: 'LETTER_A_F',
+          includeAttendance: true,
+        },
+        USER_ID,
+      );
+
+      expect(reportRepo.create).toHaveBeenCalledWith(
+        FAMILY_ID,
+        expect.anything(),
+        expect.anything(),
+        USER_ID,
       );
     });
 
@@ -224,6 +264,77 @@ describe('ReportService', () => {
       expect(exportData.mimeType).toBe('application/json');
       expect(exportData.filename).toContain('.json');
       expect(JSON.parse(exportData.content)).toHaveProperty('subjectGrades');
+    });
+
+    it('rejects PDF format on the JSON export endpoint, directing to the dedicated PDF route', async () => {
+      await expect(service.exportReport(FAMILY_ID, REPORT_ID, 'PDF')).rejects.toThrow(
+        'GET :id/export/pdf',
+      );
+    });
+  });
+
+  describe('exportReportPdf', () => {
+    it('renders a real PDF and returns its content hash', async () => {
+      const result = await service.exportReportPdf(FAMILY_ID, REPORT_ID);
+
+      expect(pdfRenderer.render).toHaveBeenCalledWith(
+        expect.objectContaining({ id: REPORT_ID, type: 'ACADEMIC_TRANSCRIPT' }),
+        null,
+      );
+      expect(result.documentHash).toBe('a'.repeat(64));
+      expect(result.filename).toContain('.pdf');
+      expect(result.bytes).toBeInstanceOf(Uint8Array);
+    });
+
+    it('resolves the generating user into a human-readable label when present', async () => {
+      reportRepo.findById.mockResolvedValueOnce(
+        new OfficialReportEntity(
+          REPORT_ID,
+          FAMILY_ID,
+          LEARNER_ID,
+          YEAR_ID,
+          'ACADEMIC_TRANSCRIPT',
+          'Official Transcript 2026',
+          'LETTER_A_F',
+          { learnerName: 'Alice', subjectGrades: [] },
+          new Date(),
+          new Date(),
+          new Date(),
+          'Alice',
+          'Academic Year 2026',
+          'u0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66',
+        ),
+      );
+
+      await service.exportReportPdf(FAMILY_ID, REPORT_ID);
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'u0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66' },
+      });
+      expect(pdfRenderer.render).toHaveBeenCalledWith(expect.anything(), 'Jane Guardian');
+    });
+
+    it('rejects PDF export for report types other than ACADEMIC_TRANSCRIPT', async () => {
+      reportRepo.findById.mockResolvedValueOnce(
+        new OfficialReportEntity(
+          REPORT_ID,
+          FAMILY_ID,
+          LEARNER_ID,
+          YEAR_ID,
+          'ATTENDANCE_SUMMARY',
+          'Attendance Report',
+          'LETTER_A_F',
+          {},
+          new Date(),
+          new Date(),
+          new Date(),
+        ),
+      );
+
+      await expect(service.exportReportPdf(FAMILY_ID, REPORT_ID)).rejects.toThrow(
+        'only available for ACADEMIC_TRANSCRIPT',
+      );
+      expect(pdfRenderer.render).not.toHaveBeenCalled();
     });
   });
 });
