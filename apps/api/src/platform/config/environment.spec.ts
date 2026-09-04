@@ -59,6 +59,31 @@ describe('parseEnvironment', () => {
     ).toThrow('JWT_SECRET is required and must be at least 16 characters long');
   });
 
+  it.each([
+    ['development', 'debug'],
+    ['production', 'info'],
+    ['test', 'silent'],
+  ] as const)('defaults LOG_LEVEL to %s for %s', (nodeEnv, expectedLevel) => {
+    const result = parseEnvironment({
+      NODE_ENV: nodeEnv,
+      DATABASE_URL: 'postgresql://user:pass@localhost:5432/aletheia',
+      JWT_SECRET: validJwtSecret,
+      MFA_ENCRYPTION_KEY: validMfaEncryptionKey,
+    });
+    expect(result.logLevel).toBe(expectedLevel);
+  });
+
+  it('honors an explicit LOG_LEVEL override', () => {
+    const result = parseEnvironment({
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgresql://user:pass@localhost:5432/aletheia',
+      JWT_SECRET: validJwtSecret,
+      MFA_ENCRYPTION_KEY: validMfaEncryptionKey,
+      LOG_LEVEL: 'warn',
+    });
+    expect(result.logLevel).toBe('warn');
+  });
+
   it('does not require optional infrastructure for API startup', () => {
     expect(
       parseEnvironment({
@@ -139,6 +164,7 @@ describe('parseEnvironment', () => {
       }),
     ).toEqual({
       nodeEnv: 'production',
+      logLevel: 'info',
       databaseUrl: 'postgresql://user:pass@db:5432/aletheia',
       redisUrl: 'redis://cache:6379',
       jwtSecret: validJwtSecret,
