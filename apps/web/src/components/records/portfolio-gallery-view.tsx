@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { AletheiaIcon } from '@aletheia/ui';
+import { AletheiaIcon, Badge, Button, EmptyState, Input, Select } from '@aletheia/ui';
 import type {
   PortfolioItemResponseDto,
   LearnerSummaryDto,
@@ -101,24 +101,9 @@ export function PortfolioGalleryView({
           </div>
 
           <Can action="upload_portfolio_items">
-            <button
-              type="button"
-              data-testid="open-add-portfolio-btn"
-              onClick={onOpenAddItem}
-              style={{
-                padding: '0.625rem 1.25rem',
-                backgroundColor: 'var(--forest)',
-                color: 'var(--text-inverse)',
-                borderRadius: 'var(--radius-md)',
-                border: 'none',
-                fontSize: '0.875rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                boxShadow: 'var(--shadow-sm)',
-              }}
-            >
+            <Button data-testid="open-add-portfolio-btn" onClick={onOpenAddItem}>
               + Adicionar Evidência
-            </button>
+            </Button>
           </Can>
         </div>
       </div>
@@ -132,86 +117,44 @@ export function PortfolioGalleryView({
         }}
       >
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          {/* Search */}
-          <input
+          <Input
             type="text"
             data-testid="search-portfolio-input"
             placeholder="Buscar no portfólio..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              padding: '0.5rem 0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-medium)',
-              fontSize: '0.875rem',
-              minWidth: '180px',
-            }}
+            style={{ minWidth: '180px' }}
           />
 
-          {/* Type Filter */}
-          <select
+          <Select
             data-testid="filter-portfolio-type-select"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            style={{
-              padding: '0.5rem 0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-medium)',
-              fontSize: '0.875rem',
-              backgroundColor: 'var(--bg-surface)',
-            }}
-          >
-            <option value="">Todos os tipos de evidência</option>
-            {Object.entries(EVIDENCE_TYPE_CONFIG).map(([k, item]) => (
-              <option key={k} value={k}>
-                {item.label}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Todos os tipos de evidência' },
+              ...Object.entries(EVIDENCE_TYPE_CONFIG).map(([k, item]) => ({ value: k, label: item.label })),
+            ]}
+          />
 
-          {/* Subject Filter */}
-          <select
+          <Select
             data-testid="filter-portfolio-subject-select"
             value={filterSubject}
             onChange={(e) => setFilterSubject(e.target.value)}
-            style={{
-              padding: '0.5rem 0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-medium)',
-              fontSize: '0.875rem',
-              backgroundColor: 'var(--bg-surface)',
-            }}
-          >
-            <option value="">Todas as disciplinas</option>
-            {subjects.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Todas as disciplinas' },
+              ...subjects.map((s) => ({ value: s.id, label: s.name })),
+            ]}
+          />
 
           {/* Highlights toggle button */}
-          <button
-            type="button"
+          <Button
+            variant={filterOnlyHighlights ? 'secondary' : 'outline'}
             data-testid="toggle-highlights-filter"
             onClick={() => setFilterOnlyHighlights((prev) => !prev)}
-            style={{
-              padding: '0.5rem 0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              border: filterOnlyHighlights ? '1px solid var(--color-amber-600)' : '1px solid var(--border-medium)',
-              backgroundColor: filterOnlyHighlights ? 'var(--color-amber-50)' : 'var(--bg-surface)',
-              color: filterOnlyHighlights ? 'var(--color-amber-700)' : 'var(--text-secondary)',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-            }}
+            leftIcon={<AletheiaIcon name="sparkles" size={14} />}
           >
-            <AletheiaIcon name="sparkles" size={14} style={{ color: filterOnlyHighlights ? 'var(--color-amber-600)' : 'currentColor' }} />
-            <span>Apenas Destaques</span>
-          </button>
+            Apenas Destaques
+          </Button>
         </div>
 
         {/* Tag chips */}
@@ -261,45 +204,19 @@ export function PortfolioGalleryView({
 
       {/* Grid of Portfolio items */}
       {filteredItems.length === 0 ? (
-        <div
+        <EmptyState
           data-testid="portfolio-empty-state"
-          style={{
-            padding: '3.5rem 1rem',
-            textAlign: 'center',
-            backgroundColor: 'var(--bg-surface)',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px dashed var(--border-medium)',
-          }}
-        >
-          <div style={{ color: 'var(--color-amber-600)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
-            <AletheiaIcon name="palette" size={40} />
-          </div>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
-            Nenhuma evidência no portfólio
-          </h3>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
-            Fotografe cadernos, desenhos da natureza, adicione áudios de narração e celebre a jornada educativa!
-          </p>
-          <Can action="upload_portfolio_items">
-            <button
-              type="button"
-              data-testid="empty-add-portfolio-btn"
-              onClick={onOpenAddItem}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: 'var(--forest)',
-                color: 'var(--text-inverse)',
-                borderRadius: 'var(--radius-sm)',
-                border: 'none',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Adicionar Primeira Obra
-            </button>
-          </Can>
-        </div>
+          icon={<AletheiaIcon name="palette" size={40} style={{ color: 'var(--color-amber-600)' }} />}
+          title="Nenhuma evidência no portfólio"
+          description="Fotografe cadernos, desenhos da natureza, adicione áudios de narração e celebre a jornada educativa!"
+          action={
+            <Can action="upload_portfolio_items">
+              <Button data-testid="empty-add-portfolio-btn" onClick={onOpenAddItem}>
+                Adicionar Primeira Obra
+              </Button>
+            </Can>
+          }
+        />
       ) : (
         <div
           data-testid="portfolio-gallery-grid"
@@ -378,27 +295,15 @@ export function PortfolioGalleryView({
 
                   {/* Highlight Star Badge */}
                   {item.isHighlight && (
-                    <span
+                    <Badge
                       data-testid={`portfolio-highlight-badge-${item.id}`}
-                      style={{
-                        position: 'absolute',
-                        top: '0.5rem',
-                        right: '0.5rem',
-                        backgroundColor: 'var(--color-amber-50)',
-                        color: 'var(--color-amber-700)',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        padding: '0.2rem 0.5rem',
-                        borderRadius: 'var(--radius-full)',
-                        border: '1px solid var(--color-amber-100)',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                      }}
+                      variant="amber"
+                      size="sm"
+                      style={{ position: 'absolute', top: '0.5rem', right: '0.5rem' }}
                     >
                       <AletheiaIcon name="sparkles" size={11} style={{ color: 'var(--color-amber-600)' }} />
                       <span>Destaque</span>
-                    </span>
+                    </Badge>
                   )}
                 </div>
 
@@ -415,40 +320,16 @@ export function PortfolioGalleryView({
                   {/* Learner & Subject */}
                   <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
                     {learner && (
-                      <span
-                        style={{
-                          backgroundColor: 'var(--color-indigo-50)',
-                          color: 'var(--color-indigo-700)',
-                          fontSize: '0.6875rem',
-                          fontWeight: 600,
-                          padding: '0.125rem 0.375rem',
-                          borderRadius: 'var(--radius-sm)',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.25rem',
-                        }}
-                      >
+                      <Badge variant="indigo" size="sm">
                         <AletheiaIcon name="graduation-cap" size={10} />
                         <span>{learner.preferredName || learner.firstName}</span>
-                      </span>
+                      </Badge>
                     )}
                     {item.subjectName && (
-                      <span
-                        style={{
-                          backgroundColor: 'var(--sage-soft)',
-                          color: 'var(--text-secondary)',
-                          fontSize: '0.6875rem',
-                          fontWeight: 600,
-                          padding: '0.125rem 0.375rem',
-                          borderRadius: 'var(--radius-sm)',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.25rem',
-                        }}
-                      >
+                      <Badge variant="slate" size="sm">
                         <AletheiaIcon name="book-open" size={10} />
                         <span>{item.subjectName}</span>
-                      </span>
+                      </Badge>
                     )}
                   </div>
 
@@ -541,40 +422,25 @@ export function PortfolioGalleryView({
 
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <Can action="upload_portfolio_items">
-                        <button
-                          type="button"
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           data-testid={`edit-portfolio-btn-${item.id}`}
                           onClick={() => onEditItem(item)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--forest)',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            padding: '0.25rem',
-                          }}
                         >
                           Editar
-                        </button>
+                        </Button>
                       </Can>
                       <Can action="delete_learners">
-                        <button
-                          type="button"
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           data-testid={`delete-portfolio-btn-${item.id}`}
                           onClick={() => onDeleteItem(item.id)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--color-rose-600)',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            padding: '0.25rem',
-                          }}
+                          style={{ color: 'var(--color-rose-600)' }}
                         >
                           Excluir
-                        </button>
+                        </Button>
                       </Can>
                     </div>
                   </div>
