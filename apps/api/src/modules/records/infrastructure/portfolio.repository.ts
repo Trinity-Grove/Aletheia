@@ -166,6 +166,17 @@ export class PortfolioRepository {
     return this.findById(familyId, id);
   }
 
+  // Hard-deletes soft-deleted rows past the retention window. The
+  // underlying storage object is already removed at soft-delete time
+  // (see PortfolioService.deleteItem), so this only reclaims metadata —
+  // no storage call needed here.
+  async purgeSoftDeletedBefore(cutoff: Date): Promise<number> {
+    const result = await this.prisma.portfolioItem.deleteMany({
+      where: { deletedAt: { not: null, lt: cutoff } },
+    });
+    return result.count;
+  }
+
   private mapPortfolioItem(row: any): PortfolioItemEntity {
     const learnerName = row.learner
       ? row.learner.preferredName || `${row.learner.firstName}${row.learner.lastName ? ' ' + row.learner.lastName : ''}`
