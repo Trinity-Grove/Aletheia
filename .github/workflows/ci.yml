@@ -104,6 +104,10 @@ jobs:
       DATABASE_URL: postgresql://aletheia_ci:ci_only_not_a_secret@127.0.0.1:5432/aletheia_ci?schema=public
       JWT_SECRET: postgres_integration_ci_jwt_secret_not_a_real_secret
       MFA_ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+      S3_ENDPOINT: http://127.0.0.1:9000
+      S3_ACCESS_KEY: aletheia_ci
+      S3_SECRET_KEY: ci_only_not_a_secret
+      S3_BUCKET: aletheia-ci
     services:
       postgres:
         image: postgres:17
@@ -122,6 +126,32 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+
+      # Real S3-compatible storage for the portfolio evidence upload flow
+      # (issue #29's "testes de integração usam armazenamento S3
+      # compatível real" acceptance criterion). Started with `docker run`
+      # rather than as a `services:` container: GitHub Actions service
+      # containers can't override an image's command the way
+      # infra/compose.yaml does, and the minio image's default CMD only
+      # prints usage — it requires the explicit `server /data` argument.
+      - name: Start MinIO
+        run: |
+          docker run -d --name minio \
+            -p 9000:9000 \
+            -e MINIO_ROOT_USER=aletheia_ci \
+            -e MINIO_ROOT_PASSWORD=ci_only_not_a_secret \
+            quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z server /data
+          for i in $(seq 1 20); do
+            if curl -sf http://127.0.0.1:9000/minio/health/live > /dev/null; then
+              echo "MinIO is ready."
+              exit 0
+            fi
+            echo "Waiting for MinIO to become ready ($i/20)..."
+            sleep 2
+          done
+          echo "::error::MinIO did not become ready in time."
+          docker logs minio
+          exit 1
 
       - name: Set up Node.js
         uses: actions/setup-node@v7

@@ -8,6 +8,7 @@ import type {
   LearnerSummaryDto,
   LearningRecordResponseDto,
   ObjectiveResponseDto,
+  PortfolioItemResponseDto,
   SubjectResponseDto,
 } from '@aletheia/contracts';
 import { ProductShell } from '../../../src/components/product-shell';
@@ -168,8 +169,8 @@ export default function RecordsPage() {
     }
   };
 
-  const handleSaveEvidence = async (dto: CreatePortfolioItemDto) => {
-    if (!familyId) return;
+  const handleSaveEvidence = async (dto: CreatePortfolioItemDto): Promise<PortfolioItemResponseDto> => {
+    if (!familyId) throw new Error('Família não autenticada');
     const res = await fetch(`/api/v1/families/${familyId}/portfolio`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -179,6 +180,39 @@ export default function RecordsPage() {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.message || 'Falha ao anexar evidência');
+    }
+    const saved: PortfolioItemResponseDto = await res.json();
+    await fetchRecords();
+    return saved;
+  };
+
+  const handleUploadEvidenceFile = async (itemId: string, file: File) => {
+    if (!familyId) return;
+
+    const uploadUrlRes = await fetch(`/api/v1/families/${familyId}/portfolio/${itemId}/upload-url`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ fileName: file.name, mimeType: file.type, fileSizeBytes: file.size }),
+    });
+    if (!uploadUrlRes.ok) {
+      const err = await uploadUrlRes.json().catch(() => ({}));
+      throw new Error(err.message || 'Falha ao preparar o envio do arquivo');
+    }
+    const { uploadUrl } = await uploadUrlRes.json();
+
+    const putRes = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+    if (!putRes.ok) {
+      throw new Error('Falha ao enviar o arquivo para o armazenamento.');
+    }
+
+    const confirmRes = await fetch(`/api/v1/families/${familyId}/portfolio/${itemId}/confirm-upload`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    if (!confirmRes.ok) {
+      const err = await confirmRes.json().catch(() => ({}));
+      throw new Error(err.message || 'Falha ao confirmar o envio do arquivo');
     }
     await fetchRecords();
   };
@@ -249,6 +283,7 @@ export default function RecordsPage() {
           isOpen={isEvidenceModalOpen}
           onClose={() => setIsEvidenceModalOpen(false)}
           onSave={handleSaveEvidence}
+          onUploadFile={handleUploadEvidenceFile}
           learners={learners}
           subjects={subjects}
           records={records}

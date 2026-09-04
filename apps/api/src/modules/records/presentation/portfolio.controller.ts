@@ -14,11 +14,15 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   createPortfolioItemSchema,
+  requestPortfolioUploadSchema,
   updatePortfolioItemSchema,
   type CreatePortfolioItemDto,
   type EvidenceType,
+  type PortfolioDownloadUrlResponseDto,
   type PortfolioItemFilterDto,
   type PortfolioItemResponseDto,
+  type PortfolioUploadUrlResponseDto,
+  type RequestPortfolioUploadDto,
   type UpdatePortfolioItemDto,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
@@ -94,5 +98,35 @@ export class PortfolioController {
   ): Promise<{ success: boolean }> {
     const success = await this.portfolioService.deleteItem(familyId, id);
     return { success };
+  }
+
+  @Post(':id/upload-url')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Request a presigned URL to upload evidence for a portfolio item' })
+  async requestUpload(
+    @Param('familyId') familyId: string,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(requestPortfolioUploadSchema)) dto: RequestPortfolioUploadDto,
+  ): Promise<PortfolioUploadUrlResponseDto> {
+    return this.portfolioService.requestUpload(familyId, id, dto);
+  }
+
+  @Post(':id/confirm-upload')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Confirm a completed upload and finalize its metadata' })
+  async confirmUpload(
+    @Param('familyId') familyId: string,
+    @Param('id') id: string,
+  ): Promise<PortfolioItemResponseDto> {
+    return this.portfolioService.confirmUpload(familyId, id);
+  }
+
+  @Get(':id/download-url')
+  @ApiOperation({ summary: 'Get a short-lived presigned URL to download a portfolio item file' })
+  async getDownloadUrl(
+    @Param('familyId') familyId: string,
+    @Param('id') id: string,
+  ): Promise<PortfolioDownloadUrlResponseDto> {
+    return this.portfolioService.getDownloadUrl(familyId, id);
   }
 }

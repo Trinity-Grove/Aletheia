@@ -96,31 +96,60 @@ export default function PortfolioPage() {
   }, [fetchPortfolioItems]);
 
   // Actions
-  const handleSaveItem = async (dto: CreatePortfolioItemDto) => {
+  const handleSaveItem = async (dto: CreatePortfolioItemDto): Promise<PortfolioItemResponseDto> => {
+    if (!familyId) throw new Error('Família não autenticada');
+
+    const res = itemToEdit
+      ? await fetch(`/api/v1/families/${familyId}/portfolio/${itemToEdit.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(dto),
+        })
+      : await fetch(`/api/v1/families/${familyId}/portfolio`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(dto),
+        });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || (itemToEdit ? 'Falha ao atualizar evidência' : 'Falha ao adicionar evidência'));
+    }
+
+    const saved: PortfolioItemResponseDto = await res.json();
+    await fetchPortfolioItems();
+    return saved;
+  };
+
+  const handleUploadFile = async (itemId: string, file: File) => {
     if (!familyId) return;
 
-    if (itemToEdit) {
-      const res = await fetch(`/api/v1/families/${familyId}/portfolio/${itemToEdit.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-        body: JSON.stringify(dto),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao atualizar evidência');
-      }
-    } else {
-      const res = await fetch(`/api/v1/families/${familyId}/portfolio`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-        body: JSON.stringify(dto),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao adicionar evidência');
-      }
+    const uploadUrlRes = await fetch(`/api/v1/families/${familyId}/portfolio/${itemId}/upload-url`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ fileName: file.name, mimeType: file.type, fileSizeBytes: file.size }),
+    });
+    if (!uploadUrlRes.ok) {
+      const err = await uploadUrlRes.json().catch(() => ({}));
+      throw new Error(err.message || 'Falha ao preparar o envio do arquivo');
+    }
+    const { uploadUrl } = await uploadUrlRes.json();
+
+    const putRes = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+    if (!putRes.ok) {
+      throw new Error('Falha ao enviar o arquivo para o armazenamento.');
+    }
+
+    const confirmRes = await fetch(`/api/v1/families/${familyId}/portfolio/${itemId}/confirm-upload`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    if (!confirmRes.ok) {
+      const err = await confirmRes.json().catch(() => ({}));
+      throw new Error(err.message || 'Falha ao confirmar o envio do arquivo');
     }
     await fetchPortfolioItems();
   };
@@ -184,6 +213,7 @@ export default function PortfolioPage() {
           isOpen={isItemModalOpen}
           onClose={() => setIsItemModalOpen(false)}
           onSave={handleSaveItem}
+          onUploadFile={handleUploadFile}
           learners={learners}
           subjects={subjects}
           records={records}

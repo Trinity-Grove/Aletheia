@@ -43,7 +43,7 @@ export class PortfolioRepository {
 
   async findById(familyId: string, id: string): Promise<PortfolioItemEntity | null> {
     const row = await this.prisma.portfolioItem.findFirst({
-      where: { id, familyId },
+      where: { id, familyId, deletedAt: null },
       include: {
         learner: true,
         subject: true,
@@ -54,7 +54,7 @@ export class PortfolioRepository {
   }
 
   async list(familyId: string, filter: PortfolioItemFilterDto = {}): Promise<PortfolioItemEntity[]> {
-    const where: Record<string, unknown> = { familyId };
+    const where: Record<string, unknown> = { familyId, deletedAt: null };
 
     if (filter.learnerId) {
       where.learnerId = filter.learnerId;
@@ -130,12 +130,40 @@ export class PortfolioRepository {
     return this.mapPortfolioItem(updated);
   }
 
-  async delete(familyId: string, id: string): Promise<boolean> {
-    const existing = await this.findById(familyId, id);
-    if (!existing) return false;
+  // Soft delete: retains the metadata row (retention/audit trail) and only
+  // marks it deleted; findById/list already filter deletedAt out. Callers
+  // are responsible for removing the underlying storage object first.
+  async softDelete(familyId: string, id: string): Promise<boolean> {
+    const result = await this.prisma.portfolioItem.updateMany({
+      where: { id, familyId, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+    return result.count > 0;
+  }
 
-    await this.prisma.portfolioItem.delete({ where: { id } });
-    return true;
+  // Records a pending upload's storage key before the client has actually
+  // uploaded anything — confirmUpload finalizes it once the object is
+  // verified to exist. Re-issuing an upload URL for the same item just
+  // overwrites this, so an interrupted upload never creates an orphan row.
+  async savePendingUpload(familyId: string, id: string, storageKey: string): Promise<boolean> {
+    const result = await this.prisma.portfolioItem.updateMany({
+      where: { id, familyId, deletedAt: null },
+      data: { storageKey },
+    });
+    return result.count > 0;
+  }
+
+  async confirmUpload(
+    familyId: string,
+    id: string,
+    data: { mimeType: string; fileSizeBytes: number; checksumSha256: string },
+  ): Promise<PortfolioItemEntity | null> {
+    const result = await this.prisma.portfolioItem.updateMany({
+      where: { id, familyId, deletedAt: null },
+      data,
+    });
+    if (result.count === 0) return null;
+    return this.findById(familyId, id);
   }
 
   private mapPortfolioItem(row: any): PortfolioItemEntity {
@@ -157,6 +185,9 @@ export class PortfolioRepository {
       row.textContent ?? null,
       row.mimeType ?? null,
       row.fileSizeBytes ?? null,
+      row.storageKey ?? null,
+      row.checksumSha256 ?? null,
+      row.deletedAt ?? null,
       row.capturedAt ?? null,
       row.isHighlight ?? false,
       row.tags ?? [],

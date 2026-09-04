@@ -71,3 +71,48 @@ export const portfolioItemResponseSchema = z.object({
 });
 
 export type PortfolioItemResponseDto = z.infer<typeof portfolioItemResponseSchema>;
+
+// Evidence upload (issue #29): direct-to-storage presigned URL flow. The
+// allowlist and size cap are shared between client-side and server-side
+// validation, per this issue's "limites validados no cliente e no
+// servidor" acceptance criterion — one source of truth for both.
+export const ALLOWED_PORTFOLIO_MIME_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'audio/mpeg',
+  'audio/mp4',
+  'audio/wav',
+  'video/mp4',
+  'video/quicktime',
+  'video/webm',
+  'application/pdf',
+] as const;
+
+export type AllowedPortfolioMimeType = (typeof ALLOWED_PORTFOLIO_MIME_TYPES)[number];
+
+export const PORTFOLIO_MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB
+
+export const requestPortfolioUploadSchema = z.object({
+  fileName: z.string().min(1).max(255),
+  mimeType: z.enum(ALLOWED_PORTFOLIO_MIME_TYPES),
+  fileSizeBytes: z.number().int().positive().max(PORTFOLIO_MAX_FILE_SIZE_BYTES),
+});
+
+export type RequestPortfolioUploadDto = z.infer<typeof requestPortfolioUploadSchema>;
+
+export const portfolioUploadUrlResponseSchema = z.object({
+  uploadUrl: z.string().url(),
+  storageKey: z.string(),
+  expiresAt: z.string(),
+});
+
+export type PortfolioUploadUrlResponseDto = z.infer<typeof portfolioUploadUrlResponseSchema>;
+
+export const portfolioDownloadUrlResponseSchema = z.object({
+  downloadUrl: z.string().url(),
+  expiresAt: z.string(),
+});
+
+export type PortfolioDownloadUrlResponseDto = z.infer<typeof portfolioDownloadUrlResponseSchema>;

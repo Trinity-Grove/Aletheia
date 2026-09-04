@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../../platform/database/database.module.js';
+import { StorageModule } from '../../platform/storage/storage.module.js';
 import { LearningRecordRepository } from './infrastructure/learning-record.repository.js';
 import { PortfolioRepository } from './infrastructure/portfolio.repository.js';
 import { LearningRecordService } from './application/learning-record.service.js';
@@ -9,7 +10,7 @@ import { LearningRecordController } from './presentation/learning-record.control
 import { PortfolioController } from './presentation/portfolio.controller.js';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, StorageModule],
   controllers: [LearningRecordController, PortfolioController],
   providers: [
     LearningRecordRepository,
