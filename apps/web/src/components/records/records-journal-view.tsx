@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { AletheiaIcon } from '@aletheia/ui';
+import { AletheiaIcon, Button, EmptyState, Input, Select } from '@aletheia/ui';
 import type {
   LearningRecordResponseDto,
   LearnerProgressSummaryDto,
@@ -180,150 +180,69 @@ export function RecordsJournalView({
         }}
       >
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          {/* Search bar */}
-          <input
+          <Input
             type="text"
             data-testid="search-records-input"
             placeholder="Buscar registros..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              padding: '0.5rem 0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-medium)',
-              fontSize: '0.875rem',
-              minWidth: '180px',
-            }}
+            style={{ minWidth: '180px' }}
           />
 
-          {/* Type filter */}
-          <select
+          <Select
             data-testid="filter-record-type-select"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            style={{
-              padding: '0.5rem 0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-medium)',
-              fontSize: '0.875rem',
-              backgroundColor: 'var(--bg-surface)',
-            }}
-          >
-            <option value="">Todos os tipos</option>
-            {Object.entries(RECORD_TYPE_LABELS).map(([k, item]) => (
-              <option key={k} value={k}>
-                {item.label}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Todos os tipos' },
+              ...Object.entries(RECORD_TYPE_LABELS).map(([k, item]) => ({ value: k, label: item.label })),
+            ]}
+          />
 
-          {/* Subject filter */}
-          <select
+          <Select
             data-testid="filter-subject-select"
             value={filterSubject}
             onChange={(e) => setFilterSubject(e.target.value)}
-            style={{
-              padding: '0.5rem 0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-medium)',
-              fontSize: '0.875rem',
-              backgroundColor: 'var(--bg-surface)',
-            }}
-          >
-            <option value="">Todas as disciplinas</option>
-            {subjects.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Todas as disciplinas' },
+              ...subjects.map((s) => ({ value: s.id, label: s.name })),
+            ]}
+          />
 
-          {/* Mastery filter */}
-          <select
+          <Select
             data-testid="filter-mastery-select"
             value={filterMastery}
             onChange={(e) => setFilterMastery(e.target.value)}
-            style={{
-              padding: '0.5rem 0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-medium)',
-              fontSize: '0.875rem',
-              backgroundColor: 'var(--bg-surface)',
-            }}
-          >
-            <option value="">Todos os níveis de domínio</option>
-            {Object.entries(MASTERY_CONFIG).map(([k, item]) => (
-              <option key={k} value={k}>
-                {item.label}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Todos os níveis de domínio' },
+              ...Object.entries(MASTERY_CONFIG).map(([k, item]) => ({ value: k, label: item.label })),
+            ]}
+          />
         </div>
 
         {/* New Record Button */}
         <Can action="log_learning">
-          <button
-            type="button"
-            data-testid="open-create-record-btn"
-            onClick={onOpenCreateRecord}
-            style={{
-              padding: '0.625rem 1.25rem',
-              backgroundColor: 'var(--forest)',
-              color: 'var(--text-inverse)',
-              borderRadius: 'var(--radius-md)',
-              border: 'none',
-              fontSize: '0.875rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: 'var(--shadow-sm)',
-            }}
-          >
+          <Button data-testid="open-create-record-btn" onClick={onOpenCreateRecord}>
             + Novo Registro
-          </button>
+          </Button>
         </Can>
       </div>
 
       {/* Feed of Records */}
       {filteredRecords.length === 0 ? (
-        <div
+        <EmptyState
           data-testid="records-empty-state"
-          style={{
-            padding: '3.5rem 1rem',
-            textAlign: 'center',
-            backgroundColor: 'var(--bg-surface)',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px dashed var(--border-medium)',
-          }}
-        >
-          <div style={{ color: 'var(--sage)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
-            <AletheiaIcon name="book-open" size={40} />
-          </div>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
-            Nenhum registro de aprendizagem encontrado
-          </h3>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
-            Registre as lições concluídas, narrações orais, vivências espontâneas e o crescimento dos hábitos dos seus filhos.
-          </p>
-          <Can action="log_learning">
-            <button
-              type="button"
-              data-testid="empty-create-record-btn"
-              onClick={onOpenCreateRecord}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: 'var(--forest)',
-                color: 'var(--text-inverse)',
-                borderRadius: 'var(--radius-sm)',
-                border: 'none',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Criar Primeiro Registro
-            </button>
-          </Can>
-        </div>
+          icon={<AletheiaIcon name="book-open" size={40} style={{ color: 'var(--sage)' }} />}
+          title="Nenhum registro de aprendizagem encontrado"
+          description="Registre as lições concluídas, narrações orais, vivências espontâneas e o crescimento dos hábitos dos seus filhos."
+          action={
+            <Can action="log_learning">
+              <Button data-testid="empty-create-record-btn" onClick={onOpenCreateRecord}>
+                Criar Primeiro Registro
+              </Button>
+            </Can>
+          }
+        />
       ) : (
         <div
           data-testid="records-feed-list"

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AletheiaIcon } from '@aletheia/ui';
+import { AletheiaIcon, Badge, Button, IconButton } from '@aletheia/ui';
 import type {
   LearningRecordResponseDto,
   MasteryLevel,
@@ -19,14 +19,14 @@ export interface RecordCardProps {
 
 export const MASTERY_CONFIG: Record<
   MasteryLevel,
-  { label: string; bg: string; text: string; icon: React.ReactNode }
+  { label: string; bg: string; text: string; icon: React.ReactNode; badgeVariant: 'slate' | 'amber' | 'indigo' | 'emerald' }
 > = {
-  NOT_STARTED: { label: 'Não Iniciado', bg: 'var(--sage-soft)', text: 'var(--text-secondary)', icon: <AletheiaIcon name="clock" size={14} /> },
-  EXPOSURE: { label: 'Exposição', bg: 'var(--color-amber-50)', text: 'var(--color-amber-700)', icon: <AletheiaIcon name="sprout" size={14} /> },
-  DEVELOPING: { label: 'Em Desenvolvimento', bg: 'var(--color-indigo-50)', text: 'var(--color-indigo-700)', icon: <AletheiaIcon name="trending-up" size={14} /> },
-  WITH_ASSISTANCE: { label: 'Com Assistência', bg: 'var(--color-indigo-100)', text: 'var(--color-indigo-700)', icon: <AletheiaIcon name="heart" size={14} /> },
-  AUTONOMOUS: { label: 'Autônomo', bg: 'var(--color-emerald-100)', text: 'var(--color-emerald-700)', icon: <AletheiaIcon name="sparkles" size={14} /> },
-  MASTERED: { label: 'Dominado', bg: 'var(--color-emerald-50)', text: 'var(--color-emerald-700)', icon: <AletheiaIcon name="sparkles" size={14} /> },
+  NOT_STARTED: { label: 'Não Iniciado', bg: 'var(--sage-soft)', text: 'var(--text-secondary)', icon: <AletheiaIcon name="clock" size={14} />, badgeVariant: 'slate' },
+  EXPOSURE: { label: 'Exposição', bg: 'var(--color-amber-50)', text: 'var(--color-amber-700)', icon: <AletheiaIcon name="sprout" size={14} />, badgeVariant: 'amber' },
+  DEVELOPING: { label: 'Em Desenvolvimento', bg: 'var(--color-indigo-50)', text: 'var(--color-indigo-700)', icon: <AletheiaIcon name="trending-up" size={14} />, badgeVariant: 'indigo' },
+  WITH_ASSISTANCE: { label: 'Com Assistência', bg: 'var(--color-indigo-100)', text: 'var(--color-indigo-700)', icon: <AletheiaIcon name="heart" size={14} />, badgeVariant: 'indigo' },
+  AUTONOMOUS: { label: 'Autônomo', bg: 'var(--color-emerald-100)', text: 'var(--color-emerald-700)', icon: <AletheiaIcon name="sparkles" size={14} />, badgeVariant: 'emerald' },
+  MASTERED: { label: 'Dominado', bg: 'var(--color-emerald-50)', text: 'var(--color-emerald-700)', icon: <AletheiaIcon name="sparkles" size={14} />, badgeVariant: 'emerald' },
 };
 
 export const ASSESSMENT_LABELS: Record<AssessmentMethod, string> = {
@@ -81,22 +81,9 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <span
-            data-testid={`record-type-badge-${record.id}`}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.25rem',
-              backgroundColor: 'var(--sage-soft)',
-              color: 'var(--text-secondary)',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              padding: '0.25rem 0.5rem',
-              borderRadius: 'var(--radius-sm)',
-            }}
-          >
-            <span>{recordType.icon}</span> {recordType.label}
-          </span>
+          <Badge data-testid={`record-type-badge-${record.id}`} variant="slate" size="sm">
+            {recordType.icon} {recordType.label}
+          </Badge>
 
           {record.subjectName && (
             <span
@@ -120,45 +107,18 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
           )}
 
           {record.learnerName && (
-            <span
-              data-testid={`record-learner-badge-${record.id}`}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-                backgroundColor: 'var(--color-amber-50)',
-                color: 'var(--color-amber-700)',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                padding: '0.25rem 0.5rem',
-                borderRadius: 'var(--radius-sm)',
-              }}
-            >
+            <Badge data-testid={`record-learner-badge-${record.id}`} variant="amber" size="sm">
               <AletheiaIcon name="graduation-cap" size={12} />
               <span>{record.learnerName}</span>
-            </span>
+            </Badge>
           )}
         </div>
 
         {/* Mastery Badge */}
-        <span
-          data-testid={`mastery-badge-${record.id}`}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.25rem',
-            backgroundColor: mastery.bg,
-            color: mastery.text,
-            fontSize: '0.75rem',
-            fontWeight: 700,
-            padding: '0.25rem 0.625rem',
-            borderRadius: 'var(--radius-full)',
-            border: `1px solid ${mastery.text}30`,
-          }}
-        >
-          <span>{mastery.icon}</span>
+        <Badge data-testid={`mastery-badge-${record.id}`} variant={mastery.badgeVariant}>
+          {mastery.icon}
           {mastery.label}
-        </span>
+        </Badge>
       </div>
 
       {/* Main Title & Description */}
@@ -208,23 +168,10 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
             <AletheiaIcon name="clock" size={12} /> {record.durationMinutes} min
           </span>
         )}
-        <span
-          data-testid={`assessment-method-badge-${record.id}`}
-          style={{
-            backgroundColor: 'var(--sage-soft)',
-            color: 'var(--text-secondary)',
-            padding: '0.2rem 0.5rem',
-            borderRadius: 'var(--radius-sm)',
-            border: '1px solid var(--border-light)',
-            fontWeight: 500,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.375rem',
-          }}
-        >
+        <Badge data-testid={`assessment-method-badge-${record.id}`} variant="slate" size="sm">
           <AletheiaIcon name="search" size={12} />
           <span>Avaliação: {assessmentLabel}</span>
-        </span>
+        </Badge>
       </div>
 
       {/* Strengths & Areas for Growth */}
@@ -314,21 +261,9 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
           </span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
             {record.objectives.map((obj) => (
-              <span
-                key={obj.id}
-                data-testid={`attached-objective-${obj.id}`}
-                style={{
-                  backgroundColor: 'var(--color-indigo-50)',
-                  color: 'var(--color-indigo-700)',
-                  border: '1px solid var(--color-indigo-100)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '0.2rem 0.5rem',
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
-                }}
-              >
+              <Badge key={obj.id} data-testid={`attached-objective-${obj.id}`} variant="indigo" size="sm">
                 {obj.objectiveTitle || 'Objetivo de Aprendizagem'}
-              </span>
+              </Badge>
             ))}
           </div>
         </div>
@@ -347,46 +282,22 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
       >
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           {record.portfolioItemIds && record.portfolioItemIds.length > 0 && (
-            <span
-              data-testid={`record-evidence-count-${record.id}`}
-              style={{
-                fontSize: '0.75rem',
-                color: 'var(--text-secondary)',
-                backgroundColor: 'var(--sage-soft)',
-                padding: '0.25rem 0.5rem',
-                borderRadius: 'var(--radius-sm)',
-                fontWeight: 500,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-              }}
-            >
+            <Badge data-testid={`record-evidence-count-${record.id}`} variant="slate" size="sm">
               <AletheiaIcon name="paperclip" size={12} />
               <span>{record.portfolioItemIds.length} evidência(s)</span>
-            </span>
+            </Badge>
           )}
           {onAddEvidence && (
             <Can action="upload_portfolio_items">
-              <button
-                type="button"
+              <Button
+                variant="outline"
+                size="sm"
                 data-testid={`add-evidence-btn-${record.id}`}
                 onClick={() => onAddEvidence(record)}
-                style={{
-                  background: 'none',
-                  border: '1.5px dashed var(--border-medium)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '0.25rem 0.5rem',
-                  fontSize: '0.75rem',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                }}
+                leftIcon={<AletheiaIcon name="plus" size={12} />}
               >
-                <AletheiaIcon name="plus" size={12} />
-                <span>+ Evidência</span>
-              </button>
+                Evidência
+              </Button>
             </Can>
           )}
         </div>
@@ -394,49 +305,27 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
         <div style={{ display: 'flex', gap: '0.375rem' }}>
           {onEdit && (
             <Can action="log_learning">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
                 data-testid={`edit-record-btn-${record.id}`}
                 onClick={() => onEdit(record)}
-                style={{
-                  background: 'none',
-                  border: '1px solid var(--border-medium)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '0.25rem 0.5rem',
-                  fontSize: '0.75rem',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                }}
+                leftIcon={<AletheiaIcon name="pencil" size={12} />}
               >
-                <AletheiaIcon name="pencil" size={12} />
-                <span>Editar</span>
-              </button>
+                Editar
+              </Button>
             </Can>
           )}
           {onDelete && (
             <Can action="delete_learners">
-              <button
-                type="button"
+              <IconButton
+                size="sm"
                 data-testid={`delete-record-btn-${record.id}`}
                 onClick={() => onDelete(record.id)}
-                style={{
-                  background: 'none',
-                  border: '1px solid var(--color-rose-100)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '0.25rem 0.5rem',
-                  fontSize: '0.75rem',
-                  color: 'var(--color-rose-600)',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                }}
                 aria-label="Excluir registro"
               >
                 <AletheiaIcon name="trash" size={12} />
-              </button>
+              </IconButton>
             </Can>
           )}
         </div>
