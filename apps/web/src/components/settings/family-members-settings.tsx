@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AletheiaIcon } from '@aletheia/ui';
+import { AletheiaIcon, Button, Card, Input, Select } from '@aletheia/ui';
 import type {
   FamilyInvitationDto,
   FamilyMemberDto,
@@ -10,7 +10,7 @@ import type {
 } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 import { RoleBadge, ROLE_LABELS } from '../auth/role-badge';
-import { cardStyle, labelStyle, inputStyle, SuccessAlert, ErrorAlert } from './settings-form-kit';
+import { SuccessAlert, ErrorAlert } from './settings-form-kit';
 
 export interface FamilyMembersSettingsProps {
   members: FamilyMemberDto[];
@@ -68,7 +68,7 @@ export function FamilyMembersSettings({
 
   return (
     <div style={{ display: 'grid', gap: '1.5rem' }}>
-      <div data-testid="family-members-card" style={cardStyle}>
+      <Card data-testid="family-members-card" style={{ padding: '1.75rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
             Responsáveis & Educadores
@@ -106,10 +106,10 @@ export function FamilyMembersSettings({
             </li>
           ))}
         </ul>
-      </div>
+      </Card>
 
       {invitations.length > 0 && (
-        <div data-testid="pending-invitations-card" style={cardStyle}>
+        <Card data-testid="pending-invitations-card" style={{ padding: '1.75rem' }}>
           <div style={{ marginBottom: '1.5rem' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
               Convites Pendentes
@@ -141,33 +141,25 @@ export function FamilyMembersSettings({
                   </div>
                 </div>
                 <Can action="invite_guardian">
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     data-testid={`cancel-invitation-${invitation.id}`}
                     onClick={() => handleCancel(invitation.id)}
-                    disabled={cancellingId === invitation.id}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      backgroundColor: 'transparent',
-                      color: 'var(--color-rose-700)',
-                      fontWeight: 600,
-                      fontSize: '0.8125rem',
-                      borderRadius: 'var(--radius-md)',
-                      border: '1px solid var(--color-rose-100)',
-                      cursor: cancellingId === invitation.id ? 'not-allowed' : 'pointer',
-                    }}
+                    isLoading={cancellingId === invitation.id}
+                    style={{ color: 'var(--color-rose-700)' }}
                   >
-                    {cancellingId === invitation.id ? 'Cancelando...' : 'Cancelar convite'}
-                  </button>
+                    Cancelar convite
+                  </Button>
                 </Can>
               </li>
             ))}
           </ul>
-        </div>
+        </Card>
       )}
 
       <Can action="invite_guardian">
-        <div data-testid="invite-guardian-card" style={cardStyle}>
+        <Card data-testid="invite-guardian-card" style={{ padding: '1.75rem' }}>
           <div style={{ marginBottom: '1.5rem' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
               Convidar Responsável ou Educador
@@ -182,65 +174,35 @@ export function FamilyMembersSettings({
 
           <form data-testid="invite-guardian-form" onSubmit={handleInvite}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
-              <div>
-                <label htmlFor="invite-guardian-email" style={labelStyle}>
-                  E-mail
-                </label>
-                <input
-                  id="invite-guardian-email"
-                  type="email"
-                  data-testid="invite-guardian-email-input"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  style={inputStyle}
-                  disabled={inviteSaving}
-                />
-              </div>
-              <div>
-                <label htmlFor="invite-guardian-role" style={labelStyle}>
-                  Papel na família
-                </label>
-                <select
-                  id="invite-guardian-role"
-                  data-testid="invite-guardian-role-select"
-                  value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as FamilyRole)}
-                  style={inputStyle}
-                  disabled={inviteSaving}
-                >
-                  {INVITABLE_ROLES.map((role) => (
-                    <option key={role} value={role}>
-                      {ROLE_LABELS[role]}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Input
+                label="E-mail"
+                type="email"
+                data-testid="invite-guardian-email-input"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                disabled={inviteSaving}
+              />
+              <Select
+                label="Papel na família"
+                data-testid="invite-guardian-role-select"
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value as FamilyRole)}
+                disabled={inviteSaving}
+                options={INVITABLE_ROLES.map((role) => ({ value: role, label: ROLE_LABELS[role] }))}
+              />
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.25rem' }}>
-              <button
+              <Button
                 type="submit"
                 data-testid="invite-guardian-submit-button"
-                disabled={inviteSaving}
-                style={{
-                  padding: '0.625rem 1.5rem',
-                  backgroundColor: inviteSaving ? 'var(--text-muted)' : 'var(--forest)',
-                  color: 'var(--text-inverse)',
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: 'none',
-                  cursor: inviteSaving ? 'not-allowed' : 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                }}
+                isLoading={inviteSaving}
+                leftIcon={<AletheiaIcon name="user-plus" size={16} />}
               >
-                <AletheiaIcon name="user-plus" size={16} />
-                {inviteSaving ? 'Enviando...' : 'Enviar Convite'}
-              </button>
+                Enviar Convite
+              </Button>
             </div>
           </form>
-        </div>
+        </Card>
       </Can>
     </div>
   );

@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Button, Card, Input } from '@aletheia/ui';
 import type { ChangeEmailDto, ChangePasswordDto } from '@aletheia/contracts';
 import { MfaSettingsCard } from './mfa-settings-card';
-import { cardStyle, labelStyle, inputStyle, SuccessAlert, ErrorAlert } from './settings-form-kit';
+import { SuccessAlert, ErrorAlert } from './settings-form-kit';
 
 export interface AccountSecuritySettingsProps {
   currentEmail?: string | undefined;
@@ -90,7 +91,7 @@ export function AccountSecuritySettings({
 
   return (
     <div style={{ display: 'grid', gap: '1.5rem' }}>
-      <div data-testid="change-password-card" style={cardStyle}>
+      <Card data-testid="change-password-card" style={{ padding: '1.75rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
             Alterar Senha
@@ -105,76 +106,44 @@ export function AccountSecuritySettings({
 
         <form data-testid="change-password-form" onSubmit={handleChangePassword}>
           <div style={{ display: 'grid', gap: '1.25rem' }}>
-            <div>
-              <label htmlFor="current-password-for-pw" style={labelStyle}>
-                Senha atual
-              </label>
-              <input
-                id="current-password-for-pw"
+            <Input
+              label="Senha atual"
+              type="password"
+              data-testid="current-password-for-pw-input"
+              value={currentPasswordForPw}
+              onChange={(e) => setCurrentPasswordForPw(e.target.value)}
+              disabled={pwSaving}
+            />
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+              <Input
+                label="Nova senha (mínimo 8 caracteres)"
                 type="password"
-                data-testid="current-password-for-pw-input"
-                value={currentPasswordForPw}
-                onChange={(e) => setCurrentPasswordForPw(e.target.value)}
-                style={inputStyle}
+                data-testid="new-password-input"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                disabled={pwSaving}
+              />
+              <Input
+                label="Confirmar nova senha"
+                type="password"
+                data-testid="confirm-new-password-input"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
                 disabled={pwSaving}
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
-              <div>
-                <label htmlFor="new-password" style={labelStyle}>
-                  Nova senha (mínimo 8 caracteres)
-                </label>
-                <input
-                  id="new-password"
-                  type="password"
-                  data-testid="new-password-input"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  style={inputStyle}
-                  disabled={pwSaving}
-                />
-              </div>
-              <div>
-                <label htmlFor="confirm-new-password" style={labelStyle}>
-                  Confirmar nova senha
-                </label>
-                <input
-                  id="confirm-new-password"
-                  type="password"
-                  data-testid="confirm-new-password-input"
-                  value={confirmNewPassword}
-                  onChange={(e) => setConfirmNewPassword(e.target.value)}
-                  style={inputStyle}
-                  disabled={pwSaving}
-                />
-              </div>
-            </div>
-
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                type="submit"
-                data-testid="change-password-button"
-                disabled={pwSaving}
-                style={{
-                  padding: '0.625rem 1.5rem',
-                  backgroundColor: pwSaving ? 'var(--text-muted)' : 'var(--forest)',
-                  color: 'var(--text-inverse)',
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: 'none',
-                  cursor: pwSaving ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {pwSaving ? 'Alterando...' : 'Alterar Senha'}
-              </button>
+              <Button type="submit" data-testid="change-password-button" isLoading={pwSaving}>
+                Alterar Senha
+              </Button>
             </div>
           </div>
         </form>
-      </div>
+      </Card>
 
-      <div data-testid="change-email-card" style={cardStyle}>
+      <Card data-testid="change-email-card" style={{ padding: '1.75rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
             Alterar E-mail
@@ -190,58 +159,32 @@ export function AccountSecuritySettings({
 
         <form data-testid="change-email-form" onSubmit={handleChangeEmail}>
           <div style={{ display: 'grid', gap: '1.25rem' }}>
-            <div>
-              <label htmlFor="current-password-for-email" style={labelStyle}>
-                Senha atual
-              </label>
-              <input
-                id="current-password-for-email"
-                type="password"
-                data-testid="current-password-for-email-input"
-                value={currentPasswordForEmail}
-                onChange={(e) => setCurrentPasswordForEmail(e.target.value)}
-                style={inputStyle}
-                disabled={emailSaving}
-              />
-            </div>
+            <Input
+              label="Senha atual"
+              type="password"
+              data-testid="current-password-for-email-input"
+              value={currentPasswordForEmail}
+              onChange={(e) => setCurrentPasswordForEmail(e.target.value)}
+              disabled={emailSaving}
+            />
 
-            <div>
-              <label htmlFor="new-email" style={labelStyle}>
-                Novo e-mail
-              </label>
-              <input
-                id="new-email"
-                type="email"
-                data-testid="new-email-input"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                style={inputStyle}
-                disabled={emailSaving}
-              />
-            </div>
+            <Input
+              label="Novo e-mail"
+              type="email"
+              data-testid="new-email-input"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              disabled={emailSaving}
+            />
 
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                type="submit"
-                data-testid="change-email-button"
-                disabled={emailSaving}
-                style={{
-                  padding: '0.625rem 1.5rem',
-                  backgroundColor: emailSaving ? 'var(--text-muted)' : 'var(--forest)',
-                  color: 'var(--text-inverse)',
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: 'none',
-                  cursor: emailSaving ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {emailSaving ? 'Alterando...' : 'Alterar E-mail'}
-              </button>
+              <Button type="submit" data-testid="change-email-button" isLoading={emailSaving}>
+                Alterar E-mail
+              </Button>
             </div>
           </div>
         </form>
-      </div>
+      </Card>
 
       <MfaSettingsCard mfaEnabled={mfaEnabled} onMfaStateChanged={onMfaStateChanged} />
     </div>
