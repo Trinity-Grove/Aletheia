@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AletheiaIcon } from '@aletheia/ui';
+import { AletheiaIcon, Alert, Badge, Button, Card } from '@aletheia/ui';
 import type {
   DataExportJobResponseDto,
   FamilyDataExportPackageDto,
@@ -30,7 +30,7 @@ export function DataBackupCard({
 
     try {
       const exportPackage = await onExportPackage();
-      
+
       const jsonContent = JSON.stringify(exportPackage, null, 2);
       const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -52,16 +52,7 @@ export function DataBackupCard({
   };
 
   return (
-    <div
-      data-testid="data-backup-card"
-      style={{
-        backgroundColor: 'var(--bg-surface)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border-light)',
-        padding: '1.75rem',
-        boxShadow: 'var(--shadow-sm)',
-      }}
-    >
+    <Card data-testid="data-backup-card" style={{ padding: '1.75rem' }}>
       <div style={{ marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
           <span style={{ color: 'var(--color-emerald-600)', display: 'flex', alignItems: 'center' }}>
@@ -77,45 +68,15 @@ export function DataBackupCard({
       </div>
 
       {exportSuccessMessage && (
-        <div
-          data-testid="backup-export-success"
-          style={{
-            padding: '0.75rem 1rem',
-            backgroundColor: 'var(--color-emerald-50)',
-            border: '1px solid var(--color-emerald-100)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--color-emerald-700)',
-            fontSize: '0.875rem',
-            marginBottom: '1.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-          }}
-        >
-          <AletheiaIcon name="check" size={16} />
-          <span>{exportSuccessMessage}</span>
-        </div>
+        <Alert variant="success" data-testid="backup-export-success" style={{ marginBottom: '1.25rem' }}>
+          {exportSuccessMessage}
+        </Alert>
       )}
 
       {errorMessage && (
-        <div
-          data-testid="backup-export-error"
-          style={{
-            padding: '0.75rem 1rem',
-            backgroundColor: 'var(--color-rose-50)',
-            border: '1px solid var(--color-rose-100)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--color-rose-700)',
-            fontSize: '0.875rem',
-            marginBottom: '1.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-          }}
-        >
-          <AletheiaIcon name="alert-circle" size={16} />
-          <span>{errorMessage}</span>
-        </div>
+        <Alert variant="error" data-testid="backup-export-error" style={{ marginBottom: '1.25rem' }}>
+          {errorMessage}
+        </Alert>
       )}
 
       <div
@@ -178,29 +139,15 @@ export function DataBackupCard({
             </div>
           }
         >
-          <button
-            type="button"
+          <Button
             data-testid="export-full-data-btn"
             onClick={handleDownloadBackup}
             disabled={isLoading || isExporting}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.625rem 1.5rem',
-              backgroundColor: isExporting ? 'var(--text-muted)' : 'var(--forest)',
-              color: 'var(--text-inverse)',
-              fontWeight: 600,
-              fontSize: '0.875rem',
-              borderRadius: 'var(--radius-md)',
-              border: 'none',
-              cursor: isExporting ? 'not-allowed' : 'pointer',
-              transition: 'background-color 0.15s ease',
-            }}
+            isLoading={isExporting}
+            leftIcon={<AletheiaIcon name="download" size={16} />}
           >
-            <AletheiaIcon name="download" size={16} />
-            <span>{isExporting ? 'Exportando Pacote...' : 'Exportar Pacote Completo (JSON)'}</span>
-          </button>
+            Exportar Pacote Completo (JSON)
+          </Button>
         </Can>
       </div>
 
@@ -228,23 +175,14 @@ export function DataBackupCard({
                   Solicitado em {new Date(job.createdAt).toLocaleDateString()} às{' '}
                   {new Date(job.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
-                <span
-                  style={{
-                    padding: '0.125rem 0.5rem',
-                    borderRadius: 'var(--radius-full)',
-                    fontWeight: 600,
-                    fontSize: '0.75rem',
-                    backgroundColor: job.status === 'COMPLETED' ? 'var(--color-emerald-100)' : 'var(--color-amber-50)',
-                    color: job.status === 'COMPLETED' ? 'var(--color-emerald-700)' : 'var(--color-amber-700)',
-                  }}
-                >
+                <Badge variant={job.status === 'COMPLETED' ? 'emerald' : 'amber'} size="sm">
                   {job.status}
-                </span>
+                </Badge>
               </div>
             ))}
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

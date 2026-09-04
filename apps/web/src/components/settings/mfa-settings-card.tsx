@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
+import { Button, Card, Input } from '@aletheia/ui';
 import type {
   MfaConfirmDto,
   MfaDisableDto,
@@ -9,7 +10,7 @@ import type {
   MfaSetupResponseDto,
 } from '@aletheia/contracts';
 import { api } from '../../lib/api';
-import { cardStyle, labelStyle, inputStyle, SuccessAlert, ErrorAlert } from './settings-form-kit';
+import { SuccessAlert, ErrorAlert } from './settings-form-kit';
 
 export interface MfaSettingsCardProps {
   mfaEnabled?: boolean;
@@ -126,7 +127,7 @@ export function MfaSettingsCard({
   };
 
   return (
-    <div data-testid="change-mfa-card" style={cardStyle}>
+    <Card data-testid="change-mfa-card" style={{ padding: '1.75rem' }}>
       <div style={{ marginBottom: '1.5rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
           Autenticação de Dois Fatores (2FA)
@@ -156,23 +157,9 @@ export function MfaSettingsCard({
               Recomendamos ativar para proteger seu acesso.
             </p>
           </div>
-          <button
-            type="button"
-            data-testid="mfa-enable-button"
-            onClick={() => setMfaSetupOpen(true)}
-            style={{
-              padding: '0.625rem 1.5rem',
-              backgroundColor: 'var(--forest)',
-              color: 'var(--text-inverse)',
-              fontWeight: 600,
-              fontSize: '0.875rem',
-              borderRadius: 'var(--radius-md)',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
+          <Button data-testid="mfa-enable-button" onClick={() => setMfaSetupOpen(true)}>
             Ativar 2FA
-          </button>
+          </Button>
         </div>
       )}
 
@@ -180,55 +167,26 @@ export function MfaSettingsCard({
         <form data-testid="mfa-setup-password-form" onSubmit={handleMfaSetup}>
           {setupPasswordError && <ErrorAlert testId="mfa-setup-password-error" message={setupPasswordError} />}
           <div style={{ display: 'grid', gap: '1.25rem' }}>
-            <div>
-              <label htmlFor="mfa-setup-password" style={labelStyle}>
-                Confirme sua senha atual
-              </label>
-              <input
-                id="mfa-setup-password"
-                type="password"
-                data-testid="mfa-setup-password-input"
-                value={setupPassword}
-                onChange={(e) => setSetupPassword(e.target.value)}
-                style={inputStyle}
-                disabled={setupPasswordSaving}
-              />
-            </div>
+            <Input
+              label="Confirme sua senha atual"
+              type="password"
+              data-testid="mfa-setup-password-input"
+              value={setupPassword}
+              onChange={(e) => setSetupPassword(e.target.value)}
+              disabled={setupPasswordSaving}
+            />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 data-testid="mfa-setup-cancel-button"
                 onClick={() => setMfaSetupOpen(false)}
-                style={{
-                  padding: '0.625rem 1.5rem',
-                  backgroundColor: 'transparent',
-                  color: 'var(--forest)',
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--forest)',
-                  cursor: 'pointer',
-                }}
               >
                 Cancelar
-              </button>
-              <button
-                type="submit"
-                data-testid="mfa-setup-submit-button"
-                disabled={setupPasswordSaving}
-                style={{
-                  padding: '0.625rem 1.5rem',
-                  backgroundColor: setupPasswordSaving ? 'var(--text-muted)' : 'var(--forest)',
-                  color: 'var(--text-inverse)',
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: 'none',
-                  cursor: setupPasswordSaving ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {setupPasswordSaving ? 'Gerando...' : 'Continuar'}
-              </button>
+              </Button>
+              <Button type="submit" data-testid="mfa-setup-submit-button" isLoading={setupPasswordSaving}>
+                Continuar
+              </Button>
             </div>
           </div>
         </form>
@@ -312,62 +270,33 @@ export function MfaSettingsCard({
           <form data-testid="mfa-confirm-form" onSubmit={handleMfaConfirm}>
             {confirmError && <ErrorAlert testId="mfa-confirm-error" message={confirmError} />}
             <div style={{ display: 'grid', gap: '1.25rem' }}>
-              <div>
-                <label htmlFor="mfa-confirm-code" style={labelStyle}>
-                  3. Digite o código de 6 dígitos exibido pelo aplicativo
-                </label>
-                <input
-                  id="mfa-confirm-code"
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  data-testid="mfa-confirm-code-input"
-                  value={confirmCode}
-                  onChange={(e) => setConfirmCode(e.target.value)}
-                  style={inputStyle}
-                  disabled={confirmSaving}
-                  placeholder="000000"
-                />
-              </div>
+              <Input
+                label="3. Digite o código de 6 dígitos exibido pelo aplicativo"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                data-testid="mfa-confirm-code-input"
+                value={confirmCode}
+                onChange={(e) => setConfirmCode(e.target.value)}
+                disabled={confirmSaving}
+                placeholder="000000"
+              />
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   data-testid="mfa-confirm-cancel-button"
                   onClick={() => {
                     setSetupData(null);
                     setQrDataUrl(null);
                     setConfirmCode('');
                   }}
-                  style={{
-                    padding: '0.625rem 1.5rem',
-                    backgroundColor: 'transparent',
-                    color: 'var(--forest)',
-                    fontWeight: 600,
-                    fontSize: '0.875rem',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--forest)',
-                    cursor: 'pointer',
-                  }}
                 >
                   Cancelar
-                </button>
-                <button
-                  type="submit"
-                  data-testid="mfa-confirm-button"
-                  disabled={confirmSaving}
-                  style={{
-                    padding: '0.625rem 1.5rem',
-                    backgroundColor: confirmSaving ? 'var(--text-muted)' : 'var(--forest)',
-                    color: 'var(--text-inverse)',
-                    fontWeight: 600,
-                    fontSize: '0.875rem',
-                    borderRadius: 'var(--radius-md)',
-                    border: 'none',
-                    cursor: confirmSaving ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {confirmSaving ? 'Confirmando...' : 'Ativar 2FA'}
-                </button>
+                </Button>
+                <Button type="submit" data-testid="mfa-confirm-button" isLoading={confirmSaving}>
+                  Ativar 2FA
+                </Button>
               </div>
             </div>
           </form>
@@ -396,42 +325,22 @@ export function MfaSettingsCard({
                 </p>
               </div>
             </div>
-            <div>
-              <label htmlFor="mfa-disable-password" style={labelStyle}>
-                Confirme sua senha atual para desativar
-              </label>
-              <input
-                id="mfa-disable-password"
-                type="password"
-                data-testid="mfa-disable-password-input"
-                value={disablePassword}
-                onChange={(e) => setDisablePassword(e.target.value)}
-                style={inputStyle}
-                disabled={disableSaving}
-              />
-            </div>
+            <Input
+              label="Confirme sua senha atual para desativar"
+              type="password"
+              data-testid="mfa-disable-password-input"
+              value={disablePassword}
+              onChange={(e) => setDisablePassword(e.target.value)}
+              disabled={disableSaving}
+            />
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                type="submit"
-                data-testid="mfa-disable-button"
-                disabled={disableSaving}
-                style={{
-                  padding: '0.625rem 1.5rem',
-                  backgroundColor: disableSaving ? 'var(--text-muted)' : 'var(--color-rose-600)',
-                  color: 'var(--text-inverse)',
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: 'none',
-                  cursor: disableSaving ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {disableSaving ? 'Desativando...' : 'Desativar 2FA'}
-              </button>
+              <Button type="submit" variant="danger" data-testid="mfa-disable-button" isLoading={disableSaving}>
+                Desativar 2FA
+              </Button>
             </div>
           </div>
         </form>
       )}
-    </div>
+    </Card>
   );
 }

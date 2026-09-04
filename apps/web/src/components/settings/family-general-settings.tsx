@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { AletheiaIcon } from '@aletheia/ui';
+import { AletheiaIcon, Alert, Button, Card, Input, Select } from '@aletheia/ui';
 import type {
   FamilySettingsResponseDto,
   GradingScale,
@@ -103,17 +103,14 @@ export function FamilyGeneralSettings({
   const isEducator = authContext?.isEducator ?? false;
   const isReadOnly = isEducator;
 
+  const languageOptions = [
+    { value: 'pt-BR', label: 'Português (Brasil)' },
+    { value: 'en-US', label: 'English (United States)' },
+    { value: 'es-ES', label: 'Español' },
+  ];
+
   return (
-    <div
-      data-testid="family-general-settings-card"
-      style={{
-        backgroundColor: 'var(--bg-surface)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border-light)',
-        padding: '1.75rem',
-        boxShadow: 'var(--shadow-sm)',
-      }}
-    >
+    <Card data-testid="family-general-settings-card" style={{ padding: '1.75rem' }}>
       <div style={{ marginBottom: '1.5rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
           Geral da Família & Identidade Pedagógica
@@ -124,191 +121,64 @@ export function FamilyGeneralSettings({
       </div>
 
       {isEducator && (
-        <div
-          data-testid="educator-settings-notice"
-          style={{
-            padding: '0.75rem 1rem',
-            backgroundColor: 'var(--color-indigo-50)',
-            border: '1px solid var(--color-indigo-100)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--color-indigo-700)',
-            fontSize: '0.875rem',
-            marginBottom: '1.25rem',
-          }}
-        >
-          ℹ️ <strong>Modo Somente Leitura:</strong> Como Educador, você pode visualizar as configurações da família, mas apenas os Responsáveis podem alterá-las.
-        </div>
+        <Alert variant="info" data-testid="educator-settings-notice" style={{ marginBottom: '1.25rem' }}>
+          <strong>Modo Somente Leitura:</strong> Como Educador, você pode visualizar as configurações da família, mas apenas os Responsáveis podem alterá-las.
+        </Alert>
       )}
 
       {successMessage && (
-        <div
-          data-testid="family-settings-success-alert"
-          style={{
-            padding: '0.75rem 1rem',
-            backgroundColor: 'var(--color-emerald-50)',
-            border: '1px solid var(--color-emerald-100)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--color-emerald-700)',
-            fontSize: '0.875rem',
-            marginBottom: '1.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-          }}
-        >
-          <AletheiaIcon name="check" size={16} />
-          <span>{successMessage}</span>
-        </div>
+        <Alert variant="success" data-testid="family-settings-success-alert" style={{ marginBottom: '1.25rem' }}>
+          {successMessage}
+        </Alert>
       )}
 
       {errorMessage && (
-        <div
-          data-testid="family-settings-error-alert"
-          style={{
-            padding: '0.75rem 1rem',
-            backgroundColor: 'var(--color-rose-50)',
-            border: '1px solid var(--color-rose-100)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--color-rose-700)',
-            fontSize: '0.875rem',
-            marginBottom: '1.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-          }}
-        >
-          <AletheiaIcon name="alert-circle" size={16} />
-          <span>{errorMessage}</span>
-        </div>
+        <Alert variant="error" data-testid="family-settings-error-alert" style={{ marginBottom: '1.25rem' }}>
+          {errorMessage}
+        </Alert>
       )}
 
       <form data-testid="family-settings-form" onSubmit={handleSubmit}>
         <div style={{ display: 'grid', gap: '1.25rem' }}>
-          <div>
-            <label
-              htmlFor="homeschoolName"
-              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.375rem' }}
-            >
-              Nome da Academia Familiar / Homeschool
-            </label>
-            <input
-              id="homeschoolName"
-              data-testid="homeschool-name-input"
-              type="text"
-              value={homeschoolName}
-              onChange={(e) => setHomeschoolName(e.target.value)}
-              placeholder="Ex: Academia Familiar Silva"
-              disabled={isLoading || isSaving || isReadOnly}
-              style={{
-                width: '100%',
-                padding: '0.625rem 0.875rem',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-medium)',
-                fontSize: '0.875rem',
-                color: 'var(--text-primary)',
-                backgroundColor: isReadOnly ? 'var(--sage-soft)' : 'var(--bg-surface)',
-                boxSizing: 'border-box',
-              }}
-            />
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
-              Este nome será exibido nos cabeçalhos de históricos e relatórios acadêmicos oficiais.
-            </span>
-          </div>
+          <Input
+            label="Nome da Academia Familiar / Homeschool"
+            data-testid="homeschool-name-input"
+            value={homeschoolName}
+            onChange={(e) => setHomeschoolName(e.target.value)}
+            placeholder="Ex: Academia Familiar Silva"
+            disabled={isLoading || isSaving || isReadOnly}
+            helperText="Este nome será exibido nos cabeçalhos de históricos e relatórios acadêmicos oficiais."
+          />
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
-            <div>
-              <label
-                htmlFor="timezone"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.375rem' }}
-              >
-                Fuso Horário
-              </label>
-              <select
-                id="timezone"
-                data-testid="timezone-select"
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
-                disabled={isLoading || isSaving || isReadOnly}
-                style={{
-                  width: '100%',
-                  padding: '0.625rem 0.875rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border-medium)',
-                  fontSize: '0.875rem',
-                  color: 'var(--text-primary)',
-                  backgroundColor: isReadOnly ? 'var(--sage-soft)' : 'var(--bg-surface)',
-                  boxSizing: 'border-box',
-                }}
-              >
-                {COMMON_TIMEZONES.map((tz) => (
-                  <option key={tz.value} value={tz.value}>
-                    {tz.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Select
+              label="Fuso Horário"
+              data-testid="timezone-select"
+              value={timezone}
+              onChange={(e) => setTimezone(e.target.value)}
+              disabled={isLoading || isSaving || isReadOnly}
+              options={COMMON_TIMEZONES}
+            />
 
-            <div>
-              <label
-                htmlFor="language"
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.375rem' }}
-              >
-                Idioma do Sistema
-              </label>
-              <select
-                id="language"
-                data-testid="language-select"
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                disabled={isLoading || isSaving || isReadOnly}
-                style={{
-                  width: '100%',
-                  padding: '0.625rem 0.875rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border-medium)',
-                  fontSize: '0.875rem',
-                  color: 'var(--text-primary)',
-                  backgroundColor: isReadOnly ? 'var(--sage-soft)' : 'var(--bg-surface)',
-                  boxSizing: 'border-box',
-                }}
-              >
-                <option value="pt-BR">Português (Brasil)</option>
-                <option value="en-US">English (United States)</option>
-                <option value="es-ES">Español</option>
-              </select>
-            </div>
+            <Select
+              label="Idioma do Sistema"
+              data-testid="language-select"
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              disabled={isLoading || isSaving || isReadOnly}
+              options={languageOptions}
+            />
           </div>
 
           <div>
-            <label
-              htmlFor="defaultGradingScale"
-              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.375rem' }}
-            >
-              Estrutura Pedagógica & Escala de Avaliação Padrão
-            </label>
-            <select
-              id="defaultGradingScale"
+            <Select
+              label="Estrutura Pedagógica & Escala de Avaliação Padrão"
               data-testid="default-grading-scale-select"
               value={defaultGradingScale}
               onChange={(e) => setDefaultGradingScale(e.target.value as GradingScale)}
               disabled={isLoading || isSaving || isReadOnly}
-              style={{
-                width: '100%',
-                padding: '0.625rem 0.875rem',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-medium)',
-                fontSize: '0.875rem',
-                color: 'var(--text-primary)',
-                backgroundColor: isReadOnly ? 'var(--sage-soft)' : 'var(--bg-surface)',
-                boxSizing: 'border-box',
-              }}
-            >
-              {GRADING_SCALES.map((scale) => (
-                <option key={scale.value} value={scale.value}>
-                  {scale.label}
-                </option>
-              ))}
-            </select>
+              options={GRADING_SCALES.map(({ value, label }) => ({ value, label }))}
+            />
             <div
               style={{
                 marginTop: '0.5rem',
@@ -329,28 +199,13 @@ export function FamilyGeneralSettings({
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
             <Can action="edit_family_settings">
-              <button
-                type="submit"
-                data-testid="save-family-settings-btn"
-                disabled={isLoading || isSaving}
-                style={{
-                  padding: '0.625rem 1.5rem',
-                  backgroundColor: isSaving ? 'var(--text-muted)' : 'var(--forest)',
-                  color: 'var(--text-inverse)',
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: 'none',
-                  cursor: isSaving ? 'not-allowed' : 'pointer',
-                  transition: 'background-color 0.15s ease',
-                }}
-              >
-                {isSaving ? 'Salvando...' : 'Salvar Configurações Gerais'}
-              </button>
+              <Button type="submit" data-testid="save-family-settings-btn" isLoading={isSaving} disabled={isLoading}>
+                Salvar Configurações Gerais
+              </Button>
             </Can>
           </div>
         </div>
       </form>
-    </div>
+    </Card>
   );
 }

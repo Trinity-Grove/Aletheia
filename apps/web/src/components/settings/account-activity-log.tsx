@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { EmptyState } from '@aletheia/ui';
+import { Alert, Card, EmptyState } from '@aletheia/ui';
 import type { AccountAuditEventType, AccountAuditLogEntryDto } from '@aletheia/contracts';
 
 export interface AccountActivityLogProps {
@@ -50,16 +50,7 @@ export function AccountActivityLog({ fetchAuditLog }: AccountActivityLogProps) {
   }, [fetchAuditLog]);
 
   return (
-    <div
-      data-testid="account-activity-log-card"
-      style={{
-        backgroundColor: 'var(--bg-surface)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border-light)',
-        padding: '1.75rem',
-        boxShadow: 'var(--shadow-sm)',
-      }}
-    >
+    <Card data-testid="account-activity-log-card" style={{ padding: '1.75rem' }}>
       <div style={{ marginBottom: '1.5rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
           Atividade Recente da Conta
@@ -70,20 +61,9 @@ export function AccountActivityLog({ fetchAuditLog }: AccountActivityLogProps) {
       </div>
 
       {error && (
-        <div
-          data-testid="account-activity-log-error"
-          role="alert"
-          style={{
-            padding: '0.75rem 1rem',
-            backgroundColor: 'var(--color-rose-50)',
-            border: '1px solid var(--color-rose-100)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--color-rose-700)',
-            fontSize: '0.875rem',
-          }}
-        >
+        <Alert variant="error" data-testid="account-activity-log-error">
           {error}
-        </div>
+        </Alert>
       )}
 
       {!error && entries === null && (
@@ -124,6 +104,6 @@ export function AccountActivityLog({ fetchAuditLog }: AccountActivityLogProps) {
           ))}
         </ul>
       )}
-    </div>
+    </Card>
   );
 }
