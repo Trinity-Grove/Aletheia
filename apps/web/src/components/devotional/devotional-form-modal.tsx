@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { Alert, Button, Input, Modal, Select, Textarea } from '@aletheia/ui';
 import type { DailyDevotionalResponseDto, UpsertDailyDevotionalDto } from '@aletheia/contracts';
 
 export interface DevotionalFormModalProps {
@@ -11,6 +12,15 @@ export interface DevotionalFormModalProps {
   onClose: () => void;
   onSubmit: (_data: UpsertDailyDevotionalDto) => Promise<void> | void;
 }
+
+const BIBLE_VERSION_OPTIONS = [
+  { value: 'nvi', label: 'NVI (Nova Versão Internacional)' },
+  { value: 'ara', label: 'ARA (Almeida Revista e Atualizada)' },
+  { value: 'arc', label: 'ARC (Almeida Revista e Corrigida)' },
+  { value: 'naa', label: 'NAA (Nova Almeida Atualizada)' },
+  { value: 'kjv', label: 'KJV (King James Version)' },
+  { value: 'esv', label: 'ESV (English Standard Version)' },
+];
 
 export function DevotionalFormModal({
   isOpen,
@@ -57,8 +67,6 @@ export function DevotionalFormModal({
     }
     setError(null);
   }, [initialData, currentDate, isOpen]);
-
-  if (!isOpen) return null;
 
   const handleLookupScripture = async () => {
     if (!bibleReference.trim()) {
@@ -117,205 +125,130 @@ export function DevotionalFormModal({
     }
   };
 
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      data-testid="devotional-form-modal"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 50,
-        padding: '1rem',
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: '#FFFFFF',
-          borderRadius: '0.75rem',
-          maxWidth: '650px',
-          width: '100%',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          padding: '1.5rem',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>
-            {initialData ? 'Editar Devocional' : 'Novo Devocional Diário'}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', lineHeight: 1 }}
-          >
-            &times;
-          </button>
-        </div>
+  if (!isOpen) return null;
 
+  return (
+    <div data-testid="devotional-form-modal">
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={initialData ? 'Editar Devocional' : 'Novo Devocional Diário'}
+        maxWidth="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={onClose} disabled={loading}>
+              Cancelar
+            </Button>
+            <Button type="submit" form="devotional-form" data-testid="devotional-submit-btn" isLoading={loading}>
+              {initialData ? 'Salvar Alterações' : 'Criar Devocional'}
+            </Button>
+          </>
+        }
+      >
         {error && (
-          <div className="alert alert-error" role="alert" style={{ marginBottom: '1rem' }}>
+          <Alert variant="error" style={{ marginBottom: '1rem' }}>
             {error}
-          </div>
+          </Alert>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <form id="devotional-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label htmlFor="devotional-date">Data *</label>
-              <input
-                id="devotional-date"
-                type="date"
-                data-testid="devotional-date-input"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="devotional-version">Versão Bíblica</label>
-              <select
-                id="devotional-version"
-                data-testid="devotional-version-select"
-                value={bibleVersionId}
-                onChange={(e) => setBibleVersionId(e.target.value)}
-              >
-                <option value="nvi">NVI (Nova Versão Internacional)</option>
-                <option value="ara">ARA (Almeida Revista e Atualizada)</option>
-                <option value="arc">ARC (Almeida Revista e Corrigida)</option>
-                <option value="naa">NAA (Nova Almeida Atualizada)</option>
-                <option value="kjv">KJV (King James Version)</option>
-                <option value="esv">ESV (English Standard Version)</option>
-              </select>
-            </div>
+            <Input
+              label="Data *"
+              type="date"
+              data-testid="devotional-date-input"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+            <Select
+              label="Versão Bíblica"
+              data-testid="devotional-version-select"
+              value={bibleVersionId}
+              onChange={(e) => setBibleVersionId(e.target.value)}
+              options={BIBLE_VERSION_OPTIONS}
+            />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="devotional-reference">Referência Bíblica *</label>
+          <div className="ui-form-group">
+            <label htmlFor="devotional-reference" className="ui-form-label">
+              Referência Bíblica *
+            </label>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
+              <Input
                 id="devotional-reference"
-                type="text"
                 data-testid="devotional-reference-input"
                 value={bibleReference}
                 onChange={(e) => setBibleReference(e.target.value)}
                 placeholder="Ex: Salmos 23:1-6, João 3:16..."
                 style={{ flex: 1 }}
-                required
               />
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 data-testid="scripture-lookup-btn"
                 onClick={handleLookupScripture}
-                disabled={lookupLoading}
-                className="btn btn-secondary"
-                style={{ whiteSpace: 'nowrap', fontSize: '0.875rem' }}
+                isLoading={lookupLoading}
+                style={{ whiteSpace: 'nowrap' }}
               >
-                {lookupLoading ? 'Buscando...' : 'Buscar Texto YouVersion'}
-              </button>
+                Buscar Texto YouVersion
+              </Button>
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="devotional-passage">Texto da Passagem</label>
-            <textarea
-              id="devotional-passage"
-              rows={4}
-              data-testid="devotional-passage-input"
-              value={passageText}
-              onChange={(e) => setPassageText(e.target.value)}
-              placeholder="Cole ou busque o texto bíblico da leitura..."
-            />
-          </div>
+          <Textarea
+            label="Texto da Passagem"
+            rows={4}
+            data-testid="devotional-passage-input"
+            value={passageText}
+            onChange={(e) => setPassageText(e.target.value)}
+            placeholder="Cole ou busque o texto bíblico da leitura..."
+          />
 
-          <div className="form-group">
-            <label htmlFor="devotional-reflection">Reflexão / Comentário Familiar</label>
-            <textarea
-              id="devotional-reflection"
-              rows={3}
-              data-testid="devotional-reflection-input"
-              value={reflection}
-              onChange={(e) => setReflection(e.target.value)}
-              placeholder="Reflexão principal, contexto e lições para a família..."
-            />
-          </div>
+          <Textarea
+            label="Reflexão / Comentário Familiar"
+            rows={3}
+            data-testid="devotional-reflection-input"
+            value={reflection}
+            onChange={(e) => setReflection(e.target.value)}
+            placeholder="Reflexão principal, contexto e lições para a família..."
+          />
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label htmlFor="devotional-memory">Versículo para Memorização</label>
-              <input
-                id="devotional-memory"
-                type="text"
-                data-testid="devotional-memory-input"
-                value={memoryVerse}
-                onChange={(e) => setMemoryVerse(e.target.value)}
-                placeholder="Ex: Guardei no coração a tua palavra..."
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="devotional-hymn">Hino / Cântico</label>
-              <input
-                id="devotional-hymn"
-                type="text"
-                data-testid="devotional-hymn-input"
-                value={hymnOrSong}
-                onChange={(e) => setHymnOrSong(e.target.value)}
-                placeholder="Ex: Castelo Forte, Maravilhosa Graça..."
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="devotional-questions">Perguntas para Diálogo / Catequese</label>
-            <textarea
-              id="devotional-questions"
-              rows={2}
-              data-testid="devotional-questions-input"
-              value={discussionQuestions}
-              onChange={(e) => setDiscussionQuestions(e.target.value)}
-              placeholder="1. O que este texto nos ensina sobre Deus?&#10;2. Como podemos praticar isso hoje?"
+            <Input
+              label="Versículo para Memorização"
+              data-testid="devotional-memory-input"
+              value={memoryVerse}
+              onChange={(e) => setMemoryVerse(e.target.value)}
+              placeholder="Ex: Guardei no coração a tua palavra..."
+            />
+            <Input
+              label="Hino / Cântico"
+              data-testid="devotional-hymn-input"
+              value={hymnOrSong}
+              onChange={(e) => setHymnOrSong(e.target.value)}
+              placeholder="Ex: Castelo Forte, Maravilhosa Graça..."
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="devotional-application">Aplicação Prática</label>
-            <textarea
-              id="devotional-application"
-              rows={2}
-              data-testid="devotional-application-input"
-              value={practicalApplication}
-              onChange={(e) => setPracticalApplication(e.target.value)}
-              placeholder="Ações concretas, atitudes de amor e serviço para hoje..."
-            />
-          </div>
+          <Textarea
+            label="Perguntas para Diálogo / Catequese"
+            rows={2}
+            data-testid="devotional-questions-input"
+            value={discussionQuestions}
+            onChange={(e) => setDiscussionQuestions(e.target.value)}
+            placeholder={'1. O que este texto nos ensina sobre Deus?\n2. Como podemos praticar isso hoje?'}
+          />
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn btn-secondary"
-              disabled={loading}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              data-testid="devotional-submit-btn"
-              className="btn btn-primary"
-              disabled={loading}
-            >
-              {loading ? 'Salvando...' : initialData ? 'Salvar Alterações' : 'Criar Devocional'}
-            </button>
-          </div>
+          <Textarea
+            label="Aplicação Prática"
+            rows={2}
+            data-testid="devotional-application-input"
+            value={practicalApplication}
+            onChange={(e) => setPracticalApplication(e.target.value)}
+            placeholder="Ações concretas, atitudes de amor e serviço para hoje..."
+          />
         </form>
-      </div>
+      </Modal>
     </div>
   );
 }

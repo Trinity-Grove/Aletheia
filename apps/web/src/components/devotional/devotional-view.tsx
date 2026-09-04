@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AletheiaIcon } from '@aletheia/ui';
+import { AletheiaIcon, Button, EmptyState } from '@aletheia/ui';
 import type { DailyDevotionalResponseDto } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 
@@ -64,57 +64,15 @@ export function DevotionalView({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <button
-            type="button"
-            className="btn btn-secondary ui-button ui-button--secondary ui-button--sm"
-            onClick={() => handleShiftDate(-1)}
-            style={{
-              padding: '0.375rem 0.75rem',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-medium)',
-              backgroundColor: 'var(--bg-surface)',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-            }}
-          >
+          <Button variant="secondary" size="sm" onClick={() => handleShiftDate(-1)}>
             &larr; Ontem
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary ui-button ui-button--secondary ui-button--sm"
-            onClick={handleToday}
-            style={{
-              padding: '0.375rem 0.75rem',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-medium)',
-              backgroundColor: 'var(--sage-soft)',
-              color: 'var(--text-primary)',
-              cursor: 'pointer',
-            }}
-          >
+          </Button>
+          <Button variant="secondary" size="sm" onClick={handleToday}>
             Hoje
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary ui-button ui-button--secondary ui-button--sm"
-            onClick={() => handleShiftDate(1)}
-            style={{
-              padding: '0.375rem 0.75rem',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-medium)',
-              backgroundColor: 'var(--bg-surface)',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-            }}
-          >
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => handleShiftDate(1)}>
             Amanhã &rarr;
-          </button>
+          </Button>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -133,89 +91,25 @@ export function DevotionalView({
             }}
           />
           <Can action="manage_devotional">
-            <button
-              type="button"
-              data-testid="edit-devotional-btn"
-              onClick={onEdit}
-              className="btn btn-primary ui-button ui-button--primary ui-button--sm"
-              style={{
-                padding: '0.45rem 1rem',
-                fontSize: '0.8125rem',
-                fontWeight: 600,
-                borderRadius: 'var(--radius-sm)',
-                border: 'none',
-                color: 'var(--text-inverse)',
-                cursor: 'pointer',
-                boxShadow: 'var(--shadow-sm)',
-              }}
-            >
+            <Button size="sm" data-testid="edit-devotional-btn" onClick={onEdit}>
               {devotional ? 'Editar Devocional' : 'Criar Devocional'}
-            </button>
+            </Button>
           </Can>
         </div>
       </div>
 
       {!devotional ? (
-        <div
+        <EmptyState
           data-testid="devotional-empty-state"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '2px dashed var(--border-medium)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '3.5rem 1.5rem',
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '1rem',
-          }}
-        >
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: 'var(--radius-full)',
-              backgroundColor: 'var(--color-amber-50)',
-              border: '2px solid var(--color-amber-100)',
-              color: 'var(--color-amber-600)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: 'var(--shadow-sm)',
-            }}
-          >
-            <AletheiaIcon name="book-open" size={32} />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.375rem 0' }}>
-              Nenhum devocional registrado para esta data ({currentDate})
-            </h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '28rem', margin: 0 }}>
-              Reúna a família ao redor da Palavra de Deus. Registre as passagens lidas, reflexões e orações de hoje.
-            </p>
-          </div>
-
-          <Can action="manage_devotional">
-            <button
-              type="button"
-              onClick={onEdit}
-              className="btn btn-primary ui-button ui-button--primary"
-              style={{
-                padding: '0.625rem 1.25rem',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                borderRadius: 'var(--radius-md)',
-                color: 'var(--text-inverse)',
-                border: 'none',
-                cursor: 'pointer',
-                boxShadow: 'var(--shadow-sm)',
-                marginTop: '0.5rem',
-              }}
-            >
-              Criar Devocional do Dia
-            </button>
-          </Can>
-        </div>
+          icon={<AletheiaIcon name="book-open" size={32} style={{ color: 'var(--color-amber-600)' }} />}
+          title={`Nenhum devocional registrado para esta data (${currentDate})`}
+          description="Reúna a família ao redor da Palavra de Deus. Registre as passagens lidas, reflexões e orações de hoje."
+          action={
+            <Can action="manage_devotional">
+              <Button onClick={onEdit}>Criar Devocional do Dia</Button>
+            </Can>
+          }
+        />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Scripture Reading Card with Gold Ribbon Badge */}
