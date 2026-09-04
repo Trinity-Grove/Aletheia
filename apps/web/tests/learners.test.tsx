@@ -1,6 +1,7 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { ToastProvider } from '@aletheia/ui';
 import type { LearnerResponseDto } from '@aletheia/contracts';
 import { AuthProvider } from '../src/lib/auth/rbac-context';
 import { LearnerCard } from '../src/components/learners/learner-card';
@@ -119,11 +120,13 @@ describe('Learner Components', () => {
       const onClose = vi.fn();
 
       render(
-        <LearnerFormModal
-          isOpen={true}
-          onClose={onClose}
-          onSubmit={onSubmit}
-        />
+        <ToastProvider>
+          <LearnerFormModal
+            isOpen={true}
+            onClose={onClose}
+            onSubmit={onSubmit}
+          />
+        </ToastProvider>
       );
 
       fireEvent.change(screen.getByTestId('learner-first-name-input'), {
@@ -150,12 +153,14 @@ describe('Learner Components', () => {
       const onClose = vi.fn();
 
       render(
-        <LearnerFormModal
-          isOpen={true}
-          initialData={mockLearner}
-          onClose={onClose}
-          onSubmit={onSubmit}
-        />
+        <ToastProvider>
+          <LearnerFormModal
+            isOpen={true}
+            initialData={mockLearner}
+            onClose={onClose}
+            onSubmit={onSubmit}
+          />
+        </ToastProvider>
       );
 
       const nameInput = screen.getByTestId('learner-first-name-input') as HTMLInputElement;
@@ -170,6 +175,57 @@ describe('Learner Components', () => {
           preferredName: 'Clarinha',
         })
       );
+    });
+
+    it('shows per-field validation errors with aria-invalid when required fields are missing', () => {
+      const onSubmit = vi.fn();
+      const onClose = vi.fn();
+
+      render(
+        <ToastProvider>
+          <LearnerFormModal
+            isOpen={true}
+            onClose={onClose}
+            onSubmit={onSubmit}
+          />
+        </ToastProvider>
+      );
+
+      fireEvent.click(screen.getByTestId('learner-submit-btn'));
+
+      expect(onSubmit).not.toHaveBeenCalled();
+
+      const firstNameInput = screen.getByTestId('learner-first-name-input');
+      const birthDateInput = screen.getByTestId('learner-birth-date-input');
+      expect(firstNameInput).toHaveAttribute('aria-invalid', 'true');
+      expect(birthDateInput).toHaveAttribute('aria-invalid', 'true');
+      expect(screen.getByText('Nome é obrigatório.')).toBeInTheDocument();
+      expect(screen.getByText('Data de nascimento é obrigatória.')).toBeInTheDocument();
+    });
+
+    it('shows a success toast after a successful submission', async () => {
+      const onSubmit = vi.fn().mockResolvedValue(undefined);
+      const onClose = vi.fn();
+
+      render(
+        <ToastProvider>
+          <LearnerFormModal
+            isOpen={true}
+            onClose={onClose}
+            onSubmit={onSubmit}
+          />
+        </ToastProvider>
+      );
+
+      fireEvent.change(screen.getByTestId('learner-first-name-input'), {
+        target: { value: 'Lucas' },
+      });
+      fireEvent.change(screen.getByTestId('learner-birth-date-input'), {
+        target: { value: '2018-09-20' },
+      });
+      fireEvent.click(screen.getByTestId('learner-submit-btn'));
+
+      expect(await screen.findByTestId('toast')).toHaveTextContent('Educando criado com sucesso.');
     });
   });
 
@@ -221,9 +277,11 @@ describe('Learner Components', () => {
   describe('LearnersPage', () => {
     it('renders page layout with add button for OWNER_GUARDIAN', () => {
       render(
-        <AuthProvider initialRole="OWNER_GUARDIAN">
-          <LearnersPage initialLearners={[mockLearner]} />
-        </AuthProvider>
+        <ToastProvider>
+          <AuthProvider initialRole="OWNER_GUARDIAN">
+            <LearnersPage initialLearners={[mockLearner]} />
+          </AuthProvider>
+        </ToastProvider>
       );
 
       expect(screen.getByTestId('add-learner-btn')).toBeInTheDocument();
@@ -236,9 +294,11 @@ describe('Learner Components', () => {
 
     it('hides add-learner-btn for EDUCATOR role (RBAC Gated)', () => {
       render(
-        <AuthProvider initialRole="EDUCATOR">
-          <LearnersPage initialLearners={[mockLearner]} />
-        </AuthProvider>
+        <ToastProvider>
+          <AuthProvider initialRole="EDUCATOR">
+            <LearnersPage initialLearners={[mockLearner]} />
+          </AuthProvider>
+        </ToastProvider>
       );
 
       expect(screen.queryByTestId('add-learner-btn')).not.toBeInTheDocument();
