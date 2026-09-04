@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useToast } from '@aletheia/ui';
 import type {
   CreatePortfolioItemDto,
   LearnerSummaryDto,
@@ -13,6 +14,7 @@ import { PortfolioGalleryView } from '../../../src/components/records/portfolio-
 import { PortfolioItemModal } from '../../../src/components/records/portfolio-item-modal';
 
 export default function PortfolioPage() {
+  const { toast } = useToast();
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
   const [activeLearnerId, setActiveLearnerId] = useState<string | null>(null);
@@ -180,12 +182,19 @@ export default function PortfolioPage() {
 
   const handleDeleteItem = async (itemId: string) => {
     if (!familyId) return;
-    const res = await fetch(`/api/v1/families/${familyId}/portfolio/${itemId}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
-    if (res.ok) {
+    try {
+      const res = await fetch(`/api/v1/families/${familyId}/portfolio/${itemId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Falha ao excluir evidência.');
+      }
       await fetchPortfolioItems();
+      toast({ variant: 'success', title: 'Evidência excluída.' });
+    } catch (err: unknown) {
+      toast({ variant: 'error', title: err instanceof Error ? err.message : 'Falha ao excluir evidência.' });
     }
   };
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { AletheiaIcon, Button, Checkbox, EmptyState, IconButton, Input, Modal, Select, Textarea } from '@aletheia/ui';
+import { AletheiaIcon, Alert, Button, Checkbox, EmptyState, IconButton, Input, Modal, Select, Textarea } from '@aletheia/ui';
 import type {
   GenerateReportDto,
   GradingScale,
@@ -76,6 +76,7 @@ export function ReportGeneratorView({
   const [includePortfolioHighlights, setIncludePortfolioHighlights] = useState(true);
   const [notes, setNotes] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
 
   // Filter
   const [filterType, setFilterType] = useState<string>('');
@@ -98,6 +99,7 @@ export function ReportGeneratorView({
     setIncludeAttendance(true);
     setIncludePortfolioHighlights(true);
     setNotes('');
+    setGenerateError(null);
     setIsModalOpen(true);
   };
 
@@ -114,6 +116,7 @@ export function ReportGeneratorView({
     e.preventDefault();
     if (!selectedLearnerId || !title.trim()) return;
     setIsGenerating(true);
+    setGenerateError(null);
     try {
       const dto: GenerateReportDto = {
         learnerId: selectedLearnerId,
@@ -129,6 +132,8 @@ export function ReportGeneratorView({
       if (newReport && typeof newReport === 'object' && 'id' in newReport) {
         setSelectedReportForView(newReport);
       }
+    } catch (err: unknown) {
+      setGenerateError(err instanceof Error ? err.message : 'Falha ao gerar relatório oficial.');
     } finally {
       setIsGenerating(false);
     }
@@ -310,7 +315,11 @@ export function ReportGeneratorView({
                       <IconButton
                         size="sm"
                         data-testid={`delete-report-btn-${report.id}`}
-                        onClick={() => onDeleteReport(report.id)}
+                        onClick={() => {
+                          if (window.confirm('Excluir este relatório oficial? Esta ação não pode ser desfeita.')) {
+                            onDeleteReport(report.id);
+                          }
+                        }}
                         title="Excluir Relatório"
                         aria-label="Excluir Relatório"
                       >
@@ -344,6 +353,11 @@ export function ReportGeneratorView({
             }
           >
             <form id="generate-report-form" onSubmit={handleGenerate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {generateError && (
+                <Alert variant="error" data-testid="generate-report-form-error">
+                  {generateError}
+                </Alert>
+              )}
               <Select
                 label="Educando *"
                 data-testid="report-learner-select"

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { AletheiaIcon, Badge, Button, Checkbox, EmptyState, Input, Modal, Select, Textarea } from '@aletheia/ui';
+import { AletheiaIcon, Alert, Badge, Button, Checkbox, EmptyState, Input, Modal, Select, Textarea } from '@aletheia/ui';
 import type {
   AttendanceComplianceSummaryDto,
   AttendanceResponseDto,
@@ -117,6 +117,8 @@ export function AttendanceTrackerView({
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [filterDate, setFilterDate] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [singleError, setSingleError] = useState<string | null>(null);
+  const [bulkError, setBulkError] = useState<string | null>(null);
 
   const activeLearner = learners.find((l) => l.id === activeLearnerId);
 
@@ -136,6 +138,7 @@ export function AttendanceTrackerView({
     setSingleStatus('PRESENT');
     setSingleHours('4');
     setSingleNotes('');
+    setSingleError(null);
     setIsSingleModalOpen(true);
   };
 
@@ -145,6 +148,7 @@ export function AttendanceTrackerView({
     setBulkStatus('PRESENT');
     setBulkHours('4');
     setBulkNotes('');
+    setBulkError(null);
     setIsBulkModalOpen(true);
   };
 
@@ -152,6 +156,7 @@ export function AttendanceTrackerView({
     e.preventDefault();
     if (!singleLearnerId || !singleDate) return;
     setIsSubmitting(true);
+    setSingleError(null);
     try {
       const dto: LogAttendanceDto = {
         learnerId: singleLearnerId,
@@ -163,6 +168,8 @@ export function AttendanceTrackerView({
       };
       await onLogAttendance(dto);
       setIsSingleModalOpen(false);
+    } catch (err: unknown) {
+      setSingleError(err instanceof Error ? err.message : 'Falha ao registrar frequência.');
     } finally {
       setIsSubmitting(false);
     }
@@ -172,6 +179,7 @@ export function AttendanceTrackerView({
     e.preventDefault();
     if (bulkSelectedLearnerIds.length === 0 || !bulkDate) return;
     setIsSubmitting(true);
+    setBulkError(null);
     try {
       const dto: BulkLogAttendanceDto = {
         learnerIds: bulkSelectedLearnerIds,
@@ -183,6 +191,8 @@ export function AttendanceTrackerView({
       };
       await onBulkLogAttendance(dto);
       setIsBulkModalOpen(false);
+    } catch (err: unknown) {
+      setBulkError(err instanceof Error ? err.message : 'Falha ao registrar frequência coletiva.');
     } finally {
       setIsSubmitting(false);
     }
@@ -387,6 +397,11 @@ export function AttendanceTrackerView({
             }
           >
             <form id="single-attendance-form" onSubmit={handleSaveSingle} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {singleError && (
+                <Alert variant="error" data-testid="single-attendance-form-error">
+                  {singleError}
+                </Alert>
+              )}
               <Select
                 label="Educando *"
                 data-testid="attendance-learner-select"
@@ -461,6 +476,11 @@ export function AttendanceTrackerView({
             }
           >
             <form id="bulk-attendance-form" onSubmit={handleSaveBulk} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {bulkError && (
+                <Alert variant="error" data-testid="bulk-attendance-form-error">
+                  {bulkError}
+                </Alert>
+              )}
               <div>
                 <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
                   Selecione os Educandos *

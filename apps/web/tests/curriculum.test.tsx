@@ -102,7 +102,10 @@ describe('Curriculum Web Components', () => {
             learnerPlan={mockPlan}
             onApplyTemplate={vi.fn()}
             onCreateSubject={vi.fn()}
+            onUpdateSubject={vi.fn()}
+            onArchiveSubject={vi.fn()}
             onCreateObjective={vi.fn()}
+            onUpdateObjective={vi.fn()}
             onToggleObjectiveStatus={vi.fn()}
             onDeleteObjective={vi.fn()}
           />
@@ -130,7 +133,10 @@ describe('Curriculum Web Components', () => {
             learnerPlan={null}
             onApplyTemplate={vi.fn()}
             onCreateSubject={vi.fn()}
+            onUpdateSubject={vi.fn()}
+            onArchiveSubject={vi.fn()}
             onCreateObjective={vi.fn()}
+            onUpdateObjective={vi.fn()}
             onToggleObjectiveStatus={vi.fn()}
             onDeleteObjective={vi.fn()}
           />
@@ -150,7 +156,10 @@ describe('Curriculum Web Components', () => {
             subject={mockSubject}
             objectives={mockObjectives}
             onAddObjective={vi.fn()}
+            onEditSubject={vi.fn()}
+            onArchiveSubject={vi.fn()}
             onToggleStatus={toggleMock}
+            onEditObjective={vi.fn()}
             onDeleteObjective={vi.fn()}
           />
         </AuthProvider>

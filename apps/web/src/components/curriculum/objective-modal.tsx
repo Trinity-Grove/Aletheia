@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Button, Input, Modal, Textarea } from '@aletheia/ui';
-import type { CreateObjectiveDto } from '@aletheia/contracts';
+import React, { useEffect, useState } from 'react';
+import { Alert, Button, Input, Modal, Textarea } from '@aletheia/ui';
+import type { CreateObjectiveDto, ObjectiveResponseDto, UpdateObjectiveDto } from '@aletheia/contracts';
 
 export interface ObjectiveModalProps {
   isOpen: boolean;
@@ -8,8 +8,10 @@ export interface ObjectiveModalProps {
   subjectName: string;
   learnerId: string;
   academicYearId: string;
+  objectiveToEdit?: ObjectiveResponseDto | null | undefined;
   onClose: () => void;
   onSave: (dto: CreateObjectiveDto) => Promise<void>;
+  onUpdate?: ((objectiveId: string, dto: UpdateObjectiveDto) => Promise<void>) | undefined;
 }
 
 export function ObjectiveModal({
@@ -18,31 +20,55 @@ export function ObjectiveModal({
   subjectName,
   learnerId,
   academicYearId,
+  objectiveToEdit,
   onClose,
   onSave,
+  onUpdate,
 }: ObjectiveModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [targetDate, setTargetDate] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (objectiveToEdit) {
+      setTitle(objectiveToEdit.title);
+      setDescription(objectiveToEdit.description || '');
+      setTargetDate(objectiveToEdit.targetDate || '');
+    } else {
+      setTitle('');
+      setDescription('');
+      setTargetDate('');
+    }
+    setError(null);
+  }, [objectiveToEdit, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
     setLoading(true);
+    setError(null);
     try {
-      await onSave({
-        learnerId,
-        subjectId,
-        academicYearId,
-        title: title.trim(),
-        description: description.trim() || undefined,
-        targetDate: targetDate || undefined,
-      });
-      setTitle('');
-      setDescription('');
-      setTargetDate('');
+      if (objectiveToEdit && onUpdate) {
+        await onUpdate(objectiveToEdit.id, {
+          title: title.trim(),
+          description: description.trim() || undefined,
+          targetDate: targetDate || undefined,
+        });
+      } else {
+        await onSave({
+          learnerId,
+          subjectId,
+          academicYearId,
+          title: title.trim(),
+          description: description.trim() || undefined,
+          targetDate: targetDate || undefined,
+        });
+      }
       onClose();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Falha ao salvar objetivo.');
     } finally {
       setLoading(false);
     }
@@ -52,7 +78,7 @@ export function ObjectiveModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Novo Objetivo de Aprendizagem"
+      title={objectiveToEdit ? 'Editar Objetivo de Aprendizagem' : 'Novo Objetivo de Aprendizagem'}
       description={
         <>
           Disciplina: <strong>{subjectName}</strong>
@@ -64,11 +90,17 @@ export function ObjectiveModal({
             Cancelar
           </Button>
           <Button type="submit" form="objective-form" data-testid="save-objective-btn" isLoading={loading}>
-            Salvar Objetivo
+            {objectiveToEdit ? 'Salvar Alterações' : 'Salvar Objetivo'}
           </Button>
         </>
       }
     >
+      {error && (
+        <Alert variant="error" data-testid="objective-form-error" style={{ marginBottom: '1rem' }}>
+          {error}
+        </Alert>
+      )}
+
       <form id="objective-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <Input
           label="Meta / Objetivo *"
