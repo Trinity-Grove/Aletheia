@@ -652,6 +652,9 @@ model PortfolioItem {
   textContent      String?         @map("text_content")
   mimeType         String?         @map("mime_type")
   fileSizeBytes    Int?            @map("file_size_bytes")
+  storageKey       String?         @unique @map("storage_key")
+  checksumSha256   String?         @map("checksum_sha256")
+  deletedAt        DateTime?       @map("deleted_at") @db.Timestamptz
   capturedAt       DateTime?       @map("captured_at") @db.Date
   isHighlight      Boolean         @default(false) @map("is_highlight")
   tags             String[]        @default([])

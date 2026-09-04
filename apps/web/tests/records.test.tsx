@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type {
   LearnerProgressSummaryDto,
   LearnerSummaryDto,
@@ -13,6 +13,7 @@ import { RecordCard } from '../src/components/records/record-card';
 import { RecordFormModal } from '../src/components/records/record-form-modal';
 import { RecordsJournalView } from '../src/components/records/records-journal-view';
 import { PortfolioGalleryView } from '../src/components/records/portfolio-gallery-view';
+import { PortfolioItemModal } from '../src/components/records/portfolio-item-modal';
 import { AuthProvider } from '../src/lib/auth/rbac-context';
 
 const mockLearners: LearnerSummaryDto[] = [
@@ -508,6 +509,72 @@ describe('Learning Journal, Mastery & Portfolio Web Components', () => {
       expect(screen.getByTestId('open-add-portfolio-btn')).toBeDefined();
       expect(screen.getByTestId('edit-portfolio-btn-port-1')).toBeDefined();
       expect(screen.queryByTestId('delete-portfolio-btn-port-1')).toBeNull();
+    });
+  });
+
+  describe('PortfolioItemModal file upload', () => {
+    it('shows a file input for IMAGE evidence and an external URL field for LINK evidence', () => {
+      render(
+        <PortfolioItemModal
+          isOpen
+          onClose={vi.fn()}
+          onSave={vi.fn()}
+          learners={mockLearners}
+          subjects={mockSubjects}
+        />,
+      );
+
+      expect(screen.getByTestId('portfolio-file-input')).toBeInTheDocument();
+      expect(screen.queryByTestId('portfolio-file-url-input')).not.toBeInTheDocument();
+
+      fireEvent.change(screen.getByTestId('portfolio-type-select'), { target: { value: 'LINK' } });
+
+      expect(screen.getByTestId('portfolio-file-url-input')).toBeInTheDocument();
+      expect(screen.queryByTestId('portfolio-file-input')).not.toBeInTheDocument();
+    });
+
+    it('rejects an oversized file client-side without calling onSave', () => {
+      const onSave = vi.fn();
+      render(
+        <PortfolioItemModal
+          isOpen
+          onClose={vi.fn()}
+          onSave={onSave}
+          learners={mockLearners}
+          subjects={mockSubjects}
+        />,
+      );
+
+      const oversized = new File([new Uint8Array(26 * 1024 * 1024)], 'huge.png', { type: 'image/png' });
+      fireEvent.change(screen.getByTestId('portfolio-file-input'), { target: { files: [oversized] } });
+
+      expect(screen.getByTestId('portfolio-file-error')).toHaveTextContent(/muito grande/i);
+    });
+
+    it('saves the item then uploads the selected file, in order', async () => {
+      const savedItem = { ...mockPortfolioItems[0]!, id: 'new-item-id' };
+      const onSave = vi.fn().mockResolvedValue(savedItem);
+      const onUploadFile = vi.fn().mockResolvedValue(undefined);
+
+      render(
+        <PortfolioItemModal
+          isOpen
+          onClose={vi.fn()}
+          onSave={onSave}
+          onUploadFile={onUploadFile}
+          learners={mockLearners}
+          subjects={mockSubjects}
+          defaultLearnerId={mockLearners[0]!.id}
+        />,
+      );
+
+      fireEvent.change(screen.getByTestId('portfolio-title-input'), { target: { value: 'Nova pintura' } });
+      const file = new File(['content'], 'painting.png', { type: 'image/png' });
+      fireEvent.change(screen.getByTestId('portfolio-file-input'), { target: { files: [file] } });
+      fireEvent.click(screen.getByTestId('save-portfolio-btn'));
+
+      await waitFor(() => expect(onSave).toHaveBeenCalled());
+      await waitFor(() => expect(onUploadFile).toHaveBeenCalledWith('new-item-id', file));
     });
   });
 });

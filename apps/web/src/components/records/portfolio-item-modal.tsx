@@ -2,19 +2,24 @@
 
 import React, { useEffect, useState } from 'react';
 import { AletheiaIcon } from '@aletheia/ui';
-import type {
-  CreatePortfolioItemDto,
-  PortfolioItemResponseDto,
-  LearnerSummaryDto,
-  SubjectResponseDto,
-  EvidenceType,
-  LearningRecordResponseDto,
+import {
+  ALLOWED_PORTFOLIO_MIME_TYPES,
+  PORTFOLIO_MAX_FILE_SIZE_BYTES,
+  type CreatePortfolioItemDto,
+  type PortfolioItemResponseDto,
+  type LearnerSummaryDto,
+  type SubjectResponseDto,
+  type EvidenceType,
+  type LearningRecordResponseDto,
 } from '@aletheia/contracts';
+
+const FILE_EVIDENCE_TYPES = new Set<EvidenceType>(['IMAGE', 'AUDIO', 'VIDEO', 'DOCUMENT', 'CERTIFICATE']);
 
 export interface PortfolioItemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (dto: CreatePortfolioItemDto) => Promise<void>;
+  onSave: (dto: CreatePortfolioItemDto) => Promise<PortfolioItemResponseDto>;
+  onUploadFile?: ((itemId: string, file: File) => Promise<void>) | undefined;
   learners: LearnerSummaryDto[];
   subjects: SubjectResponseDto[];
   records?: LearningRecordResponseDto[];
@@ -40,6 +45,7 @@ export function PortfolioItemModal({
   isOpen,
   onClose,
   onSave,
+  onUploadFile,
   learners,
   subjects,
   records = [],
@@ -54,6 +60,8 @@ export function PortfolioItemModal({
   const [description, setDescription] = useState('');
   const [type, setType] = useState<EvidenceType>('IMAGE');
   const [fileUrl, setFileUrl] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [textContent, setTextContent] = useState('');
   const [capturedAt, setCapturedAt] = useState(() => new Date().toISOString().split('T')[0]!);
   const [isHighlight, setIsHighlight] = useState(false);
@@ -88,8 +96,30 @@ export function PortfolioItemModal({
       setIsHighlight(false);
       setTagsInput('');
     }
+    setSelectedFile(null);
+    setFileError(null);
     setError(null);
   }, [itemToEdit, isOpen, initialRecordId, defaultLearnerId, learners]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setFileError(null);
+    if (!file) {
+      setSelectedFile(null);
+      return;
+    }
+    if (!(ALLOWED_PORTFOLIO_MIME_TYPES as readonly string[]).includes(file.type)) {
+      setFileError('Tipo de arquivo não suportado.');
+      setSelectedFile(null);
+      return;
+    }
+    if (file.size > PORTFOLIO_MAX_FILE_SIZE_BYTES) {
+      setFileError(`Arquivo muito grande (máx. ${Math.floor(PORTFOLIO_MAX_FILE_SIZE_BYTES / (1024 * 1024))}MB).`);
+      setSelectedFile(null);
+      return;
+    }
+    setSelectedFile(file);
+  };
 
   if (!isOpen) return null;
 
@@ -120,14 +150,17 @@ export function PortfolioItemModal({
         title: title.trim(),
         description: description.trim() || undefined,
         type,
-        fileUrl: fileUrl.trim() || undefined,
+        fileUrl: type === 'LINK' ? fileUrl.trim() || undefined : undefined,
         textContent: textContent.trim() || undefined,
         capturedAt: capturedAt || undefined,
         isHighlight,
         tags: parsedTags,
       };
 
-      await onSave(dto);
+      const saved = await onSave(dto);
+      if (selectedFile && onUploadFile) {
+        await onUploadFile(saved.id, selectedFile);
+      }
       onClose();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Falha ao salvar evidência';
@@ -373,30 +406,65 @@ export function PortfolioItemModal({
             </div>
           </div>
 
-          {/* Media URL / Text Content depending on type */}
-          <div>
-            <label
-              htmlFor="portfolio-file-url-input"
-              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
-            >
-              URL do Arquivo / Foto / Vídeo
-            </label>
-            <input
-              id="portfolio-file-url-input"
-              type="url"
-              data-testid="portfolio-file-url-input"
-              value={fileUrl}
-              onChange={(e) => setFileUrl(e.target.value)}
-              placeholder="https://exemplo.com/fotos/desenho.jpg"
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-medium)',
-                fontSize: '0.875rem',
-              }}
-            />
-          </div>
+          {/* Media: file upload or external URL, depending on type */}
+          {type === 'LINK' ? (
+            <div>
+              <label
+                htmlFor="portfolio-file-url-input"
+                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
+              >
+                URL Externa
+              </label>
+              <input
+                id="portfolio-file-url-input"
+                type="url"
+                data-testid="portfolio-file-url-input"
+                value={fileUrl}
+                onChange={(e) => setFileUrl(e.target.value)}
+                placeholder="https://exemplo.com/fotos/desenho.jpg"
+                style={{
+                  width: '100%',
+                  padding: '0.5rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
+                  fontSize: '0.875rem',
+                }}
+              />
+            </div>
+          ) : FILE_EVIDENCE_TYPES.has(type) ? (
+            <div>
+              <label
+                htmlFor="portfolio-file-input"
+                style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
+              >
+                Arquivo {itemToEdit?.mimeType ? '(substituir arquivo existente)' : ''}
+              </label>
+              <input
+                id="portfolio-file-input"
+                type="file"
+                data-testid="portfolio-file-input"
+                accept={ALLOWED_PORTFOLIO_MIME_TYPES.join(',')}
+                onChange={handleFileChange}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
+                  fontSize: '0.875rem',
+                }}
+              />
+              {fileError && (
+                <span data-testid="portfolio-file-error" style={{ fontSize: '0.8125rem', color: 'var(--color-rose-700)', marginTop: '0.25rem', display: 'block' }}>
+                  {fileError}
+                </span>
+              )}
+              {itemToEdit?.mimeType && !selectedFile && (
+                <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.25rem', display: 'block' }}>
+                  Arquivo atual: {itemToEdit.mimeType}
+                </span>
+              )}
+            </div>
+          ) : null}
 
           <div>
             <label
