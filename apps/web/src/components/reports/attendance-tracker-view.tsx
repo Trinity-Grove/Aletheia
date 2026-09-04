@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { AletheiaIcon } from '@aletheia/ui';
+import { AletheiaIcon, Badge, Button, Checkbox, EmptyState, Input, Modal, Select, Textarea } from '@aletheia/ui';
 import type {
   AttendanceComplianceSummaryDto,
   AttendanceResponseDto,
@@ -16,7 +16,7 @@ import { ComplianceGauge } from './compliance-gauge';
 
 export const ATTENDANCE_STATUS_CONFIG: Record<
   AttendanceStatus,
-  { label: string; bg: string; text: string; border: string; icon: React.ReactNode }
+  { label: string; bg: string; text: string; border: string; icon: React.ReactNode; badgeVariant: 'emerald' | 'amber' | 'rose' | 'indigo' }
 > = {
   PRESENT: {
     label: 'Presente',
@@ -24,6 +24,7 @@ export const ATTENDANCE_STATUS_CONFIG: Record<
     text: 'var(--color-emerald-700)',
     border: 'var(--color-emerald-100)',
     icon: <AletheiaIcon name="check" size={14} />,
+    badgeVariant: 'emerald',
   },
   EXCUSED_ABSENCE: {
     label: 'Falta Justificada',
@@ -31,6 +32,7 @@ export const ATTENDANCE_STATUS_CONFIG: Record<
     text: 'var(--color-amber-700)',
     border: 'var(--color-amber-100)',
     icon: <AletheiaIcon name="file-text" size={14} />,
+    badgeVariant: 'amber',
   },
   UNEXCUSED_ABSENCE: {
     label: 'Falta Não Justificada',
@@ -38,6 +40,7 @@ export const ATTENDANCE_STATUS_CONFIG: Record<
     text: 'var(--color-rose-700)',
     border: 'var(--color-rose-100)',
     icon: <AletheiaIcon name="x" size={14} />,
+    badgeVariant: 'rose',
   },
   HOLIDAY: {
     label: 'Feriado / Recesso',
@@ -45,6 +48,7 @@ export const ATTENDANCE_STATUS_CONFIG: Record<
     text: 'var(--color-indigo-700)',
     border: 'var(--color-indigo-100)',
     icon: <AletheiaIcon name="calendar" size={14} />,
+    badgeVariant: 'indigo',
   },
   FIELD_TRIP: {
     label: 'Passeio Educativo',
@@ -52,6 +56,7 @@ export const ATTENDANCE_STATUS_CONFIG: Record<
     text: 'var(--color-indigo-700)',
     border: 'var(--color-indigo-100)',
     icon: <AletheiaIcon name="landmark" size={14} />,
+    badgeVariant: 'indigo',
   },
   SICK: {
     label: 'Atestado / Doença',
@@ -59,6 +64,7 @@ export const ATTENDANCE_STATUS_CONFIG: Record<
     text: 'var(--color-amber-700)',
     border: 'var(--color-amber-100)',
     icon: <AletheiaIcon name="alert-circle" size={14} />,
+    badgeVariant: 'amber',
   },
 };
 
@@ -211,147 +217,65 @@ export function AttendanceTrackerView({
       >
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
           {/* Status filter */}
-          <select
+          <Select
             data-testid="filter-attendance-status-select"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            style={{
-              padding: '0.5rem 0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-medium)',
-              fontSize: '0.875rem',
-              backgroundColor: 'var(--bg-surface)',
-            }}
-          >
-            <option value="">Todos os status</option>
-            {Object.entries(ATTENDANCE_STATUS_CONFIG).map(([k, item]) => (
-              <option key={k} value={k}>
-                {item.label}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Todos os status' },
+              ...Object.entries(ATTENDANCE_STATUS_CONFIG).map(([k, item]) => ({ value: k, label: item.label })),
+            ]}
+          />
 
           {/* Date Filter */}
-          <input
+          <Input
             type="date"
             data-testid="filter-attendance-date-input"
             value={filterDate}
             onChange={(e) => setFilterDate(e.target.value)}
-            style={{
-              padding: '0.45rem 0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-medium)',
-              fontSize: '0.875rem',
-              backgroundColor: 'var(--bg-surface)',
-            }}
           />
           {filterDate && (
-            <button
-              type="button"
-              onClick={() => setFilterDate('')}
-              style={{
-                fontSize: '0.75rem',
-                color: 'var(--text-secondary)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                textDecoration: 'underline',
-              }}
-            >
+            <Button variant="ghost" size="sm" onClick={() => setFilterDate('')}>
               Limpar data
-            </button>
+            </Button>
           )}
         </div>
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <Can action="log_attendance">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               data-testid="open-bulk-attendance-btn"
               onClick={handleOpenBulkModal}
-              style={{
-                padding: '0.625rem 1rem',
-                backgroundColor: 'var(--sage-soft)',
-                color: 'var(--text-secondary)',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-medium)',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.375rem',
-              }}
+              leftIcon={<AletheiaIcon name="users" size={16} />}
             >
-              <AletheiaIcon name="users" size={16} />
-              <span>Frequência Coletiva</span>
-            </button>
+              Frequência Coletiva
+            </Button>
           </Can>
           <Can action="log_attendance">
-            <button
-              type="button"
-              data-testid="open-log-attendance-btn"
-              onClick={handleOpenSingleModal}
-              style={{
-                padding: '0.625rem 1.25rem',
-                backgroundColor: 'var(--forest)',
-                color: 'var(--text-inverse)',
-                borderRadius: 'var(--radius-md)',
-                border: 'none',
-                fontSize: '0.875rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                boxShadow: 'var(--shadow-sm)',
-              }}
-            >
+            <Button data-testid="open-log-attendance-btn" onClick={handleOpenSingleModal}>
               + Registrar Frequência
-            </button>
+            </Button>
           </Can>
         </div>
       </div>
 
       {/* Attendance Table / List */}
       {filteredRecords.length === 0 ? (
-        <div
+        <EmptyState
           data-testid="attendance-empty-state"
-          style={{
-            padding: '3.5rem 1rem',
-            textAlign: 'center',
-            backgroundColor: 'var(--bg-surface)',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px dashed var(--border-medium)',
-          }}
-        >
-          <div style={{ color: 'var(--sage)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
-            <AletheiaIcon name="calendar" size={40} />
-          </div>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
-            Nenhum registro de presença encontrado
-          </h3>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
-            Mantenha o registro de dias letivos e horas cumpridas para garantir a conformidade legal e o histórico anual.
-          </p>
-          <Can action="log_attendance">
-            <button
-              type="button"
-              data-testid="empty-log-attendance-btn"
-              onClick={handleOpenSingleModal}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: 'var(--forest)',
-                color: 'var(--text-inverse)',
-                borderRadius: 'var(--radius-sm)',
-                border: 'none',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Registrar Primeiro Dia
-            </button>
-          </Can>
-        </div>
+          icon={<AletheiaIcon name="calendar" size={40} style={{ color: 'var(--sage)' }} />}
+          title="Nenhum registro de presença encontrado"
+          description="Mantenha o registro de dias letivos e horas cumpridas para garantir a conformidade legal e o histórico anual."
+          action={
+            <Can action="log_attendance">
+              <Button data-testid="empty-log-attendance-btn" onClick={handleOpenSingleModal}>
+                Registrar Primeiro Dia
+              </Button>
+            </Can>
+          }
+        />
       ) : (
         <div
           data-testid="attendance-table-container"
@@ -409,24 +333,10 @@ export function AttendanceTrackerView({
                       </span>
                     </td>
                     <td style={{ padding: '0.875rem 1rem' }}>
-                      <span
-                        data-testid={`attendance-status-badge-${record.id}`}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.25rem',
-                          padding: '0.25rem 0.625rem',
-                          borderRadius: 'var(--radius-full)',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          backgroundColor: conf.bg,
-                          color: conf.text,
-                          border: `1px solid ${conf.border}`,
-                        }}
-                      >
+                      <Badge data-testid={`attendance-status-badge-${record.id}`} variant={conf.badgeVariant}>
                         <span>{conf.icon}</span>
                         {conf.label}
-                      </span>
+                      </Badge>
                     </td>
                     <td style={{ padding: '0.875rem 1rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                       {record.hoursSpent !== null && record.hoursSpent !== undefined
@@ -460,215 +370,97 @@ export function AttendanceTrackerView({
 
       {/* Single Attendance Modal */}
       {isSingleModalOpen && (
-        <div
-          data-testid="single-attendance-modal"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '1rem',
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              borderRadius: 'var(--radius-lg)',
-              maxWidth: '480px',
-              width: '100%',
-              padding: '1.5rem',
-              boxShadow: 'var(--shadow-xl)',
-            }}
+        <div data-testid="single-attendance-modal">
+          <Modal
+            isOpen={true}
+            onClose={() => setIsSingleModalOpen(false)}
+            title="Registrar Frequência Individual"
+            footer={
+              <>
+                <Button variant="secondary" data-testid="cancel-attendance-btn" onClick={() => setIsSingleModalOpen(false)} disabled={isSubmitting}>
+                  Cancelar
+                </Button>
+                <Button type="submit" form="single-attendance-form" data-testid="save-attendance-btn" isLoading={isSubmitting}>
+                  Salvar Registro
+                </Button>
+              </>
+            }
           >
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 1rem 0' }}>
-              Registrar Frequência Individual
-            </h2>
-            <form onSubmit={handleSaveSingle} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                  Educando *
-                </label>
-                <select
-                  data-testid="attendance-learner-select"
-                  value={singleLearnerId}
-                  onChange={(e) => setSingleLearnerId(e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-medium)',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  {learners.map((l) => (
-                    <option key={l.id} value={l.id}>
-                      {l.preferredName || l.firstName} {l.lastName || ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <form id="single-attendance-form" onSubmit={handleSaveSingle} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <Select
+                label="Educando *"
+                data-testid="attendance-learner-select"
+                value={singleLearnerId}
+                onChange={(e) => setSingleLearnerId(e.target.value)}
+                options={learners.map((l) => ({ value: l.id, label: `${l.preferredName || l.firstName} ${l.lastName || ''}` }))}
+              />
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                    Data *
-                  </label>
-                  <input
-                    type="date"
-                    data-testid="attendance-date-input"
-                    value={singleDate}
-                    onChange={(e) => setSingleDate(e.target.value)}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-medium)',
-                      fontSize: '0.875rem',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                    Carga Horária (h)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    max="24"
-                    data-testid="attendance-hours-input"
-                    value={singleHours}
-                    onChange={(e) => setSingleHours(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-medium)',
-                      fontSize: '0.875rem',
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                  Status de Presença *
-                </label>
-                <select
-                  data-testid="attendance-status-select"
-                  value={singleStatus}
-                  onChange={(e) => setSingleStatus(e.target.value as AttendanceStatus)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-medium)',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  {Object.entries(ATTENDANCE_STATUS_CONFIG).map(([k, item]) => (
-                    <option key={k} value={k}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                  Observações / Justificativas
-                </label>
-                <textarea
-                  data-testid="attendance-notes-input"
-                  rows={3}
-                  value={singleNotes}
-                  onChange={(e) => setSingleNotes(e.target.value)}
-                  placeholder="Ex.: Visita ao jardim botânico e narração sobre botânica."
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-medium)',
-                    fontSize: '0.875rem',
-                  }}
+                <Input
+                  label="Data *"
+                  type="date"
+                  data-testid="attendance-date-input"
+                  value={singleDate}
+                  onChange={(e) => setSingleDate(e.target.value)}
+                />
+                <Input
+                  label="Carga Horária (h)"
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  max="24"
+                  data-testid="attendance-hours-input"
+                  value={singleHours}
+                  onChange={(e) => setSingleHours(e.target.value)}
                 />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button
-                  type="button"
-                  data-testid="cancel-attendance-btn"
-                  onClick={() => setIsSingleModalOpen(false)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-medium)',
-                    backgroundColor: 'var(--bg-surface)',
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.875rem',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  data-testid="save-attendance-btn"
-                  disabled={isSubmitting}
-                  style={{
-                    padding: '0.5rem 1.25rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: 'none',
-                    backgroundColor: 'var(--forest)',
-                    color: 'var(--text-inverse)',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {isSubmitting ? 'Salvando...' : 'Salvar Registro'}
-                </button>
-              </div>
+              <Select
+                label="Status de Presença *"
+                data-testid="attendance-status-select"
+                value={singleStatus}
+                onChange={(e) => setSingleStatus(e.target.value as AttendanceStatus)}
+                options={Object.entries(ATTENDANCE_STATUS_CONFIG).map(([k, item]) => ({ value: k, label: item.label }))}
+              />
+
+              <Textarea
+                label="Observações / Justificativas"
+                data-testid="attendance-notes-input"
+                rows={3}
+                value={singleNotes}
+                onChange={(e) => setSingleNotes(e.target.value)}
+                placeholder="Ex.: Visita ao jardim botânico e narração sobre botânica."
+              />
             </form>
-          </div>
+          </Modal>
         </div>
       )}
 
       {/* Bulk Attendance Modal */}
       {isBulkModalOpen && (
-        <div
-          data-testid="bulk-attendance-modal"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '1rem',
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              borderRadius: 'var(--radius-lg)',
-              maxWidth: '520px',
-              width: '100%',
-              padding: '1.5rem',
-              boxShadow: 'var(--shadow-xl)',
-            }}
+        <div data-testid="bulk-attendance-modal">
+          <Modal
+            isOpen={true}
+            onClose={() => setIsBulkModalOpen(false)}
+            title="Registrar Frequência Coletiva"
+            footer={
+              <>
+                <Button variant="secondary" data-testid="cancel-bulk-attendance-btn" onClick={() => setIsBulkModalOpen(false)} disabled={isSubmitting}>
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  form="bulk-attendance-form"
+                  data-testid="save-bulk-attendance-btn"
+                  isLoading={isSubmitting}
+                  disabled={bulkSelectedLearnerIds.length === 0}
+                >
+                  Registrar para Todos Selecionados
+                </Button>
+              </>
+            }
           >
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 1rem 0' }}>
-              Registrar Frequência Coletiva
-            </h2>
-            <form onSubmit={handleSaveBulk} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <form id="bulk-attendance-form" onSubmit={handleSaveBulk} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
                   Selecione os Educandos *
@@ -686,159 +478,56 @@ export function AttendanceTrackerView({
                     overflowY: 'auto',
                   }}
                 >
-                  {learners.map((l) => {
-                    const isChecked = bulkSelectedLearnerIds.includes(l.id);
-                    return (
-                      <label
-                        key={l.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          fontSize: '0.875rem',
-                          color: 'var(--text-secondary)',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          data-testid={`bulk-learner-checkbox-${l.id}`}
-                          checked={isChecked}
-                          onChange={() => toggleBulkLearner(l.id)}
-                        />
-                        <AletheiaIcon name="graduation-cap" size={14} style={{ color: 'var(--text-secondary)' }} />
-                        <span>{l.preferredName || l.firstName} {l.lastName || ''}</span>
-                      </label>
-                    );
-                  })}
+                  {learners.map((l) => (
+                    <Checkbox
+                      key={l.id}
+                      data-testid={`bulk-learner-checkbox-${l.id}`}
+                      checked={bulkSelectedLearnerIds.includes(l.id)}
+                      onChange={() => toggleBulkLearner(l.id)}
+                      label={`${l.preferredName || l.firstName} ${l.lastName || ''}`}
+                    />
+                  ))}
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                    Data *
-                  </label>
-                  <input
-                    type="date"
-                    data-testid="bulk-attendance-date-input"
-                    value={bulkDate}
-                    onChange={(e) => setBulkDate(e.target.value)}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-medium)',
-                      fontSize: '0.875rem',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                    Carga Horária (h)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    max="24"
-                    data-testid="bulk-attendance-hours-input"
-                    value={bulkHours}
-                    onChange={(e) => setBulkHours(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-medium)',
-                      fontSize: '0.875rem',
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                  Status de Presença *
-                </label>
-                <select
-                  data-testid="bulk-attendance-status-select"
-                  value={bulkStatus}
-                  onChange={(e) => setBulkStatus(e.target.value as AttendanceStatus)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-medium)',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  {Object.entries(ATTENDANCE_STATUS_CONFIG).map(([k, item]) => (
-                    <option key={k} value={k}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                  Observações Gerais
-                </label>
-                <textarea
-                  data-testid="bulk-attendance-notes-input"
-                  rows={2}
-                  value={bulkNotes}
-                  onChange={(e) => setBulkNotes(e.target.value)}
-                  placeholder="Ex.: Aula interdisciplinar em família."
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid var(--border-medium)',
-                    fontSize: '0.875rem',
-                  }}
+                <Input
+                  label="Data *"
+                  type="date"
+                  data-testid="bulk-attendance-date-input"
+                  value={bulkDate}
+                  onChange={(e) => setBulkDate(e.target.value)}
+                />
+                <Input
+                  label="Carga Horária (h)"
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  max="24"
+                  data-testid="bulk-attendance-hours-input"
+                  value={bulkHours}
+                  onChange={(e) => setBulkHours(e.target.value)}
                 />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button
-                  type="button"
-                  data-testid="cancel-bulk-attendance-btn"
-                  onClick={() => setIsBulkModalOpen(false)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-medium)',
-                    backgroundColor: 'var(--bg-surface)',
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.875rem',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  data-testid="save-bulk-attendance-btn"
-                  disabled={isSubmitting || bulkSelectedLearnerIds.length === 0}
-                  style={{
-                    padding: '0.5rem 1.25rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: 'none',
-                    backgroundColor: 'var(--forest)',
-                    color: 'var(--text-inverse)',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {isSubmitting ? 'Registrando...' : 'Registrar para Todos Selecionados'}
-                </button>
-              </div>
+              <Select
+                label="Status de Presença *"
+                data-testid="bulk-attendance-status-select"
+                value={bulkStatus}
+                onChange={(e) => setBulkStatus(e.target.value as AttendanceStatus)}
+                options={Object.entries(ATTENDANCE_STATUS_CONFIG).map(([k, item]) => ({ value: k, label: item.label }))}
+              />
+
+              <Textarea
+                label="Observações Gerais"
+                data-testid="bulk-attendance-notes-input"
+                rows={2}
+                value={bulkNotes}
+                onChange={(e) => setBulkNotes(e.target.value)}
+                placeholder="Ex.: Aula interdisciplinar em família."
+              />
             </form>
-          </div>
+          </Modal>
         </div>
       )}
     </div>

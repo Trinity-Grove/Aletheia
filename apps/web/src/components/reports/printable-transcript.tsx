@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AletheiaIcon } from '@aletheia/ui';
+import { AletheiaIcon, Button, IconButton } from '@aletheia/ui';
 import type {
   AcademicTranscriptDto,
   GradingScale,
@@ -91,68 +91,25 @@ export function PrintableTranscript({
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             data-testid="download-csv-btn"
             onClick={handleExportCsv}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: 'var(--sage-soft)',
-              color: 'var(--text-secondary)',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-medium)',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-            }}
+            leftIcon={<AletheiaIcon name="download" size={16} />}
           >
-            <AletheiaIcon name="download" size={16} />
-            <span>Baixar CSV</span>
-          </button>
-          <button
-            type="button"
+            Baixar CSV
+          </Button>
+          <Button
             data-testid="print-transcript-btn"
             onClick={handlePrint}
-            style={{
-              padding: '0.5rem 1.25rem',
-              backgroundColor: 'var(--forest)',
-              color: 'var(--text-inverse)',
-              borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              fontSize: '0.875rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-            }}
+            leftIcon={<AletheiaIcon name="printer" size={16} />}
           >
-            <AletheiaIcon name="printer" size={16} />
-            <span>Imprimir / Salvar PDF</span>
-          </button>
+            Imprimir / Salvar PDF
+          </Button>
           {onClose && (
-            <button
-              type="button"
-              data-testid="close-transcript-btn"
-              onClick={onClose}
-              style={{
-                padding: '0.5rem 0.75rem',
-                backgroundColor: 'var(--bg-surface)',
-                color: 'var(--text-secondary)',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-medium)',
-                fontSize: '0.875rem',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-              }}
-              aria-label="Fechar"
-            >
+            <IconButton data-testid="close-transcript-btn" onClick={onClose} aria-label="Fechar">
               <AletheiaIcon name="x" size={16} />
-            </button>
+            </IconButton>
           )}
         </div>
       </div>

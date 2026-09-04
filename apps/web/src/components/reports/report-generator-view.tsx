@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { AletheiaIcon } from '@aletheia/ui';
+import { AletheiaIcon, Button, Checkbox, EmptyState, IconButton, Input, Modal, Select, Textarea } from '@aletheia/ui';
 import type {
   GenerateReportDto,
   GradingScale,
@@ -145,94 +145,43 @@ export function ReportGeneratorView({
         }}
       >
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-          <select
+          <Select
             data-testid="filter-report-type-select"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            style={{
-              padding: '0.5rem 0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-medium)',
-              fontSize: '0.875rem',
-              backgroundColor: 'var(--bg-surface)',
-            }}
-          >
-            <option value="">Todos os tipos de relatório</option>
-            {Object.entries(REPORT_TYPE_CONFIG).map(([k, item]) => (
-              <option key={k} value={k}>
-                {item.label}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Todos os tipos de relatório' },
+              ...Object.entries(REPORT_TYPE_CONFIG).map(([k, item]) => ({ value: k, label: item.label })),
+            ]}
+          />
         </div>
 
         <Can action="generate_transcripts">
-          <button
-            type="button"
+          <Button
             data-testid="open-generate-report-btn"
             onClick={handleOpenModal}
-            style={{
-              padding: '0.625rem 1.25rem',
-              backgroundColor: 'var(--forest)',
-              color: 'var(--text-inverse)',
-              borderRadius: 'var(--radius-md)',
-              border: 'none',
-              fontSize: '0.875rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: 'var(--shadow-sm)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-            }}
+            leftIcon={<AletheiaIcon name="file-text" size={16} />}
           >
-            <AletheiaIcon name="file-text" size={16} />
-            <span>Gerar Relatório Oficial</span>
-          </button>
+            Gerar Relatório Oficial
+          </Button>
         </Can>
       </div>
 
       {/* Reports Feed / Grid */}
       {filteredReports.length === 0 ? (
-        <div
+        <EmptyState
           data-testid="reports-empty-state"
-          style={{
-            padding: '3.5rem 1rem',
-            textAlign: 'center',
-            backgroundColor: 'var(--bg-surface)',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px dashed var(--border-medium)',
-          }}
-        >
-          <div style={{ color: 'var(--sage)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
-            <AletheiaIcon name="file-text" size={40} />
-          </div>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
-            Nenhum relatório oficial gerado ainda
-          </h3>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
-            Emita históricos escolares oficiais, sumários de presença para conformidade legal e dossiês do portfólio dos educandos.
-          </p>
-          <Can action="generate_transcripts">
-            <button
-              type="button"
-              data-testid="empty-generate-report-btn"
-              onClick={handleOpenModal}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: 'var(--forest)',
-                color: 'var(--text-inverse)',
-                borderRadius: 'var(--radius-sm)',
-                border: 'none',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Gerar Primeiro Histórico
-            </button>
-          </Can>
-        </div>
+          icon={<AletheiaIcon name="file-text" size={40} style={{ color: 'var(--sage)' }} />}
+          title="Nenhum relatório oficial gerado ainda"
+          description="Emita históricos escolares oficiais, sumários de presença para conformidade legal e dossiês do portfólio dos educandos."
+          action={
+            <Can action="generate_transcripts">
+              <Button data-testid="empty-generate-report-btn" onClick={handleOpenModal}>
+                Gerar Primeiro Histórico
+              </Button>
+            </Can>
+          }
+        />
       ) : (
         <div
           data-testid="reports-grid"
@@ -321,72 +270,37 @@ export function ReportGeneratorView({
                     borderTop: '1px solid var(--sage-soft)',
                   }}
                 >
-                  <button
-                    type="button"
+                  <Button
+                    size="sm"
                     data-testid={`view-report-btn-${report.id}`}
                     onClick={() => setSelectedReportForView(report)}
-                    style={{
-                      padding: '0.4rem 0.875rem',
-                      backgroundColor: 'var(--forest)',
-                      color: 'var(--text-inverse)',
-                      borderRadius: 'var(--radius-sm)',
-                      border: 'none',
-                      fontSize: '0.8125rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.375rem',
-                    }}
+                    leftIcon={<AletheiaIcon name="eye" size={14} />}
                   >
-                    <AletheiaIcon name="eye" size={14} />
-                    <span>Visualizar</span>
-                  </button>
+                    Visualizar
+                  </Button>
 
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                      type="button"
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       data-testid={`export-csv-btn-${report.id}`}
                       onClick={() => onExportCsv(report.id)}
                       title="Exportar CSV"
-                      style={{
-                        padding: '0.4rem 0.625rem',
-                        backgroundColor: 'var(--sage-soft)',
-                        color: 'var(--text-secondary)',
-                        borderRadius: 'var(--radius-sm)',
-                        border: '1px solid var(--border-medium)',
-                        fontSize: '0.8125rem',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                      }}
+                      leftIcon={<AletheiaIcon name="download" size={14} />}
                     >
-                      <AletheiaIcon name="download" size={14} />
-                      <span>CSV</span>
-                    </button>
+                      CSV
+                    </Button>
 
                     <Can action="delete_learners">
-                      <button
-                        type="button"
+                      <IconButton
+                        size="sm"
                         data-testid={`delete-report-btn-${report.id}`}
                         onClick={() => onDeleteReport(report.id)}
                         title="Excluir Relatório"
-                        style={{
-                          padding: '0.4rem 0.625rem',
-                          backgroundColor: 'var(--color-rose-50)',
-                          color: 'var(--color-rose-600)',
-                          borderRadius: 'var(--radius-sm)',
-                          border: '1px solid var(--color-rose-100)',
-                          fontSize: '0.8125rem',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                        }}
                         aria-label="Excluir Relatório"
                       >
                         <AletheiaIcon name="trash-2" size={14} />
-                      </button>
+                      </IconButton>
                     </Can>
                   </div>
                 </div>
@@ -398,246 +312,94 @@ export function ReportGeneratorView({
 
       {/* Generate Report Modal */}
       {isModalOpen && (
-        <div
-          data-testid="generate-report-modal"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '1rem',
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              borderRadius: 'var(--radius-lg)',
-              maxWidth: '560px',
-              width: '100%',
-              padding: '1.75rem',
-              boxShadow: 'var(--shadow-xl)',
-            }}
+        <div data-testid="generate-report-modal">
+          <Modal
+            isOpen={true}
+            onClose={() => setIsModalOpen(false)}
+            title="Gerar Relatório / Histórico Oficial"
+            footer={
+              <>
+                <Button variant="secondary" data-testid="cancel-report-btn" onClick={() => setIsModalOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" form="generate-report-form" data-testid="generate-report-btn" isLoading={isGenerating}>
+                  Gerar Relatório
+                </Button>
+              </>
+            }
           >
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 1rem 0' }}>
-              Gerar Relatório / Histórico Oficial
-            </h2>
+            <form id="generate-report-form" onSubmit={handleGenerate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <Select
+                label="Educando *"
+                data-testid="report-learner-select"
+                value={selectedLearnerId}
+                onChange={(e) => handleLearnerChange(e.target.value)}
+                options={learners.map((l) => ({ value: l.id, label: `${l.preferredName || l.firstName} ${l.lastName || ''}` }))}
+              />
 
-            <form onSubmit={handleGenerate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                  Educando *
-                </label>
-                <select
-                  data-testid="report-learner-select"
-                  value={selectedLearnerId}
-                  onChange={(e) => handleLearnerChange(e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-medium)',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  {learners.map((l) => (
-                    <option key={l.id} value={l.id}>
-                      {l.preferredName || l.firstName} {l.lastName || ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                label="Tipo de Relatório *"
+                data-testid="report-type-select"
+                value={reportType}
+                onChange={(e) => setReportType(e.target.value as ReportType)}
+                options={Object.entries(REPORT_TYPE_CONFIG).map(([k, item]) => ({ value: k, label: item.label }))}
+              />
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                  Tipo de Relatório *
-                </label>
-                <select
-                  data-testid="report-type-select"
-                  value={reportType}
-                  onChange={(e) => setReportType(e.target.value as ReportType)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-medium)',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  {Object.entries(REPORT_TYPE_CONFIG).map(([k, item]) => (
-                    <option key={k} value={k}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Input
+                label="Título do Documento *"
+                data-testid="report-title-input"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ex.: Histórico Escolar Oficial - Ano Letivo 2026"
+              />
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                  Título do Documento *
-                </label>
-                <input
-                  type="text"
-                  data-testid="report-title-input"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                  placeholder="Ex.: Histórico Escolar Oficial - Ano Letivo 2026"
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-medium)',
-                    fontSize: '0.875rem',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                  Critério de Escala de Notas / Domínio *
-                </label>
-                <select
-                  data-testid="report-grading-scale-select"
-                  value={gradingScale}
-                  onChange={(e) => setGradingScale(e.target.value as GradingScale)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-medium)',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  {Object.entries(GRADING_SCALE_LABELS).map(([k, label]) => (
-                    <option key={k} value={k}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                label="Critério de Escala de Notas / Domínio *"
+                data-testid="report-grading-scale-select"
+                value={gradingScale}
+                onChange={(e) => setGradingScale(e.target.value as GradingScale)}
+                options={Object.entries(GRADING_SCALE_LABELS).map(([k, label]) => ({ value: k, label }))}
+              />
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    data-testid="report-include-attendance-checkbox"
-                    checked={includeAttendance}
-                    onChange={(e) => setIncludeAttendance(e.target.checked)}
-                  />
-                  Incluir Sumário de Frequência e Carga Horária Cumprida
-                </label>
+                <Checkbox
+                  data-testid="report-include-attendance-checkbox"
+                  checked={includeAttendance}
+                  onChange={(e) => setIncludeAttendance(e.target.checked)}
+                  label="Incluir Sumário de Frequência e Carga Horária Cumprida"
+                />
 
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    data-testid="report-include-portfolio-checkbox"
-                    checked={includePortfolioHighlights}
-                    onChange={(e) => setIncludePortfolioHighlights(e.target.checked)}
-                  />
-                  Incluir Destaques e Evidências do Portfólio
-                </label>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                  Observações Gerais Pedagógicas / Notações
-                </label>
-                <textarea
-                  data-testid="report-notes-input"
-                  rows={3}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Ex.: O educando demonstrou excelente avanço em hábitos de concentração e reverência nas narrações bíblicas."
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-medium)',
-                    fontSize: '0.875rem',
-                  }}
+                <Checkbox
+                  data-testid="report-include-portfolio-checkbox"
+                  checked={includePortfolioHighlights}
+                  onChange={(e) => setIncludePortfolioHighlights(e.target.checked)}
+                  label="Incluir Destaques e Evidências do Portfólio"
                 />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button
-                  type="button"
-                  data-testid="cancel-report-btn"
-                  onClick={() => setIsModalOpen(false)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-medium)',
-                    backgroundColor: 'var(--bg-surface)',
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.875rem',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  data-testid="generate-report-btn"
-                  disabled={isGenerating}
-                  style={{
-                    padding: '0.5rem 1.25rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: 'none',
-                    backgroundColor: 'var(--forest)',
-                    color: 'var(--text-inverse)',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {isGenerating ? 'Gerando Documento...' : 'Gerar Relatório'}
-                </button>
-              </div>
+              <Textarea
+                label="Observações Gerais Pedagógicas / Notações"
+                data-testid="report-notes-input"
+                rows={3}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Ex.: O educando demonstrou excelente avanço em hábitos de concentração e reverência nas narrações bíblicas."
+              />
             </form>
-          </div>
+          </Modal>
         </div>
       )}
 
       {/* Preview Modal */}
       {selectedReportForView && (
-        <div
-          data-testid="report-preview-modal"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '1.5rem',
-            overflowY: 'auto',
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              borderRadius: 'var(--radius-lg)',
-              maxWidth: '900px',
-              width: '100%',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              padding: '2rem',
-              boxShadow: 'var(--shadow-xl)',
-            }}
-          >
+        <div data-testid="report-preview-modal">
+          <Modal isOpen={true} onClose={() => setSelectedReportForView(null)} maxWidth="2xl">
             <PrintableTranscript
               report={selectedReportForView}
               onExportCsv={onExportCsv}
               onClose={() => setSelectedReportForView(null)}
             />
-          </div>
+          </Modal>
         </div>
       )}
     </div>

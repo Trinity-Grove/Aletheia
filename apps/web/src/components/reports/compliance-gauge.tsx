@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AletheiaIcon } from '@aletheia/ui';
+import { AletheiaIcon, Badge, EmptyState } from '@aletheia/ui';
 import type {
   AttendanceComplianceSummaryDto,
   ComplianceRequirementResponseDto,
@@ -20,24 +20,11 @@ export function ComplianceGauge({
 }: ComplianceGaugeProps) {
   if (!summary) {
     return (
-      <div
+      <EmptyState
         data-testid="compliance-gauge-empty"
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          borderRadius: 'var(--radius-lg)',
-          border: '1px dashed var(--border-medium)',
-          padding: '1.5rem',
-          textAlign: 'center',
-          color: 'var(--text-secondary)',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>
-          <AletheiaIcon name="bar-chart-2" size={24} />
-        </div>
-        <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.875rem' }}>
-          Nenhum dado de conformidade registrado para este educando.
-        </p>
-      </div>
+        icon={<AletheiaIcon name="bar-chart-2" size={24} />}
+        title="Nenhum dado de conformidade registrado para este educando."
+      />
     );
   }
 
@@ -60,9 +47,6 @@ export function ComplianceGauge({
 
   const isCompliant = summary.isCompliant || (daysPercent >= 100 && hoursPercent >= 100);
 
-  const statusBg = isCompliant ? 'var(--color-emerald-50)' : 'var(--color-amber-50)';
-  const statusColor = isCompliant ? 'var(--color-emerald-700)' : 'var(--color-amber-700)';
-  const statusBorder = isCompliant ? 'var(--color-emerald-100)' : 'var(--color-amber-100)';
   const statusText = isCompliant ? 'Conforme com as Metas Legais' : 'Em Progresso / Metas Anuais';
 
   return (
@@ -114,24 +98,10 @@ export function ComplianceGauge({
           </p>
         </div>
 
-        <span
-          data-testid="compliance-status-badge"
-          style={{
-            padding: '0.375rem 0.75rem',
-            borderRadius: 'var(--radius-full)',
-            fontSize: '0.75rem',
-            fontWeight: 700,
-            backgroundColor: statusBg,
-            color: statusColor,
-            border: `1px solid ${statusBorder}`,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.375rem',
-          }}
-        >
+        <Badge data-testid="compliance-status-badge" variant={isCompliant ? 'emerald' : 'amber'}>
           {isCompliant ? <AletheiaIcon name="check" size={12} /> : <AletheiaIcon name="clock" size={12} />}
           <span>{statusText}</span>
-        </span>
+        </Badge>
       </div>
 
       {/* Main Gauges Grid */}
