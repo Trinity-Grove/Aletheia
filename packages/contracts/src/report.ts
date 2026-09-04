@@ -45,6 +45,7 @@ export const officialReportResponseSchema = z.object({
   learnerName: z.string().optional(),
   academicYearId: z.string().uuid().nullable().optional(),
   academicYearTitle: z.string().optional(),
+  generatedByUserId: z.string().uuid().nullable().optional(),
   type: reportTypeSchema,
   title: z.string(),
   gradingScale: gradingScaleSchema,

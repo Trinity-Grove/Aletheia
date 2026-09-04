@@ -5,6 +5,7 @@ import { ComplianceRepository } from './infrastructure/compliance.repository.js'
 import { ReportRepository } from './infrastructure/report.repository.js';
 import { AttendanceService } from './application/attendance.service.js';
 import { ReportService } from './application/report.service.js';
+import { TranscriptPdfRenderer } from './application/transcript-pdf.renderer.js';
 import { COMPLIANCE_REPORTS_PUBLIC_API, type ComplianceReportsPublicApi } from './application/public-api.js';
 import { AttendanceController } from './presentation/attendance.controller.js';
 import { ReportController } from './presentation/report.controller.js';
@@ -18,6 +19,7 @@ import { ReportController } from './presentation/report.controller.js';
     ReportRepository,
     AttendanceService,
     ReportService,
+    TranscriptPdfRenderer,
     {
       provide: COMPLIANCE_REPORTS_PUBLIC_API,
       useFactory: (attendanceService: AttendanceService, reportService: ReportService): ComplianceReportsPublicApi => ({

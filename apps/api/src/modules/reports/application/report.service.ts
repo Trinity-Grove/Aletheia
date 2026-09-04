@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../platform/database/prisma.service.js';
 import { ReportRepository } from '../infrastructure/report.repository.js';
 import { AttendanceService } from './attendance.service.js';
 import { GradeConverter } from '../domain/grade-converter.js';
+import { TranscriptPdfRenderer } from './transcript-pdf.renderer.js';
 import type {
   AcademicTranscriptDto,
   ExportFormat,
@@ -18,9 +19,14 @@ export class ReportService {
     private readonly prisma: PrismaService,
     private readonly reportRepo: ReportRepository,
     private readonly attendanceService: AttendanceService,
+    private readonly pdfRenderer: TranscriptPdfRenderer,
   ) {}
 
-  async generateReport(familyId: string, dto: GenerateReportDto): Promise<OfficialReportResponseDto> {
+  async generateReport(
+    familyId: string,
+    dto: GenerateReportDto,
+    generatedByUserId: string | null = null,
+  ): Promise<OfficialReportResponseDto> {
     const learner = await this.prisma.learner.findFirst({
       where: { id: dto.learnerId, familyId },
     });
@@ -72,7 +78,7 @@ export class ReportService {
       }
     }
 
-    const report = await this.reportRepo.create(familyId, dto, reportContent);
+    const report = await this.reportRepo.create(familyId, dto, reportContent, generatedByUserId);
     return report.toResponseDto();
   }
 
@@ -116,11 +122,42 @@ export class ReportService {
       };
     }
 
-    // Default to JSON format (or fallback if PDF is requested as structured string)
+    if (format === 'PDF') {
+      throw new BadRequestException(
+        'PDF export is served as binary content via GET :id/export/pdf, not through this JSON endpoint.',
+      );
+    }
+
     return {
       content: JSON.stringify(report.content, null, 2),
-      mimeType: format === 'JSON' ? 'application/json' : 'application/pdf',
-      filename: `${report.title.replace(/\s+/g, '_')}_${report.id}.${format.toLowerCase()}`,
+      mimeType: 'application/json',
+      filename: `${report.title.replace(/\s+/g, '_')}_${report.id}.json`,
+    };
+  }
+
+  async exportReportPdf(
+    familyId: string,
+    id: string,
+  ): Promise<{ bytes: Uint8Array; filename: string; documentHash: string }> {
+    const report = await this.getReport(familyId, id);
+
+    if (report.type !== 'ACADEMIC_TRANSCRIPT') {
+      throw new BadRequestException(
+        `PDF export is only available for ACADEMIC_TRANSCRIPT reports (this report is ${report.type}).`,
+      );
+    }
+
+    let generatedByLabel: string | null = null;
+    if (report.generatedByUserId) {
+      const user = await this.prisma.user.findUnique({ where: { id: report.generatedByUserId } });
+      generatedByLabel = user?.fullName || user?.email || null;
+    }
+
+    const { bytes, documentHash } = await this.pdfRenderer.render(report, generatedByLabel);
+    return {
+      bytes,
+      documentHash,
+      filename: `${report.title.replace(/\s+/g, '_')}_${report.id}.pdf`,
     };
   }
 

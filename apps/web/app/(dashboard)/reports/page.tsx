@@ -120,6 +120,25 @@ export default function ReportsPage() {
     }
   };
 
+  const handleExportPdf = async (reportId: string) => {
+    if (!familyId) return;
+    const res = await fetch(`/api/v1/families/${familyId}/reports/${reportId}/export/pdf`, {
+      credentials: 'include',
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const disposition = res.headers.get('Content-Disposition') ?? '';
+    const filenameMatch = disposition.match(/filename="?([^";]+)"?/);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filenameMatch?.[1] ?? `report_${reportId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <ProductShell
       learners={learners}
@@ -148,6 +167,7 @@ export default function ReportsPage() {
             onGenerateReport={handleGenerateReport}
             onDeleteReport={handleDeleteReport}
             onExportCsv={handleExportCsv}
+            onExportPdf={handleExportPdf}
           />
         )}
       </div>

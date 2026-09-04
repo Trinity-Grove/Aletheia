@@ -11,12 +11,14 @@ export class ReportRepository {
     familyId: string,
     dto: GenerateReportDto,
     content: Record<string, any>,
+    generatedByUserId: string | null,
   ): Promise<OfficialReportEntity> {
     const created = await this.prisma.officialReport.create({
       data: {
         familyId,
         learnerId: dto.learnerId,
         academicYearId: dto.academicYearId ?? null,
+        generatedByUserId,
         type: dto.type,
         title: dto.title,
         gradingScale: dto.gradingScale ?? 'MASTERY_QUALITATIVE',
@@ -101,6 +103,7 @@ export class ReportRepository {
       row.updatedAt,
       learnerName,
       academicYearTitle,
+      row.generatedByUserId ?? null,
     );
   }
 }

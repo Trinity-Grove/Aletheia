@@ -49,6 +49,7 @@ export interface ReportGeneratorViewProps {
   onGenerateReport: (dto: GenerateReportDto) => Promise<OfficialReportResponseDto | void>;
   onDeleteReport: (reportId: string) => Promise<void>;
   onExportCsv: (reportId: string) => Promise<void>;
+  onExportPdf?: ((reportId: string) => Promise<void>) | undefined;
 }
 
 export function ReportGeneratorView({
@@ -58,6 +59,7 @@ export function ReportGeneratorView({
   onGenerateReport,
   onDeleteReport,
   onExportCsv,
+  onExportPdf,
 }: ReportGeneratorViewProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedReportForView, setSelectedReportForView] =
@@ -290,6 +292,19 @@ export function ReportGeneratorView({
                     >
                       CSV
                     </Button>
+
+                    {onExportPdf && report.type === 'ACADEMIC_TRANSCRIPT' && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        data-testid={`export-pdf-btn-${report.id}`}
+                        onClick={() => onExportPdf(report.id)}
+                        title="Baixar PDF"
+                        leftIcon={<AletheiaIcon name="file-text" size={14} />}
+                      >
+                        PDF
+                      </Button>
+                    )}
 
                     <Can action="delete_learners">
                       <IconButton

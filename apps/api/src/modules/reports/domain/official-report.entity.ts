@@ -19,6 +19,7 @@ export class OfficialReportEntity {
     public readonly updatedAt: Date,
     public readonly learnerName?: string,
     public readonly academicYearTitle?: string,
+    public readonly generatedByUserId?: string | null,
   ) {}
 
   toResponseDto(): OfficialReportResponseDto {
@@ -43,6 +44,9 @@ export class OfficialReportEntity {
     }
     if (this.academicYearTitle !== undefined) {
       dto.academicYearTitle = this.academicYearTitle;
+    }
+    if (this.generatedByUserId !== undefined) {
+      dto.generatedByUserId = this.generatedByUserId;
     }
 
     return dto;

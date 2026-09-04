@@ -27,6 +27,7 @@ model User {
   mfaRecoveryCodes        MfaRecoveryCode[]
   mfaSetupChallenges      MfaSetupChallenge[]
   mfaLoginChallenges      MfaLoginChallenge[]
+  generatedReports        OfficialReport[]
 
   @@map("users")
 }
@@ -735,21 +736,23 @@ model ComplianceRequirement {
 }
 
 model OfficialReport {
-  id             String       @id @default(uuid()) @db.Uuid
-  familyId       String       @map("family_id") @db.Uuid
-  learnerId      String       @map("learner_id") @db.Uuid
-  academicYearId String?      @map("academic_year_id") @db.Uuid
-  type           ReportType
-  title          String
-  gradingScale   GradingScale @default(MASTERY_QUALITATIVE) @map("grading_scale")
-  content        Json
-  generatedAt    DateTime     @default(now()) @map("generated_at") @db.Timestamptz
-  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+  id                String       @id @default(uuid()) @db.Uuid
+  familyId          String       @map("family_id") @db.Uuid
+  learnerId         String       @map("learner_id") @db.Uuid
+  academicYearId    String?      @map("academic_year_id") @db.Uuid
+  generatedByUserId String?      @map("generated_by_user_id") @db.Uuid
+  type              ReportType
+  title             String
+  gradingScale      GradingScale @default(MASTERY_QUALITATIVE) @map("grading_scale")
+  content           Json
+  generatedAt       DateTime     @default(now()) @map("generated_at") @db.Timestamptz
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime     @updatedAt @map("updated_at") @db.Timestamptz
 
   family         Family        @relation(fields: [familyId], references: [id], onDelete: Cascade)
   learner        Learner       @relation(fields: [learnerId], references: [id], onDelete: Cascade)
   academicYear   AcademicYear? @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  generatedBy    User?         @relation(fields: [generatedByUserId], references: [id], onDelete: SetNull)
 
   @@index([familyId])
   @@index([familyId, learnerId])
