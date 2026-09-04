@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AletheiaIcon } from '@aletheia/ui';
+import { AletheiaIcon, Button, EmptyState } from '@aletheia/ui';
 import type {
   AcademicYearResponseDto,
   CreateObjectiveDto,
@@ -132,49 +132,25 @@ export function CurriculumView({
           />
           {activeLearner && (
             <Can action="manage_curriculum">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
                 data-testid="open-template-modal-btn"
                 onClick={() => setIsTemplateModalOpen(true)}
-                className="btn btn-secondary ui-button ui-button--secondary ui-button--sm"
-                style={{
-                  padding: '0.45rem 0.875rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--color-indigo-100)',
-                  backgroundColor: 'var(--color-indigo-50)',
-                  color: 'var(--color-indigo-700)',
-                  fontSize: '0.8125rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.375rem',
-                }}
+                leftIcon={<AletheiaIcon name="sparkles" size={14} />}
               >
-                <AletheiaIcon name="sparkles" size={14} />
-                <span>Modelos Pedagógicos</span>
-              </button>
+                Modelos Pedagógicos
+              </Button>
             </Can>
           )}
           <Can action="manage_curriculum">
-            <button
-              type="button"
+            <Button
+              size="sm"
               data-testid="open-subject-modal-btn"
               onClick={() => setIsSubjectModalOpen(true)}
-              className="btn btn-primary ui-button ui-button--primary ui-button--sm"
-              style={{
-                padding: '0.45rem 1rem',
-                borderRadius: 'var(--radius-md)',
-                border: 'none',
-                color: 'var(--text-inverse)',
-                fontSize: '0.8125rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                boxShadow: 'var(--shadow-sm)',
-              }}
             >
               + Nova Disciplina
-            </button>
+            </Button>
           </Can>
         </div>
       </div>
@@ -230,90 +206,31 @@ export function CurriculumView({
 
       {/* Subjects & Objectives Grid */}
       {subjects.length === 0 ? (
-        <div
+        <EmptyState
           data-testid="curriculum-empty-state"
-          style={{
-            padding: '3.5rem 1.5rem',
-            textAlign: 'center',
-            backgroundColor: 'var(--bg-surface)',
-            borderRadius: 'var(--radius-lg)',
-            border: '2px dashed var(--border-medium)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '1rem',
-          }}
-        >
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: 'var(--radius-full)',
-              backgroundColor: 'var(--color-indigo-50)',
-              color: 'var(--color-indigo-700)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: 'var(--shadow-sm)',
-            }}
-          >
-            <AletheiaIcon name="book-open" size={32} />
-          </div>
-          <div>
-            <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.375rem 0' }}>
-              Nenhuma disciplina cadastrada para este ano letivo
-            </h2>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '28rem', margin: '0 auto' }}>
-              Comece aplicando um modelo pedagógico clássico ou Charlotte Mason, ou crie suas próprias disciplinas personalizadas.
-            </p>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-            {activeLearner && (
+          icon={<AletheiaIcon name="book-open" size={32} />}
+          title="Nenhuma disciplina cadastrada para este ano letivo"
+          description="Comece aplicando um modelo pedagógico clássico ou Charlotte Mason, ou crie suas próprias disciplinas personalizadas."
+          action={
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              {activeLearner && (
+                <Can action="manage_curriculum">
+                  <Button
+                    onClick={() => setIsTemplateModalOpen(true)}
+                    leftIcon={<AletheiaIcon name="sparkles" size={16} />}
+                  >
+                    Usar Modelo Pedagógico
+                  </Button>
+                </Can>
+              )}
               <Can action="manage_curriculum">
-                <button
-                  type="button"
-                  onClick={() => setIsTemplateModalOpen(true)}
-                  className="btn btn-primary ui-button ui-button--primary"
-                  style={{
-                    padding: '0.5rem 1.25rem',
-                    borderRadius: 'var(--radius-md)',
-                    border: 'none',
-                    color: 'var(--text-inverse)',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    boxShadow: 'var(--shadow-sm)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.375rem',
-                  }}
-                >
-                  <AletheiaIcon name="sparkles" size={16} />
-                  <span>Usar Modelo Pedagógico</span>
-                </button>
+                <Button variant="secondary" onClick={() => setIsSubjectModalOpen(true)}>
+                  + Criar Disciplina Manualmente
+                </Button>
               </Can>
-            )}
-            <Can action="manage_curriculum">
-              <button
-                type="button"
-                onClick={() => setIsSubjectModalOpen(true)}
-                className="btn btn-secondary ui-button ui-button--secondary"
-                style={{
-                  padding: '0.5rem 1.25rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border-medium)',
-                  backgroundColor: 'var(--bg-surface)',
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                + Criar Disciplina Manualmente
-              </button>
-            </Can>
-          </div>
-        </div>
+            </div>
+          }
+        />
       ) : (
         <div
           data-testid="subjects-grid"
