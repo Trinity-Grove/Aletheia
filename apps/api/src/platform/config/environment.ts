@@ -1,7 +1,10 @@
 import { z } from 'zod';
 
+export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace' | 'silent';
+
 export interface Environment {
   nodeEnv: 'development' | 'test' | 'production';
+  logLevel: LogLevel;
   databaseUrl: string;
   redisUrl: string | null;
   jwtSecret: string;
@@ -37,6 +40,7 @@ const optionalValue = z.preprocess(
 const environmentSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+    LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).optional(),
     DATABASE_URL: z.preprocess(
       (value) => value ?? '',
       z.string().trim().min(1, 'DATABASE_URL is required').pipe(z.url()),
@@ -90,6 +94,13 @@ const environmentSchema = z
   .transform(
     (environment): Environment => ({
       nodeEnv: environment.NODE_ENV,
+      logLevel:
+        environment.LOG_LEVEL ??
+        (environment.NODE_ENV === 'test'
+          ? 'silent'
+          : environment.NODE_ENV === 'production'
+            ? 'info'
+            : 'debug'),
       databaseUrl: environment.DATABASE_URL,
       redisUrl: environment.REDIS_URL ?? null,
       jwtSecret: environment.JWT_SECRET,
