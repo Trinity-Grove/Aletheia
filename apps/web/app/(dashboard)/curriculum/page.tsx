@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import { Alert } from "@aletheia/ui";
+import { Alert, useToast } from "@aletheia/ui";
 import type {
   AcademicYearResponseDto,
   CreateObjectiveDto,
@@ -12,11 +12,14 @@ import type {
   ObjectiveStatus,
   PedagogicalFramework,
   SubjectResponseDto,
+  UpdateObjectiveDto,
+  UpdateSubjectDto,
 } from "@aletheia/contracts";
 import { ProductShell } from "../../../src/components/product-shell";
 import { CurriculumView } from "../../../src/components/curriculum/curriculum-view";
 
 export default function CurriculumPage() {
+  const { toast } = useToast();
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
   const [activeLearnerId, setActiveLearnerId] = useState<string | null>(null);
@@ -159,9 +162,48 @@ export default function CurriculumPage() {
       credentials: 'include',
       body: JSON.stringify(dto),
     });
-    if (res.ok) {
-      const created = await res.json();
-      setSubjects((prev) => [...prev, created]);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Falha ao criar disciplina.');
+    }
+    const created = await res.json();
+    setSubjects((prev) => [...prev, created]);
+  };
+
+  const handleUpdateSubject = async (subjectId: string, dto: UpdateSubjectDto) => {
+    if (!familyId) return;
+    const res = await fetch(`/api/v1/families/${familyId}/curriculum/subjects/${subjectId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: 'include',
+      body: JSON.stringify(dto),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Falha ao atualizar disciplina.');
+    }
+    const updated = await res.json();
+    setSubjects((prev) => prev.map((s) => (s.id === subjectId ? updated : s)));
+  };
+
+  const handleArchiveSubject = async (subjectId: string) => {
+    if (!familyId) return;
+    try {
+      const res = await fetch(`/api/v1/families/${familyId}/curriculum/subjects/${subjectId}/archive`, {
+        method: "POST",
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Falha ao arquivar disciplina.');
+      }
+      setSubjects((prev) => prev.filter((s) => s.id !== subjectId));
+      toast({ variant: 'success', title: 'Disciplina arquivada.' });
+    } catch (err: unknown) {
+      toast({
+        variant: 'error',
+        title: err instanceof Error ? err.message : 'Falha ao arquivar disciplina.',
+      });
     }
   };
 
@@ -173,34 +215,71 @@ export default function CurriculumPage() {
       credentials: 'include',
       body: JSON.stringify(dto),
     });
-    if (res.ok) {
-      const created = await res.json();
-      setObjectives((prev) => [...prev, created]);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Falha ao criar objetivo.');
     }
+    const created = await res.json();
+    setObjectives((prev) => [...prev, created]);
   };
 
-  const handleToggleObjectiveStatus = async (objectiveId: string, nextStatus: ObjectiveStatus) => {
+  const handleUpdateObjective = async (objectiveId: string, dto: UpdateObjectiveDto) => {
     if (!familyId) return;
     const res = await fetch(`/api/v1/families/${familyId}/curriculum/objectives/${objectiveId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       credentials: 'include',
-      body: JSON.stringify({ status: nextStatus }),
+      body: JSON.stringify(dto),
     });
-    if (res.ok) {
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Falha ao atualizar objetivo.');
+    }
+    const updated = await res.json();
+    setObjectives((prev) => prev.map((o) => (o.id === objectiveId ? updated : o)));
+  };
+
+  const handleToggleObjectiveStatus = async (objectiveId: string, nextStatus: ObjectiveStatus) => {
+    if (!familyId) return;
+    try {
+      const res = await fetch(`/api/v1/families/${familyId}/curriculum/objectives/${objectiveId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Falha ao atualizar status do objetivo.');
+      }
       const updated = await res.json();
       setObjectives((prev) => prev.map((o) => (o.id === objectiveId ? updated : o)));
+    } catch (err: unknown) {
+      toast({
+        variant: 'error',
+        title: err instanceof Error ? err.message : 'Falha ao atualizar status do objetivo.',
+      });
     }
   };
 
   const handleDeleteObjective = async (objectiveId: string) => {
     if (!familyId) return;
-    const res = await fetch(`/api/v1/families/${familyId}/curriculum/objectives/${objectiveId}`, {
-      method: "DELETE",
-      credentials: 'include',
-    });
-    if (res.ok) {
+    try {
+      const res = await fetch(`/api/v1/families/${familyId}/curriculum/objectives/${objectiveId}`, {
+        method: "DELETE",
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Falha ao excluir objetivo.');
+      }
       setObjectives((prev) => prev.filter((o) => o.id !== objectiveId));
+      toast({ variant: 'success', title: 'Objetivo excluído.' });
+    } catch (err: unknown) {
+      toast({
+        variant: 'error',
+        title: err instanceof Error ? err.message : 'Falha ao excluir objetivo.',
+      });
     }
   };
 
@@ -228,7 +307,10 @@ export default function CurriculumPage() {
           learnerPlan={learnerPlan}
           onApplyTemplate={handleApplyTemplate}
           onCreateSubject={handleCreateSubject}
+          onUpdateSubject={handleUpdateSubject}
+          onArchiveSubject={handleArchiveSubject}
           onCreateObjective={handleCreateObjective}
+          onUpdateObjective={handleUpdateObjective}
           onToggleObjectiveStatus={handleToggleObjectiveStatus}
           onDeleteObjective={handleDeleteObjective}
         />

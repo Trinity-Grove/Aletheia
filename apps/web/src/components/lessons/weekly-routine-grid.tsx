@@ -235,7 +235,11 @@ export function WeeklyRoutineGrid({
                             <button
                               type="button"
                               data-testid={`delete-slot-btn-${slot.id}`}
-                              onClick={() => onDeleteSlot(slot.id)}
+                              onClick={() => {
+                                if (window.confirm('Excluir este bloco de rotina? Esta ação não pode ser desfeita.')) {
+                                  onDeleteSlot(slot.id);
+                                }
+                              }}
                               title="Excluir bloco de rotina"
                               style={{
                                 background: 'none',

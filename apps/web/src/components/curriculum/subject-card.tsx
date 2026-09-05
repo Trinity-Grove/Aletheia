@@ -9,7 +9,10 @@ export interface SubjectCardProps {
   subject: SubjectResponseDto;
   objectives: ObjectiveResponseDto[];
   onAddObjective: (subjectId: string) => void;
+  onEditSubject: (subject: SubjectResponseDto) => void;
+  onArchiveSubject: (subjectId: string) => void;
   onToggleStatus: (objectiveId: string, nextStatus: ObjectiveStatus) => void;
+  onEditObjective: (objective: ObjectiveResponseDto) => void;
   onDeleteObjective: (objectiveId: string) => void;
 }
 
@@ -17,7 +20,10 @@ export function SubjectCard({
   subject,
   objectives,
   onAddObjective,
+  onEditSubject,
+  onArchiveSubject,
   onToggleStatus,
+  onEditObjective,
   onDeleteObjective,
 }: SubjectCardProps) {
   const total = objectives.length;
@@ -83,12 +89,36 @@ export function SubjectCard({
             </h3>
           </div>
 
-          <Badge
-            data-testid={`subject-count-badge-${subject.id}`}
-            variant={percent === 100 ? 'emerald' : 'slate'}
-          >
-            {achieved}/{total} ({percent}%)
-          </Badge>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+            <Badge
+              data-testid={`subject-count-badge-${subject.id}`}
+              variant={percent === 100 ? 'emerald' : 'slate'}
+            >
+              {achieved}/{total} ({percent}%)
+            </Badge>
+            <Can action="manage_curriculum">
+              <IconButton
+                size="sm"
+                data-testid={`edit-subject-btn-${subject.id}`}
+                onClick={() => onEditSubject(subject)}
+                aria-label="Editar disciplina"
+              >
+                <AletheiaIcon name="pencil" size={14} />
+              </IconButton>
+              <IconButton
+                size="sm"
+                data-testid={`archive-subject-btn-${subject.id}`}
+                onClick={() => {
+                  if (window.confirm(`Arquivar a disciplina "${subject.name}"? Ela deixará de aparecer no currículo ativo.`)) {
+                    onArchiveSubject(subject.id);
+                  }
+                }}
+                aria-label="Arquivar disciplina"
+              >
+                <AletheiaIcon name="folder" size={14} />
+              </IconButton>
+            </Can>
+          </div>
         </div>
 
         {subject.description && (
@@ -198,8 +228,20 @@ export function SubjectCard({
                   <Can action="manage_curriculum">
                     <IconButton
                       size="sm"
+                      data-testid={`edit-objective-btn-${obj.id}`}
+                      onClick={() => onEditObjective(obj)}
+                      aria-label="Editar objetivo"
+                    >
+                      <AletheiaIcon name="pencil" size={14} />
+                    </IconButton>
+                    <IconButton
+                      size="sm"
                       data-testid={`delete-objective-btn-${obj.id}`}
-                      onClick={() => onDeleteObjective(obj.id)}
+                      onClick={() => {
+                        if (window.confirm(`Excluir o objetivo "${obj.title}"? Esta ação não pode ser desfeita.`)) {
+                          onDeleteObjective(obj.id);
+                        }
+                      }}
                       aria-label="Excluir objetivo"
                     >
                       <AletheiaIcon name="x" size={14} />

@@ -436,7 +436,11 @@ export function PortfolioGalleryView({
                           variant="ghost"
                           size="sm"
                           data-testid={`delete-portfolio-btn-${item.id}`}
-                          onClick={() => onDeleteItem(item.id)}
+                          onClick={() => {
+                            if (window.confirm('Excluir esta evidência do portfólio? Esta ação não pode ser desfeita.')) {
+                              onDeleteItem(item.id);
+                            }
+                          }}
                           style={{ color: 'var(--color-rose-600)' }}
                         >
                           Excluir

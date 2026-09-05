@@ -578,7 +578,11 @@ export function DailyAgendaView({
                           <button
                             type="button"
                             data-testid={`delete-lesson-btn-${item.id}`}
-                            onClick={() => onDeleteLesson(item.id)}
+                            onClick={() => {
+                              if (window.confirm('Excluir esta lição? Esta ação não pode ser desfeita.')) {
+                                onDeleteLesson(item.id);
+                              }
+                            }}
                             title="Excluir lição"
                             className="btn btn-sm"
                             style={{
@@ -603,7 +607,11 @@ export function DailyAgendaView({
                       <button
                         type="button"
                         data-testid={`delete-slot-btn-${item.id}`}
-                        onClick={() => onDeleteSlot(item.id)}
+                        onClick={() => {
+                          if (window.confirm('Excluir este bloco de rotina? Esta ação não pode ser desfeita.')) {
+                            onDeleteSlot(item.id);
+                          }
+                        }}
                         title="Excluir bloco de rotina"
                         className="btn btn-sm"
                         style={{

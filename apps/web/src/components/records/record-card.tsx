@@ -321,7 +321,11 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
               <IconButton
                 size="sm"
                 data-testid={`delete-record-btn-${record.id}`}
-                onClick={() => onDelete(record.id)}
+                onClick={() => {
+                  if (window.confirm('Excluir este registro de aprendizagem? Esta ação não pode ser desfeita.')) {
+                    onDelete(record.id);
+                  }
+                }}
                 aria-label="Excluir registro"
               >
                 <AletheiaIcon name="trash" size={12} />

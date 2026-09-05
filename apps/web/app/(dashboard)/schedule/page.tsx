@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { AletheiaIcon } from '@aletheia/ui';
+import { AletheiaIcon, useToast } from '@aletheia/ui';
 import type {
   CompleteLessonDto,
   CreateLessonPlanDto,
@@ -24,6 +24,7 @@ import { WeeklyRoutineGrid } from '../../../src/components/lessons/weekly-routin
 import { RoutineSlotModal } from '../../../src/components/lessons/routine-slot-modal';
 
 export default function SchedulePage() {
+  const { toast } = useToast();
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
   const [activeLearnerId, setActiveLearnerId] = useState<string | null>(null);
@@ -202,12 +203,19 @@ export default function SchedulePage() {
 
   const handleDeleteLesson = async (lessonId: string) => {
     if (!familyId) return;
-    const res = await fetch(`/api/v1/families/${familyId}/lessons/${lessonId}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
-    if (res.ok) {
+    try {
+      const res = await fetch(`/api/v1/families/${familyId}/lessons/${lessonId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Falha ao excluir lição.');
+      }
       await fetchAgenda();
+      toast({ variant: 'success', title: 'Lição excluída.' });
+    } catch (err: unknown) {
+      toast({ variant: 'error', title: err instanceof Error ? err.message : 'Falha ao excluir lição.' });
     }
   };
 
@@ -229,13 +237,20 @@ export default function SchedulePage() {
 
   const handleDeleteSlot = async (slotId: string) => {
     if (!familyId) return;
-    const res = await fetch(`/api/v1/families/${familyId}/schedule/slots/${slotId}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
-    if (res.ok) {
+    try {
+      const res = await fetch(`/api/v1/families/${familyId}/schedule/slots/${slotId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Falha ao excluir bloco de rotina.');
+      }
       await fetchSlots();
       await fetchAgenda();
+      toast({ variant: 'success', title: 'Bloco de rotina excluído.' });
+    } catch (err: unknown) {
+      toast({ variant: 'error', title: err instanceof Error ? err.message : 'Falha ao excluir bloco de rotina.' });
     }
   };
 

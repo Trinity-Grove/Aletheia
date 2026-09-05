@@ -12,6 +12,8 @@ import type {
   ObjectiveStatus,
   PedagogicalFramework,
   SubjectResponseDto,
+  UpdateObjectiveDto,
+  UpdateSubjectDto,
 } from '@aletheia/contracts';
 import { AcademicYearSwitcher } from './academic-year-switcher';
 import { TemplateModal } from './template-modal';
@@ -30,9 +32,12 @@ export interface CurriculumViewProps {
   learnerPlan: LearnerPlanResponseDto | null;
   onApplyTemplate: (template: PedagogicalFramework) => Promise<void>;
   onCreateSubject: (dto: CreateSubjectDto) => Promise<void>;
+  onUpdateSubject: (subjectId: string, dto: UpdateSubjectDto) => Promise<void>;
+  onArchiveSubject: (subjectId: string) => void;
   onCreateObjective: (dto: CreateObjectiveDto) => Promise<void>;
+  onUpdateObjective: (objectiveId: string, dto: UpdateObjectiveDto) => Promise<void>;
   onToggleObjectiveStatus: (objectiveId: string, nextStatus: ObjectiveStatus) => Promise<void>;
-  onDeleteObjective: (objectiveId: string) => Promise<void>;
+  onDeleteObjective: (objectiveId: string) => void;
 }
 
 export function CurriculumView({
@@ -45,13 +50,18 @@ export function CurriculumView({
   learnerPlan,
   onApplyTemplate,
   onCreateSubject,
+  onUpdateSubject,
+  onArchiveSubject,
   onCreateObjective,
+  onUpdateObjective,
   onToggleObjectiveStatus,
   onDeleteObjective,
 }: CurriculumViewProps) {
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
+  const [subjectToEdit, setSubjectToEdit] = useState<SubjectResponseDto | null>(null);
   const [selectedSubjectForObjective, setSelectedSubjectForObjective] = useState<SubjectResponseDto | null>(null);
+  const [objectiveToEdit, setObjectiveToEdit] = useState<ObjectiveResponseDto | null>(null);
 
   const getFrameworkLabel = (framework?: PedagogicalFramework) => {
     switch (framework) {
@@ -248,7 +258,10 @@ export function CurriculumView({
                 subject={subject}
                 objectives={subjectObjectives}
                 onAddObjective={() => setSelectedSubjectForObjective(subject)}
+                onEditSubject={(s) => setSubjectToEdit(s)}
+                onArchiveSubject={onArchiveSubject}
                 onToggleStatus={onToggleObjectiveStatus}
+                onEditObjective={(o) => setObjectiveToEdit(o)}
                 onDeleteObjective={onDeleteObjective}
               />
             );
@@ -264,20 +277,38 @@ export function CurriculumView({
       />
 
       <SubjectModal
-        isOpen={isSubjectModalOpen}
-        onClose={() => setIsSubjectModalOpen(false)}
+        isOpen={isSubjectModalOpen || Boolean(subjectToEdit)}
+        subjectToEdit={subjectToEdit}
+        onClose={() => {
+          setIsSubjectModalOpen(false);
+          setSubjectToEdit(null);
+        }}
         onSave={onCreateSubject}
+        onUpdate={onUpdateSubject}
       />
 
-      {selectedSubjectForObjective && activeLearner && (
+      {(selectedSubjectForObjective || objectiveToEdit) && activeLearner && (
         <ObjectiveModal
           isOpen={true}
-          subjectId={selectedSubjectForObjective.id}
-          subjectName={selectedSubjectForObjective.name}
+          subjectId={
+            selectedSubjectForObjective?.id ??
+            subjects.find((s) => s.id === objectiveToEdit?.subjectId)?.id ??
+            ''
+          }
+          subjectName={
+            selectedSubjectForObjective?.name ??
+            subjects.find((s) => s.id === objectiveToEdit?.subjectId)?.name ??
+            ''
+          }
           learnerId={activeLearner.id}
           academicYearId={activeYearId}
-          onClose={() => setSelectedSubjectForObjective(null)}
+          objectiveToEdit={objectiveToEdit}
+          onClose={() => {
+            setSelectedSubjectForObjective(null);
+            setObjectiveToEdit(null);
+          }}
           onSave={onCreateObjective}
+          onUpdate={onUpdateObjective}
         />
       )}
     </div>

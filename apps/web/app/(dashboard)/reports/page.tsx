@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useToast } from '@aletheia/ui';
 import type {
   GenerateReportDto,
   LearnerSummaryDto,
@@ -10,6 +11,7 @@ import { ProductShell } from '../../../src/components/product-shell';
 import { ReportGeneratorView } from '../../../src/components/reports/report-generator-view';
 
 export default function ReportsPage() {
+  const { toast } = useToast();
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
   const [activeLearnerId, setActiveLearnerId] = useState<string | null>(null);
@@ -90,12 +92,19 @@ export default function ReportsPage() {
 
   const handleDeleteReport = async (reportId: string) => {
     if (!familyId) return;
-    const res = await fetch(`/api/v1/families/${familyId}/reports/${reportId}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
-    if (res.ok) {
+    try {
+      const res = await fetch(`/api/v1/families/${familyId}/reports/${reportId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Falha ao excluir relatório.');
+      }
       await fetchReports();
+      toast({ variant: 'success', title: 'Relatório excluído.' });
+    } catch (err: unknown) {
+      toast({ variant: 'error', title: err instanceof Error ? err.message : 'Falha ao excluir relatório.' });
     }
   };
 
