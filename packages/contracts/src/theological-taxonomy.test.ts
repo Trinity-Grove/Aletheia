@@ -45,10 +45,20 @@ describe('Theological Position Definition Contracts', () => {
     ).toThrow();
   });
 
-  it('requires a traditionId', () => {
+  it('allows a missing traditionId -- cross-cutting positions (e.g. eschatological schools of thought) are not owned by one tradition', () => {
+    const parsed = createTheologicalPositionDefinitionSchema.parse({
+      code: 'ESCHATOLOGY.MILLENNIUM.AMILLENNIALISM',
+      topic: 'eschatology.millennium',
+      name: 'Amilenismo',
+    });
+    expect(parsed.traditionId).toBeUndefined();
+  });
+
+  it('rejects a malformed (non-UUID) traditionId when one is provided', () => {
     expect(() =>
       createTheologicalPositionDefinitionSchema.parse({
         code: 'REFORMED.SOTERIOLOGY.CALVINISM',
+        traditionId: 'not-a-uuid',
         topic: 'soteriology',
         name: 'x',
       }),

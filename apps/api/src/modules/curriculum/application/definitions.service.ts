@@ -20,6 +20,7 @@ import type {
   TheologicalTraditionDefinition,
   TheologicalPositionDefinition,
   ProgressionPolicy,
+  BibleTranslationDefinition,
 } from '@prisma/client';
 import type {
   CreateLearningDomainOutput,
@@ -60,6 +61,8 @@ import type {
   TheologicalPositionDefinitionResponseDto,
   CreateProgressionPolicyOutput,
   ProgressionPolicyResponseDto,
+  CreateBibleTranslationDefinitionOutput,
+  BibleTranslationDefinitionResponseDto,
   DefinitionStatus,
 } from '@aletheia/contracts';
 import { DefinitionsRepository } from '../infrastructure/definitions.repository.js';
@@ -474,6 +477,30 @@ export class DefinitionsService {
     return this.toProgressionPolicyDto(row);
   }
 
+  // Bible Translation Definition
+  async createBibleTranslationDefinition(
+    dto: CreateBibleTranslationDefinitionOutput,
+  ): Promise<BibleTranslationDefinitionResponseDto> {
+    const row = await this.withWriteErrorMapping(() => this.repository.createBibleTranslationDefinition(dto));
+    return this.toBibleTranslationDefinitionDto(row);
+  }
+
+  async listBibleTranslationDefinitions(): Promise<BibleTranslationDefinitionResponseDto[]> {
+    const rows = await this.repository.listBibleTranslationDefinitions();
+    return rows.map((row) => this.toBibleTranslationDefinitionDto(row));
+  }
+
+  async transitionBibleTranslationDefinitionStatus(
+    id: string,
+    status: DefinitionStatus,
+  ): Promise<BibleTranslationDefinitionResponseDto> {
+    const existing = await this.repository.findBibleTranslationDefinitionById(id);
+    if (!existing) throw new NotFoundException('Bible translation definition not found.');
+    const update = computeStatusTransition(existing.status as DefinitionStatus, status);
+    const row = await this.repository.updateBibleTranslationDefinitionStatus(id, update);
+    return this.toBibleTranslationDefinitionDto(row);
+  }
+
   // Helpers
   private async requireCurriculumDefinition(id: string): Promise<void> {
     const existing = await this.repository.findCurriculumDefinitionById(id);
@@ -800,6 +827,26 @@ export class DefinitionsService {
       rules: row.rules as Record<string, unknown>,
       competencyDefinitionId: row.competencyDefinitionId,
       curriculumDefinitionId: row.curriculumDefinitionId,
+      metadata: row.metadata as Record<string, unknown>,
+      createdAt: row.createdAt.toISOString(),
+      publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,
+      deprecatedAt: row.deprecatedAt ? row.deprecatedAt.toISOString() : null,
+    };
+  }
+
+  private toBibleTranslationDefinitionDto(row: BibleTranslationDefinition): BibleTranslationDefinitionResponseDto {
+    return {
+      id: row.id,
+      code: row.code,
+      version: row.version,
+      status: row.status as DefinitionStatus,
+      schemaVersion: row.schemaVersion,
+      name: row.name,
+      language: row.language,
+      youVersionId: row.youVersionId,
+      translationPhilosophy: row.translationPhilosophy,
+      publisher: row.publisher,
+      licensingNotes: row.licensingNotes,
       metadata: row.metadata as Record<string, unknown>,
       createdAt: row.createdAt.toISOString(),
       publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,

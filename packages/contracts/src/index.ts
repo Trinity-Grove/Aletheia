@@ -19,6 +19,7 @@ export * from './progression-policy.js';
 export * from './progression-evaluation.js';
 export * from './evidence-submission.js';
 export * from './assessment-result.js';
+export * from './bible-translation-definition.js';
 export * from './lesson.js';
 export * from './schedule.js';
 export * from './record.js';

@@ -1364,7 +1364,12 @@ model TheologicalPositionDefinition {
   version       Int              @default(1)
   status        DefinitionStatus @default(DRAFT)
   schemaVersion String           @default("1.0.0") @map("schema_version")
-  traditionId   String           @map("tradition_id") @db.Uuid
+  // Nullable (Fase 3, issue #96 section 15): cross-cutting eschatological
+  // schools of thought (premillennialism, amillennialism, preterism, ...)
+  // aren't owned by one denomination/tradition, unlike most doctrinal
+  // positions -- see the comment in packages/contracts/src/
+  // theological-taxonomy.ts for the full reasoning.
+  traditionId   String?          @map("tradition_id") @db.Uuid
   topic         String
   name          String
   description   String?
@@ -1373,7 +1378,7 @@ model TheologicalPositionDefinition {
   publishedAt   DateTime?        @map("published_at") @db.Timestamptz
   deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
 
-  tradition     TheologicalTraditionDefinition @relation(fields: [traditionId], references: [id], onDelete: Restrict)
+  tradition     TheologicalTraditionDefinition? @relation(fields: [traditionId], references: [id], onDelete: Restrict)
 
   @@unique([code, version])
   @@index([code])
@@ -1616,4 +1621,57 @@ model AssessmentResultScore {
   @@index([assessmentResultId])
   @@index([rubricCriterionId])
   @@map("assessment_result_scores")
+}
+
+// Bible translation registry (issue #96 Fase 3, section 16) --
+// METADATA ONLY. This table records which translations exist and their
+// properties; it never stores the actual scriptural text. Real passage
+// text is fetched live from YouVersion's API on demand
+// (YouVersionService.fetchPassage) and never persisted -- "texto bíblico
+// é desacoplado da aplicação" holds by construction, since there is
+// literally no text-content column here to decouple.
+//
+// `youVersionId` is the numeric id YouVersion's API expects (e.g.
+// "1608" for Almeida Revista e Atualizada) -- kept as a plain string
+// since that's exactly the type YouVersionService.fetchPassage already
+// takes. `code` is the human-facing abbreviation (e.g. "ARA"), matching
+// this codebase's existing Definition/Version code convention.
+// `translationPhilosophy` is free-form (equivalência formal/funcional/
+// dinâmica/paráfrase, or anything not yet named), not a closed enum, per
+// this issue's own anti-hardcode principle. "Disponibilidade pode ser
+// ativada/desativada" (section 16) reuses the existing DRAFT/PUBLISHED/
+// DEPRECATED/ARCHIVED lifecycle rather than a separate toggle field --
+// PUBLISHED is available, DEPRECATED/ARCHIVED is not, exactly like every
+// other Definition/Version table.
+//
+// This is the strangler-fig proof step (like PR #98 for
+// PedagogicalModelDefinition): it proves this table can represent the
+// same catalog `apps/api/src/modules/devotional/infrastructure/
+// youversion.service.ts`'s hardcoded `POPULAR_BIBLE_VERSIONS` array
+// already provides. That array is NOT removed or cut over to read from
+// here in this PR -- same reason every prior strangler-fig proof step in
+// this project has kept the old path alive until a separate,
+// human-approved cutover.
+model BibleTranslationDefinition {
+  id                     String           @id @default(uuid()) @db.Uuid
+  code                   String
+  version                Int              @default(1)
+  status                 DefinitionStatus @default(DRAFT)
+  schemaVersion          String           @default("1.0.0") @map("schema_version")
+  name                   String
+  language               String
+  youVersionId           String           @map("you_version_id")
+  translationPhilosophy  String?          @map("translation_philosophy")
+  publisher              String?
+  licensingNotes         String?          @map("licensing_notes")
+  metadata               Json             @default("{}")
+  createdAt              DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  publishedAt            DateTime?        @map("published_at") @db.Timestamptz
+  deprecatedAt           DateTime?        @map("deprecated_at") @db.Timestamptz
+
+  @@unique([code, version])
+  @@index([code])
+  @@index([status])
+  @@index([youVersionId])
+  @@map("bible_translation_definitions")
 }

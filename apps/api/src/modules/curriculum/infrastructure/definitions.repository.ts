@@ -19,6 +19,7 @@ import type {
   TheologicalTraditionDefinition,
   TheologicalPositionDefinition,
   ProgressionPolicy,
+  BibleTranslationDefinition,
   Prisma,
 } from '@prisma/client';
 import type {
@@ -41,6 +42,7 @@ import type {
   CreateTheologicalTraditionDefinitionOutput,
   CreateTheologicalPositionDefinitionOutput,
   CreateProgressionPolicyOutput,
+  CreateBibleTranslationDefinitionOutput,
 } from '@aletheia/contracts';
 import { PrismaService } from '../../../platform/database/prisma.service.js';
 import type { DefinitionStatusUpdate } from '../application/definition-status-transition.js';
@@ -484,7 +486,7 @@ export class DefinitionsRepository {
         version: dto.version,
         status: dto.status,
         schemaVersion: dto.schemaVersion,
-        traditionId: dto.traditionId,
+        traditionId: dto.traditionId ?? null,
         topic: dto.topic,
         name: dto.name,
         description: dto.description ?? null,
@@ -539,5 +541,58 @@ export class DefinitionsRepository {
 
   updateProgressionPolicyStatus(id: string, update: DefinitionStatusUpdate): Promise<ProgressionPolicy> {
     return this.prisma.progressionPolicy.update({ where: { id }, data: update });
+  }
+
+  // Bible Translation Definition
+  createBibleTranslationDefinition(
+    dto: CreateBibleTranslationDefinitionOutput,
+  ): Promise<BibleTranslationDefinition> {
+    return this.prisma.bibleTranslationDefinition.create({
+      data: {
+        code: dto.code,
+        version: dto.version,
+        status: dto.status,
+        schemaVersion: dto.schemaVersion,
+        name: dto.name,
+        language: dto.language,
+        youVersionId: dto.youVersionId,
+        translationPhilosophy: dto.translationPhilosophy ?? null,
+        publisher: dto.publisher ?? null,
+        licensingNotes: dto.licensingNotes ?? null,
+        metadata: dto.metadata as Prisma.InputJsonValue,
+      },
+    });
+  }
+
+  listBibleTranslationDefinitions(): Promise<BibleTranslationDefinition[]> {
+    return this.prisma.bibleTranslationDefinition.findMany({ orderBy: [{ code: 'asc' }, { version: 'desc' }] });
+  }
+
+  findBibleTranslationDefinitionById(id: string): Promise<BibleTranslationDefinition | null> {
+    return this.prisma.bibleTranslationDefinition.findUnique({ where: { id } });
+  }
+
+  updateBibleTranslationDefinitionStatus(
+    id: string,
+    update: DefinitionStatusUpdate,
+  ): Promise<BibleTranslationDefinition> {
+    return this.prisma.bibleTranslationDefinition.update({ where: { id }, data: update });
+  }
+
+  // Latest PUBLISHED row per code -- used by the read-only compare
+  // endpoint to resolve a translation code to the youVersionId
+  // YouVersionService.fetchPassage needs.
+  async findLatestPublishedBibleTranslationDefinitionsByCodes(
+    codes: string[],
+  ): Promise<BibleTranslationDefinition[]> {
+    const candidates = await this.prisma.bibleTranslationDefinition.findMany({
+      where: { code: { in: codes }, status: 'PUBLISHED' },
+      orderBy: { version: 'desc' },
+    });
+    const latestByCode = new Map<string, BibleTranslationDefinition>();
+    for (const row of candidates) {
+      if (!latestByCode.has(row.code)) latestByCode.set(row.code, row);
+    }
+    return codes.map((code) => latestByCode.get(code)).filter((row): row is BibleTranslationDefinition => Boolean(row));
   }
 }

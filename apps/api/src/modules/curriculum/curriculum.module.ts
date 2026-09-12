@@ -3,12 +3,14 @@ import { ProgressionRepository } from './infrastructure/progression.repository.j
 import { ProgressionService } from './application/progression.service.js';
 import { ProgressionController } from './presentation/progression.controller.js';
 import { DatabaseModule } from '../../platform/database/database.module.js';
+import { DevotionalModule } from '../devotional/devotional.module.js';
 import { CurriculumRepository } from './infrastructure/curriculum.repository.js';
 import { ObjectiveRepository } from './infrastructure/objective.repository.js';
 import { CurriculumTemplateEngine } from './infrastructure/curriculum-template.engine.js';
 import { PedagogicalModelDefinitionResolver } from './infrastructure/pedagogical-model-definition.resolver.js';
 import { PedagogicalModelDefinitionSeeder } from './infrastructure/pedagogical-model-definition.seeder.js';
 import { EvidenceTypeDefinitionSeeder } from './infrastructure/evidence-type-definition.seeder.js';
+import { BibleTranslationDefinitionSeeder } from './infrastructure/bible-translation-definition.seeder.js';
 import { DefinitionsRepository } from './infrastructure/definitions.repository.js';
 import { ProfilesRepository } from './infrastructure/profiles.repository.js';
 import { EvidenceSubmissionRepository } from './infrastructure/evidence-submission.repository.js';
@@ -19,6 +21,7 @@ import { DefinitionsService } from './application/definitions.service.js';
 import { ProfilesService } from './application/profiles.service.js';
 import { EvidenceSubmissionService } from './application/evidence-submission.service.js';
 import { AssessmentResultService } from './application/assessment-result.service.js';
+import { BibleTranslationCompareService } from './application/bible-translation-compare.service.js';
 import { CURRICULUM_PUBLIC_API } from './application/public-api.js';
 import { CurriculumController } from './presentation/curriculum.controller.js';
 import { ObjectiveController } from './presentation/objective.controller.js';
@@ -26,9 +29,10 @@ import { DefinitionsController } from './presentation/definitions.controller.js'
 import { ProfilesController } from './presentation/profiles.controller.js';
 import { EvidenceSubmissionController } from './presentation/evidence-submission.controller.js';
 import { AssessmentResultController } from './presentation/assessment-result.controller.js';
+import { BibleTranslationCompareController } from './presentation/bible-translation-compare.controller.js';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, DevotionalModule],
   controllers: [
     ProgressionController,
     CurriculumController,
@@ -37,6 +41,7 @@ import { AssessmentResultController } from './presentation/assessment-result.con
     ProfilesController,
     EvidenceSubmissionController,
     AssessmentResultController,
+    BibleTranslationCompareController,
   ],
   providers: [
     ProgressionRepository,
@@ -47,6 +52,7 @@ import { AssessmentResultController } from './presentation/assessment-result.con
     PedagogicalModelDefinitionResolver,
     PedagogicalModelDefinitionSeeder,
     EvidenceTypeDefinitionSeeder,
+    BibleTranslationDefinitionSeeder,
     DefinitionsRepository,
     ProfilesRepository,
     EvidenceSubmissionRepository,
@@ -57,6 +63,7 @@ import { AssessmentResultController } from './presentation/assessment-result.con
     ProfilesService,
     EvidenceSubmissionService,
     AssessmentResultService,
+    BibleTranslationCompareService,
     {
       provide: CURRICULUM_PUBLIC_API,
       useExisting: CurriculumService,

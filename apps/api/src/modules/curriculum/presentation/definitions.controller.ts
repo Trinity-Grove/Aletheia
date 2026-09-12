@@ -20,6 +20,7 @@ import {
   createTheologicalTraditionDefinitionSchema,
   createTheologicalPositionDefinitionSchema,
   createProgressionPolicySchema,
+  createBibleTranslationDefinitionSchema,
   transitionDefinitionStatusSchema,
   type CreateLearningDomainOutput,
   type LearningDomainResponseDto,
@@ -59,6 +60,8 @@ import {
   type TheologicalPositionDefinitionResponseDto,
   type CreateProgressionPolicyOutput,
   type ProgressionPolicyResponseDto,
+  type CreateBibleTranslationDefinitionOutput,
+  type BibleTranslationDefinitionResponseDto,
   type TransitionDefinitionStatusDto,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, PlatformAdminGuard } from '../../../platform/auth/index.js';
@@ -505,5 +508,30 @@ export class DefinitionsController {
     @Body(new ZodValidationPipe(transitionDefinitionStatusSchema)) dto: TransitionDefinitionStatusDto,
   ): Promise<ProgressionPolicyResponseDto> {
     return this.definitionsService.transitionProgressionPolicyStatus(id, dto.status);
+  }
+
+  // Bible Translation Definitions
+  @Post('bible-translation-definitions')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a Bible translation definition' })
+  async createBibleTranslationDefinition(
+    @Body(new ZodValidationPipe(createBibleTranslationDefinitionSchema)) dto: CreateBibleTranslationDefinitionOutput,
+  ): Promise<BibleTranslationDefinitionResponseDto> {
+    return this.definitionsService.createBibleTranslationDefinition(dto);
+  }
+
+  @Get('bible-translation-definitions')
+  @ApiOperation({ summary: 'List Bible translation definitions' })
+  async listBibleTranslationDefinitions(): Promise<BibleTranslationDefinitionResponseDto[]> {
+    return this.definitionsService.listBibleTranslationDefinitions();
+  }
+
+  @Patch('bible-translation-definitions/:id/status')
+  @ApiOperation({ summary: 'Transition a Bible translation definition status' })
+  async transitionBibleTranslationDefinitionStatus(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(transitionDefinitionStatusSchema)) dto: TransitionDefinitionStatusDto,
+  ): Promise<BibleTranslationDefinitionResponseDto> {
+    return this.definitionsService.transitionBibleTranslationDefinitionStatus(id, dto.status);
   }
 }
