@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { upsertTheologicalProfileSchema } from './theological-profile.js';
 
 describe('Theological Profile Contracts', () => {
+  it.each([{ '': 'POSITION' }, { eschatology: 'invalid-code' }])('rejects malformed topic overrides: %j', (topicOverrides) => {
+    expect(upsertTheologicalProfileSchema.safeParse({ topicOverrides }).success).toBe(false);
+  });
   it('validates an empty profile (no preference set yet)', () => {
     const parsed = upsertTheologicalProfileSchema.parse({});
     expect(parsed.preferredTraditionCode).toBeUndefined();

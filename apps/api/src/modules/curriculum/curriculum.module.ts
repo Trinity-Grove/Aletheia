@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
+import { ProgressionRepository } from './infrastructure/progression.repository.js';
+import { ProgressionService } from './application/progression.service.js';
+import { ProgressionController } from './presentation/progression.controller.js';
 import { DatabaseModule } from '../../platform/database/database.module.js';
 import { CurriculumRepository } from './infrastructure/curriculum.repository.js';
 import { ObjectiveRepository } from './infrastructure/objective.repository.js';
@@ -27,6 +30,7 @@ import { AssessmentResultController } from './presentation/assessment-result.con
 @Module({
   imports: [DatabaseModule],
   controllers: [
+    ProgressionController,
     CurriculumController,
     ObjectiveController,
     DefinitionsController,
@@ -35,6 +39,8 @@ import { AssessmentResultController } from './presentation/assessment-result.con
     AssessmentResultController,
   ],
   providers: [
+    ProgressionRepository,
+    ProgressionService,
     CurriculumRepository,
     ObjectiveRepository,
     CurriculumTemplateEngine,

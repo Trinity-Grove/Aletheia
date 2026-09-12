@@ -36,6 +36,8 @@ model User {
   authoredEvidenceSubmissions  EvidenceSubmission[] @relation("EvidenceSubmissionAuthor")
   validatedEvidenceSubmissions EvidenceSubmission[] @relation("EvidenceSubmissionValidator")
   assessmentResultsAssessed    AssessmentResult[]   @relation("AssessmentResultAssessor")
+  authoredPedagogicalProfiles  PedagogicalProfile[] @relation("PedagogicalProfileAuthor")
+  authoredTheologicalProfiles  TheologicalProfile[] @relation("TheologicalProfileAuthor")
 
   @@map("users")
 }
@@ -1407,9 +1409,11 @@ model PedagogicalProfile {
   primaryModelCode String   @map("primary_model_code")
   secondaryModels  Json     @default("[]") @map("secondary_models")
   overrides        Json     @default("{}")
+  createdByUserId  String?  @map("created_by_user_id") @db.Uuid
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  createdBy User? @relation("PedagogicalProfileAuthor", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   @@unique([familyId, version])
   @@index([familyId])
@@ -1430,9 +1434,11 @@ model TheologicalProfile {
   version                Int      @default(1)
   preferredTraditionCode String?  @map("preferred_tradition_code")
   topicOverrides         Json     @default("{}") @map("topic_overrides")
+  createdByUserId         String?  @map("created_by_user_id") @db.Uuid
   createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  createdBy User? @relation("TheologicalProfileAuthor", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   @@unique([familyId, version])
   @@index([familyId])

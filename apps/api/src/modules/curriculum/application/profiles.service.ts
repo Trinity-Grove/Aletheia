@@ -27,8 +27,9 @@ export class ProfilesService {
   async upsertPedagogicalProfile(
     familyId: string,
     dto: UpsertPedagogicalProfileOutput,
+    actorId: string,
   ): Promise<PedagogicalProfileResponseDto> {
-    const row = await this.repository.createPedagogicalProfileVersion(familyId, dto);
+    const row = await this.repository.createPedagogicalProfileVersion(familyId, dto, actorId);
     return this.toPedagogicalProfileDto(row);
   }
 
@@ -45,8 +46,9 @@ export class ProfilesService {
   async upsertTheologicalProfile(
     familyId: string,
     dto: UpsertTheologicalProfileOutput,
+    actorId: string,
   ): Promise<TheologicalProfileResponseDto> {
-    const row = await this.repository.createTheologicalProfileVersion(familyId, dto);
+    const row = await this.repository.createTheologicalProfileVersion(familyId, dto, actorId);
     return this.toTheologicalProfileDto(row);
   }
 
@@ -61,6 +63,7 @@ export class ProfilesService {
       familyId: row.familyId,
       version: row.version,
       primaryModelCode: row.primaryModelCode,
+      createdByUserId: row.createdByUserId,
       secondaryModels: row.secondaryModels as unknown as SecondaryPedagogicalModel[],
       overrides: row.overrides as Record<string, unknown>,
       createdAt: row.createdAt.toISOString(),
@@ -73,6 +76,7 @@ export class ProfilesService {
       familyId: row.familyId,
       version: row.version,
       preferredTraditionCode: row.preferredTraditionCode,
+      createdByUserId: row.createdByUserId,
       topicOverrides: row.topicOverrides as Record<string, string>,
       createdAt: row.createdAt.toISOString(),
     };
