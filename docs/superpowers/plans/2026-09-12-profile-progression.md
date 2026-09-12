@@ -12,26 +12,26 @@ Work only in this worktree. Reuse family guards and authenticated actor. Keep hi
 
 ## Task 1: Profile reference integrity
 Files: curriculum profiles.service.ts, profiles.repository.ts, profile contracts, test/profiles.integration-spec.ts.
-- [ ] Establish baseline and seed published definitions in profile integration fixtures.
-- [ ] Add failing API tests: unknown/draft models, unknown traditions, mismatched position topics, duplicate secondary models; history is unchanged after rejection.
-- [ ] Query published definitions by code, validate all references before create, preserve cross-tradition overrides.
-- [ ] Run profile integration and contract suites.
+- [x] Establish baseline and seed published definitions in profile integration fixtures.
+- [x] Add failing API tests: unknown/draft models, unknown traditions, mismatched position topics, duplicate secondary models; history is unchanged after rejection.
+- [x] Query published definitions by code, validate all references before create, preserve cross-tradition overrides.
+- [x] Run profile integration and contract suites.
 
 ## Task 2: Attributable concurrent profile history
 Files: schema.prisma, new additive SQL migration, profiles controller/service/repository/contracts, profile integration tests.
-- [ ] Add failing tests asserting session actor, spoof prevention, and parallel successful writes with distinct consecutive versions.
-- [ ] Add nullable createdByUserId relation for historical rows; pass CurrentUser to writes and serialize in responses.
-- [ ] Lock family row within transaction before allocating/inserting version; validate references in the transaction.
-- [ ] Apply migration to isolated test database; run profile tests and typecheck.
+- [x] Add failing tests asserting session actor, spoof prevention, and parallel successful writes with distinct consecutive versions.
+- [x] Add nullable createdByUserId relation for historical rows; pass CurrentUser to writes and serialize in responses.
+- [x] Lock family row within transaction before allocating/inserting version; validate references in the transaction.
+- [x] Apply migration to isolated test database; run profile tests and typecheck.
 
 ## Task 3: Executable progression
 Files: new progression evaluation contract, service/repository/controller and tests, curriculum.module.ts, contracts/index.ts.
-- [ ] Define strict EVIDENCE_COUNT rule and evaluation request/response; write failing tests for actual counts and prerequisite decisions.
-- [ ] Implement snapshot-consistent family-scoped evaluation over validated evidence and exact definition versions.
-- [ ] Validate scopes, publication, unsupported schemas/types, missing/cyclic prerequisites and bounded traversal.
-- [ ] Wire endpoint with existing family guards; run unit/integration tests and typecheck.
+- [x] Define strict EVIDENCE_COUNT rule and evaluation request/response; write failing tests for actual counts and prerequisite decisions.
+- [x] Implement snapshot-consistent family-scoped evaluation over validated evidence and exact definition versions.
+- [x] Validate scopes, publication, unsupported schemas/types, missing/cyclic prerequisites and bounded traversal.
+- [x] Wire endpoint with existing family guards; run unit/integration tests and typecheck.
 
 ## Completion
-- [ ] Review entire diff for spec coverage and regressions.
-- [ ] Run relevant contracts, curriculum integration, API typecheck/lint and boundaries.
-- [ ] Commit scoped changes and report evidence and remaining limitations.
+- [x] Review entire diff for spec coverage and regressions.
+- [x] Run relevant contracts, curriculum integration, API typecheck/lint and boundaries.
+- [x] Commit scoped changes and report evidence and remaining limitations.
