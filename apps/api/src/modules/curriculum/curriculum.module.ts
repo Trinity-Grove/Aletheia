@@ -5,6 +5,7 @@ import { CurriculumRepository } from './infrastructure/curriculum.repository.js'
 import { ObjectiveRepository } from './infrastructure/objective.repository.js';
 import { CurriculumTemplateEngine } from './infrastructure/curriculum-template.engine.js';
 import { PedagogicalModelDefinitionResolver } from './infrastructure/pedagogical-model-definition.resolver.js';
+import { TheologicalTraditionCatalogResolver } from './infrastructure/theological-tradition-catalog.resolver.js';
 import { PedagogicalModelDefinitionSeeder } from './infrastructure/pedagogical-model-definition.seeder.js';
 import { EvidenceTypeDefinitionSeeder } from './infrastructure/evidence-type-definition.seeder.js';
 import { BibleTranslationDefinitionSeeder } from './infrastructure/bible-translation-definition.seeder.js';
@@ -50,6 +51,7 @@ import { CurriculumPackController } from './presentation/curriculum-pack.control
     ObjectiveRepository,
     CurriculumTemplateEngine,
     PedagogicalModelDefinitionResolver,
+    TheologicalTraditionCatalogResolver,
     PedagogicalModelDefinitionSeeder,
     EvidenceTypeDefinitionSeeder,
     BibleTranslationDefinitionSeeder,

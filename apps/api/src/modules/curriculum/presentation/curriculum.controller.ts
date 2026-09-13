@@ -25,6 +25,7 @@ import {
   type LearnerPlanResponseDto,
   type PedagogicalModelCatalogEntryDto,
   type SubjectResponseDto,
+  type TheologicalTraditionCatalogEntryDto,
   type UpdateSubjectDto,
   type UpsertLearnerPlanDto,
 } from '@aletheia/contracts';
@@ -129,6 +130,17 @@ export class CurriculumController {
   @ApiOperation({ summary: 'List published pedagogical model templates a family can apply' })
   async listTemplateCatalog(): Promise<PedagogicalModelCatalogEntryDto[]> {
     return this.curriculumService.listPublishedTemplateCatalog();
+  }
+
+  // Theological Tradition Catalog (issue #126 item 1) -- same reasoning
+  // and guard pattern as the template catalog above: a family discovers
+  // a new PUBLISHED tradition without a release, to populate the
+  // pedagogical/theological profile settings UI's "preferred tradition"
+  // dropdown.
+  @Get('theological-traditions/catalog')
+  @ApiOperation({ summary: 'List published theological traditions a family can prefer' })
+  async listTheologicalTraditionCatalog(): Promise<TheologicalTraditionCatalogEntryDto[]> {
+    return this.curriculumService.listPublishedTheologicalTraditionCatalog();
   }
 
   // Apply Template Accelerator
