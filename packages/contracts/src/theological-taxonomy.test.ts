@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createTheologicalTraditionDefinitionSchema,
   createTheologicalPositionDefinitionSchema,
+  theologicalTraditionCatalogEntrySchema,
 } from './theological-taxonomy.js';
 
 const TRADITION_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
@@ -63,5 +64,16 @@ describe('Theological Position Definition Contracts', () => {
         name: 'x',
       }),
     ).toThrow();
+  });
+});
+
+describe('Theological Tradition Catalog Entry Contract', () => {
+  it('validates a lean catalog entry', () => {
+    const parsed = theologicalTraditionCatalogEntrySchema.parse({
+      code: 'REFORMED',
+      name: 'Reformada',
+      description: null,
+    });
+    expect(parsed.code).toBe('REFORMED');
   });
 });
