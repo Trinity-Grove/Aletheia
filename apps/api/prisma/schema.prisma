@@ -8,34 +8,34 @@ datasource db {
 }
 
 model User {
-  id                      String                    @id @default(uuid()) @db.Uuid
-  email                   String                    @unique
-  passwordHash            String                    @map("password_hash")
-  fullName                String                    @map("full_name")
-  emailVerifiedAt         DateTime?                 @map("email_verified_at") @db.Timestamptz
-  mfaEnabled              Boolean                   @default(false) @map("mfa_enabled")
+  id                           String                   @id @default(uuid()) @db.Uuid
+  email                        String                   @unique
+  passwordHash                 String                   @map("password_hash")
+  fullName                     String                   @map("full_name")
+  emailVerifiedAt              DateTime?                @map("email_verified_at") @db.Timestamptz
+  mfaEnabled                   Boolean                  @default(false) @map("mfa_enabled")
   // Real platform-admin role (issue #101), replacing the temporary
   // "guardian of any family" proxy PR #100 used for
   // /admin/curriculum-definitions. Never auto-demoted -- see
   // AuthService's platform-admin bootstrap sync for how this gets set.
-  isPlatformAdmin         Boolean                   @default(false) @map("is_platform_admin")
-  createdAt               DateTime                  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt               DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
-  memberships             FamilyMember[]
-  notifications           NotificationItem[]
-  exportJobs              DataExportJob[]
-  refreshTokens           RefreshToken[]
-  emailVerificationTokens EmailVerificationToken[]
-  passwordResetTokens     PasswordResetToken[]
-  auditLogEntries         AccountAuditLogEntry[]
-  mfaSecret               MfaSecret?
-  mfaRecoveryCodes        MfaRecoveryCode[]
-  mfaSetupChallenges      MfaSetupChallenge[]
-  mfaLoginChallenges      MfaLoginChallenge[]
-  generatedReports        OfficialReport[]
-  authoredEvidenceSubmissions  EvidenceSubmission[] @relation("EvidenceSubmissionAuthor")
-  validatedEvidenceSubmissions EvidenceSubmission[] @relation("EvidenceSubmissionValidator")
-  assessmentResultsAssessed    AssessmentResult[]   @relation("AssessmentResultAssessor")
+  isPlatformAdmin              Boolean                  @default(false) @map("is_platform_admin")
+  createdAt                    DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                    DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
+  memberships                  FamilyMember[]
+  notifications                NotificationItem[]
+  exportJobs                   DataExportJob[]
+  refreshTokens                RefreshToken[]
+  emailVerificationTokens      EmailVerificationToken[]
+  passwordResetTokens          PasswordResetToken[]
+  auditLogEntries              AccountAuditLogEntry[]
+  mfaSecret                    MfaSecret?
+  mfaRecoveryCodes             MfaRecoveryCode[]
+  mfaSetupChallenges           MfaSetupChallenge[]
+  mfaLoginChallenges           MfaLoginChallenge[]
+  generatedReports             OfficialReport[]
+  authoredEvidenceSubmissions  EvidenceSubmission[]     @relation("EvidenceSubmissionAuthor")
+  validatedEvidenceSubmissions EvidenceSubmission[]     @relation("EvidenceSubmissionValidator")
+  assessmentResultsAssessed    AssessmentResult[]       @relation("AssessmentResultAssessor")
 
   @@map("users")
 }
@@ -156,35 +156,36 @@ model MfaLoginChallenge {
 }
 
 model Family {
-  id               String             @id @default(uuid()) @db.Uuid
-  name             String
-  countryCode      String             @map("country_code")
-  stateProvince    String?            @map("state_province")
-  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt        DateTime           @updatedAt @map("updated_at") @db.Timestamptz
-  members          FamilyMember[]
-  invitations      FamilyInvitation[]
-  learners         Learner[]
-  dailyDevotionals   DailyDevotional[]
-  prayerRequests     PrayerRequest[]
-  academicYears      AcademicYear[]
-  subjects           Subject[]
-  curriculumPlans    LearnerCurriculumPlan[]
-  learningObjectives LearningObjective[]
-  lessonPlans        LessonPlan[]
-  scheduleSlots      WeeklyScheduleSlot[]
-  learningRecords    LearningRecord[]
-  portfolioItems     PortfolioItem[]
-  attendanceRecords  AttendanceRecord[]
+  id                     String                      @id @default(uuid()) @db.Uuid
+  name                   String
+  countryCode            String                      @map("country_code")
+  stateProvince          String?                     @map("state_province")
+  createdAt              DateTime                    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt              DateTime                    @updatedAt @map("updated_at") @db.Timestamptz
+  members                FamilyMember[]
+  invitations            FamilyInvitation[]
+  learners               Learner[]
+  dailyDevotionals       DailyDevotional[]
+  prayerRequests         PrayerRequest[]
+  academicYears          AcademicYear[]
+  subjects               Subject[]
+  curriculumPlans        LearnerCurriculumPlan[]
+  learningObjectives     LearningObjective[]
+  lessonPlans            LessonPlan[]
+  scheduleSlots          WeeklyScheduleSlot[]
+  learningRecords        LearningRecord[]
+  portfolioItems         PortfolioItem[]
+  attendanceRecords      AttendanceRecord[]
   complianceRequirements ComplianceRequirement[]
-  officialReports    OfficialReport[]
-  settings           FamilySettings?
-  notifications      NotificationItem[]
-  exportJobs         DataExportJob[]
-  pedagogicalProfiles PedagogicalProfile[]
-  theologicalProfiles TheologicalProfile[]
-  evidenceSubmissions EvidenceSubmission[]
-  assessmentResults   AssessmentResult[]
+  officialReports        OfficialReport[]
+  settings               FamilySettings?
+  notifications          NotificationItem[]
+  exportJobs             DataExportJob[]
+  pedagogicalProfiles    PedagogicalProfile[]
+  theologicalProfiles    TheologicalProfile[]
+  evidenceSubmissions    EvidenceSubmission[]
+  assessmentResults      AssessmentResult[]
+  competencyTrackings    LearnerCompetencyTracking[]
 
   @@map("families")
 }
@@ -207,35 +208,36 @@ enum PrayerType {
 }
 
 model Learner {
-  id             String           @id @default(uuid()) @db.Uuid
-  familyId       String           @map("family_id") @db.Uuid
-  firstName      String           @map("first_name")
-  lastName       String?          @map("last_name")
-  preferredName  String?          @map("preferred_name")
-  birthDate      DateTime         @map("birth_date") @db.Date
-  stage          EducationalStage @default(PRIMARY_GRAMMAR)
-  customGrade    String?          @map("custom_grade")
-  avatarColor    String?          @map("avatar_color")
-  specialNeeds   String?          @map("special_needs")
-  notes          String?
-  archivedAt     DateTime?        @map("archived_at") @db.Timestamptz
-  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+  id            String           @id @default(uuid()) @db.Uuid
+  familyId      String           @map("family_id") @db.Uuid
+  firstName     String           @map("first_name")
+  lastName      String?          @map("last_name")
+  preferredName String?          @map("preferred_name")
+  birthDate     DateTime         @map("birth_date") @db.Date
+  stage         EducationalStage @default(PRIMARY_GRAMMAR)
+  customGrade   String?          @map("custom_grade")
+  avatarColor   String?          @map("avatar_color")
+  specialNeeds  String?          @map("special_needs")
+  notes         String?
+  archivedAt    DateTime?        @map("archived_at") @db.Timestamptz
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime         @updatedAt @map("updated_at") @db.Timestamptz
 
-  family             Family                  @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  prayerRequests     PrayerRequest[]
-  curriculumPlans    LearnerCurriculumPlan[]
-  learningObjectives LearningObjective[]
-  lessonPlans        LessonPlanLearner[]
-  scheduleSlots      WeeklyScheduleSlot[]
-  learningRecords    LearningRecord[]
-  portfolioItems     PortfolioItem[]
-  attendanceRecords  AttendanceRecord[]
+  family                 Family                      @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  prayerRequests         PrayerRequest[]
+  curriculumPlans        LearnerCurriculumPlan[]
+  learningObjectives     LearningObjective[]
+  lessonPlans            LessonPlanLearner[]
+  scheduleSlots          WeeklyScheduleSlot[]
+  learningRecords        LearningRecord[]
+  portfolioItems         PortfolioItem[]
+  attendanceRecords      AttendanceRecord[]
   complianceRequirements ComplianceRequirement[]
-  officialReports    OfficialReport[]
-  accessGrant        LearnerAccessGrant?
-  evidenceSubmissions EvidenceSubmission[]
-  assessmentResults   AssessmentResult[]
+  officialReports        OfficialReport[]
+  accessGrant            LearnerAccessGrant?
+  evidenceSubmissions    EvidenceSubmission[]
+  assessmentResults      AssessmentResult[]
+  competencyTrackings    LearnerCompetencyTracking[]
 
   @@index([familyId])
   @@index([familyId, archivedAt])
@@ -307,19 +309,19 @@ model FamilyInvitation {
 }
 
 model DailyDevotional {
-  id                   String    @id @default(uuid()) @db.Uuid
-  familyId             String    @map("family_id") @db.Uuid
-  date                 DateTime  @db.Date
-  bibleReference       String    @map("bible_reference")
-  bibleVersionId       String?   @map("bible_version_id")
-  passageText          String?   @map("passage_text")
+  id                   String   @id @default(uuid()) @db.Uuid
+  familyId             String   @map("family_id") @db.Uuid
+  date                 DateTime @db.Date
+  bibleReference       String   @map("bible_reference")
+  bibleVersionId       String?  @map("bible_version_id")
+  passageText          String?  @map("passage_text")
   reflection           String?
-  memoryVerse          String?   @map("memory_verse")
-  hymnOrSong           String?   @map("hymn_or_song")
-  discussionQuestions  String?   @map("discussion_questions")
-  practicalApplication String?   @map("practical_application")
-  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  memoryVerse          String?  @map("memory_verse")
+  hymnOrSong           String?  @map("hymn_or_song")
+  discussionQuestions  String?  @map("discussion_questions")
+  practicalApplication String?  @map("practical_application")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
 
@@ -373,26 +375,26 @@ enum ObjectiveStatus {
 }
 
 model AcademicYear {
-  id         String                  @id @default(uuid()) @db.Uuid
-  familyId   String                  @map("family_id") @db.Uuid
-  year       Int
-  title      String
-  startDate  DateTime?               @map("start_date") @db.Date
-  endDate    DateTime?               @map("end_date") @db.Date
-  isCurrent  Boolean                 @default(false) @map("is_current")
-  createdAt  DateTime                @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt  DateTime                @updatedAt @map("updated_at") @db.Timestamptz
+  id        String    @id @default(uuid()) @db.Uuid
+  familyId  String    @map("family_id") @db.Uuid
+  year      Int
+  title     String
+  startDate DateTime? @map("start_date") @db.Date
+  endDate   DateTime? @map("end_date") @db.Date
+  isCurrent Boolean   @default(false) @map("is_current")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  family        Family                  @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  plans         LearnerCurriculumPlan[]
-  objectives    LearningObjective[]
-  lessonPlans   LessonPlan[]
-  scheduleSlots WeeklyScheduleSlot[]
-  learningRecords LearningRecord[]
-  portfolioItems  PortfolioItem[]
-  attendanceRecords AttendanceRecord[]
+  family                 Family                  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  plans                  LearnerCurriculumPlan[]
+  objectives             LearningObjective[]
+  lessonPlans            LessonPlan[]
+  scheduleSlots          WeeklyScheduleSlot[]
+  learningRecords        LearningRecord[]
+  portfolioItems         PortfolioItem[]
+  attendanceRecords      AttendanceRecord[]
   complianceRequirements ComplianceRequirement[]
-  officialReports OfficialReport[]
+  officialReports        OfficialReport[]
 
   @@unique([familyId, year])
   @@index([familyId])
@@ -400,20 +402,20 @@ model AcademicYear {
 }
 
 model Subject {
-  id          String              @id @default(uuid()) @db.Uuid
-  familyId    String              @map("family_id") @db.Uuid
+  id          String    @id @default(uuid()) @db.Uuid
+  familyId    String    @map("family_id") @db.Uuid
   name        String
   color       String?
   icon        String?
   description String?
-  archivedAt  DateTime?           @map("archived_at") @db.Timestamptz
-  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime            @updatedAt @map("updated_at") @db.Timestamptz
+  archivedAt  DateTime? @map("archived_at") @db.Timestamptz
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  family        Family              @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  objectives    LearningObjective[]
-  lessonPlans   LessonPlan[]
-  scheduleSlots WeeklyScheduleSlot[]
+  family          Family               @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  objectives      LearningObjective[]
+  lessonPlans     LessonPlan[]
+  scheduleSlots   WeeklyScheduleSlot[]
   learningRecords LearningRecord[]
   portfolioItems  PortfolioItem[]
 
@@ -423,20 +425,20 @@ model Subject {
 }
 
 model LearnerCurriculumPlan {
-  id                   String               @id @default(uuid()) @db.Uuid
-  familyId             String               @map("family_id") @db.Uuid
-  learnerId            String               @map("learner_id") @db.Uuid
-  academicYearId       String               @map("academic_year_id") @db.Uuid
-  pedagogicalFramework PedagogicalFramework @default(CUSTOM) @map("pedagogical_framework")
-  pedagogicalModelDefinitionId String? @map("pedagogical_model_definition_id") @db.Uuid
-  pedagogicalModelDefinition PedagogicalModelDefinition? @relation(fields: [pedagogicalModelDefinitionId], references: [id], onDelete: Restrict)
-  notes                String?
-  createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt            DateTime             @updatedAt @map("updated_at") @db.Timestamptz
+  id                           String                      @id @default(uuid()) @db.Uuid
+  familyId                     String                      @map("family_id") @db.Uuid
+  learnerId                    String                      @map("learner_id") @db.Uuid
+  academicYearId               String                      @map("academic_year_id") @db.Uuid
+  pedagogicalFramework         PedagogicalFramework        @default(CUSTOM) @map("pedagogical_framework")
+  pedagogicalModelDefinitionId String?                     @map("pedagogical_model_definition_id") @db.Uuid
+  pedagogicalModelDefinition   PedagogicalModelDefinition? @relation(fields: [pedagogicalModelDefinitionId], references: [id], onDelete: Restrict)
+  notes                        String?
+  createdAt                    DateTime                    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                    DateTime                    @updatedAt @map("updated_at") @db.Timestamptz
 
-  family               Family               @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  learner              Learner              @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  academicYear         AcademicYear         @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  family       Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner      Learner      @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
 
   @@unique([familyId, learnerId, academicYearId])
   @@index([familyId])
@@ -458,11 +460,11 @@ model LearningObjective {
   createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz
 
-  family         Family                @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  learner        Learner               @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  subject        Subject               @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  academicYear   AcademicYear          @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  lessonPlans    LessonPlanObjective[]
+  family          Family                    @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner         Learner                   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  subject         Subject                   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  academicYear    AcademicYear              @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  lessonPlans     LessonPlanObjective[]
   learningRecords LearningRecordObjective[]
 
   @@index([familyId, learnerId, academicYearId])
@@ -481,31 +483,31 @@ enum LessonStatus {
 }
 
 model LessonPlan {
-  id                    String                @id @default(uuid()) @db.Uuid
-  familyId              String                @map("family_id") @db.Uuid
-  academicYearId        String?               @map("academic_year_id") @db.Uuid
-  subjectId             String                @map("subject_id") @db.Uuid
+  id                    String       @id @default(uuid()) @db.Uuid
+  familyId              String       @map("family_id") @db.Uuid
+  academicYearId        String?      @map("academic_year_id") @db.Uuid
+  subjectId             String       @map("subject_id") @db.Uuid
   title                 String
   description           String?
-  date                  DateTime              @db.Date
-  startTime             String?               @map("start_time")
-  endTime               String?               @map("end_time")
-  durationMinutes       Int?                  @map("duration_minutes")
-  actualDurationMinutes Int?                  @map("actual_duration_minutes")
-  status                LessonStatus          @default(PLANNED)
+  date                  DateTime     @db.Date
+  startTime             String?      @map("start_time")
+  endTime               String?      @map("end_time")
+  durationMinutes       Int?         @map("duration_minutes")
+  actualDurationMinutes Int?         @map("actual_duration_minutes")
+  status                LessonStatus @default(PLANNED)
   materials             String?
   homework              String?
   notes                 String?
-  completedAt           DateTime?             @map("completed_at") @db.Timestamptz
-  createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt             DateTime              @updatedAt @map("updated_at") @db.Timestamptz
+  completedAt           DateTime?    @map("completed_at") @db.Timestamptz
+  createdAt             DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime     @updatedAt @map("updated_at") @db.Timestamptz
 
-  family                Family                @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  academicYear          AcademicYear?         @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
-  subject               Subject               @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  learners              LessonPlanLearner[]
-  objectives            LessonPlanObjective[]
-  learningRecords       LearningRecord[]
+  family          Family                @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  academicYear    AcademicYear?         @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  subject         Subject               @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  learners        LessonPlanLearner[]
+  objectives      LessonPlanObjective[]
+  learningRecords LearningRecord[]
 
   @@index([familyId])
   @@index([familyId, date])
@@ -515,15 +517,15 @@ model LessonPlan {
 }
 
 model LessonPlanLearner {
-  id           String     @id @default(uuid()) @db.Uuid
-  lessonPlanId String     @map("lesson_plan_id") @db.Uuid
-  learnerId    String     @map("learner_id") @db.Uuid
+  id           String   @id @default(uuid()) @db.Uuid
+  lessonPlanId String   @map("lesson_plan_id") @db.Uuid
+  learnerId    String   @map("learner_id") @db.Uuid
   notes        String?
-  completed    Boolean    @default(false)
-  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  completed    Boolean  @default(false)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  lessonPlan   LessonPlan @relation(fields: [lessonPlanId], references: [id], onDelete: Cascade)
-  learner      Learner    @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  lessonPlan LessonPlan @relation(fields: [lessonPlanId], references: [id], onDelete: Cascade)
+  learner    Learner    @relation(fields: [learnerId], references: [id], onDelete: Cascade)
 
   @@unique([lessonPlanId, learnerId])
   @@index([learnerId])
@@ -531,13 +533,13 @@ model LessonPlanLearner {
 }
 
 model LessonPlanObjective {
-  id           String            @id @default(uuid()) @db.Uuid
-  lessonPlanId String            @map("lesson_plan_id") @db.Uuid
-  objectiveId  String            @map("objective_id") @db.Uuid
-  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  id           String   @id @default(uuid()) @db.Uuid
+  lessonPlanId String   @map("lesson_plan_id") @db.Uuid
+  objectiveId  String   @map("objective_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  lessonPlan   LessonPlan        @relation(fields: [lessonPlanId], references: [id], onDelete: Cascade)
-  objective    LearningObjective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
+  lessonPlan LessonPlan        @relation(fields: [lessonPlanId], references: [id], onDelete: Cascade)
+  objective  LearningObjective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
 
   @@unique([lessonPlanId, objectiveId])
   @@index([objectiveId])
@@ -545,25 +547,25 @@ model LessonPlanObjective {
 }
 
 model WeeklyScheduleSlot {
-  id             String        @id @default(uuid()) @db.Uuid
-  familyId       String        @map("family_id") @db.Uuid
-  academicYearId String?       @map("academic_year_id") @db.Uuid
-  subjectId      String?       @map("subject_id") @db.Uuid
-  learnerId      String?       @map("learner_id") @db.Uuid
-  dayOfWeek      Int           @map("day_of_week")
-  startTime      String        @map("start_time")
-  endTime        String        @map("end_time")
+  id             String   @id @default(uuid()) @db.Uuid
+  familyId       String   @map("family_id") @db.Uuid
+  academicYearId String?  @map("academic_year_id") @db.Uuid
+  subjectId      String?  @map("subject_id") @db.Uuid
+  learnerId      String?  @map("learner_id") @db.Uuid
+  dayOfWeek      Int      @map("day_of_week")
+  startTime      String   @map("start_time")
+  endTime        String   @map("end_time")
   title          String
   description    String?
   location       String?
   color          String?
-  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  family         Family        @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  academicYear   AcademicYear? @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
-  subject        Subject?      @relation(fields: [subjectId], references: [id], onDelete: SetNull)
-  learner        Learner?      @relation(fields: [learnerId], references: [id], onDelete: SetNull)
+  family       Family        @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear? @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  subject      Subject?      @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  learner      Learner?      @relation(fields: [learnerId], references: [id], onDelete: SetNull)
 
   @@index([familyId])
   @@index([familyId, dayOfWeek])
@@ -620,33 +622,33 @@ enum LearningRecordType {
 }
 
 model LearningRecord {
-  id                   String                  @id @default(uuid()) @db.Uuid
-  familyId             String                  @map("family_id") @db.Uuid
-  learnerId            String                  @map("learner_id") @db.Uuid
-  subjectId            String?                 @map("subject_id") @db.Uuid
-  academicYearId       String?                 @map("academic_year_id") @db.Uuid
-  lessonPlanId         String?                 @map("lesson_plan_id") @db.Uuid
-  type                 LearningRecordType      @default(PLANNED_LESSON)
+  id                   String             @id @default(uuid()) @db.Uuid
+  familyId             String             @map("family_id") @db.Uuid
+  learnerId            String             @map("learner_id") @db.Uuid
+  subjectId            String?            @map("subject_id") @db.Uuid
+  academicYearId       String?            @map("academic_year_id") @db.Uuid
+  lessonPlanId         String?            @map("lesson_plan_id") @db.Uuid
+  type                 LearningRecordType @default(PLANNED_LESSON)
   title                String
   description          String?
-  date                 DateTime                @db.Date
-  durationMinutes      Int?                    @map("duration_minutes")
-  masteryLevel         MasteryLevel            @default(DEVELOPING) @map("mastery_level")
-  assessmentMethod     AssessmentMethod        @default(OBSERVATION) @map("assessment_method")
+  date                 DateTime           @db.Date
+  durationMinutes      Int?               @map("duration_minutes")
+  masteryLevel         MasteryLevel       @default(DEVELOPING) @map("mastery_level")
+  assessmentMethod     AssessmentMethod   @default(OBSERVATION) @map("assessment_method")
   strengths            String?
-  areasForGrowth       String?                 @map("areas_for_growth")
-  characterHabitGrowth String?                 @map("character_habit_growth")
+  areasForGrowth       String?            @map("areas_for_growth")
+  characterHabitGrowth String?            @map("character_habit_growth")
   notes                String?
-  createdAt            DateTime                @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt            DateTime                @updatedAt @map("updated_at") @db.Timestamptz
+  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz
 
-  family               Family                  @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  learner              Learner                 @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  subject              Subject?                @relation(fields: [subjectId], references: [id], onDelete: SetNull)
-  academicYear         AcademicYear?           @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
-  lessonPlan           LessonPlan?             @relation(fields: [lessonPlanId], references: [id], onDelete: SetNull)
-  objectives           LearningRecordObjective[]
-  portfolioItems       PortfolioItem[]
+  family         Family                    @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner        Learner                   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  subject        Subject?                  @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  academicYear   AcademicYear?             @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  lessonPlan     LessonPlan?               @relation(fields: [lessonPlanId], references: [id], onDelete: SetNull)
+  objectives     LearningRecordObjective[]
+  portfolioItems PortfolioItem[]
 
   @@index([familyId])
   @@index([familyId, learnerId])
@@ -657,13 +659,13 @@ model LearningRecord {
 }
 
 model LearningRecordObjective {
-  id               String            @id @default(uuid()) @db.Uuid
-  learningRecordId String            @map("learning_record_id") @db.Uuid
-  objectiveId      String            @map("objective_id") @db.Uuid
-  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  id               String   @id @default(uuid()) @db.Uuid
+  learningRecordId String   @map("learning_record_id") @db.Uuid
+  objectiveId      String   @map("objective_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  learningRecord   LearningRecord    @relation(fields: [learningRecordId], references: [id], onDelete: Cascade)
-  objective        LearningObjective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
+  learningRecord LearningRecord    @relation(fields: [learningRecordId], references: [id], onDelete: Cascade)
+  objective      LearningObjective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
 
   @@unique([learningRecordId, objectiveId])
   @@index([objectiveId])
@@ -671,33 +673,33 @@ model LearningRecordObjective {
 }
 
 model PortfolioItem {
-  id               String          @id @default(uuid()) @db.Uuid
-  familyId         String          @map("family_id") @db.Uuid
-  learnerId        String          @map("learner_id") @db.Uuid
-  learningRecordId String?         @map("learning_record_id") @db.Uuid
-  academicYearId   String?         @map("academic_year_id") @db.Uuid
-  subjectId        String?         @map("subject_id") @db.Uuid
+  id               String       @id @default(uuid()) @db.Uuid
+  familyId         String       @map("family_id") @db.Uuid
+  learnerId        String       @map("learner_id") @db.Uuid
+  learningRecordId String?      @map("learning_record_id") @db.Uuid
+  academicYearId   String?      @map("academic_year_id") @db.Uuid
+  subjectId        String?      @map("subject_id") @db.Uuid
   title            String
   description      String?
   type             EvidenceType
-  fileUrl          String?         @map("file_url")
-  textContent      String?         @map("text_content")
-  mimeType         String?         @map("mime_type")
-  fileSizeBytes    Int?            @map("file_size_bytes")
-  storageKey       String?         @unique @map("storage_key")
-  checksumSha256   String?         @map("checksum_sha256")
-  deletedAt        DateTime?       @map("deleted_at") @db.Timestamptz
-  capturedAt       DateTime?       @map("captured_at") @db.Date
-  isHighlight      Boolean         @default(false) @map("is_highlight")
-  tags             String[]        @default([])
-  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+  fileUrl          String?      @map("file_url")
+  textContent      String?      @map("text_content")
+  mimeType         String?      @map("mime_type")
+  fileSizeBytes    Int?         @map("file_size_bytes")
+  storageKey       String?      @unique @map("storage_key")
+  checksumSha256   String?      @map("checksum_sha256")
+  deletedAt        DateTime?    @map("deleted_at") @db.Timestamptz
+  capturedAt       DateTime?    @map("captured_at") @db.Date
+  isHighlight      Boolean      @default(false) @map("is_highlight")
+  tags             String[]     @default([])
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime     @updatedAt @map("updated_at") @db.Timestamptz
 
-  family           Family          @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  learner          Learner         @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  learningRecord   LearningRecord? @relation(fields: [learningRecordId], references: [id], onDelete: SetNull)
-  academicYear     AcademicYear?   @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
-  subject          Subject?        @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  family         Family          @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner        Learner         @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  learningRecord LearningRecord? @relation(fields: [learningRecordId], references: [id], onDelete: SetNull)
+  academicYear   AcademicYear?   @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  subject        Subject?        @relation(fields: [subjectId], references: [id], onDelete: SetNull)
 
   @@index([familyId])
   @@index([familyId, learnerId])
@@ -750,9 +752,9 @@ model AttendanceRecord {
   createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz
 
-  family         Family           @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  learner        Learner          @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  academicYear   AcademicYear?    @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  family       Family        @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner      Learner       @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear? @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
 
   @@unique([familyId, learnerId, date])
   @@index([familyId])
@@ -763,20 +765,20 @@ model AttendanceRecord {
 }
 
 model ComplianceRequirement {
-  id                    String        @id @default(uuid()) @db.Uuid
-  familyId              String        @map("family_id") @db.Uuid
-  academicYearId        String        @map("academic_year_id") @db.Uuid
-  learnerId             String?       @map("learner_id") @db.Uuid
+  id                    String   @id @default(uuid()) @db.Uuid
+  familyId              String   @map("family_id") @db.Uuid
+  academicYearId        String   @map("academic_year_id") @db.Uuid
+  learnerId             String?  @map("learner_id") @db.Uuid
   jurisdiction          String?
-  minInstructionalDays  Int?          @map("min_instructional_days")
-  minInstructionalHours Float?        @map("min_instructional_hours")
+  minInstructionalDays  Int?     @map("min_instructional_days")
+  minInstructionalHours Float?   @map("min_instructional_hours")
   notes                 String?
-  createdAt             DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt             DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  family                Family        @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  academicYear          AcademicYear  @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  learner               Learner?      @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  family       Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  learner      Learner?     @relation(fields: [learnerId], references: [id], onDelete: Cascade)
 
   @@unique([familyId, academicYearId, learnerId])
   @@index([familyId])
@@ -798,10 +800,10 @@ model OfficialReport {
   createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz
   updatedAt         DateTime     @updatedAt @map("updated_at") @db.Timestamptz
 
-  family         Family        @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  learner        Learner       @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  academicYear   AcademicYear? @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
-  generatedBy    User?         @relation(fields: [generatedByUserId], references: [id], onDelete: SetNull)
+  family       Family        @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner      Learner       @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear? @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  generatedBy  User?         @relation(fields: [generatedByUserId], references: [id], onDelete: SetNull)
 
   @@index([familyId])
   @@index([familyId, learnerId])
@@ -844,7 +846,7 @@ model FamilySettings {
   createdAt                 DateTime     @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                 DateTime     @updatedAt @map("updated_at") @db.Timestamptz
 
-  family                    Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
 
   @@map("family_settings")
 }
@@ -863,8 +865,8 @@ model NotificationItem {
   createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz
 
-  family    Family           @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([familyId])
   @@index([familyId, userId])
@@ -884,8 +886,8 @@ model DataExportJob {
   createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz
 
-  family        Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  requestedBy   User         @relation(fields: [requestedById], references: [id], onDelete: Cascade)
+  family      Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  requestedBy User   @relation(fields: [requestedById], references: [id], onDelete: Cascade)
 
   @@index([familyId])
   @@index([familyId, status])
@@ -918,23 +920,23 @@ enum DefinitionStatus {
 }
 
 model LearningDomain {
-  id            String                 @id @default(uuid()) @db.Uuid
+  id            String           @id @default(uuid()) @db.Uuid
   code          String
-  version       Int                    @default(1)
-  status        DefinitionStatus       @default(DRAFT)
-  schemaVersion String                 @default("1.0.0") @map("schema_version")
+  version       Int              @default(1)
+  status        DefinitionStatus @default(DRAFT)
+  schemaVersion String           @default("1.0.0") @map("schema_version")
   name          String
   description   String?
-  parentId      String?                @map("parent_id") @db.Uuid
-  metadata      Json                   @default("{}")
-  createdAt     DateTime               @default(now()) @map("created_at") @db.Timestamptz
-  publishedAt   DateTime?              @map("published_at") @db.Timestamptz
-  deprecatedAt  DateTime?              @map("deprecated_at") @db.Timestamptz
+  parentId      String?          @map("parent_id") @db.Uuid
+  metadata      Json             @default("{}")
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  publishedAt   DateTime?        @map("published_at") @db.Timestamptz
+  deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
 
-  parent        LearningDomain?        @relation("LearningDomainHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
-  children      LearningDomain[]       @relation("LearningDomainHierarchy")
-  competencies  CompetencyDefinition[]
-  learningPaths LearningPath[]
+  parent          LearningDomain?              @relation("LearningDomainHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children        LearningDomain[]             @relation("LearningDomainHierarchy")
+  competencies    CompetencyDefinition[]
+  learningPaths   LearningPath[]
   curriculumLinks CurriculumDefinitionDomain[]
 
   @@unique([code, version])
@@ -959,14 +961,15 @@ model CompetencyDefinition {
   publishedAt   DateTime?        @map("published_at") @db.Timestamptz
   deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
 
-  domain        LearningDomain   @relation(fields: [domainId], references: [id], onDelete: Restrict)
-  path          LearningPath?    @relation(fields: [pathId], references: [id], onDelete: SetNull)
-  skills        SkillDefinition[]
-  rubrics       RubricDefinition[]
-  curriculumLinks CurriculumDefinitionCompetency[]
-  activityLinks ActivityDefinitionCompetency[]
-  progressionPolicies ProgressionPolicy[]
+  domain                  LearningDomain                   @relation(fields: [domainId], references: [id], onDelete: Restrict)
+  path                    LearningPath?                    @relation(fields: [pathId], references: [id], onDelete: SetNull)
+  skills                  SkillDefinition[]
+  rubrics                 RubricDefinition[]
+  curriculumLinks         CurriculumDefinitionCompetency[]
+  activityLinks           ActivityDefinitionCompetency[]
+  progressionPolicies     ProgressionPolicy[]
   evidenceSubmissionLinks EvidenceSubmissionCompetency[]
+  learnerTrackings        LearnerCompetencyTracking[]
 
   @@unique([code, version])
   @@index([code])
@@ -979,21 +982,21 @@ model CompetencyDefinition {
 // Learning path: belongs to a domain, can hold many competencies (issue
 // #96 section 4). Same Definition/Version shape as everything else here.
 model LearningPath {
-  id            String                 @id @default(uuid()) @db.Uuid
+  id            String           @id @default(uuid()) @db.Uuid
   code          String
-  version       Int                    @default(1)
-  status        DefinitionStatus       @default(DRAFT)
-  schemaVersion String                 @default("1.0.0") @map("schema_version")
-  domainId      String                 @map("domain_id") @db.Uuid
+  version       Int              @default(1)
+  status        DefinitionStatus @default(DRAFT)
+  schemaVersion String           @default("1.0.0") @map("schema_version")
+  domainId      String           @map("domain_id") @db.Uuid
   name          String
   description   String?
-  metadata      Json                   @default("{}")
-  createdAt     DateTime               @default(now()) @map("created_at") @db.Timestamptz
-  publishedAt   DateTime?              @map("published_at") @db.Timestamptz
-  deprecatedAt  DateTime?              @map("deprecated_at") @db.Timestamptz
+  metadata      Json             @default("{}")
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  publishedAt   DateTime?        @map("published_at") @db.Timestamptz
+  deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
 
-  domain        LearningDomain         @relation(fields: [domainId], references: [id], onDelete: Restrict)
-  competencies  CompetencyDefinition[]
+  domain       LearningDomain         @relation(fields: [domainId], references: [id], onDelete: Restrict)
+  competencies CompetencyDefinition[]
 
   @@unique([code, version])
   @@index([code])
@@ -1008,20 +1011,20 @@ model LearningPath {
 // "relational for identity, JSONB for extensible properties" rule since
 // skill-to-skill prerequisite graphs aren't load-bearing for anything yet.
 model SkillDefinition {
-  id            String               @id @default(uuid()) @db.Uuid
+  id            String           @id @default(uuid()) @db.Uuid
   code          String
-  version       Int                  @default(1)
-  status        DefinitionStatus     @default(DRAFT)
-  schemaVersion String               @default("1.0.0") @map("schema_version")
-  competencyId  String               @map("competency_id") @db.Uuid
+  version       Int              @default(1)
+  status        DefinitionStatus @default(DRAFT)
+  schemaVersion String           @default("1.0.0") @map("schema_version")
+  competencyId  String           @map("competency_id") @db.Uuid
   title         String
-  order         Int                  @default(0)
-  metadata      Json                 @default("{}")
-  createdAt     DateTime             @default(now()) @map("created_at") @db.Timestamptz
-  publishedAt   DateTime?            @map("published_at") @db.Timestamptz
-  deprecatedAt  DateTime?            @map("deprecated_at") @db.Timestamptz
+  order         Int              @default(0)
+  metadata      Json             @default("{}")
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  publishedAt   DateTime?        @map("published_at") @db.Timestamptz
+  deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
 
-  competency    CompetencyDefinition @relation(fields: [competencyId], references: [id], onDelete: Restrict)
+  competency CompetencyDefinition @relation(fields: [competencyId], references: [id], onDelete: Restrict)
 
   @@unique([code, version])
   @@index([code])
@@ -1040,22 +1043,22 @@ model SkillDefinition {
 // as free-form strings, not a closed enum, so a new mode is a data value,
 // not a migration).
 model RubricDefinition {
-  id            String                @id @default(uuid()) @db.Uuid
+  id            String           @id @default(uuid()) @db.Uuid
   code          String
-  version       Int                   @default(1)
-  status        DefinitionStatus      @default(DRAFT)
-  schemaVersion String                @default("1.0.0") @map("schema_version")
-  competencyId  String?               @map("competency_id") @db.Uuid
+  version       Int              @default(1)
+  status        DefinitionStatus @default(DRAFT)
+  schemaVersion String           @default("1.0.0") @map("schema_version")
+  competencyId  String?          @map("competency_id") @db.Uuid
   name          String
   description   String?
-  metadata      Json                  @default("{}")
-  createdAt     DateTime              @default(now()) @map("created_at") @db.Timestamptz
-  publishedAt   DateTime?             @map("published_at") @db.Timestamptz
-  deprecatedAt  DateTime?             @map("deprecated_at") @db.Timestamptz
+  metadata      Json             @default("{}")
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  publishedAt   DateTime?        @map("published_at") @db.Timestamptz
+  deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
 
-  competency    CompetencyDefinition? @relation(fields: [competencyId], references: [id], onDelete: SetNull)
-  criteria      RubricCriterion[]
-  curriculumLinks CurriculumDefinitionRubric[]
+  competency        CompetencyDefinition?        @relation(fields: [competencyId], references: [id], onDelete: SetNull)
+  criteria          RubricCriterion[]
+  curriculumLinks   CurriculumDefinitionRubric[]
   assessmentResults AssessmentResult[]
 
   @@unique([code, version])
@@ -1066,19 +1069,19 @@ model RubricDefinition {
 }
 
 model RubricCriterion {
-  id          String           @id @default(uuid()) @db.Uuid
-  rubricId    String           @map("rubric_id") @db.Uuid
-  code        String
-  label       String
-  weight      Float            @default(1)
-  order       Int              @default(0)
-  scaleMin    Int              @default(0) @map("scale_min")
-  scaleMax    Int              @default(4) @map("scale_max")
-  metadata    Json             @default("{}")
-  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+  id        String   @id @default(uuid()) @db.Uuid
+  rubricId  String   @map("rubric_id") @db.Uuid
+  code      String
+  label     String
+  weight    Float    @default(1)
+  order     Int      @default(0)
+  scaleMin  Int      @default(0) @map("scale_min")
+  scaleMax  Int      @default(4) @map("scale_max")
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  rubric      RubricDefinition @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+  rubric           RubricDefinition        @relation(fields: [rubricId], references: [id], onDelete: Cascade)
   assessmentScores AssessmentResultScore[]
 
   @@unique([rubricId, code])
@@ -1107,7 +1110,7 @@ model PedagogicalModelDefinition {
   publishedAt   DateTime?        @map("published_at") @db.Timestamptz
   deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
 
-  curricula     CurriculumDefinition[]
+  curricula    CurriculumDefinition[]
   learnerPlans LearnerCurriculumPlan[]
 
   @@unique([code, version])
@@ -1136,7 +1139,7 @@ model EvidenceTypeDefinition {
   publishedAt   DateTime?        @map("published_at") @db.Timestamptz
   deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
 
-  activityLinks ActivityDefinitionEvidenceType[]
+  activityLinks       ActivityDefinitionEvidenceType[]
   evidenceSubmissions EvidenceSubmission[]
 
   @@unique([code, version])
@@ -1160,25 +1163,26 @@ model EvidenceTypeDefinition {
 // now would mean referencing something that doesn't exist. "Referencia
 // avaliações" is covered by the rubrics join below.
 model CurriculumDefinition {
-  id            String                       @id @default(uuid()) @db.Uuid
-  code          String
-  version       Int                          @default(1)
-  status        DefinitionStatus             @default(DRAFT)
-  schemaVersion String                       @default("1.0.0") @map("schema_version")
-  name          String
-  description   String?
-  pedagogicalModelDefinitionId String?        @map("pedagogical_model_definition_id") @db.Uuid
-  metadata      Json                         @default("{}")
-  createdAt     DateTime                     @default(now()) @map("created_at") @db.Timestamptz
-  publishedAt   DateTime?                    @map("published_at") @db.Timestamptz
-  deprecatedAt  DateTime?                    @map("deprecated_at") @db.Timestamptz
+  id                           String           @id @default(uuid()) @db.Uuid
+  code                         String
+  version                      Int              @default(1)
+  status                       DefinitionStatus @default(DRAFT)
+  schemaVersion                String           @default("1.0.0") @map("schema_version")
+  name                         String
+  description                  String?
+  pedagogicalModelDefinitionId String?          @map("pedagogical_model_definition_id") @db.Uuid
+  metadata                     Json             @default("{}")
+  createdAt                    DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  publishedAt                  DateTime?        @map("published_at") @db.Timestamptz
+  deprecatedAt                 DateTime?        @map("deprecated_at") @db.Timestamptz
 
-  pedagogicalModel PedagogicalModelDefinition? @relation(fields: [pedagogicalModelDefinitionId], references: [id], onDelete: SetNull)
-  domains       CurriculumDefinitionDomain[]
-  competencies  CurriculumDefinitionCompetency[]
-  rubrics       CurriculumDefinitionRubric[]
-  activities    CurriculumDefinitionActivity[]
+  pedagogicalModel    PedagogicalModelDefinition?      @relation(fields: [pedagogicalModelDefinitionId], references: [id], onDelete: SetNull)
+  domains             CurriculumDefinitionDomain[]
+  competencies        CurriculumDefinitionCompetency[]
+  rubrics             CurriculumDefinitionRubric[]
+  activities          CurriculumDefinitionActivity[]
   progressionPolicies ProgressionPolicy[]
+  learnerTrackings    LearnerCompetencyTracking[]
 
   @@unique([code, version])
   @@index([code])
@@ -1266,26 +1270,26 @@ model CurriculumDefinitionActivity {
 // operator, not domain content, so unlike evidence types themselves it's
 // safe as a small closed set rather than a free string.
 model ActivityDefinition {
-  id            String           @id @default(uuid()) @db.Uuid
-  code          String
-  version       Int              @default(1)
-  status        DefinitionStatus @default(DRAFT)
-  schemaVersion String           @default("1.0.0") @map("schema_version")
-  name          String
-  description   String?
-  ageMin        Int?             @map("age_min")
-  ageMax        Int?             @map("age_max")
-  estimatedDurationMinutes Int?  @map("estimated_duration_minutes")
-  supervisionRequired Boolean    @default(false) @map("supervision_required")
-  riskLevel     String?          @map("risk_level")
-  evidenceRequirementMode String @default("ANY") @map("evidence_requirement_mode")
-  metadata      Json             @default("{}")
-  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz
-  publishedAt   DateTime?        @map("published_at") @db.Timestamptz
-  deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
+  id                       String           @id @default(uuid()) @db.Uuid
+  code                     String
+  version                  Int              @default(1)
+  status                   DefinitionStatus @default(DRAFT)
+  schemaVersion            String           @default("1.0.0") @map("schema_version")
+  name                     String
+  description              String?
+  ageMin                   Int?             @map("age_min")
+  ageMax                   Int?             @map("age_max")
+  estimatedDurationMinutes Int?             @map("estimated_duration_minutes")
+  supervisionRequired      Boolean          @default(false) @map("supervision_required")
+  riskLevel                String?          @map("risk_level")
+  evidenceRequirementMode  String           @default("ANY") @map("evidence_requirement_mode")
+  metadata                 Json             @default("{}")
+  createdAt                DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  publishedAt              DateTime?        @map("published_at") @db.Timestamptz
+  deprecatedAt             DateTime?        @map("deprecated_at") @db.Timestamptz
 
-  competencies  ActivityDefinitionCompetency[]
-  evidenceTypes ActivityDefinitionEvidenceType[]
+  competencies    ActivityDefinitionCompetency[]
+  evidenceTypes   ActivityDefinitionEvidenceType[]
   curriculumLinks CurriculumDefinitionActivity[]
 
   @@unique([code, version])
@@ -1336,19 +1340,19 @@ model ActivityDefinitionEvidenceType {
 // topic is a data value. Nothing here is wired into any content-tagging
 // or read path yet.
 model TheologicalTraditionDefinition {
-  id            String                       @id @default(uuid()) @db.Uuid
+  id            String           @id @default(uuid()) @db.Uuid
   code          String
-  version       Int                          @default(1)
-  status        DefinitionStatus             @default(DRAFT)
-  schemaVersion String                       @default("1.0.0") @map("schema_version")
+  version       Int              @default(1)
+  status        DefinitionStatus @default(DRAFT)
+  schemaVersion String           @default("1.0.0") @map("schema_version")
   name          String
   description   String?
-  metadata      Json                         @default("{}")
-  createdAt     DateTime                     @default(now()) @map("created_at") @db.Timestamptz
-  publishedAt   DateTime?                    @map("published_at") @db.Timestamptz
-  deprecatedAt  DateTime?                    @map("deprecated_at") @db.Timestamptz
+  metadata      Json             @default("{}")
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  publishedAt   DateTime?        @map("published_at") @db.Timestamptz
+  deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
 
-  positions     TheologicalPositionDefinition[]
+  positions TheologicalPositionDefinition[]
 
   @@unique([code, version])
   @@index([code])
@@ -1376,7 +1380,7 @@ model TheologicalPositionDefinition {
   publishedAt   DateTime?        @map("published_at") @db.Timestamptz
   deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
 
-  tradition     TheologicalTraditionDefinition? @relation(fields: [traditionId], references: [id], onDelete: Restrict)
+  tradition TheologicalTraditionDefinition? @relation(fields: [traditionId], references: [id], onDelete: Restrict)
 
   @@unique([code, version])
   @@index([code])
@@ -1460,21 +1464,21 @@ model TheologicalProfile {
 // on delete -- same choice as RubricDefinition.competencyId, since this
 // is platform config, not user data whose history must never be lost).
 model ProgressionPolicy {
-  id                     String                @id @default(uuid()) @db.Uuid
+  id                     String           @id @default(uuid()) @db.Uuid
   code                   String
-  version                Int                   @default(1)
-  status                 DefinitionStatus      @default(DRAFT)
-  schemaVersion          String                @default("1.0.0") @map("schema_version")
+  version                Int              @default(1)
+  status                 DefinitionStatus @default(DRAFT)
+  schemaVersion          String           @default("1.0.0") @map("schema_version")
   name                   String
   description            String?
-  policyType             String                @map("policy_type")
-  rules                  Json                  @default("{}")
-  competencyDefinitionId String?               @map("competency_definition_id") @db.Uuid
-  curriculumDefinitionId String?               @map("curriculum_definition_id") @db.Uuid
-  metadata               Json                  @default("{}")
-  createdAt              DateTime              @default(now()) @map("created_at") @db.Timestamptz
-  publishedAt            DateTime?             @map("published_at") @db.Timestamptz
-  deprecatedAt           DateTime?             @map("deprecated_at") @db.Timestamptz
+  policyType             String           @map("policy_type")
+  rules                  Json             @default("{}")
+  competencyDefinitionId String?          @map("competency_definition_id") @db.Uuid
+  curriculumDefinitionId String?          @map("curriculum_definition_id") @db.Uuid
+  metadata               Json             @default("{}")
+  createdAt              DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  publishedAt            DateTime?        @map("published_at") @db.Timestamptz
+  deprecatedAt           DateTime?        @map("deprecated_at") @db.Timestamptz
 
   competencyDefinition CompetencyDefinition? @relation(fields: [competencyDefinitionId], references: [id], onDelete: SetNull)
   curriculumDefinition CurriculumDefinition? @relation(fields: [curriculumDefinitionId], references: [id], onDelete: SetNull)
@@ -1526,12 +1530,12 @@ model EvidenceSubmission {
   validatedAt       DateTime?                @map("validated_at") @db.Timestamptz
   createdAt         DateTime                 @default(now()) @map("created_at") @db.Timestamptz
 
-  family       Family                         @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  learner      Learner                        @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  evidenceType EvidenceTypeDefinition         @relation(fields: [evidenceTypeId], references: [id], onDelete: Restrict)
-  author       User                           @relation("EvidenceSubmissionAuthor", fields: [authorId], references: [id], onDelete: Restrict)
-  validatedBy  User?                          @relation("EvidenceSubmissionValidator", fields: [validatedByUserId], references: [id], onDelete: SetNull)
-  competencies EvidenceSubmissionCompetency[]
+  family            Family                         @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner           Learner                        @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  evidenceType      EvidenceTypeDefinition         @relation(fields: [evidenceTypeId], references: [id], onDelete: Restrict)
+  author            User                           @relation("EvidenceSubmissionAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  validatedBy       User?                          @relation("EvidenceSubmissionValidator", fields: [validatedByUserId], references: [id], onDelete: SetNull)
+  competencies      EvidenceSubmissionCompetency[]
   assessmentResults AssessmentResult[]
 
   @@index([familyId])
@@ -1575,22 +1579,22 @@ model EvidenceSubmissionCompetency {
 // RubricDefinition.metadata.assessmentModes, not the literal schema -- a
 // new assessor role is a data value, not a migration.
 model AssessmentResult {
-  id                   String    @id @default(uuid()) @db.Uuid
-  familyId             String    @map("family_id") @db.Uuid
-  learnerId            String    @map("learner_id") @db.Uuid
-  evidenceSubmissionId String?   @map("evidence_submission_id") @db.Uuid
-  rubricDefinitionId   String    @map("rubric_definition_id") @db.Uuid
-  rubricVersion        Int       @map("rubric_version")
-  assessorType         String    @map("assessor_type")
-  assessorUserId       String?   @map("assessor_user_id") @db.Uuid
+  id                   String   @id @default(uuid()) @db.Uuid
+  familyId             String   @map("family_id") @db.Uuid
+  learnerId            String   @map("learner_id") @db.Uuid
+  evidenceSubmissionId String?  @map("evidence_submission_id") @db.Uuid
+  rubricDefinitionId   String   @map("rubric_definition_id") @db.Uuid
+  rubricVersion        Int      @map("rubric_version")
+  assessorType         String   @map("assessor_type")
+  assessorUserId       String?  @map("assessor_user_id") @db.Uuid
   notes                String?
-  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  family             Family              @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  learner            Learner             @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  evidenceSubmission EvidenceSubmission? @relation(fields: [evidenceSubmissionId], references: [id], onDelete: Restrict)
-  rubricDefinition   RubricDefinition    @relation(fields: [rubricDefinitionId], references: [id], onDelete: Restrict)
-  assessor           User?               @relation("AssessmentResultAssessor", fields: [assessorUserId], references: [id], onDelete: SetNull)
+  family             Family                  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner            Learner                 @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  evidenceSubmission EvidenceSubmission?     @relation(fields: [evidenceSubmissionId], references: [id], onDelete: Restrict)
+  rubricDefinition   RubricDefinition        @relation(fields: [rubricDefinitionId], references: [id], onDelete: Restrict)
+  assessor           User?                   @relation("AssessmentResultAssessor", fields: [assessorUserId], references: [id], onDelete: SetNull)
   scores             AssessmentResultScore[]
 
   @@index([familyId])
@@ -1615,6 +1619,61 @@ model AssessmentResultScore {
   @@index([assessmentResultId])
   @@index([rubricCriterionId])
   @@map("assessment_result_scores")
+}
+
+// Issue #126 item 3: this is the missing link that makes a
+// CurriculumDefinition's bundled competencies into a family's actual
+// per-learner working set. Before this table, "applying a curriculum"
+// meant nothing at the competency level -- CurriculumService.applyTemplate
+// only ever created old-style Subject/LearningObjective rows, even when
+// resolving a catalog-based pedagogical_model_definition. Activating a
+// CurriculumDefinition for a learner (via a new endpoint) fans out over
+// its CurriculumDefinitionCompetency joins and inserts one row per
+// competency here -- this is the per-learner tracking list that the new
+// EvidenceSubmission/AssessmentResult flow (Fase 2) is actually assessed
+// against, replacing LearningObjective/LearningRecord as the forward-going
+// mechanism (per the human's explicit decision that Fase 2 replaces the
+// Diario de Aprendizagem, not coexists with it).
+//
+// Same version-snapshot discipline as EvidenceSubmissionCompetency /
+// AssessmentResult: competencyVersion is denormalized from the exact
+// CompetencyDefinition row referenced (Restrict, so a competency can never
+// be deleted out from under an active tracking row), so a later version
+// bump of the competency does not retroactively change what a learner was
+// actually assigned. curriculumDefinitionId is nullable and SetNull on
+// delete -- a competency can, in principle, be tracked ad hoc for a
+// learner without going through a curriculum (e.g. added individually by
+// a parent), so the curriculum link is provenance, not a hard requirement.
+model LearnerCompetencyTracking {
+  id                     String                          @id @default(uuid()) @db.Uuid
+  familyId               String                          @map("family_id") @db.Uuid
+  learnerId              String                          @map("learner_id") @db.Uuid
+  competencyDefinitionId String                          @map("competency_definition_id") @db.Uuid
+  competencyVersion      Int                             @map("competency_version")
+  curriculumDefinitionId String?                         @map("curriculum_definition_id") @db.Uuid
+  status                 LearnerCompetencyTrackingStatus @default(ACTIVE)
+  activatedAt            DateTime                        @default(now()) @map("activated_at") @db.Timestamptz
+  retiredAt              DateTime?                       @map("retired_at") @db.Timestamptz
+  createdAt              DateTime                        @default(now()) @map("created_at") @db.Timestamptz
+
+  family               Family                @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner              Learner               @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  competencyDefinition CompetencyDefinition  @relation(fields: [competencyDefinitionId], references: [id], onDelete: Restrict)
+  curriculumDefinition CurriculumDefinition? @relation(fields: [curriculumDefinitionId], references: [id], onDelete: SetNull)
+
+  @@unique([learnerId, competencyDefinitionId, competencyVersion])
+  @@index([familyId])
+  @@index([familyId, learnerId])
+  @@index([competencyDefinitionId])
+  @@index([curriculumDefinitionId])
+  @@map("learner_competency_tracking")
+}
+
+enum LearnerCompetencyTrackingStatus {
+  ACTIVE
+  RETIRED
+
+  @@map("learner_competency_tracking_statuses")
 }
 
 // Bible translation registry (issue #96 Fase 3, section 16) --
@@ -1647,21 +1706,21 @@ model AssessmentResultScore {
 // this project has kept the old path alive until a separate,
 // human-approved cutover.
 model BibleTranslationDefinition {
-  id                     String           @id @default(uuid()) @db.Uuid
-  code                   String
-  version                Int              @default(1)
-  status                 DefinitionStatus @default(DRAFT)
-  schemaVersion          String           @default("1.0.0") @map("schema_version")
-  name                   String
-  language               String
-  youVersionId           String           @map("you_version_id")
-  translationPhilosophy  String?          @map("translation_philosophy")
-  publisher              String?
-  licensingNotes         String?          @map("licensing_notes")
-  metadata               Json             @default("{}")
-  createdAt              DateTime         @default(now()) @map("created_at") @db.Timestamptz
-  publishedAt            DateTime?        @map("published_at") @db.Timestamptz
-  deprecatedAt           DateTime?        @map("deprecated_at") @db.Timestamptz
+  id                    String           @id @default(uuid()) @db.Uuid
+  code                  String
+  version               Int              @default(1)
+  status                DefinitionStatus @default(DRAFT)
+  schemaVersion         String           @default("1.0.0") @map("schema_version")
+  name                  String
+  language              String
+  youVersionId          String           @map("you_version_id")
+  translationPhilosophy String?          @map("translation_philosophy")
+  publisher             String?
+  licensingNotes        String?          @map("licensing_notes")
+  metadata              Json             @default("{}")
+  createdAt             DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  publishedAt           DateTime?        @map("published_at") @db.Timestamptz
+  deprecatedAt          DateTime?        @map("deprecated_at") @db.Timestamptz
 
   @@unique([code, version])
   @@index([code])
