@@ -16,6 +16,7 @@ export * from './evidence-type-definition.js';
 export * from './pedagogical-profile.js';
 export * from './theological-profile.js';
 export * from './progression-policy.js';
+export * from './progression-evaluation.js';
 export * from './evidence-submission.js';
 export * from './assessment-result.js';
 export * from './bible-translation-definition.js';

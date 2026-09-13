@@ -18,24 +18,26 @@ model User {
   // "guardian of any family" proxy PR #100 used for
   // /admin/curriculum-definitions. Never auto-demoted -- see
   // AuthService's platform-admin bootstrap sync for how this gets set.
-  isPlatformAdmin              Boolean                  @default(false) @map("is_platform_admin")
-  createdAt                    DateTime                 @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt                    DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
-  memberships                  FamilyMember[]
-  notifications                NotificationItem[]
-  exportJobs                   DataExportJob[]
-  refreshTokens                RefreshToken[]
-  emailVerificationTokens      EmailVerificationToken[]
-  passwordResetTokens          PasswordResetToken[]
-  auditLogEntries              AccountAuditLogEntry[]
-  mfaSecret                    MfaSecret?
-  mfaRecoveryCodes             MfaRecoveryCode[]
-  mfaSetupChallenges           MfaSetupChallenge[]
-  mfaLoginChallenges           MfaLoginChallenge[]
-  generatedReports             OfficialReport[]
-  authoredEvidenceSubmissions  EvidenceSubmission[]     @relation("EvidenceSubmissionAuthor")
-  validatedEvidenceSubmissions EvidenceSubmission[]     @relation("EvidenceSubmissionValidator")
-  assessmentResultsAssessed    AssessmentResult[]       @relation("AssessmentResultAssessor")
+  isPlatformAdmin         Boolean                   @default(false) @map("is_platform_admin")
+  createdAt               DateTime                  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
+  memberships             FamilyMember[]
+  notifications           NotificationItem[]
+  exportJobs              DataExportJob[]
+  refreshTokens           RefreshToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+  auditLogEntries         AccountAuditLogEntry[]
+  mfaSecret               MfaSecret?
+  mfaRecoveryCodes        MfaRecoveryCode[]
+  mfaSetupChallenges      MfaSetupChallenge[]
+  mfaLoginChallenges      MfaLoginChallenge[]
+  generatedReports        OfficialReport[]
+  authoredEvidenceSubmissions  EvidenceSubmission[] @relation("EvidenceSubmissionAuthor")
+  validatedEvidenceSubmissions EvidenceSubmission[] @relation("EvidenceSubmissionValidator")
+  assessmentResultsAssessed    AssessmentResult[]   @relation("AssessmentResultAssessor")
+  authoredPedagogicalProfiles  PedagogicalProfile[] @relation("PedagogicalProfileAuthor")
+  authoredTheologicalProfiles  TheologicalProfile[] @relation("TheologicalProfileAuthor")
 
   @@map("users")
 }
@@ -1416,9 +1418,11 @@ model PedagogicalProfile {
   primaryModelCode String   @map("primary_model_code")
   secondaryModels  Json     @default("[]") @map("secondary_models")
   overrides        Json     @default("{}")
+  createdByUserId  String?  @map("created_by_user_id") @db.Uuid
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  createdBy User? @relation("PedagogicalProfileAuthor", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   @@unique([familyId, version])
   @@index([familyId])
@@ -1439,9 +1443,11 @@ model TheologicalProfile {
   version                Int      @default(1)
   preferredTraditionCode String?  @map("preferred_tradition_code")
   topicOverrides         Json     @default("{}") @map("topic_overrides")
+  createdByUserId         String?  @map("created_by_user_id") @db.Uuid
   createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  createdBy User? @relation("TheologicalProfileAuthor", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   @@unique([familyId, version])
   @@index([familyId])

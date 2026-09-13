@@ -18,7 +18,10 @@ export const upsertTheologicalProfileSchema = z.object({
     .max(150)
     .regex(DEFINITION_CODE_REGEX, 'code must be upper snake/dot case, e.g. REFORMED')
     .nullish(),
-  topicOverrides: z.record(z.string(), z.string()).default({}),
+  topicOverrides: z.record(
+    z.string().trim().min(1).max(150),
+    z.string().min(1).max(150).regex(DEFINITION_CODE_REGEX),
+  ).default({}),
 });
 
 export type UpsertTheologicalProfileDto = z.input<typeof upsertTheologicalProfileSchema>;
@@ -31,6 +34,7 @@ export const theologicalProfileResponseSchema = z.object({
   preferredTraditionCode: z.string().nullable().optional(),
   topicOverrides: z.record(z.string(), z.string()),
   createdAt: z.string(),
+  createdByUserId: z.string().uuid().nullable(),
 });
 
 export type TheologicalProfileResponseDto = z.infer<typeof theologicalProfileResponseSchema>;

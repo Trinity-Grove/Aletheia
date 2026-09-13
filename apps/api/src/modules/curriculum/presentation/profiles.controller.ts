@@ -8,7 +8,7 @@ import {
   type UpsertPedagogicalProfileOutput,
   type UpsertTheologicalProfileOutput,
 } from '@aletheia/contracts';
-import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
+import { JwtAuthGuard, FamilyTenantGuard, CurrentUser } from '../../../platform/auth/index.js';
 import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { ProfilesService } from '../application/profiles.service.js';
 
@@ -39,9 +39,10 @@ export class ProfilesController {
   @ApiOperation({ summary: 'Create a new version of the family pedagogical profile' })
   async upsertPedagogicalProfile(
     @Param('familyId') familyId: string,
+    @CurrentUser('userId') actorId: string,
     @Body(new ZodValidationPipe(upsertPedagogicalProfileSchema)) dto: UpsertPedagogicalProfileOutput,
   ): Promise<PedagogicalProfileResponseDto> {
-    return this.profilesService.upsertPedagogicalProfile(familyId, dto);
+    return this.profilesService.upsertPedagogicalProfile(familyId, dto, actorId);
   }
 
   @Get('pedagogical-profile/history')
@@ -64,9 +65,10 @@ export class ProfilesController {
   @ApiOperation({ summary: 'Create a new version of the family theological profile' })
   async upsertTheologicalProfile(
     @Param('familyId') familyId: string,
+    @CurrentUser('userId') actorId: string,
     @Body(new ZodValidationPipe(upsertTheologicalProfileSchema)) dto: UpsertTheologicalProfileOutput,
   ): Promise<TheologicalProfileResponseDto> {
-    return this.profilesService.upsertTheologicalProfile(familyId, dto);
+    return this.profilesService.upsertTheologicalProfile(familyId, dto, actorId);
   }
 
   @Get('theological-profile/history')

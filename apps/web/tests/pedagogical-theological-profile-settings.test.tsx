@@ -24,6 +24,7 @@ const mockTheologicalCatalog: TheologicalTraditionCatalogEntryDto[] = [
 
 const mockPedagogicalProfile: PedagogicalProfileResponseDto = {
   id: 'ped-profile-1',
+  createdByUserId: null,
   familyId: FAMILY_ID,
   version: 2,
   primaryModelCode: 'CHARLOTTE_MASON',
@@ -36,6 +37,7 @@ const mockPedagogicalHistory: PedagogicalProfileResponseDto[] = [
   mockPedagogicalProfile,
   {
     id: 'ped-profile-0',
+    createdByUserId: null,
     familyId: FAMILY_ID,
     version: 1,
     primaryModelCode: 'CLASSICAL_TRIVIUM',
@@ -47,6 +49,7 @@ const mockPedagogicalHistory: PedagogicalProfileResponseDto[] = [
 
 const mockTheologicalProfile: TheologicalProfileResponseDto = {
   id: 'theo-profile-1',
+  createdByUserId: null,
   familyId: FAMILY_ID,
   version: 1,
   preferredTraditionCode: 'REFORMED',
@@ -121,6 +124,81 @@ describe('PedagogicalTheologicalProfileSettings', () => {
 
     fireEvent.click(screen.getByTestId('remove-secondary-model-MONTESSORI'));
     expect(screen.queryByTestId('secondary-model-row-MONTESSORI')).not.toBeInTheDocument();
+  });
+
+  it('preserves loaded overrides when saving either profile', async () => {
+    const overrides = { schedule: { days: ['MONDAY', 'FRIDAY'] }, narration: true };
+    const topicOverrides = { baptism: 'BELIEVERS_BAPTISM' };
+    stubFetch({
+      pedagogicalProfile: { ...mockPedagogicalProfile, overrides },
+      theologicalProfile: { ...mockTheologicalProfile, preferredTraditionCode: null, topicOverrides },
+      pedagogicalHistory: [], theologicalHistory: [],
+    });
+    render(<PedagogicalTheologicalProfileSettings familyId={FAMILY_ID} />);
+    await screen.findByTestId('primary-model-select');
+    fireEvent.change(screen.getByTestId('primary-model-select'), { target: { value: 'CLASSICAL_TRIVIUM' } });
+    fireEvent.change(screen.getByTestId('preferred-tradition-select'), { target: { value: 'BAPTIST' } });
+    fireEvent.click(screen.getByTestId('save-pedagogical-profile-btn'));
+    fireEvent.click(screen.getByTestId('save-theological-profile-btn'));
+    await screen.findByTestId('pedagogical-profile-success-alert');
+    await screen.findByTestId('theological-profile-success-alert');
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/pedagogical-profile'), expect.objectContaining({
+      method: 'PUT', body: JSON.stringify({ primaryModelCode: 'CLASSICAL_TRIVIUM', secondaryModels: mockPedagogicalProfile.secondaryModels, overrides }),
+    }));
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/theological-profile'), expect.objectContaining({
+      method: 'PUT', body: JSON.stringify({ preferredTraditionCode: 'BAPTIST', topicOverrides }),
+    }));
+  });
+
+  it('removes a secondary model when it becomes the primary model', async () => {
+    stubFetch({ pedagogicalHistory: [] });
+    render(<PedagogicalTheologicalProfileSettings familyId={FAMILY_ID} />);
+    await screen.findByTestId('primary-model-select');
+    fireEvent.change(screen.getByTestId('primary-model-select'), { target: { value: 'MONTESSORI' } });
+    expect(screen.queryByTestId('secondary-model-row-MONTESSORI')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('save-pedagogical-profile-btn'));
+    await screen.findByTestId('pedagogical-profile-success-alert');
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/pedagogical-profile'), expect.objectContaining({
+      method: 'PUT', body: JSON.stringify({ primaryModelCode: 'MONTESSORI', secondaryModels: [], overrides: {} }),
+    }));
+  });
+
+  it('lets the family remove a stale topic override after a rejected save while preserving other overrides', async () => {
+    const topicOverrides = { baptism: 'DEPRECATED_POSITION', salvation: 'VALID_POSITION' };
+    stubFetch({ theologicalProfile: { ...mockTheologicalProfile, topicOverrides }, theologicalHistory: [] });
+    const initialFetch = vi.mocked(fetch).getMockImplementation()!;
+    const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (init?.method === 'PUT' && url.endsWith('/theological-profile')) {
+        const payload = JSON.parse(init.body as string);
+        return Promise.resolve(payload.topicOverrides.baptism
+          ? { ok: false, json: async () => ({ message: 'Position DEPRECATED_POSITION is not published' }) }
+          : { ok: true, json: async () => ({ ...mockTheologicalProfile, id: 'theo-retry', version: 2, ...payload }) });
+      }
+      return initialFetch(url, init);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    render(<PedagogicalTheologicalProfileSettings familyId={FAMILY_ID} />);
+    await screen.findByTestId('preferred-tradition-select');
+    fireEvent.click(screen.getByTestId('save-theological-profile-btn'));
+    expect(await screen.findByTestId('theological-profile-error-alert')).toHaveTextContent('DEPRECATED_POSITION');
+    fireEvent.click(screen.getByRole('button', { name: 'Remover exceção baptism: DEPRECATED_POSITION' }));
+    expect(screen.getByRole('button', { name: 'Remover exceção salvation: VALID_POSITION' })).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('save-theological-profile-btn'));
+    await screen.findByTestId('theological-profile-success-alert');
+    expect(fetchMock).toHaveBeenLastCalledWith(expect.stringContaining('/theological-profile'), expect.objectContaining({
+      method: 'PUT', body: JSON.stringify({ preferredTraditionCode: 'REFORMED', topicOverrides: { salvation: 'VALID_POSITION' } }),
+    }));
+  });
+
+  it('clears a pending secondary selection that becomes the primary model', async () => {
+    stubFetch();
+    render(<PedagogicalTheologicalProfileSettings familyId={FAMILY_ID} />);
+    await screen.findByTestId('primary-model-select');
+    fireEvent.change(screen.getByTestId('new-secondary-model-select'), { target: { value: 'CLASSICAL_TRIVIUM' } });
+    fireEvent.change(screen.getByTestId('primary-model-select'), { target: { value: 'CLASSICAL_TRIVIUM' } });
+    fireEvent.click(screen.getByTestId('add-secondary-model-btn'));
+    expect(screen.queryByTestId('secondary-model-row-CLASSICAL_TRIVIUM')).not.toBeInTheDocument();
+    expect(screen.getByTestId('add-secondary-model-btn')).toBeDisabled();
   });
 
   it('saves the pedagogical profile via PUT and appends the new version to history', async () => {

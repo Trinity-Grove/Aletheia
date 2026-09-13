@@ -29,6 +29,14 @@ export const upsertPedagogicalProfileSchema = z.object({
     .regex(DEFINITION_CODE_REGEX, 'code must be upper snake/dot case, e.g. MONTESSORI'),
   secondaryModels: z.array(secondaryPedagogicalModelSchema).default([]),
   overrides: z.record(z.string(), z.unknown()).default({}),
+}).superRefine((profile, context) => {
+  const codes = new Set([profile.primaryModelCode]);
+  profile.secondaryModels.forEach((model, index) => {
+    if (codes.has(model.code)) {
+      context.addIssue({ code: 'custom', path: ['secondaryModels', index, 'code'], message: 'Each model may appear only once' });
+    }
+    codes.add(model.code);
+  });
 });
 
 export type UpsertPedagogicalProfileDto = z.input<typeof upsertPedagogicalProfileSchema>;
@@ -42,6 +50,7 @@ export const pedagogicalProfileResponseSchema = z.object({
   secondaryModels: z.array(secondaryPedagogicalModelSchema),
   overrides: z.record(z.string(), z.unknown()),
   createdAt: z.string(),
+  createdByUserId: z.string().uuid().nullable(),
 });
 
 export type PedagogicalProfileResponseDto = z.infer<typeof pedagogicalProfileResponseSchema>;

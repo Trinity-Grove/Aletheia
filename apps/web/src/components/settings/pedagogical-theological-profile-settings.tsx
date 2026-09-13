@@ -30,6 +30,7 @@ export function PedagogicalTheologicalProfileSettings({ familyId }: PedagogicalT
   const [pedagogicalHistory, setPedagogicalHistory] = useState<PedagogicalProfileResponseDto[]>([]);
   const [primaryModelCode, setPrimaryModelCode] = useState('');
   const [secondaryModels, setSecondaryModels] = useState<SecondaryPedagogicalModel[]>([]);
+  const [pedagogicalOverrides, setPedagogicalOverrides] = useState<PedagogicalProfileResponseDto['overrides']>({});
   const [newSecondaryCode, setNewSecondaryCode] = useState('');
   const [newSecondaryWeight, setNewSecondaryWeight] = useState('0.5');
   const [savingPedagogical, setSavingPedagogical] = useState(false);
@@ -38,6 +39,7 @@ export function PedagogicalTheologicalProfileSettings({ familyId }: PedagogicalT
 
   const [theologicalHistory, setTheologicalHistory] = useState<TheologicalProfileResponseDto[]>([]);
   const [preferredTraditionCode, setPreferredTraditionCode] = useState('');
+  const [topicOverrides, setTopicOverrides] = useState<TheologicalProfileResponseDto['topicOverrides']>({});
   const [savingTheological, setSavingTheological] = useState(false);
   const [theologicalError, setTheologicalError] = useState<string | null>(null);
   const [theologicalSuccess, setTheologicalSuccess] = useState<string | null>(null);
@@ -70,6 +72,7 @@ export function PedagogicalTheologicalProfileSettings({ familyId }: PedagogicalT
 
         if (pedProfileRes.ok) {
           const profile: PedagogicalProfileResponseDto | null = await pedProfileRes.json();
+          setPedagogicalOverrides(profile?.overrides ?? {});
           if (profile) {
             setPrimaryModelCode(profile.primaryModelCode);
             setSecondaryModels(profile.secondaryModels);
@@ -79,6 +82,7 @@ export function PedagogicalTheologicalProfileSettings({ familyId }: PedagogicalT
 
         if (theoProfileRes.ok) {
           const profile: TheologicalProfileResponseDto | null = await theoProfileRes.json();
+          setTopicOverrides(profile?.topicOverrides ?? {});
           if (profile?.preferredTraditionCode) setPreferredTraditionCode(profile.preferredTraditionCode);
         }
         if (theoHistoryRes.ok) setTheologicalHistory(await theoHistoryRes.json());
@@ -97,13 +101,19 @@ export function PedagogicalTheologicalProfileSettings({ familyId }: PedagogicalT
   }, [familyId]);
 
   const handleAddSecondaryModel = () => {
-    if (!newSecondaryCode) return;
+    if (!newSecondaryCode || newSecondaryCode === primaryModelCode) return;
     const weight = Number(newSecondaryWeight);
     if (Number.isNaN(weight) || weight < 0 || weight > 1) return;
     if (secondaryModels.some((m) => m.code === newSecondaryCode)) return;
     setSecondaryModels((prev) => [...prev, { code: newSecondaryCode, weight }]);
     setNewSecondaryCode('');
     setNewSecondaryWeight('0.5');
+  };
+
+  const handlePrimaryModelChange = (code: string) => {
+    setPrimaryModelCode(code);
+    setSecondaryModels((prev) => prev.filter((model) => model.code !== code));
+    setNewSecondaryCode((prev) => prev === code ? '' : prev);
   };
 
   const handleRemoveSecondaryModel = (code: string) => {
@@ -121,7 +131,7 @@ export function PedagogicalTheologicalProfileSettings({ familyId }: PedagogicalT
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ primaryModelCode, secondaryModels }),
+        body: JSON.stringify({ primaryModelCode, secondaryModels, overrides: pedagogicalOverrides }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -147,7 +157,7 @@ export function PedagogicalTheologicalProfileSettings({ familyId }: PedagogicalT
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ preferredTraditionCode: preferredTraditionCode || null }),
+        body: JSON.stringify({ preferredTraditionCode: preferredTraditionCode || null, topicOverrides }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -207,7 +217,7 @@ export function PedagogicalTheologicalProfileSettings({ familyId }: PedagogicalT
               label="Modelo Pedagógico Principal"
               data-testid="primary-model-select"
               value={primaryModelCode}
-              onChange={(e) => setPrimaryModelCode(e.target.value)}
+              onChange={(e) => handlePrimaryModelChange(e.target.value)}
               disabled={savingPedagogical}
               options={[
                 { value: '', label: 'Selecione um modelo...' },
@@ -352,6 +362,31 @@ export function PedagogicalTheologicalProfileSettings({ familyId }: PedagogicalT
 
         <form data-testid="theological-profile-form" onSubmit={handleSaveTheologicalProfile}>
           <div style={{ display: 'grid', gap: '1.25rem' }}>
+            {Object.keys(topicOverrides).length > 0 && (
+              <div>
+                <div style={{ fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                  Exceções por tema
+                </div>
+                <ul style={{ display: 'grid', gap: '0.5rem', listStyle: 'none', padding: 0, margin: 0 }}>
+                  {Object.entries(topicOverrides).map(([topic, code]) => (
+                    <li key={topic} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                      <span>{topic}: {code}</span>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        aria-label={`Remover exceção ${topic}: ${code}`}
+                        disabled={savingTheological}
+                        onClick={() => setTopicOverrides((previous) => Object.fromEntries(
+                          Object.entries(previous).filter(([key]) => key !== topic),
+                        ))}
+                      >
+                        Remover
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <Select
               label="Tradição Teológica Preferencial"
               data-testid="preferred-tradition-select"
