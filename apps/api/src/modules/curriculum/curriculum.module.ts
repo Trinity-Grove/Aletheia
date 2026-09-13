@@ -6,6 +6,8 @@ import { ObjectiveRepository } from './infrastructure/objective.repository.js';
 import { CurriculumTemplateEngine } from './infrastructure/curriculum-template.engine.js';
 import { PedagogicalModelDefinitionResolver } from './infrastructure/pedagogical-model-definition.resolver.js';
 import { TheologicalTraditionCatalogResolver } from './infrastructure/theological-tradition-catalog.resolver.js';
+import { CurriculumDefinitionCatalogResolver } from './infrastructure/curriculum-definition-catalog.resolver.js';
+import { EvidenceTypeCatalogResolver } from './infrastructure/evidence-type-catalog.resolver.js';
 import { PedagogicalModelDefinitionSeeder } from './infrastructure/pedagogical-model-definition.seeder.js';
 import { EvidenceTypeDefinitionSeeder } from './infrastructure/evidence-type-definition.seeder.js';
 import { BibleTranslationDefinitionSeeder } from './infrastructure/bible-translation-definition.seeder.js';
@@ -14,6 +16,7 @@ import { ProfilesRepository } from './infrastructure/profiles.repository.js';
 import { EvidenceSubmissionRepository } from './infrastructure/evidence-submission.repository.js';
 import { AssessmentResultRepository } from './infrastructure/assessment-result.repository.js';
 import { CurriculumPackRepository } from './infrastructure/curriculum-pack.repository.js';
+import { LearnerCompetencyTrackingRepository } from './infrastructure/learner-competency-tracking.repository.js';
 import { CurriculumService } from './application/curriculum.service.js';
 import { ObjectiveService } from './application/objective.service.js';
 import { DefinitionsService } from './application/definitions.service.js';
@@ -24,6 +27,7 @@ import { BibleTranslationCompareService } from './application/bible-translation-
 import { CurriculumPackService } from './application/curriculum-pack.service.js';
 import { CurriculumPackExportService } from './application/curriculum-pack-export.service.js';
 import { CurriculumPackImportService } from './application/curriculum-pack-import.service.js';
+import { LearnerCompetencyTrackingService } from './application/learner-competency-tracking.service.js';
 import { CURRICULUM_PUBLIC_API } from './application/public-api.js';
 import { CurriculumController } from './presentation/curriculum.controller.js';
 import { ObjectiveController } from './presentation/objective.controller.js';
@@ -33,6 +37,7 @@ import { EvidenceSubmissionController } from './presentation/evidence-submission
 import { AssessmentResultController } from './presentation/assessment-result.controller.js';
 import { BibleTranslationCompareController } from './presentation/bible-translation-compare.controller.js';
 import { CurriculumPackController } from './presentation/curriculum-pack.controller.js';
+import { LearnerCompetencyTrackingController } from './presentation/learner-competency-tracking.controller.js';
 
 @Module({
   imports: [DatabaseModule, DevotionalModule],
@@ -45,6 +50,7 @@ import { CurriculumPackController } from './presentation/curriculum-pack.control
     AssessmentResultController,
     BibleTranslationCompareController,
     CurriculumPackController,
+    LearnerCompetencyTrackingController,
   ],
   providers: [
     CurriculumRepository,
@@ -52,6 +58,8 @@ import { CurriculumPackController } from './presentation/curriculum-pack.control
     CurriculumTemplateEngine,
     PedagogicalModelDefinitionResolver,
     TheologicalTraditionCatalogResolver,
+    CurriculumDefinitionCatalogResolver,
+    EvidenceTypeCatalogResolver,
     PedagogicalModelDefinitionSeeder,
     EvidenceTypeDefinitionSeeder,
     BibleTranslationDefinitionSeeder,
@@ -60,6 +68,7 @@ import { CurriculumPackController } from './presentation/curriculum-pack.control
     EvidenceSubmissionRepository,
     AssessmentResultRepository,
     CurriculumPackRepository,
+    LearnerCompetencyTrackingRepository,
     CurriculumService,
     ObjectiveService,
     DefinitionsService,
@@ -70,6 +79,7 @@ import { CurriculumPackController } from './presentation/curriculum-pack.control
     CurriculumPackService,
     CurriculumPackExportService,
     CurriculumPackImportService,
+    LearnerCompetencyTrackingService,
     {
       provide: CURRICULUM_PUBLIC_API,
       useExisting: CurriculumService,

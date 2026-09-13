@@ -78,7 +78,16 @@ describe('CurriculumService', () => {
     curriculumRepo.applyPublishedTemplate = jest.fn().mockResolvedValue({ subjectsCount: 1, objectivesCount: 1 });
 
     const traditionCatalogResolver: any = { listPublishedCatalog: jest.fn().mockResolvedValue([]) };
-    service = new CurriculumService(curriculumRepo, objectiveRepo, resolver, traditionCatalogResolver);
+    const curriculumDefinitionCatalogResolver: any = { listPublishedCatalog: jest.fn().mockResolvedValue([]) };
+    const evidenceTypeCatalogResolver: any = { listPublishedCatalog: jest.fn().mockResolvedValue([]) };
+    service = new CurriculumService(
+      curriculumRepo,
+      objectiveRepo,
+      resolver,
+      traditionCatalogResolver,
+      curriculumDefinitionCatalogResolver,
+      evidenceTypeCatalogResolver,
+    );
   });
 
   it('creates an academic year', async () => {
@@ -136,7 +145,14 @@ describe('published catalog application', () => {
   it('rejects unavailable definitions before any writes', async () => {
     const repo = { applyPublishedTemplate: jest.fn(), upsertLearnerPlan: jest.fn() };
     const resolver = { resolvePublished: jest.fn().mockResolvedValue(null) };
-    const service = new CurriculumService(repo as any, {} as any, resolver as any, { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any);
+    const service = new CurriculumService(
+      repo as any,
+      {} as any,
+      resolver as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
+    );
     await expect(service.applyTemplate('family', { learnerId: 'learner', academicYearId: 'year', template: 'NEW_MODEL' })).rejects.toThrow('Published pedagogical model not found');
     expect(repo.applyPublishedTemplate).not.toHaveBeenCalled();
     expect(repo.upsertLearnerPlan).not.toHaveBeenCalled();
@@ -145,7 +161,14 @@ describe('published catalog application', () => {
     const definition = { id: 'version-id', subjects: [] };
     const repo = { applyPublishedTemplate: jest.fn().mockResolvedValue({ subjectsCount: 0, objectivesCount: 0 }) };
     const resolver = { resolvePublished: jest.fn().mockResolvedValue(definition) };
-    const service = new CurriculumService(repo as any, {} as any, resolver as any, { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any);
+    const service = new CurriculumService(
+      repo as any,
+      {} as any,
+      resolver as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
+    );
     const dto = { learnerId: 'learner', academicYearId: 'year', template: 'NEW_MODEL' };
     await service.applyTemplate('family', dto);
     expect(resolver.resolvePublished).toHaveBeenCalledWith('NEW_MODEL');

@@ -22,6 +22,7 @@ export * from './bible-translation-definition.js';
 export * from './curriculum-pack.js';
 export * from './curriculum-pack-export.js';
 export * from './curriculum-pack-import.js';
+export * from './learner-competency-tracking.js';
 export * from './lesson.js';
 export * from './schedule.js';
 export * from './record.js';

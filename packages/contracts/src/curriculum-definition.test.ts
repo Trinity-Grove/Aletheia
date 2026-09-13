@@ -5,6 +5,7 @@ import {
   addCurriculumDefinitionCompetencySchema,
   addCurriculumDefinitionRubricSchema,
   addCurriculumDefinitionActivitySchema,
+  curriculumDefinitionCatalogEntrySchema,
 } from './curriculum-definition.js';
 
 const MODEL_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
@@ -63,5 +64,15 @@ describe('Curriculum Definition Contracts', () => {
     const parsed = addCurriculumDefinitionActivitySchema.parse({ activityId: ACTIVITY_ID });
     expect(parsed.required).toBe(true);
     expect(parsed.order).toBe(0);
+  });
+
+  it('validates a family-facing catalog entry, which unlike the pedagogical/theological catalogs does carry an id', () => {
+    const parsed = curriculumDefinitionCatalogEntrySchema.parse({
+      id: MODEL_ID,
+      code: 'CLASSICAL_TRIVIUM.CORE',
+      name: 'Trivium Clássico -- Núcleo',
+      description: null,
+    });
+    expect(parsed.id).toBe(MODEL_ID);
   });
 });
