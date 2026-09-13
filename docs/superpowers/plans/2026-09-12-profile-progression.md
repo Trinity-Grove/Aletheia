@@ -35,3 +35,14 @@ Files: new progression evaluation contract, service/repository/controller and te
 - [x] Review entire diff for spec coverage and regressions.
 - [x] Run relevant contracts, curriculum integration, API typecheck/lint and boundaries.
 - [x] Commit scoped changes and report evidence and remaining limitations.
+
+## Adaptation to main db7adb1 — 2026-09-13
+- [x] Preserve task 1 reference validation and task 2 attributable serialized history when resolving the schema merge.
+- [x] Change evaluation query to trackingId + policyId; derive learner, exact competency version and curriculum from the family's existing tracking.
+- [x] Keep deprecated/archived tracked versions and retired tracking evaluable; reject draft definitions, mismatched versions and policies outside the activated curriculum.
+- [x] Require prerequisite tracking for the same learner; retain cycle and traversal bounds and consistent database snapshot.
+- [x] Preserve profile overrides in settings; prevent primary/secondary duplication and allow explicit removal of stale theological overrides.
+- [x] Cover activation via the existing API, historical prerequisites, foreign tracking and unsupported curricula; review UI rejection/removal/retry.
+- [x] Verify 266 contracts, 410 API unit tests, all 27 PostgreSQL integration suites (163 tests at the full run), then the expanded progression suite (18 tests), and 9 settings component tests. API/web types, API lint, scoped web lint and boundaries pass. Independent review's UI finding fixed and re-reviewed.
+
+Evaluation remains read-only. Policies are not pinned by LearnerCompetencyTracking, so a caller must provide an exact currently published policy. This is current computed progress, not a stored historical achievement or automatic update to ACTIVE/RETIRED.

@@ -108,3 +108,17 @@ export const theologicalPositionDefinitionResponseSchema = z.object({
 });
 
 export type TheologicalPositionDefinitionResponseDto = z.infer<typeof theologicalPositionDefinitionResponseSchema>;
+
+// Lean, family-facing catalog entry (issue #126 item 1) -- same shape
+// and same reasoning as PedagogicalModelCatalogEntryDto (issue #96
+// section 35): a family choosing a preferred tradition doesn't need the
+// admin-facing shape, just enough to render an option and set it by
+// code, the same `code` `upsertTheologicalProfileSchema
+// .preferredTraditionCode` already accepts.
+export const theologicalTraditionCatalogEntrySchema = z.object({
+  code: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+});
+
+export type TheologicalTraditionCatalogEntryDto = z.infer<typeof theologicalTraditionCatalogEntrySchema>;

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createEvidenceTypeDefinitionSchema } from './evidence-type-definition.js';
+import { createEvidenceTypeDefinitionSchema, evidenceTypeCatalogEntrySchema } from './evidence-type-definition.js';
+
+const EVIDENCE_TYPE_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 
 describe('Evidence Type Definition Contracts', () => {
   it('validates a minimal evidence type with defaults', () => {
@@ -39,5 +41,15 @@ describe('Evidence Type Definition Contracts', () => {
         metadata: { maxSizeMb: 0 },
       }),
     ).toThrow();
+  });
+
+  it('validates a family-facing catalog entry with a real FK id', () => {
+    const parsed = evidenceTypeCatalogEntrySchema.parse({
+      id: EVIDENCE_TYPE_ID,
+      code: 'PHOTO',
+      name: 'Foto',
+      description: null,
+    });
+    expect(parsed.id).toBe(EVIDENCE_TYPE_ID);
   });
 });

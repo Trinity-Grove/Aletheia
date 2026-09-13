@@ -2,15 +2,21 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CurriculumRepository } from '../infrastructure/curriculum.repository.js';
 import { ObjectiveRepository } from '../infrastructure/objective.repository.js';
 import { PedagogicalModelDefinitionResolver } from '../infrastructure/pedagogical-model-definition.resolver.js';
+import { TheologicalTraditionCatalogResolver } from '../infrastructure/theological-tradition-catalog.resolver.js';
+import { CurriculumDefinitionCatalogResolver } from '../infrastructure/curriculum-definition-catalog.resolver.js';
+import { EvidenceTypeCatalogResolver } from '../infrastructure/evidence-type-catalog.resolver.js';
 import { pedagogicalFrameworkSchema } from '@aletheia/contracts';
 import type {
   AcademicYearResponseDto,
   ApplyCurriculumTemplateDto,
   CreateAcademicYearDto,
   CreateSubjectDto,
+  CurriculumDefinitionCatalogEntryDto,
+  EvidenceTypeCatalogEntryDto,
   LearnerPlanResponseDto,
   PedagogicalModelCatalogEntryDto,
   SubjectResponseDto,
+  TheologicalTraditionCatalogEntryDto,
   UpdateSubjectDto,
   UpsertLearnerPlanDto,
 } from '@aletheia/contracts';
@@ -22,6 +28,9 @@ export class CurriculumService implements CurriculumPublicApi {
     private readonly curriculumRepo: CurriculumRepository,
     private readonly objectiveRepo: ObjectiveRepository,
     private readonly modelResolver: PedagogicalModelDefinitionResolver,
+    private readonly traditionCatalogResolver: TheologicalTraditionCatalogResolver,
+    private readonly curriculumDefinitionCatalogResolver: CurriculumDefinitionCatalogResolver,
+    private readonly evidenceTypeCatalogResolver: EvidenceTypeCatalogResolver,
   ) {}
 
   // Academic Years
@@ -122,6 +131,27 @@ export class CurriculumService implements CurriculumPublicApi {
   // PlatformAdminGuard and returns the full admin-facing shape.
   async listPublishedTemplateCatalog(): Promise<PedagogicalModelCatalogEntryDto[]> {
     return this.modelResolver.listPublishedCatalog();
+  }
+
+  // Family-facing theological tradition catalog (issue #126 item 1):
+  // lets the pedagogical/theological profile settings UI populate a
+  // "preferred tradition" dropdown from real published data -- same
+  // reasoning and shape as listPublishedTemplateCatalog above.
+  async listPublishedTheologicalTraditionCatalog(): Promise<TheologicalTraditionCatalogEntryDto[]> {
+    return this.traditionCatalogResolver.listPublishedCatalog();
+  }
+
+  // Family-facing curriculum definition catalog (issue #126 item 3): lets
+  // a family discover a new PUBLISHED curriculum to activate for a
+  // learner, populating the "activate curriculum" flow's dropdown.
+  async listPublishedCurriculumDefinitionCatalog(): Promise<CurriculumDefinitionCatalogEntryDto[]> {
+    return this.curriculumDefinitionCatalogResolver.listPublishedCatalog();
+  }
+
+  // Family-facing evidence type catalog (issue #126 item 3): populates
+  // the evidence-submission form's "type of evidence" dropdown.
+  async listPublishedEvidenceTypeCatalog(): Promise<EvidenceTypeCatalogEntryDto[]> {
+    return this.evidenceTypeCatalogResolver.listPublishedCatalog();
   }
 
   async getLearnerCurriculumSummary(

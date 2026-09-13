@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { BiblePassageDto, BibleVersionDto } from '@aletheia/contracts';
+import { parseScriptureReference } from './scripture-reference.js';
 
 export const POPULAR_BIBLE_VERSIONS: BibleVersionDto[] = [
   { id: '1608', name: 'Almeida Revista e Atualizada', language: 'pt', abbreviation: 'ARA' },
@@ -23,6 +24,19 @@ export class YouVersionService {
   }
 
   async fetchPassage(reference: string, versionId = '3034'): Promise<BiblePassageDto | null> {
+    // YouVersion's real API requires a USFM-style code in the path
+    // (e.g. "JHN.3.16", "PSA.23.1-PSA.23.6") -- confirmed directly
+    // against the live API: a human-readable reference like
+    // "John 3:16" 404s. A reference this converter doesn't recognize
+    // is reported as null (not silently sent to the API as garbage,
+    // and not confused with a legitimate API-side failure, which
+    // still falls back to empty content below) so the caller can show
+    // "reference not recognized."
+    const parsed = parseScriptureReference(reference);
+    if (!parsed) {
+      return null;
+    }
+
     if (!this.appKey) {
       return {
         reference,
@@ -32,7 +46,7 @@ export class YouVersionService {
     }
 
     try {
-      const url = `https://api.youversion.com/v1/bibles/${encodeURIComponent(versionId)}/passages/${encodeURIComponent(reference)}`;
+      const url = `https://api.youversion.com/v1/bibles/${encodeURIComponent(versionId)}/passages/${encodeURIComponent(parsed.usfm)}`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {

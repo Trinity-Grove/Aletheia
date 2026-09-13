@@ -5,10 +5,13 @@ describe('evidence progression', () => {
   const competencyId = '00000000-0000-4000-8000-000000000001';
   const policyId = '00000000-0000-4000-8000-000000000002';
   const prerequisiteId = '00000000-0000-4000-8000-000000000003';
-  const query = { learnerId: 'learner', competencyDefinitionId: competencyId, policyId };
+  const query = { trackingId: 'tracking', policyId };
+  const tracking = { id: 'tracking', learnerId: 'learner', competencyDefinitionId: competencyId, competencyVersion: 2, curriculumDefinitionId: null, status: 'ACTIVE' as const };
   function reader(overrides: Partial<ProgressionReader> = {}): ProgressionReader {
     return {
       learnerExists: async () => true,
+      tracking: async () => tracking,
+      trackingForCompetency: async () => tracking,
       competency: async (id) => ({ id, version: 2, status: 'PUBLISHED', schemaVersion: '1.0.0' }),
       policy: async (id) => ({ id, version: 3, status: 'PUBLISHED', schemaVersion: '1.0.0', policyType: 'EVIDENCE_COUNT', rules: { minimumEvidenceCount: 2 }, competencyDefinitionId: null, curriculumDefinitionId: null }),
       curriculumContains: async () => true,

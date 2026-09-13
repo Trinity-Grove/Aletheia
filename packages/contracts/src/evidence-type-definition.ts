@@ -50,3 +50,19 @@ export const evidenceTypeDefinitionResponseSchema = z.object({
 });
 
 export type EvidenceTypeDefinitionResponseDto = z.infer<typeof evidenceTypeDefinitionResponseSchema>;
+
+// Lean, family-facing catalog entry (issue #126 item 3): populates the
+// evidence-submission form's "type of evidence" dropdown from real
+// PUBLISHED data. Includes `id` (unlike the code-only catalog entries for
+// PedagogicalModelDefinition/TheologicalTraditionDefinition) because
+// createEvidenceSubmissionSchema.evidenceTypeId is a real FK id, not a
+// code -- this table doesn't have a family-facing "resolve by code"
+// concept the way profiles do.
+export const evidenceTypeCatalogEntrySchema = z.object({
+  id: z.string().uuid(),
+  code: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+});
+
+export type EvidenceTypeCatalogEntryDto = z.infer<typeof evidenceTypeCatalogEntrySchema>;

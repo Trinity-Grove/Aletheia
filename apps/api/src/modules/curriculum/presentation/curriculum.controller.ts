@@ -22,9 +22,12 @@ import {
   type ApplyCurriculumTemplateDto,
   type CreateAcademicYearDto,
   type CreateSubjectDto,
+  type CurriculumDefinitionCatalogEntryDto,
+  type EvidenceTypeCatalogEntryDto,
   type LearnerPlanResponseDto,
   type PedagogicalModelCatalogEntryDto,
   type SubjectResponseDto,
+  type TheologicalTraditionCatalogEntryDto,
   type UpdateSubjectDto,
   type UpsertLearnerPlanDto,
 } from '@aletheia/contracts';
@@ -129,6 +132,35 @@ export class CurriculumController {
   @ApiOperation({ summary: 'List published pedagogical model templates a family can apply' })
   async listTemplateCatalog(): Promise<PedagogicalModelCatalogEntryDto[]> {
     return this.curriculumService.listPublishedTemplateCatalog();
+  }
+
+  // Theological Tradition Catalog (issue #126 item 1) -- same reasoning
+  // and guard pattern as the template catalog above: a family discovers
+  // a new PUBLISHED tradition without a release, to populate the
+  // pedagogical/theological profile settings UI's "preferred tradition"
+  // dropdown.
+  @Get('theological-traditions/catalog')
+  @ApiOperation({ summary: 'List published theological traditions a family can prefer' })
+  async listTheologicalTraditionCatalog(): Promise<TheologicalTraditionCatalogEntryDto[]> {
+    return this.curriculumService.listPublishedTheologicalTraditionCatalog();
+  }
+
+  // Curriculum Definition Catalog (issue #126 item 3) -- populates the
+  // "activate curriculum for this learner" flow's dropdown. Unlike the
+  // two catalogs above, entries carry a real `id` (see
+  // curriculumDefinitionCatalogEntrySchema's comment for why).
+  @Get('curriculum-definitions/catalog')
+  @ApiOperation({ summary: 'List published curriculum definitions a family can activate for a learner' })
+  async listCurriculumDefinitionCatalog(): Promise<CurriculumDefinitionCatalogEntryDto[]> {
+    return this.curriculumService.listPublishedCurriculumDefinitionCatalog();
+  }
+
+  // Evidence Type Catalog (issue #126 item 3) -- populates the evidence
+  // submission form's "type of evidence" dropdown.
+  @Get('evidence-types/catalog')
+  @ApiOperation({ summary: 'List published evidence types a family can submit as' })
+  async listEvidenceTypeCatalog(): Promise<EvidenceTypeCatalogEntryDto[]> {
+    return this.curriculumService.listPublishedEvidenceTypeCatalog();
   }
 
   // Apply Template Accelerator

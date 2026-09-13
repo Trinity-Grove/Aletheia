@@ -10,12 +10,16 @@ export const evidenceCountRulesSchema = z.object({
   prerequisites: z.array(progressionPrerequisiteSchema).max(32).default([]),
 }).strict();
 
-export const progressionEvaluationQuerySchema = progressionPrerequisiteSchema.extend({
-  learnerId: z.string().uuid(),
+export const progressionEvaluationQuerySchema = z.object({
+  trackingId: z.string().uuid(),
+  policyId: z.string().uuid(),
 }).strict();
 
 export const progressionStateSchema = z.enum(['NOT_STARTED', 'IN_PROGRESS', 'BLOCKED', 'MASTERED']);
 const evaluationFields = {
+  trackingId: z.string().uuid(),
+  trackingStatus: z.enum(['ACTIVE', 'RETIRED']),
+  curriculumDefinitionId: z.string().uuid().nullable(),
   competencyDefinitionId: z.string().uuid(),
   competencyVersion: z.number().int().positive(),
   policyId: z.string().uuid(),

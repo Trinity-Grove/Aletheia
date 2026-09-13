@@ -37,7 +37,11 @@ describe('YouVersionService', () => {
       });
     });
 
-    it('fetches passage from API when key is configured', async () => {
+    // Confirmed directly against the live YouVersion API: "JHN.3.16"
+    // resolves correctly; a raw human-readable string like "John 3:16"
+    // 404s. fetchPassage must convert the reference to USFM before
+    // calling the API -- this is the actual bug this fix closes.
+    it('converts a human-readable reference to USFM before calling the API', async () => {
       process.env.YOUVERSION_APP_KEY = 'test-key-123';
 
       const mockResponse = {
@@ -56,7 +60,7 @@ describe('YouVersionService', () => {
       const result = await service.fetchPassage('John 3:16', '3034');
 
       expect(fetchSpy).toHaveBeenCalledWith(
-        'https://api.youversion.com/v1/bibles/3034/passages/John%203%3A16',
+        'https://api.youversion.com/v1/bibles/3034/passages/JHN.3.16',
         {
           method: 'GET',
           headers: {
@@ -72,6 +76,34 @@ describe('YouVersionService', () => {
       });
     });
 
+    it('converts a Portuguese reference with a verse range to USFM', async () => {
+      process.env.YOUVERSION_APP_KEY = 'test-key-123';
+
+      const fetchSpy = jest.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ reference: 'Salmos 23:1-6', version_id: '1608', content: 'O Senhor é o meu pastor...' }),
+      } as Response);
+
+      const service = new YouVersionService();
+      await service.fetchPassage('Salmos 23:1-6', '1608');
+
+      expect(fetchSpy).toHaveBeenCalledWith(
+        'https://api.youversion.com/v1/bibles/1608/passages/PSA.23.1-PSA.23.6',
+        expect.anything(),
+      );
+    });
+
+    it('returns null (not an API call) for a reference it cannot recognize', async () => {
+      process.env.YOUVERSION_APP_KEY = 'test-key-123';
+      const fetchSpy = jest.spyOn(globalThis, 'fetch');
+
+      const service = new YouVersionService();
+      const result = await service.fetchPassage('not a real reference', '3034');
+
+      expect(result).toBeNull();
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
     it('returns fallback content when API request fails with error status', async () => {
       process.env.YOUVERSION_APP_KEY = 'test-key-123';
 
@@ -81,10 +113,10 @@ describe('YouVersionService', () => {
       } as Response);
 
       const service = new YouVersionService();
-      const result = await service.fetchPassage('NonExistent 99:99', '3034');
+      const result = await service.fetchPassage('John 99:99', '3034');
 
       expect(result).toEqual({
-        reference: 'NonExistent 99:99',
+        reference: 'John 99:99',
         versionId: '3034',
         content: '',
       });

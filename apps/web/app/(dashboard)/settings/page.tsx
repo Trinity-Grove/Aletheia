@@ -21,10 +21,11 @@ import { NotificationPreferences } from '../../../src/components/settings/notifi
 import { DataBackupCard } from '../../../src/components/settings/data-backup-card';
 import { AccountSecuritySettings } from '../../../src/components/settings/account-security-settings';
 import { AccountActivityLog } from '../../../src/components/settings/account-activity-log';
+import { PedagogicalTheologicalProfileSettings } from '../../../src/components/settings/pedagogical-theological-profile-settings';
 import { useAuth } from '../../../src/lib/auth/auth-context';
 import { api } from '../../../src/lib/api';
 
-type ActiveTab = 'general' | 'family' | 'notifications' | 'backup' | 'account';
+type ActiveTab = 'general' | 'family' | 'profile' | 'notifications' | 'backup' | 'account';
 
 export default function SettingsPage() {
   const { user, changePassword, changeEmail, refreshSession } = useAuth();
@@ -318,6 +319,28 @@ export default function SettingsPage() {
 
           <button
             type="button"
+            data-testid="tab-profile-settings"
+            onClick={() => setActiveTab('profile')}
+            style={{
+              padding: '0.75rem 1.25rem',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'profile' ? '2px solid var(--forest)' : '2px solid transparent',
+              color: activeTab === 'profile' ? 'var(--forest)' : 'var(--text-secondary)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            <AletheiaIcon name="graduation-cap" size="sm" />
+            <span>Perfil Pedagógico & Teológico</span>
+          </button>
+
+          <button
+            type="button"
             data-testid="tab-notification-preferences"
             onClick={() => setActiveTab('notifications')}
             style={{
@@ -403,6 +426,10 @@ export default function SettingsPage() {
                 onInvite={handleInviteGuardian}
                 onCancelInvitation={handleCancelInvitation}
               />
+            )}
+
+            {activeTab === 'profile' && familyId && (
+              <PedagogicalTheologicalProfileSettings familyId={familyId} />
             )}
 
             {activeTab === 'notifications' && (

@@ -52,6 +52,24 @@ export const curriculumDefinitionResponseSchema = z.object({
 
 export type CurriculumDefinitionResponseDto = z.infer<typeof curriculumDefinitionResponseSchema>;
 
+// Lean, family-facing catalog entry (issue #126 item 3): lets a family
+// discover a new PUBLISHED curriculum without a release, to populate an
+// "activate this curriculum for my learner" dropdown. Unlike
+// PedagogicalModelCatalogEntryDto/TheologicalTraditionCatalogEntryDto,
+// this DOES include `id` -- activating a curriculum
+// (activateCurriculumForLearnerSchema) needs the real FK id, not a code,
+// because the resulting LearnerCompetencyTracking rows point at exact
+// CompetencyDefinition/CurriculumDefinition rows (Definition/Version
+// snapshot discipline), not at a resolved-by-code pointer.
+export const curriculumDefinitionCatalogEntrySchema = z.object({
+  id: z.string().uuid(),
+  code: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+});
+
+export type CurriculumDefinitionCatalogEntryDto = z.infer<typeof curriculumDefinitionCatalogEntrySchema>;
+
 // Domain / competency links carry `required` + `order`; the rubric link
 // is a plain membership (a rubric either applies to the curriculum or it
 // doesn't -- no ordering/required concept for it in this slice).
