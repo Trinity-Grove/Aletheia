@@ -19,20 +19,21 @@ export class AchievementRepository {
 
   async reconcileValidatedEvidence(familyId: string, learnerId: string, actorId: string): Promise<void> {
     const rows = await this.prisma.evidenceSubmission.findMany({ where: { familyId, learnerId, validationStatus: 'VALIDATED' }, select: { id: true } });
-    for (const row of rows) await this.validateAndReconcile(familyId, row.id, 'VALIDATED', actorId);
+    for (const row of rows) await this.validateAndReconcile(familyId, row.id, 'VALIDATED', actorId, false);
   }
 
-  async validateAndReconcile(familyId: string, evidenceId: string, status: 'VALIDATED' | 'REJECTED', actorId: string): Promise<ValidationReconciliationResult | null> {
+  async validateAndReconcile(familyId: string, evidenceId: string, status: 'VALIDATED' | 'REJECTED', actorId: string, updateStatus = true): Promise<ValidationReconciliationResult | null> {
     return this.prisma.$transaction(async (tx) => {
       const current = await tx.evidenceSubmission.findFirst({ where: { id: evidenceId, familyId }, include: { competencies: true } });
       if (!current) return null;
       const lockedLearner = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM learners WHERE id = ${current.learnerId}::uuid AND family_id = ${familyId}::uuid FOR UPDATE`;
       if (!lockedLearner.length) return null;
-      const evidence = await tx.evidenceSubmission.update({
+      if (!updateStatus && current.validationStatus !== 'VALIDATED') return null;
+      const evidence = updateStatus ? await tx.evidenceSubmission.update({
         where: { id: evidenceId },
         data: { validationStatus: status, validatedByUserId: actorId, validatedAt: new Date() },
         include: { competencies: true },
-      });
+      }) : current;
 
       const trackings = await tx.learnerCompetencyTracking.findMany({ where: { familyId, learnerId: current.learnerId, progressionPolicyId: { not: null } } });
       const achievements: LearnerCompetencyAchievement[] = [];

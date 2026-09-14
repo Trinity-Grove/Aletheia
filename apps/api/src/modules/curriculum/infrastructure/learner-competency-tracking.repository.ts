@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import type { LearnerCompetencyTracking, Prisma, ProgressionPolicy } from '@prisma/client';
 import { PrismaService } from '../../../platform/database/prisma.service.js';
 
@@ -81,6 +82,13 @@ export class LearnerCompetencyTrackingRepository {
       const learner = await tx.learner.findFirst({ where: { id: learnerId, familyId }, select: { id: true } });
       if (!learner) return;
       await tx.$queryRaw`SELECT id FROM learners WHERE id = ${learnerId}::uuid FOR UPDATE`;
+      if (policy) {
+        const existing = await tx.learnerCompetencyTracking.findMany({ where: { learnerId, competencyDefinitionId: { in: competencies.map((c) => c.competencyDefinitionId) } }, select: { competencyDefinitionId: true, competencyVersion: true, progressionPolicyId: true, policyVersion: true } });
+        const requested = new Set(competencies.map((c) => `${c.competencyDefinitionId}:${c.competencyVersion}`));
+        if (existing.some((row) => requested.has(`${row.competencyDefinitionId}:${row.competencyVersion}`) && (row.progressionPolicyId !== policy.id || row.policyVersion !== policy.version))) {
+          throw new BadRequestException('This tracking already has a different immutable progression policy binding.');
+        }
+      }
       await tx.learnerCompetencyTracking.createMany({
         data: competencies.map((c) => ({
           familyId,

@@ -55,7 +55,7 @@ export async function evaluateProgression(reader: ProgressionReader, familyId: s
     // Previously activated versions remain usable after deprecation/archival.
     // Policies are selected now, not pinned by tracking, so must still be published.
     if (!['PUBLISHED', 'DEPRECATED', 'ARCHIVED'].includes(competency.status) || competency.version !== tracking.competencyVersion ||
-        competency.schemaVersion !== '1.0.0' || !['PUBLISHED', 'DEPRECATED', 'ARCHIVED'].includes(policy.status) || policy.schemaVersion !== '1.0.0' ||
+        competency.schemaVersion !== '1.0.0' || (pinnedPolicy ? !['PUBLISHED', 'DEPRECATED', 'ARCHIVED'].includes(policy.status) : policy.status !== 'PUBLISHED') || policy.schemaVersion !== '1.0.0' ||
         (pinnedPolicy && policy.version !== pinnedPolicy.version)) {
       throw new BadRequestException('Progression requires a supported tracked competency version and a published supported policy');
     }

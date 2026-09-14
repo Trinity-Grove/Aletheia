@@ -4,7 +4,7 @@
 
 **Goal:** Record an immutable, idempotent achievement when validated evidence satisfies the fixed EVIDENCE_COUNT policy of a learner tracking, and append a review event when later rejection affects that achievement.
 
-**Architecture:** Activation pins `progressionPolicyId` and its exact `policyVersion` on each tracking row. Evidence validation and achievement reconciliation run inside one repeatable-read transaction locked per learner. `LearnerCompetencyAchievement` stores exact learner/tracking/competency/curriculum/policy snapshots and a unique tracking key; `LearnerCompetencyAchievementReview` records later review-needed events without deleting the original award.
+**Architecture:** Activation pins `progressionPolicyId` and its exact `policyVersion` on each tracking row. Evidence validation and achievement reconciliation run inside one `ReadCommitted` transaction locked per learner, so a waiting validation sees the committed state after the lock. `LearnerCompetencyAchievement` stores exact learner/tracking/competency/curriculum/policy snapshots and a unique tracking key; `LearnerCompetencyAchievementReview` records later review-needed events without deleting the original award.
 
 **Tech Stack:** Prisma/PostgreSQL, NestJS services/repositories, shared Zod contracts, Jest integration tests.
 
