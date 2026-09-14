@@ -13,6 +13,11 @@ const DOMAIN_ID = 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55';
 const TRACKING_ID = 'f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66';
 
 describe('Learner Competency Tracking Contracts', () => {
+  it('preserves an exact policy binding and rejects invalid policy IDs', () => {
+    const request = { learnerId: LEARNER_ID, curriculumDefinitionId: CURRICULUM_ID, progressionPolicyId: TRACKING_ID };
+    expect(activateCurriculumForLearnerSchema.parse(request)).toEqual(request);
+    expect(activateCurriculumForLearnerSchema.safeParse({ ...request, progressionPolicyId: 'latest' }).success).toBe(false);
+  });
   it('validates an activation request', () => {
     const parsed = activateCurriculumForLearnerSchema.parse({
       learnerId: LEARNER_ID,
