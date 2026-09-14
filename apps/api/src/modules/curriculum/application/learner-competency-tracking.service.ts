@@ -87,7 +87,7 @@ export class LearnerCompetencyTrackingService {
     // unique constraint on [learnerId, competencyDefinitionId,
     // competencyVersion] means re-activating the same curriculum for the
     // same learner never duplicates tracking rows.
-    await this.repository.createMany(familyId, dto.learnerId, dto.curriculumDefinitionId, toCreate, policy);
+    await this.repository.createMany(familyId, dto.learnerId, dto.curriculumDefinitionId, toCreate, policy, competencies);
 
     const allRows = await this.repository.findByLearnerAndCompetencies(
       dto.learnerId,
