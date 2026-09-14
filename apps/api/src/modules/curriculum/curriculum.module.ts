@@ -12,6 +12,7 @@ import { TheologicalTraditionCatalogResolver } from './infrastructure/theologica
 import { CurriculumDefinitionCatalogResolver } from './infrastructure/curriculum-definition-catalog.resolver.js';
 import { EvidenceTypeCatalogResolver } from './infrastructure/evidence-type-catalog.resolver.js';
 import { ProgressionPolicyCatalogResolver } from './infrastructure/progression-policy-catalog.resolver.js';
+import { RubricCatalogResolver } from './infrastructure/rubric-catalog.resolver.js';
 import { PedagogicalModelDefinitionSeeder } from './infrastructure/pedagogical-model-definition.seeder.js';
 import { EvidenceTypeDefinitionSeeder } from './infrastructure/evidence-type-definition.seeder.js';
 import { BibleTranslationDefinitionSeeder } from './infrastructure/bible-translation-definition.seeder.js';
@@ -79,6 +80,7 @@ import { AchievementController } from './presentation/achievement.controller.js'
     CurriculumDefinitionCatalogResolver,
     EvidenceTypeCatalogResolver,
     ProgressionPolicyCatalogResolver,
+    RubricCatalogResolver,
     PedagogicalModelDefinitionSeeder,
     EvidenceTypeDefinitionSeeder,
     BibleTranslationDefinitionSeeder,

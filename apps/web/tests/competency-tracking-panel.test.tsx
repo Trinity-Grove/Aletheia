@@ -33,6 +33,18 @@ const mockProgressionPolicyCatalog = [
   },
 ];
 
+const mockRubricCatalog = [
+  {
+    id: 'rubric-1',
+    code: 'FOUNDATION.RUBRIC',
+    version: 1,
+    name: 'Rubrica de leitura',
+    description: 'Avaliação breve.',
+    competencyId: 'competency-1',
+    criteria: [{ id: 'criterion-1', code: 'CLARITY', label: 'Clareza', order: 0, scaleMin: 0, scaleMax: 4 }],
+  },
+];
+
 const mockTracking: LearnerCompetencyTrackingResponseDto = {
   id: 'tracking-1',
   familyId: FAMILY_ID,
@@ -130,6 +142,9 @@ function stubFetch(overrides: Record<string, unknown> = {}) {
       if (init?.method === 'POST' && url.includes('/evidence-submissions')) {
         return Promise.resolve({ ok: true, json: async () => mockEvidenceSubmission });
       }
+      if (init?.method === 'POST' && url.includes('/assessment-results')) {
+        return Promise.resolve({ ok: true, json: async () => mockAssessmentResult });
+      }
       if (url.includes('/curriculum-definitions/catalog')) {
         return Promise.resolve({ ok: true, json: async () => overrides.curriculumCatalog ?? mockCurriculumCatalog });
       }
@@ -138,6 +153,9 @@ function stubFetch(overrides: Record<string, unknown> = {}) {
       }
       if (url.includes('/progression-policies/catalog')) {
         return Promise.resolve({ ok: true, json: async () => overrides.progressionPolicyCatalog ?? mockProgressionPolicyCatalog });
+      }
+      if (url.includes('/rubrics/catalog')) {
+        return Promise.resolve({ ok: true, json: async () => overrides.rubricCatalog ?? mockRubricCatalog });
       }
       if (url.includes('/progression/evaluation')) {
         return Promise.resolve({
@@ -234,6 +252,32 @@ describe('CompetencyTrackingPanel', () => {
     expect(screen.getByTestId('achievement-competency-achievement-1')).toHaveTextContent('Leitura Fluente');
     expect(screen.getByTestId('achievement-achievement-1')).toHaveTextContent('Competência v1');
     expect(screen.getByTestId('achievement-achievement-1')).toHaveTextContent('1/1 evidência validada');
+  });
+
+  it('records a rubric assessment from the competency panel', async () => {
+    stubFetch();
+    render(<CompetencyTrackingPanel familyId={FAMILY_ID} learnerId={LEARNER_ID} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('open-assessment-modal-btn')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId('open-assessment-modal-btn'));
+    await waitFor(() => expect(screen.getByTestId('assessment-score-criterion-1')).toBeInTheDocument());
+    fireEvent.change(screen.getByTestId('assessment-score-criterion-1'), { target: { value: '4' } });
+    fireEvent.click(screen.getByTestId('save-assessment-result-btn'));
+
+    await waitFor(() => {
+      const assessmentCall = vi.mocked(fetch).mock.calls.find(([url, init]) =>
+        String(url).includes('/assessment-results') && init?.method === 'POST',
+      );
+      expect(assessmentCall).toBeTruthy();
+      expect(JSON.parse(String(assessmentCall?.[1]?.body))).toMatchObject({
+        learnerId: LEARNER_ID,
+        rubricDefinitionId: 'rubric-1',
+        assessorType: 'PARENT',
+        scores: [{ rubricCriterionId: 'criterion-1', score: 4 }],
+      });
+    });
   });
 
   it('activates a curriculum for the learner and refreshes the tracked list', async () => {

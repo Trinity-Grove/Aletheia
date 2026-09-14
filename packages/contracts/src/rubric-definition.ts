@@ -93,3 +93,26 @@ export const rubricDefinitionResponseSchema = z.object({
 });
 
 export type RubricDefinitionResponseDto = z.infer<typeof rubricDefinitionResponseSchema>;
+
+export const rubricCatalogCriterionSchema = z.object({
+  id: z.string().uuid(),
+  code: z.string(),
+  label: z.string(),
+  order: z.number().int(),
+  scaleMin: z.number().int(),
+  scaleMax: z.number().int(),
+});
+
+export type RubricCatalogCriterionDto = z.infer<typeof rubricCatalogCriterionSchema>;
+
+export const rubricCatalogEntrySchema = z.object({
+  id: z.string().uuid(),
+  code: z.string(),
+  version: z.number().int().positive(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  competencyId: z.string().uuid().nullable().optional(),
+  criteria: z.array(rubricCatalogCriterionSchema).min(1),
+});
+
+export type RubricCatalogEntryDto = z.infer<typeof rubricCatalogEntrySchema>;

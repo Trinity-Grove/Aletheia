@@ -9,6 +9,7 @@ describe('CurriculumService', () => {
   let curriculumRepo: any;
   let objectiveRepo: any;
   let resolver: any;
+  let rubricCatalogResolver: any;
 
   const FAMILY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
   const LEARNER_ID = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
@@ -80,6 +81,17 @@ describe('CurriculumService', () => {
     const traditionCatalogResolver: any = { listPublishedCatalog: jest.fn().mockResolvedValue([]) };
     const curriculumDefinitionCatalogResolver: any = { listPublishedCatalog: jest.fn().mockResolvedValue([]) };
     const evidenceTypeCatalogResolver: any = { listPublishedCatalog: jest.fn().mockResolvedValue([]) };
+    rubricCatalogResolver = {
+      listPublishedCatalog: jest.fn().mockResolvedValue([
+        {
+          id: 'rubric-1',
+          code: 'FOUNDATION.RUBRIC',
+          version: 1,
+          name: 'Rubrica de leitura',
+          criteria: [{ id: 'criterion-1', code: 'CLARITY', label: 'Clareza', order: 0, scaleMin: 0, scaleMax: 4 }],
+        },
+      ]),
+    };
     service = new CurriculumService(
       curriculumRepo,
       objectiveRepo,
@@ -88,6 +100,7 @@ describe('CurriculumService', () => {
       curriculumDefinitionCatalogResolver,
       evidenceTypeCatalogResolver,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
+      rubricCatalogResolver,
     );
   });
 
@@ -140,6 +153,13 @@ describe('CurriculumService', () => {
       'MONTESSORI',
     );
   });
+
+  it('lists the published rubric catalog for family-facing assessment', async () => {
+    await expect(service.listPublishedRubricCatalog()).resolves.toEqual([
+      expect.objectContaining({ code: 'FOUNDATION.RUBRIC', version: 1 }),
+    ]);
+    expect(rubricCatalogResolver.listPublishedCatalog).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('published catalog application', () => {
@@ -150,6 +170,7 @@ describe('published catalog application', () => {
       repo as any,
       {} as any,
       resolver as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
@@ -167,6 +188,7 @@ describe('published catalog application', () => {
       repo as any,
       {} as any,
       resolver as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,

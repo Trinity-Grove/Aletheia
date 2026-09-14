@@ -25,6 +25,7 @@ import {
   type CurriculumDefinitionCatalogEntryDto,
   type EvidenceTypeCatalogEntryDto,
   type ProgressionPolicyCatalogEntryDto,
+  type RubricCatalogEntryDto,
   type LearnerPlanResponseDto,
   type PedagogicalModelCatalogEntryDto,
   type SubjectResponseDto,
@@ -168,6 +169,12 @@ export class CurriculumController {
   @ApiOperation({ summary: 'List published progression policies a family can use for competency tracking' })
   async listProgressionPolicyCatalog(): Promise<ProgressionPolicyCatalogEntryDto[]> {
     return this.curriculumService.listPublishedProgressionPolicyCatalog();
+  }
+
+  @Get('rubrics/catalog')
+  @ApiOperation({ summary: 'List published rubrics a family can use for assessments' })
+  async listRubricCatalog(): Promise<RubricCatalogEntryDto[]> {
+    return this.curriculumService.listPublishedRubricCatalog();
   }
 
   // Apply Template Accelerator
