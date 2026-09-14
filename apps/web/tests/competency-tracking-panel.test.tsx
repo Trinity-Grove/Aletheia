@@ -102,6 +102,9 @@ function stubFetch(overrides: Record<string, unknown> = {}) {
       if (init?.method === 'PATCH' && url.includes('/retire')) {
         return Promise.resolve({ ok: true, json: async () => ({ ...mockTracking, status: 'RETIRED' }) });
       }
+      if (init?.method === 'PATCH' && url.includes('/evidence-submissions/') && url.includes('/validation')) {
+        return Promise.resolve({ ok: true, json: async () => ({ ...mockEvidenceSubmission, validationStatus: 'VALIDATED' }) });
+      }
       if (init?.method === 'POST' && url.includes('/evidence-submissions')) {
         return Promise.resolve({ ok: true, json: async () => mockEvidenceSubmission });
       }
@@ -257,6 +260,25 @@ describe('CompetencyTrackingPanel', () => {
 
     await waitFor(() => {
       expect(screen.queryByTestId('evidence-text-content-input')).not.toBeInTheDocument();
+    });
+  });
+
+  it('validates a pending evidence submission from the family panel', async () => {
+    stubFetch();
+    render(<CompetencyTrackingPanel familyId={FAMILY_ID} learnerId={LEARNER_ID} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('validate-evidence-evidence-1')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('validate-evidence-evidence-1'));
+
+    await waitFor(() => {
+      const validationCall = vi.mocked(fetch).mock.calls.find(([url, init]) =>
+        String(url).includes('/evidence-submissions/evidence-1/validation') && init?.method === 'PATCH',
+      );
+      expect(validationCall).toBeTruthy();
+      expect(JSON.parse(String(validationCall?.[1]?.body))).toEqual({ status: 'VALIDATED' });
     });
   });
 });

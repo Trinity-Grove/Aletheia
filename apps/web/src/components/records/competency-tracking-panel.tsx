@@ -52,6 +52,8 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
   const [progressionEvaluations, setProgressionEvaluations] = useState<Record<string, ProgressionEvaluationResponseDto>>({});
   const [evidenceSubmissions, setEvidenceSubmissions] = useState<EvidenceSubmissionResponseDto[]>([]);
   const [assessmentResults, setAssessmentResults] = useState<AssessmentResultResponseDto[]>([]);
+  const [validatingEvidenceId, setValidatingEvidenceId] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [selectedCurriculumId, setSelectedCurriculumId] = useState('');
@@ -200,6 +202,31 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
       throw new Error(err.message || 'Falha ao enviar evidência.');
     }
     await loadLearnerData();
+  };
+
+  const handleValidateEvidence = async (evidenceId: string, status: 'VALIDATED' | 'REJECTED') => {
+    setValidatingEvidenceId(evidenceId);
+    setValidationError(null);
+    try {
+      const res = await fetch(
+        `/api/v1/families/${familyId}/curriculum/evidence-submissions/${evidenceId}/validation`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ status }),
+        },
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Falha ao atualizar a validação da evidência.');
+      }
+      await loadLearnerData();
+    } catch (err) {
+      setValidationError(err instanceof Error ? err.message : 'Falha ao atualizar a validação da evidência.');
+    } finally {
+      setValidatingEvidenceId(null);
+    }
   };
 
   if (!learnerId) {
@@ -405,6 +432,11 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 1.25rem 0' }}>
           Evidências Enviadas
         </h2>
+        {validationError && (
+          <Alert variant="error" data-testid="evidence-validation-error" style={{ marginBottom: '1.25rem' }}>
+            {validationError}
+          </Alert>
+        )}
         {evidenceSubmissions.length === 0 ? (
           <EmptyState
             title="Nenhuma evidência enviada"
@@ -446,6 +478,31 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
                   {submission.competencies.length} competência(s) vinculada(s) --{' '}
                   {new Date(submission.createdAt).toLocaleDateString('pt-BR')}
                 </div>
+                {submission.validationStatus === 'UNVALIDATED' && (
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      data-testid={`validate-evidence-${submission.id}`}
+                      onClick={() => handleValidateEvidence(submission.id, 'VALIDATED')}
+                      disabled={validatingEvidenceId !== null}
+                      isLoading={validatingEvidenceId === submission.id}
+                    >
+                      Validar evidência
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      data-testid={`reject-evidence-${submission.id}`}
+                      onClick={() => handleValidateEvidence(submission.id, 'REJECTED')}
+                      disabled={validatingEvidenceId !== null}
+                    >
+                      Rejeitar
+                    </Button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
