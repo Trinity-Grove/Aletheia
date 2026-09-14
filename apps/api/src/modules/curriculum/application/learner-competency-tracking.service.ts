@@ -103,6 +103,15 @@ export class LearnerCompetencyTrackingService {
     const relevantRows = allRows.filter((row) =>
       relevantVersions.has(`${row.competencyDefinitionId}:${row.competencyVersion}`),
     );
+    if (policy) {
+      const existingRows = await this.repository.findByLearnerAndCompetencies(dto.learnerId, competencies.map((c) => c.competencyDefinitionId));
+      const relevantVersions = new Set(competencies.map((c) => `${c.competencyDefinitionId}:${c.competencyVersion}`));
+      for (const row of existingRows.filter((candidate) => relevantVersions.has(`${candidate.competencyDefinitionId}:${candidate.competencyVersion}`))) {
+        if (row.progressionPolicyId !== policy.id || row.policyVersion !== policy.version) {
+          throw new BadRequestException('This tracking already has a different immutable progression policy binding.');
+        }
+      }
+    }
 
     for (const row of relevantRows) {
       const rowPolicy = row.progressionPolicyId ? { id: row.progressionPolicyId, version: row.policyVersion } : null;

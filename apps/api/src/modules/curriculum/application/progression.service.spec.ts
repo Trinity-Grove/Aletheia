@@ -36,6 +36,9 @@ describe('evidence progression', () => {
     const base = reader();
     await expect(evaluateProgression(reader({ policy: async (id) => ({ ...(await base.policy(id))!, rules: { minimumEvidenceCount: 1, prerequisites: [{ competencyDefinitionId: competencyId, policyId }] } }) }), 'family', query)).rejects.toThrow('cycle');
   });
+  it('rejects a pinned tracking policy mismatch instead of silently using the requested policy', async () => {
+    await expect(evaluateProgression(reader({ trackingPolicy: async () => ({ id: prerequisiteId, version: 3 }) }), 'family', query)).rejects.toThrow('does not match');
+  });
   it.each([
     { policyType: 'HOURS' }, { schemaVersion: '2.0.0' }, { status: 'DRAFT' },
     { rules: { minimumEvidenceCount: 0 } }, { rules: { minimumEvidenceCount: 1, ignored: true } },

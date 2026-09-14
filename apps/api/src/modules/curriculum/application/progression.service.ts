@@ -26,6 +26,7 @@ export interface ProgressionReader {
   curriculumContains(curriculumId: string, competencyId: string): Promise<boolean>;
   evidenceCount(familyId: string, learnerId: string, competencyId: string, version: number): Promise<number>;
   trackingPolicy?(familyId: string, trackingId: string): Promise<{ id: string; version: number } | null>;
+  requireTrackingPolicyBinding?: boolean;
 }
 
 // A request evaluates at most 64 distinct competency/policy pairs, 16 levels deep.
@@ -39,6 +40,7 @@ export async function evaluateProgression(reader: ProgressionReader, familyId: s
   async function evaluate(tracking: ProgressionTracking, policyId: string, depth: number): Promise<ProgressionEvaluationResponseDto> {
     const competencyId = tracking.competencyDefinitionId;
     const pinnedPolicy = await reader.trackingPolicy?.(familyId, tracking.id);
+    if (reader.requireTrackingPolicyBinding && !pinnedPolicy) throw new BadRequestException('Automatic progression requires a policy binding for every tracked prerequisite');
     if (pinnedPolicy && pinnedPolicy.id !== policyId) throw new BadRequestException('Progression prerequisite policy does not match the tracking binding');
     const effectivePolicyId = pinnedPolicy?.id ?? policyId;
     const key = `${tracking.id}:${effectivePolicyId}`;

@@ -38,6 +38,7 @@ export class AchievementRepository {
       const achievements: LearnerCompetencyAchievement[] = [];
       const reviews: LearnerCompetencyAchievementReview[] = [];
       const reader: ProgressionReader = {
+        requireTrackingPolicyBinding: true,
         learnerExists: async (f, learnerId) => !!await tx.learner.findFirst({ where: { id: learnerId, familyId: f }, select: { id: true } }),
         tracking: async (f, id) => await tx.learnerCompetencyTracking.findFirst({ where: { id, familyId: f, learner: { familyId: f } } }) as ProgressionTracking | null,
         trackingForCompetency: async (f, learnerId, competencyId) => await tx.learnerCompetencyTracking.findFirst({ where: { familyId: f, learnerId, competencyDefinitionId: competencyId }, orderBy: { competencyVersion: 'desc' } }) as ProgressionTracking | null,
