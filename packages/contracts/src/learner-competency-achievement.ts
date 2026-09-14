@@ -1,5 +1,16 @@
 import { z } from 'zod';
 
+export const learnerCompetencyAchievementReviewResponseSchema = z.object({
+  id: z.string().uuid(),
+  achievementId: z.string().uuid(),
+  familyId: z.string().uuid(),
+  learnerId: z.string().uuid(),
+  evidenceSubmissionId: z.string().uuid(),
+  reviewedByUserId: z.string().uuid(),
+  reason: z.literal('EVIDENCE_REJECTED'),
+  createdAt: z.string().datetime(),
+});
+
 // All contributing prerequisites are flattened into this immutable snapshot.
 export const achievementEvidenceSnapshotSchema = z.object({
   evidenceSubmissionIds: z.array(z.string().uuid()).min(1),
@@ -31,17 +42,7 @@ export const learnerCompetencyAchievementResponseSchema = z.object({
   evidenceSnapshot: achievementEvidenceSnapshotSchema,
   awardedByUserId: z.string().uuid(),
   achievedAt: z.string().datetime(),
-});
-
-export const learnerCompetencyAchievementReviewResponseSchema = z.object({
-  id: z.string().uuid(),
-  achievementId: z.string().uuid(),
-  familyId: z.string().uuid(),
-  learnerId: z.string().uuid(),
-  evidenceSubmissionId: z.string().uuid(),
-  reviewedByUserId: z.string().uuid(),
-  reason: z.literal('EVIDENCE_REJECTED'),
-  createdAt: z.string().datetime(),
+  reviews: z.array(learnerCompetencyAchievementReviewResponseSchema).optional(),
 });
 
 export type AchievementEvidenceSnapshot = z.infer<typeof achievementEvidenceSnapshotSchema>;

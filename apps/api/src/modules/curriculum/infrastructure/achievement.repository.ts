@@ -26,7 +26,8 @@ export class AchievementRepository {
     return this.prisma.$transaction(async (tx) => {
       const current = await tx.evidenceSubmission.findFirst({ where: { id: evidenceId, familyId }, include: { competencies: true } });
       if (!current) return null;
-      await tx.$queryRaw`SELECT id FROM learners WHERE id = ${current.learnerId}::uuid AND family_id = ${familyId}::uuid FOR UPDATE`;
+      const lockedLearner = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM learners WHERE id = ${current.learnerId}::uuid AND family_id = ${familyId}::uuid FOR UPDATE`;
+      if (!lockedLearner.length) return null;
       const evidence = await tx.evidenceSubmission.update({
         where: { id: evidenceId },
         data: { validationStatus: status, validatedByUserId: actorId, validatedAt: new Date() },
@@ -116,6 +117,6 @@ export class AchievementRepository {
   }
 
   listAchievements(familyId: string, learnerId?: string): Promise<LearnerCompetencyAchievement[]> {
-    return this.prisma.learnerCompetencyAchievement.findMany({ where: { familyId, ...(learnerId ? { learnerId } : {}) }, orderBy: { achievedAt: 'desc' } });
+    return this.prisma.learnerCompetencyAchievement.findMany({ where: { familyId, ...(learnerId ? { learnerId } : {}) }, include: { reviews: true }, orderBy: { achievedAt: 'desc' } }) as unknown as Promise<LearnerCompetencyAchievement[]>;
   }
 }

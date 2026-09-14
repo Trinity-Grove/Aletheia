@@ -15,6 +15,6 @@ export class AchievementController {
   @ApiOperation({ summary: 'List immutable competency achievements for the family' })
   async list(@Param('familyId') familyId: string, @Query('learnerId') learnerId?: string): Promise<LearnerCompetencyAchievementResponseDto[]> {
     const rows = await this.repository.listAchievements(familyId, learnerId);
-    return rows.map((row) => ({ ...row, curriculumDefinitionId: row.curriculumDefinitionId, curriculumVersion: row.curriculumVersion, evidenceSnapshot: row.evidenceSnapshot as LearnerCompetencyAchievementResponseDto['evidenceSnapshot'], achievedAt: row.achievedAt.toISOString() }));
+    return rows.map((row) => ({ ...row, curriculumDefinitionId: row.curriculumDefinitionId, curriculumVersion: row.curriculumVersion, evidenceSnapshot: row.evidenceSnapshot as LearnerCompetencyAchievementResponseDto['evidenceSnapshot'], achievedAt: row.achievedAt.toISOString(), reviews: ((row as typeof row & { reviews?: { id: string; achievementId: string; familyId: string; learnerId: string; evidenceSubmissionId: string; reviewedByUserId: string; reason: 'EVIDENCE_REJECTED'; createdAt: Date }[] }).reviews ?? []).map((review) => ({ ...review, createdAt: review.createdAt.toISOString() })) }));
   }
 }
