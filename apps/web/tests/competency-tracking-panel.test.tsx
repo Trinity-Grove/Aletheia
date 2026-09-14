@@ -89,6 +89,28 @@ const mockAssessmentResult: AssessmentResultResponseDto = {
   scores: [{ id: 'score-1', assessmentResultId: 'assessment-1', rubricCriterionId: 'criterion-1', score: 3, notes: null, createdAt: '2026-09-13T00:00:00.000Z' }],
 };
 
+const mockAchievement = {
+  id: 'achievement-1',
+  trackingId: 'tracking-1',
+  familyId: FAMILY_ID,
+  learnerId: LEARNER_ID,
+  competencyDefinitionId: 'competency-1',
+  competencyVersion: 1,
+  curriculumDefinitionId: 'curriculum-1',
+  curriculumVersion: 1,
+  progressionPolicyId: 'policy-1',
+  policyVersion: 1,
+  validatedEvidenceCount: 1,
+  minimumEvidenceCount: 1,
+  evidenceSnapshot: {
+    evidenceSubmissionIds: ['evidence-1'],
+    prerequisites: [],
+  },
+  awardedByUserId: 'user-1',
+  achievedAt: '2026-09-13T00:00:00.000Z',
+  reviews: [],
+};
+
 function stubFetch(overrides: Record<string, unknown> = {}) {
   vi.stubGlobal(
     'fetch',
@@ -145,6 +167,9 @@ function stubFetch(overrides: Record<string, unknown> = {}) {
       if (url.includes('/assessment-results')) {
         return Promise.resolve({ ok: true, json: async () => overrides.assessmentResults ?? [mockAssessmentResult] });
       }
+      if (url.includes('/achievements')) {
+        return Promise.resolve({ ok: true, json: async () => overrides.achievements ?? [mockAchievement] });
+      }
       return Promise.resolve({ ok: true, json: async () => null });
     }),
   );
@@ -177,7 +202,7 @@ describe('CompetencyTrackingPanel', () => {
       expect(screen.getByTestId('tracked-competency-competency-1')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Leitura Fluente')).toBeInTheDocument();
+    expect(screen.getByTestId('tracked-competency-competency-1')).toHaveTextContent('Leitura Fluente');
     expect(screen.getByTestId('evidence-submission-evidence-1')).toBeInTheDocument();
     expect(screen.getByTestId('assessment-result-assessment-1')).toBeInTheDocument();
 
@@ -193,8 +218,22 @@ describe('CompetencyTrackingPanel', () => {
       expect(screen.getByTestId('progression-state-competency-1')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Dominada')).toBeInTheDocument();
-    expect(screen.getByText('1/1 evidência validada')).toBeInTheDocument();
+    expect(screen.getByTestId('progression-state-competency-1')).toHaveTextContent('Dominada');
+    expect(screen.getAllByText('1/1 evidência validada').length).toBeGreaterThan(0);
+  });
+
+  it('displays automatic competency achievements with immutable version details', async () => {
+    stubFetch();
+    render(<CompetencyTrackingPanel familyId={FAMILY_ID} learnerId={LEARNER_ID} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('achievement-achievement-1')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Conquistas de Competências')).toBeInTheDocument();
+    expect(screen.getByTestId('achievement-competency-achievement-1')).toHaveTextContent('Leitura Fluente');
+    expect(screen.getByTestId('achievement-achievement-1')).toHaveTextContent('Competência v1');
+    expect(screen.getByTestId('achievement-achievement-1')).toHaveTextContent('1/1 evidência validada');
   });
 
   it('activates a curriculum for the learner and refreshes the tracked list', async () => {
