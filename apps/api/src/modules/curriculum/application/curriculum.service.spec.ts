@@ -87,6 +87,7 @@ describe('CurriculumService', () => {
       traditionCatalogResolver,
       curriculumDefinitionCatalogResolver,
       evidenceTypeCatalogResolver,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
     );
   });
 
@@ -152,6 +153,7 @@ describe('published catalog application', () => {
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
     );
     await expect(service.applyTemplate('family', { learnerId: 'learner', academicYearId: 'year', template: 'NEW_MODEL' })).rejects.toThrow('Published pedagogical model not found');
     expect(repo.applyPublishedTemplate).not.toHaveBeenCalled();
@@ -165,6 +167,7 @@ describe('published catalog application', () => {
       repo as any,
       {} as any,
       resolver as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,

@@ -318,4 +318,56 @@ describe('Learner Competency Tracking (real Postgres)', () => {
       .expect(200);
     expect(evidenceTypeCatalog.body.map((e: { id: string }) => e.id)).toContain(evidenceType.body.id);
   });
+
+  it('lists only executable published progression policies in the family catalog', async () => {
+    const suffix = `POLICYCATALOG.${Date.now()}`;
+    const supported = await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-definitions/progression-policies')
+      .set('Cookie', adminCookie)
+      .send({
+        code: `TEST.TRACKING.POLICY.${suffix}`,
+        name: 'Tracking Test Evidence Policy',
+        policyType: 'EVIDENCE_COUNT',
+        rules: { minimumEvidenceCount: 2, prerequisites: [] },
+      })
+      .expect(201);
+    await supertest(app.getHttpServer())
+      .patch(`/api/v1/admin/curriculum-definitions/progression-policies/${supported.body.id}/status`)
+      .set('Cookie', adminCookie)
+      .send({ status: 'PUBLISHED' })
+      .expect(200);
+
+    const unsupported = await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-definitions/progression-policies')
+      .set('Cookie', adminCookie)
+      .send({
+        code: `TEST.TRACKING.UNSUPPORTED_POLICY.${suffix}`,
+        name: 'Unsupported Tracking Policy',
+        policyType: 'HOURS',
+        rules: { minimumHours: 2 },
+      })
+      .expect(201);
+    await supertest(app.getHttpServer())
+      .patch(`/api/v1/admin/curriculum-definitions/progression-policies/${unsupported.body.id}/status`)
+      .set('Cookie', adminCookie)
+      .send({ status: 'PUBLISHED' })
+      .expect(200);
+
+    const catalog = await supertest(app.getHttpServer())
+      .get(`/api/v1/families/${familyAId}/curriculum/progression-policies/catalog`)
+      .set('Cookie', familyACookie)
+      .expect(200);
+
+    expect(catalog.body).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: supported.body.id,
+        code: supported.body.code,
+        policyType: 'EVIDENCE_COUNT',
+        minimumEvidenceCount: 2,
+      }),
+    ]));
+    expect(catalog.body).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: unsupported.body.id }),
+    ]));
+  });
 });

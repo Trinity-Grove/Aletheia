@@ -24,6 +24,7 @@ import {
   type CreateSubjectDto,
   type CurriculumDefinitionCatalogEntryDto,
   type EvidenceTypeCatalogEntryDto,
+  type ProgressionPolicyCatalogEntryDto,
   type LearnerPlanResponseDto,
   type PedagogicalModelCatalogEntryDto,
   type SubjectResponseDto,
@@ -161,6 +162,12 @@ export class CurriculumController {
   @ApiOperation({ summary: 'List published evidence types a family can submit as' })
   async listEvidenceTypeCatalog(): Promise<EvidenceTypeCatalogEntryDto[]> {
     return this.curriculumService.listPublishedEvidenceTypeCatalog();
+  }
+
+  @Get('progression-policies/catalog')
+  @ApiOperation({ summary: 'List published progression policies a family can use for competency tracking' })
+  async listProgressionPolicyCatalog(): Promise<ProgressionPolicyCatalogEntryDto[]> {
+    return this.curriculumService.listPublishedProgressionPolicyCatalog();
   }
 
   // Apply Template Accelerator

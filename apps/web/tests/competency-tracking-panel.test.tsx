@@ -21,6 +21,18 @@ const mockEvidenceTypeCatalog: EvidenceTypeCatalogEntryDto[] = [
   { id: 'evidence-type-1', code: 'TEXT', name: 'Texto', description: null },
 ];
 
+const mockProgressionPolicyCatalog = [
+  {
+    id: 'policy-1',
+    code: 'FOUNDATIONAL.EVIDENCE_COUNT',
+    name: 'Evidência validada',
+    description: 'Uma evidência validada demonstra a competência.',
+    policyType: 'EVIDENCE_COUNT',
+    minimumEvidenceCount: 1,
+    curriculumDefinitionId: 'curriculum-1',
+  },
+];
+
 const mockTracking: LearnerCompetencyTrackingResponseDto = {
   id: 'tracking-1',
   familyId: FAMILY_ID,
@@ -28,6 +40,8 @@ const mockTracking: LearnerCompetencyTrackingResponseDto = {
   competencyDefinitionId: 'competency-1',
   competencyVersion: 1,
   curriculumDefinitionId: 'curriculum-1',
+  progressionPolicyId: 'policy-1',
+  policyVersion: 1,
   status: 'ACTIVE',
   activatedAt: '2026-09-13T00:00:00.000Z',
   retiredAt: null,
@@ -97,6 +111,28 @@ function stubFetch(overrides: Record<string, unknown> = {}) {
       if (url.includes('/evidence-types/catalog')) {
         return Promise.resolve({ ok: true, json: async () => overrides.evidenceTypeCatalog ?? mockEvidenceTypeCatalog });
       }
+      if (url.includes('/progression-policies/catalog')) {
+        return Promise.resolve({ ok: true, json: async () => overrides.progressionPolicyCatalog ?? mockProgressionPolicyCatalog });
+      }
+      if (url.includes('/progression/evaluation')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => overrides.progressionEvaluation ?? {
+            learnerId: LEARNER_ID,
+            trackingId: 'tracking-1',
+            trackingStatus: 'ACTIVE',
+            curriculumDefinitionId: 'curriculum-1',
+            competencyDefinitionId: 'competency-1',
+            competencyVersion: 1,
+            policyId: 'policy-1',
+            policyVersion: 1,
+            validatedEvidenceCount: 1,
+            minimumEvidenceCount: 1,
+            unmetPrerequisites: [],
+            state: 'MASTERED',
+          },
+        });
+      }
       if (url.includes('/competency-tracking')) {
         return Promise.resolve({ ok: true, json: async () => overrides.trackedCompetencies ?? [mockTracking] });
       }
@@ -146,6 +182,18 @@ describe('CompetencyTrackingPanel', () => {
     expect(curriculumSelect.querySelector('option[value="curriculum-1"]')).toBeTruthy();
   });
 
+  it('loads a progression policy and displays the evaluated state for tracked competencies', async () => {
+    stubFetch();
+    render(<CompetencyTrackingPanel familyId={FAMILY_ID} learnerId={LEARNER_ID} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('progression-state-competency-1')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Dominada')).toBeInTheDocument();
+    expect(screen.getByText('1/1 evidência validada')).toBeInTheDocument();
+  });
+
   it('activates a curriculum for the learner and refreshes the tracked list', async () => {
     stubFetch();
     render(<CompetencyTrackingPanel familyId={FAMILY_ID} learnerId={LEARNER_ID} />);
@@ -155,11 +203,17 @@ describe('CompetencyTrackingPanel', () => {
     });
 
     fireEvent.change(screen.getByTestId('curriculum-catalog-select'), { target: { value: 'curriculum-1' } });
+    fireEvent.change(screen.getByTestId('progression-policy-select'), { target: { value: 'policy-1' } });
     fireEvent.click(screen.getByTestId('activate-curriculum-btn'));
 
     await waitFor(() => {
       expect(screen.getByTestId('activation-success-alert')).toBeInTheDocument();
     });
+
+    const activateCall = vi.mocked(fetch).mock.calls.find(([url, init]) =>
+      String(url).includes('/competency-tracking/activate') && init?.method === 'POST',
+    );
+    expect(JSON.parse(String(activateCall?.[1]?.body))).toMatchObject({ progressionPolicyId: 'policy-1' });
   });
 
   it('retires a tracked competency', async () => {

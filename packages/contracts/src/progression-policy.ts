@@ -54,3 +54,18 @@ export const progressionPolicyResponseSchema = z.object({
 });
 
 export type ProgressionPolicyResponseDto = z.infer<typeof progressionPolicyResponseSchema>;
+
+// Lean family-facing catalog entry. Only policies the live activation and
+// evaluation path can execute are exposed here; the full definition remains
+// an admin concern.
+export const progressionPolicyCatalogEntrySchema = z.object({
+  id: z.string().uuid(),
+  code: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  policyType: z.literal('EVIDENCE_COUNT'),
+  minimumEvidenceCount: z.number().int().positive(),
+  curriculumDefinitionId: z.string().uuid().nullable().optional(),
+});
+
+export type ProgressionPolicyCatalogEntryDto = z.infer<typeof progressionPolicyCatalogEntrySchema>;

@@ -17,6 +17,7 @@
     "seed:cooking-formation": "node dist/scripts/seed-cooking-formation.js",
     "seed:gardening-formation": "node dist/scripts/seed-gardening-formation.js",
     "seed:resilience-formation": "node dist/scripts/seed-resilience-formation.js",
+    "seed:foundational-curriculum": "node dist/scripts/seed-foundational-curriculum.js",
     "lint": "eslint . --config ../../packages/eslint-config/index.mjs --ignore-pattern dist --global require --global module",
     "prisma": "prisma",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",

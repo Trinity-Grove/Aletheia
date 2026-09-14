@@ -5,6 +5,7 @@ import { PedagogicalModelDefinitionResolver } from '../infrastructure/pedagogica
 import { TheologicalTraditionCatalogResolver } from '../infrastructure/theological-tradition-catalog.resolver.js';
 import { CurriculumDefinitionCatalogResolver } from '../infrastructure/curriculum-definition-catalog.resolver.js';
 import { EvidenceTypeCatalogResolver } from '../infrastructure/evidence-type-catalog.resolver.js';
+import { ProgressionPolicyCatalogResolver } from '../infrastructure/progression-policy-catalog.resolver.js';
 import { pedagogicalFrameworkSchema } from '@aletheia/contracts';
 import type {
   AcademicYearResponseDto,
@@ -13,6 +14,7 @@ import type {
   CreateSubjectDto,
   CurriculumDefinitionCatalogEntryDto,
   EvidenceTypeCatalogEntryDto,
+  ProgressionPolicyCatalogEntryDto,
   LearnerPlanResponseDto,
   PedagogicalModelCatalogEntryDto,
   SubjectResponseDto,
@@ -31,6 +33,7 @@ export class CurriculumService implements CurriculumPublicApi {
     private readonly traditionCatalogResolver: TheologicalTraditionCatalogResolver,
     private readonly curriculumDefinitionCatalogResolver: CurriculumDefinitionCatalogResolver,
     private readonly evidenceTypeCatalogResolver: EvidenceTypeCatalogResolver,
+    private readonly progressionPolicyCatalogResolver: ProgressionPolicyCatalogResolver,
   ) {}
 
   // Academic Years
@@ -152,6 +155,10 @@ export class CurriculumService implements CurriculumPublicApi {
   // the evidence-submission form's "type of evidence" dropdown.
   async listPublishedEvidenceTypeCatalog(): Promise<EvidenceTypeCatalogEntryDto[]> {
     return this.evidenceTypeCatalogResolver.listPublishedCatalog();
+  }
+
+  async listPublishedProgressionPolicyCatalog(): Promise<ProgressionPolicyCatalogEntryDto[]> {
+    return this.progressionPolicyCatalogResolver.listPublishedCatalog();
   }
 
   async getLearnerCurriculumSummary(
