@@ -19,6 +19,7 @@ import { MusicFormationSeeder } from './infrastructure/music-formation.seeder.js
 import { TradesFormationSeeder } from './infrastructure/trades-formation.seeder.js';
 import { CookingFormationSeeder } from './infrastructure/cooking-formation.seeder.js';
 import { GardeningFormationSeeder } from './infrastructure/gardening-formation.seeder.js';
+import { ResilienceFormationSeeder } from './infrastructure/resilience-formation.seeder.js';
 import { DefinitionsRepository } from './infrastructure/definitions.repository.js';
 import { ProfilesRepository } from './infrastructure/profiles.repository.js';
 import { EvidenceSubmissionRepository } from './infrastructure/evidence-submission.repository.js';
@@ -82,6 +83,7 @@ import { AchievementController } from './presentation/achievement.controller.js'
     TradesFormationSeeder,
     CookingFormationSeeder,
     GardeningFormationSeeder,
+    ResilienceFormationSeeder,
     DefinitionsRepository,
     ProfilesRepository,
     EvidenceSubmissionRepository,
