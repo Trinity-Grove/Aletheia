@@ -6,7 +6,7 @@ import {
   type ActivateCurriculumForLearnerResultDto,
   type LearnerCompetencyTrackingResponseDto,
 } from '@aletheia/contracts';
-import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
+import { JwtAuthGuard, FamilyTenantGuard, CurrentUser } from '../../../platform/auth/index.js';
 import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { LearnerCompetencyTrackingService } from '../application/learner-competency-tracking.service.js';
 
@@ -32,9 +32,10 @@ export class LearnerCompetencyTrackingController {
   @ApiOperation({ summary: 'Activate a curriculum definition for a learner, creating tracked competencies' })
   async activateCurriculumForLearner(
     @Param('familyId') familyId: string,
+    @CurrentUser('userId') actorId: string,
     @Body(new ZodValidationPipe(activateCurriculumForLearnerSchema)) dto: ActivateCurriculumForLearnerDto,
   ): Promise<ActivateCurriculumForLearnerResultDto> {
-    return this.trackingService.activateCurriculumForLearner(familyId, dto);
+    return this.trackingService.activateCurriculumForLearner(familyId, dto, actorId);
   }
 
   @Get()

@@ -22,6 +22,10 @@ export class ProgressionRepository {
       evidenceCount: (familyId, learnerId, competencyDefinitionId, competencyVersion) => tx.evidenceSubmission.count({
         where: { familyId, learnerId, validationStatus: 'VALIDATED', competencies: { some: { competencyDefinitionId, competencyVersion } } },
       }),
+      trackingPolicy: async (familyId, trackingId) => {
+        const row = await tx.learnerCompetencyTracking.findFirst({ where: { id: trackingId, familyId }, select: { progressionPolicyId: true, policyVersion: true } });
+        return row?.progressionPolicyId && row.policyVersion ? { id: row.progressionPolicyId, version: row.policyVersion } : null;
+      },
     }), { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead, timeout: 15_000 });
   }
 }

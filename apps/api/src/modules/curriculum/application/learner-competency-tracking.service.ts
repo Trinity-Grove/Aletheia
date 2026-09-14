@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { evidenceCountRulesSchema } from '@aletheia/contracts';
 import type {
   ActivateCurriculumForLearnerDto,
   ActivateCurriculumForLearnerResultDto,
@@ -8,6 +9,7 @@ import {
   LearnerCompetencyTrackingRepository,
   type LearnerCompetencyTrackingWithCompetency,
 } from '../infrastructure/learner-competency-tracking.repository.js';
+import { AchievementRepository } from '../infrastructure/achievement.repository.js';
 
 // Activates a CurriculumDefinition for a learner (issue #126 item 3) --
 // this is the piece that was missing: CurriculumService.applyTemplate
@@ -31,11 +33,12 @@ import {
 // at a different family's learner.
 @Injectable()
 export class LearnerCompetencyTrackingService {
-  constructor(private readonly repository: LearnerCompetencyTrackingRepository) {}
+  constructor(private readonly repository: LearnerCompetencyTrackingRepository, private readonly achievementRepository: AchievementRepository) {}
 
   async activateCurriculumForLearner(
     familyId: string,
     dto: ActivateCurriculumForLearnerDto,
+    actorId?: string,
   ): Promise<ActivateCurriculumForLearnerResultDto> {
     const learnerFamilyId = await this.repository.findLearnerFamilyId(dto.learnerId);
     if (!learnerFamilyId || learnerFamilyId !== familyId) {
@@ -54,6 +57,23 @@ export class LearnerCompetencyTrackingService {
       );
     }
 
+    let policy: { id: string; version: number } | null = null;
+    if (dto.progressionPolicyId) {
+      const policyRow = await this.repository.findProgressionPolicy(dto.progressionPolicyId);
+      if (!policyRow || policyRow.status !== 'PUBLISHED' || policyRow.schemaVersion !== '1.0.0' || policyRow.policyType !== 'EVIDENCE_COUNT') {
+        throw new BadRequestException('Automatic achievements require a published supported EVIDENCE_COUNT policy.');
+      }
+      const parsedRules = evidenceCountRulesSchema.safeParse(policyRow.rules);
+      if (!parsedRules.success) throw new BadRequestException('The progression policy has invalid EVIDENCE_COUNT rules.');
+      if (policyRow.curriculumDefinitionId && policyRow.curriculumDefinitionId !== dto.curriculumDefinitionId) {
+        throw new BadRequestException('The progression policy is scoped to a different curriculum.');
+      }
+      if (policyRow.competencyDefinitionId && competencies.some((c) => c.competencyDefinitionId !== policyRow.competencyDefinitionId)) {
+        throw new BadRequestException('A competency-scoped policy can only activate its competency.');
+      }
+      policy = { id: policyRow.id, version: policyRow.version };
+    }
+
     const existingKeys = await this.repository.findExistingTrackingKeys(
       dto.learnerId,
       competencies.map((c) => c.competencyDefinitionId),
@@ -67,7 +87,7 @@ export class LearnerCompetencyTrackingService {
     // unique constraint on [learnerId, competencyDefinitionId,
     // competencyVersion] means re-activating the same curriculum for the
     // same learner never duplicates tracking rows.
-    await this.repository.createMany(familyId, dto.learnerId, dto.curriculumDefinitionId, toCreate);
+    await this.repository.createMany(familyId, dto.learnerId, dto.curriculumDefinitionId, toCreate, policy);
 
     const allRows = await this.repository.findByLearnerAndCompetencies(
       dto.learnerId,
@@ -83,6 +103,18 @@ export class LearnerCompetencyTrackingService {
     const relevantRows = allRows.filter((row) =>
       relevantVersions.has(`${row.competencyDefinitionId}:${row.competencyVersion}`),
     );
+
+    for (const row of relevantRows) {
+      const rowPolicy = row.progressionPolicyId ? { id: row.progressionPolicyId, version: row.policyVersion } : null;
+      if (policy && (!rowPolicy || rowPolicy.id !== policy.id || rowPolicy.version !== policy.version)) {
+        throw new BadRequestException('This tracking already has a different immutable progression policy binding.');
+      }
+      if (!policy && rowPolicy) {
+        // An idempotent legacy activation may read a tracking that was already
+        // bound by an earlier request; its binding is returned unchanged.
+      }
+    }
+    if (actorId && policy) await this.achievementRepository.reconcileValidatedEvidence(familyId, dto.learnerId, actorId);
 
     return {
       createdCount: toCreate.length,
@@ -115,6 +147,8 @@ export class LearnerCompetencyTrackingService {
       competencyDefinitionId: row.competencyDefinitionId,
       competencyVersion: row.competencyVersion,
       curriculumDefinitionId: row.curriculumDefinitionId,
+      progressionPolicyId: row.progressionPolicyId,
+      policyVersion: row.policyVersion,
       status: row.status,
       activatedAt: row.activatedAt.toISOString(),
       retiredAt: row.retiredAt ? row.retiredAt.toISOString() : null,

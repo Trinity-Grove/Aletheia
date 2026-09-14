@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { LearnerCompetencyTracking, Prisma } from '@prisma/client';
+import type { LearnerCompetencyTracking, Prisma, ProgressionPolicy } from '@prisma/client';
 import { PrismaService } from '../../../platform/database/prisma.service.js';
 
 export type LearnerCompetencyTrackingWithCompetency = LearnerCompetencyTracking & {
@@ -14,6 +14,11 @@ export type LearnerCompetencyTrackingWithCompetency = LearnerCompetencyTracking 
 export interface CurriculumCompetencyToActivate {
   competencyDefinitionId: string;
   competencyVersion: number;
+}
+
+export interface ProgressionPolicyBinding {
+  id: string;
+  version: number;
 }
 
 // Thin persistence for LearnerCompetencyTracking (issue #126 item 3) --
@@ -69,18 +74,30 @@ export class LearnerCompetencyTrackingRepository {
     learnerId: string,
     curriculumDefinitionId: string | null,
     competencies: CurriculumCompetencyToActivate[],
+    policy: ProgressionPolicyBinding | null = null,
   ): Promise<void> {
     if (competencies.length === 0) return;
-    await this.prisma.learnerCompetencyTracking.createMany({
-      data: competencies.map((c) => ({
-        familyId,
-        learnerId,
-        competencyDefinitionId: c.competencyDefinitionId,
-        competencyVersion: c.competencyVersion,
-        curriculumDefinitionId,
-      })),
-      skipDuplicates: true,
+    await this.prisma.$transaction(async (tx) => {
+      const learner = await tx.learner.findFirst({ where: { id: learnerId, familyId }, select: { id: true } });
+      if (!learner) return;
+      await tx.$queryRaw`SELECT id FROM learners WHERE id = ${learnerId}::uuid FOR UPDATE`;
+      await tx.learnerCompetencyTracking.createMany({
+        data: competencies.map((c) => ({
+          familyId,
+          learnerId,
+          competencyDefinitionId: c.competencyDefinitionId,
+          competencyVersion: c.competencyVersion,
+          curriculumDefinitionId,
+          progressionPolicyId: policy?.id ?? null,
+          policyVersion: policy?.version ?? null,
+        })),
+        skipDuplicates: true,
+      });
     });
+  }
+
+  findProgressionPolicy(id: string): Promise<ProgressionPolicy | null> {
+    return this.prisma.progressionPolicy.findUnique({ where: { id } });
   }
 
   findByLearnerAndCompetencies(

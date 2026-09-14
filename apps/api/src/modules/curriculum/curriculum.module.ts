@@ -41,6 +41,8 @@ import { AssessmentResultController } from './presentation/assessment-result.con
 import { BibleTranslationCompareController } from './presentation/bible-translation-compare.controller.js';
 import { CurriculumPackController } from './presentation/curriculum-pack.controller.js';
 import { LearnerCompetencyTrackingController } from './presentation/learner-competency-tracking.controller.js';
+import { AchievementRepository } from './infrastructure/achievement.repository.js';
+import { AchievementController } from './presentation/achievement.controller.js';
 
 @Module({
   imports: [DatabaseModule, DevotionalModule],
@@ -55,6 +57,7 @@ import { LearnerCompetencyTrackingController } from './presentation/learner-comp
     BibleTranslationCompareController,
     CurriculumPackController,
     LearnerCompetencyTrackingController,
+    AchievementController,
   ],
   providers: [
     ProgressionRepository,
@@ -75,6 +78,7 @@ import { LearnerCompetencyTrackingController } from './presentation/learner-comp
     AssessmentResultRepository,
     CurriculumPackRepository,
     LearnerCompetencyTrackingRepository,
+    AchievementRepository,
     CurriculumService,
     ObjectiveService,
     DefinitionsService,

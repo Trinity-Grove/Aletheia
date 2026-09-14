@@ -8,6 +8,7 @@ import {
   EvidenceSubmissionRepository,
   type EvidenceSubmissionWithCompetencies,
 } from '../infrastructure/evidence-submission.repository.js';
+import { AchievementRepository } from '../infrastructure/achievement.repository.js';
 
 // Family-scoped evidence submission workflow (issue #96 Fase 2, section
 // 9). Deliberately NOT wired into LearningObjective/LearningRecord --
@@ -20,7 +21,7 @@ import {
 // learner).
 @Injectable()
 export class EvidenceSubmissionService {
-  constructor(private readonly repository: EvidenceSubmissionRepository) {}
+  constructor(private readonly repository: EvidenceSubmissionRepository, private readonly achievementRepository: AchievementRepository) {}
 
   async createEvidenceSubmission(
     familyId: string,
@@ -86,10 +87,9 @@ export class EvidenceSubmissionService {
     status: 'VALIDATED' | 'REJECTED',
     validatedByUserId: string,
   ): Promise<EvidenceSubmissionResponseDto> {
-    const existing = await this.repository.findById(familyId, id);
-    if (!existing) throw new NotFoundException('Evidence submission not found.');
-    const updated = await this.repository.updateValidationStatus(id, status, validatedByUserId);
-    return this.toDto(updated);
+    const reconciled = await this.achievementRepository.validateAndReconcile(familyId, id, status, validatedByUserId);
+    if (!reconciled) throw new NotFoundException('Evidence submission not found.');
+    return this.toDto(reconciled.evidence as EvidenceSubmissionWithCompetencies);
   }
 
   private toDto(row: EvidenceSubmissionWithCompetencies): EvidenceSubmissionResponseDto {
