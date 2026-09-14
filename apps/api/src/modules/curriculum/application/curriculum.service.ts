@@ -6,6 +6,7 @@ import { TheologicalTraditionCatalogResolver } from '../infrastructure/theologic
 import { CurriculumDefinitionCatalogResolver } from '../infrastructure/curriculum-definition-catalog.resolver.js';
 import { EvidenceTypeCatalogResolver } from '../infrastructure/evidence-type-catalog.resolver.js';
 import { ProgressionPolicyCatalogResolver } from '../infrastructure/progression-policy-catalog.resolver.js';
+import { RubricCatalogResolver } from '../infrastructure/rubric-catalog.resolver.js';
 import { pedagogicalFrameworkSchema } from '@aletheia/contracts';
 import type {
   AcademicYearResponseDto,
@@ -15,6 +16,7 @@ import type {
   CurriculumDefinitionCatalogEntryDto,
   EvidenceTypeCatalogEntryDto,
   ProgressionPolicyCatalogEntryDto,
+  RubricCatalogEntryDto,
   LearnerPlanResponseDto,
   PedagogicalModelCatalogEntryDto,
   SubjectResponseDto,
@@ -34,6 +36,7 @@ export class CurriculumService implements CurriculumPublicApi {
     private readonly curriculumDefinitionCatalogResolver: CurriculumDefinitionCatalogResolver,
     private readonly evidenceTypeCatalogResolver: EvidenceTypeCatalogResolver,
     private readonly progressionPolicyCatalogResolver: ProgressionPolicyCatalogResolver,
+    private readonly rubricCatalogResolver: RubricCatalogResolver,
   ) {}
 
   // Academic Years
@@ -159,6 +162,10 @@ export class CurriculumService implements CurriculumPublicApi {
 
   async listPublishedProgressionPolicyCatalog(): Promise<ProgressionPolicyCatalogEntryDto[]> {
     return this.progressionPolicyCatalogResolver.listPublishedCatalog();
+  }
+
+  async listPublishedRubricCatalog(): Promise<RubricCatalogEntryDto[]> {
+    return this.rubricCatalogResolver.listPublishedCatalog();
   }
 
   async getLearnerCurriculumSummary(

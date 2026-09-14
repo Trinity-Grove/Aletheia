@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Badge, Button, Card, EmptyState, Select } from '@aletheia/ui';
+import { Alert, Badge, Button, Card, EmptyState, Input, Modal, Select, Textarea } from '@aletheia/ui';
 import type {
   AssessmentResultResponseDto,
   CurriculumDefinitionCatalogEntryDto,
@@ -11,6 +11,7 @@ import type {
   LearnerCompetencyTrackingResponseDto,
   ProgressionEvaluationResponseDto,
   ProgressionPolicyCatalogEntryDto,
+  RubricCatalogEntryDto,
 } from '@aletheia/contracts';
 import { EvidenceSubmissionModal, type EvidenceSubmissionFormValues } from './evidence-submission-modal';
 
@@ -49,6 +50,7 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
   const [curriculumCatalog, setCurriculumCatalog] = useState<CurriculumDefinitionCatalogEntryDto[]>([]);
   const [evidenceTypeCatalog, setEvidenceTypeCatalog] = useState<EvidenceTypeCatalogEntryDto[]>([]);
   const [progressionPolicyCatalog, setProgressionPolicyCatalog] = useState<ProgressionPolicyCatalogEntryDto[]>([]);
+  const [rubricCatalog, setRubricCatalog] = useState<RubricCatalogEntryDto[]>([]);
   const [trackedCompetencies, setTrackedCompetencies] = useState<LearnerCompetencyTrackingResponseDto[]>([]);
   const [progressionEvaluations, setProgressionEvaluations] = useState<Record<string, ProgressionEvaluationResponseDto>>({});
   const [evidenceSubmissions, setEvidenceSubmissions] = useState<EvidenceSubmissionResponseDto[]>([]);
@@ -66,12 +68,19 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
 
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
   const [evidenceModalInitialCompetencyId, setEvidenceModalInitialCompetencyId] = useState<string | null>(null);
+  const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
+  const [selectedRubricId, setSelectedRubricId] = useState('');
+  const [assessmentScores, setAssessmentScores] = useState<Record<string, number>>({});
+  const [assessmentNotes, setAssessmentNotes] = useState('');
+  const [assessmentSubmitting, setAssessmentSubmitting] = useState(false);
+  const [assessmentError, setAssessmentError] = useState<string | null>(null);
 
   const loadCatalogs = useCallback(async () => {
-    const [curriculumRes, evidenceTypeRes, progressionRes] = await Promise.all([
+    const [curriculumRes, evidenceTypeRes, progressionRes, rubricRes] = await Promise.all([
       fetch(`/api/v1/families/${familyId}/curriculum/curriculum-definitions/catalog`, { credentials: 'include' }),
       fetch(`/api/v1/families/${familyId}/curriculum/evidence-types/catalog`, { credentials: 'include' }),
       fetch(`/api/v1/families/${familyId}/curriculum/progression-policies/catalog`, { credentials: 'include' }),
+      fetch(`/api/v1/families/${familyId}/curriculum/rubrics/catalog`, { credentials: 'include' }),
     ]);
     if (curriculumRes.ok) setCurriculumCatalog(await curriculumRes.json());
     if (evidenceTypeRes.ok) setEvidenceTypeCatalog(await evidenceTypeRes.json());
@@ -79,6 +88,14 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
       const policies: ProgressionPolicyCatalogEntryDto[] = await progressionRes.json();
       setProgressionPolicyCatalog(policies);
       setSelectedProgressionPolicyId((current) => current || policies[0]?.id || '');
+    }
+    if (rubricRes.ok) {
+      const rubrics: RubricCatalogEntryDto[] = await rubricRes.json();
+      setRubricCatalog(rubrics);
+      setSelectedRubricId((current) => current || rubrics[0]?.id || '');
+      if (rubrics[0]) {
+        setAssessmentScores(Object.fromEntries(rubrics[0].criteria.map((criterion) => [criterion.id, criterion.scaleMin])));
+      }
     }
   }, [familyId]);
 
@@ -209,6 +226,60 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
       throw new Error(err.message || 'Falha ao enviar evidência.');
     }
     await loadLearnerData();
+  };
+
+  const handleOpenAssessmentModal = () => {
+    const rubric = rubricCatalog.find((entry) => entry.id === selectedRubricId) ?? rubricCatalog[0];
+    if (!rubric) return;
+    setSelectedRubricId(rubric.id);
+    setAssessmentScores(Object.fromEntries(rubric.criteria.map((criterion) => [criterion.id, criterion.scaleMin])));
+    setAssessmentNotes('');
+    setAssessmentError(null);
+    setIsAssessmentModalOpen(true);
+  };
+
+  const handleRubricChange = (rubricId: string) => {
+    const rubric = rubricCatalog.find((entry) => entry.id === rubricId);
+    setSelectedRubricId(rubricId);
+    setAssessmentScores(
+      Object.fromEntries((rubric?.criteria ?? []).map((criterion) => [criterion.id, criterion.scaleMin])),
+    );
+  };
+
+  const handleSaveAssessment = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!learnerId || !selectedRubricId) return;
+    const rubric = rubricCatalog.find((entry) => entry.id === selectedRubricId);
+    if (!rubric || rubric.criteria.length === 0) return;
+    setAssessmentSubmitting(true);
+    setAssessmentError(null);
+    try {
+      const res = await fetch(`/api/v1/families/${familyId}/curriculum/assessment-results`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          learnerId,
+          rubricDefinitionId: selectedRubricId,
+          assessorType: 'PARENT',
+          notes: assessmentNotes.trim() || null,
+          scores: rubric.criteria.map((criterion) => ({
+            rubricCriterionId: criterion.id,
+            score: assessmentScores[criterion.id] ?? criterion.scaleMin,
+          })),
+        }),
+      });
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.message || 'Falha ao registrar avaliação.');
+      }
+      await loadLearnerData();
+      setIsAssessmentModalOpen(false);
+    } catch (error) {
+      setAssessmentError(error instanceof Error ? error.message : 'Falha ao registrar avaliação.');
+    } finally {
+      setAssessmentSubmitting(false);
+    }
   };
 
   const handleValidateEvidence = async (evidenceId: string, status: 'VALIDATED' | 'REJECTED') => {
@@ -573,11 +644,32 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
         )}
       </Card>
 
-      {assessmentResults.length > 0 && (
-        <Card data-testid="assessment-results-card" style={{ padding: '1.75rem' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 1.25rem 0' }}>
-            Avaliações
-          </h2>
+      <Card data-testid="assessment-results-card" style={{ padding: '1.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              Avaliações
+            </h2>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0' }}>
+              Registre uma avaliação por critérios para este educando.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            data-testid="open-assessment-modal-btn"
+            onClick={handleOpenAssessmentModal}
+            disabled={rubricCatalog.length === 0}
+          >
+            Registrar avaliação
+          </Button>
+        </div>
+        {assessmentResults.length === 0 ? (
+          <EmptyState
+            title="Nenhuma avaliação registrada"
+            description="As avaliações por rubrica deste educando aparecerão aqui."
+          />
+        ) : (
           <div style={{ display: 'grid', gap: '0.625rem' }} data-testid="assessment-result-list">
             {assessmentResults.map((result) => {
               const average =
@@ -605,8 +697,66 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
               );
             })}
           </div>
-        </Card>
-      )}
+        )}
+      </Card>
+
+      <Modal
+        isOpen={isAssessmentModalOpen}
+        onClose={() => setIsAssessmentModalOpen(false)}
+        title="Registrar avaliação"
+        description="Atribua uma pontuação a cada critério da rubrica selecionada."
+        maxWidth="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setIsAssessmentModalOpen(false)} disabled={assessmentSubmitting}>
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              form="assessment-result-form"
+              data-testid="save-assessment-result-btn"
+              isLoading={assessmentSubmitting}
+              disabled={!selectedRubricId}
+            >
+              Salvar avaliação
+            </Button>
+          </>
+        }
+      >
+        <form id="assessment-result-form" onSubmit={handleSaveAssessment} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {assessmentError && <Alert variant="error" data-testid="assessment-result-error">{assessmentError}</Alert>}
+          <Select
+            label="Rubrica *"
+            data-testid="assessment-rubric-select"
+            value={selectedRubricId}
+            onChange={(event) => handleRubricChange(event.target.value)}
+            options={[
+              { value: '', label: 'Selecione uma rubrica...' },
+              ...rubricCatalog.map((rubric) => ({ value: rubric.id, label: rubric.name })),
+            ]}
+          />
+          {rubricCatalog.find((rubric) => rubric.id === selectedRubricId)?.criteria.map((criterion) => (
+            <Input
+              key={criterion.id}
+              type="number"
+              label={`${criterion.label} (${criterion.scaleMin}–${criterion.scaleMax})`}
+              data-testid={`assessment-score-${criterion.id}`}
+              min={criterion.scaleMin}
+              max={criterion.scaleMax}
+              step={1}
+              value={assessmentScores[criterion.id] ?? criterion.scaleMin}
+              onChange={(event) => setAssessmentScores((current) => ({ ...current, [criterion.id]: Number(event.target.value) }))}
+            />
+          ))}
+          <Textarea
+            label="Observações (opcional)"
+            data-testid="assessment-notes-input"
+            value={assessmentNotes}
+            onChange={(event) => setAssessmentNotes(event.target.value)}
+            rows={3}
+          />
+        </form>
+      </Modal>
 
       <EvidenceSubmissionModal
         isOpen={isEvidenceModalOpen}
