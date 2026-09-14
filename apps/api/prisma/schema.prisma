@@ -8,6 +8,8 @@ datasource db {
 }
 
 model User {
+  competencyAchievements LearnerCompetencyAchievement[]
+  competencyAchievementReviews LearnerCompetencyAchievementReview[]
   id                           String                   @id @default(uuid()) @db.Uuid
   email                        String                   @unique
   passwordHash                 String                   @map("password_hash")
@@ -158,6 +160,8 @@ model MfaLoginChallenge {
 }
 
 model Family {
+  competencyAchievements LearnerCompetencyAchievement[]
+  competencyAchievementReviews LearnerCompetencyAchievementReview[]
   id                     String                      @id @default(uuid()) @db.Uuid
   name                   String
   countryCode            String                      @map("country_code")
@@ -210,6 +214,8 @@ enum PrayerType {
 }
 
 model Learner {
+  competencyAchievements LearnerCompetencyAchievement[]
+  competencyAchievementReviews LearnerCompetencyAchievementReview[]
   id            String           @id @default(uuid()) @db.Uuid
   familyId      String           @map("family_id") @db.Uuid
   firstName     String           @map("first_name")
@@ -949,6 +955,7 @@ model LearningDomain {
 }
 
 model CompetencyDefinition {
+  achievements LearnerCompetencyAchievement[]
   id            String           @id @default(uuid()) @db.Uuid
   code          String
   version       Int              @default(1)
@@ -1165,6 +1172,7 @@ model EvidenceTypeDefinition {
 // now would mean referencing something that doesn't exist. "Referencia
 // avaliações" is covered by the rubrics join below.
 model CurriculumDefinition {
+  achievements LearnerCompetencyAchievement[]
   id                           String           @id @default(uuid()) @db.Uuid
   code                         String
   version                      Int              @default(1)
@@ -1470,6 +1478,8 @@ model TheologicalProfile {
 // on delete -- same choice as RubricDefinition.competencyId, since this
 // is platform config, not user data whose history must never be lost).
 model ProgressionPolicy {
+  learnerTrackings LearnerCompetencyTracking[]
+  achievements LearnerCompetencyAchievement[]
   id                     String           @id @default(uuid()) @db.Uuid
   code                   String
   version                Int              @default(1)
@@ -1520,6 +1530,7 @@ model ProgressionPolicy {
 // means a competency can never be hard-deleted out from under existing
 // evidence ("evidência não é apagada quando currículo muda").
 model EvidenceSubmission {
+  achievementReviews LearnerCompetencyAchievementReview[]
   id                String                   @id @default(uuid()) @db.Uuid
   familyId          String                   @map("family_id") @db.Uuid
   learnerId         String                   @map("learner_id") @db.Uuid
@@ -1651,6 +1662,10 @@ model AssessmentResultScore {
 // learner without going through a curriculum (e.g. added individually by
 // a parent), so the curriculum link is provenance, not a hard requirement.
 model LearnerCompetencyTracking {
+  progressionPolicyId String? @map("progression_policy_id") @db.Uuid
+  policyVersion Int? @map("policy_version")
+  progressionPolicy ProgressionPolicy? @relation(fields: [progressionPolicyId], references: [id], onDelete: Restrict)
+  achievement LearnerCompetencyAchievement?
   id                     String                          @id @default(uuid()) @db.Uuid
   familyId               String                          @map("family_id") @db.Uuid
   learnerId              String                          @map("learner_id") @db.Uuid
@@ -1673,6 +1688,59 @@ model LearnerCompetencyTracking {
   @@index([competencyDefinitionId])
   @@index([curriculumDefinitionId])
   @@map("learner_competency_tracking")
+}
+
+// Append-only awards: one award per exact tracking, never revoked or replaced.
+model LearnerCompetencyAchievement {
+  id String @id @default(uuid()) @db.Uuid
+  trackingId String @unique @map("tracking_id") @db.Uuid
+  familyId String @map("family_id") @db.Uuid
+  learnerId String @map("learner_id") @db.Uuid
+  competencyDefinitionId String @map("competency_definition_id") @db.Uuid
+  competencyVersion Int @map("competency_version")
+  curriculumDefinitionId String? @map("curriculum_definition_id") @db.Uuid
+  curriculumVersion Int? @map("curriculum_version")
+  progressionPolicyId String @map("progression_policy_id") @db.Uuid
+  policyVersion Int @map("policy_version")
+  validatedEvidenceCount Int @map("validated_evidence_count")
+  minimumEvidenceCount Int @map("minimum_evidence_count")
+  evidenceSnapshot Json @map("evidence_snapshot")
+  awardedByUserId String @map("awarded_by_user_id") @db.Uuid
+  achievedAt DateTime @default(now()) @map("achieved_at") @db.Timestamptz
+
+  tracking LearnerCompetencyTracking @relation(fields: [trackingId], references: [id], onDelete: Restrict)
+  family Family @relation(fields: [familyId], references: [id], onDelete: Restrict)
+  learner Learner @relation(fields: [learnerId], references: [id], onDelete: Restrict)
+  competencyDefinition CompetencyDefinition @relation(fields: [competencyDefinitionId], references: [id], onDelete: Restrict)
+  curriculumDefinition CurriculumDefinition? @relation(fields: [curriculumDefinitionId], references: [id], onDelete: Restrict)
+  progressionPolicy ProgressionPolicy @relation(fields: [progressionPolicyId], references: [id], onDelete: Restrict)
+  awardedBy User @relation(fields: [awardedByUserId], references: [id], onDelete: Restrict)
+  reviews LearnerCompetencyAchievementReview[]
+
+  @@index([familyId, learnerId])
+  @@map("learner_competency_achievements")
+}
+
+// Rejection appends a review event; the original award remains unchanged.
+model LearnerCompetencyAchievementReview {
+  id String @id @default(uuid()) @db.Uuid
+  achievementId String @map("achievement_id") @db.Uuid
+  familyId String @map("family_id") @db.Uuid
+  learnerId String @map("learner_id") @db.Uuid
+  evidenceSubmissionId String @map("evidence_submission_id") @db.Uuid
+  reviewedByUserId String @map("reviewed_by_user_id") @db.Uuid
+  reason String @default("EVIDENCE_REJECTED")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  achievement LearnerCompetencyAchievement @relation(fields: [achievementId], references: [id], onDelete: Restrict)
+  family Family @relation(fields: [familyId], references: [id], onDelete: Restrict)
+  learner Learner @relation(fields: [learnerId], references: [id], onDelete: Restrict)
+  evidenceSubmission EvidenceSubmission @relation(fields: [evidenceSubmissionId], references: [id], onDelete: Restrict)
+  reviewedBy User @relation(fields: [reviewedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([achievementId, evidenceSubmissionId])
+  @@index([familyId, learnerId])
+  @@map("learner_competency_achievement_reviews")
 }
 
 enum LearnerCompetencyTrackingStatus {

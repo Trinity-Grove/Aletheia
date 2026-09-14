@@ -2,8 +2,8 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { evidenceCountRulesSchema, type ProgressionEvaluationQueryDto, type ProgressionEvaluationResponseDto } from '@aletheia/contracts';
 import { ProgressionRepository } from '../infrastructure/progression.repository.js';
 
-interface Definition { id: string; version: number; status: string; schemaVersion: string }
-interface Policy extends Definition {
+export interface Definition { id: string; version: number; status: string; schemaVersion: string }
+export interface Policy extends Definition {
   policyType: string;
   rules: unknown;
   competencyDefinitionId: string | null;
@@ -25,6 +25,8 @@ export interface ProgressionReader {
   policy(id: string): Promise<Policy | null>;
   curriculumContains(curriculumId: string, competencyId: string): Promise<boolean>;
   evidenceCount(familyId: string, learnerId: string, competencyId: string, version: number): Promise<number>;
+  trackingPolicy?(familyId: string, trackingId: string): Promise<{ id: string; version: number } | null>;
+  requireTrackingPolicyBinding?: boolean;
 }
 
 // A request evaluates at most 64 distinct competency/policy pairs, 16 levels deep.
@@ -37,19 +39,24 @@ export async function evaluateProgression(reader: ProgressionReader, familyId: s
   let visited = 0;
   async function evaluate(tracking: ProgressionTracking, policyId: string, depth: number): Promise<ProgressionEvaluationResponseDto> {
     const competencyId = tracking.competencyDefinitionId;
-    const key = `${tracking.id}:${policyId}`;
+    const pinnedPolicy = await reader.trackingPolicy?.(familyId, tracking.id);
+    if (reader.requireTrackingPolicyBinding && !pinnedPolicy) throw new BadRequestException('Automatic progression requires a policy binding for every tracked prerequisite');
+    if (pinnedPolicy && pinnedPolicy.id !== policyId) throw new BadRequestException('Progression prerequisite policy does not match the tracking binding');
+    const effectivePolicyId = pinnedPolicy?.id ?? policyId;
+    const key = `${tracking.id}:${effectivePolicyId}`;
     if (visiting.has(key)) throw new BadRequestException('Progression prerequisite cycle');
     const cached = results.get(key);
     if (cached) return cached;
     if (depth > 16 || ++visited > 64) throw new BadRequestException('Progression traversal limit exceeded');
     visiting.add(key);
     const competency = await reader.competency(competencyId);
-    const policy = await reader.policy(policyId);
+    const policy = await reader.policy(effectivePolicyId);
     if (!competency || !policy) throw new NotFoundException('Progression definition not found');
     // Previously activated versions remain usable after deprecation/archival.
     // Policies are selected now, not pinned by tracking, so must still be published.
     if (!['PUBLISHED', 'DEPRECATED', 'ARCHIVED'].includes(competency.status) || competency.version !== tracking.competencyVersion ||
-        competency.schemaVersion !== '1.0.0' || policy.status !== 'PUBLISHED' || policy.schemaVersion !== '1.0.0') {
+        competency.schemaVersion !== '1.0.0' || (pinnedPolicy ? !['PUBLISHED', 'DEPRECATED', 'ARCHIVED'].includes(policy.status) : policy.status !== 'PUBLISHED') || policy.schemaVersion !== '1.0.0' ||
+        (pinnedPolicy && policy.version !== pinnedPolicy.version)) {
       throw new BadRequestException('Progression requires a supported tracked competency version and a published supported policy');
     }
     if (policy.policyType !== 'EVIDENCE_COUNT') throw new BadRequestException('Unsupported progression policy type');
@@ -73,7 +80,7 @@ export async function evaluateProgression(reader: ProgressionReader, familyId: s
     const result: ProgressionEvaluationResponseDto = {
       learnerId: root!.learnerId, competencyDefinitionId: competencyId, competencyVersion: tracking.competencyVersion,
       trackingId: tracking.id, trackingStatus: tracking.status, curriculumDefinitionId: tracking.curriculumDefinitionId,
-      policyId, policyVersion: policy.version, validatedEvidenceCount: count,
+      policyId: effectivePolicyId, policyVersion: policy.version, validatedEvidenceCount: count,
       minimumEvidenceCount: parsed.data.minimumEvidenceCount, unmetPrerequisites,
       state: unmetPrerequisites.length ? 'BLOCKED' : count >= parsed.data.minimumEvidenceCount ? 'MASTERED' : count > 0 ? 'IN_PROGRESS' : 'NOT_STARTED',
     };

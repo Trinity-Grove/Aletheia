@@ -25,6 +25,7 @@ export type LearnerCompetencyTrackingStatus = z.infer<typeof learnerCompetencyTr
 export const activateCurriculumForLearnerSchema = z.object({
   learnerId: z.string().uuid(),
   curriculumDefinitionId: z.string().uuid(),
+  progressionPolicyId: z.string().uuid().optional(),
 });
 
 export type ActivateCurriculumForLearnerDto = z.infer<typeof activateCurriculumForLearnerSchema>;
@@ -48,6 +49,8 @@ export const learnerCompetencyTrackingResponseSchema = z.object({
   competencyDefinitionId: z.string().uuid(),
   competencyVersion: z.number().int(),
   curriculumDefinitionId: z.string().uuid().nullable().optional(),
+  progressionPolicyId: z.string().uuid().nullable().optional(),
+  policyVersion: z.number().int().positive().nullable().optional(),
   status: learnerCompetencyTrackingStatusSchema,
   activatedAt: z.string(),
   retiredAt: z.string().nullable().optional(),
