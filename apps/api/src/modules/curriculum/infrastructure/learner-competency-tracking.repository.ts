@@ -76,6 +76,7 @@ export class LearnerCompetencyTrackingRepository {
     curriculumDefinitionId: string | null,
     competencies: CurriculumCompetencyToActivate[],
     policy: ProgressionPolicyBinding | null = null,
+    requestedCompetencies: CurriculumCompetencyToActivate[] = competencies,
   ): Promise<void> {
     if (competencies.length === 0) return;
     await this.prisma.$transaction(async (tx) => {
@@ -83,8 +84,8 @@ export class LearnerCompetencyTrackingRepository {
       if (!learner) return;
       await tx.$queryRaw`SELECT id FROM learners WHERE id = ${learnerId}::uuid FOR UPDATE`;
       if (policy) {
-        const existing = await tx.learnerCompetencyTracking.findMany({ where: { learnerId, competencyDefinitionId: { in: competencies.map((c) => c.competencyDefinitionId) } }, select: { competencyDefinitionId: true, competencyVersion: true, progressionPolicyId: true, policyVersion: true } });
-        const requested = new Set(competencies.map((c) => `${c.competencyDefinitionId}:${c.competencyVersion}`));
+        const existing = await tx.learnerCompetencyTracking.findMany({ where: { learnerId, competencyDefinitionId: { in: requestedCompetencies.map((c) => c.competencyDefinitionId) } }, select: { competencyDefinitionId: true, competencyVersion: true, progressionPolicyId: true, policyVersion: true } });
+        const requested = new Set(requestedCompetencies.map((c) => `${c.competencyDefinitionId}:${c.competencyVersion}`));
         if (existing.some((row) => requested.has(`${row.competencyDefinitionId}:${row.competencyVersion}`) && (row.progressionPolicyId !== policy.id || row.policyVersion !== policy.version))) {
           throw new BadRequestException('This tracking already has a different immutable progression policy binding.');
         }
