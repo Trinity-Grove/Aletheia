@@ -16,9 +16,13 @@ import { ProductShell } from '../../../src/components/product-shell';
 import { RecordsJournalView } from '../../../src/components/records/records-journal-view';
 import { RecordFormModal } from '../../../src/components/records/record-form-modal';
 import { PortfolioItemModal } from '../../../src/components/records/portfolio-item-modal';
+import { CompetencyTrackingPanel } from '../../../src/components/records/competency-tracking-panel';
+
+type RecordsTab = 'diario' | 'competencias';
 
 export default function RecordsPage() {
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<RecordsTab>('diario');
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
   const [activeLearnerId, setActiveLearnerId] = useState<string | null>(null);
@@ -261,11 +265,61 @@ export default function RecordsPage() {
           </p>
         </div>
 
+        {/* Tab switcher (issue #126 item 3): "Competências" is additive
+            alongside the existing "Diário" tab -- the existing Diario de
+            Aprendizagem creation flow is untouched and stays the default
+            tab. Retiring/hiding it is a separate, human-reviewed step. */}
+        <div
+          style={{
+            display: 'flex',
+            borderBottom: '1px solid var(--border-light)',
+            marginBottom: '1.5rem',
+            gap: '0.5rem',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          <button
+            type="button"
+            data-testid="tab-records-diario"
+            onClick={() => setActiveTab('diario')}
+            style={{
+              padding: '0.75rem 1.25rem',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'diario' ? '2px solid var(--forest)' : '2px solid transparent',
+              color: activeTab === 'diario' ? 'var(--forest)' : 'var(--text-secondary)',
+            }}
+          >
+            Diário
+          </button>
+          <button
+            type="button"
+            data-testid="tab-records-competencias"
+            onClick={() => setActiveTab('competencias')}
+            style={{
+              padding: '0.75rem 1.25rem',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'competencias' ? '2px solid var(--forest)' : '2px solid transparent',
+              color: activeTab === 'competencias' ? 'var(--forest)' : 'var(--text-secondary)',
+            }}
+          >
+            Competências
+          </button>
+        </div>
+
         {loading ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
             Carregando diário de aprendizagem...
           </div>
-        ) : (
+        ) : activeTab === 'diario' ? (
           <RecordsJournalView
             records={records}
             progressSummary={progressSummary}
@@ -277,7 +331,9 @@ export default function RecordsPage() {
             onDeleteRecord={handleDeleteRecord}
             onAddEvidence={handleOpenAddEvidence}
           />
-        )}
+        ) : familyId ? (
+          <CompetencyTrackingPanel familyId={familyId} learnerId={activeLearnerId} />
+        ) : null}
 
         {/* Modals */}
         <RecordFormModal
