@@ -12,6 +12,7 @@
     "seed:evidence-types": "node dist/scripts/seed-evidence-type-definitions.js",
     "seed:bible-translations": "node dist/scripts/seed-bible-translation-definitions.js",
     "seed:biblical-formation": "node dist/scripts/seed-biblical-formation.js",
+    "seed:music-formation": "node dist/scripts/seed-music-formation.js",
     "lint": "eslint . --config ../../packages/eslint-config/index.mjs --ignore-pattern dist --global require --global module",
     "prisma": "prisma",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
