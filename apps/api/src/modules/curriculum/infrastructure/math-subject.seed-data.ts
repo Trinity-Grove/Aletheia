@@ -40,13 +40,22 @@ import {
 // (e.g. MATH.PRIMARY_GRAMMAR) so a future "suggest a path for this
 // learner's stage" feature has an exact, non-guessed join key.
 //
-// This first slice covers two bands -- PRIMARY_GRAMMAR (Ensino
+// PR #142 covered the first two bands -- PRIMARY_GRAMMAR (Ensino
 // Fundamental I, roughly ages 6-10) and MIDDLE_LOGIC (Ensino Fundamental
-// II, roughly ages 11-14) -- with seven competencies each, per the task's
-// explicit "2-3 grade bands with 5-8 competencies each" scoping
-// instruction. EARLY_YEARS and HIGH_RHETORIC are explicitly NOT covered
-// here and remain follow-up work, same as every prior seed's documented
-// scope boundary.
+// II, roughly ages 11-14), seven competencies each. Issue #144 Lote 1
+// item 1 closes Matemática out with the remaining two bands:
+//   - EARLY_YEARS (Educação Infantil, roughly ages 4-5): pre-arithmetic
+//     foundations -- oral counting, number recognition 0-10, comparing
+//     quantities, shape recognition, simple patterns. Five competencies,
+//     one per item explicitly listed in the #144 task.
+//   - HIGH_RHETORIC (Ensino Médio, roughly ages 15-17): the next real
+//     step up from MIDDLE_LOGIC -- functions, quadratic equations,
+//     plane/spatial geometry at proof level, probability, more advanced
+//     statistics, intro to exponentials/logarithms. Six competencies, a
+//     deliberately bounded first slice of Ensino Médio math, not a full
+//     curriculum's worth in one PR.
+// All four EducationalStage bands are now covered -- Matemática is
+// complete as a subject (see issue #144's tracking table).
 //
 // Pre-existing content: curriculum-template.engine.ts has a flat
 // "Matemática" Subject stub in both the TRADITIONAL and CLASSICAL_TRIVIUM
@@ -60,8 +69,10 @@ import {
 // percentages, multi-step problem solving) to stay consistent.
 
 const DOMAIN_CODE = 'MATH';
+const EARLY_YEARS_PATH_CODE = 'MATH.EARLY_YEARS';
 const PRIMARY_GRAMMAR_PATH_CODE = 'MATH.PRIMARY_GRAMMAR';
 const MIDDLE_LOGIC_PATH_CODE = 'MATH.MIDDLE_LOGIC';
+const HIGH_RHETORIC_PATH_CODE = 'MATH.HIGH_RHETORIC';
 
 export interface MathSubjectDomainSeed {
   code: string;
@@ -103,6 +114,69 @@ export function buildMathSubjectSeedData(): MathSubjectSeedData {
         'Raciocínio quantitativo, aritmética, geometria e resolução de problemas, com progressão real por faixa de idade/série -- cada trilha deste domínio corresponde a um estágio educacional (issue #96 EducationalStage), não um único nível único para todas as idades.',
     },
     paths: [
+      {
+        path: {
+          code: EARLY_YEARS_PATH_CODE,
+          name: 'Matemática -- Educação Infantil (Early Years)',
+          description:
+            'Matemática para a Educação Infantil (aproximadamente 4 a 5 anos) -- fundamentos pré-aritméticos: contagem oral, reconhecimento de números, comparação de quantidades, formas básicas e padrões simples, antes de qualquer operação formal.',
+        },
+        competencies: [
+          {
+            code: 'MATH.EARLY_YEARS.COUNTING_ALOUD',
+            title: 'Contagem Oral de Objetos',
+            level: 1,
+            ageRecommendation: { min: 4, max: 5 },
+            evidenceTypes: ['video', 'observation'],
+            starterObjectives: [
+              'Contar em voz alta objetos concretos (brinquedos, blocos, dedos) até pelo menos 10, apontando para cada um ao contar',
+              'Responder corretamente "quantos são" depois de contar um pequeno grupo de objetos',
+            ],
+          },
+          {
+            code: 'MATH.EARLY_YEARS.NUMBER_RECOGNITION',
+            title: 'Reconhecimento e Nomeação de Números (0 a 10)',
+            level: 1,
+            ageRecommendation: { min: 4, max: 5 },
+            evidenceTypes: ['photo', 'observation'],
+            starterObjectives: [
+              'Reconhecer e nomear os números de 0 a 10 ao vê-los escritos, em qualquer ordem',
+              'Associar cada número de 0 a 10 à quantidade correspondente de objetos',
+            ],
+          },
+          {
+            code: 'MATH.EARLY_YEARS.COMPARING_QUANTITIES',
+            title: 'Comparação de Quantidades (Mais/Menos/Igual)',
+            level: 1,
+            ageRecommendation: { min: 4, max: 5 },
+            evidenceTypes: ['observation', 'photo'],
+            starterObjectives: [
+              'Comparar dois grupos de objetos e dizer qual tem mais, qual tem menos, ou se têm a mesma quantidade',
+            ],
+          },
+          {
+            code: 'MATH.EARLY_YEARS.SHAPE_RECOGNITION',
+            title: 'Reconhecimento de Formas Básicas',
+            level: 1,
+            ageRecommendation: { min: 4, max: 5 },
+            evidenceTypes: ['photo', 'observation'],
+            starterObjectives: [
+              'Identificar e nomear formas básicas (círculo, quadrado, triângulo) em brinquedos e objetos do dia a dia',
+            ],
+          },
+          {
+            code: 'MATH.EARLY_YEARS.PATTERNS',
+            title: 'Padrões e Sequências Simples',
+            level: 1,
+            ageRecommendation: { min: 4, max: 6 },
+            evidenceTypes: ['photo', 'observation'],
+            starterObjectives: [
+              'Continuar um padrão simples de cores, formas ou objetos (ex.: vermelho-azul-vermelho-azul)',
+              'Criar um padrão simples próprio usando objetos ou desenhos',
+            ],
+          },
+        ],
+      },
       {
         path: {
           code: PRIMARY_GRAMMAR_PATH_CODE,
@@ -266,6 +340,81 @@ export function buildMathSubjectSeedData(): MathSubjectSeedData {
             evidenceTypes: ['text'],
             starterObjectives: [
               'Resolver operações de adição e subtração envolvendo números negativos, representando-os em uma reta numérica',
+            ],
+          },
+        ],
+      },
+      {
+        path: {
+          code: HIGH_RHETORIC_PATH_CODE,
+          name: 'Matemática -- Ensino Médio (Rhetoric)',
+          description:
+            'Matemática para o Ensino Médio (aproximadamente 15 a 17 anos) -- funções, equações do segundo grau, geometria plana e espacial em nível de demonstração, probabilidade, estatística avançada e introdução a exponenciais e logaritmos. Fatia inicial deliberadamente delimitada, não uma cobertura completa do currículo de Ensino Médio.',
+        },
+        competencies: [
+          {
+            code: 'MATH.HIGH_RHETORIC.FUNCTIONS',
+            title: 'Funções',
+            level: 3,
+            ageRecommendation: { min: 15, max: 16 },
+            evidenceTypes: ['text', 'photo'],
+            starterObjectives: [
+              'Construir e interpretar o gráfico de uma função do primeiro grau, identificando domínio, imagem e taxa de variação',
+              'Resolver um problema do cotidiano modelando-o como uma função',
+            ],
+          },
+          {
+            code: 'MATH.HIGH_RHETORIC.QUADRATIC_EQUATIONS',
+            title: 'Equações do Segundo Grau',
+            level: 3,
+            ageRecommendation: { min: 15, max: 16 },
+            evidenceTypes: ['text'],
+            starterObjectives: [
+              'Resolver uma equação do segundo grau usando a fórmula de Bhaskara, verificando as soluções encontradas',
+              'Analisar o número de raízes de uma equação do segundo grau a partir do discriminante',
+            ],
+          },
+          {
+            code: 'MATH.HIGH_RHETORIC.PLANE_SPATIAL_GEOMETRY',
+            title: 'Geometria Plana e Espacial Avançada',
+            level: 3,
+            ageRecommendation: { min: 15, max: 17 },
+            evidenceTypes: ['text', 'photo'],
+            starterObjectives: [
+              'Demonstrar, com justificativa passo a passo, uma propriedade geométrica simples (ex.: soma dos ângulos internos de um triângulo)',
+              'Calcular o volume e a área de superfície de sólidos geométricos simples (cubo, cilindro, prisma)',
+            ],
+          },
+          {
+            code: 'MATH.HIGH_RHETORIC.PROBABILITY',
+            title: 'Probabilidade',
+            level: 3,
+            ageRecommendation: { min: 16, max: 17 },
+            evidenceTypes: ['text'],
+            starterObjectives: [
+              'Calcular a probabilidade de um evento simples e de eventos compostos independentes',
+              'Explicar a diferença entre probabilidade teórica e frequência observada em um experimento',
+            ],
+          },
+          {
+            code: 'MATH.HIGH_RHETORIC.ADVANCED_STATISTICS',
+            title: 'Estatística Avançada',
+            level: 3,
+            ageRecommendation: { min: 16, max: 17 },
+            evidenceTypes: ['text', 'photo'],
+            starterObjectives: [
+              'Calcular medidas de dispersão (amplitude, desvio médio), além de média e mediana, interpretando o que elas revelam sobre um conjunto de dados',
+            ],
+          },
+          {
+            code: 'MATH.HIGH_RHETORIC.EXPONENTIALS_LOGARITHMS',
+            title: 'Introdução a Exponenciais e Logaritmos',
+            level: 3,
+            ageRecommendation: { min: 16, max: 17 },
+            evidenceTypes: ['text'],
+            starterObjectives: [
+              'Resolver uma equação exponencial simples e explicar a relação entre potenciação e logaritmo',
+              'Reconhecer situações do cotidiano modeladas por crescimento exponencial (ex.: juros compostos, crescimento populacional)',
             ],
           },
         ],
