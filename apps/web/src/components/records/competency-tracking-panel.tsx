@@ -7,6 +7,7 @@ import type {
   CurriculumDefinitionCatalogEntryDto,
   EvidenceSubmissionResponseDto,
   EvidenceTypeCatalogEntryDto,
+  LearnerCompetencyAchievementResponseDto,
   LearnerCompetencyTrackingResponseDto,
   ProgressionEvaluationResponseDto,
   ProgressionPolicyCatalogEntryDto,
@@ -52,6 +53,7 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
   const [progressionEvaluations, setProgressionEvaluations] = useState<Record<string, ProgressionEvaluationResponseDto>>({});
   const [evidenceSubmissions, setEvidenceSubmissions] = useState<EvidenceSubmissionResponseDto[]>([]);
   const [assessmentResults, setAssessmentResults] = useState<AssessmentResultResponseDto[]>([]);
+  const [achievements, setAchievements] = useState<LearnerCompetencyAchievementResponseDto[]>([]);
   const [validatingEvidenceId, setValidatingEvidenceId] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,9 +88,10 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
       setProgressionEvaluations({});
       setEvidenceSubmissions([]);
       setAssessmentResults([]);
+      setAchievements([]);
       return;
     }
-    const [trackingRes, evidenceRes, assessmentRes] = await Promise.all([
+    const [trackingRes, evidenceRes, assessmentRes, achievementRes] = await Promise.all([
       fetch(`/api/v1/families/${familyId}/curriculum/competency-tracking?learnerId=${learnerId}`, {
         credentials: 'include',
       }),
@@ -98,11 +101,15 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
       fetch(`/api/v1/families/${familyId}/curriculum/assessment-results?learnerId=${learnerId}`, {
         credentials: 'include',
       }),
+      fetch(`/api/v1/families/${familyId}/curriculum/achievements?learnerId=${learnerId}`, {
+        credentials: 'include',
+      }),
     ]);
     const nextTrackings: LearnerCompetencyTrackingResponseDto[] = trackingRes.ok ? await trackingRes.json() : [];
     if (trackingRes.ok) setTrackedCompetencies(nextTrackings);
     if (evidenceRes.ok) setEvidenceSubmissions(await evidenceRes.json());
     if (assessmentRes.ok) setAssessmentResults(await assessmentRes.json());
+    if (achievementRes.ok) setAchievements(await achievementRes.json());
     const evaluationEntries = await Promise.all(
       nextTrackings.map(async (tracking) => {
         if (!tracking.progressionPolicyId) return null;
@@ -424,6 +431,63 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
                 </div>
               ))}
             </div>
+          </div>
+        )}
+      </Card>
+
+      <Card data-testid="achievement-history-card" style={{ padding: '1.75rem' }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.35rem 0' }}>
+          Conquistas de Competências
+        </h2>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0 0 1.25rem 0' }}>
+          Registros históricos criados automaticamente quando uma política de progressão é satisfeita.
+        </p>
+        {achievements.length === 0 ? (
+          <EmptyState
+            title="Nenhuma conquista registrada"
+            description="As conquistas aparecerão aqui depois que evidências validadas satisfizerem uma política de progressão."
+          />
+        ) : (
+          <div style={{ display: 'grid', gap: '0.625rem' }} data-testid="achievement-history-list">
+            {achievements.map((achievement) => {
+              const tracked = trackedCompetencies.find(
+                (candidate) => candidate.competencyDefinitionId === achievement.competencyDefinitionId,
+              );
+              return (
+                <div
+                  key={achievement.id}
+                  data-testid={`achievement-${achievement.id}`}
+                  style={{
+                    padding: '0.75rem 1rem',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-light)',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span
+                      data-testid={`achievement-competency-${achievement.id}`}
+                      style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)' }}
+                    >
+                      {tracked?.competency.title ?? `Competência ${achievement.competencyDefinitionId}`}
+                    </span>
+                    <Badge variant="emerald">Dominada</Badge>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
+                    Competência v{achievement.competencyVersion}
+                    {achievement.curriculumVersion ? ` · currículo v${achievement.curriculumVersion}` : ''}
+                    {' · '}{achievement.validatedEvidenceCount}/{achievement.minimumEvidenceCount} evidência
+                    {achievement.minimumEvidenceCount === 1 ? '' : 's'} validada
+                    {achievement.minimumEvidenceCount === 1 ? '' : 's'}
+                    {' · '}{new Date(achievement.achievedAt).toLocaleDateString('pt-BR')}
+                  </div>
+                  {achievement.reviews && achievement.reviews.length > 0 && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
+                      {achievement.reviews.length} revisão(ões) registrada(s)
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </Card>
