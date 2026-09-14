@@ -15,6 +15,7 @@
     "seed:music-formation": "node dist/scripts/seed-music-formation.js",
     "seed:trades-formation": "node dist/scripts/seed-trades-formation.js",
     "seed:cooking-formation": "node dist/scripts/seed-cooking-formation.js",
+    "seed:gardening-formation": "node dist/scripts/seed-gardening-formation.js",
     "lint": "eslint . --config ../../packages/eslint-config/index.mjs --ignore-pattern dist --global require --global module",
     "prisma": "prisma",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
