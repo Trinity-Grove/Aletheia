@@ -11,6 +11,7 @@ import { PedagogicalModelDefinitionResolver } from './infrastructure/pedagogical
 import { TheologicalTraditionCatalogResolver } from './infrastructure/theological-tradition-catalog.resolver.js';
 import { CurriculumDefinitionCatalogResolver } from './infrastructure/curriculum-definition-catalog.resolver.js';
 import { EvidenceTypeCatalogResolver } from './infrastructure/evidence-type-catalog.resolver.js';
+import { ProgressionPolicyCatalogResolver } from './infrastructure/progression-policy-catalog.resolver.js';
 import { PedagogicalModelDefinitionSeeder } from './infrastructure/pedagogical-model-definition.seeder.js';
 import { EvidenceTypeDefinitionSeeder } from './infrastructure/evidence-type-definition.seeder.js';
 import { BibleTranslationDefinitionSeeder } from './infrastructure/bible-translation-definition.seeder.js';
@@ -20,6 +21,7 @@ import { TradesFormationSeeder } from './infrastructure/trades-formation.seeder.
 import { CookingFormationSeeder } from './infrastructure/cooking-formation.seeder.js';
 import { GardeningFormationSeeder } from './infrastructure/gardening-formation.seeder.js';
 import { ResilienceFormationSeeder } from './infrastructure/resilience-formation.seeder.js';
+import { FoundationalCurriculumSeeder } from './infrastructure/foundational-curriculum.seeder.js';
 import { DefinitionsRepository } from './infrastructure/definitions.repository.js';
 import { ProfilesRepository } from './infrastructure/profiles.repository.js';
 import { EvidenceSubmissionRepository } from './infrastructure/evidence-submission.repository.js';
@@ -75,6 +77,7 @@ import { AchievementController } from './presentation/achievement.controller.js'
     TheologicalTraditionCatalogResolver,
     CurriculumDefinitionCatalogResolver,
     EvidenceTypeCatalogResolver,
+    ProgressionPolicyCatalogResolver,
     PedagogicalModelDefinitionSeeder,
     EvidenceTypeDefinitionSeeder,
     BibleTranslationDefinitionSeeder,
@@ -84,6 +87,7 @@ import { AchievementController } from './presentation/achievement.controller.js'
     CookingFormationSeeder,
     GardeningFormationSeeder,
     ResilienceFormationSeeder,
+    FoundationalCurriculumSeeder,
     DefinitionsRepository,
     ProfilesRepository,
     EvidenceSubmissionRepository,

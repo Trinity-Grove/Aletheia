@@ -8,6 +8,8 @@ import type {
   EvidenceSubmissionResponseDto,
   EvidenceTypeCatalogEntryDto,
   LearnerCompetencyTrackingResponseDto,
+  ProgressionEvaluationResponseDto,
+  ProgressionPolicyCatalogEntryDto,
 } from '@aletheia/contracts';
 import { EvidenceSubmissionModal, type EvidenceSubmissionFormValues } from './evidence-submission-modal';
 
@@ -15,6 +17,20 @@ export interface CompetencyTrackingPanelProps {
   familyId: string;
   learnerId: string | null;
 }
+
+const progressionStateLabels = {
+  NOT_STARTED: 'Não iniciada',
+  IN_PROGRESS: 'Em andamento',
+  BLOCKED: 'Bloqueada',
+  MASTERED: 'Dominada',
+} as const;
+
+const progressionStateVariants = {
+  NOT_STARTED: 'slate',
+  IN_PROGRESS: 'amber',
+  BLOCKED: 'rose',
+  MASTERED: 'emerald',
+} as const;
 
 // Family-facing competency tracking UI (issue #126 item 3): activates a
 // CurriculumDefinition for the active learner, lists the resulting
@@ -31,12 +47,15 @@ export interface CompetencyTrackingPanelProps {
 export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrackingPanelProps) {
   const [curriculumCatalog, setCurriculumCatalog] = useState<CurriculumDefinitionCatalogEntryDto[]>([]);
   const [evidenceTypeCatalog, setEvidenceTypeCatalog] = useState<EvidenceTypeCatalogEntryDto[]>([]);
+  const [progressionPolicyCatalog, setProgressionPolicyCatalog] = useState<ProgressionPolicyCatalogEntryDto[]>([]);
   const [trackedCompetencies, setTrackedCompetencies] = useState<LearnerCompetencyTrackingResponseDto[]>([]);
+  const [progressionEvaluations, setProgressionEvaluations] = useState<Record<string, ProgressionEvaluationResponseDto>>({});
   const [evidenceSubmissions, setEvidenceSubmissions] = useState<EvidenceSubmissionResponseDto[]>([]);
   const [assessmentResults, setAssessmentResults] = useState<AssessmentResultResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [selectedCurriculumId, setSelectedCurriculumId] = useState('');
+  const [selectedProgressionPolicyId, setSelectedProgressionPolicyId] = useState('');
   const [activating, setActivating] = useState(false);
   const [activationError, setActivationError] = useState<string | null>(null);
   const [activationSuccess, setActivationSuccess] = useState<string | null>(null);
@@ -45,17 +64,24 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
   const [evidenceModalInitialCompetencyId, setEvidenceModalInitialCompetencyId] = useState<string | null>(null);
 
   const loadCatalogs = useCallback(async () => {
-    const [curriculumRes, evidenceTypeRes] = await Promise.all([
+    const [curriculumRes, evidenceTypeRes, progressionRes] = await Promise.all([
       fetch(`/api/v1/families/${familyId}/curriculum/curriculum-definitions/catalog`, { credentials: 'include' }),
       fetch(`/api/v1/families/${familyId}/curriculum/evidence-types/catalog`, { credentials: 'include' }),
+      fetch(`/api/v1/families/${familyId}/curriculum/progression-policies/catalog`, { credentials: 'include' }),
     ]);
     if (curriculumRes.ok) setCurriculumCatalog(await curriculumRes.json());
     if (evidenceTypeRes.ok) setEvidenceTypeCatalog(await evidenceTypeRes.json());
+    if (progressionRes.ok) {
+      const policies: ProgressionPolicyCatalogEntryDto[] = await progressionRes.json();
+      setProgressionPolicyCatalog(policies);
+      setSelectedProgressionPolicyId((current) => current || policies[0]?.id || '');
+    }
   }, [familyId]);
 
   const loadLearnerData = useCallback(async () => {
     if (!learnerId) {
       setTrackedCompetencies([]);
+      setProgressionEvaluations({});
       setEvidenceSubmissions([]);
       setAssessmentResults([]);
       return;
@@ -71,9 +97,22 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
         credentials: 'include',
       }),
     ]);
-    if (trackingRes.ok) setTrackedCompetencies(await trackingRes.json());
+    const nextTrackings: LearnerCompetencyTrackingResponseDto[] = trackingRes.ok ? await trackingRes.json() : [];
+    if (trackingRes.ok) setTrackedCompetencies(nextTrackings);
     if (evidenceRes.ok) setEvidenceSubmissions(await evidenceRes.json());
     if (assessmentRes.ok) setAssessmentResults(await assessmentRes.json());
+    const evaluationEntries = await Promise.all(
+      nextTrackings.map(async (tracking) => {
+        if (!tracking.progressionPolicyId) return null;
+        const response = await fetch(
+          `/api/v1/families/${familyId}/curriculum/progression/evaluation?trackingId=${tracking.id}&policyId=${tracking.progressionPolicyId}`,
+          { credentials: 'include' },
+        );
+        if (!response.ok) return null;
+        return [tracking.competencyDefinitionId, (await response.json()) as ProgressionEvaluationResponseDto] as const;
+      }),
+    );
+    setProgressionEvaluations(Object.fromEntries(evaluationEntries.filter((entry): entry is readonly [string, ProgressionEvaluationResponseDto] => entry !== null)));
   }, [familyId, learnerId]);
 
   useEffect(() => {
@@ -102,7 +141,11 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ learnerId, curriculumDefinitionId: selectedCurriculumId }),
+        body: JSON.stringify({
+          learnerId,
+          curriculumDefinitionId: selectedCurriculumId,
+          ...(selectedProgressionPolicyId ? { progressionPolicyId: selectedProgressionPolicyId } : {}),
+        }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -219,6 +262,22 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
               ]}
             />
           </div>
+          <div style={{ flex: '1 1 260px' }}>
+            <Select
+              label="Política de progressão"
+              data-testid="progression-policy-select"
+              value={selectedProgressionPolicyId}
+              onChange={(e) => setSelectedProgressionPolicyId(e.target.value)}
+              disabled={activating || progressionPolicyCatalog.length === 0}
+              options={[
+                { value: '', label: progressionPolicyCatalog.length === 0 ? 'Sem política publicada' : 'Selecione...' },
+                ...progressionPolicyCatalog.map((policy) => ({
+                  value: policy.id,
+                  label: `${policy.name} (${policy.minimumEvidenceCount} evidência${policy.minimumEvidenceCount === 1 ? '' : 's'})`,
+                })),
+              ]}
+            />
+          </div>
           <Button
             type="button"
             data-testid="activate-curriculum-btn"
@@ -259,8 +318,10 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
           />
         ) : (
           <div style={{ display: 'grid', gap: '0.625rem' }} data-testid="active-competency-list">
-            {activeTrackings.map((tracking) => (
-              <div
+            {activeTrackings.map((tracking) => {
+              const evaluation = progressionEvaluations[tracking.competencyDefinitionId];
+              return (
+                <div
                 key={tracking.id}
                 data-testid={`tracked-competency-${tracking.competencyDefinitionId}`}
                 style={{
@@ -281,6 +342,19 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
                   <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
                     {tracking.competency.domainTitle} -- v{tracking.competencyVersion}
                   </div>
+                  {evaluation && (
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.35rem' }}>
+                        <Badge
+                          variant={progressionStateVariants[evaluation.state]}
+                          data-testid={`progression-state-${tracking.competencyDefinitionId}`}
+                        >
+                          {progressionStateLabels[evaluation.state]}
+                        </Badge>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          {evaluation.validatedEvidenceCount}/{evaluation.minimumEvidenceCount} evidência{evaluation.minimumEvidenceCount === 1 ? '' : 's'} validada{evaluation.minimumEvidenceCount === 1 ? '' : 's'}
+                        </span>
+                      </div>
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <Badge variant="emerald" data-testid={`tracked-competency-status-${tracking.competencyDefinitionId}`}>
@@ -305,8 +379,9 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
                     Retirar
                   </Button>
                 </div>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         )}
 
