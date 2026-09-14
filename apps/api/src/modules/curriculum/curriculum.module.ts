@@ -16,6 +16,7 @@ import { EvidenceTypeDefinitionSeeder } from './infrastructure/evidence-type-def
 import { BibleTranslationDefinitionSeeder } from './infrastructure/bible-translation-definition.seeder.js';
 import { BiblicalFormationSeeder } from './infrastructure/biblical-formation.seeder.js';
 import { MusicFormationSeeder } from './infrastructure/music-formation.seeder.js';
+import { TradesFormationSeeder } from './infrastructure/trades-formation.seeder.js';
 import { DefinitionsRepository } from './infrastructure/definitions.repository.js';
 import { ProfilesRepository } from './infrastructure/profiles.repository.js';
 import { EvidenceSubmissionRepository } from './infrastructure/evidence-submission.repository.js';
@@ -76,6 +77,7 @@ import { AchievementController } from './presentation/achievement.controller.js'
     BibleTranslationDefinitionSeeder,
     BiblicalFormationSeeder,
     MusicFormationSeeder,
+    TradesFormationSeeder,
     DefinitionsRepository,
     ProfilesRepository,
     EvidenceSubmissionRepository,
