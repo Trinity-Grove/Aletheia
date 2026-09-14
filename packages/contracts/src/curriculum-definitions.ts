@@ -88,6 +88,12 @@ export const competencyMetadataSchema = z.object({
   prerequisites: z.array(z.string()).default([]),
   evidenceTypes: z.array(z.string()).default([]),
   assessmentPolicy: competencyAssessmentPolicySchema.optional(),
+  // Concrete, portfolio-friendly starter objectives for this competency --
+  // same tone/purpose as TemplateSubjectDefinition.starterObjectives
+  // (curriculum-template.engine.ts), just scoped to one competency instead
+  // of a whole subject. Extensible/non-critical property, per section 30's
+  // JSONB-discipline rule (relational for identity, JSONB for the rest).
+  starterObjectives: z.array(z.string().min(1).max(300)).max(5).default([]),
 });
 
 export type CompetencyMetadata = z.infer<typeof competencyMetadataSchema>;

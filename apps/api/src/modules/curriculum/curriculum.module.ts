@@ -14,6 +14,7 @@ import { EvidenceTypeCatalogResolver } from './infrastructure/evidence-type-cata
 import { PedagogicalModelDefinitionSeeder } from './infrastructure/pedagogical-model-definition.seeder.js';
 import { EvidenceTypeDefinitionSeeder } from './infrastructure/evidence-type-definition.seeder.js';
 import { BibleTranslationDefinitionSeeder } from './infrastructure/bible-translation-definition.seeder.js';
+import { BiblicalFormationSeeder } from './infrastructure/biblical-formation.seeder.js';
 import { DefinitionsRepository } from './infrastructure/definitions.repository.js';
 import { ProfilesRepository } from './infrastructure/profiles.repository.js';
 import { EvidenceSubmissionRepository } from './infrastructure/evidence-submission.repository.js';
@@ -69,6 +70,7 @@ import { LearnerCompetencyTrackingController } from './presentation/learner-comp
     PedagogicalModelDefinitionSeeder,
     EvidenceTypeDefinitionSeeder,
     BibleTranslationDefinitionSeeder,
+    BiblicalFormationSeeder,
     DefinitionsRepository,
     ProfilesRepository,
     EvidenceSubmissionRepository,
