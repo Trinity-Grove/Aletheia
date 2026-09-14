@@ -102,11 +102,3 @@ ALTER TABLE "learner_competency_achievement_reviews" ADD CONSTRAINT "learner_com
 
 -- AddForeignKey
 ALTER TABLE "learner_competency_achievement_reviews" ADD CONSTRAINT "learner_competency_achievement_reviews_reviewed_by_user_id_fkey" FOREIGN KEY ("reviewed_by_user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
-
-
-
-
-
-
-
