@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   addFamilyCurriculumPackMediaSchema,
   familyCurriculumPackMediaResponseSchema,
+  requestFamilyCurriculumPackMediaUploadSchema,
 } from './family-curriculum-pack-media.js';
 
 describe('family curriculum pack media contracts', () => {
@@ -63,5 +64,27 @@ describe('family curriculum pack media contracts', () => {
     });
 
     expect(result.sizeBytes).toBe(1024);
+  });
+
+  it('accepts a bounded upload request and rejects a mismatched file size', () => {
+    expect(
+      requestFamilyCurriculumPackMediaUploadSchema.parse({
+        mediaType: 'IMAGE',
+        title: 'Drawing',
+        fileName: 'drawing.png',
+        mimeType: 'image/png',
+        fileSizeBytes: 4096,
+      }).mimeType,
+    ).toBe('image/png');
+
+    expect(() =>
+      requestFamilyCurriculumPackMediaUploadSchema.parse({
+        mediaType: 'IMAGE',
+        title: 'Too large',
+        fileName: 'drawing.png',
+        mimeType: 'image/png',
+        fileSizeBytes: 26 * 1024 * 1024,
+      }),
+    ).toThrow();
   });
 });

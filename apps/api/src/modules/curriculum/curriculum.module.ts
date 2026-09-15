@@ -3,6 +3,7 @@ import { ProgressionRepository } from './infrastructure/progression.repository.j
 import { ProgressionService } from './application/progression.service.js';
 import { ProgressionController } from './presentation/progression.controller.js';
 import { DatabaseModule } from '../../platform/database/database.module.js';
+import { StorageModule } from '../../platform/storage/storage.module.js';
 import { DevotionalModule } from '../devotional/devotional.module.js';
 import { CurriculumRepository } from './infrastructure/curriculum.repository.js';
 import { ObjectiveRepository } from './infrastructure/objective.repository.js';
@@ -87,7 +88,7 @@ import { FamilyCurriculumPackMediaService } from './application/family-curriculu
 import { FamilyCurriculumPackMediaController } from './presentation/family-curriculum-pack-media.controller.js';
 
 @Module({
-  imports: [DatabaseModule, DevotionalModule],
+  imports: [DatabaseModule, DevotionalModule, StorageModule],
   controllers: [
     ProgressionController,
     CurriculumController,
