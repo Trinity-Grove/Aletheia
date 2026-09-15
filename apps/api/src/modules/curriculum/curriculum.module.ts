@@ -24,6 +24,7 @@ import { GardeningFormationSeeder } from './infrastructure/gardening-formation.s
 import { ResilienceFormationSeeder } from './infrastructure/resilience-formation.seeder.js';
 import { MathSubjectSeeder } from './infrastructure/math-subject.seeder.js';
 import { PortugueseSubjectSeeder } from './infrastructure/portuguese-subject.seeder.js';
+import { ScienceSubjectSeeder } from './infrastructure/science-subject.seeder.js';
 import { FoundationalCurriculumSeeder } from './infrastructure/foundational-curriculum.seeder.js';
 import { DefinitionsRepository } from './infrastructure/definitions.repository.js';
 import { ProfilesRepository } from './infrastructure/profiles.repository.js';
@@ -93,6 +94,7 @@ import { AchievementController } from './presentation/achievement.controller.js'
     ResilienceFormationSeeder,
     MathSubjectSeeder,
     PortugueseSubjectSeeder,
+    ScienceSubjectSeeder,
     FoundationalCurriculumSeeder,
     DefinitionsRepository,
     ProfilesRepository,
