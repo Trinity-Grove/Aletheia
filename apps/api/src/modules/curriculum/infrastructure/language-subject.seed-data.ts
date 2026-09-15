@@ -127,19 +127,45 @@ export function buildLanguageSubjectSeedData(): LanguageSubjectSeedData[] {
 }
 
 /**
- * Complete language catalog. Portuguese already had age-band paths; keeping
- * them in this aggregate makes LanguageSubjectSeeder the single owner of all
- * language content while the legacy PortugueseSubjectSeeder remains usable by
- * existing scripts and integrations.
+ * Complete language catalog. Portuguese already had age-band paths; merging
+ * those competencies into the canonical stage paths makes LanguageSubjectSeeder
+ * the single owner of new language content while the legacy PortugueseSubjectSeeder
+ * remains usable by existing scripts and integrations.
  */
 export function buildLanguageSubjectCatalogSeedData(): LanguageSubjectSeedData[] {
   const profileData = buildLanguageSubjectSeedData();
   const portugueseAcademic = buildPortugueseSubjectSeedData();
   return profileData.map((language) =>
     language.domain.code === 'PORTUGUESE'
-      ? { ...language, paths: [...language.paths, ...portugueseAcademic.paths] }
+      ? mergePortugueseAcademicPaths(language, portugueseAcademic.paths)
       : language,
   );
+}
+
+function mergePortugueseAcademicPaths(
+  language: LanguageSubjectSeedData,
+  academicPaths: Array<{
+    path: { code: string; name: string; description: string };
+    competencies: LanguageSubjectCompetencySeed[];
+  }>,
+): LanguageSubjectSeedData {
+  const stageByLegacyCode: Record<string, EducationalStage> = {
+    'PORTUGUESE.EARLY_YEARS': 'EARLY_YEARS',
+    'PORTUGUESE.PRIMARY_GRAMMAR': 'PRIMARY',
+    'PORTUGUESE.MIDDLE_LOGIC': 'LOWER_SECONDARY',
+    'PORTUGUESE.HIGH_RHETORIC': 'UPPER_SECONDARY',
+  };
+  const paths = [...language.paths];
+  for (const academic of academicPaths) {
+    const stage = stageByLegacyCode[academic.path.code];
+    if (!stage) continue;
+    const canonicalCode = `${language.domain.code}.NATIVE_LITERACY.${stage}`;
+    const existing = paths.find((path) => path.path.code === canonicalCode);
+    const competencies = academic.competencies.map((competency) => ({ ...competency, educationalStage: stage }));
+    if (existing) existing.competencies.push(...competencies);
+    else paths.push({ path: { ...academic.path, code: canonicalCode }, competencies });
+  }
+  return { ...language, paths };
 }
 
 function nativeObjectives(code: LanguageCode, stageIndex: number, competencyIndex: number): string[] {
