@@ -17,6 +17,7 @@
     "seed:music-christian": "node dist/scripts/seed-music-christian.js",
     "seed:trades-formation": "node dist/scripts/seed-trades-formation.js",
     "seed:cooking-formation": "node dist/scripts/seed-cooking-formation.js",
+    "seed:cooking-progression": "node dist/scripts/seed-cooking-progression.js",
     "seed:gardening-formation": "node dist/scripts/seed-gardening-formation.js",
     "seed:resilience-formation": "node dist/scripts/seed-resilience-formation.js",
     "seed:resilience-navigation-camping": "node dist/scripts/seed-resilience-navigation-camping.js",
