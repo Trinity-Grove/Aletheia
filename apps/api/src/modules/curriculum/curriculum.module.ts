@@ -19,6 +19,7 @@ import { BibleTranslationDefinitionSeeder } from './infrastructure/bible-transla
 import { BiblicalFormationSeeder } from './infrastructure/biblical-formation.seeder.js';
 import { MusicFormationSeeder } from './infrastructure/music-formation.seeder.js';
 import { MusicInstrumentsSeeder } from './infrastructure/music-instruments.seeder.js';
+import { MusicChristianSeeder } from './infrastructure/music-christian.seeder.js';
 import { TradesFormationSeeder } from './infrastructure/trades-formation.seeder.js';
 import { CookingFormationSeeder } from './infrastructure/cooking-formation.seeder.js';
 import { GardeningFormationSeeder } from './infrastructure/gardening-formation.seeder.js';
@@ -97,6 +98,7 @@ import { AchievementController } from './presentation/achievement.controller.js'
     BiblicalFormationSeeder,
     MusicFormationSeeder,
     MusicInstrumentsSeeder,
+    MusicChristianSeeder,
     TradesFormationSeeder,
     CookingFormationSeeder,
     GardeningFormationSeeder,
