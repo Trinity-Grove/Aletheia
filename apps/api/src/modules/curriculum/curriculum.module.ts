@@ -17,6 +17,7 @@ import { PedagogicalModelDefinitionSeeder } from './infrastructure/pedagogical-m
 import { EvidenceTypeDefinitionSeeder } from './infrastructure/evidence-type-definition.seeder.js';
 import { BibleTranslationDefinitionSeeder } from './infrastructure/bible-translation-definition.seeder.js';
 import { BiblicalFormationSeeder } from './infrastructure/biblical-formation.seeder.js';
+import { BiblicalFormationIntermediateSeeder } from './infrastructure/biblical-formation-intermediate.seeder.js';
 import { MusicFormationSeeder } from './infrastructure/music-formation.seeder.js';
 import { MusicInstrumentsSeeder } from './infrastructure/music-instruments.seeder.js';
 import { MusicChristianSeeder } from './infrastructure/music-christian.seeder.js';
@@ -103,6 +104,7 @@ import { ArtsFormationSeeder } from './infrastructure/arts-formation.seeder.js';
     EvidenceTypeDefinitionSeeder,
     BibleTranslationDefinitionSeeder,
     BiblicalFormationSeeder,
+    BiblicalFormationIntermediateSeeder,
     MusicFormationSeeder,
     MusicInstrumentsSeeder,
     MusicChristianSeeder,
