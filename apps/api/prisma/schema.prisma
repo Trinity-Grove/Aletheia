@@ -40,6 +40,7 @@ model User {
   assessmentResultsAssessed    AssessmentResult[]   @relation("AssessmentResultAssessor")
   authoredPedagogicalProfiles  PedagogicalProfile[] @relation("PedagogicalProfileAuthor")
   authoredTheologicalProfiles  TheologicalProfile[] @relation("TheologicalProfileAuthor")
+  definitionVersionOperationLogs DefinitionVersionOperationLog[]
 
   @@map("users")
 }
@@ -1749,6 +1750,40 @@ enum LearnerCompetencyTrackingStatus {
   RETIRED
 
   @@map("learner_competency_tracking_statuses")
+}
+
+// Traceability log for the two admin-triggered, explicit Definition/
+// Version operations added in issue #96 section 24: controlled migration
+// of referencing entities between two versions of the same definition
+// code, and logical rollback (PUBLISHED -> DEPRECATED) of a version that
+// turned out to be wrong. Append-only, same spirit as AccountAuditLogEntry
+// -- every call to DefinitionVersionOperationsService writes exactly one
+// row here inside the same transaction as the mutation it describes, so
+// "what happened" is never silent.
+enum DefinitionVersionOperationType {
+  MIGRATE_REFERENCES
+  ROLLBACK
+
+  @@map("definition_version_operation_types")
+}
+
+model DefinitionVersionOperationLog {
+  id                 String                         @id @default(uuid()) @db.Uuid
+  operationType      DefinitionVersionOperationType @map("operation_type")
+  definitionCode     String                         @map("definition_code")
+  fromVersion        Int                            @map("from_version")
+  toVersion          Int?                           @map("to_version")
+  affectedEntityType String?                        @map("affected_entity_type")
+  affectedEntityIds  Json                            @default("[]") @map("affected_entity_ids")
+  performedByUserId  String                         @map("performed_by_user_id") @db.Uuid
+  metadata           Json                            @default("{}")
+  createdAt          DateTime                       @default(now()) @map("created_at") @db.Timestamptz
+
+  performedBy User @relation(fields: [performedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([definitionCode])
+  @@index([operationType])
+  @@map("definition_version_operation_logs")
 }
 
 // Bible translation registry (issue #96 Fase 3, section 16) --

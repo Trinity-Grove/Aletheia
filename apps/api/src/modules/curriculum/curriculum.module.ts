@@ -86,6 +86,8 @@ import { FamilyCurriculumPackController } from './presentation/family-curriculum
 import { FamilyCurriculumPackMediaRepository } from './infrastructure/family-curriculum-pack-media.repository.js';
 import { FamilyCurriculumPackMediaService } from './application/family-curriculum-pack-media.service.js';
 import { FamilyCurriculumPackMediaController } from './presentation/family-curriculum-pack-media.controller.js';
+import { DefinitionVersionOperationsService } from './application/definition-version-operations.service.js';
+import { DefinitionVersionOperationsController } from './presentation/definition-version-operations.controller.js';
 
 @Module({
   imports: [DatabaseModule, DevotionalModule, StorageModule],
@@ -103,6 +105,7 @@ import { FamilyCurriculumPackMediaController } from './presentation/family-curri
     AchievementController,
     FamilyCurriculumPackController,
     FamilyCurriculumPackMediaController,
+    DefinitionVersionOperationsController,
   ],
   providers: [
     ProgressionRepository,
@@ -175,6 +178,7 @@ import { FamilyCurriculumPackMediaController } from './presentation/family-curri
     LearnerCompetencyTrackingService,
     FamilyCurriculumPackService,
     FamilyCurriculumPackMediaService,
+    DefinitionVersionOperationsService,
     {
       provide: CURRICULUM_PUBLIC_API,
       useExisting: CurriculumService,
