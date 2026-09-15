@@ -37,6 +37,7 @@
     "seed:trades-textile-craft": "node dist/scripts/seed-trades-textile-craft.js",
     "seed:trades-mechanical-electrical-home": "node dist/scripts/seed-trades-mechanical-electrical-home.js",
     "seed:arts-formation": "node dist/scripts/seed-arts-formation.js",
+    "seed:service-community-formation": "node dist/scripts/seed-service-community-formation.js",
     "seed:foundational-curriculum": "node dist/scripts/seed-foundational-curriculum.js",
     "lint": "eslint . --config ../../packages/eslint-config/index.mjs --ignore-pattern dist --global require --global module",
     "prisma": "prisma",
