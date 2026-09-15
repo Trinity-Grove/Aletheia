@@ -71,6 +71,7 @@ import { LearnerCompetencyTrackingController } from './presentation/learner-comp
 import { AchievementRepository } from './infrastructure/achievement.repository.js';
 import { AchievementController } from './presentation/achievement.controller.js';
 import { ArtsFormationSeeder } from './infrastructure/arts-formation.seeder.js';
+import { ServiceCommunityFormationSeeder } from './infrastructure/service-community-formation.seeder.js';
 
 @Module({
   imports: [DatabaseModule, DevotionalModule],
@@ -135,6 +136,7 @@ import { ArtsFormationSeeder } from './infrastructure/arts-formation.seeder.js';
     LearnerCompetencyTrackingRepository,
     AchievementRepository,
     ArtsFormationSeeder,
+    ServiceCommunityFormationSeeder,
     CurriculumService,
     ObjectiveService,
     DefinitionsService,
