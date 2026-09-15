@@ -26,6 +26,7 @@ import { MathSubjectSeeder } from './infrastructure/math-subject.seeder.js';
 import { PortugueseSubjectSeeder } from './infrastructure/portuguese-subject.seeder.js';
 import { ScienceSubjectSeeder } from './infrastructure/science-subject.seeder.js';
 import { HistorySubjectSeeder } from './infrastructure/history-subject.seeder.js';
+import { GeographySubjectSeeder } from './infrastructure/geography-subject.seeder.js';
 import { FoundationalCurriculumSeeder } from './infrastructure/foundational-curriculum.seeder.js';
 import { DefinitionsRepository } from './infrastructure/definitions.repository.js';
 import { ProfilesRepository } from './infrastructure/profiles.repository.js';
@@ -97,6 +98,7 @@ import { AchievementController } from './presentation/achievement.controller.js'
     PortugueseSubjectSeeder,
     ScienceSubjectSeeder,
     HistorySubjectSeeder,
+    GeographySubjectSeeder,
     FoundationalCurriculumSeeder,
     DefinitionsRepository,
     ProfilesRepository,
