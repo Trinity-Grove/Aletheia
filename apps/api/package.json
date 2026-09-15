@@ -14,6 +14,7 @@
     "seed:biblical-formation": "node dist/scripts/seed-biblical-formation.js",
     "seed:music-formation": "node dist/scripts/seed-music-formation.js",
     "seed:music-instruments": "node dist/scripts/seed-music-instruments.js",
+    "seed:music-christian": "node dist/scripts/seed-music-christian.js",
     "seed:trades-formation": "node dist/scripts/seed-trades-formation.js",
     "seed:cooking-formation": "node dist/scripts/seed-cooking-formation.js",
     "seed:gardening-formation": "node dist/scripts/seed-gardening-formation.js",
