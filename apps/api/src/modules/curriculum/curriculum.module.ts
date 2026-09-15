@@ -30,6 +30,7 @@ import { GeographySubjectSeeder } from './infrastructure/geography-subject.seede
 import { LanguageSubjectSeeder } from './infrastructure/language-subject.seeder.js';
 import { TradesWoodworkingConstructionSeeder } from './infrastructure/trades-woodworking-construction.seeder.js';
 import { TradesTextileCraftSeeder } from './infrastructure/trades-textile-craft.seeder.js';
+import { TradesMechanicalElectricalHomeSeeder } from './infrastructure/trades-mechanical-electrical-home.seeder.js';
 import { FoundationalCurriculumSeeder } from './infrastructure/foundational-curriculum.seeder.js';
 import { DefinitionsRepository } from './infrastructure/definitions.repository.js';
 import { ProfilesRepository } from './infrastructure/profiles.repository.js';
@@ -105,6 +106,7 @@ import { AchievementController } from './presentation/achievement.controller.js'
     LanguageSubjectSeeder,
     TradesWoodworkingConstructionSeeder,
     TradesTextileCraftSeeder,
+    TradesMechanicalElectricalHomeSeeder,
     FoundationalCurriculumSeeder,
     DefinitionsRepository,
     ProfilesRepository,
