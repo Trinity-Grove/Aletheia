@@ -25,6 +25,7 @@ import { CookingFormationSeeder } from './infrastructure/cooking-formation.seede
 import { CookingProgressionSeeder } from './infrastructure/cooking-progression.seeder.js';
 import { GardeningFormationSeeder } from './infrastructure/gardening-formation.seeder.js';
 import { GardeningProductionSeeder } from './infrastructure/gardening-production.seeder.js';
+import { GardeningManagementPlanningSeeder } from './infrastructure/gardening-management-planning.seeder.js';
 import { ResilienceFormationSeeder } from './infrastructure/resilience-formation.seeder.js';
 import { ResilienceNavigationCampingSeeder } from './infrastructure/resilience-navigation-camping.seeder.js';
 import { ResilienceWaterFireSeeder } from './infrastructure/resilience-water-fire.seeder.js';
@@ -108,6 +109,7 @@ import { AchievementController } from './presentation/achievement.controller.js'
     CookingProgressionSeeder,
     GardeningFormationSeeder,
     GardeningProductionSeeder,
+    GardeningManagementPlanningSeeder,
     ResilienceFormationSeeder,
     ResilienceNavigationCampingSeeder,
     ResilienceWaterFireSeeder,
