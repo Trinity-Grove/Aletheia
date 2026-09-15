@@ -20,6 +20,7 @@
     "seed:math-subject": "node dist/scripts/seed-math-subject.js",
     "seed:science-subject": "node dist/scripts/seed-science-subject.js",
     "seed:history-subject": "node dist/scripts/seed-history-subject.js",
+    "seed:geography-subject": "node dist/scripts/seed-geography-subject.js",
     "seed:foundational-curriculum": "node dist/scripts/seed-foundational-curriculum.js",
     "lint": "eslint . --config ../../packages/eslint-config/index.mjs --ignore-pattern dist --global require --global module",
     "prisma": "prisma",
