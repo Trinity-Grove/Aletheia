@@ -18,6 +18,7 @@
     "seed:trades-formation": "node dist/scripts/seed-trades-formation.js",
     "seed:cooking-formation": "node dist/scripts/seed-cooking-formation.js",
     "seed:gardening-formation": "node dist/scripts/seed-gardening-formation.js",
+    "seed:gardening-production": "node dist/scripts/seed-gardening-production.js",
     "seed:resilience-formation": "node dist/scripts/seed-resilience-formation.js",
     "seed:resilience-navigation-camping": "node dist/scripts/seed-resilience-navigation-camping.js",
     "seed:resilience-water-fire": "node dist/scripts/seed-resilience-water-fire.js",
