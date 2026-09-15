@@ -70,6 +70,7 @@ import { CurriculumPackController } from './presentation/curriculum-pack.control
 import { LearnerCompetencyTrackingController } from './presentation/learner-competency-tracking.controller.js';
 import { AchievementRepository } from './infrastructure/achievement.repository.js';
 import { AchievementController } from './presentation/achievement.controller.js';
+import { ArtsFormationSeeder } from './infrastructure/arts-formation.seeder.js';
 
 @Module({
   imports: [DatabaseModule, DevotionalModule],
@@ -133,6 +134,7 @@ import { AchievementController } from './presentation/achievement.controller.js'
     CurriculumPackRepository,
     LearnerCompetencyTrackingRepository,
     AchievementRepository,
+    ArtsFormationSeeder,
     CurriculumService,
     ObjectiveService,
     DefinitionsService,
