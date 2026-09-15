@@ -27,4 +27,13 @@ Referências nacionais podem orientar limites de idade, exemplos e complexidade,
 
 ## Implicação para novos catálogos
 
-Novos domínios devem reutilizar os quatro códigos de etapa e a semântica de progressão acima. Se um currículo precisar de uma adaptação jurisdicional explícita, ela deve ser proposta como requisito de produto e avaliada separadamente, sem alterar a taxonomia universal por padrão.
+Novos domínios devem reutilizar os quatro códigos de etapa e a semântica de progressão acima. A aplicação ocorre em dois eixos:
+
+1. **Alinhamento educacional (opcional):** uma trilha ou competência pode declarar `educationalStage` quando pertence claramente a uma etapa. Quando uma competência de domínio prático atravessa mais de uma etapa, ela declara `educationalStages` como alinhamento etário, sem transformar isso em nível de proficiência.
+2. **Progressão própria do domínio (obrigatória):** cada domínio continua responsável por seus níveis, pré-requisitos, autonomia, complexidade, segurança e evidências. O campo `progressionAxis` identifica se a progressão é por `EDUCATIONAL_STAGE`, `DOMAIN_PROFICIENCY` ou `CEFR`.
+
+Matemática, Ciências, História, Geografia e Linguagens usam `EDUCATIONAL_STAGE` nas trilhas escolares. Música, Ofícios, Culinária, Plantio, Resiliência e futuros domínios práticos usam `DOMAIN_PROFICIENCY`, podendo manter alinhamento com uma ou mais etapas universais. Língua adicional usa `CEFR`, independentemente da etapa escolar.
+
+Os schemas de `LearningPath` e `CompetencyDefinition` inferem esse eixo a partir do código canônico e da recomendação de idade, permitindo que catálogos existentes adotem a regra sem duplicar competências nem quebrar códigos legados. Códigos históricos como `PRIMARY_GRAMMAR`, `MIDDLE_LOGIC` e `HIGH_RHETORIC` são tratados como aliases de `PRIMARY`, `LOWER_SECONDARY` e `UPPER_SECONDARY` durante a transição.
+
+Se um currículo precisar de uma adaptação jurisdicional explícita, ela deve ser proposta como requisito de produto e avaliada separadamente, sem alterar a taxonomia universal por padrão.

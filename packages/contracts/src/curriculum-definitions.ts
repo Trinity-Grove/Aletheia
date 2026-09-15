@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import {
+  progressionAxisSchema,
+  universalEducationalStageSchema,
+  progressionMetadataForCode,
+} from './educational-taxonomy.js';
 
 // --- Data-driven curriculum foundation (Aletheia issue #96, Fase 0) ---
 //
@@ -85,6 +90,11 @@ export type CompetencyAssessmentPolicy = z.infer<typeof competencyAssessmentPoli
 
 export const competencyMetadataSchema = z.object({
   ageRecommendation: competencyAgeRecommendationSchema.optional(),
+  educationalStage: universalEducationalStageSchema.optional(),
+  educationalStages: z.array(universalEducationalStageSchema).min(1).optional(),
+  progressionAxis: progressionAxisSchema.optional(),
+  proficiencyFramework: z.string().min(1).max(50).optional(),
+  proficiencyLevel: z.string().min(1).max(50).optional(),
   prerequisites: z.array(z.string()).default([]),
   evidenceTypes: z.array(z.string()).default([]),
   assessmentPolicy: competencyAssessmentPolicySchema.optional(),
@@ -112,7 +122,13 @@ export const createCompetencyDefinitionSchema = z.object({
   title: z.string().min(1).max(250),
   level: z.number().int().min(0).max(20).nullish(),
   metadata: competencyMetadataSchema.partial().default({}),
-});
+}).transform((value) => ({
+  ...value,
+  metadata: {
+    ...progressionMetadataForCode(value.code, value.metadata.ageRecommendation),
+    ...value.metadata,
+  },
+}));
 
 export type CreateCompetencyDefinitionDto = z.input<typeof createCompetencyDefinitionSchema>;
 export type CreateCompetencyDefinitionOutput = z.output<typeof createCompetencyDefinitionSchema>;
