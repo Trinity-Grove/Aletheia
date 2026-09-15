@@ -28,6 +28,7 @@
     "seed:resilience-water-fire": "node dist/scripts/seed-resilience-water-fire.js",
     "seed:resilience-real-emergencies": "node dist/scripts/seed-resilience-real-emergencies.js",
     "seed:physical-formation": "node dist/scripts/seed-physical-formation.js",
+    "seed:technology-formation": "node dist/scripts/seed-technology-formation.js",
     "seed:math-subject": "node dist/scripts/seed-math-subject.js",
     "seed:science-subject": "node dist/scripts/seed-science-subject.js",
     "seed:history-subject": "node dist/scripts/seed-history-subject.js",
