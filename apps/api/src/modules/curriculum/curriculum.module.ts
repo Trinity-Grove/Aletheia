@@ -35,6 +35,7 @@ import { ResilienceNavigationCampingSeeder } from './infrastructure/resilience-n
 import { ResilienceWaterFireSeeder } from './infrastructure/resilience-water-fire.seeder.js';
 import { ResilienceRealEmergenciesSeeder } from './infrastructure/resilience-real-emergencies.seeder.js';
 import { PhysicalFormationSeeder } from './infrastructure/physical-formation.seeder.js';
+import { TechnologyFormationSeeder } from './infrastructure/technology-formation.seeder.js';
 import { MathSubjectSeeder } from './infrastructure/math-subject.seeder.js';
 import { PortugueseSubjectSeeder } from './infrastructure/portuguese-subject.seeder.js';
 import { ScienceSubjectSeeder } from './infrastructure/science-subject.seeder.js';
@@ -126,6 +127,7 @@ import { ServiceCommunityFormationSeeder } from './infrastructure/service-commun
     ResilienceWaterFireSeeder,
     ResilienceRealEmergenciesSeeder,
     PhysicalFormationSeeder,
+    TechnologyFormationSeeder,
     MathSubjectSeeder,
     PortugueseSubjectSeeder,
     ScienceSubjectSeeder,
