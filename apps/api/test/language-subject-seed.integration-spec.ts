@@ -1,13 +1,13 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { createApplication } from '../src/main.js';
 import { LanguageSubjectSeeder } from '../src/modules/curriculum/infrastructure/language-subject.seeder.js';
-import { buildLanguageSubjectCatalogSeedData } from '../src/modules/curriculum/infrastructure/language-subject.seed-data.js';
+import { buildLanguageSubjectSeedData } from '../src/modules/curriculum/infrastructure/language-subject.seed-data.js';
 import { PrismaService } from '../src/platform/database/prisma.service.js';
 
 describe('LanguageSubjectSeeder (real Postgres)', () => {
   let app: NestFastifyApplication;
   let prisma: PrismaService;
-  const seedData = buildLanguageSubjectCatalogSeedData();
+  const seedData = buildLanguageSubjectSeedData();
 
   beforeAll(async () => {
     app = await createApplication();
