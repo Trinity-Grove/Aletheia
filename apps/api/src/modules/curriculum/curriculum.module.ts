@@ -29,6 +29,7 @@ import { HistorySubjectSeeder } from './infrastructure/history-subject.seeder.js
 import { GeographySubjectSeeder } from './infrastructure/geography-subject.seeder.js';
 import { LanguageSubjectSeeder } from './infrastructure/language-subject.seeder.js';
 import { TradesWoodworkingConstructionSeeder } from './infrastructure/trades-woodworking-construction.seeder.js';
+import { TradesTextileCraftSeeder } from './infrastructure/trades-textile-craft.seeder.js';
 import { FoundationalCurriculumSeeder } from './infrastructure/foundational-curriculum.seeder.js';
 import { DefinitionsRepository } from './infrastructure/definitions.repository.js';
 import { ProfilesRepository } from './infrastructure/profiles.repository.js';
@@ -103,6 +104,7 @@ import { AchievementController } from './presentation/achievement.controller.js'
     GeographySubjectSeeder,
     LanguageSubjectSeeder,
     TradesWoodworkingConstructionSeeder,
+    TradesTextileCraftSeeder,
     FoundationalCurriculumSeeder,
     DefinitionsRepository,
     ProfilesRepository,
