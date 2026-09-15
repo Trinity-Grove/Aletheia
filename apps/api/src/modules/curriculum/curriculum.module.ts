@@ -82,6 +82,9 @@ import { ServiceCommunityFormationSeeder } from './infrastructure/service-commun
 import { FamilyCurriculumPackRepository } from './infrastructure/family-curriculum-pack.repository.js';
 import { FamilyCurriculumPackService } from './application/family-curriculum-pack.service.js';
 import { FamilyCurriculumPackController } from './presentation/family-curriculum-pack.controller.js';
+import { FamilyCurriculumPackMediaRepository } from './infrastructure/family-curriculum-pack-media.repository.js';
+import { FamilyCurriculumPackMediaService } from './application/family-curriculum-pack-media.service.js';
+import { FamilyCurriculumPackMediaController } from './presentation/family-curriculum-pack-media.controller.js';
 
 @Module({
   imports: [DatabaseModule, DevotionalModule],
@@ -98,6 +101,7 @@ import { FamilyCurriculumPackController } from './presentation/family-curriculum
     LearnerCompetencyTrackingController,
     AchievementController,
     FamilyCurriculumPackController,
+    FamilyCurriculumPackMediaController,
   ],
   providers: [
     ProgressionRepository,
@@ -156,6 +160,7 @@ import { FamilyCurriculumPackController } from './presentation/family-curriculum
     ArtsFormationSeeder,
     ServiceCommunityFormationSeeder,
     FamilyCurriculumPackRepository,
+    FamilyCurriculumPackMediaRepository,
     CurriculumService,
     ObjectiveService,
     DefinitionsService,
@@ -168,6 +173,7 @@ import { FamilyCurriculumPackController } from './presentation/family-curriculum
     CurriculumPackImportService,
     LearnerCompetencyTrackingService,
     FamilyCurriculumPackService,
+    FamilyCurriculumPackMediaService,
     {
       provide: CURRICULUM_PUBLIC_API,
       useExisting: CurriculumService,

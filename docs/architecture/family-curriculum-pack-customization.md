@@ -20,8 +20,20 @@ The family routes are tenant guarded:
 - `PUT /api/v1/families/:familyId/curriculum-packs/:id`
 - `GET /api/v1/families/:familyId/curriculum-packs/:id/revisions`
 
-Curriculum media is a separate concern. The next slice should add first-class
-resource records and references to this portable document, with private
-uploads and validated external providers such as YouTube. A URL in arbitrary
-metadata is not enough to provide provider validation, licensing, or safe
-export/import behavior.
+Curriculum media is a separate concern from the revisioned portable document.
+`FamilyCurriculumPackMedia` records are owned by the family pack and can be
+added or removed without rewriting the curriculum revision history. An
+external item stores an HTTPS URL and the API identifies YouTube links as the
+`YOUTUBE` provider; uploaded items store a storage reference plus optional
+MIME and size metadata so binary storage can be provided independently.
+
+Media routes are tenant guarded:
+
+- `POST /api/v1/families/:familyId/curriculum-packs/:packId/media`
+- `GET /api/v1/families/:familyId/curriculum-packs/:packId/media`
+- `DELETE /api/v1/families/:familyId/curriculum-packs/:packId/media/:id`
+
+External URLs must use HTTPS. YouTube URLs are accepted only for video
+items; other HTTPS providers remain represented as `OTHER` until a provider
+specific validator is added. Binary upload and signed URL issuance remain
+storage concerns and are intentionally decoupled from this metadata API.
