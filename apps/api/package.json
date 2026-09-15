@@ -23,6 +23,7 @@
     "seed:gardening-production": "node dist/scripts/seed-gardening-production.js",
     "seed:gardening-management-planning": "node dist/scripts/seed-gardening-management-planning.js",
     "seed:home-sufficiency-foundations": "node dist/scripts/seed-home-sufficiency-foundations.js",
+    "seed:personal-finance-foundations": "node dist/scripts/seed-personal-finance-foundations.js",
     "seed:resilience-formation": "node dist/scripts/seed-resilience-formation.js",
     "seed:resilience-navigation-camping": "node dist/scripts/seed-resilience-navigation-camping.js",
     "seed:resilience-water-fire": "node dist/scripts/seed-resilience-water-fire.js",

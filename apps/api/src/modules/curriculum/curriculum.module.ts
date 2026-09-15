@@ -28,6 +28,7 @@ import { GardeningFormationSeeder } from './infrastructure/gardening-formation.s
 import { GardeningProductionSeeder } from './infrastructure/gardening-production.seeder.js';
 import { GardeningManagementPlanningSeeder } from './infrastructure/gardening-management-planning.seeder.js';
 import { HomeSufficiencyFoundationsSeeder } from './infrastructure/home-sufficiency-foundations.seeder.js';
+import { PersonalFinanceFoundationsSeeder } from './infrastructure/personal-finance-foundations.seeder.js';
 import { ResilienceFormationSeeder } from './infrastructure/resilience-formation.seeder.js';
 import { ResilienceNavigationCampingSeeder } from './infrastructure/resilience-navigation-camping.seeder.js';
 import { ResilienceWaterFireSeeder } from './infrastructure/resilience-water-fire.seeder.js';
@@ -116,6 +117,7 @@ import { ArtsFormationSeeder } from './infrastructure/arts-formation.seeder.js';
     GardeningProductionSeeder,
     GardeningManagementPlanningSeeder,
     HomeSufficiencyFoundationsSeeder,
+    PersonalFinanceFoundationsSeeder,
     ResilienceFormationSeeder,
     ResilienceNavigationCampingSeeder,
     ResilienceWaterFireSeeder,
