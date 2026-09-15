@@ -14,6 +14,8 @@ import {
 const DOMAIN_CODE = 'PORTUGUESE';
 const EARLY_YEARS_PATH_CODE = 'PORTUGUESE.EARLY_YEARS';
 const PRIMARY_GRAMMAR_PATH_CODE = 'PORTUGUESE.PRIMARY_GRAMMAR';
+const MIDDLE_LOGIC_PATH_CODE = 'PORTUGUESE.MIDDLE_LOGIC';
+const HIGH_RHETORIC_PATH_CODE = 'PORTUGUESE.HIGH_RHETORIC';
 
 export interface PortugueseSubjectDomainSeed {
   code: string;
@@ -181,6 +183,136 @@ export function buildPortugueseSubjectSeedData(): PortugueseSubjectSeedData {
             starterObjectives: [
               'Apresentar um assunto conhecido com começo, desenvolvimento e conclusão',
               'Falar de modo audível, consultar anotações quando necessário e responder perguntas do público',
+            ],
+          },
+        ],
+      },
+      {
+        path: {
+          code: MIDDLE_LOGIC_PATH_CODE,
+          name: 'Português -- Ensino Fundamental II (Logic)',
+          description:
+            'Português para o Ensino Fundamental II (aproximadamente 11 a 14 anos): análise de textos, argumentação, sintaxe, literatura e comunicação oral.',
+        },
+        competencies: [
+          {
+            code: 'PORTUGUESE.MIDDLE_LOGIC.TEXT_ANALYSIS',
+            title: 'Análise e Interpretação de Textos',
+            level: 3,
+            ageRecommendation: { min: 10, max: 14 },
+            evidenceTypes: ['text'],
+            starterObjectives: [
+              'Analisar tema, ponto de vista, estrutura e recursos expressivos em textos de gêneros variados',
+              'Relacionar informações explícitas e implícitas para sustentar uma interpretação',
+            ],
+          },
+          {
+            code: 'PORTUGUESE.MIDDLE_LOGIC.ARGUMENTATIVE_WRITING',
+            title: 'Produção de Texto Argumentativo',
+            level: 3,
+            ageRecommendation: { min: 11, max: 14 },
+            evidenceTypes: ['text'],
+            starterObjectives: [
+              'Escrever um texto argumentativo com tese clara, razões organizadas e conclusão coerente',
+              'Usar exemplos e informações verificáveis para sustentar uma posição em um tema apropriado à idade',
+            ],
+          },
+          {
+            code: 'PORTUGUESE.MIDDLE_LOGIC.SYNTAX',
+            title: 'Sintaxe e Coesão',
+            level: 3,
+            ageRecommendation: { min: 11, max: 14 },
+            evidenceTypes: ['text'],
+            starterObjectives: [
+              'Reconhecer funções sintáticas básicas e a relação entre as partes de uma oração',
+              'Revisar períodos para melhorar concordância, coesão e clareza das ideias',
+            ],
+          },
+          {
+            code: 'PORTUGUESE.MIDDLE_LOGIC.LITERARY_READING',
+            title: 'Leitura Literária',
+            level: 3,
+            ageRecommendation: { min: 10, max: 14 },
+            evidenceTypes: ['text', 'audio'],
+            starterObjectives: [
+              'Interpretar personagens, conflitos, narrador e ambientação em uma obra literária',
+              'Comparar duas leituras literárias, apontando temas, escolhas de linguagem e efeitos produzidos',
+            ],
+          },
+          {
+            code: 'PORTUGUESE.MIDDLE_LOGIC.ORAL_DEBATE',
+            title: 'Debate e Comunicação Oral',
+            level: 3,
+            ageRecommendation: { min: 12, max: 14 },
+            evidenceTypes: ['audio', 'video', 'observation'],
+            starterObjectives: [
+              'Participar de um debate apresentando argumentos relacionados ao tema e ouvindo posições diferentes',
+              'Responder a perguntas com clareza, distinguindo opinião, exemplo e informação',
+            ],
+          },
+        ],
+      },
+      {
+        path: {
+          code: HIGH_RHETORIC_PATH_CODE,
+          name: 'Português -- Ensino Médio (Rhetoric)',
+          description:
+            'Português para o Ensino Médio (aproximadamente 15 a 18 anos): retórica, escrita de pesquisa, leitura crítica, literatura e apresentação pública.',
+        },
+        competencies: [
+          {
+            code: 'PORTUGUESE.HIGH_RHETORIC.RHETORICAL_ANALYSIS',
+            title: 'Análise Retórica',
+            level: 4,
+            ageRecommendation: { min: 15, max: 18 },
+            evidenceTypes: ['text'],
+            starterObjectives: [
+              'Analisar como escolhas de linguagem, estrutura e recursos retóricos influenciam um público',
+              'Avaliar a força de argumentos, pressupostos e evidências em discursos e textos públicos',
+            ],
+          },
+          {
+            code: 'PORTUGUESE.HIGH_RHETORIC.RESEARCH_WRITING',
+            title: 'Escrita de Pesquisa',
+            level: 4,
+            ageRecommendation: { min: 15, max: 18 },
+            evidenceTypes: ['text'],
+            starterObjectives: [
+              'Formular uma pergunta de pesquisa e organizar fontes confiáveis para investigá-la',
+              'Escrever um texto de pesquisa com síntese das fontes, citações identificadas e conclusão própria',
+            ],
+          },
+          {
+            code: 'PORTUGUESE.HIGH_RHETORIC.CRITICAL_READING',
+            title: 'Leitura Crítica e Mídia',
+            level: 4,
+            ageRecommendation: { min: 15, max: 18 },
+            evidenceTypes: ['text'],
+            starterObjectives: [
+              'Comparar textos sobre um mesmo assunto, identificando perspectivas, seleção de fatos e possíveis vieses',
+              'Verificar a consistência de uma afirmação antes de compartilhá-la ou usá-la como evidência',
+            ],
+          },
+          {
+            code: 'PORTUGUESE.HIGH_RHETORIC.LITERARY_CANON',
+            title: 'Literatura e Tradição',
+            level: 4,
+            ageRecommendation: { min: 15, max: 18 },
+            evidenceTypes: ['text', 'observation'],
+            starterObjectives: [
+              'Ler obras literárias de períodos e estilos distintos, relacionando forma, contexto e temas humanos',
+              'Construir uma interpretação própria de uma obra usando passagens e elementos formais como evidência',
+            ],
+          },
+          {
+            code: 'PORTUGUESE.HIGH_RHETORIC.PUBLIC_SPEAKING',
+            title: 'Oratória e Apresentação Pública',
+            level: 4,
+            ageRecommendation: { min: 15, max: 18 },
+            evidenceTypes: ['audio', 'video', 'observation'],
+            starterObjectives: [
+              'Planejar e realizar uma apresentação pública com propósito, estrutura, fontes e conclusão claros',
+              'Adaptar vocabulário, ritmo e recursos visuais ao público, respondendo perguntas com precisão',
             ],
           },
         ],

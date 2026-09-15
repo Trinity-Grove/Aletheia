@@ -5,16 +5,21 @@ import { buildPortugueseSubjectSeedData } from './portuguese-subject.seed-data.j
 const DOMAIN_ID = 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 const EARLY_YEARS_PATH_ID = 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
 const PRIMARY_GRAMMAR_PATH_ID = 'f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33';
+const MIDDLE_LOGIC_PATH_ID = 'a1eebc99-9c0b-4ef8-bb6d-6bb9bd380a44';
+const HIGH_RHETORIC_PATH_ID = 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a55';
 
 function pathIdFor(code: string): string {
-  return code.endsWith('EARLY_YEARS') ? EARLY_YEARS_PATH_ID : PRIMARY_GRAMMAR_PATH_ID;
+  if (code.endsWith('EARLY_YEARS')) return EARLY_YEARS_PATH_ID;
+  if (code.endsWith('PRIMARY_GRAMMAR')) return PRIMARY_GRAMMAR_PATH_ID;
+  if (code.endsWith('MIDDLE_LOGIC')) return MIDDLE_LOGIC_PATH_ID;
+  return HIGH_RHETORIC_PATH_ID;
 }
 
 describe('PortugueseSubjectSeeder', () => {
   const seedData = buildPortugueseSubjectSeedData();
   const totalCompetencies = seedData.paths.reduce((sum, path) => sum + path.competencies.length, 0);
 
-  it('creates the domain, both grade-band paths and every competency on a first run', async () => {
+  it('creates the domain, every grade-band path and every competency on a first run', async () => {
     const definitionsService = {
       listLearningDomains: jest.fn().mockResolvedValue([]),
       listLearningPaths: jest.fn().mockResolvedValue([]),
@@ -74,17 +79,29 @@ describe('PortugueseSubjectSeeder', () => {
     },
   );
 
-  it('keeps the early-years band age-appropriate and makes primary grammar genuinely more advanced', () => {
+  it('keeps each grade band age-appropriate and increases complexity across stages', () => {
+    expect(seedData.paths).toHaveLength(4);
     const earlyYears = seedData.paths.find((path) => path.path.code === 'PORTUGUESE.EARLY_YEARS');
     const primaryGrammar = seedData.paths.find((path) => path.path.code === 'PORTUGUESE.PRIMARY_GRAMMAR');
+    const middleLogic = seedData.paths.find((path) => path.path.code === 'PORTUGUESE.MIDDLE_LOGIC');
+    const highRhetoric = seedData.paths.find((path) => path.path.code === 'PORTUGUESE.HIGH_RHETORIC');
     expect(earlyYears).toBeDefined();
     expect(primaryGrammar).toBeDefined();
+    expect(middleLogic).toBeDefined();
+    expect(highRhetoric).toBeDefined();
 
     for (const competency of earlyYears!.competencies) {
       expect(competency.ageRecommendation.max).toBeLessThanOrEqual(6);
     }
     for (const competency of primaryGrammar!.competencies) {
       expect(competency.ageRecommendation.min).toBeGreaterThanOrEqual(6);
+    }
+    for (const competency of middleLogic!.competencies) {
+      expect(competency.ageRecommendation.min).toBeGreaterThanOrEqual(10);
+      expect(competency.ageRecommendation.max).toBeLessThanOrEqual(14);
+    }
+    for (const competency of highRhetoric!.competencies) {
+      expect(competency.ageRecommendation.min).toBeGreaterThanOrEqual(14);
     }
 
     const earlyText = earlyYears!.competencies.flatMap((competency) => [competency.title, ...competency.starterObjectives]).join(' ').toLowerCase();
@@ -93,5 +110,11 @@ describe('PortugueseSubjectSeeder', () => {
     const primaryText = primaryGrammar!.competencies.flatMap((competency) => [competency.title, ...competency.starterObjectives]).join(' ').toLowerCase();
     expect(primaryText).toContain('compreensão');
     expect(primaryText).toContain('ortografia');
+    const middleText = middleLogic!.competencies.flatMap((competency) => [competency.title, ...competency.starterObjectives]).join(' ').toLowerCase();
+    expect(middleText).toContain('argumentativo');
+    expect(middleText).toContain('sintaxe');
+    const highText = highRhetoric!.competencies.flatMap((competency) => [competency.title, ...competency.starterObjectives]).join(' ').toLowerCase();
+    expect(highText).toContain('retórica');
+    expect(highText).toContain('pesquisa');
   });
 });
