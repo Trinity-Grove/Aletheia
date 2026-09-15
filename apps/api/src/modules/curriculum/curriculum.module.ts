@@ -24,6 +24,7 @@ import { CookingFormationSeeder } from './infrastructure/cooking-formation.seede
 import { GardeningFormationSeeder } from './infrastructure/gardening-formation.seeder.js';
 import { ResilienceFormationSeeder } from './infrastructure/resilience-formation.seeder.js';
 import { ResilienceNavigationCampingSeeder } from './infrastructure/resilience-navigation-camping.seeder.js';
+import { ResilienceWaterFireSeeder } from './infrastructure/resilience-water-fire.seeder.js';
 import { MathSubjectSeeder } from './infrastructure/math-subject.seeder.js';
 import { PortugueseSubjectSeeder } from './infrastructure/portuguese-subject.seeder.js';
 import { ScienceSubjectSeeder } from './infrastructure/science-subject.seeder.js';
@@ -101,6 +102,7 @@ import { AchievementController } from './presentation/achievement.controller.js'
     GardeningFormationSeeder,
     ResilienceFormationSeeder,
     ResilienceNavigationCampingSeeder,
+    ResilienceWaterFireSeeder,
     MathSubjectSeeder,
     PortugueseSubjectSeeder,
     ScienceSubjectSeeder,
