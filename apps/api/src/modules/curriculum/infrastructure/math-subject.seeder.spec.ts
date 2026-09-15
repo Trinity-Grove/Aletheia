@@ -3,11 +3,21 @@ import { MathSubjectSeeder } from './math-subject.seeder.js';
 import { buildMathSubjectSeedData } from './math-subject.seed-data.js';
 
 const DOMAIN_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
-const PRIMARY_GRAMMAR_PATH_ID = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
-const MIDDLE_LOGIC_PATH_ID = 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33';
+
+// Four grade bands now (Educação Infantil, PRIMARY_GRAMMAR, MIDDLE_LOGIC,
+// HIGH_RHETORIC) -- map each path code to a stable fake UUID by index
+// into the actual seed data, so this stays correct regardless of how
+// many bands math-subject.seed-data.ts eventually adds, with no
+// collision risk.
+const seedDataForPathIds = buildMathSubjectSeedData();
+const PATH_ID_BY_CODE = new Map(
+  seedDataForPathIds.paths.map((p, i) => [p.path.code, `b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a${String(i).padStart(2, '0')}`]),
+);
 
 function pathIdFor(code: string): string {
-  return code.endsWith('PRIMARY_GRAMMAR') ? PRIMARY_GRAMMAR_PATH_ID : MIDDLE_LOGIC_PATH_ID;
+  const id = PATH_ID_BY_CODE.get(code);
+  if (!id) throw new Error(`No fake path id mapped for code ${code}`);
+  return id;
 }
 
 describe('MathSubjectSeeder', () => {
@@ -93,7 +103,7 @@ describe('MathSubjectSeeder', () => {
   it('creates only the missing path and its competencies when the domain and one grade-band path already exist', async () => {
     const existingDomain = { id: DOMAIN_ID, code: seedData.domain.code, version: 1, status: 'PUBLISHED' };
     const firstPathData = seedData.paths[0]!;
-    const existingPath = { id: PRIMARY_GRAMMAR_PATH_ID, code: firstPathData.path.code, version: 1, status: 'PUBLISHED' };
+    const existingPath = { id: pathIdFor(firstPathData.path.code), code: firstPathData.path.code, version: 1, status: 'PUBLISHED' };
     const existingCompetencies = firstPathData.competencies.map((c, i) => ({
       id: `existing-${i}`,
       code: c.code,
@@ -116,14 +126,21 @@ describe('MathSubjectSeeder', () => {
     const seeder = new MathSubjectSeeder(definitionsService);
     const result = await seeder.seed();
 
+    const remainingPaths = seedData.paths.slice(1);
+    const remainingCompetenciesCount = remainingPaths.reduce((sum, p) => sum + p.competencies.length, 0);
+
     expect(result.domainCreated).toBe(false);
-    expect(result.pathsCreated).toBe(seedData.paths.length - 1);
-    const secondPathData = seedData.paths[1]!;
-    expect(result.competenciesCreated).toBe(secondPathData.competencies.length);
-    expect(definitionsService.createLearningPath).toHaveBeenCalledTimes(seedData.paths.length - 1);
+    expect(result.pathsCreated).toBe(remainingPaths.length);
+    expect(result.competenciesCreated).toBe(remainingCompetenciesCount);
+    expect(definitionsService.createLearningPath).toHaveBeenCalledTimes(remainingPaths.length);
     expect(definitionsService.createLearningPath).not.toHaveBeenCalledWith(
       expect.objectContaining({ code: firstPathData.path.code }),
     );
-    expect(definitionsService.createCompetencyDefinition).toHaveBeenCalledTimes(secondPathData.competencies.length);
+    for (const pathData of remainingPaths) {
+      expect(definitionsService.createLearningPath).toHaveBeenCalledWith(
+        expect.objectContaining({ code: pathData.path.code }),
+      );
+    }
+    expect(definitionsService.createCompetencyDefinition).toHaveBeenCalledTimes(remainingCompetenciesCount);
   });
 });

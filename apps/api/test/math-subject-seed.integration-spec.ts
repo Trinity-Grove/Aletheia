@@ -102,26 +102,36 @@ describe('MathSubjectSeeder (real Postgres)', () => {
     }
   });
 
-  it('keeps each grade band age-appropriate -- no advanced-band concepts leaked into the earlier band, and the later band genuinely escalates', async () => {
+  it('keeps each grade band age-appropriate -- no advanced-band concepts leaked into an earlier band, and each later band genuinely escalates', async () => {
     // Sanity check standing in for the "scope-neutrality" tests used by
-    // prior seeds, adapted to this domain's actual risk: since the two
+    // prior seeds, adapted to this domain's actual risk: since all four
     // paths intentionally build on the same subject (unlike the
     // enrichment domains' mutually exclusive subsections), the
-    // meaningful check isn't "these two bands never share vocabulary" --
-    // it's that PRIMARY_GRAMMAR (younger band) never uses MIDDLE_LOGIC
-    // (older band) concepts, and that MIDDLE_LOGIC actually contains
-    // genuinely more advanced material rather than just repeating the
-    // younger band under a different label.
-    const primaryGrammar = seedData.paths.find((p) => p.path.code === 'MATH.PRIMARY_GRAMMAR');
-    const middleLogic = seedData.paths.find((p) => p.path.code === 'MATH.MIDDLE_LOGIC');
-    expect(primaryGrammar).toBeDefined();
-    expect(middleLogic).toBeDefined();
+    // meaningful check isn't "these bands never share vocabulary" --
+    // it's that each younger band never uses an older band's concepts,
+    // and that each older band actually contains genuinely more advanced
+    // material rather than just repeating the younger one under a
+    // different label.
+    function textFor(pathCode: string): string {
+      const path = seedData.paths.find((p) => p.path.code === pathCode);
+      expect(path).toBeDefined();
+      return path!.competencies
+        .flatMap((c) => [c.title, ...c.starterObjectives])
+        .join(' ')
+        .toLowerCase();
+    }
+
+    const earlyYearsText = textFor('MATH.EARLY_YEARS');
+    const primaryGrammarText = textFor('MATH.PRIMARY_GRAMMAR');
+    const middleLogicText = textFor('MATH.MIDDLE_LOGIC');
+    const highRhetoricText = textFor('MATH.HIGH_RHETORIC');
 
     // Word stems, not full singular/plural forms -- "fração"/"frações"
     // and "decimal"/"decimais" diverge after the stem in Portuguese, so a
     // literal singular-form substring check would silently miss the
-    // plural forms actually used in the content below.
-    const advancedOnlyTerms = [
+    // plural forms actually used in the content below (the exact bug
+    // this test caught once already, per the task's own reminder).
+    const primaryGrammarOnwardTerms = [
       'equaç',
       'incógnita',
       'porcentagem',
@@ -134,36 +144,63 @@ describe('MathSubjectSeeder (real Postgres)', () => {
       'perímetro',
       'área',
     ];
+    const highRhetoricOnlyTerms = [
+      'função',
+      'funções',
+      'segundo grau',
+      'discriminante',
+      'probabilidade',
+      'logaritm',
+      'exponencial',
+      'volume',
+      'sólido',
+    ];
 
-    const primaryGrammarText = primaryGrammar!.competencies
-      .flatMap((c) => [c.title, ...c.starterObjectives])
-      .join(' ')
-      .toLowerCase();
-    for (const term of advancedOnlyTerms) {
+    // EARLY_YEARS must never use PRIMARY_GRAMMAR-onward concepts (formal
+    // arithmetic operations, fractions, equations, etc.) or
+    // HIGH_RHETORIC-only concepts -- it's pre-arithmetic by design.
+    for (const term of [...primaryGrammarOnwardTerms, ...highRhetoricOnlyTerms]) {
+      expect(earlyYearsText).not.toContain(term);
+    }
+
+    // PRIMARY_GRAMMAR must never use MIDDLE_LOGIC/HIGH_RHETORIC concepts.
+    for (const term of [...primaryGrammarOnwardTerms, ...highRhetoricOnlyTerms]) {
       expect(primaryGrammarText).not.toContain(term);
     }
 
-    // MIDDLE_LOGIC must actually escalate -- contain at least several of
-    // those genuinely more advanced concepts, proving it isn't a
-    // re-labeled copy of the younger band.
-    const middleLogicText = middleLogic!.competencies
-      .flatMap((c) => [c.title, ...c.starterObjectives])
-      .join(' ')
-      .toLowerCase();
-    const advancedTermsPresent = advancedOnlyTerms.filter((term) => middleLogicText.includes(term));
-    expect(advancedTermsPresent.length).toBeGreaterThanOrEqual(5);
+    // MIDDLE_LOGIC must actually escalate beyond PRIMARY_GRAMMAR --
+    // contain several genuinely more advanced concepts -- but must not
+    // yet reach into HIGH_RHETORIC-only territory (functions, quadratics,
+    // probability, logarithms), which is the next band's job.
+    const middleLogicAdvancedTermsPresent = primaryGrammarOnwardTerms.filter((term) => middleLogicText.includes(term));
+    expect(middleLogicAdvancedTermsPresent.length).toBeGreaterThanOrEqual(5);
+    for (const term of highRhetoricOnlyTerms) {
+      expect(middleLogicText).not.toContain(term);
+    }
+
+    // HIGH_RHETORIC must actually escalate beyond MIDDLE_LOGIC -- contain
+    // several genuinely new concepts, proving it isn't a re-labeled copy.
+    const highRhetoricAdvancedTermsPresent = highRhetoricOnlyTerms.filter((term) => highRhetoricText.includes(term));
+    expect(highRhetoricAdvancedTermsPresent.length).toBeGreaterThanOrEqual(5);
 
     // Every competency in every band declares an ageRecommendation
     // that's internally consistent (min <= max) and roughly matches its
-    // band -- PRIMARY_GRAMMAR competencies shouldn't recommend ages past
-    // 10, MIDDLE_LOGIC competencies shouldn't recommend ages under 10.
-    for (const competency of primaryGrammar!.competencies) {
-      expect(competency.ageRecommendation.min).toBeLessThanOrEqual(competency.ageRecommendation.max);
-      expect(competency.ageRecommendation.max).toBeLessThanOrEqual(10);
+    // band.
+    function assertAgeBounds(pathCode: string, opts: { maxCeiling?: number; minFloor?: number }): void {
+      const path = seedData.paths.find((p) => p.path.code === pathCode)!;
+      for (const competency of path.competencies) {
+        expect(competency.ageRecommendation.min).toBeLessThanOrEqual(competency.ageRecommendation.max);
+        if (opts.maxCeiling !== undefined) {
+          expect(competency.ageRecommendation.max).toBeLessThanOrEqual(opts.maxCeiling);
+        }
+        if (opts.minFloor !== undefined) {
+          expect(competency.ageRecommendation.min).toBeGreaterThanOrEqual(opts.minFloor);
+        }
+      }
     }
-    for (const competency of middleLogic!.competencies) {
-      expect(competency.ageRecommendation.min).toBeLessThanOrEqual(competency.ageRecommendation.max);
-      expect(competency.ageRecommendation.min).toBeGreaterThanOrEqual(10);
-    }
+    assertAgeBounds('MATH.EARLY_YEARS', { maxCeiling: 6 });
+    assertAgeBounds('MATH.PRIMARY_GRAMMAR', { minFloor: 6, maxCeiling: 10 });
+    assertAgeBounds('MATH.MIDDLE_LOGIC', { minFloor: 10, maxCeiling: 14 });
+    assertAgeBounds('MATH.HIGH_RHETORIC', { minFloor: 15 });
   });
 });
