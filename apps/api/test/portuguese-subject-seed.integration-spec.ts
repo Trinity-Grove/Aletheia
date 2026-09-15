@@ -19,7 +19,7 @@ describe('PortugueseSubjectSeeder (real Postgres)', () => {
     await app.close();
   });
 
-  it('publishes both grade-band paths and their competencies, then is idempotent', async () => {
+  it('publishes every grade-band path and its competencies, then is idempotent', async () => {
     const seeder = app.get(PortugueseSubjectSeeder);
     await seeder.seed();
     const secondRun = await seeder.seed();
