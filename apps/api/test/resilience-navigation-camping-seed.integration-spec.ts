@@ -144,6 +144,9 @@ describe('ResilienceNavigationCampingSeeder (real Postgres)', () => {
   });
 
   it('never centers weapons or confrontation -- prevention/safety/helping tone only, per the issue\'s explicit framing', () => {
+    // Word-boundary match, not substring: "arma" is a legitimate
+    // substring of Portuguese words like "armazenamento" (storage) that
+    // have nothing to do with weapons.
     const forbiddenTerms = ['arma', 'confronto', 'defesa pessoal', 'ataque', 'combate'];
     const haystack = [
       seedData.domain.description,
@@ -153,7 +156,8 @@ describe('ResilienceNavigationCampingSeeder (real Postgres)', () => {
       .toLowerCase();
 
     for (const term of forbiddenTerms) {
-      expect(haystack).not.toContain(term);
+      const wordBoundaryPattern = new RegExp(`\\b${term}\\b`, 'i');
+      expect(wordBoundaryPattern.test(haystack)).toBe(false);
     }
   });
 });
