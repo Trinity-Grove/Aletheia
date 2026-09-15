@@ -11,10 +11,11 @@ import { ProfilesRepository } from '../infrastructure/profiles.repository.js';
 
 // Family-scoped profile CRUD (issue #96 Fase 1, sections 13/14). Read +
 // upsert only -- "upsert" always creates a new version, never mutates an
-// existing row (see ProfilesRepository). Deliberately NOT wired into any
-// content-resolution read path yet: CurriculumService.applyTemplate still
-// doesn't consult these. That integration is a separate, human-approved
-// step once this foundation is proven correct on its own.
+// existing row (see ProfilesRepository). getPedagogicalProfile is now also
+// consumed by CurriculumService.applyTemplate (issue #95, human-approved)
+// to weight -- never filter -- the subject set an applied template
+// resolves; reused here exactly as-is, so that read path stays
+// family-scoped the same way every other consumer of this service is.
 @Injectable()
 export class ProfilesService {
   constructor(private readonly repository: ProfilesRepository) {}

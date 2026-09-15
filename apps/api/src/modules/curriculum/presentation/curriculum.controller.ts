@@ -184,7 +184,7 @@ export class CurriculumController {
   async applyTemplate(
     @Param('familyId') familyId: string,
     @Body(new ZodValidationPipe(applyCurriculumTemplateSchema)) dto: ApplyCurriculumTemplateDto,
-  ): Promise<{ subjectsCount: number; objectivesCount: number }> {
+  ): ReturnType<CurriculumService['applyTemplate']> {
     return this.curriculumService.applyTemplate(familyId, dto);
   }
 }
