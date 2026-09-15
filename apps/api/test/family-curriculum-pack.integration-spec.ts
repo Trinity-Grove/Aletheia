@@ -99,6 +99,62 @@ describe('Family curriculum pack instances (real Postgres)', () => {
       .set('Cookie', adminCookie)
       .expect(200);
     expect(sourceAfterEdit.body.name).toBe('Platform Template');
+
+    const video = await supertest(app.getHttpServer())
+      .post(`/api/v1/families/${familyId}/curriculum-packs/${installed.body.id}/media`)
+      .set('Cookie', familyCookie)
+      .send({
+        sourceType: 'EXTERNAL_URL',
+        mediaType: 'VIDEO',
+        title: 'Fractions lesson',
+        url: 'https://www.youtube.com/watch?v=abc123',
+      })
+      .expect(201);
+    expect(video.body.provider).toBe('YOUTUBE');
+    expect(video.body.sourceType).toBe('EXTERNAL_URL');
+
+    await supertest(app.getHttpServer())
+      .post(`/api/v1/families/${familyId}/curriculum-packs/${installed.body.id}/media`)
+      .set('Cookie', familyCookie)
+      .send({
+        sourceType: 'EXTERNAL_URL',
+        mediaType: 'VIDEO',
+        title: 'Unsafe link',
+        url: 'http://www.youtube.com/watch?v=abc123',
+      })
+      .expect(400);
+
+    const upload = await supertest(app.getHttpServer())
+      .post(`/api/v1/families/${familyId}/curriculum-packs/${installed.body.id}/media`)
+      .set('Cookie', familyCookie)
+      .send({
+        sourceType: 'UPLOAD',
+        mediaType: 'DOCUMENT',
+        title: 'Family worksheet',
+        storageKey: 'families/family-1/worksheet.pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: 1024,
+      })
+      .expect(201);
+    expect(upload.body.sourceType).toBe('UPLOAD');
+    expect(upload.body.storageKey).toBe('families/family-1/worksheet.pdf');
+
+    const media = await supertest(app.getHttpServer())
+      .get(`/api/v1/families/${familyId}/curriculum-packs/${installed.body.id}/media`)
+      .set('Cookie', familyCookie)
+      .expect(200);
+    expect(media.body).toHaveLength(2);
+
+    await supertest(app.getHttpServer())
+      .delete(`/api/v1/families/${familyId}/curriculum-packs/${installed.body.id}/media/${video.body.id}`)
+      .set('Cookie', familyCookie)
+      .expect(204);
+
+    const remainingMedia = await supertest(app.getHttpServer())
+      .get(`/api/v1/families/${familyId}/curriculum-packs/${installed.body.id}/media`)
+      .set('Cookie', familyCookie)
+      .expect(200);
+    expect(remainingMedia.body).toHaveLength(1);
   });
 
   it('rejects installing a draft pack as a family template', async () => {
