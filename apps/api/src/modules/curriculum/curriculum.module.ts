@@ -18,6 +18,7 @@ import { EvidenceTypeDefinitionSeeder } from './infrastructure/evidence-type-def
 import { BibleTranslationDefinitionSeeder } from './infrastructure/bible-translation-definition.seeder.js';
 import { BiblicalFormationSeeder } from './infrastructure/biblical-formation.seeder.js';
 import { MusicFormationSeeder } from './infrastructure/music-formation.seeder.js';
+import { MusicInstrumentsSeeder } from './infrastructure/music-instruments.seeder.js';
 import { TradesFormationSeeder } from './infrastructure/trades-formation.seeder.js';
 import { CookingFormationSeeder } from './infrastructure/cooking-formation.seeder.js';
 import { GardeningFormationSeeder } from './infrastructure/gardening-formation.seeder.js';
@@ -93,6 +94,7 @@ import { AchievementController } from './presentation/achievement.controller.js'
     BibleTranslationDefinitionSeeder,
     BiblicalFormationSeeder,
     MusicFormationSeeder,
+    MusicInstrumentsSeeder,
     TradesFormationSeeder,
     CookingFormationSeeder,
     GardeningFormationSeeder,
