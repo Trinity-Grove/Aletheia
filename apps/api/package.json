@@ -19,6 +19,7 @@
     "seed:resilience-formation": "node dist/scripts/seed-resilience-formation.js",
     "seed:math-subject": "node dist/scripts/seed-math-subject.js",
     "seed:science-subject": "node dist/scripts/seed-science-subject.js",
+    "seed:history-subject": "node dist/scripts/seed-history-subject.js",
     "seed:foundational-curriculum": "node dist/scripts/seed-foundational-curriculum.js",
     "lint": "eslint . --config ../../packages/eslint-config/index.mjs --ignore-pattern dist --global require --global module",
     "prisma": "prisma",
