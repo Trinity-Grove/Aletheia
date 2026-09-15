@@ -18,6 +18,7 @@ import { EvidenceTypeDefinitionSeeder } from './infrastructure/evidence-type-def
 import { BibleTranslationDefinitionSeeder } from './infrastructure/bible-translation-definition.seeder.js';
 import { BiblicalFormationSeeder } from './infrastructure/biblical-formation.seeder.js';
 import { BiblicalFormationIntermediateSeeder } from './infrastructure/biblical-formation-intermediate.seeder.js';
+import { BiblicalFormationOriginalLanguagesLiteracySeeder } from './infrastructure/biblical-formation-original-languages-literacy.seeder.js';
 import { MusicFormationSeeder } from './infrastructure/music-formation.seeder.js';
 import { MusicInstrumentsSeeder } from './infrastructure/music-instruments.seeder.js';
 import { MusicChristianSeeder } from './infrastructure/music-christian.seeder.js';
@@ -111,6 +112,7 @@ import { ServiceCommunityFormationSeeder } from './infrastructure/service-commun
     BibleTranslationDefinitionSeeder,
     BiblicalFormationSeeder,
     BiblicalFormationIntermediateSeeder,
+    BiblicalFormationOriginalLanguagesLiteracySeeder,
     MusicFormationSeeder,
     MusicInstrumentsSeeder,
     MusicChristianSeeder,
