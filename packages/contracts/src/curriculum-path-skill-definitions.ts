@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import { definitionStatusSchema } from './curriculum-definitions.js';
+import {
+  definitionStatusSchema,
+} from './curriculum-definitions.js';
+import {
+  progressionAxisSchema,
+  progressionMetadataForCode,
+  universalEducationalStageSchema,
+} from './educational-taxonomy.js';
 
 // --- Learning paths and skills (Aletheia issue #96, Fase 0, section 4 + 6) ---
 //
@@ -17,6 +24,10 @@ const DEFINITION_CODE_REGEX = /^[A-Z0-9][A-Z0-9_.]*$/;
 // Learning Path
 export const learningPathMetadataSchema = z.object({
   levels: z.array(z.string()).default([]),
+  educationalStage: universalEducationalStageSchema.optional(),
+  educationalStages: z.array(universalEducationalStageSchema).min(1).optional(),
+  progressionAxis: progressionAxisSchema.optional(),
+  proficiencyFramework: z.string().min(1).max(50).optional(),
   prerequisites: z.array(z.string()).default([]),
   optional: z.boolean().default(false),
   recommended: z.boolean().default(false),
@@ -38,7 +49,13 @@ export const createLearningPathSchema = z.object({
   name: z.string().min(1).max(150),
   description: z.string().max(2000).nullish(),
   metadata: learningPathMetadataSchema.partial().default({}),
-});
+}).transform((value) => ({
+  ...value,
+  metadata: {
+    ...progressionMetadataForCode(value.code),
+    ...value.metadata,
+  },
+}));
 
 export type CreateLearningPathDto = z.input<typeof createLearningPathSchema>;
 export type CreateLearningPathOutput = z.output<typeof createLearningPathSchema>;
