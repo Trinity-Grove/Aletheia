@@ -22,6 +22,7 @@
     "seed:history-subject": "node dist/scripts/seed-history-subject.js",
     "seed:geography-subject": "node dist/scripts/seed-geography-subject.js",
     "seed:language-subjects": "node dist/scripts/seed-language-subjects.js",
+    "seed:trades-woodworking-construction": "node dist/scripts/seed-trades-woodworking-construction.js",
     "seed:foundational-curriculum": "node dist/scripts/seed-foundational-curriculum.js",
     "lint": "eslint . --config ../../packages/eslint-config/index.mjs --ignore-pattern dist --global require --global module",
     "prisma": "prisma",
