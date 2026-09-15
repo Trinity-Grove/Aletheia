@@ -7,6 +7,8 @@ import { CurriculumDefinitionCatalogResolver } from '../infrastructure/curriculu
 import { EvidenceTypeCatalogResolver } from '../infrastructure/evidence-type-catalog.resolver.js';
 import { ProgressionPolicyCatalogResolver } from '../infrastructure/progression-policy-catalog.resolver.js';
 import { RubricCatalogResolver } from '../infrastructure/rubric-catalog.resolver.js';
+import { ProfilesService } from './profiles.service.js';
+import { rankSubjectsByRelevance, type SubjectRelevance, type WeightedModel } from './pedagogical-subject-ranking.js';
 import { pedagogicalFrameworkSchema } from '@aletheia/contracts';
 import type {
   AcademicYearResponseDto,
@@ -20,6 +22,7 @@ import type {
   LearnerPlanResponseDto,
   PedagogicalModelCatalogEntryDto,
   SubjectResponseDto,
+  TemplateSubjectDefinition,
   TheologicalTraditionCatalogEntryDto,
   UpdateSubjectDto,
   UpsertLearnerPlanDto,
@@ -32,6 +35,7 @@ export class CurriculumService implements CurriculumPublicApi {
     private readonly curriculumRepo: CurriculumRepository,
     private readonly objectiveRepo: ObjectiveRepository,
     private readonly modelResolver: PedagogicalModelDefinitionResolver,
+    private readonly profilesService: ProfilesService,
     private readonly traditionCatalogResolver: TheologicalTraditionCatalogResolver,
     private readonly curriculumDefinitionCatalogResolver: CurriculumDefinitionCatalogResolver,
     private readonly evidenceTypeCatalogResolver: EvidenceTypeCatalogResolver,
@@ -120,15 +124,67 @@ export class CurriculumService implements CurriculumPublicApi {
   }
 
   // Apply Template Accelerator
-  async applyTemplate(familyId: string, dto: ApplyCurriculumTemplateDto): Promise<{ subjectsCount: number; objectivesCount: number }> {
+  //
+  // Issue #95 (human-approved, live read-path change): when the family has
+  // a PedagogicalProfile configured, its weighted primary/secondary models
+  // are used as a *soft ranking signal* over the subject set the applied
+  // template (dto.template) already resolved -- see
+  // rankByPedagogicalProfile below. This never filters or hides a subject;
+  // every subject the template would have produced before this change is
+  // still produced. With no profile configured, rankByPedagogicalProfile
+  // returns the exact same subjects array by reference, so `appliedDefinition`
+  // below is `=== definition` and behavior is byte-for-byte unchanged from
+  // before this change (see the no-profile-is-a-no-op tests).
+  async applyTemplate(
+    familyId: string,
+    dto: ApplyCurriculumTemplateDto,
+  ): Promise<{ subjectsCount: number; objectivesCount: number; subjectRelevance?: SubjectRelevance[] }> {
     // CUSTOM historically used the traditional engine fallback.
     const code = dto.template === 'CUSTOM' ? 'TRADITIONAL' : dto.template;
     const definition = await this.modelResolver.resolvePublished(code);
     if (!definition) throw new NotFoundException('Published pedagogical model not found');
     const legacy = pedagogicalFrameworkSchema.safeParse(dto.template);
-    return this.curriculumRepo.applyPublishedTemplate(
-      familyId, dto, definition, legacy.success ? legacy.data : 'CUSTOM',
+
+    const { subjects: rankedSubjects, relevance } = await this.rankByPedagogicalProfile(
+      definition.subjects,
+      familyId,
     );
+    const appliedDefinition = relevance.length > 0 ? { ...definition, subjects: rankedSubjects } : definition;
+
+    const result = await this.curriculumRepo.applyPublishedTemplate(
+      familyId, dto, appliedDefinition, legacy.success ? legacy.data : 'CUSTOM',
+    );
+    return relevance.length > 0 ? { ...result, subjectRelevance: relevance } : result;
+  }
+
+  // Reuses ProfilesService.getPedagogicalProfile exactly as-is -- it is
+  // already family-scoped (ProfilesRepository.findLatestPedagogicalProfile
+  // filters by `familyId`), so this never reads another family's profile.
+  // Returns the input `subjects` array unchanged (by reference) and an
+  // empty `relevance` when no profile exists, which is the no-op contract
+  // applyTemplate above relies on.
+  private async rankByPedagogicalProfile(
+    subjects: TemplateSubjectDefinition[],
+    familyId: string,
+  ): Promise<{ subjects: TemplateSubjectDefinition[]; relevance: SubjectRelevance[] }> {
+    const profile = await this.profilesService.getPedagogicalProfile(familyId);
+    if (!profile) return { subjects, relevance: [] };
+
+    const weightedModels: WeightedModel[] = [
+      { code: profile.primaryModelCode, weight: 1 },
+      ...profile.secondaryModels,
+    ];
+
+    const subjectNamesByModelCode = new Map<string, Set<string>>(
+      await Promise.all(
+        weightedModels.map(async (model): Promise<[string, Set<string>]> => {
+          const modelSubjects = await this.modelResolver.getSubjectDefinitions(model.code);
+          return [model.code, new Set(modelSubjects.map((subject) => subject.name))];
+        }),
+      ),
+    );
+
+    return rankSubjectsByRelevance(subjects, weightedModels, subjectNamesByModelCode);
   }
 
   // Family-facing template catalog (issue #96 section 35): lets the UI

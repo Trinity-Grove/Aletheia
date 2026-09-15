@@ -10,6 +10,7 @@ describe('CurriculumService', () => {
   let objectiveRepo: any;
   let resolver: any;
   let rubricCatalogResolver: any;
+  let profilesService: any;
 
   const FAMILY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
   const LEARNER_ID = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
@@ -75,8 +76,16 @@ describe('CurriculumService', () => {
       create: jest.fn().mockResolvedValue({ id: 'o-1' }),
     };
 
-    resolver = { resolvePublished: jest.fn().mockResolvedValue({ id: 'definition-1', subjects: [{ name: 'Catalog subject', color: '#123456', description: 'Catalog', starterObjectives: ['Catalog objective'] }] }) };
+    resolver = {
+      resolvePublished: jest.fn().mockResolvedValue({ id: 'definition-1', subjects: [{ name: 'Catalog subject', color: '#123456', description: 'Catalog', starterObjectives: ['Catalog objective'] }] }),
+      getSubjectDefinitions: jest.fn().mockResolvedValue([]),
+    };
     curriculumRepo.applyPublishedTemplate = jest.fn().mockResolvedValue({ subjectsCount: 1, objectivesCount: 1 });
+    // Default: no PedagogicalProfile configured -- applyTemplate must be a
+    // no-op with respect to weighting in this default setup (see the
+    // dedicated 'PedagogicalProfile-weighted applyTemplate' suite below for
+    // the with-profile behavior).
+    profilesService = { getPedagogicalProfile: jest.fn().mockResolvedValue(null) };
 
     const traditionCatalogResolver: any = { listPublishedCatalog: jest.fn().mockResolvedValue([]) };
     const curriculumDefinitionCatalogResolver: any = { listPublishedCatalog: jest.fn().mockResolvedValue([]) };
@@ -96,6 +105,7 @@ describe('CurriculumService', () => {
       curriculumRepo,
       objectiveRepo,
       resolver,
+      profilesService,
       traditionCatalogResolver,
       curriculumDefinitionCatalogResolver,
       evidenceTypeCatalogResolver,
@@ -170,6 +180,7 @@ describe('published catalog application', () => {
       repo as any,
       {} as any,
       resolver as any,
+      { getPedagogicalProfile: jest.fn().mockResolvedValue(null) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
@@ -188,6 +199,7 @@ describe('published catalog application', () => {
       repo as any,
       {} as any,
       resolver as any,
+      { getPedagogicalProfile: jest.fn().mockResolvedValue(null) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
@@ -198,5 +210,96 @@ describe('published catalog application', () => {
     await service.applyTemplate('family', dto);
     expect(resolver.resolvePublished).toHaveBeenCalledWith('NEW_MODEL');
     expect(repo.applyPublishedTemplate).toHaveBeenCalledWith('family', dto, definition, 'CUSTOM');
+  });
+});
+
+describe('PedagogicalProfile-weighted applyTemplate (issue #95)', () => {
+  const FAMILY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+
+  const CROSS_CUTTING = { name: 'Cross-Cutting Subject', color: '#111111', description: 'Shared', starterObjectives: ['x'] };
+  const CLASSICAL_ONLY = { name: 'Classical-Only Subject', color: '#222222', description: 'Specific', starterObjectives: ['y'] };
+
+  function buildService(overrides: {
+    profile: any;
+    subjectsByCode: Record<string, Array<{ name: string }>>;
+  }) {
+    const repo = {
+      applyPublishedTemplate: jest.fn().mockResolvedValue({ subjectsCount: 2, objectivesCount: 2 }),
+    };
+    const resolver = {
+      resolvePublished: jest.fn().mockResolvedValue({
+        id: 'classical-def', subjects: [CLASSICAL_ONLY, CROSS_CUTTING],
+      }),
+      getSubjectDefinitions: jest.fn().mockImplementation(async (code: string) => overrides.subjectsByCode[code] ?? []),
+    };
+    const profilesService = { getPedagogicalProfile: jest.fn().mockResolvedValue(overrides.profile) };
+    const service = new CurriculumService(
+      repo as any,
+      {} as any,
+      resolver as any,
+      profilesService as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
+    );
+    return { service, repo, resolver, profilesService };
+  }
+
+  it('is a byte-for-byte no-op when the family has no PedagogicalProfile', async () => {
+    const { service, repo, resolver } = buildService({ profile: null, subjectsByCode: {} });
+    const dto = { learnerId: 'l', academicYearId: 'y', template: 'CLASSICAL_TRIVIUM' };
+    const resolvedDefinition = await resolver.resolvePublished('CLASSICAL_TRIVIUM');
+
+    const result = await service.applyTemplate(FAMILY_ID, dto);
+
+    // No new resolver calls to weigh by (getSubjectDefinitions only called
+    // for weighted models -- none exist here).
+    expect(resolver.getSubjectDefinitions).not.toHaveBeenCalled();
+    // The definition passed to the repository is the exact same object
+    // resolvePublished returns -- not a copy, not reordered.
+    const passedDefinition = repo.applyPublishedTemplate.mock.calls[0][2];
+    expect(passedDefinition).toBe(resolvedDefinition);
+    expect(passedDefinition.subjects).toEqual([CLASSICAL_ONLY, CROSS_CUTTING]);
+    // Response carries no weighting artifact at all.
+    expect(result).toEqual({ subjectsCount: 2, objectivesCount: 2 });
+    expect('subjectRelevance' in result).toBe(false);
+  });
+
+  it('boosts a subject shared with the weighted models ahead of a template-only subject', async () => {
+    const { service, repo } = buildService({
+      profile: {
+        primaryModelCode: 'MONTESSORI',
+        secondaryModels: [{ code: 'CHARLOTTE_MASON', weight: 0.5 }],
+        overrides: {},
+      },
+      subjectsByCode: {
+        MONTESSORI: [{ name: CROSS_CUTTING.name }],
+        CHARLOTTE_MASON: [{ name: CROSS_CUTTING.name }],
+      },
+    });
+    const dto = { learnerId: 'l', academicYearId: 'y', template: 'CLASSICAL_TRIVIUM' };
+
+    const result = await service.applyTemplate(FAMILY_ID, dto);
+
+    const passedDefinition = repo.applyPublishedTemplate.mock.calls[0][2];
+    // CROSS_CUTTING (score 1 + 0.5 = 1.5) now sorts ahead of
+    // CLASSICAL_ONLY (score 0), reversing the original array order.
+    expect(passedDefinition.subjects.map((s: any) => s.name)).toEqual([
+      CROSS_CUTTING.name,
+      CLASSICAL_ONLY.name,
+    ]);
+    expect(result.subjectRelevance).toEqual([
+      { name: CROSS_CUTTING.name, relevanceScore: 1.5 },
+      { name: CLASSICAL_ONLY.name, relevanceScore: 0 },
+    ]);
+  });
+
+  it('never reads another family\'s profile (tenant isolation)', async () => {
+    const { service, profilesService } = buildService({ profile: null, subjectsByCode: {} });
+    await service.applyTemplate(FAMILY_ID, { learnerId: 'l', academicYearId: 'y', template: 'CLASSICAL_TRIVIUM' });
+    expect(profilesService.getPedagogicalProfile).toHaveBeenCalledTimes(1);
+    expect(profilesService.getPedagogicalProfile).toHaveBeenCalledWith(FAMILY_ID);
   });
 });

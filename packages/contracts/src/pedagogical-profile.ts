@@ -9,8 +9,10 @@ import { z } from 'zod';
 // creates a new row with an incremented version; nothing is ever updated
 // or deleted, so changing preferences never destroys history.
 //
-// NOT wired into any read path yet -- applyTemplate still doesn't consult
-// this. That integration is a separate, human-approved step.
+// Wired into CurriculumService.applyTemplate (issue #95, human-approved):
+// when a profile exists, its primary/secondary weights rank (never filter)
+// the subject set the applied template resolves. See
+// apps/api/src/modules/curriculum/application/pedagogical-subject-ranking.ts.
 
 const DEFINITION_CODE_REGEX = /^[A-Z0-9][A-Z0-9_.]*$/;
 
