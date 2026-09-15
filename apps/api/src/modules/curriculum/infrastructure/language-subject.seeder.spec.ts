@@ -11,7 +11,7 @@ describe('LanguageSubjectSeeder', () => {
     0,
   );
 
-  it('creates one domain per language with native and additional-language tracks', async () => {
+  it('creates one domain per language with universal native stages and an additional-language track', async () => {
     let domainIndex = 0;
     let pathIndex = 0;
     const definitionsService = {
@@ -69,15 +69,19 @@ describe('LanguageSubjectSeeder', () => {
 
   it('keeps the two profiles explicit and carries CEFR progression for additional-language tracks', () => {
     for (const language of seedData) {
-      const profilePaths = language.paths.filter((path) => path.path.code.endsWith('NATIVE_LITERACY') || path.path.code.endsWith('ADDITIONAL_LANGUAGE'));
-      expect(profilePaths.map((path) => path.path.code)).toEqual([
-        `${language.domain.code}.NATIVE_LITERACY`,
-        `${language.domain.code}.ADDITIONAL_LANGUAGE`,
+      const nativePaths = language.paths.filter((path) => path.path.code.includes('.NATIVE_LITERACY.'));
+      const profilePaths = [...nativePaths, ...language.paths.filter((path) => path.path.code.endsWith('ADDITIONAL_LANGUAGE'))];
+      expect(nativePaths.map((path) => path.path.code)).toEqual([
+        `${language.domain.code}.NATIVE_LITERACY.EARLY_YEARS`,
+        `${language.domain.code}.NATIVE_LITERACY.PRIMARY`,
+        `${language.domain.code}.NATIVE_LITERACY.LOWER_SECONDARY`,
+        `${language.domain.code}.NATIVE_LITERACY.UPPER_SECONDARY`,
       ]);
+      expect(profilePaths).toHaveLength(5);
       const additional = profilePaths.find((path) => path.path.code.endsWith('ADDITIONAL_LANGUAGE'))!;
       expect(additional.competencies.map((competency) => competency.proficiencyLevel)).toEqual(['A1', 'A2', 'B1', 'B2', 'C1']);
       expect(additional.competencies.every((competency) => competency.proficiencyFramework === 'CEFR')).toBe(true);
-      expect(profilePaths.find((path) => path.path.code.endsWith('NATIVE_LITERACY'))!.competencies.every((competency) => competency.proficiencyLevel === undefined)).toBe(true);
+      expect(nativePaths.every((path) => path.competencies.every((competency) => competency.educationalStage !== undefined && competency.proficiencyLevel === undefined))).toBe(true);
     }
   });
 });

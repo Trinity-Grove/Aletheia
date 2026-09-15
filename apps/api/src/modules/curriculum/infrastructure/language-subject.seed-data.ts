@@ -10,6 +10,7 @@ import { buildPortugueseSubjectSeedData } from './portuguese-subject.seed-data.j
 
 export type LanguageCode = 'ENGLISH' | 'PORTUGUESE' | 'SPANISH';
 export type LanguageTrack = 'NATIVE_LITERACY' | 'ADDITIONAL_LANGUAGE';
+export type EducationalStage = 'EARLY_YEARS' | 'PRIMARY' | 'LOWER_SECONDARY' | 'UPPER_SECONDARY';
 
 export interface LanguageSubjectCompetencySeed {
   code: string;
@@ -20,6 +21,7 @@ export interface LanguageSubjectCompetencySeed {
   starterObjectives: string[];
   proficiencyFramework?: 'CEFR';
   proficiencyLevel?: 'A1' | 'A2' | 'B1' | 'B2' | 'C1';
+  educationalStage?: EducationalStage;
 }
 
 export interface LanguageSubjectPathSeedData {
@@ -32,28 +34,49 @@ export interface LanguageSubjectSeedData {
   paths: LanguageSubjectPathSeedData[];
 }
 
-const languageProfiles: Record<LanguageCode, { name: string; adjective: string; native: string[]; additional: string[] }> = {
+const languageProfiles: Record<LanguageCode, { name: string; adjective: string; native: string[][]; additional: string[] }> = {
   ENGLISH: {
     name: 'English',
     adjective: 'English',
-    native: ['Oral expression', 'Reading fluency', 'Composition', 'Grammar and style', 'Literature and rhetoric'],
+    native: [
+      ['Oral language', 'Phonological awareness', 'Emergent literacy'],
+      ['Reading fluency', 'Text comprehension', 'Composition'],
+      ['Text analysis', 'Grammar and cohesion', 'Argumentation'],
+      ['Rhetorical analysis', 'Research writing', 'Literature and public communication'],
+    ],
     additional: ['Foundations and introductions', 'Everyday communication', 'Independent communication', 'Argumentation and interaction', 'Academic fluency'],
   },
   PORTUGUESE: {
     name: 'Português',
     adjective: 'Português',
-    native: ['Expressão oral', 'Fluência leitora', 'Composição', 'Gramática e estilo', 'Literatura e retórica'],
+    native: [
+      ['Linguagem oral', 'Consciência sonora', 'Alfabetização emergente'],
+      ['Fluência leitora', 'Compreensão de textos', 'Composição'],
+      ['Análise de textos', 'Gramática e coesão', 'Argumentação'],
+      ['Análise retórica', 'Escrita de pesquisa', 'Literatura e comunicação pública'],
+    ],
     additional: ['Fundamentos e apresentações', 'Comunicação cotidiana', 'Comunicação independente', 'Argumentação e interação', 'Fluência acadêmica'],
   },
   SPANISH: {
     name: 'Español',
     adjective: 'Español',
-    native: ['Expresión oral', 'Fluidez lectora', 'Composición', 'Gramática y estilo', 'Literatura y retórica'],
+    native: [
+      ['Lenguaje oral', 'Conciencia fonológica', 'Alfabetización emergente'],
+      ['Fluidez lectora', 'Comprensión de textos', 'Composición'],
+      ['Análisis de textos', 'Gramática y cohesión', 'Argumentación'],
+      ['Análisis retórico', 'Escritura de investigación', 'Literatura y comunicación pública'],
+    ],
     additional: ['Fundamentos y presentaciones', 'Comunicación cotidiana', 'Comunicación independiente', 'Argumentación e interacción', 'Fluidez académica'],
   },
 };
 
 const cefrLevels = ['A1', 'A2', 'B1', 'B2', 'C1'] as const;
+const educationalStages: Array<{ code: EducationalStage; name: string; ages: { min: number; max: number } }> = [
+  { code: 'EARLY_YEARS', name: 'Early Years / Educação Infantil', ages: { min: 4, max: 5 } },
+  { code: 'PRIMARY', name: 'Primary / Ensino Fundamental inicial', ages: { min: 6, max: 10 } },
+  { code: 'LOWER_SECONDARY', name: 'Lower Secondary / Ensino Fundamental final', ages: { min: 11, max: 14 } },
+  { code: 'UPPER_SECONDARY', name: 'Upper Secondary / Ensino Médio', ages: { min: 15, max: 18 } },
+];
 
 export function buildLanguageSubjectSeedData(): LanguageSubjectSeedData[] {
   return (Object.keys(languageProfiles) as LanguageCode[]).map((code) => {
@@ -65,21 +88,22 @@ export function buildLanguageSubjectSeedData(): LanguageSubjectSeedData[] {
         description: `${profile.name}: progressão de alfabetização nativa e aprendizagem como língua adicional, com evidências e objetivos comuns.`,
       },
       paths: [
-        {
+        ...educationalStages.map((stage, stageIndex) => ({
           path: {
-            code: `${code}.NATIVE_LITERACY`,
-            name: `${profile.name} — alfabetização e domínio nativos`,
-            description: `Trilha para falantes nativos: leitura, escrita, expressão, gramática, literatura e retórica em progressão escolar.`,
+            code: `${code}.NATIVE_LITERACY.${stage.code}`,
+            name: `${profile.name} — ${stage.name}`,
+            description: `Trilha nativa para ${stage.name.toLowerCase()}, com objetivos de linguagem adequados à faixa etária.`,
           },
-          competencies: profile.native.map((title, index) => ({
-            code: `${code}.NATIVE_LITERACY.${['ORAL_EXPRESSION', 'READING_FLUENCY', 'COMPOSITION', 'GRAMMAR_STYLE', 'LITERATURE_RHETORIC'][index]}`,
+          competencies: profile.native[stageIndex]!.map((title, competencyIndex) => ({
+            code: `${code}.NATIVE_LITERACY.${stage.code}.${['ORAL_LANGUAGE', 'PHONOLOGICAL_AWARENESS', 'EMERGENT_LITERACY', 'READING_FLUENCY', 'TEXT_COMPREHENSION', 'COMPOSITION', 'TEXT_ANALYSIS', 'GRAMMAR_COHESION', 'ARGUMENTATION', 'RHETORICAL_ANALYSIS', 'RESEARCH_WRITING', 'LITERATURE_PUBLIC_COMMUNICATION'][stageIndex * 3 + competencyIndex]}`,
             title,
-            level: index + 1,
-            ageRecommendation: { min: index < 2 ? 6 : 8, max: 18 },
-            evidenceTypes: index === 0 ? ['audio', 'video', 'observation'] : ['text', 'observation'],
-            starterObjectives: nativeObjectives(code, index),
+            level: stageIndex + 1,
+            ageRecommendation: stage.ages,
+            evidenceTypes: competencyIndex === 0 ? ['audio', 'video', 'observation'] : ['text', 'observation'],
+            starterObjectives: nativeObjectives(code, stageIndex, competencyIndex),
+            educationalStage: stage.code,
           })),
-        },
+        })),
         {
           path: {
             code: `${code}.ADDITIONAL_LANGUAGE`,
@@ -87,14 +111,14 @@ export function buildLanguageSubjectSeedData(): LanguageSubjectSeedData[] {
             description: `Trilha para quem aprende ${profile.adjective} como língua adicional, organizada pelos níveis A1 a C1 do CEFR.`,
           },
           competencies: profile.additional.map((title, index) => ({
-            code: `${code}.ADDITIONAL_LANGUAGE.${cefrLevels[index]}`,
-            title: `${cefrLevels[index]} — ${title}`,
+            code: `${code}.ADDITIONAL_LANGUAGE.${cefrLevels[index]!}`,
+            title: `${cefrLevels[index]!} — ${title}`,
             level: index + 1,
             ageRecommendation: { min: 6, max: 18 },
             evidenceTypes: ['audio', 'text', 'observation'],
             starterObjectives: additionalObjectives(code, index),
             proficiencyFramework: 'CEFR' as const,
-            proficiencyLevel: cefrLevels[index],
+            proficiencyLevel: cefrLevels[index]!,
           })),
         },
       ],
@@ -118,31 +142,28 @@ export function buildLanguageSubjectCatalogSeedData(): LanguageSubjectSeedData[]
   );
 }
 
-function nativeObjectives(code: LanguageCode, index: number): string[] {
+function nativeObjectives(code: LanguageCode, stageIndex: number, competencyIndex: number): string[] {
   const objectives: Record<LanguageCode, string[][]> = {
     ENGLISH: [
-      ['Participate in conversations with clear turn-taking and understandable speech', 'Retell an experience with a coherent sequence of events'],
-      ['Read age-appropriate texts accurately and with expressive phrasing', 'Use details from a text to explain its central idea'],
-      ['Write organized narratives and explanations for a defined audience', 'Revise a draft for clarity, structure, and precise word choice'],
-      ['Apply sentence structure, punctuation, and register intentionally', 'Explain how grammar and style choices change meaning or effect'],
-      ['Interpret literary works using form, context, and textual evidence', 'Build a supported rhetorical reading for a real audience'],
+      ['Participate in conversations with clear turn-taking', 'Notice rhymes, syllables, and beginning sounds', 'Connect spoken language, letters, and meaning'],
+      ['Read age-appropriate texts accurately and expressively', 'Use details from a text to explain its central idea', 'Write organized narratives and explanations for a defined audience'],
+      ['Analyze theme, structure, and evidence in varied texts', 'Revise sentences for cohesion, grammar, and register', 'Write an argument with a clear claim and relevant support'],
+      ['Evaluate how rhetorical choices influence an audience', 'Conduct research and synthesize reliable sources', 'Interpret literature and communicate ideas in public settings'],
     ],
     PORTUGUESE: [
-      ['Participar de conversas com turnos claros e fala compreensível', 'Relatar uma experiência em sequência coerente'],
-      ['Ler textos adequados à idade com precisão e entonação expressiva', 'Usar detalhes do texto para explicar sua ideia central'],
-      ['Escrever narrativas e explicações organizadas para um público definido', 'Revisar um rascunho para melhorar clareza, estrutura e escolha de palavras'],
-      ['Aplicar estrutura de orações, pontuação e registro de forma intencional', 'Explicar como escolhas gramaticais e estilísticas alteram o sentido'],
-      ['Interpretar obras literárias usando forma, contexto e evidências textuais', 'Construir uma leitura retórica fundamentada para um público real'],
+      ['Participar de conversas respeitando turnos', 'Perceber rimas, sílabas e sons iniciais', 'Relacionar fala, letras e construção de sentido'],
+      ['Ler textos adequados à idade com precisão e expressividade', 'Usar detalhes do texto para explicar sua ideia central', 'Escrever narrativas e explicações organizadas para um público definido'],
+      ['Analisar tema, estrutura e evidências em textos variados', 'Revisar frases para melhorar coesão, gramática e registro', 'Escrever um argumento com tese clara e suporte relevante'],
+      ['Avaliar como escolhas retóricas influenciam um público', 'Realizar pesquisa e sintetizar fontes confiáveis', 'Interpretar literatura e comunicar ideias em situações públicas'],
     ],
     SPANISH: [
-      ['Participar en conversaciones respetando turnos y con habla comprensible', 'Relatar una experiencia en una secuencia coherente'],
-      ['Leer textos apropiados para la edad con precisión y entonación expresiva', 'Usar detalles del texto para explicar su idea central'],
-      ['Escribir narraciones y explicaciones organizadas para un público definido', 'Revisar un borrador para mejorar claridad, estructura y elección de palabras'],
-      ['Aplicar estructura de oraciones, puntuación y registro de forma intencional', 'Explicar cómo las elecciones gramaticales y estilísticas cambian el sentido'],
-      ['Interpretar obras literarias usando forma, contexto y evidencias textuales', 'Construir una lectura retórica fundamentada para un público real'],
+      ['Participar en conversaciones respetando turnos', 'Reconocer rimas, sílabas y sonidos iniciales', 'Relacionar el habla, las letras y la construcción de significado'],
+      ['Leer textos apropiados para la edad con precisión y expresividad', 'Usar detalles del texto para explicar su idea central', 'Escribir narraciones y explicaciones organizadas para un público definido'],
+      ['Analizar tema, estructura y evidencias en textos variados', 'Revisar oraciones para mejorar cohesión, gramática y registro', 'Escribir un argumento con una tesis clara y apoyo relevante'],
+      ['Evaluar cómo las elecciones retóricas influyen en un público', 'Investigar y sintetizar fuentes confiables', 'Interpretar literatura y comunicar ideas en situaciones públicas'],
     ],
   };
-  return objectives[code]![index]!;
+  return objectives[code]![stageIndex * 3 + competencyIndex]!;
 }
 
 function additionalObjectives(code: LanguageCode, index: number): string[] {
@@ -197,6 +218,7 @@ export function buildLanguageSubjectCompetencyDto(
       starterObjectives: seed.starterObjectives,
       ...(seed.proficiencyFramework ? { proficiencyFramework: seed.proficiencyFramework } : {}),
       ...(seed.proficiencyLevel ? { proficiencyLevel: seed.proficiencyLevel } : {}),
+      ...(seed.educationalStage ? { educationalStage: seed.educationalStage } : {}),
     },
   });
 }
