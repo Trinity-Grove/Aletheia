@@ -22,6 +22,7 @@ import { MusicInstrumentsSeeder } from './infrastructure/music-instruments.seede
 import { MusicChristianSeeder } from './infrastructure/music-christian.seeder.js';
 import { TradesFormationSeeder } from './infrastructure/trades-formation.seeder.js';
 import { CookingFormationSeeder } from './infrastructure/cooking-formation.seeder.js';
+import { CookingProgressionSeeder } from './infrastructure/cooking-progression.seeder.js';
 import { GardeningFormationSeeder } from './infrastructure/gardening-formation.seeder.js';
 import { ResilienceFormationSeeder } from './infrastructure/resilience-formation.seeder.js';
 import { ResilienceNavigationCampingSeeder } from './infrastructure/resilience-navigation-camping.seeder.js';
@@ -103,6 +104,7 @@ import { AchievementController } from './presentation/achievement.controller.js'
     MusicChristianSeeder,
     TradesFormationSeeder,
     CookingFormationSeeder,
+    CookingProgressionSeeder,
     GardeningFormationSeeder,
     ResilienceFormationSeeder,
     ResilienceNavigationCampingSeeder,
