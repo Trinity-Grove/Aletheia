@@ -192,6 +192,7 @@ model Family {
   evidenceSubmissions    EvidenceSubmission[]
   assessmentResults      AssessmentResult[]
   competencyTrackings    LearnerCompetencyTracking[]
+  curriculumPacks        FamilyCurriculumPack[]
 
   @@map("families")
 }
@@ -1832,13 +1833,57 @@ model CurriculumPack {
   publishedAt   DateTime?        @map("published_at") @db.Timestamptz
   deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
 
-  items        CurriculumPackItem[]
-  dependencies CurriculumPackDependency[]
+  items           CurriculumPackItem[]
+  dependencies    CurriculumPackDependency[]
+  familyInstances FamilyCurriculumPack[]
 
   @@unique([code, version])
   @@index([code])
   @@index([status])
   @@map("curriculum_packs")
+}
+
+// A family-owned, editable snapshot of a published platform pack. The
+// portable document is copied at installation time so later platform pack
+// versions cannot mutate a family's plan. `sourcePackCode` and
+// `sourcePackVersion` remain denormalized provenance even if the source row
+// is eventually retired.
+model FamilyCurriculumPack {
+  id                String   @id @default(uuid()) @db.Uuid
+  familyId          String   @map("family_id") @db.Uuid
+  sourcePackId      String   @map("source_pack_id") @db.Uuid
+  sourcePackCode    String   @map("source_pack_code")
+  sourcePackVersion Int      @map("source_pack_version")
+  revision          Int      @default(1)
+  document          Json
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  family     Family                         @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  sourcePack CurriculumPack                 @relation(fields: [sourcePackId], references: [id], onDelete: Restrict)
+  revisions  FamilyCurriculumPackRevision[]
+
+  @@unique([familyId, sourcePackId], name: "family_curriculum_packs_family_source_unique")
+  @@index([familyId])
+  @@index([sourcePackCode, sourcePackVersion])
+  @@map("family_curriculum_packs")
+}
+
+// Append-only history for family edits. Keeping every document revision
+// makes customization auditable and allows achievement snapshots to point
+// back to the exact family curriculum state used at the time.
+model FamilyCurriculumPackRevision {
+  id                     String   @id @default(uuid()) @db.Uuid
+  familyCurriculumPackId String   @map("family_curriculum_pack_id") @db.Uuid
+  revision               Int
+  document               Json
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  familyCurriculumPack FamilyCurriculumPack @relation(fields: [familyCurriculumPackId], references: [id], onDelete: Cascade)
+
+  @@unique([familyCurriculumPackId, revision], name: "family_curriculum_pack_revisions_pack_revision_unique")
+  @@index([familyCurriculumPackId, revision])
+  @@map("family_curriculum_pack_revisions")
 }
 
 model CurriculumPackItem {
