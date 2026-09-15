@@ -17,9 +17,9 @@ describe('learner contracts', () => {
     it('accepts valid educational stages', () => {
       const validStages: EducationalStage[] = [
         'EARLY_YEARS',
-        'PRIMARY_GRAMMAR',
-        'MIDDLE_LOGIC',
-        'HIGH_RHETORIC',
+        'PRIMARY',
+        'LOWER_SECONDARY',
+        'UPPER_SECONDARY',
         'OTHER',
       ];
 
@@ -45,10 +45,22 @@ describe('learner contracts', () => {
       const result = createLearnerSchema.safeParse(payload);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.stage).toBe('PRIMARY_GRAMMAR');
+        expect(result.data.stage).toBe('PRIMARY');
         expect(result.data.firstName).toBe('John');
         expect(result.data.birthDate).toBe('2016-05-14');
       }
+    });
+
+    it('normalizes legacy stage aliases to the universal taxonomy', () => {
+      expect(
+        createLearnerSchema.parse({ firstName: 'John', birthDate: '2016-05-14', stage: 'PRIMARY_GRAMMAR' }).stage,
+      ).toBe('PRIMARY');
+      expect(
+        createLearnerSchema.parse({ firstName: 'John', birthDate: '2012-05-14', stage: 'MIDDLE_LOGIC' }).stage,
+      ).toBe('LOWER_SECONDARY');
+      expect(
+        updateLearnerSchema.parse({ stage: 'HIGH_RHETORIC' }).stage,
+      ).toBe('UPPER_SECONDARY');
     });
 
     it('validates a full create learner payload', () => {
@@ -114,7 +126,7 @@ describe('learner contracts', () => {
   describe('updateLearnerSchema', () => {
     it('validates partial updates', () => {
       const partialUpdate: UpdateLearnerDto = {
-        stage: 'MIDDLE_LOGIC',
+        stage: 'LOWER_SECONDARY',
         notes: 'Updated notes',
       };
 
@@ -144,7 +156,7 @@ describe('learner contracts', () => {
         lastName: 'Doe',
         preferredName: 'Johnny',
         birthDate: '2016-05-14',
-        stage: 'PRIMARY_GRAMMAR',
+        stage: 'PRIMARY',
         customGrade: '4th Grade',
         avatarColor: '#10B981',
         specialNeeds: null,
@@ -163,7 +175,7 @@ describe('learner contracts', () => {
         firstName: 'John',
         lastName: 'Doe',
         preferredName: 'Johnny',
-        stage: 'PRIMARY_GRAMMAR',
+        stage: 'PRIMARY',
         avatarColor: '#10B981',
       };
 

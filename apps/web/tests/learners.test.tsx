@@ -21,7 +21,7 @@ const mockLearner: LearnerResponseDto = {
   lastName: 'Silva',
   preferredName: 'Clarinha',
   birthDate: '2016-05-12',
-  stage: 'PRIMARY_GRAMMAR',
+  stage: 'PRIMARY',
   customGrade: '3º Ano',
   avatarColor: '#3B82F6',
   specialNeeds: 'Dislexia leve',
@@ -61,7 +61,7 @@ describe('Learner Components', () => {
 
       expect(screen.getByText('Clarinha')).toBeInTheDocument();
       expect(screen.getByText(/3º Ano/i)).toBeInTheDocument();
-      expect(screen.getByText(/Grammar/i)).toBeInTheDocument();
+      expect(screen.getByText(/Primary/i)).toBeInTheDocument();
       expect(screen.getByText(/Dislexia leve/i)).toBeInTheDocument();
       expect(screen.getByText(/Gosta muito de leitura/i)).toBeInTheDocument();
       expect(screen.getByTestId('learner-avatar')).toHaveTextContent('C');
@@ -143,7 +143,7 @@ describe('Learner Components', () => {
         expect.objectContaining({
           firstName: 'Lucas',
           birthDate: '2018-09-20',
-          stage: 'PRIMARY_GRAMMAR',
+          stage: 'PRIMARY',
         })
       );
     });

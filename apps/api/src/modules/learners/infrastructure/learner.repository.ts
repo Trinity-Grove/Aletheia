@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../platform/database/prisma.service.js';
 import { LearnerEntity } from '../domain/learner.entity.js';
-import { EducationalStage } from '../domain/educational-stage.js';
-import type { CreateLearnerDto, UpdateLearnerDto } from '@aletheia/contracts';
+import {
+  normalizeEducationalStage,
+  type CreateLearnerDto,
+  type LearnerStageInput,
+  type UpdateLearnerDto,
+} from '@aletheia/contracts';
 
 interface LearnerDbRecord {
   id: string;
@@ -11,7 +15,7 @@ interface LearnerDbRecord {
   lastName: string | null;
   preferredName: string | null;
   birthDate: Date;
-  stage: EducationalStage;
+  stage: LearnerStageInput;
   customGrade: string | null;
   avatarColor: string | null;
   specialNeeds: string | null;
@@ -33,7 +37,7 @@ export class LearnerRepository {
         lastName: dto.lastName?.trim() || null,
         preferredName: dto.preferredName?.trim() || null,
         birthDate: new Date(dto.birthDate),
-        stage: dto.stage ?? 'PRIMARY_GRAMMAR',
+        stage: normalizeEducationalStage(dto.stage ?? 'PRIMARY'),
         customGrade: dto.customGrade?.trim() || null,
         avatarColor: dto.avatarColor?.trim() || null,
         specialNeeds: dto.specialNeeds?.trim() || null,
@@ -92,7 +96,7 @@ export class LearnerRepository {
         ...(data.lastName !== undefined ? { lastName: data.lastName?.trim() || null } : {}),
         ...(data.preferredName !== undefined ? { preferredName: data.preferredName?.trim() || null } : {}),
         ...(data.birthDate !== undefined ? { birthDate: new Date(data.birthDate) } : {}),
-        ...(data.stage !== undefined ? { stage: data.stage } : {}),
+        ...(data.stage !== undefined ? { stage: normalizeEducationalStage(data.stage) } : {}),
         ...(data.customGrade !== undefined ? { customGrade: data.customGrade?.trim() || null } : {}),
         ...(data.avatarColor !== undefined ? { avatarColor: data.avatarColor?.trim() || null } : {}),
         ...(data.specialNeeds !== undefined ? { specialNeeds: data.specialNeeds?.trim() || null } : {}),
@@ -112,7 +116,7 @@ export class LearnerRepository {
       lastName: record.lastName,
       preferredName: record.preferredName,
       birthDate: record.birthDate,
-      stage: record.stage,
+      stage: normalizeEducationalStage(record.stage),
       customGrade: record.customGrade,
       avatarColor: record.avatarColor,
       specialNeeds: record.specialNeeds,

@@ -13,9 +13,9 @@ export interface LearnerFormModalProps {
 
 const STAGE_OPTIONS: { value: EducationalStage; label: string }[] = [
   { value: 'EARLY_YEARS', label: 'Educação Infantil (Early Years)' },
-  { value: 'PRIMARY_GRAMMAR', label: 'Ensino Fundamental I (Grammar)' },
-  { value: 'MIDDLE_LOGIC', label: 'Ensino Fundamental II (Logic)' },
-  { value: 'HIGH_RHETORIC', label: 'Ensino Médio (Rhetoric)' },
+  { value: 'PRIMARY', label: 'Ensino Fundamental inicial (Primary)' },
+  { value: 'LOWER_SECONDARY', label: 'Ensino Fundamental final (Lower Secondary)' },
+  { value: 'UPPER_SECONDARY', label: 'Ensino Médio (Upper Secondary)' },
   { value: 'OTHER', label: 'Outro' },
 ];
 
@@ -30,7 +30,7 @@ export function LearnerFormModal({
   const [lastName, setLastName] = useState('');
   const [preferredName, setPreferredName] = useState('');
   const [birthDate, setBirthDate] = useState('');
-  const [stage, setStage] = useState<EducationalStage>('PRIMARY_GRAMMAR');
+  const [stage, setStage] = useState<EducationalStage>('PRIMARY');
   const [customGrade, setCustomGrade] = useState('');
   const [avatarColor, setAvatarColor] = useState('#3B82F6');
   const [specialNeeds, setSpecialNeeds] = useState('');
@@ -46,7 +46,7 @@ export function LearnerFormModal({
       setLastName(initialData.lastName || '');
       setPreferredName(initialData.preferredName || '');
       setBirthDate(initialData.birthDate || '');
-      setStage(initialData.stage || 'PRIMARY_GRAMMAR');
+      setStage(initialData.stage || 'PRIMARY');
       setCustomGrade(initialData.customGrade || '');
       setAvatarColor(initialData.avatarColor || '#3B82F6');
       setSpecialNeeds(initialData.specialNeeds || '');
@@ -56,7 +56,7 @@ export function LearnerFormModal({
       setLastName('');
       setPreferredName('');
       setBirthDate('');
-      setStage('PRIMARY_GRAMMAR');
+      setStage('PRIMARY');
       setCustomGrade('');
       setAvatarColor('#3B82F6');
       setSpecialNeeds('');

@@ -5,7 +5,7 @@ import { createApplication } from '../src/main.js';
 import { AuthService } from '../src/modules/identity/application/auth.service.js';
 import { FAMILY_PUBLIC_API, type FamilyPublicApi } from '../src/modules/families/application/public-api.js';
 import { LearnerService } from '../src/modules/learners/application/learner.service.js';
-import type { LearnerResponseDto } from '@aletheia/contracts';
+import { normalizeEducationalStage, type LearnerResponseDto } from '@aletheia/contracts';
 
 describe('Learners E2E & Multi-Tenant Isolation', () => {
   let app: NestFastifyApplication;
@@ -50,7 +50,7 @@ describe('Learners E2E & Multi-Tenant Isolation', () => {
         lastName: dto.lastName ?? null,
         preferredName: dto.preferredName ?? null,
         birthDate: dto.birthDate,
-        stage: dto.stage ?? 'PRIMARY_GRAMMAR',
+        stage: normalizeEducationalStage(dto.stage ?? 'PRIMARY'),
         customGrade: dto.customGrade ?? null,
         avatarColor: dto.avatarColor ?? null,
         specialNeeds: dto.specialNeeds ?? null,
@@ -90,7 +90,7 @@ describe('Learners E2E & Multi-Tenant Isolation', () => {
         familyId: current.familyId,
         firstName: dto.firstName ?? current.firstName,
         birthDate: dto.birthDate ?? current.birthDate,
-        stage: dto.stage ?? current.stage,
+        stage: dto.stage !== undefined ? normalizeEducationalStage(dto.stage) : current.stage,
         createdAt: current.createdAt,
         updatedAt: new Date().toISOString(),
       };
@@ -204,7 +204,7 @@ describe('Learners E2E & Multi-Tenant Isolation', () => {
       expect(createRes.body.firstName).toBe('John');
       expect(createRes.body.lastName).toBe('Doe');
       expect(createRes.body.preferredName).toBe('Johnny');
-      expect(createRes.body.stage).toBe('PRIMARY_GRAMMAR');
+      expect(createRes.body.stage).toBe('PRIMARY');
       expect(createRes.body.archivedAt).toBeNull();
 
       // 2. List Learners (Active)
@@ -236,7 +236,7 @@ describe('Learners E2E & Multi-Tenant Isolation', () => {
         .expect(200);
 
       expect(updateRes.body.preferredName).toBe('John D.');
-      expect(updateRes.body.stage).toBe('MIDDLE_LOGIC');
+      expect(updateRes.body.stage).toBe('LOWER_SECONDARY');
 
       // 5. Archive (Soft-Delete) Learner
       const archiveRes = await supertest(app.getHttpServer())

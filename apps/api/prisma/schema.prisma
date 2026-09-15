@@ -198,9 +198,9 @@ model Family {
 
 enum EducationalStage {
   EARLY_YEARS
-  PRIMARY_GRAMMAR
-  MIDDLE_LOGIC
-  HIGH_RHETORIC
+  PRIMARY
+  LOWER_SECONDARY
+  UPPER_SECONDARY
   OTHER
 
   @@map("educational_stages")
@@ -222,7 +222,7 @@ model Learner {
   lastName      String?          @map("last_name")
   preferredName String?          @map("preferred_name")
   birthDate     DateTime         @map("birth_date") @db.Date
-  stage         EducationalStage @default(PRIMARY_GRAMMAR)
+  stage         EducationalStage @default(PRIMARY)
   customGrade   String?          @map("custom_grade")
   avatarColor   String?          @map("avatar_color")
   specialNeeds  String?          @map("special_needs")

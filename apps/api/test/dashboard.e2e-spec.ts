@@ -48,7 +48,7 @@ const learnerA: LearnerSummaryDto = {
   firstName: 'Ada',
   lastName: 'Lovelace',
   preferredName: 'Addie',
-  stage: 'MIDDLE_LOGIC',
+  stage: 'LOWER_SECONDARY',
 };
 
 const populatedAgenda: DailyAgendaDto = {

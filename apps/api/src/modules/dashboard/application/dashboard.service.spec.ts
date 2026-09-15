@@ -33,14 +33,14 @@ const learners: LearnerSummaryDto[] = [
     firstName: 'Ada',
     lastName: 'Lovelace',
     preferredName: 'Addie',
-    stage: 'MIDDLE_LOGIC',
+    stage: 'LOWER_SECONDARY',
   },
   {
     id: FULL_NAME_LEARNER_ID,
     firstName: 'Grace',
     lastName: 'Hopper',
     preferredName: null,
-    stage: 'HIGH_RHETORIC',
+    stage: 'UPPER_SECONDARY',
   },
 ];
 
