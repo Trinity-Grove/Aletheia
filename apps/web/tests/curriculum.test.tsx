@@ -29,7 +29,7 @@ const mockLearner: LearnerSummaryDto = {
   firstName: 'Samuel',
   lastName: 'Silva',
   preferredName: 'Samuca',
-  stage: 'PRIMARY_GRAMMAR',
+  stage: 'PRIMARY',
   avatarColor: '#3B82F6',
 };
 

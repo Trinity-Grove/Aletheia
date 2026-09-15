@@ -13,9 +13,9 @@ export interface LearnerCardProps {
 
 const stageLabels: Record<EducationalStage, string> = {
   EARLY_YEARS: 'Educação Infantil (Early Years)',
-  PRIMARY_GRAMMAR: 'Ensino Fundamental I (Grammar)',
-  MIDDLE_LOGIC: 'Ensino Fundamental II (Logic)',
-  HIGH_RHETORIC: 'Ensino Médio (Rhetoric)',
+  PRIMARY: 'Ensino Fundamental inicial (Primary)',
+  LOWER_SECONDARY: 'Ensino Fundamental final (Lower Secondary)',
+  UPPER_SECONDARY: 'Ensino Médio (Upper Secondary)',
   OTHER: 'Outro',
 };
 

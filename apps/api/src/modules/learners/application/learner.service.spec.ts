@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { LearnerService } from './learner.service.js';
 import { LearnerRepository } from '../infrastructure/learner.repository.js';
 import { LearnerEntity } from '../domain/learner.entity.js';
-import type { CreateLearnerDto, UpdateLearnerDto } from '@aletheia/contracts';
+import { normalizeEducationalStage, type CreateLearnerDto, type UpdateLearnerDto } from '@aletheia/contracts';
 
 describe('LearnerService', () => {
   let learnerService: LearnerService;
@@ -21,7 +21,7 @@ describe('LearnerService', () => {
           lastName: dto.lastName ?? null,
           preferredName: dto.preferredName ?? null,
           birthDate: new Date(dto.birthDate),
-          stage: dto.stage ?? 'PRIMARY_GRAMMAR',
+          stage: normalizeEducationalStage(dto.stage ?? 'PRIMARY'),
           customGrade: dto.customGrade ?? null,
           avatarColor: dto.avatarColor ?? null,
           specialNeeds: dto.specialNeeds ?? null,
@@ -63,7 +63,7 @@ describe('LearnerService', () => {
           lastName: data.lastName !== undefined ? data.lastName : existing.lastName,
           preferredName: data.preferredName !== undefined ? data.preferredName : existing.preferredName,
           birthDate: data.birthDate ? new Date(data.birthDate) : existing.birthDate,
-          stage: data.stage ?? existing.stage,
+          stage: data.stage !== undefined ? normalizeEducationalStage(data.stage) : existing.stage,
           customGrade: data.customGrade !== undefined ? data.customGrade : existing.customGrade,
           avatarColor: data.avatarColor !== undefined ? data.avatarColor : existing.avatarColor,
           specialNeeds: data.specialNeeds !== undefined ? data.specialNeeds : existing.specialNeeds,
@@ -94,7 +94,7 @@ describe('LearnerService', () => {
       expect(result.firstName).toBe('Lucas');
       expect(result.lastName).toBe('Silva');
       expect(result.birthDate).toBe('2016-05-12');
-      expect(result.stage).toBe('PRIMARY_GRAMMAR');
+      expect(result.stage).toBe('PRIMARY');
       expect(result.archivedAt).toBeNull();
     });
   });
@@ -178,7 +178,7 @@ describe('LearnerService', () => {
       });
 
       expect(updated.firstName).toBe('Pedro Henrique');
-      expect(updated.stage).toBe('MIDDLE_LOGIC');
+      expect(updated.stage).toBe('LOWER_SECONDARY');
     });
 
     it('throws NotFoundException if learner not found for update', async () => {

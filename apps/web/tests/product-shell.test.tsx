@@ -28,7 +28,7 @@ const mockLearners: LearnerSummaryDto[] = [
     firstName: 'Clara',
     lastName: 'Silva',
     preferredName: 'Clarinha',
-    stage: 'PRIMARY_GRAMMAR',
+    stage: 'PRIMARY',
     avatarColor: '#3B82F6',
   },
   {
@@ -36,7 +36,7 @@ const mockLearners: LearnerSummaryDto[] = [
     firstName: 'Pedro',
     lastName: 'Silva',
     preferredName: null,
-    stage: 'MIDDLE_LOGIC',
+    stage: 'LOWER_SECONDARY',
     avatarColor: '#10B981',
   },
 ];

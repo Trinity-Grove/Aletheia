@@ -36,4 +36,6 @@ Matemática, Ciências, História, Geografia e Linguagens usam `EDUCATIONAL_STAG
 
 Os schemas de `LearningPath` e `CompetencyDefinition` inferem esse eixo a partir do código canônico e da recomendação de idade, permitindo que catálogos existentes adotem a regra sem duplicar competências nem quebrar códigos legados. Códigos históricos como `PRIMARY_GRAMMAR`, `MIDDLE_LOGIC` e `HIGH_RHETORIC` são tratados como aliases de `PRIMARY`, `LOWER_SECONDARY` e `UPPER_SECONDARY` durante a transição.
 
+O campo `Learner.stage` segue a mesma normalização: a migração de banco converte os registros existentes para os códigos universais, e os contratos/API continuam aceitando os aliases legados durante a janela de compatibilidade. `OTHER` permanece disponível para perfis sem etapa escolar universal correspondente.
+
 Se um currículo precisar de uma adaptação jurisdicional explícita, ela deve ser proposta como requisito de produto e avaliada separadamente, sem alterar a taxonomia universal por padrão.

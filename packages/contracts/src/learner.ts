@@ -1,21 +1,51 @@
 import { z } from 'zod';
+import {
+  universalEducationalStageSchema,
+  type UniversalEducationalStage,
+} from './educational-taxonomy.js';
 
-export const educationalStageSchema = z.enum([
-  'EARLY_YEARS',
+const legacyEducationalStageSchema = z.enum([
   'PRIMARY_GRAMMAR',
   'MIDDLE_LOGIC',
   'HIGH_RHETORIC',
-  'OTHER',
+]);
+
+/** Canonical stage values returned by the learner API and stored in the DB. */
+export const educationalStageSchema = z.union([
+  universalEducationalStageSchema,
+  z.literal('OTHER'),
+]);
+
+/** Backward-compatible input accepted while clients migrate. */
+export const learnerStageInputSchema = z.union([
+  educationalStageSchema,
+  legacyEducationalStageSchema,
 ]);
 
 export type EducationalStage = z.infer<typeof educationalStageSchema>;
+export type LearnerStageInput = z.infer<typeof learnerStageInputSchema>;
+
+export function normalizeEducationalStage(stage: LearnerStageInput): EducationalStage {
+  switch (stage) {
+    case 'PRIMARY_GRAMMAR':
+      return 'PRIMARY';
+    case 'MIDDLE_LOGIC':
+      return 'LOWER_SECONDARY';
+    case 'HIGH_RHETORIC':
+      return 'UPPER_SECONDARY';
+    default:
+      return stage as UniversalEducationalStage | 'OTHER';
+  }
+}
+
+const learnerStageSchema = learnerStageInputSchema.transform(normalizeEducationalStage);
 
 export const createLearnerSchema = z.object({
   firstName: z.string().min(1).max(100),
   lastName: z.string().max(100).nullish(),
   preferredName: z.string().max(100).nullish(),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'birthDate must be in YYYY-MM-DD format'),
-  stage: educationalStageSchema.default('PRIMARY_GRAMMAR'),
+  stage: learnerStageSchema.default('PRIMARY'),
   customGrade: z.string().nullish(),
   avatarColor: z.string().nullish(),
   specialNeeds: z.string().nullish(),
@@ -27,7 +57,7 @@ export type CreateLearnerOutput = z.output<typeof createLearnerSchema>;
 
 export const updateLearnerSchema = createLearnerSchema.partial();
 
-export type UpdateLearnerDto = z.infer<typeof updateLearnerSchema>;
+export type UpdateLearnerDto = z.input<typeof updateLearnerSchema>;
 
 export const learnerResponseSchema = z.object({
   id: z.string().uuid(),
