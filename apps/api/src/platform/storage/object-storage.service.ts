@@ -128,9 +128,14 @@ export class ObjectStorageService {
     this.bucketEnsured = true;
   }
 
-  buildStorageKey(familyId: string, portfolioItemId: string, fileName: string): string {
+  buildStorageKey(
+    familyId: string,
+    ownerId: string,
+    fileName: string,
+    namespace = 'portfolio',
+  ): string {
     const safeName = sanitizeFileNameSegment(fileName);
-    return `families/${familyId}/portfolio/${portfolioItemId}/${randomUUID()}-${safeName}`;
+    return `families/${familyId}/${namespace}/${ownerId}/${randomUUID()}-${safeName}`;
   }
 
   async getPresignedUploadUrl(storageKey: string, contentType: string): Promise<{ uploadUrl: string; expiresAt: Date }> {

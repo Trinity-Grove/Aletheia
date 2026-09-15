@@ -2,8 +2,11 @@ import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, UseGu
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   addFamilyCurriculumPackMediaSchema,
+  requestFamilyCurriculumPackMediaUploadSchema,
   type AddFamilyCurriculumPackMediaDto,
   type FamilyCurriculumPackMediaResponseDto,
+  type FamilyCurriculumPackMediaUploadUrlResponseDto,
+  type RequestFamilyCurriculumPackMediaUploadDto,
 } from '@aletheia/contracts';
 import { FamilyTenantGuard, JwtAuthGuard } from '../../../platform/auth/index.js';
 import { ZodValidationPipe } from '../../../platform/validation/index.js';
@@ -25,6 +28,27 @@ export class FamilyCurriculumPackMediaController {
     @Body(new ZodValidationPipe(addFamilyCurriculumPackMediaSchema)) dto: AddFamilyCurriculumPackMediaDto,
   ): Promise<FamilyCurriculumPackMediaResponseDto> {
     return this.service.add(familyId, packId, dto);
+  }
+
+  @Post('upload-url')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Request a presigned URL to upload media to a family curriculum pack' })
+  async requestUpload(
+    @Param('familyId') familyId: string,
+    @Param('packId') packId: string,
+    @Body(new ZodValidationPipe(requestFamilyCurriculumPackMediaUploadSchema)) dto: RequestFamilyCurriculumPackMediaUploadDto,
+  ): Promise<FamilyCurriculumPackMediaUploadUrlResponseDto> {
+    return this.service.requestUpload(familyId, packId, dto);
+  }
+
+  @Post(':id/confirm-upload')
+  @ApiOperation({ summary: 'Confirm a completed media upload' })
+  async confirmUpload(
+    @Param('familyId') familyId: string,
+    @Param('packId') packId: string,
+    @Param('id') id: string,
+  ): Promise<FamilyCurriculumPackMediaResponseDto> {
+    return this.service.confirmUpload(familyId, packId, id);
   }
 
   @Get()

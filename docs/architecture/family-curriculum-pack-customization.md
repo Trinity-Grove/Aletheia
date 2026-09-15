@@ -32,8 +32,13 @@ Media routes are tenant guarded:
 - `POST /api/v1/families/:familyId/curriculum-packs/:packId/media`
 - `GET /api/v1/families/:familyId/curriculum-packs/:packId/media`
 - `DELETE /api/v1/families/:familyId/curriculum-packs/:packId/media/:id`
+- `POST /api/v1/families/:familyId/curriculum-packs/:packId/media/upload-url`
+- `POST /api/v1/families/:familyId/curriculum-packs/:packId/media/:id/confirm-upload`
 
 External URLs must use HTTPS. YouTube URLs are accepted only for video
 items; other HTTPS providers remain represented as `OTHER` until a provider
-specific validator is added. Binary upload and signed URL issuance remain
-storage concerns and are intentionally decoupled from this metadata API.
+specific validator is added. Binary upload uses the existing S3-compatible
+storage service: the API creates a pending media row, returns a short-lived
+presigned PUT URL, and only completes the item after `confirm-upload` verifies
+the stored object's actual MIME type and size. Storage keys are generated
+server-side under the family and pack namespace.

@@ -20,6 +20,14 @@ export class FamilyCurriculumPackMediaRepository {
     return this.prisma.familyCurriculumPackMedia.create({ data });
   }
 
+  async createPendingUpload(
+    familyId: string,
+    familyCurriculumPackId: string,
+    data: Prisma.FamilyCurriculumPackMediaUncheckedCreateInput,
+  ): Promise<FamilyCurriculumPackMedia | null> {
+    return this.create(familyId, familyCurriculumPackId, data);
+  }
+
   async list(
     familyId: string,
     familyCurriculumPackId: string,
@@ -33,6 +41,20 @@ export class FamilyCurriculumPackMediaRepository {
     return this.prisma.familyCurriculumPackMedia.findMany({
       where: { familyCurriculumPackId },
       orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  findById(
+    familyId: string,
+    familyCurriculumPackId: string,
+    id: string,
+  ): Promise<FamilyCurriculumPackMedia | null> {
+    return this.prisma.familyCurriculumPackMedia.findFirst({
+      where: {
+        id,
+        familyCurriculumPackId,
+        familyCurriculumPack: { familyId },
+      },
     });
   }
 
@@ -53,5 +75,23 @@ export class FamilyCurriculumPackMediaRepository {
 
     await this.prisma.familyCurriculumPackMedia.delete({ where: { id: media.id } });
     return true;
+  }
+
+  async confirmUpload(
+    familyId: string,
+    familyCurriculumPackId: string,
+    id: string,
+    data: Prisma.FamilyCurriculumPackMediaUncheckedUpdateInput,
+  ): Promise<FamilyCurriculumPackMedia | null> {
+    const result = await this.prisma.familyCurriculumPackMedia.updateMany({
+      where: {
+        id,
+        familyCurriculumPackId,
+        familyCurriculumPack: { familyId },
+      },
+      data,
+    });
+    if (result.count === 0) return null;
+    return this.prisma.familyCurriculumPackMedia.findUnique({ where: { id } });
   }
 }
