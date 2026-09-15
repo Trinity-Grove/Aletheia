@@ -1,7 +1,6 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { createApplication } from '../src/main.js';
 import { CookingFormationSeeder } from '../src/modules/curriculum/infrastructure/cooking-formation.seeder.js';
-import { CookingProgressionSeeder } from '../src/modules/curriculum/infrastructure/cooking-progression.seeder.js';
 import { CookingLifeSkillsSeeder } from '../src/modules/curriculum/infrastructure/cooking-life-skills.seeder.js';
 import { PrismaService } from '../src/platform/database/prisma.service.js';
 import { buildCookingLifeSkillsSeedData } from '../src/modules/curriculum/infrastructure/cooking-life-skills.seed-data.js';
