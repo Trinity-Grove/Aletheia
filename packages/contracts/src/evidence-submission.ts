@@ -21,25 +21,50 @@ export const evidenceSubmissionCompetencyLinkSchema = z.object({
   competencyDefinitionId: z.string().uuid(),
 });
 
-export const createEvidenceSubmissionSchema = z
-  .object({
-    learnerId: z.string().uuid(),
-    evidenceTypeId: z.string().uuid(),
-    competencies: z.array(evidenceSubmissionCompetencyLinkSchema).min(1),
-    textContent: z.string().max(20000).nullish(),
-    fileUrl: z.string().url().nullish(),
-    storageKey: z.string().min(1).max(500).nullish(),
-    mimeType: z.string().max(150).nullish(),
-    fileSizeBytes: z.number().int().nonnegative().nullish(),
-    checksumSha256: z.string().length(64).nullish(),
-  })
-  .refine((dto) => Boolean(dto.textContent) || Boolean(dto.fileUrl), {
+const createEvidenceSubmissionBaseSchema = z.object({
+  learnerId: z.string().uuid(),
+  evidenceTypeId: z.string().uuid(),
+  competencies: z.array(evidenceSubmissionCompetencyLinkSchema).min(1),
+  textContent: z.string().max(20000).nullish(),
+  fileUrl: z.string().url().nullish(),
+  storageKey: z.string().min(1).max(500).nullish(),
+  mimeType: z.string().max(150).nullish(),
+  fileSizeBytes: z.number().int().nonnegative().nullish(),
+  checksumSha256: z.string().length(64).nullish(),
+});
+
+const requiresTextContentOrFileUrl = (dto: {
+  textContent?: string | null | undefined;
+  fileUrl?: string | null | undefined;
+}) => Boolean(dto.textContent) || Boolean(dto.fileUrl);
+
+function requiresTextContentOrFileUrlRefinement() {
+  return {
     message: 'An evidence submission needs either textContent or a fileUrl.',
     path: ['textContent'],
-  });
+  };
+}
+
+export const createEvidenceSubmissionSchema = createEvidenceSubmissionBaseSchema.refine(
+  requiresTextContentOrFileUrl,
+  requiresTextContentOrFileUrlRefinement(),
+);
 
 export type CreateEvidenceSubmissionDto = z.input<typeof createEvidenceSubmissionSchema>;
 export type CreateEvidenceSubmissionOutput = z.output<typeof createEvidenceSubmissionSchema>;
+
+// Learner-facing variant (issue #34): identical validation, minus
+// `learnerId`. The learner-access route's :learnerId param (verified
+// against the learner's own session by LearnerSelfGuard) is the only
+// source of truth for whose evidence this is -- there is structurally no
+// field here a learner could use to submit evidence for another learner,
+// sibling included.
+export const learnerSubmitEvidenceSchema = createEvidenceSubmissionBaseSchema
+  .omit({ learnerId: true })
+  .refine(requiresTextContentOrFileUrl, requiresTextContentOrFileUrlRefinement());
+
+export type LearnerSubmitEvidenceDto = z.input<typeof learnerSubmitEvidenceSchema>;
+export type LearnerSubmitEvidenceOutput = z.output<typeof learnerSubmitEvidenceSchema>;
 
 export const validateEvidenceSubmissionSchema = z.object({
   status: z.enum(['VALIDATED', 'REJECTED']),
