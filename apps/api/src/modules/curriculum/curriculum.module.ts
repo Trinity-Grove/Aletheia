@@ -66,7 +66,11 @@ import { CurriculumPackService } from './application/curriculum-pack.service.js'
 import { CurriculumPackExportService } from './application/curriculum-pack-export.service.js';
 import { CurriculumPackImportService } from './application/curriculum-pack-import.service.js';
 import { LearnerCompetencyTrackingService } from './application/learner-competency-tracking.service.js';
-import { CURRICULUM_PUBLIC_API } from './application/public-api.js';
+import {
+  CURRICULUM_PUBLIC_API,
+  EVIDENCE_SUBMISSION_PUBLIC_API,
+  LEARNER_COMPETENCY_TRACKING_PUBLIC_API,
+} from './application/public-api.js';
 import { CurriculumController } from './presentation/curriculum.controller.js';
 import { ObjectiveController } from './presentation/objective.controller.js';
 import { DefinitionsController } from './presentation/definitions.controller.js';
@@ -183,7 +187,21 @@ import { DefinitionVersionOperationsController } from './presentation/definition
       provide: CURRICULUM_PUBLIC_API,
       useExisting: CurriculumService,
     },
+    {
+      provide: EVIDENCE_SUBMISSION_PUBLIC_API,
+      useExisting: EvidenceSubmissionService,
+    },
+    {
+      provide: LEARNER_COMPETENCY_TRACKING_PUBLIC_API,
+      useExisting: LearnerCompetencyTrackingService,
+    },
   ],
-  exports: [CURRICULUM_PUBLIC_API, CurriculumService, ObjectiveService],
+  exports: [
+    CURRICULUM_PUBLIC_API,
+    CurriculumService,
+    ObjectiveService,
+    EVIDENCE_SUBMISSION_PUBLIC_API,
+    LEARNER_COMPETENCY_TRACKING_PUBLIC_API,
+  ],
 })
 export class CurriculumModule {}
