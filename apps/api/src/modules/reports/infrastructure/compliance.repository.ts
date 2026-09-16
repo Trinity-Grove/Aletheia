@@ -37,10 +37,15 @@ export class ComplianceRepository {
               ? (dto.minInstructionalHours ?? null)
               : existing.minInstructionalHours,
           notes: dto.notes !== undefined ? (dto.notes ?? null) : existing.notes,
+          jurisdictionDefinitionId:
+            dto.jurisdictionDefinitionId !== undefined
+              ? (dto.jurisdictionDefinitionId ?? null)
+              : existing.jurisdictionDefinitionId,
         },
         include: {
           academicYear: true,
           learner: true,
+          jurisdictionDefinition: true,
         },
       });
     } else {
@@ -53,10 +58,12 @@ export class ComplianceRepository {
           minInstructionalDays: dto.minInstructionalDays ?? null,
           minInstructionalHours: dto.minInstructionalHours ?? null,
           notes: dto.notes ?? null,
+          jurisdictionDefinitionId: dto.jurisdictionDefinitionId ?? null,
         },
         include: {
           academicYear: true,
           learner: true,
+          jurisdictionDefinition: true,
         },
       });
     }
@@ -80,6 +87,7 @@ export class ComplianceRepository {
         include: {
           academicYear: true,
           learner: true,
+          jurisdictionDefinition: true,
         },
       });
       if (specific) return this.mapRequirement(specific);
@@ -95,6 +103,7 @@ export class ComplianceRepository {
       include: {
         academicYear: true,
         learner: true,
+        jurisdictionDefinition: true,
       },
     });
 
@@ -112,6 +121,7 @@ export class ComplianceRepository {
       include: {
         academicYear: true,
         learner: true,
+        jurisdictionDefinition: true,
       },
       orderBy: [{ createdAt: 'asc' }],
     });
@@ -150,6 +160,9 @@ export class ComplianceRepository {
       row.updatedAt,
       academicYearTitle,
       learnerName,
+      row.jurisdictionDefinitionId ?? null,
+      row.jurisdictionDefinition ? row.jurisdictionDefinition.code : null,
+      row.jurisdictionDefinition ? row.jurisdictionDefinition.version : null,
     );
   }
 }

@@ -117,6 +117,16 @@ export class AttendanceService {
     let requiredHours: number | null = null;
 
     if (academicYearId) {
+      // Issue #26: a requirement may now optionally carry
+      // jurisdictionDefinitionId (a versioned JurisdictionDefinition), but
+      // this method deliberately still reads only the requirement's own
+      // minInstructionalDays/minInstructionalHours -- exactly as before the
+      // new catalog existed. Blending in the linked definition's metadata
+      // as a fallback/source of truth is compliance-evaluation-engine work
+      // (the issue's "avaliação explicável da situação da família"), which
+      // is out of scope here. This keeps every family's compliance summary
+      // byte-for-byte identical regardless of whether jurisdictionDefinitionId
+      // is set.
       const requirement = await this.complianceRepo.findRequirement(familyId, academicYearId, learnerId);
       if (requirement) {
         requiredDays = requirement.minInstructionalDays ?? null;

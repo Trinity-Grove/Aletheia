@@ -783,16 +783,26 @@ model ComplianceRequirement {
   minInstructionalDays  Int?     @map("min_instructional_days")
   minInstructionalHours Float?   @map("min_instructional_hours")
   notes                 String?
+  // Opt-in link to a versioned JurisdictionDefinition (issue #26),
+  // additive alongside the free-text `jurisdiction` field above. Points at
+  // one specific version row (never a bare code), so a requirement stays
+  // pinned to the exact rule text it was set against even after a newer
+  // version publishes -- same "pin by id, not by code" discipline as
+  // ProgressionPolicy.competencyDefinitionId. Nullable and defaults to
+  // unset for every existing row: strangler-fig, no forced migration.
+  jurisdictionDefinitionId String?  @map("jurisdiction_definition_id") @db.Uuid
   createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  family       Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  learner      Learner?     @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  family                 Family                  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  academicYear           AcademicYear            @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  learner                Learner?                @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  jurisdictionDefinition JurisdictionDefinition? @relation(fields: [jurisdictionDefinitionId], references: [id], onDelete: SetNull)
 
   @@unique([familyId, academicYearId, learnerId])
   @@index([familyId])
   @@index([familyId, academicYearId])
+  @@index([jurisdictionDefinitionId])
   @@map("compliance_requirements")
 }
 
@@ -1128,6 +1138,40 @@ model PedagogicalModelDefinition {
   @@index([code])
   @@index([status])
   @@map("pedagogical_model_definitions")
+}
+
+// Versioned jurisdiction/compliance catalog (issue #26). Same Definition/
+// Version pattern as every other catalog table above -- a PUBLISHED row's
+// content, including `metadata`, is never mutated in place; a rule change
+// is a new version. `code` is a bare ISO 3166-1 alpha-2 country code today
+// ("BR") but is structured (see JURISDICTION_CODE_REGEX in
+// @aletheia/contracts) to also accept a subdivision suffix ("BR-SP",
+// "US-CA") for the state/province-level jurisdictions the issue names as
+// later slices, without any schema change.
+//
+// This is only the catalog itself -- not the compliance-evaluation engine
+// (explainable assessment, immutable per-report rule snapshots, manual
+// override) the issue also describes; those are separate follow-on work
+// that will read this table.
+model JurisdictionDefinition {
+  id            String           @id @default(uuid()) @db.Uuid
+  code          String
+  version       Int              @default(1)
+  status        DefinitionStatus @default(DRAFT)
+  schemaVersion String           @default("1.0.0") @map("schema_version")
+  name          String
+  description   String?
+  metadata      Json             @default("{}")
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  publishedAt   DateTime?        @map("published_at") @db.Timestamptz
+  deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
+
+  complianceRequirements ComplianceRequirement[]
+
+  @@unique([code, version])
+  @@index([code])
+  @@index([status])
+  @@map("jurisdiction_definitions")
 }
 
 // Evidence type catalog (issue #96 section 9): the kinds of evidence a

@@ -22,6 +22,7 @@ export * from './progression-evaluation.js';
 export * from './evidence-submission.js';
 export * from './assessment-result.js';
 export * from './bible-translation-definition.js';
+export * from './jurisdiction-definition.js';
 export * from './curriculum-pack.js';
 export * from './curriculum-pack-export.js';
 export * from './curriculum-pack-import.js';

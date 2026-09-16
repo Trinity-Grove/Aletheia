@@ -71,6 +71,12 @@ export const upsertComplianceRequirementSchema = z.object({
   minInstructionalDays: z.number().int().min(0).max(366).nullish(),
   minInstructionalHours: z.number().min(0).max(3000).nullish(),
   notes: z.string().nullish(),
+  // Opt-in link to a versioned JurisdictionDefinition (issue #26). Additive
+  // alongside the free-text `jurisdiction` field above -- setting this is
+  // how a family's compliance requirement is "migrated" onto the new
+  // catalog; a requirement that never sets it keeps behaving exactly as
+  // before (strangler-fig, no forced migration).
+  jurisdictionDefinitionId: z.string().uuid().nullish(),
 });
 
 export type UpsertComplianceRequirementDto = z.input<typeof upsertComplianceRequirementSchema>;
@@ -87,6 +93,12 @@ export const complianceRequirementResponseSchema = z.object({
   minInstructionalDays: z.number().int().nullable().optional(),
   minInstructionalHours: z.number().nullable().optional(),
   notes: z.string().nullable().optional(),
+  jurisdictionDefinitionId: z.string().uuid().nullable().optional(),
+  // Denormalized read convenience when jurisdictionDefinitionId is set, so
+  // callers don't need a second lookup to know which code/version governed
+  // this requirement.
+  jurisdictionDefinitionCode: z.string().nullable().optional(),
+  jurisdictionDefinitionVersion: z.number().int().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
