@@ -394,6 +394,39 @@ describe('FamilyConsentService', () => {
       expect(overview.terms[0]!.lastRecord?.id).toBe('rec-v1');
     });
 
+    it('computes PENDING status when older version was revoked before new version was published', async () => {
+      const defV1 = buildDefinition({ id: 'cd-v1', code: 'TERMS', version: 1, status: 'DEPRECATED' });
+      const defV2 = buildDefinition({ id: 'cd-v2', code: 'TERMS', version: 2, status: 'PUBLISHED' });
+      const v1Granted = buildRecord({
+        id: 'rec-v1-g',
+        consentDefinitionId: 'cd-v1',
+        action: 'GRANTED',
+        createdAt: new Date('2026-09-16T01:00:00Z'),
+      });
+      const v1Revoked = buildRecord({
+        id: 'rec-v1-r',
+        consentDefinitionId: 'cd-v1',
+        action: 'REVOKED',
+        createdAt: new Date('2026-09-16T02:00:00Z'),
+      });
+
+      const { service } = buildService(
+        {
+          findAllRecordsForFamily: jest.fn().mockResolvedValue([v1Revoked, v1Granted]),
+          findFamilyLearners: jest.fn().mockResolvedValue([]),
+        },
+        {
+          findPublished: jest.fn().mockResolvedValue([defV2]),
+          findByCode: jest.fn().mockResolvedValue([defV2, defV1]),
+        },
+      );
+
+      const overview = await service.getFamilyConsentOverview('fam-1');
+
+      expect(overview.terms[0]!.status).toBe('PENDING');
+      expect(overview.terms[0]!.lastRecord).toBeNull();
+    });
+
     it('computes PENDING status when no record exists for the term or any older version', async () => {
       const def = buildDefinition({ id: 'cd-new', code: 'NEW_TERMS', version: 1 });
 
@@ -604,6 +637,12 @@ describe('FamilyConsentService', () => {
 
       const { service } = buildService(
         {
+          findLearnerById: jest.fn().mockResolvedValue({
+            id: 'l-1',
+            familyId: 'fam-1',
+            firstName: 'Alice',
+            lastName: null,
+          }),
           findLatestRecord: jest
             .fn()
             .mockImplementation(async (_famId: string, defId: string, learnerId?: string | null) => {
@@ -675,6 +714,22 @@ describe('FamilyConsentService', () => {
 
       expect(result.compliant).toBe(true);
       expect(result.pendingMandatoryTerms).toHaveLength(0);
+    });
+
+    it('throws BadRequestException if learner does not belong to family', async () => {
+      const { service, familyRepo } = buildService({
+        findLearnerById: jest.fn().mockResolvedValue({
+          id: 'alien-learner',
+          familyId: 'other-family',
+          firstName: 'Alien',
+          lastName: null,
+        }),
+      });
+
+      await expect(
+        service.checkMandatoryCompliance('fam-1', 'alien-learner'),
+      ).rejects.toThrow(new BadRequestException('Learner does not belong to this family.'));
+      expect(familyRepo.findLearnerById).toHaveBeenCalledWith('alien-learner');
     });
   });
 

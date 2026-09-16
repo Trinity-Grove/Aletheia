@@ -130,16 +130,11 @@ export class FamilyConsentService implements PrivacyPublicApi {
           const olderRecord = allRecords.find(
             (r) => olderDefIds.has(r.consentDefinitionId) && (r.learnerId === null || r.learnerId === undefined),
           );
-          const hasOlderGranted = allRecords.some(
-            (r) =>
-              olderDefIds.has(r.consentDefinitionId) &&
-              (r.learnerId === null || r.learnerId === undefined) &&
-              r.action === 'GRANTED',
-          );
+          const hasOlderGranted = olderRecord?.action === 'GRANTED';
 
           if (hasOlderGranted) {
             status = 'OUTDATED';
-            lastRecord = olderRecord ? this.toRecordDto(olderRecord) : null;
+            lastRecord = this.toRecordDto(olderRecord);
           } else {
             status = 'PENDING';
             lastRecord = null;
@@ -170,13 +165,11 @@ export class FamilyConsentService implements PrivacyPublicApi {
             const olderRecord = allRecords.find(
               (r) => olderDefIds.has(r.consentDefinitionId) && r.learnerId === learner.id,
             );
-            const hasOlderGranted = allRecords.some(
-              (r) => olderDefIds.has(r.consentDefinitionId) && r.learnerId === learner.id && r.action === 'GRANTED',
-            );
+            const hasOlderGranted = olderRecord?.action === 'GRANTED';
 
             if (hasOlderGranted) {
               learnerStatus = 'OUTDATED';
-              lastRecord = olderRecord ? this.toRecordDto(olderRecord) : null;
+              lastRecord = this.toRecordDto(olderRecord);
             } else {
               learnerStatus = 'PENDING';
               lastRecord = null;
@@ -216,9 +209,21 @@ export class FamilyConsentService implements PrivacyPublicApi {
   }
 
   async checkMandatoryCompliance(familyId: string, learnerId?: string): Promise<ConsentComplianceCheckDto> {
+    if (learnerId) {
+      const learner = await this.repository.findLearnerById(learnerId);
+      if (!learner || learner.familyId !== familyId) {
+        throw new BadRequestException('Learner does not belong to this family.');
+      }
+    }
+
     const publishedDefs = await this.consentDefsRepo.findPublished();
     const mandatoryDefs = publishedDefs.filter((d) => d.mandatory);
     const pendingMandatoryTerms: ConsentDefinitionResponseDto[] = [];
+
+    const familyLearners =
+      !learnerId && mandatoryDefs.some((d) => d.scope === 'LEARNER')
+        ? await this.repository.findFamilyLearners(familyId)
+        : [];
 
     for (const def of mandatoryDefs) {
       if (def.scope === 'FAMILY') {
@@ -233,9 +238,8 @@ export class FamilyConsentService implements PrivacyPublicApi {
             pendingMandatoryTerms.push(this.toDefinitionDto(def));
           }
         } else {
-          const learners = await this.repository.findFamilyLearners(familyId);
           let allLearnersGranted = true;
-          for (const learner of learners) {
+          for (const learner of familyLearners) {
             const latest = await this.repository.findLatestRecord(familyId, def.id, learner.id);
             if (!latest || latest.action !== 'GRANTED') {
               allLearnersGranted = false;
