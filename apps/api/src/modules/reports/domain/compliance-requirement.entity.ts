@@ -14,6 +14,13 @@ export class ComplianceRequirementEntity {
     public readonly updatedAt: Date,
     public readonly academicYearTitle?: string,
     public readonly learnerName?: string,
+    // Opt-in link to a versioned JurisdictionDefinition (issue #26). null
+    // for every requirement not explicitly migrated onto the new catalog --
+    // the free-text `jurisdiction` field above keeps being the source of
+    // truth for those, completely unaffected.
+    public readonly jurisdictionDefinitionId?: string | null,
+    public readonly jurisdictionDefinitionCode?: string | null,
+    public readonly jurisdictionDefinitionVersion?: number | null,
   ) {}
 
   toResponseDto(): ComplianceRequirementResponseDto {
@@ -45,6 +52,15 @@ export class ComplianceRequirementEntity {
     }
     if (this.notes !== undefined) {
       dto.notes = this.notes;
+    }
+    if (this.jurisdictionDefinitionId !== undefined) {
+      dto.jurisdictionDefinitionId = this.jurisdictionDefinitionId;
+    }
+    if (this.jurisdictionDefinitionCode !== undefined) {
+      dto.jurisdictionDefinitionCode = this.jurisdictionDefinitionCode;
+    }
+    if (this.jurisdictionDefinitionVersion !== undefined) {
+      dto.jurisdictionDefinitionVersion = this.jurisdictionDefinitionVersion;
     }
 
     return dto;

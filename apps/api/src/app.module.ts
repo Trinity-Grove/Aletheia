@@ -17,6 +17,7 @@ import { SettingsModule } from './modules/settings/settings.module.js';
 import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { RemindersModule } from './modules/reminders/reminders.module.js';
 import { LearnerAccessModule } from './modules/learner-access/learner-access.module.js';
+import { JurisdictionsModule } from './modules/jurisdictions/jurisdictions.module.js';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { LearnerAccessModule } from './modules/learner-access/learner-access.mod
     DashboardModule,
     RemindersModule,
     LearnerAccessModule,
+    JurisdictionsModule,
   ],
   providers: [
     {
