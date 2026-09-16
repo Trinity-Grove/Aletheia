@@ -82,8 +82,13 @@ export class ReportController {
     @Res({ passthrough: true }) reply: FastifyReply,
   ): Promise<Buffer> {
     const { bytes, filename, documentHash } = await this.reportService.exportReportPdf(familyId, id);
+    const safeAscii = filename
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9._-]/g, '_');
+    const encoded = encodeURIComponent(filename);
     reply.header('Content-Type', 'application/pdf');
-    reply.header('Content-Disposition', `attachment; filename="${filename}"`);
+    reply.header('Content-Disposition', `attachment; filename="${safeAscii}"; filename*=UTF-8''${encoded}`);
     reply.header('X-Document-Hash', documentHash);
     return Buffer.from(bytes);
   }

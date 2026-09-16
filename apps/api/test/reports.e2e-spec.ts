@@ -165,6 +165,36 @@ describe('Compliance, Attendance & Reports E2E & Multi-Tenant Isolation', () => 
     // 4. ReportService mocking
     const reportService = app.get(ReportService);
     jest.spyOn(reportService, 'generateReport').mockImplementation(async (familyId: string, dto: GenerateReportDto) => {
+      const commonFields = {
+        learnerId: dto.learnerId,
+        learnerName: 'Learner A',
+        familyOrganizationName: 'Test Family Homeschool',
+        academicYearId: dto.academicYearId ?? null,
+        academicYearTitle: 'Academic Year 2026',
+        generatedDate: '2026-08-26',
+        generalNotes: dto.notes ?? null,
+      };
+
+      const content =
+        dto.type === 'ATTENDANCE_SUMMARY'
+          ? {
+              ...commonFields,
+              attendanceSummary: {
+                learnerId: dto.learnerId,
+                totalDaysLogged: 100,
+                presentDays: 98,
+                absentDays: 2,
+                totalHoursLogged: 400,
+                isCompliant: true,
+              },
+            }
+          : {
+              ...commonFields,
+              gradingScale: dto.gradingScale ?? 'MASTERY_QUALITATIVE',
+              subjectGrades: [],
+              attendanceSummary: null,
+            };
+
       const report: OfficialReportResponseDto = {
         id: randomUUID(),
         familyId,
@@ -174,13 +204,7 @@ describe('Compliance, Attendance & Reports E2E & Multi-Tenant Isolation', () => 
         type: dto.type,
         title: dto.title,
         gradingScale: dto.gradingScale ?? 'MASTERY_QUALITATIVE',
-        content: {
-          learnerId: dto.learnerId,
-          learnerName: 'Learner A',
-          academicYearId: dto.academicYearId ?? null,
-          subjectGrades: [],
-          notes: dto.notes ?? null,
-        },
+        content,
         generatedAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -413,6 +437,109 @@ describe('Compliance, Attendance & Reports E2E & Multi-Tenant Isolation', () => 
 
       expect(listAfterDel.status).toBe(200);
       expect(listAfterDel.body).toHaveLength(0);
+    });
+  });
+
+  describe('PDF Export (real renderers, #28)', () => {
+    it('exports an ACADEMIC_TRANSCRIPT report as a real, hashed PDF (existing behavior unchanged)', async () => {
+      const genRes = await supertest(app.getHttpServer())
+        .post(`/api/v1/families/${familyAId}/reports/generate`)
+        .set('Authorization', `Bearer ${guardianAToken}`)
+        .send({
+          learnerId: learnerAId,
+          academicYearId,
+          type: 'ACADEMIC_TRANSCRIPT',
+          title: 'Histórico Escolar Oficial 2026',
+          gradingScale: 'MASTERY_QUALITATIVE',
+          includeAttendance: true,
+        });
+      expect(genRes.status).toBe(201);
+
+      const pdfRes = await supertest(app.getHttpServer())
+        .get(`/api/v1/families/${familyAId}/reports/${genRes.body.id}/export/pdf`)
+        .set('Authorization', `Bearer ${guardianAToken}`)
+        .buffer(true)
+        .parse((res, callback) => {
+          const chunks: Buffer[] = [];
+          res.on('data', (chunk: Buffer) => chunks.push(chunk));
+          res.on('end', () => callback(null, Buffer.concat(chunks)));
+        });
+
+      expect(pdfRes.status).toBe(200);
+      expect(pdfRes.headers['content-type']).toBe('application/pdf');
+      expect(pdfRes.headers['x-document-hash']).toMatch(/^[0-9a-f]{64}$/);
+      expect(pdfRes.body.slice(0, 5).toString('latin1')).toBe('%PDF-');
+    });
+
+    it('exports an ATTENDANCE_SUMMARY (declaração de frequência) report as a real, hashed PDF', async () => {
+      const genRes = await supertest(app.getHttpServer())
+        .post(`/api/v1/families/${familyAId}/reports/generate`)
+        .set('Authorization', `Bearer ${guardianAToken}`)
+        .send({
+          learnerId: learnerAId,
+          academicYearId,
+          type: 'ATTENDANCE_SUMMARY',
+          title: 'Declaração de Frequência 2026',
+        });
+      expect(genRes.status).toBe(201);
+      expect(genRes.body.type).toBe('ATTENDANCE_SUMMARY');
+
+      const pdfRes = await supertest(app.getHttpServer())
+        .get(`/api/v1/families/${familyAId}/reports/${genRes.body.id}/export/pdf`)
+        .set('Authorization', `Bearer ${guardianAToken}`)
+        .buffer(true)
+        .parse((res, callback) => {
+          const chunks: Buffer[] = [];
+          res.on('data', (chunk: Buffer) => chunks.push(chunk));
+          res.on('end', () => callback(null, Buffer.concat(chunks)));
+        });
+
+      expect(pdfRes.status).toBe(200);
+      expect(pdfRes.headers['content-type']).toBe('application/pdf');
+      expect(pdfRes.headers['x-document-hash']).toMatch(/^[0-9a-f]{64}$/);
+      expect(pdfRes.body.slice(0, 5).toString('latin1')).toBe('%PDF-');
+    });
+
+    it('never lets one family retrieve or export a PDF for another family\'s report', async () => {
+      // Family A generates an attendance certificate.
+      const genRes = await supertest(app.getHttpServer())
+        .post(`/api/v1/families/${familyAId}/reports/generate`)
+        .set('Authorization', `Bearer ${guardianAToken}`)
+        .send({
+          learnerId: learnerAId,
+          academicYearId,
+          type: 'ATTENDANCE_SUMMARY',
+          title: 'Declaração de Frequência 2026 — Família A',
+        });
+      expect(genRes.status).toBe(201);
+      const familyAReportId = genRes.body.id;
+
+      // Guardian B (member of family B only) cannot reach family A's route at all.
+      const crossFamilyRoute = await supertest(app.getHttpServer())
+        .get(`/api/v1/families/${familyAId}/reports/${familyAReportId}/export/pdf`)
+        .set('Authorization', `Bearer ${guardianBToken}`);
+      expect(crossFamilyRoute.status).toBe(403);
+
+      // Guardian B, scoped to their own family's route, still can't fetch
+      // family A's report id -- it's not found in family B's report store.
+      const scopedToOwnFamily = await supertest(app.getHttpServer())
+        .get(`/api/v1/families/${familyBId}/reports/${familyAReportId}/export/pdf`)
+        .set('Authorization', `Bearer ${guardianBToken}`);
+      expect(scopedToOwnFamily.status).toBe(404);
+
+      // Family A can still export its own document (nothing was corrupted
+      // by the isolation attempts above).
+      const ownExport = await supertest(app.getHttpServer())
+        .get(`/api/v1/families/${familyAId}/reports/${familyAReportId}/export/pdf`)
+        .set('Authorization', `Bearer ${guardianAToken}`)
+        .buffer(true)
+        .parse((res, callback) => {
+          const chunks: Buffer[] = [];
+          res.on('data', (chunk: Buffer) => chunks.push(chunk));
+          res.on('end', () => callback(null, Buffer.concat(chunks)));
+        });
+      expect(ownExport.status).toBe(200);
+      expect(ownExport.body.slice(0, 5).toString('latin1')).toBe('%PDF-');
     });
   });
 });
