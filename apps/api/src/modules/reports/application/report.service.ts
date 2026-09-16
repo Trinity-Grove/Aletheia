@@ -4,12 +4,14 @@ import { ReportRepository } from '../infrastructure/report.repository.js';
 import { AttendanceService } from './attendance.service.js';
 import { GradeConverter } from '../domain/grade-converter.js';
 import { TranscriptPdfRenderer } from './transcript-pdf.renderer.js';
+import { AttendanceCertificatePdfRenderer } from './attendance-certificate-pdf.renderer.js';
 import {
   SETTINGS_PUBLIC_API,
   type SettingsPublicApi,
 } from '../../settings/application/public-api.js';
 import type {
   AcademicTranscriptDto,
+  AttendanceCertificateDto,
   ExportFormat,
   GenerateReportDto,
   OfficialReportResponseDto,
@@ -24,6 +26,7 @@ export class ReportService {
     private readonly reportRepo: ReportRepository,
     private readonly attendanceService: AttendanceService,
     private readonly pdfRenderer: TranscriptPdfRenderer,
+    private readonly attendanceCertificateRenderer: AttendanceCertificatePdfRenderer,
     @Inject(SETTINGS_PUBLIC_API)
     private readonly settingsApi: SettingsPublicApi,
   ) {}
@@ -48,18 +51,7 @@ export class ReportService {
         break;
       }
       case 'ATTENDANCE_SUMMARY': {
-        const attendanceSummary = await this.attendanceService.getComplianceSummary(
-          familyId,
-          dto.learnerId,
-          dto.academicYearId ?? undefined,
-        );
-        reportContent = {
-          learnerId: dto.learnerId,
-          learnerName: learner.preferredName || `${learner.firstName}${learner.lastName ? ' ' + learner.lastName : ''}`,
-          academicYearId: dto.academicYearId ?? null,
-          attendanceSummary,
-          notes: dto.notes ?? null,
-        };
+        reportContent = await this.buildAttendanceCertificateContent(familyId, dto, learner);
         break;
       }
       case 'LEARNING_PORTFOLIO_DOSSIER':
@@ -147,9 +139,9 @@ export class ReportService {
   ): Promise<{ bytes: Uint8Array; filename: string; documentHash: string }> {
     const report = await this.getReport(familyId, id);
 
-    if (report.type !== 'ACADEMIC_TRANSCRIPT') {
+    if (report.type !== 'ACADEMIC_TRANSCRIPT' && report.type !== 'ATTENDANCE_SUMMARY') {
       throw new BadRequestException(
-        `PDF export is only available for ACADEMIC_TRANSCRIPT reports (this report is ${report.type}).`,
+        `PDF export is only available for ACADEMIC_TRANSCRIPT or ATTENDANCE_SUMMARY reports (this report is ${report.type}).`,
       );
     }
 
@@ -159,7 +151,11 @@ export class ReportService {
       generatedByLabel = user?.fullName || user?.email || null;
     }
 
-    const { bytes, documentHash } = await this.pdfRenderer.render(report, generatedByLabel);
+    const { bytes, documentHash } =
+      report.type === 'ATTENDANCE_SUMMARY'
+        ? await this.attendanceCertificateRenderer.render(report, generatedByLabel)
+        : await this.pdfRenderer.render(report, generatedByLabel);
+
     return {
       bytes,
       documentHash,
@@ -282,6 +278,50 @@ export class ReportService {
     };
 
     return transcript;
+  }
+
+  private async buildAttendanceCertificateContent(
+    familyId: string,
+    dto: GenerateReportDto,
+    learner: any,
+  ): Promise<AttendanceCertificateDto> {
+    const [family, settings] = await Promise.all([
+      this.prisma.family.findUnique({ where: { id: familyId } }),
+      this.settingsApi.getSettings(familyId),
+    ]);
+
+    let academicYearTitle: string | null = null;
+    if (dto.academicYearId) {
+      const year = await this.prisma.academicYear.findFirst({
+        where: { id: dto.academicYearId, familyId },
+      });
+      if (year) {
+        academicYearTitle = year.title;
+      }
+    }
+
+    const attendanceSummary = await this.attendanceService.getComplianceSummary(
+      familyId,
+      dto.learnerId,
+      dto.academicYearId ?? undefined,
+    );
+
+    const certificate: AttendanceCertificateDto = {
+      learnerId: learner.id,
+      learnerName: learner.preferredName || `${learner.firstName}${learner.lastName ? ' ' + learner.lastName : ''}`,
+      learnerBirthDate: learner.birthDate ? learner.birthDate.toISOString().slice(0, 10) : null,
+      gradeLevel: learner.customGrade ?? learner.stage ?? null,
+      academicYearId: dto.academicYearId ?? null,
+      academicYearTitle: academicYearTitle ?? null,
+      familyOrganizationName:
+        settings.homeschoolName?.trim() ||
+        (family ? `${family.name} Homeschool` : 'Homeschool Academy'),
+      generatedDate: new Date().toISOString().slice(0, 10),
+      attendanceSummary,
+      generalNotes: dto.notes ?? null,
+    };
+
+    return certificate;
   }
 
   private convertReportToCsv(report: OfficialReportResponseDto): string {

@@ -305,7 +305,8 @@ export function ReportGeneratorView({
                       CSV
                     </Button>
 
-                    {onExportPdf && report.type === 'ACADEMIC_TRANSCRIPT' && (
+                    {onExportPdf &&
+                      (report.type === 'ACADEMIC_TRANSCRIPT' || report.type === 'ATTENDANCE_SUMMARY') && (
                       <Button
                         variant="secondary"
                         size="sm"

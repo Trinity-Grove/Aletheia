@@ -7,6 +7,7 @@ describe('ReportService', () => {
   let reportRepo: any;
   let attendanceService: any;
   let pdfRenderer: any;
+  let attendanceCertificateRenderer: any;
   let settingsApi: any;
 
   const FAMILY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
@@ -159,6 +160,13 @@ describe('ReportService', () => {
       }),
     };
 
+    attendanceCertificateRenderer = {
+      render: jest.fn().mockResolvedValue({
+        bytes: new Uint8Array([4, 5, 6]),
+        documentHash: 'b'.repeat(64),
+      }),
+    };
+
     settingsApi = {
       getSettings: jest.fn().mockResolvedValue({
         id: 'settings-1',
@@ -177,7 +185,14 @@ describe('ReportService', () => {
       }),
     };
 
-    service = new ReportService(prisma, reportRepo, attendanceService, pdfRenderer, settingsApi);
+    service = new ReportService(
+      prisma,
+      reportRepo,
+      attendanceService,
+      pdfRenderer,
+      attendanceCertificateRenderer,
+      settingsApi,
+    );
   });
 
   describe('Generate Academic Transcript', () => {
@@ -274,6 +289,16 @@ describe('ReportService', () => {
         LEARNER_ID,
         YEAR_ID,
       );
+      expect(reportRepo.create).toHaveBeenCalledWith(
+        FAMILY_ID,
+        expect.objectContaining({ type: 'ATTENDANCE_SUMMARY' }),
+        expect.objectContaining({
+          learnerId: LEARNER_ID,
+          familyOrganizationName: 'Smith Homeschool',
+          attendanceSummary: expect.objectContaining({ isCompliant: true }),
+        }),
+        null,
+      );
     });
 
     it('throws NotFoundException when learner not found', async () => {
@@ -355,15 +380,15 @@ describe('ReportService', () => {
       expect(pdfRenderer.render).toHaveBeenCalledWith(expect.anything(), 'Jane Guardian');
     });
 
-    it('rejects PDF export for report types other than ACADEMIC_TRANSCRIPT', async () => {
+    it('rejects PDF export for report types other than ACADEMIC_TRANSCRIPT / ATTENDANCE_SUMMARY', async () => {
       reportRepo.findById.mockResolvedValueOnce(
         new OfficialReportEntity(
           REPORT_ID,
           FAMILY_ID,
           LEARNER_ID,
           YEAR_ID,
-          'ATTENDANCE_SUMMARY',
-          'Attendance Report',
+          'LEARNING_PORTFOLIO_DOSSIER',
+          'Portfolio Dossier',
           'LETTER_A_F',
           {},
           new Date(),
@@ -373,9 +398,44 @@ describe('ReportService', () => {
       );
 
       await expect(service.exportReportPdf(FAMILY_ID, REPORT_ID)).rejects.toThrow(
-        'only available for ACADEMIC_TRANSCRIPT',
+        'only available for ACADEMIC_TRANSCRIPT or ATTENDANCE_SUMMARY',
       );
       expect(pdfRenderer.render).not.toHaveBeenCalled();
+      expect(attendanceCertificateRenderer.render).not.toHaveBeenCalled();
+    });
+
+    it('renders an attendance certificate PDF via the dedicated renderer for ATTENDANCE_SUMMARY reports', async () => {
+      reportRepo.findById.mockResolvedValueOnce(
+        new OfficialReportEntity(
+          REPORT_ID,
+          FAMILY_ID,
+          LEARNER_ID,
+          YEAR_ID,
+          'ATTENDANCE_SUMMARY',
+          'Attendance Certificate 2026',
+          'MASTERY_QUALITATIVE',
+          {
+            learnerName: 'Alice',
+            familyOrganizationName: 'Smith Homeschool',
+            generatedDate: '2026-08-26',
+            attendanceSummary: { totalDaysLogged: 100, presentDays: 98, absentDays: 2, totalHoursLogged: 400, isCompliant: true },
+          },
+          new Date(),
+          new Date(),
+          new Date(),
+        ),
+      );
+
+      const result = await service.exportReportPdf(FAMILY_ID, REPORT_ID);
+
+      expect(attendanceCertificateRenderer.render).toHaveBeenCalledWith(
+        expect.objectContaining({ id: REPORT_ID, type: 'ATTENDANCE_SUMMARY' }),
+        null,
+      );
+      expect(pdfRenderer.render).not.toHaveBeenCalled();
+      expect(result.documentHash).toBe('b'.repeat(64));
+      expect(result.filename).toContain('.pdf');
+      expect(result.bytes).toBeInstanceOf(Uint8Array);
     });
   });
 });

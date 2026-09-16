@@ -86,3 +86,18 @@ export const academicTranscriptSchema = z.object({
 });
 
 export type AcademicTranscriptDto = z.infer<typeof academicTranscriptSchema>;
+
+export const attendanceCertificateSchema = z.object({
+  learnerId: z.string().uuid(),
+  learnerName: z.string(),
+  learnerBirthDate: z.string().nullable().optional(),
+  gradeLevel: z.string().nullable().optional(),
+  academicYearId: z.string().uuid().nullable().optional(),
+  academicYearTitle: z.string().nullable().optional(),
+  familyOrganizationName: z.string(),
+  generatedDate: z.string(),
+  attendanceSummary: attendanceComplianceSummarySchema,
+  generalNotes: z.string().nullable().optional(),
+});
+
+export type AttendanceCertificateDto = z.infer<typeof attendanceCertificateSchema>;
