@@ -41,3 +41,4 @@ export * from './notification.js';
 export * from './backup.js';
 export * from './dashboard.js';
 export * from './learner-access.js';
+export * from './consent-definition.js';
