@@ -170,4 +170,34 @@ describe('Family curriculum pack instances (real Postgres)', () => {
       .send({ sourcePackId: draft.body.id })
       .expect(400);
   });
+
+  it('lists published curriculum packs available for families to install', async () => {
+    const published = await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-packs')
+      .set('Cookie', adminCookie)
+      .send({ code: `FAMILY.AVAILABLE.PACK.${Date.now()}`, name: 'Available Catalog Pack' })
+      .expect(201);
+
+    await supertest(app.getHttpServer())
+      .patch(`/api/v1/admin/curriculum-packs/${published.body.id}/status`)
+      .set('Cookie', adminCookie)
+      .send({ status: 'PUBLISHED' })
+      .expect(200);
+
+    const draft = await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-packs')
+      .set('Cookie', adminCookie)
+      .send({ code: `FAMILY.DRAFT.PACK.${Date.now()}`, name: 'Hidden Draft Pack' })
+      .expect(201);
+
+    const res = await supertest(app.getHttpServer())
+      .get(`/api/v1/families/${familyId}/curriculum-packs/available`)
+      .set('Cookie', familyCookie)
+      .expect(200);
+
+    expect(Array.isArray(res.body)).toBe(true);
+    const codes = res.body.map((p: { code: string }) => p.code);
+    expect(codes).toContain(published.body.code);
+    expect(codes).not.toContain(draft.body.code);
+  });
 });

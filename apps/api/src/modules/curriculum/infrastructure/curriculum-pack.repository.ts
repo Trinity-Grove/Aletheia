@@ -39,6 +39,13 @@ export class CurriculumPackRepository {
     return this.prisma.curriculumPack.findMany({ orderBy: [{ code: 'asc' }, { version: 'desc' }] });
   }
 
+  listPublishedPacks(): Promise<CurriculumPack[]> {
+    return this.prisma.curriculumPack.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: [{ name: 'asc' }, { version: 'desc' }],
+    });
+  }
+
   findPackById(id: string): Promise<CurriculumPack | null> {
     return this.prisma.curriculumPack.findUnique({ where: { id } });
   }

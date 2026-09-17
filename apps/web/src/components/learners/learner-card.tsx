@@ -1,14 +1,15 @@
-'use client';
-
-import React from 'react';
+import React, { useState } from 'react';
 import { AletheiaIcon, Badge, Button, Card } from '@aletheia/ui';
 import type { EducationalStage, LearnerResponseDto } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
+import { LearnerAchievementsModal } from './learner-achievements-modal';
 
 export interface LearnerCardProps {
   learner: LearnerResponseDto;
   onEdit?: ((learner: LearnerResponseDto) => void) | undefined;
   onToggleArchive?: ((learner: LearnerResponseDto) => void) | undefined;
+  onManageAccess?: ((learner: LearnerResponseDto) => void) | undefined;
+  familyId?: string | undefined;
 }
 
 const stageLabels: Record<EducationalStage, string> = {
@@ -32,7 +33,8 @@ function calculateAge(birthDateStr?: string | null): string | null {
   return age > 0 ? `${age} anos` : 'Menos de 1 ano';
 }
 
-export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardProps) {
+export function LearnerCard({ learner, onEdit, onToggleArchive, onManageAccess, familyId }: LearnerCardProps) {
+  const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const isArchived = Boolean(learner.archivedAt);
   const displayName = learner.preferredName || learner.firstName;
   const initial = (displayName.charAt(0) || '?').toUpperCase();
@@ -40,6 +42,7 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
   const age = calculateAge(learner.birthDate);
 
   return (
+    <>
     <Card
       variant={isArchived ? 'flat' : 'default'}
       shadow={isArchived ? 'none' : 'sm'}
@@ -198,6 +201,22 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
           <Button
             variant="secondary"
             size="sm"
+            data-testid={`achievements-btn-${learner.id}`}
+            onClick={() => setIsAchievementsOpen(true)}
+          >
+            Medalhas 🏅
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            data-testid={`manage-access-btn-${learner.id}`}
+            onClick={() => onManageAccess?.(learner)}
+          >
+            Acesso Aluno (PIN)
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
             data-testid={`edit-learner-btn-${learner.id}`}
             onClick={() => onEdit?.(learner)}
           >
@@ -226,5 +245,16 @@ export function LearnerCard({ learner, onEdit, onToggleArchive }: LearnerCardPro
         </Can>
       </div>
     </Card>
+
+    {isAchievementsOpen && (
+      <LearnerAchievementsModal
+        isOpen={isAchievementsOpen}
+        onClose={() => setIsAchievementsOpen(false)}
+        familyId={familyId || (typeof window !== 'undefined' ? localStorage.getItem('familyId') : null) || ''}
+        learnerId={learner.id}
+        learnerName={displayName}
+      />
+    )}
+    </>
   );
 }

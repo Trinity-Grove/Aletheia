@@ -15,6 +15,8 @@ import {
 import { ProductShell } from '../src/components/layout/product-shell';
 import { LearnerFocusHeader } from '../src/components/dashboard/learner-focus-header';
 import { useDashboard } from '../src/components/dashboard/use-dashboard';
+import { useDailyScripture } from '../src/components/dashboard/use-daily-scripture';
+import { PrivacyComplianceBanner } from '../src/components/settings/privacy-compliance-banner';
 import type { LearnerSummaryDto } from '@aletheia/contracts';
 
 const MODULE_ACTIONS = [
@@ -54,6 +56,8 @@ export default function HomePage() {
     retry,
     completeActivity,
   } = useDashboard();
+
+  const dailyScripture = useDailyScripture(data?.family.id, data?.date);
 
   const activities: DailyActivityItem[] = data
     ? data.activities.map((activity) => ({
@@ -96,6 +100,7 @@ export default function HomePage() {
       onSelectLearner={setActiveLearnerId}
     >
       <div className="dashboard-page">
+        <PrivacyComplianceBanner />
         <PageHeader
           eyebrow="Trinity Grove • Aletheia"
           title="Faithful learning, thoughtfully guided."
@@ -170,9 +175,44 @@ export default function HomePage() {
 
                 <div className="dashboard-page-scripture">
                   <ScriptureCard
-                    verseText="Ensina a criança no caminho em que deve andar, e, ainda quando for velho, não se desviará dele."
-                    citation="Provérbios 22:6 (ARA)"
+                    verseText={dailyScripture.verseText}
+                    citation={dailyScripture.citation}
                   />
+                  {dailyScripture.isFromFamilyDevotional ? (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.375rem', padding: '0 0.25rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--sage-dark)', fontWeight: 600 }}>
+                        ✦ Devocional da Família de Hoje
+                      </span>
+                      <a
+                        href="/devotional"
+                        style={{
+                          fontSize: '0.75rem',
+                          color: 'var(--forest)',
+                          textDecoration: 'underline',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Ver devocional completo →
+                      </a>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.375rem', padding: '0 0.25rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        Versículo do Dia
+                      </span>
+                      <a
+                        href="/devotional"
+                        style={{
+                          fontSize: '0.75rem',
+                          color: 'var(--forest)',
+                          textDecoration: 'underline',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Registrar devocional de hoje →
+                      </a>
+                    </div>
+                  )}
                 </div>
 
                 <div className="dashboard-page-grid">
