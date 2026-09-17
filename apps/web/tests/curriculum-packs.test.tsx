@@ -89,6 +89,7 @@ describe('CurriculumPacksGallery (Task 7 & 8: Plugins / Pacotes Curriculares)', 
 
     // pack-1 is already installed
     expect(screen.getByTestId('installed-badge-pack-1')).toBeInTheDocument();
+    expect(screen.getByTestId('manage-pack-btn-pack-1')).toBeInTheDocument();
 
     // pack-2 is available for install
     expect(screen.getByTestId('install-pack-btn-pack-2')).toBeInTheDocument();
@@ -139,6 +140,236 @@ describe('CurriculumPacksGallery (Task 7 & 8: Plugins / Pacotes Curriculares)', 
         })
       );
       expect(screen.getByTestId('installed-badge-pack-2')).toBeInTheDocument();
+      expect(screen.getByTestId('manage-pack-btn-pack-2')).toBeInTheDocument();
+    });
+  });
+
+  it('opens family pack management modal, displays media list, and attaches new media link', async () => {
+    let addMediaPayload: Record<string, unknown> | null = null;
+
+    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.includes('/available')) {
+        return { ok: true, json: async () => mockPublishedPacks } as Response;
+      }
+      if (url.endsWith('/curriculum-packs')) {
+        return { ok: true, json: async () => mockInstalledPacks } as Response;
+      }
+      if (url.includes('/media') && init?.method === 'POST') {
+        addMediaPayload = JSON.parse(String(init.body));
+        return {
+          ok: true,
+          status: 201,
+          json: async () => ({
+            id: 'media-new-1',
+            familyCurriculumPackId: 'inst-1',
+            mediaType: 'DOCUMENT',
+            sourceType: 'EXTERNAL_URL',
+            title: 'Guia de Leitura em PDF',
+            url: 'https://exemplo.com/guia.pdf',
+            description: 'Guia complementar de apoio',
+            createdAt: '2026-09-17T12:00:00.000Z',
+            updatedAt: '2026-09-17T12:00:00.000Z',
+          }),
+        } as Response;
+      }
+      if (url.includes('/media')) {
+        return {
+          ok: true,
+          json: async () => [
+            {
+              id: 'media-existing-1',
+              familyCurriculumPackId: 'inst-1',
+              mediaType: 'IMAGE',
+              sourceType: 'EXTERNAL_URL',
+              title: 'Mapa do Trivium Clássico',
+              url: 'https://exemplo.com/mapa.png',
+              description: 'Infográfico explicativo',
+              createdAt: '2026-09-16T10:00:00.000Z',
+              updatedAt: '2026-09-16T10:00:00.000Z',
+            },
+          ],
+        } as Response;
+      }
+      if (url.includes('/revisions')) {
+        return {
+          ok: true,
+          json: async () => [
+            {
+              id: 'rev-1',
+              familyCurriculumPackId: 'inst-1',
+              revision: 1,
+              document: { pack: { code: 'CLASSICAL_TRIVIUM', name: 'Trivium Clássico' } },
+              createdAt: '2026-09-15T00:00:00.000Z',
+            },
+          ],
+        } as Response;
+      }
+      return { ok: false, status: 404 } as Response;
+    });
+
+    render(<CurriculumPacksGallery familyId="fam-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('manage-pack-btn-pack-1')).toBeInTheDocument();
+    });
+
+    // Open management modal
+    fireEvent.click(screen.getByTestId('manage-pack-btn-pack-1'));
+
+    expect(screen.getByTestId('family-pack-modal')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledWith(
+        '/api/v1/families/fam-1/curriculum-packs/inst-1/media',
+        expect.objectContaining({ credentials: 'include' })
+      );
+      expect(screen.getByText('Mapa do Trivium Clássico')).toBeInTheDocument();
+    });
+
+    // Fill in new media form
+    fireEvent.change(screen.getByTestId('pack-media-type-select'), {
+      target: { value: 'DOCUMENT' },
+    });
+    fireEvent.change(screen.getByTestId('pack-media-title-input'), {
+      target: { value: 'Guia de Leitura em PDF' },
+    });
+    fireEvent.change(screen.getByTestId('pack-media-url-input'), {
+      target: { value: 'https://exemplo.com/guia.pdf' },
+    });
+    fireEvent.change(screen.getByTestId('pack-media-description-input'), {
+      target: { value: 'Guia complementar de apoio' },
+    });
+
+    // Click attach button
+    fireEvent.click(screen.getByTestId('add-pack-media-btn'));
+
+    await waitFor(() => {
+      expect(addMediaPayload).toEqual({
+        sourceType: 'EXTERNAL_URL',
+        mediaType: 'DOCUMENT',
+        title: 'Guia de Leitura em PDF',
+        url: 'https://exemplo.com/guia.pdf',
+        description: 'Guia complementar de apoio',
+      });
+      expect(screen.getByText('Guia de Leitura em PDF')).toBeInTheDocument();
+      expect(screen.getByTestId('pack-modal-success')).toHaveTextContent(/Mídia complementar anexada com sucesso/i);
+    });
+  });
+
+  it('switches to revisions tab and displays pack revision history', async () => {
+    vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes('/available')) {
+        return { ok: true, json: async () => mockPublishedPacks } as Response;
+      }
+      if (url.endsWith('/curriculum-packs')) {
+        return { ok: true, json: async () => mockInstalledPacks } as Response;
+      }
+      if (url.includes('/media')) {
+        return { ok: true, json: async () => [] } as Response;
+      }
+      if (url.includes('/revisions')) {
+        return {
+          ok: true,
+          json: async () => [
+            {
+              id: 'rev-2',
+              familyCurriculumPackId: 'inst-1',
+              revision: 2,
+              document: { pack: { code: 'CLASSICAL_TRIVIUM', name: 'Trivium Clássico' } },
+              createdAt: '2026-09-16T12:00:00.000Z',
+            },
+            {
+              id: 'rev-1',
+              familyCurriculumPackId: 'inst-1',
+              revision: 1,
+              document: { pack: { code: 'CLASSICAL_TRIVIUM', name: 'Trivium Clássico' } },
+              createdAt: '2026-09-15T00:00:00.000Z',
+            },
+          ],
+        } as Response;
+      }
+      return { ok: false, status: 404 } as Response;
+    });
+
+    render(<CurriculumPacksGallery familyId="fam-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('manage-pack-btn-pack-1')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('manage-pack-btn-pack-1'));
+
+    expect(screen.getByTestId('family-pack-modal')).toBeInTheDocument();
+
+    // Click on revisions tab
+    fireEvent.click(screen.getByTestId('pack-modal-tab-revisions'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('pack-revisions-list')).toBeInTheDocument();
+      expect(screen.getByText(/Revisão 2/i)).toBeInTheDocument();
+      expect(screen.getByText(/Revisão 1/i)).toBeInTheDocument();
+    });
+  });
+
+  it('allows deleting an attached media from the family pack', async () => {
+    let deletedId: string | null = null;
+
+    vi.spyOn(global, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.includes('/available')) {
+        return { ok: true, json: async () => mockPublishedPacks } as Response;
+      }
+      if (url.endsWith('/curriculum-packs')) {
+        return { ok: true, json: async () => mockInstalledPacks } as Response;
+      }
+      if (url.includes('/media/media-to-delete') && init?.method === 'DELETE') {
+        deletedId = 'media-to-delete';
+        return { ok: true, status: 204 } as Response;
+      }
+      if (url.includes('/media')) {
+        return {
+          ok: true,
+          json: async () => [
+            {
+              id: 'media-to-delete',
+              familyCurriculumPackId: 'inst-1',
+              mediaType: 'IMAGE',
+              sourceType: 'EXTERNAL_URL',
+              title: 'Imagem Para Exclusão',
+              url: 'https://exemplo.com/del.png',
+              description: null,
+              createdAt: '2026-09-16T10:00:00.000Z',
+              updatedAt: '2026-09-16T10:00:00.000Z',
+            },
+          ],
+        } as Response;
+      }
+      if (url.includes('/revisions')) {
+        return { ok: true, json: async () => [] } as Response;
+      }
+      return { ok: false, status: 404 } as Response;
+    });
+
+    render(<CurriculumPacksGallery familyId="fam-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('manage-pack-btn-pack-1')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('manage-pack-btn-pack-1'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Imagem Para Exclusão')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('delete-pack-media-btn-media-to-delete'));
+
+    await waitFor(() => {
+      expect(deletedId).toBe('media-to-delete');
+      expect(screen.queryByText('Imagem Para Exclusão')).not.toBeInTheDocument();
+      expect(screen.getByTestId('pack-modal-success')).toHaveTextContent(/Mídia removida com sucesso/i);
     });
   });
 });

@@ -6,6 +6,7 @@ import type {
   CurriculumPackResponseDto,
   FamilyCurriculumPackResponseDto,
 } from '@aletheia/contracts';
+import { FamilyCurriculumPackModal } from './family-curriculum-pack-modal';
 
 interface CurriculumPacksGalleryProps {
   familyId: string;
@@ -16,6 +17,10 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
   const [installedPacks, setInstalledPacks] = useState<FamilyCurriculumPackResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [installingId, setInstallingId] = useState<string | null>(null);
+  const [managingPack, setManagingPack] = useState<{
+    installed: FamilyCurriculumPackResponseDto;
+    catalog: CurriculumPackResponseDto | null;
+  } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [error, setError] = useState<string | null>(null);
@@ -366,24 +371,36 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
 
                 <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
                   {isInstalled ? (
-                    <div
-                      data-testid={`installed-badge-${pack.id}`}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '0.5rem 0.75rem',
-                        backgroundColor: 'var(--sage-soft)',
-                        borderRadius: 'var(--radius-md)',
-                        color: 'var(--forest)',
-                        fontSize: '0.8125rem',
-                        fontWeight: 700,
-                      }}
-                    >
-                      <span>✓ Instalado no Currículo</span>
-                      <span style={{ fontSize: '0.75rem', opacity: 0.85, fontWeight: 500 }}>
-                        Rev. {installedInstance?.revision ?? 1}
-                      </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+                      <div
+                        data-testid={`installed-badge-${pack.id}`}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0.5rem 0.75rem',
+                          backgroundColor: 'var(--sage-soft)',
+                          borderRadius: 'var(--radius-md)',
+                          color: 'var(--forest)',
+                          fontSize: '0.8125rem',
+                          fontWeight: 700,
+                        }}
+                      >
+                        <span>✓ Instalado no Currículo</span>
+                        <span style={{ fontSize: '0.75rem', opacity: 0.85, fontWeight: 500 }}>
+                          Rev. {installedInstance?.revision ?? 1}
+                        </span>
+                      </div>
+
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        data-testid={`manage-pack-btn-${pack.id}`}
+                        onClick={() => setManagingPack({ installed: installedInstance!, catalog: pack })}
+                        style={{ width: '100%', fontSize: '0.8125rem', fontWeight: 600 }}
+                      >
+                        Gerenciar Pacote & Mídias ⚙️
+                      </Button>
                     </div>
                   ) : (
                     <Button
@@ -402,6 +419,15 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
           })}
         </div>
       )}
+
+      {/* Modal de Gestão de Mídias e Detalhes do Pacote */}
+      <FamilyCurriculumPackModal
+        isOpen={Boolean(managingPack)}
+        onClose={() => setManagingPack(null)}
+        familyId={familyId}
+        installedPack={managingPack?.installed ?? null}
+        catalogPack={managingPack?.catalog ?? null}
+      />
     </div>
   );
 }
