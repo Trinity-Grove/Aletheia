@@ -12,7 +12,6 @@ describe('Privacy & Versioned Consent Integration (real Postgres)', () => {
   let guardianBCookie: string;
 
   let guardianAUserId: string;
-  let guardianBUserId: string;
 
   let familyAId: string;
   let familyBId: string;
@@ -82,7 +81,6 @@ describe('Privacy & Versioned Consent Integration (real Postgres)', () => {
       .send({ email: guardianBEmail, password: 'StrongPassword123!', fullName: 'Guardian Beta' })
       .expect(201);
     guardianBCookie = extractCookie(guardianBRes, 'aletheia_session=');
-    guardianBUserId = guardianBRes.body.user.id;
 
     // 4. Create Family A & 2 Learners (Learner A1, Learner A2)
     const familyARes = await supertest(app.getHttpServer())
