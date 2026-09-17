@@ -41,6 +41,7 @@ model User {
   authoredPedagogicalProfiles  PedagogicalProfile[] @relation("PedagogicalProfileAuthor")
   authoredTheologicalProfiles  TheologicalProfile[] @relation("TheologicalProfileAuthor")
   definitionVersionOperationLogs DefinitionVersionOperationLog[]
+  consentRecords          ConsentRecord[]
 
   @@map("users")
 }
@@ -194,6 +195,7 @@ model Family {
   assessmentResults      AssessmentResult[]
   competencyTrackings    LearnerCompetencyTracking[]
   curriculumPacks        FamilyCurriculumPack[]
+  consentRecords         ConsentRecord[]
 
   @@map("families")
 }
@@ -248,6 +250,7 @@ model Learner {
   evidenceSubmissions    EvidenceSubmission[]
   assessmentResults      AssessmentResult[]
   competencyTrackings    LearnerCompetencyTracking[]
+  consentRecords         ConsentRecord[]
 
   @@index([familyId])
   @@index([familyId, archivedAt])
@@ -2033,3 +2036,64 @@ model CurriculumPackDependency {
   @@index([packId])
   @@map("curriculum_pack_dependencies")
 }
+
+enum ConsentScope {
+  FAMILY
+  LEARNER
+
+  @@map("consent_scopes")
+}
+
+enum ConsentAction {
+  GRANTED
+  REVOKED
+
+  @@map("consent_actions")
+}
+
+model ConsentDefinition {
+  id            String           @id @default(uuid()) @db.Uuid
+  code          String
+  version       Int              @default(1)
+  status        DefinitionStatus @default(DRAFT)
+  schemaVersion Int              @default(1) @map("schema_version")
+  scope         ConsentScope     @default(FAMILY)
+  mandatory     Boolean          @default(false)
+  title         String
+  description   String?
+  content       String           @db.Text
+  purposes      String[]
+  metadata      Json?
+  publishedAt   DateTime?        @map("published_at") @db.Timestamptz
+  deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  records       ConsentRecord[]
+
+  @@unique([code, version])
+  @@index([status, code])
+  @@map("consent_definitions")
+}
+
+model ConsentRecord {
+  id                  String        @id @default(uuid()) @db.Uuid
+  familyId            String        @map("family_id") @db.Uuid
+  learnerId           String?       @map("learner_id") @db.Uuid
+  consentDefinitionId String        @map("consent_definition_id") @db.Uuid
+  action              ConsentAction @default(GRANTED)
+  consentedByUserId   String        @map("consented_by_user_id") @db.Uuid
+  ipAddress           String?       @map("ip_address")
+  userAgent           String?       @map("user_agent")
+  createdAt           DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  family            Family            @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner           Learner?          @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  consentDefinition ConsentDefinition @relation(fields: [consentDefinitionId], references: [id], onDelete: Restrict)
+  consentedByUser   User              @relation(fields: [consentedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([familyId, learnerId, consentDefinitionId, createdAt(sort: Desc)])
+  @@index([consentedByUserId, createdAt])
+  @@map("consent_records")
+}
+
