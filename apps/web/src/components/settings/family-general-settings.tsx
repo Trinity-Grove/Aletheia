@@ -93,6 +93,9 @@ export function FamilyGeneralSettings({
         defaultGradingScale,
         language,
       });
+      if (language === 'pt-BR' || language === 'en-US' || language === 'es-ES') {
+        setLocale(language as Locale);
+      }
       setSuccessMessage('Configurações da família atualizadas com sucesso!');
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'Erro ao salvar configurações.');

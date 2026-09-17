@@ -1,7 +1,47 @@
 import type { Dictionary } from './pt-BR';
-import { enUS } from './en-US';
 
-// Content not yet translated to Spanish -- falls back to English rather
-// than leaving the dropdown option silently broken. Replace with real
-// Spanish strings when this locale is prioritized.
-export const esES: Dictionary = enUS;
+export const esES: Dictionary = {
+  common: {
+    home: 'Inicio',
+    logout: 'Cerrar sesión',
+    accessDeniedTitle: 'Acceso restringido',
+    accessDeniedDescription: 'No tienes permiso para acceder a esta página.',
+  },
+  nav: {
+    adminCatalog: 'Catálogo administrativo',
+    home: 'Inicio',
+    learners: 'Estudiantes',
+    devotional: 'Devocional',
+    curriculum: 'Currículo',
+    schedule: 'Agenda y Rutina',
+    records: 'Diario de Aprendizaje',
+    portfolio: 'Portafolio',
+    attendance: 'Asistencia',
+    reports: 'Informes',
+    settings: 'Configuración',
+  },
+  notifications: {
+    iconAriaLabel: 'Campana',
+    bellAriaLabel: 'Notificaciones ({count} no leídas)',
+    title: 'Notificaciones',
+    newCount: '{count} nuevas',
+    markAllRead: 'Marcar todas como leídas',
+    markAsRead: 'Marcar como leída',
+    empty: 'No hay notificaciones en este momento.',
+    timeJustNow: 'Ahora',
+    timeMinutesAgo: 'hace {count}m',
+    timeHoursAgo: 'hace {count}h',
+    typeDevotionalReminder: 'Devocional',
+    typeDailyScheduleReminder: 'Horario',
+    typeAttendanceMissingReminder: 'Asistencia',
+    typePrayerAnsweredAlert: 'Oración Respondida',
+    typeSystemNotice: 'Aviso del Sistema',
+    typeFallback: 'Notificación',
+  },
+  learnerFocus: {
+    wholeFamily: 'Toda la Familia',
+    familyIconAriaLabel: 'Familia',
+    ariaLabel: 'Enfoque del Estudiante',
+    selectedAriaLabel: 'Estudiante seleccionado: {name}',
+  },
+};
