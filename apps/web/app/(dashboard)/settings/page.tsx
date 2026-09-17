@@ -22,10 +22,11 @@ import { DataBackupCard } from '../../../src/components/settings/data-backup-car
 import { AccountSecuritySettings } from '../../../src/components/settings/account-security-settings';
 import { AccountActivityLog } from '../../../src/components/settings/account-activity-log';
 import { PedagogicalTheologicalProfileSettings } from '../../../src/components/settings/pedagogical-theological-profile-settings';
+import { PrivacyConsentSettings } from '../../../src/components/settings/privacy-consent-settings';
 import { useAuth } from '../../../src/lib/auth/auth-context';
 import { api } from '../../../src/lib/api';
 
-type ActiveTab = 'general' | 'family' | 'profile' | 'notifications' | 'backup' | 'account';
+type ActiveTab = 'general' | 'family' | 'profile' | 'notifications' | 'backup' | 'account' | 'privacy';
 
 export default function SettingsPage() {
   const { user, changePassword, changeEmail, refreshSession } = useAuth();
@@ -404,6 +405,28 @@ export default function SettingsPage() {
             <AletheiaIcon name="lock" size="sm" />
             <span>Conta & Segurança</span>
           </button>
+
+          <button
+            type="button"
+            data-testid="tab-privacy-settings"
+            onClick={() => setActiveTab('privacy')}
+            style={{
+              padding: '0.75rem 1.25rem',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'privacy' ? '2px solid var(--forest)' : '2px solid transparent',
+              color: activeTab === 'privacy' ? 'var(--forest)' : 'var(--text-secondary)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            <AletheiaIcon name="file-text" size="sm" />
+            <span>Privacidade & LGPD</span>
+          </button>
         </div>
 
         {loading ? (
@@ -457,6 +480,13 @@ export default function SettingsPage() {
                 />
                 <AccountActivityLog fetchAuditLog={fetchAuditLog} />
               </div>
+            )}
+
+            {activeTab === 'privacy' && familyId && (
+              <PrivacyConsentSettings
+                familyId={familyId}
+                learners={learners}
+              />
             )}
           </div>
         )}

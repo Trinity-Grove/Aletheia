@@ -152,6 +152,20 @@ export function CurriculumView({
             activeYearId={activeYearId}
             onSelectYear={onSelectYear}
           />
+          <a
+            href="/curriculum/packs"
+            className="ui-button ui-button--secondary ui-button--sm"
+            data-testid="explore-curriculum-packs-btn"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+              textDecoration: 'none',
+            }}
+          >
+            <AletheiaIcon name="package" size="sm" />
+            <span>Pacotes & Plugins</span>
+          </a>
           {activeLearner && (
             <Can action="manage_curriculum">
               <Button

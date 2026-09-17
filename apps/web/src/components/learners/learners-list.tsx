@@ -10,6 +10,7 @@ export interface LearnersListProps {
   learners: LearnerResponseDto[];
   onEdit?: ((learner: LearnerResponseDto) => void) | undefined;
   onToggleArchive?: ((learner: LearnerResponseDto) => void) | undefined;
+  onManageAccess?: ((learner: LearnerResponseDto) => void) | undefined;
   onAddLearner?: (() => void) | undefined;
 }
 
@@ -17,6 +18,7 @@ export function LearnersList({
   learners,
   onEdit,
   onToggleArchive,
+  onManageAccess,
   onAddLearner,
 }: LearnersListProps) {
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
@@ -167,6 +169,7 @@ export function LearnersList({
               learner={learner}
               onEdit={onEdit}
               onToggleArchive={onToggleArchive}
+              onManageAccess={onManageAccess}
             />
           ))}
         </div>

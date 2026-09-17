@@ -6,6 +6,7 @@ import type { CreateLearnerDto, LearnerResponseDto } from '@aletheia/contracts';
 import { ProductShell } from '../../../src/components/product-shell';
 import { LearnersList } from '../../../src/components/learners/learners-list';
 import { LearnerFormModal } from '../../../src/components/learners/learner-form-modal';
+import { LearnerAccessModal } from '../../../src/components/learners/learner-access-modal';
 import { Can } from '../../../src/components/auth/role-guard';
 
 export interface LearnersPageProps {
@@ -17,6 +18,7 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
   const [learners, setLearners] = useState<LearnerResponseDto[]>(initialLearners);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLearner, setEditingLearner] = useState<LearnerResponseDto | null>(null);
+  const [accessModalLearner, setAccessModalLearner] = useState<LearnerResponseDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -160,6 +162,7 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
           learners={learners}
           onEdit={handleOpenEdit}
           onToggleArchive={handleToggleArchive}
+          onManageAccess={setAccessModalLearner}
         />
 
         <LearnerFormModal
@@ -167,6 +170,13 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
           initialData={editingLearner}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleSubmitForm}
+        />
+
+        <LearnerAccessModal
+          isOpen={Boolean(accessModalLearner)}
+          learner={accessModalLearner}
+          onClose={() => setAccessModalLearner(null)}
+          familyId={typeof window !== 'undefined' ? localStorage.getItem('familyId') || '' : ''}
         />
       </div>
     </ProductShell>

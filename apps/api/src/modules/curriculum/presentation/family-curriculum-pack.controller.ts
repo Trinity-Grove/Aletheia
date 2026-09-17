@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   installFamilyCurriculumPackSchema,
   updateFamilyCurriculumPackSchema,
+  type CurriculumPackResponseDto,
   type FamilyCurriculumPackResponseDto,
   type FamilyCurriculumPackRevisionResponseDto,
   type InstallFamilyCurriculumPackDto,
@@ -33,6 +34,12 @@ export class FamilyCurriculumPackController {
   @ApiOperation({ summary: 'List curriculum pack copies installed by a family' })
   async list(@Param('familyId') familyId: string): Promise<FamilyCurriculumPackResponseDto[]> {
     return this.service.list(familyId);
+  }
+
+  @Get('available')
+  @ApiOperation({ summary: 'List published curriculum packs available for family installation' })
+  async listAvailable(): Promise<CurriculumPackResponseDto[]> {
+    return this.service.listAvailable();
   }
 
   @Get(':id')

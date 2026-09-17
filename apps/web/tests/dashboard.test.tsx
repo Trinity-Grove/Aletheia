@@ -307,4 +307,22 @@ describe('HomePage dashboard states', () => {
     expect(screen.queryByRole('button', { name: 'Desmarcar' })).not.toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Concluir' })).toHaveLength(1);
   });
+
+  it('renders daily scripture card with verse and devotional navigation link', () => {
+    mockController.useDashboard.mockReturnValue(
+      buildController({
+        data: validDashboard(),
+        status: 'success',
+        activeLearnerId: LEARNER_A,
+      }),
+    );
+
+    render(<HomePage />);
+
+    const scriptureCard = screen.getByTestId('scripture-card');
+    expect(scriptureCard).toBeInTheDocument();
+    expect(screen.getByTestId('scripture-card-verse')).toBeInTheDocument();
+    expect(screen.getByTestId('scripture-card-citation')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /registrar devocional de hoje/i })).toBeInTheDocument();
+  });
 });

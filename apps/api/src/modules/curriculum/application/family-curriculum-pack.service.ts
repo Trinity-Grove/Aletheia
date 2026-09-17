@@ -1,8 +1,10 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, type FamilyCurriculumPack, type FamilyCurriculumPackRevision } from '@prisma/client';
+import { Prisma, type CurriculumPack, type FamilyCurriculumPack, type FamilyCurriculumPackRevision } from '@prisma/client';
 import {
   curriculumPackExportDocumentSchema,
   type CurriculumPackExportDocument,
+  type CurriculumPackResponseDto,
+  type DefinitionStatus,
   type FamilyCurriculumPackResponseDto,
   type FamilyCurriculumPackRevisionResponseDto,
   type InstallFamilyCurriculumPackDto,
@@ -51,6 +53,11 @@ export class FamilyCurriculumPackService {
   async list(familyId: string): Promise<FamilyCurriculumPackResponseDto[]> {
     const rows = await this.repository.listByFamily(familyId);
     return rows.map((row) => this.toDto(row));
+  }
+
+  async listAvailable(): Promise<CurriculumPackResponseDto[]> {
+    const rows = await this.curriculumPackRepository.listPublishedPacks();
+    return rows.map((row) => this.toAvailablePackDto(row));
   }
 
   async get(familyId: string, id: string): Promise<FamilyCurriculumPackResponseDto> {
@@ -114,6 +121,22 @@ export class FamilyCurriculumPackService {
       revision: row.revision,
       document: this.parseDocument(row.document as CurriculumPackExportDocument),
       createdAt: row.createdAt.toISOString(),
+    };
+  }
+
+  private toAvailablePackDto(row: CurriculumPack): CurriculumPackResponseDto {
+    return {
+      id: row.id,
+      code: row.code,
+      version: row.version,
+      status: row.status as DefinitionStatus,
+      schemaVersion: row.schemaVersion,
+      name: row.name,
+      description: row.description,
+      metadata: row.metadata as Record<string, unknown>,
+      createdAt: row.createdAt.toISOString(),
+      publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,
+      deprecatedAt: row.deprecatedAt ? row.deprecatedAt.toISOString() : null,
     };
   }
 }

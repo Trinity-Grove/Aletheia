@@ -84,6 +84,7 @@ import { AchievementRepository } from './infrastructure/achievement.repository.j
 import { AchievementController } from './presentation/achievement.controller.js';
 import { ArtsFormationSeeder } from './infrastructure/arts-formation.seeder.js';
 import { ServiceCommunityFormationSeeder } from './infrastructure/service-community-formation.seeder.js';
+import { OfficialCurriculumPacksSeeder } from './infrastructure/official-curriculum-packs.seeder.js';
 import { FamilyCurriculumPackRepository } from './infrastructure/family-curriculum-pack.repository.js';
 import { FamilyCurriculumPackService } from './application/family-curriculum-pack.service.js';
 import { FamilyCurriculumPackController } from './presentation/family-curriculum-pack.controller.js';
@@ -167,6 +168,7 @@ import { DefinitionVersionOperationsController } from './presentation/definition
     AchievementRepository,
     ArtsFormationSeeder,
     ServiceCommunityFormationSeeder,
+    OfficialCurriculumPacksSeeder,
     FamilyCurriculumPackRepository,
     FamilyCurriculumPackMediaRepository,
     CurriculumService,
