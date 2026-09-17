@@ -2,7 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { Alert, Badge, Button, Modal } from '@aletheia/ui';
-import type { LearnerAccessCodeDto, LearnerAccessGrantDto, LearnerResponseDto } from '@aletheia/contracts';
+import type {
+  ConsentComplianceCheckDto,
+  LearnerAccessCodeDto,
+  LearnerAccessGrantDto,
+  LearnerResponseDto,
+} from '@aletheia/contracts';
 
 export interface LearnerAccessModalProps {
   isOpen: boolean;
@@ -19,15 +24,35 @@ export function LearnerAccessModal({
 }: LearnerAccessModalProps) {
   const [grant, setGrant] = useState<LearnerAccessGrantDto | null>(null);
   const [issuedCode, setIssuedCode] = useState<string | null>(null);
+  const [compliance, setCompliance] = useState<ConsentComplianceCheckDto | null>(null);
   const [loading, setLoading] = useState(false);
+  const [grantingConsentId, setGrantingConsentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [consentSuccess, setConsentSuccess] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const fetchCompliance = async (learnerId: string) => {
+    try {
+      const res = await fetch(
+        `/api/v1/families/${familyId}/consents/compliance?learnerId=${learnerId}`,
+        { credentials: 'include' }
+      );
+      if (res && res.ok) {
+        const data: ConsentComplianceCheckDto = await res.json();
+        setCompliance(data);
+      }
+    } catch {
+      // Compliance check is non-blocking
+    }
+  };
 
   useEffect(() => {
     if (!isOpen || !learner || !familyId) {
       setGrant(null);
       setIssuedCode(null);
+      setCompliance(null);
       setError(null);
+      setConsentSuccess(null);
       return;
     }
 
@@ -39,12 +64,12 @@ export function LearnerAccessModal({
         const res = await fetch(`/api/v1/families/${familyId}/learners/${learner!.id}/access`, {
           credentials: 'include',
         });
-        if (res.ok) {
+        if (res && res.ok) {
           const data: LearnerAccessGrantDto = await res.json();
           if (isMounted) setGrant(data);
-        } else if (res.status === 404) {
+        } else if (res && res.status === 404) {
           if (isMounted) setGrant(null);
-        } else {
+        } else if (res) {
           const err = await res.json().catch(() => ({}));
           if (isMounted) setError(err.message || 'Falha ao buscar status do acesso.');
         }
@@ -56,6 +81,7 @@ export function LearnerAccessModal({
     }
 
     void fetchStatus();
+    void fetchCompliance(learner.id);
 
     return () => {
       isMounted = false;
@@ -133,6 +159,33 @@ export function LearnerAccessModal({
     }
   };
 
+  const handleGrantConsent = async (definitionId: string) => {
+    try {
+      setGrantingConsentId(definitionId);
+      setError(null);
+      const res = await fetch(`/api/v1/families/${familyId}/consents/grant`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          consentDefinitionId: definitionId,
+          learnerId: learner.id,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Falha ao conceder consentimento.');
+      }
+      setConsentSuccess('Consentimento concedido com sucesso!');
+      await fetchCompliance(learner.id);
+      setTimeout(() => setConsentSuccess(null), 4000);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Falha ao conceder consentimento.');
+    } finally {
+      setGrantingConsentId(null);
+    }
+  };
+
   const handleCopy = () => {
     if (!issuedCode) return;
     void navigator.clipboard?.writeText(issuedCode);
@@ -170,6 +223,102 @@ export function LearnerAccessModal({
           ) : (
             <Badge variant="slate" size="sm">Não Configurado</Badge>
           )}
+        </div>
+
+        {/* Seção Privacidade & Consentimento do Menor (LGPD) */}
+        <div
+          data-testid="learner-consent-section"
+          style={{
+            padding: '1.25rem',
+            backgroundColor: 'var(--bg-canvas)',
+            border: '1px solid var(--border-light)',
+            borderRadius: 'var(--radius-lg)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--forest)' }}>
+              Privacidade & Consentimento do Menor (LGPD)
+            </span>
+            {compliance?.compliant ? (
+              <Badge variant="emerald" size="sm" data-testid="consent-compliant-badge">
+                ✓ Termos Aceitos
+              </Badge>
+            ) : (
+              <Badge variant="amber" size="sm" data-testid="consent-pending-badge">
+                Consentimento Pendente
+              </Badge>
+            )}
+          </div>
+
+          {consentSuccess && (
+            <Alert variant="success" data-testid="consent-success-alert">
+              {consentSuccess}
+            </Alert>
+          )}
+
+          {compliance && !compliance.compliant && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <Alert variant="warning" data-testid="consent-pending-alert">
+                Para conformidade com a LGPD e proteção de dados de menores, o consentimento para acesso do educando precisa ser concedido pelo responsável.
+              </Alert>
+
+              {compliance.pendingMandatoryTerms && compliance.pendingMandatoryTerms.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {compliance.pendingMandatoryTerms.map((term) => (
+                    <div
+                      key={term.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.625rem 0.75rem',
+                        backgroundColor: 'var(--bg-surface)',
+                        border: '1px solid var(--border-light)',
+                        borderRadius: 'var(--radius-md)',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {term.title} (v{term.version})
+                      </span>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        data-testid={`grant-consent-btn-${term.id}`}
+                        isLoading={grantingConsentId === term.id}
+                        onClick={() => handleGrantConsent(term.id)}
+                      >
+                        Conceder Consentimento
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  data-testid="grant-consent-btn"
+                  isLoading={grantingConsentId === 'default'}
+                  onClick={() => handleGrantConsent('00000000-0000-0000-0000-000000000001')}
+                >
+                  Conceder Consentimento
+                </Button>
+              )}
+            </div>
+          )}
+
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+            Gerencie todos os termos da família na{' '}
+            <a
+              href="/settings/privacy"
+              data-testid="privacy-settings-link"
+              style={{ color: 'var(--forest)', fontWeight: 600, textDecoration: 'underline' }}
+            >
+              Central de Privacidade
+            </a>.
+          </div>
         </div>
 
         {issuedCode && (
