@@ -8,6 +8,7 @@ import type {
 } from '@aletheia/contracts';
 import { FamilyCurriculumPackModal } from './family-curriculum-pack-modal';
 import { CurriculumPackImportModal } from './curriculum-pack-import-modal';
+import { CurriculumPackDetailModal } from './curriculum-pack-detail-modal';
 
 interface CurriculumPacksGalleryProps {
   familyId: string;
@@ -22,6 +23,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
     installed: FamilyCurriculumPackResponseDto;
     catalog: CurriculumPackResponseDto | null;
   } | null>(null);
+  const [selectedDetailPack, setSelectedDetailPack] = useState<CurriculumPackResponseDto | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [error, setError] = useState<string | null>(null);
@@ -463,6 +465,16 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
                   <Button
                     variant="secondary"
                     size="sm"
+                    data-testid={`view-pack-detail-btn-${pack.id}`}
+                    onClick={() => setSelectedDetailPack(pack)}
+                    style={{ width: '100%', fontSize: '0.8125rem', fontWeight: 600 }}
+                  >
+                    Conhecer Pacote 🔍
+                  </Button>
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     data-testid={`export-pack-btn-${pack.id}`}
                     onClick={() => handleExportPack(pack)}
                     disabled={exportingPackId === pack.id}
@@ -477,6 +489,18 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
           })}
         </div>
       )}
+
+      {/* Modal de Detalhamento e Conhecimento do Pacote Curricular */}
+      <CurriculumPackDetailModal
+        isOpen={Boolean(selectedDetailPack)}
+        pack={selectedDetailPack}
+        isInstalled={selectedDetailPack ? installedPackMap.has(selectedDetailPack.id) : false}
+        onClose={() => setSelectedDetailPack(null)}
+        onInstall={(pack) => {
+          setSelectedDetailPack(null);
+          void handleInstall(pack);
+        }}
+      />
 
       {/* Modal de Gestão de Mídias e Detalhes do Pacote */}
       <FamilyCurriculumPackModal

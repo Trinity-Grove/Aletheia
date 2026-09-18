@@ -21,6 +21,21 @@ export function TemplateModal({ isOpen, familyId, onClose, onApply }: TemplateMo
   const [loadingCatalog, setLoadingCatalog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [expandedCodes, setExpandedCodes] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (code: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setExpandedCodes((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) {
+        next.delete(code);
+      } else {
+        next.add(code);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -93,52 +108,130 @@ export function TemplateModal({ isOpen, familyId, onClose, onApply }: TemplateMo
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {templates.map((t) => (
-              <label
-                key={t.code}
-                data-testid={`template-option-${t.code}`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '0.75rem',
-                  padding: '1rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: `2px solid ${selectedTemplate === t.code ? 'var(--forest)' : 'var(--border-light)'}`,
-                  backgroundColor: selectedTemplate === t.code ? 'var(--color-indigo-50)' : 'var(--bg-surface)',
-                  cursor: 'pointer',
-                }}
-              >
-                <input
-                  type="radio"
-                  name="pedagogical-template"
-                  value={t.code}
-                  checked={selectedTemplate === t.code}
-                  onChange={() => setSelectedTemplate(t.code)}
-                  style={{ marginTop: '0.25rem' }}
-                />
-                <div>
-                  <div
-                    style={{
-                      fontWeight: 600,
-                      color: 'var(--text-primary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                    }}
-                  >
-                    <span>
-                      <AletheiaIcon name={CATALOG_ICON} size={18} style={{ color: 'var(--color-indigo-700)' }} />
-                    </span>
-                    <span>{t.name}</span>
-                  </div>
-                  {t.description ? (
-                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                      {t.description}
+            {templates.map((t) => {
+              const hasSubjects = Boolean(t.subjects && t.subjects.length > 0);
+              const isExpanded = expandedCodes.has(t.code);
+
+              return (
+                <label
+                  key={t.code}
+                  data-testid={`template-option-${t.code}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.75rem',
+                    padding: '1rem',
+                    borderRadius: 'var(--radius-md)',
+                    border: `2px solid ${selectedTemplate === t.code ? 'var(--forest)' : 'var(--border-light)'}`,
+                    backgroundColor: selectedTemplate === t.code ? 'var(--color-indigo-50)' : 'var(--bg-surface)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="pedagogical-template"
+                    value={t.code}
+                    checked={selectedTemplate === t.code}
+                    onChange={() => setSelectedTemplate(t.code)}
+                    style={{ marginTop: '0.25rem' }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        color: 'var(--text-primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                      }}
+                    >
+                      <span>
+                        <AletheiaIcon name={CATALOG_ICON} size={18} style={{ color: 'var(--color-indigo-700)' }} />
+                      </span>
+                      <span>{t.name}</span>
                     </div>
-                  ) : null}
-                </div>
-              </label>
-            ))}
+                    {t.description ? (
+                      <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                        {t.description}
+                      </div>
+                    ) : null}
+
+                    {hasSubjects && (
+                      <div>
+                        <button
+                          type="button"
+                          data-testid={`toggle-subjects-preview-${t.code}`}
+                          onClick={(e) => toggleExpand(t.code, e)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.375rem',
+                            marginTop: '0.5rem',
+                            padding: '0.25rem 0.625rem',
+                            borderRadius: 'var(--radius-sm)',
+                            border: '1px solid var(--border-light)',
+                            backgroundColor: 'var(--bg-canvas)',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            color: 'var(--forest)',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <span>
+                            {isExpanded
+                              ? '▲ Ocultar disciplinas sugeridas'
+                              : `▼ Conhecer ${t.subjects?.length} disciplinas sugeridas`}
+                          </span>
+                        </button>
+
+                        {isExpanded && (
+                          <div
+                            data-testid={`subjects-preview-panel-${t.code}`}
+                            style={{
+                              marginTop: '0.75rem',
+                              padding: '0.75rem 1rem',
+                              backgroundColor: 'var(--bg-canvas)',
+                              borderRadius: 'var(--radius-md)',
+                              border: '1px solid var(--border-light)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.75rem',
+                            }}
+                          >
+                            {t.subjects?.map((s, sIdx) => (
+                              <div key={sIdx} style={{ fontSize: '0.8125rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
+                                  <span
+                                    style={{
+                                      display: 'inline-block',
+                                      width: '0.75rem',
+                                      height: '0.75rem',
+                                      borderRadius: '50%',
+                                      backgroundColor: s.color || 'var(--forest)',
+                                    }}
+                                  />
+                                  <span>{s.name}</span>
+                                </div>
+                                <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '0.125rem' }}>
+                                  {s.description}
+                                </div>
+                                {s.starterObjectives && s.starterObjectives.length > 0 && (
+                                  <ul style={{ margin: '0.25rem 0 0 1rem', padding: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                    {s.starterObjectives.map((obj, oIdx) => (
+                                      <li key={oIdx}>{obj}</li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </label>
+              );
+            })}
           </div>
         )}
       </form>
