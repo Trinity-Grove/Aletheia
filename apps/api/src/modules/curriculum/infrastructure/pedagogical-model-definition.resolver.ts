@@ -44,7 +44,23 @@ export class PedagogicalModelDefinitionResolver {
     for (const row of rows) {
       if (seenCodes.has(row.code)) continue;
       seenCodes.add(row.code);
-      catalog.push({ code: row.code, name: row.name, description: row.description });
+
+      let subjects: TemplateSubjectDefinition[] | undefined;
+      try {
+        const meta = pedagogicalModelMetadataSchema.safeParse(row.metadata);
+        if (meta.success && meta.data.subjects && meta.data.subjects.length > 0) {
+          subjects = meta.data.subjects;
+        }
+      } catch {
+        // ignore parsing error
+      }
+
+      catalog.push({
+        code: row.code,
+        name: row.name,
+        description: row.description,
+        ...(subjects ? { subjects } : {}),
+      });
     }
 
     return catalog;

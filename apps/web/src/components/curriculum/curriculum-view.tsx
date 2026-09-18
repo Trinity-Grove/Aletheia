@@ -17,6 +17,7 @@ import type {
 } from '@aletheia/contracts';
 import { AcademicYearSwitcher } from './academic-year-switcher';
 import { TemplateModal } from './template-modal';
+import { CurriculumPlanningWizardModal } from './curriculum-planning-wizard-modal';
 import { SubjectModal } from './subject-modal';
 import { ObjectiveModal } from './objective-modal';
 import { SubjectCard } from './subject-card';
@@ -64,6 +65,7 @@ export function CurriculumView({
   onDeleteObjective,
 }: CurriculumViewProps) {
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [isPlanningWizardOpen, setIsPlanningWizardOpen] = useState(false);
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
   const [subjectToEdit, setSubjectToEdit] = useState<SubjectResponseDto | null>(null);
   const [selectedSubjectForObjective, setSelectedSubjectForObjective] = useState<SubjectResponseDto | null>(null);
@@ -168,6 +170,15 @@ export function CurriculumView({
           </a>
           {activeLearner && (
             <Can action="manage_curriculum">
+              <Button
+                variant="primary"
+                size="sm"
+                data-testid="open-planning-wizard-btn"
+                onClick={() => setIsPlanningWizardOpen(true)}
+                leftIcon={<AletheiaIcon name="sparkles" size={14} />}
+              >
+                ✨ Planejamento Guiado
+              </Button>
               <Button
                 variant="secondary"
                 size="sm"
@@ -301,6 +312,19 @@ export function CurriculumView({
         familyId={familyId}
         onClose={() => setIsTemplateModalOpen(false)}
         onApply={onApplyTemplate}
+      />
+
+      <CurriculumPlanningWizardModal
+        isOpen={isPlanningWizardOpen}
+        familyId={familyId}
+        learnerId={activeLearner?.id}
+        academicYearId={activeYearId}
+        onClose={() => setIsPlanningWizardOpen(false)}
+        onSuccess={() => {
+          if (typeof window !== 'undefined') {
+            window.location.reload();
+          }
+        }}
       />
 
       <SubjectModal
