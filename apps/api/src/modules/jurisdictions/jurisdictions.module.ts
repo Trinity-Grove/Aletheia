@@ -4,16 +4,22 @@ import { JurisdictionDefinitionsRepository } from './infrastructure/jurisdiction
 import { JurisdictionDefinitionSeeder } from './infrastructure/jurisdiction-definition.seeder.js';
 import { JurisdictionDefinitionsService } from './application/jurisdiction-definitions.service.js';
 import { JurisdictionDefinitionsController } from './presentation/jurisdiction-definitions.controller.js';
+import { ComplianceEvaluationService } from './application/compliance-evaluation.service.js';
+import { ComplianceEvaluationController } from './presentation/compliance-evaluation.controller.js';
 
-// Versioned jurisdiction/compliance catalog (issue #26, "Brasil como
-// organizador/complemento" first slice). Standalone module, same
-// Definition/Version pattern as curriculum's DefinitionsService/Controller,
-// kept separate because this is a new category (compliance, not pedagogy)
+// Versioned jurisdiction/compliance catalog & evaluation engine (issue #26).
+// Standalone module, same Definition/Version pattern as curriculum's
+// DefinitionsService/Controller, kept separate because this is compliance/legal
 // with its own lifecycle and no shared state with CurriculumModule.
 @Module({
   imports: [DatabaseModule],
-  controllers: [JurisdictionDefinitionsController],
-  providers: [JurisdictionDefinitionsRepository, JurisdictionDefinitionSeeder, JurisdictionDefinitionsService],
-  exports: [JurisdictionDefinitionsService, JurisdictionDefinitionSeeder],
+  controllers: [JurisdictionDefinitionsController, ComplianceEvaluationController],
+  providers: [
+    JurisdictionDefinitionsRepository,
+    JurisdictionDefinitionSeeder,
+    JurisdictionDefinitionsService,
+    ComplianceEvaluationService,
+  ],
+  exports: [JurisdictionDefinitionsService, JurisdictionDefinitionSeeder, ComplianceEvaluationService],
 })
 export class JurisdictionsModule {}
