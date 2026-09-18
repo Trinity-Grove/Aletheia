@@ -17,6 +17,7 @@ import {
   generateReportSchema,
   type GenerateReportDto,
   type OfficialReportResponseDto,
+  type ReportPreviewDto,
   type ReportType,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, FamilyTenantGuard, CurrentUser } from '../../../platform/auth/index.js';
@@ -29,6 +30,16 @@ import { ReportService } from '../application/report.service.js';
 @Controller({ path: 'families/:familyId/reports', version: '1' })
 export class ReportController {
   constructor(private readonly reportService: ReportService) {}
+
+  @Post('preview')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Preview a report or dossier draft before official generation' })
+  async previewReport(
+    @Param('familyId') familyId: string,
+    @Body(new ZodValidationPipe(generateReportSchema)) dto: GenerateReportDto,
+  ): Promise<ReportPreviewDto> {
+    return this.reportService.previewReport(familyId, dto);
+  }
 
   @Post('generate')
   @HttpCode(HttpStatus.CREATED)

@@ -7,10 +7,13 @@ import type {
   GradingScale,
   LearnerSummaryDto,
   OfficialReportResponseDto,
+  ReportPreviewDto,
   ReportType,
 } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 import { PrintableTranscript, GRADING_SCALE_LABELS } from './printable-transcript';
+import { PrintablePortfolioDossier } from './printable-portfolio-dossier';
+import { PrintableComplianceReport } from './printable-compliance-report';
 
 export const REPORT_TYPE_CONFIG: Record<
   ReportType,
@@ -50,6 +53,7 @@ export interface ReportGeneratorViewProps {
   onDeleteReport: (reportId: string) => Promise<void>;
   onExportCsv: (reportId: string) => Promise<void>;
   onExportPdf?: ((reportId: string) => Promise<void>) | undefined;
+  onPreviewReport?: ((dto: GenerateReportDto) => Promise<ReportPreviewDto>) | undefined;
   defaultGradingScale?: GradingScale | undefined;
 }
 
@@ -61,11 +65,14 @@ export function ReportGeneratorView({
   onDeleteReport,
   onExportCsv,
   onExportPdf,
+  onPreviewReport,
   defaultGradingScale,
 }: ReportGeneratorViewProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedReportForView, setSelectedReportForView] =
     useState<OfficialReportResponseDto | null>(null);
+  const [previewDraft, setPreviewDraft] = useState<ReportPreviewDto | null>(null);
+  const [isPreviewing, setIsPreviewing] = useState(false);
 
   // Form State
   const [selectedLearnerId, setSelectedLearnerId] = useState(
@@ -107,6 +114,7 @@ export function ReportGeneratorView({
     setIncludePortfolioHighlights(true);
     setNotes('');
     setGenerateError(null);
+    setPreviewDraft(null);
     setIsModalOpen(true);
   };
 
@@ -116,6 +124,42 @@ export function ReportGeneratorView({
     if (learner) {
       const name = learner.preferredName || learner.firstName;
       setTitle(`Histórico Escolar - ${name}`);
+    }
+  };
+
+  const handlePreview = async () => {
+    if (!selectedLearnerId || !title.trim()) return;
+    setIsPreviewing(true);
+    setGenerateError(null);
+    try {
+      const dto: GenerateReportDto = {
+        learnerId: selectedLearnerId,
+        type: reportType,
+        title: title.trim(),
+        gradingScale,
+        includeAttendance,
+        includePortfolioHighlights,
+        notes: notes.trim() ? notes.trim() : null,
+      };
+      if (onPreviewReport) {
+        const preview = await onPreviewReport(dto);
+        setPreviewDraft(preview);
+      } else {
+        const learner = learners.find((l) => l.id === selectedLearnerId);
+        setPreviewDraft({
+          type: reportType,
+          title: title.trim(),
+          learnerName: learner ? `${learner.preferredName || learner.firstName} ${learner.lastName || ''}`.trim() : 'Educando',
+          familyOrganizationName: 'Academia Familiar',
+          academicYearTitle: null,
+          previewSummary: {},
+          draftContent: {},
+        });
+      }
+    } catch (err: unknown) {
+      setGenerateError(err instanceof Error ? err.message : 'Falha ao gerar pré-visualização.');
+    } finally {
+      setIsPreviewing(false);
     }
   };
 
@@ -305,8 +349,7 @@ export function ReportGeneratorView({
                       CSV
                     </Button>
 
-                    {onExportPdf &&
-                      (report.type === 'ACADEMIC_TRANSCRIPT' || report.type === 'ATTENDANCE_SUMMARY') && (
+                    {onExportPdf && (
                       <Button
                         variant="secondary"
                         size="sm"
@@ -353,6 +396,15 @@ export function ReportGeneratorView({
               <>
                 <Button variant="secondary" data-testid="cancel-report-btn" onClick={() => setIsModalOpen(false)}>
                   Cancelar
+                </Button>
+                <Button
+                  variant="secondary"
+                  type="button"
+                  data-testid="preview-report-btn"
+                  onClick={handlePreview}
+                  isLoading={isPreviewing}
+                >
+                  Pré-visualizar Rascunho
                 </Button>
                 <Button type="submit" form="generate-report-form" data-testid="generate-report-btn" isLoading={isGenerating}>
                   Gerar Relatório
@@ -427,15 +479,139 @@ export function ReportGeneratorView({
         </div>
       )}
 
-      {/* Preview Modal */}
+      {/* Draft Preview Modal */}
+      {previewDraft && (
+        <div data-testid="draft-preview-modal">
+          <Modal
+            isOpen={true}
+            onClose={() => setPreviewDraft(null)}
+            title="Pré-visualização do Documento (Rascunho)"
+            maxWidth="2xl"
+            footer={
+              <>
+                <Button variant="secondary" data-testid="back-to-edit-btn" onClick={() => setPreviewDraft(null)}>
+                  Voltar para Edição
+                </Button>
+                <Button
+                  data-testid="confirm-generate-report-btn"
+                  isLoading={isGenerating}
+                  onClick={(e) => {
+                    handleGenerate(e);
+                    setPreviewDraft(null);
+                  }}
+                >
+                  Confirmar e Emitir Oficialmente
+                </Button>
+              </>
+            }
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div
+                data-testid="draft-preview-warning"
+                style={{
+                  padding: '0.75rem 1rem',
+                  backgroundColor: 'var(--color-amber-50, #fffbeb)',
+                  border: '1px solid var(--color-amber-300, #fcd34d)',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '0.8125rem',
+                  color: 'var(--color-amber-900, #78350f)',
+                }}
+              >
+                <strong>Modo Pré-visualização:</strong> Este rascunho de conferência ainda não foi registrado oficialmente no banco de dados e não possui valor comprobatório legal.
+              </div>
+
+              {previewDraft.type === 'LEARNING_PORTFOLIO_DOSSIER' ? (
+                <PrintablePortfolioDossier
+                  report={{
+                    id: 'draft-preview',
+                    familyId: '',
+                    learnerId: selectedLearnerId,
+                    learnerName: previewDraft.learnerName,
+                    academicYearId: null,
+                    academicYearTitle: previewDraft.academicYearTitle,
+                    type: previewDraft.type,
+                    title: previewDraft.title,
+                    gradingScale,
+                    content: previewDraft.draftContent,
+                    documentHash: 'PREVIEW_DRAFT',
+                    generatedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  }}
+                  onClose={() => setPreviewDraft(null)}
+                />
+              ) : previewDraft.type === 'ANNUAL_COMPLIANCE_REPORT' ? (
+                <PrintableComplianceReport
+                  report={{
+                    id: 'draft-preview',
+                    familyId: '',
+                    learnerId: selectedLearnerId,
+                    learnerName: previewDraft.learnerName,
+                    academicYearId: null,
+                    academicYearTitle: previewDraft.academicYearTitle,
+                    type: previewDraft.type,
+                    title: previewDraft.title,
+                    gradingScale,
+                    content: previewDraft.draftContent,
+                    documentHash: 'PREVIEW_DRAFT',
+                    generatedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  }}
+                  onClose={() => setPreviewDraft(null)}
+                />
+              ) : (
+                <PrintableTranscript
+                  report={{
+                    id: 'draft-preview',
+                    familyId: '',
+                    learnerId: selectedLearnerId,
+                    learnerName: previewDraft.learnerName,
+                    academicYearId: null,
+                    academicYearTitle: previewDraft.academicYearTitle,
+                    type: previewDraft.type,
+                    title: previewDraft.title,
+                    gradingScale,
+                    content: previewDraft.draftContent,
+                    documentHash: 'PREVIEW_DRAFT',
+                    generatedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  }}
+                  onClose={() => setPreviewDraft(null)}
+                />
+              )}
+            </div>
+          </Modal>
+        </div>
+      )}
+
+      {/* Official Report View Modal */}
       {selectedReportForView && (
         <div data-testid="report-preview-modal">
           <Modal isOpen={true} onClose={() => setSelectedReportForView(null)} maxWidth="2xl">
-            <PrintableTranscript
-              report={selectedReportForView}
-              onExportCsv={onExportCsv}
-              onClose={() => setSelectedReportForView(null)}
-            />
+            {selectedReportForView.type === 'LEARNING_PORTFOLIO_DOSSIER' ? (
+              <PrintablePortfolioDossier
+                report={selectedReportForView}
+                onExportCsv={onExportCsv}
+                onExportPdf={onExportPdf}
+                onClose={() => setSelectedReportForView(null)}
+              />
+            ) : selectedReportForView.type === 'ANNUAL_COMPLIANCE_REPORT' ? (
+              <PrintableComplianceReport
+                report={selectedReportForView}
+                onExportCsv={onExportCsv}
+                onExportPdf={onExportPdf}
+                onClose={() => setSelectedReportForView(null)}
+              />
+            ) : (
+              <PrintableTranscript
+                report={selectedReportForView}
+                onExportCsv={onExportCsv}
+                onExportPdf={onExportPdf}
+                onClose={() => setSelectedReportForView(null)}
+              />
+            )}
           </Modal>
         </div>
       )}

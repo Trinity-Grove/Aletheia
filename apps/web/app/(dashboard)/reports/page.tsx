@@ -158,6 +158,21 @@ export default function ReportsPage() {
     URL.revokeObjectURL(url);
   };
 
+  const handlePreviewReport = async (dto: GenerateReportDto) => {
+    if (!familyId) throw new Error('Família não selecionada');
+    const res = await fetch(`/api/v1/families/${familyId}/reports/preview`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(dto),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.message || 'Falha ao gerar pré-visualização do relatório.');
+    }
+    return res.json();
+  };
+
   return (
     <ProductShell
       learners={learners}
@@ -187,6 +202,7 @@ export default function ReportsPage() {
             onDeleteReport={handleDeleteReport}
             onExportCsv={handleExportCsv}
             onExportPdf={handleExportPdf}
+            onPreviewReport={handlePreviewReport}
             defaultGradingScale={defaultGradingScale}
           />
         )}

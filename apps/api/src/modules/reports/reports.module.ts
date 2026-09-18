@@ -8,13 +8,16 @@ import { AttendanceService } from './application/attendance.service.js';
 import { ReportService } from './application/report.service.js';
 import { TranscriptPdfRenderer } from './application/transcript-pdf.renderer.js';
 import { AttendanceCertificatePdfRenderer } from './application/attendance-certificate-pdf.renderer.js';
+import { LearningPortfolioPdfRenderer } from './application/learning-portfolio-pdf.renderer.js';
+import { AnnualCompliancePdfRenderer } from './application/annual-compliance-pdf.renderer.js';
 import { COMPLIANCE_REPORTS_PUBLIC_API, type ComplianceReportsPublicApi } from './application/public-api.js';
 import { AttendanceController } from './presentation/attendance.controller.js';
 import { ReportController } from './presentation/report.controller.js';
+import { PublicReportVerificationController } from './presentation/public-report-verification.controller.js';
 
 @Module({
   imports: [DatabaseModule, SettingsModule],
-  controllers: [AttendanceController, ReportController],
+  controllers: [AttendanceController, ReportController, PublicReportVerificationController],
   providers: [
     AttendanceRepository,
     ComplianceRepository,
@@ -23,6 +26,8 @@ import { ReportController } from './presentation/report.controller.js';
     ReportService,
     TranscriptPdfRenderer,
     AttendanceCertificatePdfRenderer,
+    LearningPortfolioPdfRenderer,
+    AnnualCompliancePdfRenderer,
     {
       provide: COMPLIANCE_REPORTS_PUBLIC_API,
       useFactory: (attendanceService: AttendanceService, reportService: ReportService): ComplianceReportsPublicApi => ({

@@ -7,6 +7,10 @@ import {
   officialReportResponseSchema,
   subjectGradeSnapshotSchema,
   academicTranscriptSchema,
+  learningPortfolioDossierSchema,
+  annualComplianceReportSchema,
+  reportVerificationResponseSchema,
+  reportPreviewSchema,
 } from './report.js';
 
 const LEARNER_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
@@ -189,6 +193,158 @@ describe('Report and Academic Transcript Contracts', () => {
       expect(parsed.id).toBe(REPORT_ID);
       expect(parsed.type).toBe('ACADEMIC_TRANSCRIPT');
       expect(parsed.content).toBeDefined();
+    });
+  });
+
+  describe('learningPortfolioDossierSchema', () => {
+    it('validates a complete learning portfolio dossier DTO', () => {
+      const dossier = {
+        learnerId: LEARNER_ID,
+        learnerName: 'Ester Sá',
+        learnerBirthDate: '2016-05-12',
+        gradeLevel: '4º Ano Fundamental',
+        academicYearId: YEAR_ID,
+        academicYearTitle: 'Ano Letivo 2026',
+        familyOrganizationName: 'Família Sá Homeschool',
+        generatedDate: '2026-12-15',
+        portfolioItems: [
+          {
+            title: 'Maquete do Sistema Solar',
+            description: 'Trabalho tridimensional em argila e tinta acrílica.',
+            evidenceTypeName: 'PROJECT_PHOTO',
+            competencyNames: ['Astronomia Básica', 'Modelagem Tridimensional'],
+            fileUrl: 'https://storage.aletheia.app/photos/solar-system.jpg',
+            date: '2026-04-10',
+            status: 'VALIDATED',
+          },
+        ],
+        learningHighlights: [
+          {
+            subjectName: 'Ciências Naturais',
+            notes: 'Compreendeu os movimentos de rotação e translação perfeitamente.',
+            date: '2026-04-15',
+          },
+        ],
+        generalNotes: 'Portfólio com foco em artes manuais e ciências experimentais.',
+      };
+
+      const parsed = learningPortfolioDossierSchema.parse(dossier);
+      expect(parsed.learnerName).toBe('Ester Sá');
+      expect(parsed.portfolioItems).toHaveLength(1);
+      expect(parsed.portfolioItems[0]?.title).toBe('Maquete do Sistema Solar');
+      expect(parsed.learningHighlights).toHaveLength(1);
+    });
+  });
+
+  describe('annualComplianceReportSchema', () => {
+    it('validates a full annual compliance report with jurisdiction reference', () => {
+      const report = {
+        learnerId: LEARNER_ID,
+        learnerName: 'Ester Sá',
+        learnerBirthDate: '2016-05-12',
+        gradeLevel: '4º Ano Fundamental',
+        academicYearId: YEAR_ID,
+        academicYearTitle: 'Ano Letivo 2026',
+        familyOrganizationName: 'Família Sá Homeschool',
+        generatedDate: '2026-12-15',
+        jurisdiction: {
+          code: 'BR',
+          version: 1,
+          name: 'Brasil (Referencial Nacional)',
+          minInstructionalDays: 200,
+          minInstructionalHours: 800,
+          officialSource: 'LDB Lei nº 9.394/1996 art. 24',
+          confidenceLevel: 'ESTABLISHED',
+        },
+        attendanceCompliance: {
+          loggedDays: 205,
+          requiredDays: 200,
+          loggedHours: 820,
+          requiredHours: 800,
+          isCompliant: true,
+        },
+        curriculumProgress: [
+          {
+            subjectName: 'Língua Portuguesa',
+            evaluatedCount: 22,
+            averageMasteryLevel: 'MASTERED',
+            calculatedGrade: 'Domínio Pleno',
+          },
+        ],
+        legalDisclaimer:
+          'Documento gerado a partir dos registros autodeclarados pela família na plataforma Aletheia. Não constitui salvo-conduto ou validação estatal automática.',
+        generalNotes: 'Cumpriu a carga horária anual estipulada.',
+      };
+
+      const parsed = annualComplianceReportSchema.parse(report);
+      expect(parsed.jurisdiction.code).toBe('BR');
+      expect(parsed.attendanceCompliance.isCompliant).toBe(true);
+      expect(parsed.legalDisclaimer.toLowerCase()).toContain('não constitui salvo-conduto');
+    });
+  });
+
+  describe('reportVerificationResponseSchema', () => {
+    it('validates verified report lookup response', () => {
+      const verified = {
+        status: 'VERIFIED' as const,
+        documentHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+        reportId: REPORT_ID,
+        reportType: 'ACADEMIC_TRANSCRIPT' as const,
+        title: 'Histórico Escolar Oficial - 2026',
+        learnerName: 'Ester Sá',
+        familyOrganizationName: 'Família Sá Homeschool',
+        generatedAt: '2026-12-15T10:00:00.000Z',
+        academicYearTitle: 'Ano Letivo 2026',
+        legalDisclaimer:
+          'Documento gerado pela família na plataforma Aletheia. A plataforma atesta a integridade do arquivo gerado, mas não substitui autorização estatal.',
+      };
+
+      const parsed = reportVerificationResponseSchema.parse(verified);
+      expect(parsed.status).toBe('VERIFIED');
+      expect(parsed.documentHash).toBe('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+      expect(parsed.reportType).toBe('ACADEMIC_TRANSCRIPT');
+    });
+
+    it('validates not found report lookup response', () => {
+      const notFound = {
+        status: 'NOT_FOUND' as const,
+        documentHash: '0000000000000000000000000000000000000000000000000000000000000000',
+        reportId: null,
+        reportType: null,
+        title: null,
+        learnerName: null,
+        familyOrganizationName: null,
+        generatedAt: null,
+        academicYearTitle: null,
+        legalDisclaimer: 'Documento não localizado no registro imutável do Aletheia.',
+      };
+
+      const parsed = reportVerificationResponseSchema.parse(notFound);
+      expect(parsed.status).toBe('NOT_FOUND');
+      expect(parsed.reportId).toBeNull();
+    });
+  });
+
+  describe('reportPreviewSchema', () => {
+    it('validates preview DTO', () => {
+      const preview = {
+        type: 'LEARNING_PORTFOLIO_DOSSIER' as const,
+        title: 'Pré-visualização: Dossiê de Portfólio',
+        learnerName: 'Ester Sá',
+        familyOrganizationName: 'Família Sá Homeschool',
+        academicYearTitle: 'Ano Letivo 2026',
+        previewSummary: {
+          itemsCount: 15,
+          subjectsCount: 5,
+        },
+        draftContent: {
+          someField: 'value',
+        },
+      };
+
+      const parsed = reportPreviewSchema.parse(preview);
+      expect(parsed.type).toBe('LEARNING_PORTFOLIO_DOSSIER');
+      expect(parsed.previewSummary.itemsCount).toBe(15);
     });
   });
 });

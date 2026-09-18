@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../platform/database/prisma.service.js';
 import { ReportRepository } from '../infrastructure/report.repository.js';
@@ -5,17 +6,26 @@ import { AttendanceService } from './attendance.service.js';
 import { GradeConverter } from '../domain/grade-converter.js';
 import { TranscriptPdfRenderer } from './transcript-pdf.renderer.js';
 import { AttendanceCertificatePdfRenderer } from './attendance-certificate-pdf.renderer.js';
+import { LearningPortfolioPdfRenderer } from './learning-portfolio-pdf.renderer.js';
+import { AnnualCompliancePdfRenderer } from './annual-compliance-pdf.renderer.js';
 import {
   SETTINGS_PUBLIC_API,
   type SettingsPublicApi,
 } from '../../settings/application/public-api.js';
 import type {
   AcademicTranscriptDto,
+  AnnualComplianceReportDto,
   AttendanceCertificateDto,
   ExportFormat,
   GenerateReportDto,
+  GradingScale,
+  LearningHighlightDossierDto,
+  LearningPortfolioDossierDto,
   OfficialReportResponseDto,
+  PortfolioItemDossierDto,
+  ReportPreviewDto,
   ReportType,
+  ReportVerificationResponseDto,
   SubjectGradeSnapshotDto,
 } from '@aletheia/contracts';
 
@@ -27,6 +37,8 @@ export class ReportService {
     private readonly attendanceService: AttendanceService,
     private readonly pdfRenderer: TranscriptPdfRenderer,
     private readonly attendanceCertificateRenderer: AttendanceCertificatePdfRenderer,
+    private readonly portfolioRenderer: LearningPortfolioPdfRenderer,
+    private readonly complianceRenderer: AnnualCompliancePdfRenderer,
     @Inject(SETTINGS_PUBLIC_API)
     private readonly settingsApi: SettingsPublicApi,
   ) {}
@@ -43,7 +55,7 @@ export class ReportService {
       throw new NotFoundException(`Learner not found: ${dto.learnerId}`);
     }
 
-    let reportContent: Record<string, any> = {};
+    let reportContent: Record<string, any>;
 
     switch (dto.type) {
       case 'ACADEMIC_TRANSCRIPT': {
@@ -54,24 +66,13 @@ export class ReportService {
         reportContent = await this.buildAttendanceCertificateContent(familyId, dto, learner);
         break;
       }
-      case 'LEARNING_PORTFOLIO_DOSSIER':
+      case 'LEARNING_PORTFOLIO_DOSSIER': {
+        reportContent = await this.buildLearningPortfolioDossierContent(familyId, dto, learner);
+        break;
+      }
       case 'ANNUAL_COMPLIANCE_REPORT':
       default: {
-        const attendanceSummary = dto.includeAttendance
-          ? await this.attendanceService.getComplianceSummary(
-              familyId,
-              dto.learnerId,
-              dto.academicYearId ?? undefined,
-            )
-          : null;
-
-        reportContent = {
-          learnerId: dto.learnerId,
-          learnerName: learner.preferredName || `${learner.firstName}${learner.lastName ? ' ' + learner.lastName : ''}`,
-          academicYearId: dto.academicYearId ?? null,
-          attendanceSummary,
-          notes: dto.notes ?? null,
-        };
+        reportContent = await this.buildAnnualComplianceReportContent(familyId, dto, learner);
         break;
       }
     }
@@ -139,22 +140,30 @@ export class ReportService {
   ): Promise<{ bytes: Uint8Array; filename: string; documentHash: string }> {
     const report = await this.getReport(familyId, id);
 
-    if (report.type !== 'ACADEMIC_TRANSCRIPT' && report.type !== 'ATTENDANCE_SUMMARY') {
-      throw new BadRequestException(
-        `PDF export is only available for ACADEMIC_TRANSCRIPT or ATTENDANCE_SUMMARY reports (this report is ${report.type}).`,
-      );
-    }
-
     let generatedByLabel: string | null = null;
     if (report.generatedByUserId) {
       const user = await this.prisma.user.findUnique({ where: { id: report.generatedByUserId } });
       generatedByLabel = user?.fullName || user?.email || null;
     }
 
-    const { bytes, documentHash } =
-      report.type === 'ATTENDANCE_SUMMARY'
-        ? await this.attendanceCertificateRenderer.render(report, generatedByLabel)
-        : await this.pdfRenderer.render(report, generatedByLabel);
+    let renderResult: { bytes: Uint8Array; documentHash: string };
+    switch (report.type) {
+      case 'ACADEMIC_TRANSCRIPT':
+        renderResult = await this.pdfRenderer.render(report, generatedByLabel);
+        break;
+      case 'ATTENDANCE_SUMMARY':
+        renderResult = await this.attendanceCertificateRenderer.render(report, generatedByLabel);
+        break;
+      case 'LEARNING_PORTFOLIO_DOSSIER':
+        renderResult = await this.portfolioRenderer.render(report, generatedByLabel);
+        break;
+      case 'ANNUAL_COMPLIANCE_REPORT':
+      default:
+        renderResult = await this.complianceRenderer.render(report, generatedByLabel);
+        break;
+    }
+
+    const { bytes, documentHash } = renderResult;
 
     return {
       bytes,
@@ -388,5 +397,429 @@ export class ReportService {
     }
     return str;
   }
+
+  computeContentHash(report: {
+    id: string;
+    type: string;
+    gradingScale: string;
+    content: unknown;
+  }): string {
+    const canonical = JSON.stringify({
+      id: report.id,
+      type: report.type,
+      gradingScale: report.gradingScale,
+      content: report.content,
+    });
+    return createHash('sha256').update(canonical).digest('hex');
+  }
+
+  async previewReport(
+    familyId: string,
+    dto: GenerateReportDto,
+  ): Promise<ReportPreviewDto> {
+    const learner = await this.prisma.learner.findFirst({
+      where: { id: dto.learnerId, familyId },
+    });
+    if (!learner) {
+      throw new NotFoundException(`Learner not found: ${dto.learnerId}`);
+    }
+
+    const [family, settings] = await Promise.all([
+      this.prisma.family.findUnique({ where: { id: familyId } }),
+      this.settingsApi.getSettings(familyId),
+    ]);
+
+    let academicYearTitle: string | null = null;
+    if (dto.academicYearId) {
+      const year = await this.prisma.academicYear.findFirst({
+        where: { id: dto.academicYearId, familyId },
+      });
+      if (year) academicYearTitle = year.title;
+    }
+
+    let draftContent: any;
+    const previewSummary: Record<string, unknown> = {};
+
+    switch (dto.type) {
+      case 'ACADEMIC_TRANSCRIPT': {
+        draftContent = await this.buildAcademicTranscriptContent(familyId, dto, learner);
+        previewSummary.subjectsCount = draftContent.subjectGrades?.length ?? 0;
+        previewSummary.gradingScale = draftContent.gradingScale;
+        break;
+      }
+      case 'ATTENDANCE_SUMMARY': {
+        draftContent = await this.buildAttendanceCertificateContent(familyId, dto, learner);
+        previewSummary.loggedDays = draftContent.attendanceSummary?.totalDaysLogged ?? 0;
+        previewSummary.loggedHours = draftContent.attendanceSummary?.totalHoursLogged ?? 0;
+        break;
+      }
+      case 'LEARNING_PORTFOLIO_DOSSIER': {
+        draftContent = await this.buildLearningPortfolioDossierContent(familyId, dto, learner);
+        previewSummary.portfolioItemsCount = draftContent.portfolioItems?.length ?? 0;
+        previewSummary.highlightsCount = draftContent.learningHighlights?.length ?? 0;
+        break;
+      }
+      case 'ANNUAL_COMPLIANCE_REPORT':
+      default: {
+        draftContent = await this.buildAnnualComplianceReportContent(familyId, dto, learner);
+        previewSummary.jurisdiction = draftContent.jurisdiction?.code;
+        previewSummary.isCompliant = draftContent.attendanceCompliance?.isCompliant;
+        previewSummary.loggedDays = draftContent.attendanceCompliance?.loggedDays;
+        previewSummary.requiredDays = draftContent.attendanceCompliance?.requiredDays;
+        break;
+      }
+    }
+
+    return {
+      type: dto.type,
+      title: dto.title,
+      learnerName:
+        learner.preferredName ||
+        `${learner.firstName}${learner.lastName ? ' ' + learner.lastName : ''}`,
+      familyOrganizationName:
+        settings.homeschoolName?.trim() ||
+        (family ? `${family.name} Homeschool` : 'Homeschool Academy'),
+      academicYearTitle,
+      previewSummary,
+      draftContent,
+    };
+  }
+
+  async verifyReport(identifier: string): Promise<ReportVerificationResponseDto> {
+    const isHash = /^[0-9a-f]{64}$/i.test(identifier);
+    const isId = /^[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}$/i.test(identifier);
+
+    if (!isId && !isHash) {
+      return {
+        status: 'INVALID',
+        documentHash: identifier,
+        reportId: null,
+        reportType: null,
+        title: null,
+        learnerName: null,
+        familyOrganizationName: null,
+        generatedAt: null,
+        academicYearTitle: null,
+        legalDisclaimer:
+          'Identificador inválido. Forneça um UUID válido ou o hash SHA-256 (64 caracteres) impresso no documento.',
+      };
+    }
+
+    let report: any = null;
+    let computedHash = '';
+
+    if (isId) {
+      report = await this.prisma.officialReport.findUnique({
+        where: { id: identifier },
+        include: { family: true, learner: true, academicYear: true },
+      });
+      if (report) {
+        computedHash = this.computeContentHash({
+          id: report.id,
+          type: report.type,
+          gradingScale: report.gradingScale,
+          content: report.content,
+        });
+      }
+    } else {
+      const allReports = await this.prisma.officialReport.findMany({
+        include: { family: true, learner: true, academicYear: true },
+        orderBy: { generatedAt: 'desc' },
+        take: 500,
+      });
+
+      for (const r of allReports) {
+        const hash = this.computeContentHash({
+          id: r.id,
+          type: r.type,
+          gradingScale: r.gradingScale,
+          content: r.content,
+        });
+        if (hash.toLowerCase() === identifier.toLowerCase()) {
+          report = r;
+          computedHash = hash;
+          break;
+        }
+      }
+    }
+
+    if (!report) {
+      return {
+        status: 'NOT_FOUND',
+        documentHash: identifier,
+        reportId: null,
+        reportType: null,
+        title: null,
+        learnerName: null,
+        familyOrganizationName: null,
+        generatedAt: null,
+        academicYearTitle: null,
+        legalDisclaimer:
+          'Documento não localizado no registro imutável do Aletheia. Verifique se o hash ou identificador foi digitado corretamente.',
+      };
+    }
+
+    const learnerName =
+      report.learner?.preferredName ||
+      `${report.learner?.firstName || ''}${report.learner?.lastName ? ' ' + report.learner.lastName : ''}`.trim() ||
+      (report.content as any)?.learnerName ||
+      'Educando';
+
+    const familyOrgName =
+      (report.content as any)?.familyOrganizationName ||
+      `${report.family?.name || 'Família'} Homeschool`;
+
+    return {
+      status: 'VERIFIED',
+      documentHash: computedHash,
+      reportId: report.id,
+      reportType: report.type as ReportType,
+      title: report.title,
+      learnerName,
+      familyOrganizationName: familyOrgName,
+      generatedAt: report.generatedAt.toISOString(),
+      academicYearTitle:
+        report.academicYear?.title ?? (report.content as any)?.academicYearTitle ?? null,
+      legalDisclaimer:
+        'Documento gerado a partir dos registros autodeclarados pela família na plataforma Aletheia. A plataforma atesta a autenticidade e a integridade matemática do snapshot gerado na data indicada, mas não substitui autorizações, convalidações ou fiscalizações de órgãos estatais ou escolares e não constitui salvo-conduto jurídico ("comprovante de não abandono intelectual").',
+    };
+  }
+
+  private async buildLearningPortfolioDossierContent(
+    familyId: string,
+    dto: GenerateReportDto,
+    learner: any,
+  ): Promise<LearningPortfolioDossierDto> {
+    const [family, settings] = await Promise.all([
+      this.prisma.family.findUnique({ where: { id: familyId } }),
+      this.settingsApi.getSettings(familyId),
+    ]);
+
+    let academicYearTitle: string | null = null;
+    if (dto.academicYearId) {
+      const year = await this.prisma.academicYear.findFirst({
+        where: { id: dto.academicYearId, familyId },
+      });
+      if (year) academicYearTitle = year.title;
+    }
+
+    // Evidence submissions
+    const submissions = await this.prisma.evidenceSubmission.findMany({
+      where: {
+        familyId,
+        learnerId: dto.learnerId,
+      },
+      include: {
+        evidenceType: true,
+        competencies: {
+          include: {
+            competencyDefinition: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+
+    // Portfolio items
+    const portfolioItemsFromDb = await this.prisma.portfolioItem.findMany({
+      where: {
+        familyId,
+        learnerId: dto.learnerId,
+        deletedAt: null,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+
+    const portfolioItems: PortfolioItemDossierDto[] = [];
+
+    for (const sub of submissions) {
+      portfolioItems.push({
+        title: sub.textContent ? sub.textContent.slice(0, 80) : `Evidência: ${sub.evidenceType.name}`,
+        description: sub.textContent ?? 'Evidência anexada ao portfólio de aprendizagem.',
+        evidenceTypeName: sub.evidenceType.name,
+        competencyNames: sub.competencies
+          .map((c: any) => c.competencyDefinition?.name)
+          .filter(Boolean),
+        fileUrl: sub.fileUrl ?? null,
+        date: sub.createdAt.toISOString().slice(0, 10),
+        status: sub.validationStatus,
+      });
+    }
+
+    for (const item of portfolioItemsFromDb) {
+      portfolioItems.push({
+        title: item.title,
+        description: item.description ?? '',
+        evidenceTypeName: item.type,
+        competencyNames: item.tags || [],
+        fileUrl: item.fileUrl ?? null,
+        date: (item.capturedAt ? item.capturedAt.toISOString() : item.createdAt.toISOString()).slice(
+          0,
+          10,
+        ),
+        status: 'HIGHLIGHT',
+      });
+    }
+
+    // Learning Highlights from LearningRecord
+    const highlightRecords = await this.prisma.learningRecord.findMany({
+      where: {
+        familyId,
+        learnerId: dto.learnerId,
+        ...(dto.academicYearId ? { academicYearId: dto.academicYearId } : {}),
+      },
+      include: {
+        subject: true,
+      },
+      orderBy: { date: 'desc' },
+      take: 20,
+    });
+
+    const learningHighlights: LearningHighlightDossierDto[] = highlightRecords
+      .filter((r: any) => r.notes || r.masteryLevel === 'MASTERED' || r.masteryLevel === 'AUTONOMOUS')
+      .map((r: any) => ({
+        subjectName: r.subject?.name ?? 'Multidisciplinar',
+        notes: r.notes || r.description || `Conquista com nível de domínio ${r.masteryLevel}`,
+        date: r.date.toISOString().slice(0, 10),
+      }));
+
+    return {
+      learnerId: learner.id,
+      learnerName:
+        learner.preferredName ||
+        `${learner.firstName}${learner.lastName ? ' ' + learner.lastName : ''}`,
+      learnerBirthDate: learner.birthDate ? learner.birthDate.toISOString().slice(0, 10) : null,
+      gradeLevel: learner.customGrade ?? learner.stage ?? null,
+      academicYearId: dto.academicYearId ?? null,
+      academicYearTitle,
+      familyOrganizationName:
+        settings.homeschoolName?.trim() ||
+        (family ? `${family.name} Homeschool` : 'Homeschool Academy'),
+      generatedDate: new Date().toISOString().slice(0, 10),
+      portfolioItems,
+      learningHighlights,
+      generalNotes: dto.notes ?? null,
+    };
+  }
+
+  private async buildAnnualComplianceReportContent(
+    familyId: string,
+    dto: GenerateReportDto,
+    learner: any,
+  ): Promise<AnnualComplianceReportDto> {
+    const [family, settings, attendanceSummary] = await Promise.all([
+      this.prisma.family.findUnique({ where: { id: familyId } }),
+      this.settingsApi.getSettings(familyId),
+      this.attendanceService.getComplianceSummary(
+        familyId,
+        dto.learnerId,
+        dto.academicYearId ?? undefined,
+      ),
+    ]);
+
+    let academicYearTitle: string | null = null;
+    if (dto.academicYearId) {
+      const year = await this.prisma.academicYear.findFirst({
+        where: { id: dto.academicYearId, familyId },
+      });
+      if (year) academicYearTitle = year.title;
+    }
+
+    const jurisdictionDef = await this.prisma.jurisdictionDefinition.findFirst({
+      where: { code: 'BR', status: 'PUBLISHED' },
+      orderBy: { version: 'desc' },
+    });
+
+    const meta = (jurisdictionDef?.metadata as any) ?? {};
+    const jurisdiction = {
+      code: jurisdictionDef?.code ?? 'BR',
+      version: jurisdictionDef?.version ?? 1,
+      name: jurisdictionDef?.name ?? 'Brasil (Referencial Nacional)',
+      minInstructionalDays: meta.minInstructionalDays ?? 200,
+      minInstructionalHours: meta.minInstructionalHours ?? 800,
+      officialSource:
+        meta.officialSource ?? 'Lei de Diretrizes e Bases da Educação Nacional (Lei nº 9.394/1996, art. 24)',
+      confidenceLevel: meta.confidenceLevel ?? 'ESTABLISHED',
+    };
+
+    const requiredDays = jurisdiction.minInstructionalDays;
+    const requiredHours = jurisdiction.minInstructionalHours;
+    const loggedDays = attendanceSummary?.presentDays ?? attendanceSummary?.totalDaysLogged ?? 0;
+    const loggedHours = attendanceSummary?.totalHoursLogged ?? 0;
+    const isCompliant = loggedDays >= requiredDays && loggedHours >= requiredHours;
+
+    const records = await this.prisma.learningRecord.findMany({
+      where: {
+        familyId,
+        learnerId: dto.learnerId,
+        ...(dto.academicYearId ? { academicYearId: dto.academicYearId } : {}),
+      },
+      include: {
+        subject: true,
+      },
+    });
+
+    const subjectMap = new Map<string, { subjectName: string; records: any[] }>();
+    for (const rec of records) {
+      const sId = rec.subjectId ?? 'general';
+      const sName = rec.subject?.name ?? 'Geral / Multidisciplinar';
+      if (!subjectMap.has(sId)) {
+        subjectMap.set(sId, { subjectName: sName, records: [] });
+      }
+      subjectMap.get(sId)!.records.push(rec);
+    }
+
+    const curriculumProgress = [];
+    for (const [, data] of subjectMap.entries()) {
+      if (data.records.length === 0) continue;
+      let totalScore = 0;
+      for (const r of data.records) {
+        totalScore += GradeConverter.masteryToScore(r.masteryLevel);
+      }
+      const avgScore = totalScore / data.records.length;
+      const avgMastery = GradeConverter.scoreToMastery(avgScore);
+      curriculumProgress.push({
+        subjectName: data.subjectName,
+        evaluatedCount: data.records.length,
+        averageMasteryLevel: avgMastery,
+        calculatedGrade:
+          avgMastery === 'MASTERED'
+            ? 'Domínio Pleno'
+            : avgMastery === 'AUTONOMOUS'
+              ? 'Autônomo'
+              : 'Em Desenvolvimento',
+      });
+    }
+
+    return {
+      learnerId: learner.id,
+      learnerName:
+        learner.preferredName ||
+        `${learner.firstName}${learner.lastName ? ' ' + learner.lastName : ''}`,
+      learnerBirthDate: learner.birthDate ? learner.birthDate.toISOString().slice(0, 10) : null,
+      gradeLevel: learner.customGrade ?? learner.stage ?? null,
+      academicYearId: dto.academicYearId ?? null,
+      academicYearTitle,
+      familyOrganizationName:
+        settings.homeschoolName?.trim() ||
+        (family ? `${family.name} Homeschool` : 'Homeschool Academy'),
+      generatedDate: new Date().toISOString().slice(0, 10),
+      jurisdiction,
+      attendanceCompliance: {
+        loggedDays,
+        requiredDays,
+        loggedHours,
+        requiredHours,
+        isCompliant,
+      },
+      curriculumProgress,
+      legalDisclaimer:
+        'Documento gerado a partir dos registros informados pela família na plataforma Aletheia. Reflete os dados lançados e não constitui salvo-conduto jurídico nem comprovação oficial perante órgãos estatais ("comprovante de não abandono intelectual"). Consulte a legislação da sua jurisdição.',
+      generalNotes: dto.notes ?? null,
+    };
+  }
 }
+
 

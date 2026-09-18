@@ -3,16 +3,21 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type {
   AcademicTranscriptDto,
+  AnnualComplianceReportDto,
   AttendanceComplianceSummaryDto,
   AttendanceResponseDto,
   ComplianceRequirementResponseDto,
   LearnerSummaryDto,
+  LearningPortfolioDossierDto,
   OfficialReportResponseDto,
+  ReportPreviewDto,
 } from '@aletheia/contracts';
 import { ComplianceGauge } from '../src/components/reports/compliance-gauge';
 import { AttendanceTrackerView } from '../src/components/reports/attendance-tracker-view';
 import { ReportGeneratorView } from '../src/components/reports/report-generator-view';
 import { PrintableTranscript } from '../src/components/reports/printable-transcript';
+import { PrintablePortfolioDossier } from '../src/components/reports/printable-portfolio-dossier';
+import { PrintableComplianceReport } from '../src/components/reports/printable-compliance-report';
 import { AuthProvider } from '../src/lib/auth/rbac-context';
 
 const mockLearners: LearnerSummaryDto[] = [
@@ -155,6 +160,108 @@ const mockOfficialReport: OfficialReportResponseDto = {
   title: 'Histórico Escolar Oficial - Samuel Silva 2026',
   gradingScale: 'MASTERY_QUALITATIVE',
   content: mockTranscriptData,
+  generatedAt: '2026-08-26T12:00:00.000Z',
+  createdAt: '2026-08-26T12:00:00.000Z',
+  updatedAt: '2026-08-26T12:00:00.000Z',
+};
+
+const mockPortfolioDossierData: LearningPortfolioDossierDto = {
+  learnerId: '00000000-0000-0000-0000-000000000001',
+  learnerName: 'Samuel Silva',
+  learnerBirthDate: '2016-05-12',
+  gradeLevel: 'Primary Grammar (4º Ano)',
+  academicYearId: 'year-2026',
+  academicYearTitle: 'Ano Letivo 2026',
+  familyOrganizationName: 'Academia Familiar Silva',
+  generatedDate: '2026-08-26',
+  portfolioItems: [
+    {
+      title: 'Pintura a Óleo: Paisagem Serrana',
+      description: 'Estudo de luz e sombra inspirado em mestres holandeses.',
+      evidenceTypeName: 'Artes Visuais',
+      competencyNames: ['Percepção Espacial', 'Coordenação Fina'],
+      fileUrl: 'https://example.com/pintura.jpg',
+      date: '2026-06-15',
+      status: 'APPROVED',
+    },
+  ],
+  learningHighlights: [
+    {
+      subjectName: 'História do Brasil',
+      notes: 'Excelente narração oral sobre a chegada da corte portuguesa em 1808.',
+      date: '2026-05-10',
+    },
+  ],
+  generalNotes: 'Progresso artístico e sensibilidade notáveis.',
+};
+
+const mockPortfolioReport: OfficialReportResponseDto = {
+  id: 'rep-portfolio-1',
+  familyId: 'fam-1',
+  learnerId: '00000000-0000-0000-0000-000000000001',
+  learnerName: 'Samuel Silva',
+  academicYearId: 'year-2026',
+  academicYearTitle: 'Ano Letivo 2026',
+  type: 'LEARNING_PORTFOLIO_DOSSIER',
+  title: 'Dossiê de Portfólio de Aprendizagem - Samuel 2026',
+  gradingScale: 'MASTERY_QUALITATIVE',
+  content: mockPortfolioDossierData,
+  documentHash: 'a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0',
+  generatedAt: '2026-08-26T12:00:00.000Z',
+  createdAt: '2026-08-26T12:00:00.000Z',
+  updatedAt: '2026-08-26T12:00:00.000Z',
+};
+
+const mockComplianceReportData: AnnualComplianceReportDto = {
+  learnerId: '00000000-0000-0000-0000-000000000001',
+  learnerName: 'Samuel Silva',
+  learnerBirthDate: '2016-05-12',
+  gradeLevel: 'Primary Grammar (4º Ano)',
+  academicYearId: 'year-2026',
+  academicYearTitle: 'Ano Letivo 2026',
+  familyOrganizationName: 'Academia Familiar Silva',
+  generatedDate: '2026-08-26',
+  jurisdiction: {
+    code: 'BR',
+    version: 1,
+    name: 'Brasil / Diretrizes Nacionais de Educação',
+    minInstructionalDays: 200,
+    minInstructionalHours: 800,
+    officialSource: 'LDB Lei 9.394/1996 art. 24',
+    confidenceLevel: 'HIGH',
+  },
+  attendanceCompliance: {
+    loggedDays: 205,
+    requiredDays: 200,
+    loggedHours: 850,
+    requiredHours: 800,
+    isCompliant: true,
+  },
+  curriculumProgress: [
+    {
+      subjectName: 'Língua Portuguesa',
+      evaluatedCount: 22,
+      averageMasteryLevel: 'MASTERED',
+      calculatedGrade: 'Dominado',
+    },
+  ],
+  legalDisclaimer:
+    'Atestamos a fidelidade dos registros pedagógicos acima descritos em conformidade com as diretrizes do plano educacional familiar. Este documento comprova o histórico de atividades e avaliações realizadas no âmbito familiar através da plataforma Aletheia; não constitui salvo-conduto estatal ou atestado de não abandono intelectual emitido por autoridade pública.',
+  generalNotes: 'Metas legais anuais cumpridas com louvor.',
+};
+
+const mockComplianceReport: OfficialReportResponseDto = {
+  id: 'rep-compliance-1',
+  familyId: 'fam-1',
+  learnerId: '00000000-0000-0000-0000-000000000001',
+  learnerName: 'Samuel Silva',
+  academicYearId: 'year-2026',
+  academicYearTitle: 'Ano Letivo 2026',
+  type: 'ANNUAL_COMPLIANCE_REPORT',
+  title: 'Relatório Anual de Cumprimento Legal - Samuel 2026',
+  gradingScale: 'MASTERY_QUALITATIVE',
+  content: mockComplianceReportData,
+  documentHash: 'b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef012',
   generatedAt: '2026-08-26T12:00:00.000Z',
   createdAt: '2026-08-26T12:00:00.000Z',
   updatedAt: '2026-08-26T12:00:00.000Z',
@@ -468,18 +575,141 @@ describe('Attendance Tracker, Compliance Gauges & Official Transcript Web Compon
       expect(screen.getByTestId('view-report-btn-rep-1')).toBeDefined();
       expect(screen.getByTestId('export-csv-btn-rep-1')).toBeDefined();
     });
+
+    it('renders PDF download button for all report types when onExportPdf is provided', () => {
+      const exportPdfMock = vi.fn();
+      render(
+        <AuthProvider role="OWNER_GUARDIAN">
+          <ReportGeneratorView
+            reports={[mockOfficialReport, mockPortfolioReport, mockComplianceReport]}
+            learners={mockLearners}
+            activeLearnerId={null}
+            onGenerateReport={vi.fn()}
+            onDeleteReport={vi.fn()}
+            onExportCsv={vi.fn()}
+            onExportPdf={exportPdfMock}
+          />
+        </AuthProvider>
+      );
+
+      // PDF button should be present for all 3 types
+      expect(screen.getByTestId('export-pdf-btn-rep-1')).toBeDefined();
+      expect(screen.getByTestId('export-pdf-btn-rep-portfolio-1')).toBeDefined();
+      expect(screen.getByTestId('export-pdf-btn-rep-compliance-1')).toBeDefined();
+
+      fireEvent.click(screen.getByTestId('export-pdf-btn-rep-portfolio-1'));
+      expect(exportPdfMock).toHaveBeenCalledWith('rep-portfolio-1');
+    });
+
+    it('opens draft preview modal with preview warning and allows confirming official generation', async () => {
+      const generateReportMock = vi.fn().mockResolvedValue(mockOfficialReport);
+      const previewReportMock = vi.fn().mockResolvedValue({
+        type: 'LEARNING_PORTFOLIO_DOSSIER',
+        title: 'Dossiê do Portfólio - Samuca',
+        learnerName: 'Samuca Silva',
+        familyOrganizationName: 'Academia Familiar Silva',
+        academicYearTitle: 'Ano Letivo 2026',
+        previewSummary: { portfolioItemsCount: 1, highlightsCount: 1 },
+        draftContent: mockPortfolioDossierData,
+      } as ReportPreviewDto);
+
+      render(
+        <AuthProvider role="OWNER_GUARDIAN">
+          <ReportGeneratorView
+            reports={[]}
+            learners={mockLearners}
+            activeLearnerId={null}
+            onGenerateReport={generateReportMock}
+            onDeleteReport={vi.fn()}
+            onExportCsv={vi.fn()}
+            onPreviewReport={previewReportMock}
+          />
+        </AuthProvider>
+      );
+
+      // Open Modal
+      fireEvent.click(screen.getByTestId('open-generate-report-btn'));
+
+      // Change Type to LEARNING_PORTFOLIO_DOSSIER
+      fireEvent.change(screen.getByTestId('report-type-select'), {
+        target: { value: 'LEARNING_PORTFOLIO_DOSSIER' },
+      });
+
+      // Click "Pré-visualizar Rascunho"
+      fireEvent.click(screen.getByTestId('preview-report-btn'));
+
+      // Check previewReport was called
+      expect(previewReportMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'LEARNING_PORTFOLIO_DOSSIER',
+        })
+      );
+
+      // Check Draft Preview Modal opened
+      const draftModal = await screen.findByTestId('draft-preview-modal');
+      expect(draftModal).toBeDefined();
+      expect(screen.getByTestId('draft-preview-warning').textContent).toContain('Modo Pré-visualização');
+      expect(screen.getByTestId('printable-portfolio-dossier-view')).toBeDefined();
+
+      // Confirm and generate
+      fireEvent.click(screen.getByTestId('confirm-generate-report-btn'));
+      expect(generateReportMock).toHaveBeenCalled();
+    });
+
+    it('opens PrintablePortfolioDossier when clicking view on a portfolio report', () => {
+      render(
+        <AuthProvider role="OWNER_GUARDIAN">
+          <ReportGeneratorView
+            reports={[mockPortfolioReport]}
+            learners={mockLearners}
+            activeLearnerId={null}
+            onGenerateReport={vi.fn()}
+            onDeleteReport={vi.fn()}
+            onExportCsv={vi.fn()}
+          />
+        </AuthProvider>
+      );
+
+      fireEvent.click(screen.getByTestId('view-report-btn-rep-portfolio-1'));
+      expect(screen.getByTestId('printable-portfolio-dossier-view')).toBeDefined();
+      expect(screen.getByTestId('dossier-portfolio-items')).toBeDefined();
+    });
+
+    it('opens PrintableComplianceReport when clicking view on a compliance report', () => {
+      render(
+        <AuthProvider role="OWNER_GUARDIAN">
+          <ReportGeneratorView
+            reports={[mockComplianceReport]}
+            learners={mockLearners}
+            activeLearnerId={null}
+            onGenerateReport={vi.fn()}
+            onDeleteReport={vi.fn()}
+            onExportCsv={vi.fn()}
+          />
+        </AuthProvider>
+      );
+
+      fireEvent.click(screen.getByTestId('view-report-btn-rep-compliance-1'));
+      expect(screen.getByTestId('printable-compliance-report-view')).toBeDefined();
+      expect(screen.getByTestId('compliance-jurisdiction-info')).toBeDefined();
+    });
   });
 
   describe('PrintableTranscript', () => {
-    it('displays official school header, subject grade table, attendance summary, and download CSV button', () => {
+    it('displays official school header, subject grade table, attendance summary, download CSV, PDF, and legal disclaimer', () => {
       const exportCsvMock = vi.fn();
+      const exportPdfMock = vi.fn();
       const printMock = vi.fn();
 
       render(
         <PrintableTranscript
-          report={mockOfficialReport}
+          report={{
+            ...mockOfficialReport,
+            documentHash: 'c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0123',
+          }}
           transcript={mockTranscriptData}
           onExportCsv={exportCsvMock}
+          onExportPdf={exportPdfMock}
           onPrint={printMock}
         />
       );
@@ -490,6 +720,9 @@ describe('Attendance Tracker, Compliance Gauges & Official Transcript Web Compon
 
       const title = screen.getByTestId('transcript-title');
       expect(title.textContent).toContain('Histórico Escolar Oficial - Samuel Silva 2026');
+
+      // Verify Document Hash
+      expect(screen.getByTestId('transcript-document-hash').textContent).toContain('c3d4e5f6');
 
       // Verify Learner Info Block
       expect(screen.getByTestId('transcript-learner-name').textContent).toContain('Samuel Silva');
@@ -512,6 +745,11 @@ describe('Attendance Tracker, Compliance Gauges & Official Transcript Web Compon
       expect(attendanceSection.textContent).toContain('155');
       expect(attendanceSection.textContent).toContain('620 h');
 
+      // Verify Legal Disclaimer
+      const disclaimer = screen.getByTestId('transcript-legal-disclaimer');
+      expect(disclaimer.textContent).toContain('não constitui salvo-conduto');
+      expect(disclaimer.textContent).toContain('não abandono intelectual');
+
       // Verify Signatures
       expect(screen.getByTestId('transcript-signatures')).toBeDefined();
 
@@ -520,10 +758,119 @@ describe('Attendance Tracker, Compliance Gauges & Official Transcript Web Compon
       fireEvent.click(downloadCsvBtn);
       expect(exportCsvMock).toHaveBeenCalledWith('rep-1');
 
+      // Verify Download PDF Button
+      const downloadPdfBtn = screen.getByTestId('download-pdf-btn');
+      fireEvent.click(downloadPdfBtn);
+      expect(exportPdfMock).toHaveBeenCalledWith('rep-1');
+
       // Verify Print Button
       const printBtn = screen.getByTestId('print-transcript-btn');
       fireEvent.click(printBtn);
       expect(printMock).toHaveBeenCalled();
+    });
+  });
+
+  describe('PrintablePortfolioDossier', () => {
+    it('displays portfolio items, highlights, document hash, download CSV, download PDF, print, and legal disclaimer', () => {
+      const exportCsvMock = vi.fn();
+      const exportPdfMock = vi.fn();
+      const printMock = vi.fn();
+      const closeMock = vi.fn();
+
+      render(
+        <PrintablePortfolioDossier
+          report={mockPortfolioReport}
+          dossier={mockPortfolioDossierData}
+          onExportCsv={exportCsvMock}
+          onExportPdf={exportPdfMock}
+          onPrint={printMock}
+          onClose={closeMock}
+        />
+      );
+
+      // Header & Learner Info
+      expect(screen.getByTestId('dossier-organization-name').textContent).toContain('Academia Familiar Silva');
+      expect(screen.getByTestId('dossier-title').textContent).toContain('Dossiê de Portfólio de Aprendizagem');
+      expect(screen.getByTestId('dossier-learner-name').textContent).toContain('Samuel Silva');
+      expect(screen.getByTestId('dossier-document-hash').textContent).toContain('a1b2c3d4');
+
+      // Portfolio Items
+      expect(screen.getByTestId('dossier-portfolio-items')).toBeDefined();
+      expect(screen.getByText('Pintura a Óleo: Paisagem Serrana')).toBeDefined();
+      expect(screen.getByText(/Estudo de luz e sombra/i)).toBeDefined();
+      expect(screen.getByText('Percepção Espacial')).toBeDefined();
+
+      // Learning Highlights
+      expect(screen.getByTestId('dossier-learning-highlights')).toBeDefined();
+      expect(screen.getByText('História do Brasil')).toBeDefined();
+      expect(screen.getByText(/chegada da corte portuguesa/i)).toBeDefined();
+
+      // General Notes & Signatures
+      expect(screen.getByTestId('dossier-general-notes').textContent).toContain('Progresso artístico');
+      expect(screen.getByTestId('dossier-signatures')).toBeDefined();
+
+      // Legal Disclaimer
+      const disclaimer = screen.getByTestId('dossier-legal-disclaimer');
+      expect(disclaimer.textContent).toContain('não constitui salvo-conduto');
+      expect(disclaimer.textContent).toContain('não abandono intelectual');
+
+      // Action buttons
+      fireEvent.click(screen.getByTestId('download-csv-btn'));
+      expect(exportCsvMock).toHaveBeenCalledWith('rep-portfolio-1');
+
+      fireEvent.click(screen.getByTestId('download-pdf-btn'));
+      expect(exportPdfMock).toHaveBeenCalledWith('rep-portfolio-1');
+
+      fireEvent.click(screen.getByTestId('print-dossier-btn'));
+      expect(printMock).toHaveBeenCalled();
+
+      fireEvent.click(screen.getByTestId('close-dossier-btn'));
+      expect(closeMock).toHaveBeenCalled();
+    });
+  });
+
+  describe('PrintableComplianceReport', () => {
+    it('displays jurisdiction framework, attendance metrics, curriculum table, document hash, download PDF, and legal disclaimer', () => {
+      const exportCsvMock = vi.fn();
+      const exportPdfMock = vi.fn();
+      const printMock = vi.fn();
+
+      render(
+        <PrintableComplianceReport
+          report={mockComplianceReport}
+          compliance={mockComplianceReportData}
+          onExportCsv={exportCsvMock}
+          onExportPdf={exportPdfMock}
+          onPrint={printMock}
+        />
+      );
+
+      // Header
+      expect(screen.getByTestId('compliance-organization-name').textContent).toContain('Academia Familiar Silva');
+      expect(screen.getByTestId('compliance-title').textContent).toContain('Relatório Anual de Cumprimento Legal');
+      expect(screen.getByTestId('compliance-document-hash').textContent).toContain('b2c3d4e5');
+
+      // Jurisdiction & Attendance
+      expect(screen.getByTestId('compliance-jurisdiction-name').textContent).toContain('Brasil');
+      expect(screen.getByTestId('compliance-attendance-summary').textContent).toContain('205');
+      expect(screen.getByTestId('compliance-status-badge').textContent).toContain('CONFORME');
+
+      // Curriculum Progress Table
+      expect(screen.getByTestId('compliance-curriculum-table')).toBeDefined();
+      expect(screen.getByText('Língua Portuguesa')).toBeDefined();
+      expect(screen.getByText('Dominado')).toBeDefined();
+
+      // Legal Disclaimer
+      const disclaimer = screen.getByTestId('compliance-legal-disclaimer');
+      expect(disclaimer.textContent).toContain('não constitui salvo-conduto');
+      expect(disclaimer.textContent).toContain('não abandono intelectual');
+
+      // Signatures
+      expect(screen.getByTestId('compliance-signatures')).toBeDefined();
+
+      // Action buttons
+      fireEvent.click(screen.getByTestId('download-pdf-btn'));
+      expect(exportPdfMock).toHaveBeenCalledWith('rep-compliance-1');
     });
   });
 });
