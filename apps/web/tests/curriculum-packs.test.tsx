@@ -372,4 +372,161 @@ describe('CurriculumPacksGallery (Task 7 & 8: Plugins / Pacotes Curriculares)', 
       expect(screen.getByTestId('pack-modal-success')).toHaveTextContent(/Mídia removida com sucesso/i);
     });
   });
+
+  it('allows customizing pack content in editor tab and saving a new revision', async () => {
+    let putPayload: any = null;
+
+    const updatedPack = {
+      ...mockInstalledPacks[0],
+      revision: 2,
+      document: {
+        ...mockInstalledPacks[0].document,
+        pack: {
+          ...mockInstalledPacks[0].document.pack,
+          name: 'Trivium Clássico Customizado da Família Silva',
+          description: 'Adaptação especial com ênfase em história antiga.',
+        },
+      },
+    };
+
+    vi.spyOn(global, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.includes('/available')) {
+        return { ok: true, json: async () => mockPublishedPacks } as Response;
+      }
+      if (url.endsWith('/curriculum-packs')) {
+        return { ok: true, json: async () => mockInstalledPacks } as Response;
+      }
+      if (url.includes('/curriculum-packs/inst-1') && init?.method === 'PUT') {
+        putPayload = JSON.parse(String(init?.body));
+        return {
+          ok: true,
+          json: async () => updatedPack,
+        } as Response;
+      }
+      if (url.includes('/media')) {
+        return { ok: true, json: async () => [] } as Response;
+      }
+      if (url.includes('/revisions')) {
+        return {
+          ok: true,
+          json: async () => [
+            {
+              id: 'rev-2',
+              familyCurriculumPackId: 'inst-1',
+              revision: 2,
+              createdAt: '2026-09-17T15:00:00.000Z',
+            },
+            {
+              id: 'rev-1',
+              familyCurriculumPackId: 'inst-1',
+              revision: 1,
+              createdAt: '2026-09-15T00:00:00.000Z',
+            },
+          ],
+        } as Response;
+      }
+      return { ok: false, status: 404 } as Response;
+    });
+
+    render(<CurriculumPacksGallery familyId="fam-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('manage-pack-btn-pack-1')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('manage-pack-btn-pack-1'));
+
+    // Open Editor tab
+    const editorTab = screen.getByTestId('pack-modal-tab-editor');
+    expect(editorTab).toBeInTheDocument();
+    fireEvent.click(editorTab);
+
+    // Verify inputs populated
+    const nameInput = screen.getByTestId('pack-edit-name-input');
+    expect(nameInput).toHaveValue('Trivium Clássico & Artes Liberais');
+
+    // Modify name and notes
+    fireEvent.change(nameInput, {
+      target: { value: 'Trivium Clássico Customizado da Família Silva' },
+    });
+
+    const notesInput = screen.getByTestId('pack-edit-notes-input');
+    fireEvent.change(notesInput, {
+      target: { value: 'Enfatizar leitura em voz alta às quintas.' },
+    });
+
+    // Submit save revision
+    const saveBtn = screen.getByTestId('save-pack-revision-btn');
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(putPayload).toBeDefined();
+      expect(putPayload.document.pack.name).toBe('Trivium Clássico Customizado da Família Silva');
+      expect(putPayload.document.pack.metadata.familyNotes).toBe('Enfatizar leitura em voz alta às quintas.');
+      expect(screen.getByTestId('pack-edit-success-alert')).toBeInTheDocument();
+      expect(screen.getByText(/Nova revisão do pacote salva com sucesso!/i)).toBeInTheDocument();
+    });
+
+    // Check that gallery card badge updated to Rev. 2
+    expect(screen.getByTestId('installed-badge-pack-1')).toHaveTextContent(/Rev\. 2/i);
+  });
+
+  it('displays error alert when revision save fails or name is empty', async () => {
+    vi.spyOn(global, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.includes('/available')) {
+        return { ok: true, json: async () => mockPublishedPacks } as Response;
+      }
+      if (url.endsWith('/curriculum-packs')) {
+        return { ok: true, json: async () => mockInstalledPacks } as Response;
+      }
+      if (url.includes('/curriculum-packs/inst-1') && init?.method === 'PUT') {
+        return {
+          ok: false,
+          json: async () => ({ message: 'Documento inválido rejeitado pelo servidor.' }),
+        } as Response;
+      }
+      if (url.includes('/media')) {
+        return { ok: true, json: async () => [] } as Response;
+      }
+      if (url.includes('/revisions')) {
+        return { ok: true, json: async () => [] } as Response;
+      }
+      return { ok: false, status: 404 } as Response;
+    });
+
+    render(<CurriculumPacksGallery familyId="fam-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('manage-pack-btn-pack-1')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('manage-pack-btn-pack-1'));
+
+    fireEvent.click(screen.getByTestId('pack-modal-tab-editor'));
+
+    const nameInput = screen.getByTestId('pack-edit-name-input');
+    const saveBtn = screen.getByTestId('save-pack-revision-btn');
+
+    // Validation: empty name
+    fireEvent.change(nameInput, { target: { value: '   ' } });
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('pack-edit-error-alert')).toHaveTextContent(
+        'O nome do pacote não pode ficar vazio.'
+      );
+    });
+
+    // Backend error
+    fireEvent.change(nameInput, { target: { value: 'Nome Válido' } });
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('pack-edit-error-alert')).toHaveTextContent(
+        'Documento inválido rejeitado pelo servidor.'
+      );
+    });
+  });
 });

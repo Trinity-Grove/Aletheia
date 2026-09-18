@@ -485,6 +485,12 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
         familyId={familyId}
         installedPack={managingPack?.installed ?? null}
         catalogPack={managingPack?.catalog ?? null}
+        onPackUpdated={(updated) => {
+          setInstalledPacks((prev) =>
+            prev.map((p) => (p.id === updated.id ? updated : p))
+          );
+          setManagingPack((prev) => (prev ? { ...prev, installed: updated } : null));
+        }}
       />
 
       {/* Modal de Importação de Pacote Curricular */}
