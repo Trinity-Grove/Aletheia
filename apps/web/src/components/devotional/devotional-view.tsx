@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { AletheiaIcon, Button, EmptyState } from '@aletheia/ui';
 import type { DailyDevotionalResponseDto } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
@@ -75,7 +76,27 @@ export function DevotionalView({
           </Button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <Link
+            href="/devotional/comparador"
+            data-testid="compare-translations-nav-btn"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+              padding: '0.375rem 0.75rem',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)',
+              backgroundColor: 'var(--bg-canvas)',
+              color: 'var(--forest)',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              textDecoration: 'none',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            Comparar Traduções 📖
+          </Link>
           <input
             type="date"
             data-testid="devotional-date-picker"
