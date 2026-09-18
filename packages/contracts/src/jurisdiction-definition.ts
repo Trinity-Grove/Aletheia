@@ -94,3 +94,83 @@ export const jurisdictionDefinitionResponseSchema = z.object({
 });
 
 export type JurisdictionDefinitionResponseDto = z.infer<typeof jurisdictionDefinitionResponseSchema>;
+
+// --- Compliance Evaluation Engine Contracts (Issue #26) ---
+
+export const complianceEvaluationStatusSchema = z.enum([
+  'COMPLIANT',
+  'IN_PROGRESS',
+  'NON_COMPLIANT',
+  'REVIEW_NEEDED',
+  'EXEMPT',
+]);
+
+export type ComplianceEvaluationStatus = z.infer<typeof complianceEvaluationStatusSchema>;
+
+export const criterionTypeSchema = z.enum([
+  'INSTRUCTIONAL_DAYS',
+  'INSTRUCTIONAL_HOURS',
+  'LEARNER_AGE',
+  'REQUIRED_SUBJECTS',
+  'EVALUATIONS',
+  'NOTIFICATIONS',
+]);
+
+export type CriterionType = z.infer<typeof criterionTypeSchema>;
+
+export const criterionEvaluationSchema = z.object({
+  criterion: criterionTypeSchema,
+  label: z.string(),
+  status: complianceEvaluationStatusSchema,
+  currentValue: z.union([z.string(), z.number()]).nullish(),
+  targetValue: z.union([z.string(), z.number()]).nullish(),
+  explanation: z.string(),
+  ruleCitation: z.string().nullish(),
+});
+
+export type CriterionEvaluationDto = z.infer<typeof criterionEvaluationSchema>;
+
+export const manualComplianceOverrideResponseSchema = z.object({
+  id: z.string().uuid(),
+  status: complianceEvaluationStatusSchema,
+  reason: z.string(),
+  overriddenByUserId: z.string().uuid(),
+  overriddenByName: z.string().nullish(),
+  createdAt: z.string(),
+});
+
+export type ManualComplianceOverrideResponseDto = z.infer<typeof manualComplianceOverrideResponseSchema>;
+
+export const complianceEvaluationResponseSchema = z.object({
+  learnerId: z.string().uuid(),
+  learnerName: z.string(),
+  academicYearId: z.string().uuid().nullish(),
+  academicYearTitle: z.string().nullish(),
+  overallStatus: complianceEvaluationStatusSchema,
+  statusSummary: z.string(),
+  jurisdiction: z.object({
+    id: z.string().uuid().nullish(),
+    code: z.string(),
+    version: z.number().int(),
+    name: z.string(),
+    confidenceLevel: jurisdictionConfidenceLevelSchema,
+    officialSource: z.string().nullish(),
+    legalBasisNotes: z.string().nullish(),
+  }),
+  criteriaBreakdown: z.array(criterionEvaluationSchema),
+  manualOverride: manualComplianceOverrideResponseSchema.nullish(),
+  legalDisclaimer: z.string(),
+  evaluatedAt: z.string(),
+});
+
+export type ComplianceEvaluationResponseDto = z.infer<typeof complianceEvaluationResponseSchema>;
+
+export const createManualComplianceOverrideSchema = z.object({
+  learnerId: z.string().uuid(),
+  academicYearId: z.string().uuid(),
+  status: complianceEvaluationStatusSchema,
+  reason: z.string().min(10, 'O motivo da sobreposição manual deve ter pelo menos 10 caracteres'),
+});
+
+export type CreateManualComplianceOverrideDto = z.infer<typeof createManualComplianceOverrideSchema>;
+

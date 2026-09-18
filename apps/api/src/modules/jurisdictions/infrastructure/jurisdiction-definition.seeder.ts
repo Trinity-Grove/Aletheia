@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../platform/database/prisma.service.js';
 import { BRAZIL_JURISDICTION_SEED } from './brazil-jurisdiction.seed-data.js';
+import { URUGUAY_JURISDICTION_SEED } from './uruguay-jurisdiction.seed-data.js';
+import { US_TEXAS_JURISDICTION_SEED } from './us-texas-jurisdiction.seed-data.js';
+import { US_FLORIDA_JURISDICTION_SEED } from './us-florida-jurisdiction.seed-data.js';
 
 // Installs the missing baseline jurisdiction row(s) only. Once a version
 // exists, its content, lifecycle and publication timestamp belong to the
@@ -13,7 +16,12 @@ export class JurisdictionDefinitionSeeder {
   constructor(private readonly prisma: PrismaService) {}
 
   async seed(): Promise<number> {
-    const seeds = [BRAZIL_JURISDICTION_SEED];
+    const seeds = [
+      BRAZIL_JURISDICTION_SEED,
+      URUGUAY_JURISDICTION_SEED,
+      US_TEXAS_JURISDICTION_SEED,
+      US_FLORIDA_JURISDICTION_SEED,
+    ];
     const now = new Date();
 
     for (const seed of seeds) {
