@@ -20,6 +20,7 @@ export interface PrintableTranscriptProps {
   report: OfficialReportResponseDto;
   transcript?: AcademicTranscriptDto | null | undefined;
   onExportCsv?: ((reportId: string) => void) | undefined;
+  onExportPdf?: ((reportId: string) => void) | undefined;
   onPrint?: (() => void) | undefined;
   onClose?: (() => void) | undefined;
 }
@@ -28,6 +29,7 @@ export function PrintableTranscript({
   report,
   transcript: initialTranscript,
   onExportCsv,
+  onExportPdf,
   onPrint,
   onClose,
 }: PrintableTranscriptProps) {
@@ -44,6 +46,7 @@ export function PrintableTranscript({
   const subjectGrades = content.subjectGrades || [];
   const attendanceSummary = content.attendanceSummary;
   const generalNotes = content.generalNotes || report.content?.notes;
+  const documentHash = report.documentHash || report.id;
 
   const handlePrint = () => {
     if (onPrint) {
@@ -56,6 +59,12 @@ export function PrintableTranscript({
   const handleExportCsv = () => {
     if (onExportCsv) {
       onExportCsv(report.id);
+    }
+  };
+
+  const handleExportPdf = () => {
+    if (onExportPdf) {
+      onExportPdf(report.id);
     }
   };
 
@@ -91,6 +100,16 @@ export function PrintableTranscript({
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem' }}>
+          {onExportPdf && (
+            <Button
+              variant="secondary"
+              data-testid="download-pdf-btn"
+              onClick={handleExportPdf}
+              leftIcon={<AletheiaIcon name="file-text" size={16} />}
+            >
+              Baixar PDF
+            </Button>
+          )}
           <Button
             variant="secondary"
             data-testid="download-csv-btn"
@@ -164,6 +183,20 @@ export function PrintableTranscript({
           >
             {report.title}
           </h1>
+
+          {documentHash && (
+            <div
+              data-testid="transcript-document-hash"
+              style={{
+                marginTop: '0.5rem',
+                fontSize: '0.75rem',
+                fontFamily: 'monospace',
+                color: 'var(--text-muted)',
+              }}
+            >
+              Autenticidade SHA-256: {documentHash}
+            </div>
+          )}
         </header>
 
         {/* Learner Info Grid */}
@@ -401,6 +434,23 @@ export function PrintableTranscript({
             </p>
           </section>
         )}
+
+        {/* Legal Non-Repudiation Disclaimer */}
+        <section
+          data-testid="transcript-legal-disclaimer"
+          style={{
+            marginTop: '2rem',
+            padding: '0.875rem 1rem',
+            border: '1px solid var(--border-medium)',
+            borderRadius: 'var(--radius-sm)',
+            fontSize: '0.75rem',
+            color: 'var(--text-secondary)',
+            backgroundColor: 'var(--color-amber-50, #fffbeb)',
+            lineHeight: 1.4,
+          }}
+        >
+          <strong>Ressalva Jurídica:</strong> Atestamos a fidelidade dos registros pedagógicos acima descritos em conformidade com as diretrizes do plano educacional familiar. Este documento comprova o histórico de atividades e avaliações realizadas no âmbito familiar através da plataforma Aletheia; não constitui salvo-conduto estatal ou atestado de não abandono intelectual emitido por autoridade pública.
+        </section>
 
         {/* Official Signatures */}
         <section
