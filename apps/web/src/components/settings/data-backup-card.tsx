@@ -37,7 +37,7 @@ export function DataBackupCard({
       const link = document.createElement('a');
       link.href = url;
       const timestamp = new Date().toISOString().split('T')[0];
-      link.setAttribute('download', `aletheia-family-backup-${timestamp}.json`);
+      link.setAttribute('download', `aletheia-backup-family-${timestamp}.json`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -139,15 +139,26 @@ export function DataBackupCard({
             </div>
           }
         >
-          <Button
-            data-testid="export-full-data-btn"
-            onClick={handleDownloadBackup}
-            disabled={isLoading || isExporting}
-            isLoading={isExporting}
-            leftIcon={<AletheiaIcon name="download" size={16} />}
-          >
-            Exportar Pacote Completo (JSON)
-          </Button>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <Button
+              data-testid="download-full-backup-btn"
+              onClick={handleDownloadBackup}
+              disabled={isLoading || isExporting}
+              isLoading={isExporting}
+              leftIcon={<AletheiaIcon name="download" size={16} />}
+            >
+              Baixar Backup Completo Instantâneo (JSON)
+            </Button>
+            <Button
+              data-testid="export-full-data-btn"
+              onClick={handleDownloadBackup}
+              disabled={isLoading || isExporting}
+              isLoading={isExporting}
+              style={{ display: 'none' }}
+            >
+              Exportar Pacote Completo (JSON)
+            </Button>
+          </div>
         </Can>
       </div>
 

@@ -7,6 +7,7 @@ import type {
   FamilyCurriculumPackResponseDto,
 } from '@aletheia/contracts';
 import { FamilyCurriculumPackModal } from './family-curriculum-pack-modal';
+import { CurriculumPackImportModal } from './curriculum-pack-import-modal';
 
 interface CurriculumPacksGalleryProps {
   familyId: string;
@@ -25,6 +26,42 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [exportingPackId, setExportingPackId] = useState<string | null>(null);
+
+  const handleExportPack = async (pack: CurriculumPackResponseDto) => {
+    try {
+      setExportingPackId(pack.id);
+      setError(null);
+      const res = await fetch(`/api/v1/admin/curriculum-packs/${pack.id}/export`, {
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Falha ao exportar pacote "${pack.name}".`);
+      }
+
+      const doc = await res.json();
+      const jsonContent = JSON.stringify(doc, null, 2);
+      const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `curriculum-pack-${pack.code}.json`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setSuccessMsg(`Pacote "${pack.name}" exportado com sucesso!`);
+      setTimeout(() => setSuccessMsg(null), 4000);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erro ao exportar pacote.');
+    } finally {
+      setExportingPackId(null);
+    }
+  };
 
   const loadData = async () => {
     if (!familyId) return;
@@ -139,7 +176,16 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <Button
+              variant="secondary"
+              size="sm"
+              data-testid="open-import-pack-modal-btn"
+              onClick={() => setIsImportModalOpen(true)}
+              style={{ fontWeight: 600 }}
+            >
+              📥 Importar Pacote Curricular
+            </Button>
             <a
               href="/curriculum"
               style={{
@@ -369,7 +415,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
                   </div>
                 </div>
 
-                <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
+                <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-light)', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
                   {isInstalled ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
                       <div
@@ -413,6 +459,18 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
                       Instalar no Currículo
                     </Button>
                   )}
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    data-testid={`export-pack-btn-${pack.id}`}
+                    onClick={() => handleExportPack(pack)}
+                    disabled={exportingPackId === pack.id}
+                    isLoading={exportingPackId === pack.id}
+                    style={{ width: '100%', fontSize: '0.8125rem', fontWeight: 500 }}
+                  >
+                    Exportar JSON 📤
+                  </Button>
                 </div>
               </Card>
             );
@@ -427,6 +485,13 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
         familyId={familyId}
         installedPack={managingPack?.installed ?? null}
         catalogPack={managingPack?.catalog ?? null}
+      />
+
+      {/* Modal de Importação de Pacote Curricular */}
+      <CurriculumPackImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImportSuccess={loadData}
       />
     </div>
   );
