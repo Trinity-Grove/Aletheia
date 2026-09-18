@@ -23,6 +23,7 @@ import { RescheduleLessonItem, RescheduleModal } from '../../../src/components/l
 import { CompleteLessonItem, CompleteLessonModal } from '../../../src/components/lessons/complete-lesson-modal';
 import { WeeklyRoutineGrid } from '../../../src/components/lessons/weekly-routine-grid';
 import { RoutineSlotModal } from '../../../src/components/lessons/routine-slot-modal';
+import { CurriculumPlanningWizardModal } from '../../../src/components/curriculum/curriculum-planning-wizard-modal';
 
 export default function SchedulePage() {
   const { toast } = useToast();
@@ -36,6 +37,7 @@ export default function SchedulePage() {
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     return new Date().toISOString().split('T')[0]!;
   });
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
 
   const [agenda, setAgenda] = useState<DailyAgendaDto>({
     date: selectedDate,
@@ -414,10 +416,21 @@ export default function SchedulePage() {
             onAddSlot={handleOpenAddSlot}
             onDeleteSlot={handleDeleteSlot}
             onEditSlot={handleOpenEditSlot}
+            onSuggestRoutine={() => setIsWizardOpen(true)}
           />
         )}
 
         {/* Modals */}
+        <CurriculumPlanningWizardModal
+          isOpen={isWizardOpen}
+          onClose={() => setIsWizardOpen(false)}
+          familyId={familyId || ''}
+          learnerId={activeLearnerId}
+          onSuccess={() => {
+            void loadData();
+          }}
+        />
+
         <LessonFormModal
           isOpen={isLessonModalOpen}
           onClose={() => setIsLessonModalOpen(false)}
