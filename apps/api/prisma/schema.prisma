@@ -42,6 +42,7 @@ model User {
   authoredTheologicalProfiles  TheologicalProfile[] @relation("TheologicalProfileAuthor")
   definitionVersionOperationLogs DefinitionVersionOperationLog[]
   consentRecords          ConsentRecord[]
+  complianceManualOverrides ComplianceManualOverride[]
 
   @@map("users")
 }
@@ -196,6 +197,7 @@ model Family {
   competencyTrackings    LearnerCompetencyTracking[]
   curriculumPacks        FamilyCurriculumPack[]
   consentRecords         ConsentRecord[]
+  complianceManualOverrides ComplianceManualOverride[]
 
   @@map("families")
 }
@@ -251,6 +253,7 @@ model Learner {
   assessmentResults      AssessmentResult[]
   competencyTrackings    LearnerCompetencyTracking[]
   consentRecords         ConsentRecord[]
+  complianceManualOverrides ComplianceManualOverride[]
 
   @@index([familyId])
   @@index([familyId, archivedAt])
@@ -408,6 +411,7 @@ model AcademicYear {
   attendanceRecords      AttendanceRecord[]
   complianceRequirements ComplianceRequirement[]
   officialReports        OfficialReport[]
+  complianceManualOverrides ComplianceManualOverride[]
 
   @@unique([familyId, year])
   @@index([familyId])
@@ -807,6 +811,28 @@ model ComplianceRequirement {
   @@index([familyId, academicYearId])
   @@index([jurisdictionDefinitionId])
   @@map("compliance_requirements")
+}
+
+// Audited manual compliance override (issue #26). Allows a family/guardian
+// to override the automated evaluation result with an audited rationale,
+// without asserting state legal immunity or warranty.
+model ComplianceManualOverride {
+  id                 String   @id @default(uuid()) @db.Uuid
+  familyId           String   @map("family_id") @db.Uuid
+  learnerId          String   @map("learner_id") @db.Uuid
+  academicYearId     String   @map("academic_year_id") @db.Uuid
+  status             String   @db.VarChar(50)
+  reason             String   @db.Text
+  overriddenByUserId String   @map("overridden_by_user_id") @db.Uuid
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  family           Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner          Learner      @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  academicYear     AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  overriddenByUser User         @relation(fields: [overriddenByUserId], references: [id], onDelete: Cascade)
+
+  @@index([familyId, academicYearId, learnerId])
+  @@map("compliance_manual_overrides")
 }
 
 model OfficialReport {
