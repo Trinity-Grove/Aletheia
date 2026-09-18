@@ -15,22 +15,51 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   createScheduleSlotSchema,
   updateScheduleSlotSchema,
+  suggestRoutineInputSchema,
+  applySuggestedRoutineSchema,
   type CreateScheduleSlotDto,
   type DailyAgendaDto,
   type DayOfWeek,
   type ScheduleSlotResponseDto,
   type UpdateScheduleSlotDto,
+  type SuggestRoutineInputDto,
+  type SuggestedRoutineResponseDto,
+  type ApplySuggestedRoutineDto,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
 import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { ScheduleService } from '../application/schedule.service.js';
+import { RoutineGeneratorService } from '../application/routine-generator.service.js';
 
 @ApiTags('Schedule')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, FamilyTenantGuard)
 @Controller({ path: 'families/:familyId/schedule', version: '1' })
 export class ScheduleController {
-  constructor(private readonly scheduleService: ScheduleService) {}
+  constructor(
+    private readonly scheduleService: ScheduleService,
+    private readonly routineGeneratorService: RoutineGeneratorService,
+  ) {}
+
+  @Post('suggest-routine')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Generate a suggested weekly routine based on pedagogical model and family preferences' })
+  async suggestRoutine(
+    @Param('familyId') familyId: string,
+    @Body(new ZodValidationPipe(suggestRoutineInputSchema)) dto: SuggestRoutineInputDto,
+  ): Promise<SuggestedRoutineResponseDto> {
+    return this.routineGeneratorService.suggestRoutine(familyId, dto);
+  }
+
+  @Post('apply-suggested-routine')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Apply suggested routine slots into weekly schedule' })
+  async applySuggestedRoutine(
+    @Param('familyId') familyId: string,
+    @Body(new ZodValidationPipe(applySuggestedRoutineSchema)) dto: ApplySuggestedRoutineDto,
+  ): Promise<ScheduleSlotResponseDto[]> {
+    return this.routineGeneratorService.applySuggestedRoutine(familyId, dto);
+  }
 
   @Post('slots')
   @HttpCode(HttpStatus.CREATED)

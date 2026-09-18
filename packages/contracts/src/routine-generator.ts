@@ -29,7 +29,8 @@ export const suggestRoutineInputSchema = z.object({
   fridaysForProjects: z.boolean().default(true),
 });
 
-export type SuggestRoutineInputDto = z.infer<typeof suggestRoutineInputSchema>;
+export type SuggestRoutineInputDto = z.input<typeof suggestRoutineInputSchema>;
+export type SuggestRoutineOutputDto = z.output<typeof suggestRoutineInputSchema>;
 
 export const routineSlotTypeSchema = z.enum([
   'INSTRUCTION',
@@ -67,4 +68,5 @@ export const applySuggestedRoutineSchema = z.object({
   slots: z.array(suggestedRoutineSlotSchema),
 });
 
-export type ApplySuggestedRoutineDto = z.infer<typeof applySuggestedRoutineSchema>;
+export type ApplySuggestedRoutineDto = z.input<typeof applySuggestedRoutineSchema>;
+export type ApplySuggestedRoutineOutput = z.output<typeof applySuggestedRoutineSchema>;
