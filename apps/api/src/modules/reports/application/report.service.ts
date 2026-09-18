@@ -6,6 +6,8 @@ import { AttendanceService } from './attendance.service.js';
 import { GradeConverter } from '../domain/grade-converter.js';
 import { TranscriptPdfRenderer } from './transcript-pdf.renderer.js';
 import { AttendanceCertificatePdfRenderer } from './attendance-certificate-pdf.renderer.js';
+import { LearningPortfolioPdfRenderer } from './learning-portfolio-pdf.renderer.js';
+import { AnnualCompliancePdfRenderer } from './annual-compliance-pdf.renderer.js';
 import {
   SETTINGS_PUBLIC_API,
   type SettingsPublicApi,
@@ -35,6 +37,8 @@ export class ReportService {
     private readonly attendanceService: AttendanceService,
     private readonly pdfRenderer: TranscriptPdfRenderer,
     private readonly attendanceCertificateRenderer: AttendanceCertificatePdfRenderer,
+    private readonly portfolioRenderer: LearningPortfolioPdfRenderer,
+    private readonly complianceRenderer: AnnualCompliancePdfRenderer,
     @Inject(SETTINGS_PUBLIC_API)
     private readonly settingsApi: SettingsPublicApi,
   ) {}
@@ -136,22 +140,30 @@ export class ReportService {
   ): Promise<{ bytes: Uint8Array; filename: string; documentHash: string }> {
     const report = await this.getReport(familyId, id);
 
-    if (report.type !== 'ACADEMIC_TRANSCRIPT' && report.type !== 'ATTENDANCE_SUMMARY') {
-      throw new BadRequestException(
-        `PDF export is only available for ACADEMIC_TRANSCRIPT or ATTENDANCE_SUMMARY reports (this report is ${report.type}).`,
-      );
-    }
-
     let generatedByLabel: string | null = null;
     if (report.generatedByUserId) {
       const user = await this.prisma.user.findUnique({ where: { id: report.generatedByUserId } });
       generatedByLabel = user?.fullName || user?.email || null;
     }
 
-    const { bytes, documentHash } =
-      report.type === 'ATTENDANCE_SUMMARY'
-        ? await this.attendanceCertificateRenderer.render(report, generatedByLabel)
-        : await this.pdfRenderer.render(report, generatedByLabel);
+    let renderResult: { bytes: Uint8Array; documentHash: string };
+    switch (report.type) {
+      case 'ACADEMIC_TRANSCRIPT':
+        renderResult = await this.pdfRenderer.render(report, generatedByLabel);
+        break;
+      case 'ATTENDANCE_SUMMARY':
+        renderResult = await this.attendanceCertificateRenderer.render(report, generatedByLabel);
+        break;
+      case 'LEARNING_PORTFOLIO_DOSSIER':
+        renderResult = await this.portfolioRenderer.render(report, generatedByLabel);
+        break;
+      case 'ANNUAL_COMPLIANCE_REPORT':
+      default:
+        renderResult = await this.complianceRenderer.render(report, generatedByLabel);
+        break;
+    }
+
+    const { bytes, documentHash } = renderResult;
 
     return {
       bytes,

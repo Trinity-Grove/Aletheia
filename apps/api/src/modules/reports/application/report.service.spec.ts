@@ -8,6 +8,8 @@ describe('ReportService', () => {
   let attendanceService: any;
   let pdfRenderer: any;
   let attendanceCertificateRenderer: any;
+  let portfolioRenderer: any;
+  let complianceRenderer: any;
   let settingsApi: any;
 
   const FAMILY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
@@ -220,6 +222,20 @@ describe('ReportService', () => {
       }),
     };
 
+    portfolioRenderer = {
+      render: jest.fn().mockResolvedValue({
+        bytes: new Uint8Array([7, 8, 9]),
+        documentHash: 'c'.repeat(64),
+      }),
+    };
+
+    complianceRenderer = {
+      render: jest.fn().mockResolvedValue({
+        bytes: new Uint8Array([10, 11, 12]),
+        documentHash: 'd'.repeat(64),
+      }),
+    };
+
     settingsApi = {
       getSettings: jest.fn().mockResolvedValue({
         id: 'settings-1',
@@ -244,6 +260,8 @@ describe('ReportService', () => {
       attendanceService,
       pdfRenderer,
       attendanceCertificateRenderer,
+      portfolioRenderer,
+      complianceRenderer,
       settingsApi,
     );
   });
@@ -433,7 +451,7 @@ describe('ReportService', () => {
       expect(pdfRenderer.render).toHaveBeenCalledWith(expect.anything(), 'Jane Guardian');
     });
 
-    it('rejects PDF export for report types other than ACADEMIC_TRANSCRIPT / ATTENDANCE_SUMMARY', async () => {
+    it('renders a learning portfolio dossier PDF via portfolioRenderer', async () => {
       reportRepo.findById.mockResolvedValueOnce(
         new OfficialReportEntity(
           REPORT_ID,
@@ -443,18 +461,50 @@ describe('ReportService', () => {
           'LEARNING_PORTFOLIO_DOSSIER',
           'Portfolio Dossier',
           'LETTER_A_F',
-          {},
+          { learnerName: 'Alice', portfolioItems: [] },
           new Date(),
           new Date(),
           new Date(),
         ),
       );
 
-      await expect(service.exportReportPdf(FAMILY_ID, REPORT_ID)).rejects.toThrow(
-        'only available for ACADEMIC_TRANSCRIPT or ATTENDANCE_SUMMARY',
+      const result = await service.exportReportPdf(FAMILY_ID, REPORT_ID);
+
+      expect(portfolioRenderer.render).toHaveBeenCalledWith(
+        expect.objectContaining({ id: REPORT_ID, type: 'LEARNING_PORTFOLIO_DOSSIER' }),
+        null,
       );
-      expect(pdfRenderer.render).not.toHaveBeenCalled();
-      expect(attendanceCertificateRenderer.render).not.toHaveBeenCalled();
+      expect(result.documentHash).toBe('c'.repeat(64));
+      expect(result.filename).toContain('.pdf');
+      expect(result.bytes).toBeInstanceOf(Uint8Array);
+    });
+
+    it('renders an annual compliance report PDF via complianceRenderer', async () => {
+      reportRepo.findById.mockResolvedValueOnce(
+        new OfficialReportEntity(
+          REPORT_ID,
+          FAMILY_ID,
+          LEARNER_ID,
+          YEAR_ID,
+          'ANNUAL_COMPLIANCE_REPORT',
+          'Compliance Report',
+          'MASTERY_QUALITATIVE',
+          { learnerName: 'Alice', jurisdiction: { code: 'BR' } },
+          new Date(),
+          new Date(),
+          new Date(),
+        ),
+      );
+
+      const result = await service.exportReportPdf(FAMILY_ID, REPORT_ID);
+
+      expect(complianceRenderer.render).toHaveBeenCalledWith(
+        expect.objectContaining({ id: REPORT_ID, type: 'ANNUAL_COMPLIANCE_REPORT' }),
+        null,
+      );
+      expect(result.documentHash).toBe('d'.repeat(64));
+      expect(result.filename).toContain('.pdf');
+      expect(result.bytes).toBeInstanceOf(Uint8Array);
     });
 
     it('renders an attendance certificate PDF via the dedicated renderer for ATTENDANCE_SUMMARY reports', async () => {
