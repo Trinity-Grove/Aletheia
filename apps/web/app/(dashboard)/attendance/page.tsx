@@ -11,6 +11,7 @@ import type {
 } from '@aletheia/contracts';
 import { ProductShell } from '../../../src/components/product-shell';
 import { AttendanceTrackerView } from '../../../src/components/reports/attendance-tracker-view';
+import { ComplianceEvaluationPanel } from '../../../src/components/compliance/compliance-evaluation-panel';
 
 export default function AttendancePage() {
   const [familyId, setFamilyId] = useState<string | null>(null);
@@ -163,15 +164,29 @@ export default function AttendancePage() {
             Carregando controle de frequência...
           </div>
         ) : (
-          <AttendanceTrackerView
-            records={records}
-            complianceSummary={complianceSummary}
-            complianceRequirement={complianceRequirement}
-            learners={learners}
-            activeLearnerId={activeLearnerId}
-            onLogAttendance={handleLogAttendance}
-            onBulkLogAttendance={handleBulkLogAttendance}
-          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            {familyId && (
+              <ComplianceEvaluationPanel
+                familyId={familyId}
+                learnerId={activeLearnerId}
+                academicYearId={complianceRequirement?.academicYearId ?? null}
+                onOverrideRecorded={() => {
+                  fetchAttendance();
+                  fetchComplianceSummary();
+                }}
+              />
+            )}
+
+            <AttendanceTrackerView
+              records={records}
+              complianceSummary={complianceSummary}
+              complianceRequirement={complianceRequirement}
+              learners={learners}
+              activeLearnerId={activeLearnerId}
+              onLogAttendance={handleLogAttendance}
+              onBulkLogAttendance={handleBulkLogAttendance}
+            />
+          </div>
         )}
       </div>
     </ProductShell>
