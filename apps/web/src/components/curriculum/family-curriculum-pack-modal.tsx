@@ -8,6 +8,7 @@ import type {
   FamilyCurriculumPackResponseDto,
   FamilyCurriculumPackRevisionResponseDto,
 } from '@aletheia/contracts';
+import { getApiAuthToken } from '../../lib/api';
 
 export interface FamilyCurriculumPackModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ export interface FamilyCurriculumPackModalProps {
   familyId: string;
   installedPack: FamilyCurriculumPackResponseDto | null;
   catalogPack?: CurriculumPackResponseDto | null | undefined;
+  onPackUpdated?: (_updatedPack: FamilyCurriculumPackResponseDto) => void;
 }
 
 export function FamilyCurriculumPackModal({
@@ -23,8 +25,9 @@ export function FamilyCurriculumPackModal({
   familyId,
   installedPack,
   catalogPack,
+  onPackUpdated,
 }: FamilyCurriculumPackModalProps) {
-  const [activeTab, setActiveTab] = useState<'media' | 'revisions'>('media');
+  const [activeTab, setActiveTab] = useState<'media' | 'revisions' | 'editor'>('media');
 
   // Media state
   const [mediaList, setMediaList] = useState<FamilyCurriculumPackMediaResponseDto[]>([]);
@@ -85,8 +88,28 @@ export function FamilyCurriculumPackModal({
     }
   };
 
+  // Current pack state (keeps track of revision increments)
+  const [currentPack, setCurrentPack] = useState<FamilyCurriculumPackResponseDto | null>(installedPack);
+
+  // Editor state
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editFamilyNotes, setEditFamilyNotes] = useState('');
+  const [editItems, setEditItems] = useState<any[]>([]);
+  const [isSavingRevision, setIsSavingRevision] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editSuccess, setEditSuccess] = useState<string | null>(null);
+
   useEffect(() => {
     if (isOpen && installedPack) {
+      setCurrentPack(installedPack);
+      const doc = (installedPack.document as any) || {};
+      setEditName(doc.pack?.name || catalogPack?.name || installedPack.sourcePackCode || '');
+      setEditDescription(doc.pack?.description || catalogPack?.description || '');
+      setEditFamilyNotes(doc.pack?.metadata?.familyNotes || '');
+      setEditItems(Array.isArray(doc.items) ? doc.items : []);
+      setEditError(null);
+      setEditSuccess(null);
       setActiveTab('media');
       setMediaTitle('');
       setMediaUrl('');
@@ -98,7 +121,80 @@ export function FamilyCurriculumPackModal({
       void loadRevisions();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, installedPack?.id]);
+  }, [isOpen, installedPack?.id, installedPack?.revision]);
+
+  const handleSaveRevision = async () => {
+    const targetPack = currentPack || installedPack;
+    if (!targetPack) return;
+    if (!editName.trim()) {
+      setEditError('O nome do pacote não pode ficar vazio.');
+      return;
+    }
+
+    setIsSavingRevision(true);
+    setEditError(null);
+    setEditSuccess(null);
+
+    try {
+      const existingDoc = (targetPack.document as any) || {};
+      const updatedDoc = {
+        formatVersion: existingDoc.formatVersion || '1.0.0',
+        exportedAt: new Date().toISOString(),
+        pack: {
+          code: existingDoc.pack?.code || targetPack.sourcePackCode,
+          version: existingDoc.pack?.version || targetPack.sourcePackVersion,
+          status: existingDoc.pack?.status || 'PUBLISHED',
+          schemaVersion: existingDoc.pack?.schemaVersion || '1.0.0',
+          name: editName.trim(),
+          description: editDescription.trim() || undefined,
+          metadata: {
+            ...(existingDoc.pack?.metadata || {}),
+            familyNotes: editFamilyNotes.trim() || undefined,
+            lastEditedAt: new Date().toISOString(),
+          },
+        },
+        dependencies: existingDoc.dependencies || [],
+        items: editItems,
+      };
+
+      const authToken = getApiAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
+      const res = await fetch(
+        `/api/v1/families/${familyId}/curriculum-packs/${targetPack.id}`,
+        {
+          method: 'PUT',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify({ document: updatedDoc }),
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Falha ao salvar nova revisão do pacote.');
+      }
+
+      const updated: FamilyCurriculumPackResponseDto = await res.json();
+      setCurrentPack(updated);
+      setEditSuccess('Nova revisão do pacote salva com sucesso!');
+
+      if (onPackUpdated) {
+        onPackUpdated(updated);
+      }
+
+      void loadRevisions();
+    } catch (err: unknown) {
+      setEditError(err instanceof Error ? err.message : 'Erro ao salvar revisão.');
+    } finally {
+      setIsSavingRevision(false);
+    }
+  };
 
   if (!installedPack) return null;
 
@@ -259,7 +355,28 @@ export function FamilyCurriculumPackModal({
               marginBottom: '-2px',
             }}
           >
-            Histórico de Revisões ({revisionsList.length || installedPack.revision})
+            Histórico de Revisões ({revisionsList.length || (currentPack?.revision ?? installedPack.revision)})
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'editor'}
+            data-testid="pack-modal-tab-editor"
+            onClick={() => setActiveTab('editor')}
+            style={{
+              padding: '0.625rem 1rem',
+              fontWeight: 700,
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              border: 'none',
+              borderBottom: activeTab === 'editor' ? '3px solid var(--forest)' : '3px solid transparent',
+              color: activeTab === 'editor' ? 'var(--forest)' : 'var(--text-secondary)',
+              backgroundColor: 'transparent',
+              marginBottom: '-2px',
+            }}
+          >
+            Personalizar Conteúdo ✏️
           </button>
         </div>
 
@@ -480,6 +597,142 @@ export function FamilyCurriculumPackModal({
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Tab 3: Personalizar Conteúdo */}
+        {activeTab === 'editor' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div
+              style={{
+                padding: '1rem',
+                backgroundColor: 'var(--sage-soft)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-light)',
+                fontSize: '0.875rem',
+                color: 'var(--text-secondary)',
+                lineHeight: 1.5,
+              }}
+            >
+              <strong style={{ color: 'var(--forest)' }}>Adaptação Pedagógica Familiar:</strong> Personalize o título, orientações práticas e notas de estudo desta cópia do pacote. Cada alteração gera uma nova revisão imutável no histórico da sua família.
+            </div>
+
+            {editError && (
+              <Alert variant="error" data-testid="pack-edit-error-alert">
+                {editError}
+              </Alert>
+            )}
+
+            {editSuccess && (
+              <Alert variant="success" data-testid="pack-edit-success-alert">
+                {editSuccess}
+              </Alert>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <Input
+                label="Nome do Pacote (Personalizado) *"
+                data-testid="pack-edit-name-input"
+                value={editName}
+                onChange={(e) => {
+                  setEditName(e.target.value);
+                  if (editError) setEditError(null);
+                }}
+                required
+              />
+
+              <div>
+                <label
+                  htmlFor="pack-edit-description-input"
+                  style={{
+                    display: 'block',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    color: 'var(--forest)',
+                    marginBottom: '0.375rem',
+                  }}
+                >
+                  Descrição / Objetivo Familiar
+                </label>
+                <Textarea
+                  id="pack-edit-description-input"
+                  data-testid="pack-edit-description-input"
+                  rows={3}
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Descreva como este pacote será aplicado no plano da sua família..."
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="pack-edit-notes-input"
+                  style={{
+                    display: 'block',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    color: 'var(--forest)',
+                    marginBottom: '0.375rem',
+                  }}
+                >
+                  Notas de Orientação Familiar (Pedagógicas & Práticas)
+                </label>
+                <Textarea
+                  id="pack-edit-notes-input"
+                  data-testid="pack-edit-notes-input"
+                  rows={4}
+                  value={editFamilyNotes}
+                  onChange={(e) => setEditFamilyNotes(e.target.value)}
+                  placeholder="Ex: Focar nas lições práticas às terças-feiras; utilizar tradução ARA nas leituras..."
+                />
+              </div>
+
+              {/* Items List / Overview if items exist */}
+              {editItems.length > 0 && (
+                <div>
+                  <span style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', color: 'var(--forest)', marginBottom: '0.5rem' }}>
+                    Itens Curriculares Inclusos ({editItems.length}):
+                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '180px', overflowY: 'auto' }}>
+                    {editItems.map((item, idx) => (
+                      <div
+                        key={item.code || idx}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0.5rem 0.75rem',
+                          backgroundColor: 'var(--bg-canvas)',
+                          borderRadius: 'var(--radius-sm)',
+                          border: '1px solid var(--border-light)',
+                          fontSize: '0.8125rem',
+                        }}
+                      >
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                          {item.content?.title || item.content?.name || item.code}
+                        </span>
+                        <Badge variant="slate" size="sm">
+                          {item.definitionType || 'ITEM'}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <Button
+                  variant="primary"
+                  data-testid="save-pack-revision-btn"
+                  onClick={handleSaveRevision}
+                  isLoading={isSavingRevision}
+                  disabled={isSavingRevision}
+                  style={{ fontWeight: 600 }}
+                >
+                  Salvar Nova Revisão
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </div>
