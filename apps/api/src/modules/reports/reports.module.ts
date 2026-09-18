@@ -11,10 +11,11 @@ import { AttendanceCertificatePdfRenderer } from './application/attendance-certi
 import { COMPLIANCE_REPORTS_PUBLIC_API, type ComplianceReportsPublicApi } from './application/public-api.js';
 import { AttendanceController } from './presentation/attendance.controller.js';
 import { ReportController } from './presentation/report.controller.js';
+import { PublicReportVerificationController } from './presentation/public-report-verification.controller.js';
 
 @Module({
   imports: [DatabaseModule, SettingsModule],
-  controllers: [AttendanceController, ReportController],
+  controllers: [AttendanceController, ReportController, PublicReportVerificationController],
   providers: [
     AttendanceRepository,
     ComplianceRepository,

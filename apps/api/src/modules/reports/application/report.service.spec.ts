@@ -58,6 +58,8 @@ describe('ReportService', () => {
             learnerId: LEARNER_ID,
             subjectId: SUBJECT_ID,
             masteryLevel: 'AUTONOMOUS',
+            notes: 'Excelente progresso.',
+            date: new Date('2026-05-10'),
             subject: { id: SUBJECT_ID, name: 'Mathematics' },
           },
           {
@@ -66,9 +68,60 @@ describe('ReportService', () => {
             learnerId: LEARNER_ID,
             subjectId: SUBJECT_ID,
             masteryLevel: 'MASTERED',
+            notes: 'Domínio alcançado.',
+            date: new Date('2026-06-15'),
             subject: { id: SUBJECT_ID, name: 'Mathematics' },
           },
         ]),
+      },
+      evidenceSubmission: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'ev-1',
+            familyId: FAMILY_ID,
+            learnerId: LEARNER_ID,
+            textContent: 'Trabalho de ciências sobre células vegetais',
+            fileUrl: 'https://storage.test/ev-1.pdf',
+            validationStatus: 'VALIDATED',
+            createdAt: new Date('2026-05-15'),
+            evidenceType: { name: 'PROJECT_REPORT' },
+            competencies: [{ competencyDefinition: { name: 'Biologia Celular' } }],
+          },
+        ]),
+      },
+      portfolioItem: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'port-1',
+            familyId: FAMILY_ID,
+            learnerId: LEARNER_ID,
+            title: 'Pintura a óleo',
+            description: 'Estudo de cores e luz',
+            type: 'ARTWORK',
+            fileUrl: 'https://storage.test/art.jpg',
+            createdAt: new Date('2026-05-20'),
+            tags: ['Artes'],
+          },
+        ]),
+      },
+      jurisdictionDefinition: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'j-br-1',
+          code: 'BR',
+          version: 1,
+          name: 'Brasil (Referencial Nacional)',
+          status: 'PUBLISHED',
+          metadata: {
+            minInstructionalDays: 200,
+            minInstructionalHours: 800,
+            officialSource: 'LDB Lei nº 9.394/1996 art. 24',
+            confidenceLevel: 'ESTABLISHED',
+          },
+        }),
+      },
+      officialReport: {
+        findUnique: jest.fn(),
+        findMany: jest.fn(),
       },
     };
 
@@ -436,6 +489,144 @@ describe('ReportService', () => {
       expect(result.documentHash).toBe('b'.repeat(64));
       expect(result.filename).toContain('.pdf');
       expect(result.bytes).toBeInstanceOf(Uint8Array);
+    });
+  });
+
+  describe('previewReport', () => {
+    it('generates an in-memory draft preview without persisting to database', async () => {
+      const preview = await service.previewReport(FAMILY_ID, {
+        learnerId: LEARNER_ID,
+        type: 'LEARNING_PORTFOLIO_DOSSIER',
+        title: 'Prévia de Portfólio',
+      });
+
+      expect(reportRepo.create).not.toHaveBeenCalled();
+      expect(preview.type).toBe('LEARNING_PORTFOLIO_DOSSIER');
+      expect(preview.learnerName).toBe('Alice');
+      expect(preview.previewSummary).toBeDefined();
+      expect((preview.draftContent as any).portfolioItems).toBeDefined();
+    });
+  });
+
+  describe('Dossier and Annual Compliance Report Generation', () => {
+    it('generates LEARNING_PORTFOLIO_DOSSIER aggregating evidence submissions and portfolio items', async () => {
+      const report = await service.generateReport(FAMILY_ID, {
+        learnerId: LEARNER_ID,
+        type: 'LEARNING_PORTFOLIO_DOSSIER',
+        title: 'Dossiê Anual de Aprendizagem',
+      });
+
+      expect(report.type).toBe('LEARNING_PORTFOLIO_DOSSIER');
+      expect(reportRepo.create).toHaveBeenCalledWith(
+        FAMILY_ID,
+        expect.anything(),
+        expect.objectContaining({
+          portfolioItems: expect.arrayContaining([
+            expect.objectContaining({ evidenceTypeName: 'PROJECT_REPORT' }),
+            expect.objectContaining({ title: 'Pintura a óleo' }),
+          ]),
+          learningHighlights: expect.arrayContaining([
+            expect.objectContaining({ subjectName: 'Mathematics', notes: 'Excelente progresso.' }),
+          ]),
+        }),
+        null,
+      );
+    });
+
+    it('generates ANNUAL_COMPLIANCE_REPORT with jurisdiction rule citation and legal disclaimer', async () => {
+      const report = await service.generateReport(FAMILY_ID, {
+        learnerId: LEARNER_ID,
+        type: 'ANNUAL_COMPLIANCE_REPORT',
+        title: 'Relatório Anual de Cumprimento Legal',
+      });
+
+      expect(report.type).toBe('ANNUAL_COMPLIANCE_REPORT');
+      expect(reportRepo.create).toHaveBeenCalledWith(
+        FAMILY_ID,
+        expect.anything(),
+        expect.objectContaining({
+          jurisdiction: expect.objectContaining({ code: 'BR' }),
+          legalDisclaimer: expect.stringContaining('não constitui salvo-conduto'),
+        }),
+        null,
+      );
+    });
+  });
+
+  describe('verifyReport', () => {
+    it('returns VERIFIED with document hash and disclaimer when report is found by ID', async () => {
+      const mockReport = {
+        id: REPORT_ID,
+        familyId: FAMILY_ID,
+        learnerId: LEARNER_ID,
+        type: 'ACADEMIC_TRANSCRIPT',
+        gradingScale: 'LETTER_A_F',
+        title: 'Histórico Escolar 2026',
+        content: { learnerName: 'Alice', familyOrganizationName: 'Smith Academy' },
+        generatedAt: new Date('2026-08-26T12:00:00Z'),
+        learner: { firstName: 'Alice', lastName: 'Smith', preferredName: 'Alice' },
+        family: { name: 'Smith' },
+        academicYear: { title: 'Ano 2026' },
+      };
+
+      prisma.officialReport.findUnique.mockResolvedValueOnce(mockReport);
+
+      const result = await service.verifyReport(REPORT_ID);
+
+      expect(result.status).toBe('VERIFIED');
+      expect(result.reportId).toBe(REPORT_ID);
+      expect(result.learnerName).toBe('Alice');
+      expect(result.documentHash).toHaveLength(64);
+      expect(result.legalDisclaimer).toContain('não constitui salvo-conduto');
+    });
+
+    it('returns VERIFIED when looked up by matching SHA-256 hash', async () => {
+      const mockReport = {
+        id: REPORT_ID,
+        familyId: FAMILY_ID,
+        learnerId: LEARNER_ID,
+        type: 'ACADEMIC_TRANSCRIPT',
+        gradingScale: 'LETTER_A_F',
+        title: 'Histórico Escolar 2026',
+        content: { learnerName: 'Alice', familyOrganizationName: 'Smith Academy' },
+        generatedAt: new Date('2026-08-26T12:00:00Z'),
+        learner: { firstName: 'Alice', lastName: 'Smith', preferredName: 'Alice' },
+        family: { name: 'Smith' },
+        academicYear: { title: 'Ano 2026' },
+      };
+
+      const expectedHash = service.computeContentHash({
+        id: mockReport.id,
+        type: mockReport.type,
+        gradingScale: mockReport.gradingScale,
+        content: mockReport.content,
+      });
+
+      prisma.officialReport.findMany.mockResolvedValueOnce([mockReport]);
+
+      const result = await service.verifyReport(expectedHash);
+
+      expect(result.status).toBe('VERIFIED');
+      expect(result.documentHash).toBe(expectedHash);
+      expect(result.reportId).toBe(REPORT_ID);
+    });
+
+    it('returns NOT_FOUND when report does not exist for the hash', async () => {
+      prisma.officialReport.findMany.mockResolvedValueOnce([]);
+
+      const unknownHash = 'f'.repeat(64);
+      const result = await service.verifyReport(unknownHash);
+
+      expect(result.status).toBe('NOT_FOUND');
+      expect(result.documentHash).toBe(unknownHash);
+      expect(result.reportId).toBeNull();
+    });
+
+    it('returns INVALID when identifier format is neither UUID nor SHA-256', async () => {
+      const result = await service.verifyReport('invalid-identifier');
+
+      expect(result.status).toBe('INVALID');
+      expect(result.reportId).toBeNull();
     });
   });
 });
