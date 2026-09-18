@@ -42,3 +42,4 @@ export * from './backup.js';
 export * from './dashboard.js';
 export * from './learner-access.js';
 export * from './consent-definition.js';
+export * from './routine-generator.js';

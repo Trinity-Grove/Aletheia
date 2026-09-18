@@ -73,6 +73,7 @@ export const pedagogicalModelCatalogEntrySchema = z.object({
   code: z.string(),
   name: z.string(),
   description: z.string().nullable().optional(),
+  subjects: z.array(templateSubjectDefinitionSchema).optional(),
 });
 
 export type PedagogicalModelCatalogEntryDto = z.infer<typeof pedagogicalModelCatalogEntrySchema>;
