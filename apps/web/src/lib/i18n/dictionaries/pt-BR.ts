@@ -19,6 +19,7 @@ export const ptBR = {
     portfolio: 'Portfólio',
     attendance: 'Frequência',
     reports: 'Relatórios',
+    support: 'Apoiar o Projeto ❤️',
     settings: 'Configurações',
   },
   notifications: {

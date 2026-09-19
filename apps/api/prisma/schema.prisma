@@ -198,6 +198,8 @@ model Family {
   curriculumPacks        FamilyCurriculumPack[]
   consentRecords         ConsentRecord[]
   complianceManualOverrides ComplianceManualOverride[]
+  donations              DonationRecord[]
+  supporterSubscriptions SupporterSubscription[]
 
   @@map("families")
 }
@@ -2123,3 +2125,72 @@ model ConsentRecord {
   @@map("consent_records")
 }
 
+enum DonationFrequency {
+  ONE_TIME
+  MONTHLY
+
+  @@map("donation_frequencies")
+}
+
+enum DonationStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  CANCELLED
+
+  @@map("donation_statuses")
+}
+
+enum DonationPaymentMethod {
+  PIX
+  GOOGLE_PAY
+  CREDIT_CARD
+
+  @@map("donation_payment_methods")
+}
+
+model DonationRecord {
+  id                    String                @id @default(uuid()) @db.Uuid
+  familyId              String?               @map("family_id") @db.Uuid
+  donorName             String?               @map("donor_name")
+  donorEmail            String?               @map("donor_email")
+  amountCents           Int                   @map("amount_cents")
+  currency              String                @default("BRL")
+  frequency             DonationFrequency     @default(ONE_TIME)
+  paymentMethod         DonationPaymentMethod @map("payment_method")
+  status                DonationStatus        @default(PENDING)
+  gatewayProvider       String                @map("gateway_provider")
+  gatewayTransactionId  String?               @map("gateway_transaction_id")
+  gatewaySubscriptionId String?               @map("gateway_subscription_id")
+  pixQrCodeUrl          String?               @map("pix_qr_code_url")
+  pixCopiaECola         String?               @map("pix_copia_e_cola")
+  notes                 String?
+  confirmedAt           DateTime?             @map("confirmed_at") @db.Timestamptz
+  createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime              @updatedAt @map("updated_at") @db.Timestamptz
+
+  family                Family?               @relation(fields: [familyId], references: [id], onDelete: SetNull)
+
+  @@index([familyId])
+  @@index([gatewayTransactionId])
+  @@map("donation_records")
+}
+
+model SupporterSubscription {
+  id                    String                @id @default(uuid()) @db.Uuid
+  familyId              String                @map("family_id") @db.Uuid
+  amountCents           Int                   @map("amount_cents")
+  currency              String                @default("BRL")
+  paymentMethod         DonationPaymentMethod @map("payment_method")
+  status                DonationStatus        @default(PENDING)
+  gatewayProvider       String                @map("gateway_provider")
+  gatewaySubscriptionId String                @unique @map("gateway_subscription_id")
+  cancelledAt           DateTime?             @map("cancelled_at") @db.Timestamptz
+  createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime              @updatedAt @map("updated_at") @db.Timestamptz
+
+  family                Family                @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  @@index([familyId])
+  @@map("supporter_subscriptions")
+}

@@ -39,7 +39,7 @@ function createAuthContextValue(
     activeFamilyId: 'family-old-uuid',
     activeFamily: null,
     families: [],
-      activeRole: 'GUARDIAN',
+    activeRole: 'GUARDIAN',
     login: vi.fn(),
     verifyMfa: vi.fn(),
     register: vi.fn(),

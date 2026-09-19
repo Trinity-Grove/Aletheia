@@ -18,6 +18,7 @@ export const esES: Dictionary = {
     portfolio: 'Portafolio',
     attendance: 'Asistencia',
     reports: 'Informes',
+    support: 'Apoyar el Proyecto ❤️',
     settings: 'Configuración',
   },
   notifications: {

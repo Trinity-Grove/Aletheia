@@ -52,6 +52,7 @@ export const MAIN_NAV_ITEMS: NavigationItem[] = [
   { id: 'portfolio', label: 'nav.portfolio', href: '/portfolio', icon: <AletheiaIcon name="folder-heart" size={18} /> },
   { id: 'attendance', label: 'nav.attendance', href: '/attendance', icon: <AletheiaIcon name="clipboard-check" size={18} /> },
   { id: 'reports', label: 'nav.reports', href: '/reports', icon: <AletheiaIcon name="bar-chart-3" size={18} /> },
+  { id: 'support', label: 'nav.support', href: '/support', icon: <AletheiaIcon name="heart" size={18} /> },
   { id: 'settings', label: 'nav.settings', href: '/settings', icon: <AletheiaIcon name="settings" size={18} /> },
 ];
 
@@ -246,6 +247,7 @@ export function ProductShell({
   const navigationItems = MAIN_NAV_ITEMS
     .filter((item) => {
       if (item.id === 'admin-catalog') return isPlatformAdmin;
+      if (item.id === 'support') return activePath === '/support';
       const requiredPermission = NAV_ITEM_PERMISSIONS[item.id];
       return requiredPermission === undefined || permissions.can(requiredPermission);
     })

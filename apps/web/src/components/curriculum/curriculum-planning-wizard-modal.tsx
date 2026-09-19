@@ -12,9 +12,9 @@ export interface CurriculumPlanningWizardModalProps {
   isOpen: boolean;
   onClose: () => void;
   familyId: string;
-  learnerId?: string | null;
-  academicYearId?: string | null;
-  onSuccess?: () => void;
+  learnerId?: string | null | undefined;
+  academicYearId?: string | null | undefined;
+  onSuccess?: (() => void) | undefined;
 }
 
 type WizardStep = 1 | 2 | 3;

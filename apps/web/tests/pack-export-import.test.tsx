@@ -71,6 +71,7 @@ const mockFamilyExportPackage: FamilyDataExportPackageDto = {
   prayerRequests: [],
   learningRecords: [],
   attendanceRecords: [],
+  complianceRequirements: [],
 };
 
 const mockExportPackDoc: CurriculumPackExportDocument = {

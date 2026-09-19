@@ -7,7 +7,7 @@ export interface DailyScriptureState {
   citation: string;
   theme: string | undefined;
   isFromFamilyDevotional: boolean;
-  devotionalId?: string;
+  devotionalId?: string | undefined;
   loading: boolean;
 }
 

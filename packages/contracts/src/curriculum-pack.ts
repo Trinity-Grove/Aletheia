@@ -59,6 +59,7 @@ export const curriculumPackResponseSchema = z.object({
   name: z.string(),
   description: z.string().nullable().optional(),
   metadata: z.record(z.string(), z.unknown()),
+  manifest: z.record(z.string(), z.unknown()).optional(),
   createdAt: z.string(),
   publishedAt: z.string().nullable().optional(),
   deprecatedAt: z.string().nullable().optional(),
