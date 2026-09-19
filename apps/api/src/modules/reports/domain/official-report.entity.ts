@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type {
   GradingScale,
   OfficialReportResponseDto,
@@ -32,6 +33,16 @@ export class OfficialReportEntity {
       gradingScale: this.gradingScale,
       content: this.content,
       generatedAt: this.generatedAt.toISOString(),
+      documentHash: createHash('sha256')
+        .update(
+          JSON.stringify({
+            id: this.id,
+            type: this.type,
+            gradingScale: this.gradingScale,
+            content: this.content,
+          }),
+        )
+        .digest('hex'),
       createdAt: this.createdAt.toISOString(),
       updatedAt: this.updatedAt.toISOString(),
     };

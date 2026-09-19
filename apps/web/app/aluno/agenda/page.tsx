@@ -68,7 +68,6 @@ export default function LearnerAgendaPage() {
     } catch {
       router.replace('/aluno/login');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadAgenda = async (id: string) => {

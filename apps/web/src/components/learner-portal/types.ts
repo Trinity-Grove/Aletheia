@@ -3,7 +3,8 @@ import type {
   EvidenceSubmissionResponseDto,
 } from '@aletheia/contracts';
 
-export interface LearnerTrackedCompetency extends Partial<LearnerCompetencyTrackingResponseDto> {
+export interface LearnerTrackedCompetency
+  extends Omit<Partial<LearnerCompetencyTrackingResponseDto>, 'competency'> {
   id: string;
   competencyCode?: string;
   competencyVersion?: number;

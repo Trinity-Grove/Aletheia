@@ -6,7 +6,6 @@ import type {
   FamilyConsentOverviewDto,
   TermConsentOverviewDto,
   ConsentDefinitionResponseDto,
-  ConsentRecordResponseDto,
   ConsentComplianceCheckDto,
 } from '@aletheia/contracts';
 

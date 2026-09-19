@@ -68,10 +68,9 @@ const mockFamilyExportPackage: FamilyDataExportPackageDto = {
     },
   ],
   devotionals: [],
-  prayers: [],
-  records: [],
-  attendances: [],
-  compliance: null,
+  prayerRequests: [],
+  learningRecords: [],
+  attendanceRecords: [],
 };
 
 const mockExportPackDoc: CurriculumPackExportDocument = {
@@ -86,9 +85,9 @@ const mockExportPackDoc: CurriculumPackExportDocument = {
     description: 'Aritmética e geometria com fundamentos clássicos.',
     metadata: { category: 'Quadrivium' },
   },
-  packItems: [
+  items: [
     {
-      definitionType: 'COMPETENCY',
+      definitionType: 'CompetencyDefinition',
       code: 'MATH.ARITH.1',
       version: 1,
       status: 'PUBLISHED',
@@ -107,7 +106,7 @@ const mockDryRunReport: CurriculumPackImportReport = {
     outcome: 'WOULD_CREATE',
   },
   wouldCreate: [
-    { type: 'COMPETENCY', code: 'MATH.ARITH.1', version: 1 },
+    { type: 'CompetencyDefinition', code: 'MATH.ARITH.1', version: 1 },
   ],
   created: [],
   conflicts: [],
@@ -124,7 +123,7 @@ const mockConfirmedReport: CurriculumPackImportReport = {
   },
   wouldCreate: [],
   created: [
-    { type: 'COMPETENCY', code: 'MATH.ARITH.1', version: 1 },
+    { type: 'CompetencyDefinition', code: 'MATH.ARITH.1', version: 1 },
   ],
   conflicts: [],
   missingDependencies: [],

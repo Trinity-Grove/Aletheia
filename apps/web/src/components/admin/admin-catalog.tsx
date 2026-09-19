@@ -186,7 +186,7 @@ function CatalogResource({ resource }: { resource: Resource }) {
 
     let parsed:
       | { success: true; data: unknown }
-      | { success: false; error: { issues: { path: (string | number)[]; message: string }[] } };
+      | { success: false; error: { issues: { path: PropertyKey[]; message: string }[] } };
 
     if (resource === 'competency-definitions') {
       parsed = createCompetencyDefinitionSchema.safeParse({ ...common, title: name.trim(), domainId });
@@ -244,7 +244,7 @@ function CatalogResource({ resource }: { resource: Resource }) {
     }
 
     if (!parsed.success) {
-      setError(parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('; '));
+      setError(parsed.error.issues.map((issue) => `${issue.path.map(String).join('.')}: ${issue.message}`).join('; '));
       return;
     }
     mutationPending.current = true;

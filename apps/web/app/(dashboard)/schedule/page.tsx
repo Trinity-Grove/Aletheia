@@ -427,7 +427,7 @@ export default function SchedulePage() {
           familyId={familyId || ''}
           learnerId={activeLearnerId}
           onSuccess={() => {
-            void loadData();
+            void Promise.all([fetchAgenda(), fetchSlots()]);
           }}
         />
 

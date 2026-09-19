@@ -46,7 +46,7 @@ describe('CurriculumPlanningWizardModal & Routine Generation', () => {
     const handleClose = vi.fn();
     const handleSuccess = vi.fn();
 
-    vi.spyOn(global, 'fetch').mockImplementation((url, init) => {
+    vi.spyOn(global, 'fetch').mockImplementation((url) => {
       const urlStr = String(url);
       if (urlStr.includes('/schedule/suggest-routine')) {
         return Promise.resolve({

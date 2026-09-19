@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Badge, Button, Modal } from '@aletheia/ui';
+import { Button, Modal } from '@aletheia/ui';
 import type { CurriculumPackResponseDto } from '@aletheia/contracts';
 
 export interface CurriculumPackDetailModalProps {
@@ -22,7 +22,7 @@ export function CurriculumPackDetailModal({
   if (!pack) return null;
 
   const meta = (pack.metadata as Record<string, any>) || {};
-  const manifest = (pack.manifest as Record<string, any>) || {};
+  const manifest = (meta.manifest as Record<string, any>) || {};
   const pillars = Array.isArray(meta.pillars) ? meta.pillars : [];
   const targetStages = Array.isArray(meta.targetStages) ? meta.targetStages : [];
   const manifestSubjects = Array.isArray(manifest.subjects) ? manifest.subjects : [];

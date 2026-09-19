@@ -51,6 +51,7 @@ export const officialReportResponseSchema = z.object({
   gradingScale: gradingScaleSchema,
   content: z.record(z.string(), z.any()),
   generatedAt: z.string(),
+  documentHash: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

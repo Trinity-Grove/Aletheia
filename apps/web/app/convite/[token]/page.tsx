@@ -13,5 +13,5 @@ export default function ConvitePage({ params }: ConvitePageProps = {}) {
       ? use(params as Promise<{ token: string }>)
       : (params as { token: string } | undefined);
 
-  return <InvitationAcceptView token={resolvedParams?.token} />;
+  return <InvitationAcceptView token={resolvedParams?.token ?? ''} />;
 }
