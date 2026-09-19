@@ -76,6 +76,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-aletheia}:${POSTGRES_PASSWORD:-aletheia_local_only}@postgres:5432/${POSTGRES_DB:-aletheia}?schema=public
       JWT_SECRET: ${JWT_SECRET:-local_development_only_jwt_secret_1234567890}
       LEARNER_SESSION_JWT_SECRET: ${LEARNER_SESSION_JWT_SECRET:-local_development_only_learner_jwt_secret_1234567890}
+      MFA_ENCRYPTION_KEY: ${MFA_ENCRYPTION_KEY:-0000000000000000000000000000000000000000000000000000000000000000}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
       REDIS_URL: redis://redis:6379
       S3_ENDPOINT: http://minio:9000
