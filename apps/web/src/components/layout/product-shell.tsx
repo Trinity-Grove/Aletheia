@@ -247,6 +247,7 @@ export function ProductShell({
   const navigationItems = MAIN_NAV_ITEMS
     .filter((item) => {
       if (item.id === 'admin-catalog') return isPlatformAdmin;
+      if (item.id === 'support') return activePath === '/support';
       const requiredPermission = NAV_ITEM_PERMISSIONS[item.id];
       return requiredPermission === undefined || permissions.can(requiredPermission);
     })
