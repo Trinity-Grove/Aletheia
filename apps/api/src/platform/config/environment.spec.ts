@@ -242,7 +242,31 @@ describe('parseEnvironment', () => {
         accessKey: 'access-key',
         secretKey: 'secret-key',
         bucket: 'aletheia',
+        region: undefined,
       },
+    });
+  });
+
+  it('maps object storage configured with AWS SDK standard variable names (S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_REGION)', () => {
+    const environment = parseEnvironment({
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgresql://user:pass@db:5432/aletheia',
+      JWT_SECRET: validJwtSecret,
+      LEARNER_SESSION_JWT_SECRET: validLearnerJwtSecret,
+      MFA_ENCRYPTION_KEY: validMfaEncryptionKey,
+      S3_ENDPOINT: 'https://objects.example.com',
+      S3_ACCESS_KEY_ID: 'aws-access-key-id',
+      S3_SECRET_ACCESS_KEY: 'aws-secret-access-key',
+      S3_BUCKET: 'aletheia',
+      S3_REGION: 'sjc',
+    });
+
+    expect(environment.objectStorage).toEqual({
+      endpoint: 'https://objects.example.com',
+      accessKey: 'aws-access-key-id',
+      secretKey: 'aws-secret-access-key',
+      bucket: 'aletheia',
+      region: 'sjc',
     });
   });
 

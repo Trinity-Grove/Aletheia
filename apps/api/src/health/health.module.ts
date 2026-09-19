@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../platform/database/database.module';
+import { StorageModule } from '../platform/storage/storage.module';
 import {
   NotConfiguredDependencyProbe,
   OBJECT_STORAGE_PROBE,
+  ObjectStorageDependencyProbe,
   POSTGRES_PROBE,
   PostgresDependencyProbe,
   REDIS_PROBE,
@@ -11,11 +13,12 @@ import { HealthController } from './health.controller';
 import { HealthService } from './health.service';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, StorageModule],
   controllers: [HealthController],
   providers: [
     HealthService,
     PostgresDependencyProbe,
+    ObjectStorageDependencyProbe,
     NotConfiguredDependencyProbe,
     {
       provide: POSTGRES_PROBE,
@@ -27,7 +30,7 @@ import { HealthService } from './health.service';
     },
     {
       provide: OBJECT_STORAGE_PROBE,
-      useExisting: NotConfiguredDependencyProbe,
+      useExisting: ObjectStorageDependencyProbe,
     },
   ],
 })

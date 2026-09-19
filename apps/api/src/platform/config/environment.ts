@@ -24,6 +24,7 @@ export interface Environment {
     accessKey: string;
     secretKey: string;
     bucket: string;
+    region?: string | undefined;
   } | null;
 }
 
@@ -80,8 +81,11 @@ const environmentSchema = z
     REDIS_URL: optionalUrl,
     S3_ENDPOINT: optionalUrl,
     S3_ACCESS_KEY: optionalValue,
+    S3_ACCESS_KEY_ID: optionalValue,
     S3_SECRET_KEY: optionalValue,
+    S3_SECRET_ACCESS_KEY: optionalValue,
     S3_BUCKET: optionalValue,
+    S3_REGION: optionalValue,
   })
   .superRefine((environment, context) => {
     if (
@@ -97,10 +101,15 @@ const environmentSchema = z
       });
     }
 
+    const effectiveAccessKey =
+      environment.S3_ACCESS_KEY ?? environment.S3_ACCESS_KEY_ID;
+    const effectiveSecretKey =
+      environment.S3_SECRET_KEY ?? environment.S3_SECRET_ACCESS_KEY;
+
     const objectStorageValues = [
       environment.S3_ENDPOINT,
-      environment.S3_ACCESS_KEY,
-      environment.S3_SECRET_KEY,
+      effectiveAccessKey,
+      effectiveSecretKey,
       environment.S3_BUCKET,
     ];
     const configuredValues = objectStorageValues.filter(
@@ -149,9 +158,10 @@ const environmentSchema = z
       objectStorage: environment.S3_ENDPOINT
         ? {
             endpoint: environment.S3_ENDPOINT,
-            accessKey: environment.S3_ACCESS_KEY!,
-            secretKey: environment.S3_SECRET_KEY!,
+            accessKey: (environment.S3_ACCESS_KEY ?? environment.S3_ACCESS_KEY_ID)!,
+            secretKey: (environment.S3_SECRET_KEY ?? environment.S3_SECRET_ACCESS_KEY)!,
             bucket: environment.S3_BUCKET!,
+            region: environment.S3_REGION,
           }
         : null,
     }),
