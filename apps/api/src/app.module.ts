@@ -19,6 +19,7 @@ import { RemindersModule } from './modules/reminders/reminders.module.js';
 import { LearnerAccessModule } from './modules/learner-access/learner-access.module.js';
 import { JurisdictionsModule } from './modules/jurisdictions/jurisdictions.module.js';
 import { PrivacyModule } from './modules/privacy/privacy.module.js';
+import { DonationsModule } from './modules/donations/donations.module.js';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { PrivacyModule } from './modules/privacy/privacy.module.js';
     LearnerAccessModule,
     JurisdictionsModule,
     PrivacyModule,
+    DonationsModule,
   ],
   providers: [
     {
