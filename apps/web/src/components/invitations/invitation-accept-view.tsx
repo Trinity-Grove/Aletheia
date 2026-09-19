@@ -8,7 +8,7 @@ import { getApiAuthToken } from '../../lib/api';
 import { useAuth } from '../../lib/auth/auth-context';
 
 export interface InvitationAcceptViewProps {
-  token?: string;
+  token?: string | undefined;
   params?: Promise<{ token: string }> | { token: string };
 }
 

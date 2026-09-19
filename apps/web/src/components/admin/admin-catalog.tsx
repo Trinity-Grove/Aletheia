@@ -186,7 +186,7 @@ function CatalogResource({ resource }: { resource: Resource }) {
 
     let parsed:
       | { success: true; data: unknown }
-      | { success: false; error: { issues: { path: (string | number)[]; message: string }[] } };
+      | { success: false; error: { issues: Array<{ path: Array<PropertyKey>; message: string }> } };
 
     if (resource === 'competency-definitions') {
       parsed = createCompetencyDefinitionSchema.safeParse({ ...common, title: name.trim(), domainId });

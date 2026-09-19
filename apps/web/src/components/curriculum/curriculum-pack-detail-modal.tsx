@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Badge, Button, Modal } from '@aletheia/ui';
+import { Button, Modal } from '@aletheia/ui';
 import type { CurriculumPackResponseDto } from '@aletheia/contracts';
 
 export interface CurriculumPackDetailModalProps {

@@ -5,9 +5,9 @@ import { getDailyCanonicalVerse } from '../../lib/scripture/daily-verses';
 export interface DailyScriptureState {
   verseText: string;
   citation: string;
-  theme?: string;
+  theme?: string | undefined;
   isFromFamilyDevotional: boolean;
-  devotionalId?: string;
+  devotionalId?: string | undefined;
   loading: boolean;
 }
 

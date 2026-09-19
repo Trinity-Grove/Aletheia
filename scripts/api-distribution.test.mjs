@@ -100,6 +100,10 @@ test('a clean API package build emits and boots dist/main.js', async () => {
       ...process.env,
       DATABASE_URL: 'postgresql://smoke:smoke@127.0.0.1:1/aletheia',
       JWT_SECRET: 'smoke_test_jwt_secret_key_1234567890',
+      LEARNER_SESSION_JWT_SECRET:
+        process.env.LEARNER_SESSION_JWT_SECRET || 'smoke_test_learner_jwt_secret_key_1234567890',
+      MFA_ENCRYPTION_KEY:
+        process.env.MFA_ENCRYPTION_KEY || '0000000000000000000000000000000000000000000000000000000000000000',
       HOST: '127.0.0.1',
       NODE_ENV: 'test',
       PORT: String(port),

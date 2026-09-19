@@ -427,7 +427,8 @@ export default function SchedulePage() {
           familyId={familyId || ''}
           learnerId={activeLearnerId}
           onSuccess={() => {
-            void loadData();
+            void fetchAgenda();
+            void fetchSlots();
           }}
         />
 

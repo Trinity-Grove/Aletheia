@@ -185,7 +185,7 @@ export function CurriculumPackImportModal({
       isOpen={isOpen}
       onClose={handleClose}
       title="Importar Pacote Curricular (Admin)"
-      size="lg"
+      maxWidth="lg"
     >
       <div
         data-testid="curriculum-pack-import-modal"

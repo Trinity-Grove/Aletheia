@@ -12,7 +12,7 @@ function LearnerLoginContent() {
   const searchParams = useSearchParams();
   const familyParam = searchParams?.get('familyId');
 
-  const [familyId, setFamilyId] = useState<string>('');
+  const [_familyId, setFamilyId] = useState<string>('');
   const [learners, setLearners] = useState<LearnerAccessOptionDto[]>([]);
   const [selectedLearner, setSelectedLearner] = useState<LearnerAccessOptionDto | null>(null);
   const [pinCode, setPinCode] = useState('');

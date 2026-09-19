@@ -120,7 +120,6 @@ export function FamilyCurriculumPackModal({
       void loadMedia();
       void loadRevisions();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, installedPack?.id, installedPack?.revision]);
 
   const handleSaveRevision = async () => {

@@ -18,6 +18,7 @@ export const enUS: Dictionary = {
     portfolio: 'Portfolio',
     attendance: 'Attendance',
     reports: 'Reports',
+    support: 'Support the Project ❤️',
     settings: 'Settings',
   },
   notifications: {
