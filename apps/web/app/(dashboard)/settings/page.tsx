@@ -23,10 +23,11 @@ import { AccountSecuritySettings } from '../../../src/components/settings/accoun
 import { AccountActivityLog } from '../../../src/components/settings/account-activity-log';
 import { PedagogicalTheologicalProfileSettings } from '../../../src/components/settings/pedagogical-theological-profile-settings';
 import { PrivacyConsentSettings } from '../../../src/components/settings/privacy-consent-settings';
+import { SupporterSettingsCard } from '../../../src/components/settings/supporter-settings-card';
 import { useAuth } from '../../../src/lib/auth/auth-context';
 import { api } from '../../../src/lib/api';
 
-type ActiveTab = 'general' | 'family' | 'profile' | 'notifications' | 'backup' | 'account' | 'privacy';
+type ActiveTab = 'general' | 'family' | 'profile' | 'notifications' | 'backup' | 'account' | 'privacy' | 'support';
 
 export default function SettingsPage() {
   const { user, changePassword, changeEmail, refreshSession } = useAuth();
@@ -427,6 +428,28 @@ export default function SettingsPage() {
             <AletheiaIcon name="file-text" size="sm" />
             <span>Privacidade & LGPD</span>
           </button>
+
+          <button
+            type="button"
+            data-testid="tab-support-settings"
+            onClick={() => setActiveTab('support')}
+            style={{
+              padding: '0.75rem 1.25rem',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'support' ? '2px solid var(--forest)' : '2px solid transparent',
+              color: activeTab === 'support' ? 'var(--forest)' : 'var(--text-secondary)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            <AletheiaIcon name="heart" size="sm" />
+            <span>Apoio Comunitário</span>
+          </button>
         </div>
 
         {loading ? (
@@ -487,6 +510,10 @@ export default function SettingsPage() {
                 familyId={familyId}
                 learners={learners}
               />
+            )}
+
+            {activeTab === 'support' && (
+              <SupporterSettingsCard familyId={familyId} />
             )}
           </div>
         )}
