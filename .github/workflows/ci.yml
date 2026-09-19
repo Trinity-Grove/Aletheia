@@ -91,13 +91,7 @@ jobs:
         run: pnpm --filter @aletheia/web test:e2e
 
       - name: Run shell visual regression
-        run: pnpm --filter @aletheia/web test:e2e:visual --update-snapshots
-
-      - name: Upload updated visual snapshots
-        uses: actions/upload-artifact@v4
-        with:
-          name: visual-snapshots
-          path: apps/web/e2e-visual/shell-visual.spec.ts-snapshots/
+        run: pnpm --filter @aletheia/web test:e2e:visual
 
       - name: Build production applications and packages
         run: pnpm build
