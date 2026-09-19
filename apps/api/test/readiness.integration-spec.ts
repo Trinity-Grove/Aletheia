@@ -13,7 +13,7 @@ describe('Health readiness with PostgreSQL', () => {
     await app.close();
   });
 
-  it('reports the real PostgreSQL probe as up and unwired optional dependencies as not_configured', async () => {
+  it('reports the real PostgreSQL probe as up and optional dependencies according to configuration', async () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/health/ready',
@@ -25,7 +25,7 @@ describe('Health readiness with PostgreSQL', () => {
       dependencies: {
         postgres: 'up',
         redis: 'not_configured',
-        objectStorage: 'not_configured',
+        objectStorage: process.env.S3_ENDPOINT ? 'up' : 'not_configured',
       },
     });
   });
