@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
   suggestRoutineInputSchema,
-  applySuggestedRoutineSchema,
   type ApplySuggestedRoutineDto,
   type DayOfWeek,
   type RoutineSlotType,

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   applySuggestedRoutineSchema,
   learningBlockSchema,
-  pedagogicalGuideSchema,
   pedagogicalModelCatalogEntrySchema,
   suggestRoutineInputSchema,
   suggestedRoutineResponseSchema,

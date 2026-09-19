@@ -5,9 +5,7 @@ import { AletheiaIcon, Alert, Badge, Button, Card, Modal, Select, Textarea } fro
 import type {
   ComplianceEvaluationResponseDto,
   ComplianceEvaluationStatus,
-  CriterionEvaluationDto,
   CreateManualComplianceOverrideDto,
-  ManualComplianceOverrideResponseDto,
 } from '@aletheia/contracts';
 
 export interface ComplianceEvaluationPanelProps {
@@ -184,7 +182,7 @@ export function ComplianceEvaluationPanel({
 
   if (error) {
     return (
-      <Alert variant="danger" title="Erro de Avaliação">
+      <Alert variant="error" title="Erro de Avaliação">
         <p className="text-sm">{error}</p>
         <Button size="sm" variant="secondary" onClick={fetchEvaluation} className="mt-2">
           Tentar novamente
@@ -384,7 +382,7 @@ export function ComplianceEvaluationPanel({
       >
         <form onSubmit={handleSubmitOverride} data-testid="override-modal" className="space-y-4">
           {overrideError && (
-            <Alert variant="danger">
+            <Alert variant="error">
               <p className="text-xs">{overrideError}</p>
             </Alert>
           )}

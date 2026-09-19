@@ -77,7 +77,7 @@ describe('Pedagogical model definition resolver equivalence (real Postgres)', ()
       const catalog = await resolver.listPublishedCatalog();
       const montessori = catalog.find((entry) => entry.code === 'MONTESSORI');
       expect(montessori).toBeDefined();
-      expect(Object.keys(montessori!).sort()).toEqual(['code', 'description', 'name']);
+      expect(Object.keys(montessori!).sort()).toEqual(['code', 'description', 'name', 'subjects']);
     });
 
     it('picks up a brand-new PUBLISHED code with no code change or deploy', async () => {

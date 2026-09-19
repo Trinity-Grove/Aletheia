@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { AletheiaIcon, Alert, Badge, Button, Card, EmptyState, Modal } from '@aletheia/ui';
+import { AletheiaIcon, Alert, Badge, Button, Card, Modal } from '@aletheia/ui';
 import type {
   DonationRecordResponseDto,
   SupporterSubscriptionResponseDto,

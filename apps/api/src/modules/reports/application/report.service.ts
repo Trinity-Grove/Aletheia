@@ -18,7 +18,6 @@ import type {
   AttendanceCertificateDto,
   ExportFormat,
   GenerateReportDto,
-  GradingScale,
   LearningHighlightDossierDto,
   LearningPortfolioDossierDto,
   OfficialReportResponseDto,

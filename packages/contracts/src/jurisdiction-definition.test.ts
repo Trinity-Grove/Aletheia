@@ -5,8 +5,7 @@ import {
   createJurisdictionDefinitionSchema,
   createManualComplianceOverrideSchema,
   criterionEvaluationSchema,
-  jurisdictionConfidenceLevelSchema,
-} from './jurisdiction-definition';
+} from './jurisdiction-definition.js';
 
 describe('Jurisdiction Definition & Compliance Evaluation Contracts (Issue #26)', () => {
   describe('Jurisdiction Definition Schema', () => {

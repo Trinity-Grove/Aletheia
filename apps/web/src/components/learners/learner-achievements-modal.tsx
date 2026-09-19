@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { AletheiaIcon, Alert, Button } from '@aletheia/ui';
+import { Alert, Button } from '@aletheia/ui';
 import type { LearnerCompetencyAchievementResponseDto } from '@aletheia/contracts';
 
 interface LearnerAchievementsModalProps {

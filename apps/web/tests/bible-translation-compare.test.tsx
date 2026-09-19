@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComparePassageResponseDto } from '@aletheia/contracts';
 import {
-  AVAILABLE_TRANSLATIONS,
   BibleTranslationCompareView,
 } from '../src/components/devotional/bible-translation-compare-view';
 import BibleTranslationComparePage from '../app/(dashboard)/devotional/comparador/page';
