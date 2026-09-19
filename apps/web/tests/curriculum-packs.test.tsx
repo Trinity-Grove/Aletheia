@@ -376,14 +376,14 @@ describe('CurriculumPacksGallery (Task 7 & 8: Plugins / Pacotes Curriculares)', 
   it('allows customizing pack content in editor tab and saving a new revision', async () => {
     let putPayload: any = null;
 
-    const firstPack = mockInstalledPacks[0]!;
+    const installedPack = mockInstalledPacks[0]!;
     const updatedPack = {
-      ...firstPack,
+      ...installedPack,
       revision: 2,
       document: {
-        ...firstPack.document,
+        ...installedPack.document,
         pack: {
-          ...firstPack.document.pack,
+          ...installedPack.document.pack,
           name: 'Trivium Clássico Customizado da Família Silva',
           description: 'Adaptação especial com ênfase em história antiga.',
         },

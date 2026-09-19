@@ -4,7 +4,7 @@ import type {
 } from '@aletheia/contracts';
 
 export interface LearnerTrackedCompetency
-  extends Partial<Omit<LearnerCompetencyTrackingResponseDto, 'competency'>> {
+  extends Omit<Partial<LearnerCompetencyTrackingResponseDto>, 'competency'> {
   id: string;
   competencyCode?: string;
   competencyVersion?: number;

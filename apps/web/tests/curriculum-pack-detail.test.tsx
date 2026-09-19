@@ -25,11 +25,11 @@ const mockPack: CurriculumPackResponseDto = {
       'Leitura de Livros Vivos (Living Books)',
       'Lições Curtas de Alta Concentração (15-20 min)',
     ],
-  },
-  manifest: {
-    subjects: ['História Viva', 'Estudo da Natureza', 'Literatura & Poesia'],
-    activitiesCount: 24,
-    skillsCount: 12,
+    manifest: {
+      subjects: ['História Viva', 'Estudo da Natureza', 'Literatura & Poesia'],
+      activitiesCount: 24,
+      skillsCount: 12,
+    },
   },
   createdAt: '2026-09-18T00:00:00.000Z',
 };

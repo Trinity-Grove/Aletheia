@@ -2194,5 +2194,3 @@ model SupporterSubscription {
   @@index([familyId])
   @@map("supporter_subscriptions")
 }
-
-

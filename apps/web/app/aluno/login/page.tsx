@@ -12,7 +12,6 @@ function LearnerLoginContent() {
   const searchParams = useSearchParams();
   const familyParam = searchParams?.get('familyId');
 
-  const [_familyId, setFamilyId] = useState<string>('');
   const [learners, setLearners] = useState<LearnerAccessOptionDto[]>([]);
   const [selectedLearner, setSelectedLearner] = useState<LearnerAccessOptionDto | null>(null);
   const [pinCode, setPinCode] = useState('');
@@ -22,7 +21,6 @@ function LearnerLoginContent() {
   useEffect(() => {
     const fam = familyParam || (typeof window !== 'undefined' ? localStorage.getItem('familyId') : null) || '';
     if (fam) {
-      setFamilyId(fam);
       void loadLearners(fam);
     }
   }, [familyParam]);

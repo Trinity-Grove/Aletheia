@@ -317,7 +317,7 @@ export function CurriculumView({
       <CurriculumPlanningWizardModal
         isOpen={isPlanningWizardOpen}
         familyId={familyId}
-        learnerId={activeLearner?.id}
+        learnerId={activeLearner?.id ?? null}
         academicYearId={activeYearId}
         onClose={() => setIsPlanningWizardOpen(false)}
         onSuccess={() => {
