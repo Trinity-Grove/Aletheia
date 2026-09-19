@@ -125,22 +125,37 @@ export class MercadoPagoDonationGateway implements DonationGateway {
         ? raw.gatewaySubscriptionId
         : undefined;
 
-    const status =
-      raw.status === 'CONFIRMED' ||
-      raw.status === 'FAILED' ||
-      raw.status === 'CANCELLED'
+    const rawStatus =
+      typeof raw.status === 'string'
         ? raw.status
-        : 'CONFIRMED';
+        : rawData && typeof rawData.status === 'string'
+          ? rawData.status
+          : undefined;
+
+    let status: 'CONFIRMED' | 'FAILED' | 'CANCELLED';
+    if (rawStatus === 'CONFIRMED' || rawStatus === 'approved') {
+      status = 'CONFIRMED';
+    } else if (rawStatus === 'CANCELLED' || rawStatus === 'cancelled') {
+      status = 'CANCELLED';
+    } else {
+      status = 'FAILED';
+    }
 
     const amountCents =
-      typeof raw.amountCents === 'number' ? raw.amountCents : undefined;
+      typeof raw.amountCents === 'number'
+        ? raw.amountCents
+        : rawData && typeof rawData.transaction_amount === 'number'
+          ? Math.round(rawData.transaction_amount * 100)
+          : undefined;
 
     const paidAt =
       typeof raw.paidAt === 'string'
         ? new Date(raw.paidAt)
-        : status === 'CONFIRMED'
-          ? new Date()
-          : undefined;
+        : rawData && typeof rawData.date_approved === 'string'
+          ? new Date(rawData.date_approved)
+          : status === 'CONFIRMED'
+            ? new Date()
+            : undefined;
 
     return {
       eventId,

@@ -15,6 +15,7 @@ export interface DonationFormCardProps {
   familyId?: string | null;
   onDonationSuccess?: () => void;
   pollingIntervalMs?: number;
+  maxPollingAttempts?: number;
 }
 
 const QUICK_AMOUNTS = [
@@ -28,6 +29,7 @@ export function DonationFormCard({
   familyId,
   onDonationSuccess,
   pollingIntervalMs = 3000,
+  maxPollingAttempts = 300,
 }: DonationFormCardProps) {
   const [frequency, setFrequency] = useState<DonationFrequency>('ONE_TIME');
   const [selectedCents, setSelectedCents] = useState<number>(3000);
@@ -54,10 +56,14 @@ export function DonationFormCard({
 
   const getEffectiveCents = (): number => {
     if (isCustom) {
-      const sanitized = customAmountText.replace(/[^\d,.]/g, '').replace(',', '.');
-      const parsedFloat = parseFloat(sanitized);
-      if (isNaN(parsedFloat)) return 0;
-      return Math.round(parsedFloat * 100);
+      const sanitized = customAmountText
+        .replace(/[^\d,.]/g, '')
+        .replace(/\./g, '')
+        .replace(',', '.')
+        .trim();
+      const val = parseFloat(sanitized);
+      if (isNaN(val)) return 0;
+      return Math.round(val * 100);
     }
     return selectedCents;
   };
@@ -75,12 +81,28 @@ export function DonationFormCard({
     setErrorMessage(null);
   };
 
-  const startPollingStatus = (donationId: string, activeFamilyId: string) => {
+  const startPollingStatus = (
+    donationId: string,
+    activeFamilyId: string,
+    expiresAtStr?: string,
+  ) => {
     if (pollTimerRef.current) {
       clearInterval(pollTimerRef.current);
     }
 
+    let attempts = 0;
+    const expiresAt = expiresAtStr ? new Date(expiresAtStr).getTime() : null;
+
     pollTimerRef.current = setInterval(async () => {
+      attempts++;
+      if (attempts > maxPollingAttempts || (expiresAt && Date.now() > expiresAt)) {
+        if (pollTimerRef.current) {
+          clearInterval(pollTimerRef.current);
+          pollTimerRef.current = null;
+        }
+        return;
+      }
+
       try {
         const res = await fetch(`/api/v1/families/${activeFamilyId}/donations/${donationId}/status`, {
           credentials: 'include',
@@ -94,6 +116,11 @@ export function DonationFormCard({
             }
             setIsConfirmed(true);
             onDonationSuccess?.();
+          } else if (record.status === 'CANCELLED' || record.status === 'FAILED') {
+            if (pollTimerRef.current) {
+              clearInterval(pollTimerRef.current);
+              pollTimerRef.current = null;
+            }
           }
         }
       } catch {
@@ -157,7 +184,7 @@ export function DonationFormCard({
             setQrCodeDataUrl(intent.pixQrCodeUrl);
           }
         }
-        startPollingStatus(intent.donationId, targetFamilyId);
+        startPollingStatus(intent.donationId, targetFamilyId, intent.expiresAt);
       } else if (effectiveMethod === 'GOOGLE_PAY') {
         // Google Pay intent created: simulates instant confirmation or external token processing
         setIsConfirmed(true);

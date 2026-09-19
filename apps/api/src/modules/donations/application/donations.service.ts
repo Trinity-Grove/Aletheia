@@ -199,30 +199,33 @@ export class DonationsService {
 
     const event = await this.gateway.parseWebhook(payload, headers);
 
+    let handled = false;
+    let anyUpdated = false;
+    let allIdempotent = true;
+
     if (event.gatewayTransactionId) {
       const record =
         await this.repository.findDonationRecordByGatewayTransactionId(
           event.gatewayTransactionId,
         );
 
-      if (!record) {
-        return { received: true, handled: false };
+      if (record) {
+        handled = true;
+        if (record.status === 'CONFIRMED' && event.status === 'CONFIRMED') {
+          // already confirmed
+        } else {
+          allIdempotent = false;
+          anyUpdated = true;
+          const confirmedAt =
+            event.paidAt ?? (event.status === 'CONFIRMED' ? new Date() : null);
+
+          await this.repository.updateDonationRecordStatus(
+            record.id,
+            event.status,
+            confirmedAt,
+          );
+        }
       }
-
-      if (record.status === 'CONFIRMED' && event.status === 'CONFIRMED') {
-        return { received: true, idempotent: true };
-      }
-
-      const confirmedAt =
-        event.paidAt ?? (event.status === 'CONFIRMED' ? new Date() : null);
-
-      await this.repository.updateDonationRecordStatus(
-        record.id,
-        event.status,
-        confirmedAt,
-      );
-
-      return { received: true };
     }
 
     if (event.gatewaySubscriptionId) {
@@ -231,26 +234,33 @@ export class DonationsService {
           event.gatewaySubscriptionId,
         );
 
-      if (!sub) {
-        return { received: true, handled: false };
+      if (sub) {
+        handled = true;
+        if (sub.status === event.status) {
+          // already matching status
+        } else {
+          allIdempotent = false;
+          anyUpdated = true;
+          const cancelledAt = event.status === 'CANCELLED' ? new Date() : null;
+
+          await this.repository.updateSupporterSubscriptionStatus(
+            sub.id,
+            event.status,
+            cancelledAt,
+          );
+        }
       }
-
-      if (sub.status === event.status) {
-        return { received: true, idempotent: true };
-      }
-
-      const cancelledAt = event.status === 'CANCELLED' ? new Date() : null;
-
-      await this.repository.updateSupporterSubscriptionStatus(
-        sub.id,
-        event.status,
-        cancelledAt,
-      );
-
-      return { received: true };
     }
 
-    return { received: true, handled: false };
+    if (!handled) {
+      return { received: true, handled: false };
+    }
+
+    if (allIdempotent && !anyUpdated) {
+      return { received: true, idempotent: true };
+    }
+
+    return { received: true };
   }
 
   private mapDonationRecordToDto(

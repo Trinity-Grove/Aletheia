@@ -248,6 +248,123 @@ describe('Donation & Voluntary Support Components', () => {
         );
       });
     });
+
+    it('correctly parses custom amount with Brazilian thousand separators like 1.500,00', async () => {
+      const fetchMock = vi.fn();
+      globalThis.fetch = fetchMock;
+
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockDonationIntent,
+      });
+
+      render(<DonationFormCard familyId={testFamilyId} />);
+
+      const customInput = screen.getByTestId('custom-amount-input');
+      fireEvent.change(customInput, { target: { value: '1.500,00' } });
+
+      const submitButton = screen.getByTestId('submit-donation-button');
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledWith(
+          `/api/v1/families/${testFamilyId}/donations/create-intent`,
+          expect.objectContaining({
+            method: 'POST',
+            body: expect.stringContaining('"amountCents":150000'),
+          }),
+        );
+      });
+    });
+
+    it('stops polling when max polling attempts cap is reached', async () => {
+      const fetchMock = vi.fn();
+      globalThis.fetch = fetchMock;
+
+      // 1. Create intent
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockDonationIntent,
+      });
+
+      // 2. Status polling - always PENDING
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          ...mockHistory[0],
+          status: 'PENDING',
+        }),
+      });
+
+      const onDonationSuccess = vi.fn();
+
+      render(
+        <DonationFormCard
+          familyId={testFamilyId}
+          onDonationSuccess={onDonationSuccess}
+          pollingIntervalMs={20}
+          maxPollingAttempts={3}
+        />,
+      );
+
+      const submitButton = screen.getByTestId('submit-donation-button');
+      fireEvent.click(submitButton);
+
+      // Wait until create-intent + 3 polls have run
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledTimes(4); // 1 create-intent + 3 polls
+      });
+
+      // Wait an extra interval cycle to ensure polling stopped
+      await new Promise((resolve) => setTimeout(resolve, 80));
+      expect(fetchMock).toHaveBeenCalledTimes(4);
+      expect(onDonationSuccess).not.toHaveBeenCalled();
+    });
+
+    it('stops polling if donation intent is expired', async () => {
+      const fetchMock = vi.fn();
+      globalThis.fetch = fetchMock;
+
+      // Create intent with expired timestamp in the past
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ...mockDonationIntent,
+          expiresAt: new Date(Date.now() - 1000).toISOString(),
+        }),
+      });
+
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          ...mockHistory[0],
+          status: 'PENDING',
+        }),
+      });
+
+      render(
+        <DonationFormCard
+          familyId={testFamilyId}
+          pollingIntervalMs={20}
+        />,
+      );
+
+      const submitButton = screen.getByTestId('submit-donation-button');
+      fireEvent.click(submitButton);
+
+      // Should call create-intent
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledWith(
+          `/api/v1/families/${testFamilyId}/donations/create-intent`,
+          expect.anything(),
+        );
+      });
+
+      // Wait a moment; expired intent should abort polling immediately on first tick
+      await new Promise((resolve) => setTimeout(resolve, 80));
+      // Only 1 call (create-intent)
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('DonationReceiptsTable', () => {

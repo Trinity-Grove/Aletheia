@@ -638,5 +638,111 @@ describe('DonationsService', () => {
       expect(mockRepository.updateDonationRecordStatus).not.toHaveBeenCalled();
       expect(response).toEqual({ received: true, handled: false });
     });
+
+    it('falls through to check subscription when gatewayTransactionId is not found in repository', async () => {
+      const webhookEvent: WebhookEventResult = {
+        eventId: 'evt_fallthrough',
+        eventType: 'payment.updated',
+        gatewayTransactionId: 'tx_unmatched',
+        gatewaySubscriptionId: 'mock_sub_xyz',
+        status: 'CONFIRMED',
+        paidAt: NOW,
+      };
+
+      mockGateway.parseWebhook.mockResolvedValue(webhookEvent);
+      mockRepository.findDonationRecordByGatewayTransactionId.mockResolvedValue(null);
+
+      const existingSub = {
+        id: SUBSCRIPTION_ID,
+        familyId: FAMILY_ID,
+        amountCents: 3000,
+        currency: 'BRL',
+        paymentMethod: 'CREDIT_CARD' as DonationPaymentMethod,
+        status: 'PENDING' as DonationStatus,
+        gatewayProvider: 'mock',
+        gatewaySubscriptionId: 'mock_sub_xyz',
+        cancelledAt: null,
+        createdAt: NOW,
+        updatedAt: NOW,
+      };
+
+      mockRepository.findSupporterSubscriptionByGatewayId.mockResolvedValue(existingSub);
+
+      const response = await service.handleWebhook('mock', { raw: 'data' });
+
+      expect(mockRepository.findDonationRecordByGatewayTransactionId).toHaveBeenCalledWith('tx_unmatched');
+      expect(mockRepository.findSupporterSubscriptionByGatewayId).toHaveBeenCalledWith('mock_sub_xyz');
+      expect(mockRepository.updateSupporterSubscriptionStatus).toHaveBeenCalledWith(
+        SUBSCRIPTION_ID,
+        'CONFIRMED',
+        null,
+      );
+      expect(response).toEqual({ received: true });
+    });
+
+    it('handles both transaction and subscription updates when both are matched in a single event', async () => {
+      const webhookEvent: WebhookEventResult = {
+        eventId: 'evt_both',
+        eventType: 'payment.updated',
+        gatewayTransactionId: 'tx_matched',
+        gatewaySubscriptionId: 'mock_sub_xyz',
+        status: 'CONFIRMED',
+        paidAt: NOW,
+      };
+
+      mockGateway.parseWebhook.mockResolvedValue(webhookEvent);
+
+      const pendingRecord = {
+        id: DONATION_ID,
+        familyId: FAMILY_ID,
+        donorName: null,
+        donorEmail: null,
+        amountCents: 3000,
+        currency: 'BRL',
+        frequency: 'MONTHLY' as DonationFrequency,
+        paymentMethod: 'CREDIT_CARD' as DonationPaymentMethod,
+        status: 'PENDING' as DonationStatus,
+        gatewayProvider: 'mock',
+        gatewayTransactionId: 'tx_matched',
+        gatewaySubscriptionId: 'mock_sub_xyz',
+        pixQrCodeUrl: null,
+        pixCopiaECola: null,
+        notes: null,
+        confirmedAt: null,
+        createdAt: NOW,
+        updatedAt: NOW,
+      };
+
+      const pendingSub = {
+        id: SUBSCRIPTION_ID,
+        familyId: FAMILY_ID,
+        amountCents: 3000,
+        currency: 'BRL',
+        paymentMethod: 'CREDIT_CARD' as DonationPaymentMethod,
+        status: 'PENDING' as DonationStatus,
+        gatewayProvider: 'mock',
+        gatewaySubscriptionId: 'mock_sub_xyz',
+        cancelledAt: null,
+        createdAt: NOW,
+        updatedAt: NOW,
+      };
+
+      mockRepository.findDonationRecordByGatewayTransactionId.mockResolvedValue(pendingRecord);
+      mockRepository.findSupporterSubscriptionByGatewayId.mockResolvedValue(pendingSub);
+
+      const response = await service.handleWebhook('mock', { raw: 'both' });
+
+      expect(mockRepository.updateDonationRecordStatus).toHaveBeenCalledWith(
+        DONATION_ID,
+        'CONFIRMED',
+        NOW,
+      );
+      expect(mockRepository.updateSupporterSubscriptionStatus).toHaveBeenCalledWith(
+        SUBSCRIPTION_ID,
+        'CONFIRMED',
+        null,
+      );
+      expect(response).toEqual({ received: true });
+    });
   });
 });

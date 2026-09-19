@@ -213,6 +213,90 @@ describe('Donation Gateways & Factory', () => {
       expect(parsed.gatewayTransactionId).toBe('mp_pay_123');
       expect(parsed.status).toBe('CONFIRMED');
     });
+
+    describe('parseWebhook status mapping', () => {
+      let mpGateway: MercadoPagoDonationGateway;
+
+      beforeEach(() => {
+        mpGateway = new MercadoPagoDonationGateway();
+      });
+
+      it('maps native "approved" status to CONFIRMED and parses transaction_amount and date_approved', async () => {
+        const result = await mpGateway.parseWebhook(
+          {
+            action: 'payment.updated',
+            data: {
+              id: 'mp_tx_approved_1',
+              status: 'approved',
+              transaction_amount: 35.5,
+              date_approved: '2026-09-18T12:00:00.000Z',
+            },
+          },
+          {},
+        );
+
+        expect(result.status).toBe('CONFIRMED');
+        expect(result.gatewayTransactionId).toBe('mp_tx_approved_1');
+        expect(result.amountCents).toBe(3550);
+        expect(result.paidAt).toEqual(new Date('2026-09-18T12:00:00.000Z'));
+      });
+
+      it('maps native "rejected" status to FAILED', async () => {
+        const result = await mpGateway.parseWebhook(
+          {
+            action: 'payment.updated',
+            data: { id: 'mp_tx_rej_1', status: 'rejected' },
+          },
+          {},
+        );
+
+        expect(result.status).toBe('FAILED');
+        expect(result.paidAt).toBeUndefined();
+      });
+
+      it('maps native "cancelled" status to CANCELLED', async () => {
+        const result = await mpGateway.parseWebhook(
+          {
+            action: 'payment.updated',
+            data: { id: 'mp_tx_canc_1' },
+            status: 'cancelled',
+          },
+          {},
+        );
+
+        expect(result.status).toBe('CANCELLED');
+        expect(result.paidAt).toBeUndefined();
+      });
+
+      it('maps non-approved statuses like "pending", "in_process", or unknown to FAILED', async () => {
+        const pendingResult = await mpGateway.parseWebhook(
+          {
+            action: 'payment.updated',
+            data: { id: 'mp_tx_pend', status: 'pending' },
+          },
+          {},
+        );
+        expect(pendingResult.status).toBe('FAILED');
+
+        const inProcessResult = await mpGateway.parseWebhook(
+          {
+            action: 'payment.updated',
+            data: { id: 'mp_tx_proc', status: 'in_process' },
+          },
+          {},
+        );
+        expect(inProcessResult.status).toBe('FAILED');
+
+        const unknownResult = await mpGateway.parseWebhook(
+          {
+            action: 'payment.updated',
+            data: { id: 'mp_tx_unk', status: 'other_unknown_status' },
+          },
+          {},
+        );
+        expect(unknownResult.status).toBe('FAILED');
+      });
+    });
   });
 
   describe('DonationGatewayFactory & donationGatewayProvider', () => {
