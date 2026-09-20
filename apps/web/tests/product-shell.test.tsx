@@ -168,6 +168,86 @@ describe('ProductShell adapter', () => {
     expect(screen.getByText('Dados de relatórios do educando')).toBeInTheDocument();
   });
 
+  it('shows access-denied state when non-admin opens /admin route or subroute', () => {
+    const nonAdminAuth: AuthContextValue = {
+      status: 'authenticated',
+      user: {
+        id: 'user-1',
+        email: 'user@example.com',
+        fullName: 'User',
+        emailVerified: true,
+        mfaEnabled: false,
+        isPlatformAdmin: false,
+        createdAt: '',
+      },
+      token: null,
+      activeFamilyId: null,
+      activeFamily: null,
+      families: [],
+      activeRole: null,
+      login: vi.fn(),
+      verifyMfa: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      selectFamily: vi.fn(),
+      refreshSession: vi.fn(),
+      setActiveFamilyFromCreated: vi.fn(),
+      changePassword: vi.fn(),
+      changeEmail: vi.fn(),
+    };
+
+    render(
+      <AuthContext.Provider value={nonAdminAuth}>
+        <ProductShell currentPath="/admin/catalog">
+          <p>Conteúdo Admin</p>
+        </ProductShell>
+      </AuthContext.Provider>,
+    );
+
+    expect(screen.getByTestId('access-denied-state')).toBeInTheDocument();
+    expect(screen.queryByText('Conteúdo Admin')).not.toBeInTheDocument();
+  });
+
+  it('renders admin content for platform admin on /admin routes', () => {
+    const adminAuth: AuthContextValue = {
+      status: 'authenticated',
+      user: {
+        id: 'admin-1',
+        email: 'admin@example.com',
+        fullName: 'Admin',
+        emailVerified: true,
+        mfaEnabled: false,
+        isPlatformAdmin: true,
+        createdAt: '',
+      },
+      token: null,
+      activeFamilyId: null,
+      activeFamily: null,
+      families: [],
+      activeRole: null,
+      login: vi.fn(),
+      verifyMfa: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      selectFamily: vi.fn(),
+      refreshSession: vi.fn(),
+      setActiveFamilyFromCreated: vi.fn(),
+      changePassword: vi.fn(),
+      changeEmail: vi.fn(),
+    };
+
+    render(
+      <AuthContext.Provider value={adminAuth}>
+        <ProductShell currentPath="/admin/catalog">
+          <p>Conteúdo Admin</p>
+        </ProductShell>
+      </AuthContext.Provider>,
+    );
+
+    expect(screen.queryByTestId('access-denied-state')).not.toBeInTheDocument();
+    expect(screen.getByText('Conteúdo Admin')).toBeInTheDocument();
+  });
+
   it('uses an explicit user as the descendant auth context over a conflicting outer provider', () => {
     render(
       <AuthProvider

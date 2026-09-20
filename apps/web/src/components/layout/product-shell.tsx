@@ -239,7 +239,7 @@ export function ProductShell({
   // with an accessible state that says nothing about what the page holds.
   const requiredPermission = PATH_PERMISSIONS[activePath];
   const accessDenied =
-    (activePath === '/admin/catalog' && !isPlatformAdmin) ||
+    (activePath.startsWith('/admin') && !isPlatformAdmin) ||
     (requiredPermission !== undefined &&
       profileUser !== undefined &&
       !permissions.can(requiredPermission));
