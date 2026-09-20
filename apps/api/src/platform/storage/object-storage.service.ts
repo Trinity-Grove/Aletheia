@@ -67,7 +67,7 @@ export class ObjectStorageService {
       this.client = new S3Client({
         endpoint: this.environment.objectStorage.endpoint,
         forcePathStyle: true,
-        region: 'us-east-1',
+        region: this.environment.objectStorage.region ?? 'us-east-1',
         credentials: {
           accessKeyId: this.environment.objectStorage.accessKey,
           secretAccessKey: this.environment.objectStorage.secretKey,
@@ -75,6 +75,11 @@ export class ObjectStorageService {
       });
     }
     return { client: this.client, bucket: this.bucket };
+  }
+
+  async checkHealth(): Promise<void> {
+    const { client, bucket } = this.getClient();
+    await client.send(new HeadBucketCommand({ Bucket: bucket }));
   }
 
   // Deliberately NOT run at construction or module init: ensured lazily,
