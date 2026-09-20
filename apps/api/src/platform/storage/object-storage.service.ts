@@ -7,6 +7,7 @@ import {
   GetObjectCommand,
   HeadBucketCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
   PutBucketCorsCommand,
   PutObjectCommand,
   S3Client,
@@ -198,5 +199,50 @@ export class ObjectStorageService {
     }
 
     return hash.digest('hex');
+  }
+
+  async putObject(
+    storageKey: string,
+    body: Buffer | Uint8Array,
+    contentType?: string,
+  ): Promise<void> {
+    await this.ensureBucket();
+    const { client, bucket } = this.getClient();
+    await client.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: storageKey,
+        Body: body,
+        ContentType: contentType,
+      }),
+    );
+  }
+
+  async listObjects(
+    prefix: string,
+  ): Promise<Array<{ key: string; size: number; lastModified?: Date | undefined }>> {
+    const { client, bucket } = this.getClient();
+    const command = new ListObjectsV2Command({
+      Bucket: bucket,
+      Prefix: prefix,
+    });
+    const result = await client.send(command);
+    if (!result.Contents) return [];
+    return result.Contents.map((item) => ({
+      key: item.Key ?? '',
+      size: item.Size ?? 0,
+      lastModified: item.LastModified,
+    })).filter((item) => item.key.length > 0);
+  }
+
+  async getObjectBuffer(storageKey: string): Promise<Buffer> {
+    const { client, bucket } = this.getClient();
+    const result = await client.send(new GetObjectCommand({ Bucket: bucket, Key: storageKey }));
+    const body = result.Body as Readable;
+    const chunks: Buffer[] = [];
+    for await (const chunk of body) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
   }
 }

@@ -53,3 +53,31 @@ export const familyDataExportPackageSchema = z.object({
 });
 
 export type FamilyDataExportPackageDto = z.infer<typeof familyDataExportPackageSchema>;
+
+export const databaseBackupMetadataSchema = z.object({
+  key: z.string().min(1),
+  fileName: z.string().min(1),
+  sizeBytes: z.number().int().nonnegative(),
+  sha256Checksum: z.string().regex(/^[0-9a-f]{64}$/i, 'Must be a 64-character hex string'),
+  createdAt: z.string().datetime({ offset: true }),
+  database: z.string().min(1),
+  durationMs: z.number().int().nonnegative(),
+});
+
+export type DatabaseBackupMetadataDto = z.infer<typeof databaseBackupMetadataSchema>;
+
+export const databaseBackupListResponseSchema = z.object({
+  backups: z.array(databaseBackupMetadataSchema),
+  totalCount: z.number().int().nonnegative(),
+});
+
+export type DatabaseBackupListResponseDto = z.infer<typeof databaseBackupListResponseSchema>;
+
+export const databaseBackupRunResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  backup: databaseBackupMetadataSchema,
+});
+
+export type DatabaseBackupRunResponseDto = z.infer<typeof databaseBackupRunResponseSchema>;
+
