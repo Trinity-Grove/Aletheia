@@ -8,7 +8,7 @@ RUN pnpm install --frozen-lockfile --filter=@aletheia/api...
 RUN pnpm --filter @aletheia/api build
 
 FROM node:24-alpine AS runtime
-RUN corepack enable
+RUN corepack enable && apk add --no-cache postgresql-client
 ENV NODE_ENV=production
 WORKDIR /repo
 COPY --from=build /repo ./
