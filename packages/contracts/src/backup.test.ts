@@ -4,6 +4,9 @@ import {
   createExportJobSchema,
   dataExportJobResponseSchema,
   familyDataExportPackageSchema,
+  databaseBackupMetadataSchema,
+  databaseBackupListResponseSchema,
+  databaseBackupRunResponseSchema,
 } from './backup.js';
 
 const JOB_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
@@ -95,6 +98,72 @@ describe('Data Backup Contracts', () => {
       expect(parsed.family.name).toBe('Família Silva');
       expect(parsed.learners).toHaveLength(1);
       expect(parsed.notifications).toEqual([]);
+    });
+  });
+
+  describe('databaseBackupMetadataSchema', () => {
+    it('validates a valid database backup metadata object', () => {
+      const valid = {
+        key: 'backups/postgres/2026-09-19/2026-09-19T03-00-00-aletheia.dump',
+        fileName: '2026-09-19T03-00-00-aletheia.dump',
+        sizeBytes: 1048576,
+        sha256Checksum: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+        createdAt: '2026-09-19T03:00:00.000Z',
+        database: 'aletheia',
+        durationMs: 1250,
+      };
+
+      const parsed = databaseBackupMetadataSchema.parse(valid);
+      expect(parsed.key).toBe(valid.key);
+      expect(parsed.sizeBytes).toBe(1048576);
+      expect(parsed.sha256Checksum).toBe(valid.sha256Checksum);
+    });
+
+    it('rejects invalid sha256 checksum', () => {
+      const invalid = {
+        key: 'backup.dump',
+        fileName: 'backup.dump',
+        sizeBytes: 100,
+        sha256Checksum: 'not-a-valid-sha256',
+        createdAt: '2026-09-19T03:00:00.000Z',
+        database: 'aletheia',
+        durationMs: 100,
+      };
+
+      expect(() => databaseBackupMetadataSchema.parse(invalid)).toThrow();
+    });
+  });
+
+  describe('databaseBackupListResponseSchema & databaseBackupRunResponseSchema', () => {
+    const sampleMeta = {
+      key: 'backups/postgres/2026-09-19/2026-09-19T03-00-00-aletheia.dump',
+      fileName: '2026-09-19T03-00-00-aletheia.dump',
+      sizeBytes: 2048,
+      sha256Checksum: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+      createdAt: '2026-09-19T03:00:00.000Z',
+      database: 'aletheia',
+      durationMs: 800,
+    };
+
+    it('validates backup list response', () => {
+      const list = {
+        backups: [sampleMeta],
+        totalCount: 1,
+      };
+      const parsed = databaseBackupListResponseSchema.parse(list);
+      expect(parsed.backups).toHaveLength(1);
+      expect(parsed.totalCount).toBe(1);
+    });
+
+    it('validates backup run response', () => {
+      const run = {
+        success: true,
+        message: 'Backup completed successfully',
+        backup: sampleMeta,
+      };
+      const parsed = databaseBackupRunResponseSchema.parse(run);
+      expect(parsed.success).toBe(true);
+      expect(parsed.backup.database).toBe('aletheia');
     });
   });
 });

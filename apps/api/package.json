@@ -7,6 +7,7 @@
     "build": "nest build",
     "dev": "nest start --watch",
     "start": "node dist/main.js",
+    "db:restore": "node dist/scripts/restore-database.js",
     "retention:purge-portfolio": "node dist/scripts/purge-expired-portfolio-items.js",
     "seed:pedagogical-models": "node dist/scripts/seed-pedagogical-model-definitions.js",
     "seed:evidence-types": "node dist/scripts/seed-evidence-type-definitions.js",
