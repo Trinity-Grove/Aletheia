@@ -4,8 +4,10 @@ import { Throttle } from '@nestjs/throttler';
 import type { FastifyReply } from 'fastify';
 import {
   learnerLoginSchema,
+  learnerTokenLoginSchema,
   type LearnerAccessOptionDto,
   type LearnerLoginDto,
+  type LearnerTokenLoginDto,
   type LearnerSessionResponseDto,
 } from '@aletheia/contracts';
 import { ZodValidationPipe } from '../../../platform/validation/index.js';
@@ -43,6 +45,22 @@ export class LearnerSessionController {
     @Res({ passthrough: true }) reply: FastifyReply,
   ): Promise<LearnerSessionResponseDto> {
     const { session, token } = await this.learnerAccessService.login(dto.learnerId, dto.code);
+    setLearnerSessionCookie(reply, token, this.environment);
+    return session;
+  }
+
+  @Post('token-login')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @ApiOperation({ summary: "Exchange a learner's access token for a learner session cookie" })
+  @ApiResponse({ status: 200, description: 'Session established; cookie set.' })
+  @ApiResponse({ status: 401, description: 'Invalid or expired access token.' })
+  @ApiResponse({ status: 403, description: 'Access disabled or revoked.' })
+  async tokenLogin(
+    @Body(new ZodValidationPipe(learnerTokenLoginSchema)) dto: LearnerTokenLoginDto,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<LearnerSessionResponseDto> {
+    const { session, token } = await this.learnerAccessService.loginWithToken(dto.token);
     setLearnerSessionCookie(reply, token, this.environment);
     return session;
   }

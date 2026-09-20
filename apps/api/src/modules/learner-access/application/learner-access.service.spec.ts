@@ -138,6 +138,8 @@ describe('LearnerAccessService', () => {
       expect(result.code).toHaveLength(8);
       expect(result.grant.enabled).toBe(true);
       expect(result.grant.learnerId).toBe(LEARNER_ID);
+      expect(typeof result.accessToken).toBe('string');
+      expect(result.accessUrl).toBe(`/aluno/login?token=${result.accessToken}`);
     });
 
     it('throws NotFoundException for a learner outside the family', async () => {
@@ -190,6 +192,39 @@ describe('LearnerAccessService', () => {
 
       await expect(service.login(LEARNER_ID, first.code)).rejects.toThrow(UnauthorizedException);
       await expect(service.login(LEARNER_ID, second.code)).resolves.toBeDefined();
+    });
+  });
+
+  describe('loginWithToken', () => {
+    it('accepts a valid access token and establishes a learner session', async () => {
+      const { accessToken } = await service.grantAccess(FAMILY_ID, LEARNER_ID, GUARDIAN_ID);
+      expect(accessToken).toBeDefined();
+
+      const result = await service.loginWithToken(accessToken!);
+
+      expect(result.session.learnerId).toBe(LEARNER_ID);
+      expect(result.session.familyId).toBe(FAMILY_ID);
+      expect(result.session.displayName).toBe('Joana');
+      expect(typeof result.token).toBe('string');
+    });
+
+    it('rejects an invalid or malformed token', async () => {
+      await expect(service.loginWithToken('invalid-jwt-token')).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects an access token if the grant was disabled', async () => {
+      const { accessToken } = await service.grantAccess(FAMILY_ID, LEARNER_ID, GUARDIAN_ID);
+      await service.setEnabled(FAMILY_ID, LEARNER_ID, false);
+
+      await expect(service.loginWithToken(accessToken!)).rejects.toThrow(ForbiddenException);
+    });
+
+    it('rejects an old access token after code regeneration', async () => {
+      const first = await service.grantAccess(FAMILY_ID, LEARNER_ID, GUARDIAN_ID);
+      const second = await service.regenerateCode(FAMILY_ID, LEARNER_ID, GUARDIAN_ID);
+
+      await expect(service.loginWithToken(first.accessToken!)).rejects.toThrow(UnauthorizedException);
+      await expect(service.loginWithToken(second.accessToken!)).resolves.toBeDefined();
     });
   });
 

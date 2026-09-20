@@ -4,6 +4,7 @@ import {
   learnerAccessCodeSchema,
   learnerAccessOptionSchema,
   learnerLoginSchema,
+  learnerTokenLoginSchema,
   learnerSessionResponseSchema,
 } from './learner-access.js';
 
@@ -47,8 +48,12 @@ describe('Learner Access Contracts', () => {
           lastUsedAt: null,
         },
         code: 'ABCD1234',
+        accessToken: 'mock-access-token-jwt',
+        accessUrl: '/aluno/login?token=mock-access-token-jwt',
       });
       expect(parsed.code).toBe('ABCD1234');
+      expect(parsed.accessToken).toBe('mock-access-token-jwt');
+      expect(parsed.accessUrl).toBe('/aluno/login?token=mock-access-token-jwt');
     });
   });
 
@@ -70,6 +75,17 @@ describe('Learner Access Contracts', () => {
 
     it('rejects a code shorter than 4 characters', () => {
       expect(() => learnerLoginSchema.parse({ learnerId: LEARNER_ID, code: 'AB' })).toThrow();
+    });
+  });
+
+  describe('learnerTokenLoginSchema', () => {
+    it('validates a token login payload', () => {
+      const parsed = learnerTokenLoginSchema.parse({ token: 'valid-jwt-token-long-string' });
+      expect(parsed.token).toBe('valid-jwt-token-long-string');
+    });
+
+    it('rejects a token shorter than 10 characters', () => {
+      expect(() => learnerTokenLoginSchema.parse({ token: 'short' })).toThrow();
     });
   });
 

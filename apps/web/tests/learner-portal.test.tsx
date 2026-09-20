@@ -5,16 +5,18 @@ import LearnerLoginPage from '../app/aluno/login/page';
 import LearnerAgendaPage from '../app/aluno/agenda/page';
 
 const mockPush = vi.fn();
+let mockSearchParams = new URLSearchParams('familyId=f0000000-0000-0000-0000-000000000001');
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, replace: vi.fn() }),
-  useSearchParams: () => new URLSearchParams('familyId=f0000000-0000-0000-0000-000000000001'),
+  useSearchParams: () => mockSearchParams,
 }));
 
 describe('Learner Portal (Modo Educando)', () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
+    mockSearchParams = new URLSearchParams('familyId=f0000000-0000-0000-0000-000000000001');
   });
 
   describe('LearnerLoginPage', () => {
@@ -91,6 +93,60 @@ describe('Learner Portal (Modo Educando)', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('learner-login-error')).toHaveTextContent(/Código de acesso incorreto/i);
+      });
+    });
+
+    it('authenticates learner automatically and redirects to agenda when token param is present', async () => {
+      mockSearchParams = new URLSearchParams('token=sample-direct-access-token');
+
+      const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          learnerId: 'l-token-1',
+          familyId: 'f-1',
+          displayName: 'Joãozinho',
+          expiresAt: '2026-09-18T00:00:00.000Z',
+        }),
+      } as Response);
+
+      render(<LearnerLoginPage />);
+
+      expect(screen.getByTestId('learner-login-page')).toBeInTheDocument();
+
+      await waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledWith(
+          '/api/v1/learner-access/token-login',
+          expect.objectContaining({
+            method: 'POST',
+            body: JSON.stringify({ token: 'sample-direct-access-token' }),
+          })
+        );
+        expect(mockPush).toHaveBeenCalledWith('/aluno/agenda');
+      });
+
+      const storedSession = JSON.parse(localStorage.getItem('learner_session') || '{}');
+      expect(storedSession).toEqual({
+        learnerId: 'l-token-1',
+        familyId: 'f-1',
+        displayName: 'Joãozinho',
+      });
+    });
+
+    it('displays error message when token login fails or access was revoked', async () => {
+      mockSearchParams = new URLSearchParams('token=expired-or-revoked-token');
+
+      vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        json: async () => ({ message: 'Acesso desativado' }),
+      } as Response);
+
+      render(<LearnerLoginPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('learner-login-error')).toHaveTextContent(
+          /Acesso desativado pelo responsável/i
+        );
       });
     });
   });

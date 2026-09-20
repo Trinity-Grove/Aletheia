@@ -141,6 +141,83 @@ describe('LearnerAccessModal', () => {
     });
   });
 
+  it('generates access code and direct access url and copies url to clipboard', async () => {
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: writeTextMock,
+      },
+    });
+
+    vi.spyOn(global, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.includes('/access/grant') && init?.method === 'POST') {
+        return {
+          ok: true,
+          json: async () => ({
+            grant: {
+              learnerId: mockLearner.id,
+              enabled: true,
+              createdAt: '2026-09-17T00:00:00.000Z',
+              regeneratedAt: null,
+              lastUsedAt: null,
+            },
+            code: '749201',
+            accessToken: 'sample-jwt-token',
+            accessUrl: '/aluno/login?token=sample-jwt-token',
+          }),
+        } as Response;
+      }
+      if (url.includes('/access')) {
+        return {
+          ok: true,
+          json: async () => ({
+            learnerId: mockLearner.id,
+            enabled: false,
+            createdAt: null,
+            regeneratedAt: null,
+            lastUsedAt: null,
+          }),
+        } as Response;
+      }
+      if (url.includes('/consents/compliance')) {
+        return {
+          ok: true,
+          json: async () => ({ compliant: true, pendingMandatoryTerms: [] }),
+        } as Response;
+      }
+      return { ok: false, status: 404 } as Response;
+    });
+
+    render(
+      <LearnerAccessModal
+        isOpen={true}
+        onClose={vi.fn()}
+        learner={mockLearner}
+        familyId="f0000000-0000-0000-0000-000000000001"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('grant-access-btn')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('grant-access-btn'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('access-code-display')).toHaveTextContent('749201');
+      expect(screen.getByTestId('learner-access-url-section')).toBeInTheDocument();
+      expect(screen.getByTestId('access-url-display')).toHaveTextContent('/aluno/login?token=sample-jwt-token');
+      expect(screen.getByTestId('copy-access-url-btn')).toHaveTextContent('Copiar Link de Acesso');
+    });
+
+    fireEvent.click(screen.getByTestId('copy-access-url-btn'));
+    expect(writeTextMock).toHaveBeenCalledWith(expect.stringContaining('/aluno/login?token=sample-jwt-token'));
+    await waitFor(() => {
+      expect(screen.getByTestId('copy-access-url-btn')).toHaveTextContent('Link Copiado!');
+    });
+  });
+
   it('shows regenerate and revoke actions when access is already active', async () => {
     vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
       const url = String(input);
