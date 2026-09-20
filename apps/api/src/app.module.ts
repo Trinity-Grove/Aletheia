@@ -20,6 +20,7 @@ import { LearnerAccessModule } from './modules/learner-access/learner-access.mod
 import { JurisdictionsModule } from './modules/jurisdictions/jurisdictions.module.js';
 import { PrivacyModule } from './modules/privacy/privacy.module.js';
 import { DonationsModule } from './modules/donations/donations.module.js';
+import { BackupModule } from './modules/backup/backup.module.js';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { DonationsModule } from './modules/donations/donations.module.js';
     JurisdictionsModule,
     PrivacyModule,
     DonationsModule,
+    BackupModule,
   ],
   providers: [
     {
