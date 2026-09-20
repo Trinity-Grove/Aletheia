@@ -12,6 +12,7 @@
     "seed:pedagogical-models": "node dist/scripts/seed-pedagogical-model-definitions.js",
     "seed:evidence-types": "node dist/scripts/seed-evidence-type-definitions.js",
     "seed:bible-translations": "node dist/scripts/seed-bible-translation-definitions.js",
+    "seed:theological-traditions": "node dist/scripts/seed-theological-traditions.js",
     "seed:biblical-formation": "node dist/scripts/seed-biblical-formation.js",
     "seed:biblical-formation-intermediate": "node dist/scripts/seed-biblical-formation-intermediate.js",
     "seed:biblical-formation-original-languages-literacy": "node dist/scripts/seed-biblical-formation-original-languages-literacy.js",

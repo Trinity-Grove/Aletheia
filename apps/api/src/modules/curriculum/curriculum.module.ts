@@ -15,6 +15,7 @@ import { EvidenceTypeCatalogResolver } from './infrastructure/evidence-type-cata
 import { ProgressionPolicyCatalogResolver } from './infrastructure/progression-policy-catalog.resolver.js';
 import { RubricCatalogResolver } from './infrastructure/rubric-catalog.resolver.js';
 import { PedagogicalModelDefinitionSeeder } from './infrastructure/pedagogical-model-definition.seeder.js';
+import { TheologicalTraditionSeeder } from './infrastructure/theological-tradition.seeder.js';
 import { EvidenceTypeDefinitionSeeder } from './infrastructure/evidence-type-definition.seeder.js';
 import { BibleTranslationDefinitionSeeder } from './infrastructure/bible-translation-definition.seeder.js';
 import { BiblicalFormationSeeder } from './infrastructure/biblical-formation.seeder.js';
@@ -125,6 +126,7 @@ import { DefinitionVersionOperationsController } from './presentation/definition
     ProgressionPolicyCatalogResolver,
     RubricCatalogResolver,
     PedagogicalModelDefinitionSeeder,
+    TheologicalTraditionSeeder,
     EvidenceTypeDefinitionSeeder,
     BibleTranslationDefinitionSeeder,
     BiblicalFormationSeeder,
