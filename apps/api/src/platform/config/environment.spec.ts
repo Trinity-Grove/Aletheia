@@ -174,6 +174,21 @@ describe('parseEnvironment', () => {
     });
   });
 
+  it('splits, normalizes and lowercases a comma-separated PLATFORM_ADMIN_DOMAINS list', () => {
+    expect(
+      parseEnvironment({
+        NODE_ENV: 'production',
+        DATABASE_URL: 'postgresql://user:pass@localhost:5432/aletheia',
+        JWT_SECRET: validJwtSecret,
+        LEARNER_SESSION_JWT_SECRET: validLearnerJwtSecret,
+        MFA_ENCRYPTION_KEY: validMfaEncryptionKey,
+        PLATFORM_ADMIN_DOMAINS: ' @trinitygrove.org, AletheiaPhos.App ',
+      }),
+    ).toMatchObject({
+      platformAdminDomains: ['trinitygrove.org', 'aletheiaphos.app'],
+    });
+  });
+
   it('defaults mail configuration to the console fallback sender', () => {
     expect(
       parseEnvironment({
@@ -234,6 +249,7 @@ describe('parseEnvironment', () => {
       mfaEncryptionKey: validMfaEncryptionKey,
       corsOrigins: ['https://app.example.com'],
       platformAdminEmails: [],
+      platformAdminDomains: [],
       resendApiKey: null,
       mailFromAddress: 'Aletheia <onboarding@resend.dev>',
       webOrigin: 'http://localhost:3000',

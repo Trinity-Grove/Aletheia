@@ -81,6 +81,7 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
       WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
       PLATFORM_ADMIN_EMAILS: ${PLATFORM_ADMIN_EMAILS:-}
+      PLATFORM_ADMIN_DOMAINS: ${PLATFORM_ADMIN_DOMAINS:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       MAIL_FROM_ADDRESS: "${MAIL_FROM_ADDRESS:-Aletheia <onboarding@resend.dev>}"
       YOUVERSION_APP_KEY: ${YOUVERSION_APP_KEY:-}

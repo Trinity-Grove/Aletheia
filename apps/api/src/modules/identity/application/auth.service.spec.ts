@@ -321,6 +321,7 @@ describe('AuthService', () => {
     environment = {
       webOrigin: 'http://localhost:3000',
       platformAdminEmails: [] as string[],
+      platformAdminDomains: [] as string[],
     } as unknown as Environment;
 
     fakeSetupChallenges = new Map();
@@ -1341,6 +1342,73 @@ describe('AuthService', () => {
       await authService.login({ email: 'sticky-admin@example.com', password: 'password12345' });
 
       await expect(authService.isPlatformAdmin(result.user.id)).resolves.toBe(true);
+    });
+
+    it('does not promote a user registering with an admin domain until email is verified', async () => {
+      environment.platformAdminDomains = ['trinitygrove.org'];
+
+      const result = await authService.register({
+        email: 'leader@trinitygrove.org',
+        fullName: 'Leader',
+        password: 'password12345',
+      });
+      expectAuthSession(result);
+      await expect(authService.isPlatformAdmin(result.user.id)).resolves.toBe(false);
+    });
+
+    it('promotes a user with an admin domain when email verification succeeds', async () => {
+      environment.platformAdminDomains = ['trinitygrove.org'];
+
+      const result = await authService.register({
+        email: 'leader@trinitygrove.org',
+        fullName: 'Leader',
+        password: 'password12345',
+      });
+      expectAuthSession(result);
+      await expect(authService.isPlatformAdmin(result.user.id)).resolves.toBe(false);
+
+      const tokenRecord = Array.from(fakeVerificationTokens.values()).find(
+        (t) => t.userId === result.user.id,
+      );
+      expect(tokenRecord).toBeDefined();
+
+      await authService.verifyEmail(tokenRecord!.plainToken);
+
+      await expect(authService.isPlatformAdmin(result.user.id)).resolves.toBe(true);
+    });
+
+    it('promotes an already verified user with an admin domain at login time', async () => {
+      const registered = await authService.register({
+        email: 'staff@aletheiaphos.app',
+        fullName: 'Staff',
+        password: 'password12345',
+      });
+      const tokenRecord = Array.from(fakeVerificationTokens.values()).find(
+        (t) => t.userId === registered.user.id,
+      );
+      await authService.verifyEmail(tokenRecord!.plainToken);
+      await expect(authService.isPlatformAdmin(registered.user.id)).resolves.toBe(false);
+
+      environment.platformAdminDomains = ['aletheiaphos.app'];
+      await authService.login({ email: 'staff@aletheiaphos.app', password: 'password12345' });
+
+      await expect(authService.isPlatformAdmin(registered.user.id)).resolves.toBe(true);
+    });
+
+    it('does not promote a verified user whose domain does not match', async () => {
+      environment.platformAdminDomains = ['trinitygrove.org'];
+
+      const registered = await authService.register({
+        email: 'someone@otherdomain.com',
+        fullName: 'Other User',
+        password: 'password12345',
+      });
+      const tokenRecord = Array.from(fakeVerificationTokens.values()).find(
+        (t) => t.userId === registered.user.id,
+      );
+      await authService.verifyEmail(tokenRecord!.plainToken);
+
+      await expect(authService.isPlatformAdmin(registered.user.id)).resolves.toBe(false);
     });
   });
 });

@@ -19,6 +19,9 @@ export interface Environment {
   // promoted to true if it wasn't already. Never used to demote: removing
   // an email from this list does not revoke an already-granted flag.
   platformAdminEmails: string[];
+  // Bootstrap domains for the platform-admin role. Promotes users with
+  // verified emails ending in these domains (e.g. trinitygrove.org, aletheiaphos.app).
+  platformAdminDomains: string[];
   objectStorage: {
     endpoint: string;
     accessKey: string;
@@ -75,6 +78,7 @@ const environmentSchema = z
     ),
     CORS_ORIGIN: optionalValue,
     PLATFORM_ADMIN_EMAILS: optionalValue,
+    PLATFORM_ADMIN_DOMAINS: optionalValue,
     RESEND_API_KEY: optionalValue,
     MAIL_FROM_ADDRESS: optionalValue,
     WEB_ORIGIN: optionalUrl,
@@ -151,6 +155,11 @@ const environmentSchema = z
         ? environment.PLATFORM_ADMIN_EMAILS.split(',')
             .map((email) => email.trim().toLowerCase())
             .filter((email) => email.length > 0)
+        : [],
+      platformAdminDomains: environment.PLATFORM_ADMIN_DOMAINS
+        ? environment.PLATFORM_ADMIN_DOMAINS.split(',')
+            .map((domain) => domain.trim().toLowerCase().replace(/^@/, ''))
+            .filter((domain) => domain.length > 0)
         : [],
       resendApiKey: environment.RESEND_API_KEY ?? null,
       mailFromAddress: environment.MAIL_FROM_ADDRESS ?? 'Aletheia <onboarding@resend.dev>',

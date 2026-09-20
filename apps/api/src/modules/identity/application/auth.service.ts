@@ -325,6 +325,11 @@ export class AuthService implements IdentityPublicApi {
     await this.emailVerificationTokenRepository.markUsed(record.id);
     await this.userRepository.markEmailVerified(record.userId);
     await this.recordAuditEvent(record.userId, 'EMAIL_VERIFIED');
+
+    const verifiedUser = await this.userRepository.findById(record.userId);
+    if (verifiedUser) {
+      await this.syncPlatformAdminBootstrap(verifiedUser);
+    }
   }
 
   async resendVerificationEmail(userId: string): Promise<void> {
@@ -475,14 +480,32 @@ export class AuthService implements IdentityPublicApi {
     return user?.isPlatformAdmin ?? false;
   }
 
+  private isPlatformAdminEligible(email: string, isEmailVerified: boolean): boolean {
+    const normalized = email.toLowerCase().trim();
+    if (this.environment.platformAdminEmails.includes(normalized)) {
+      return true;
+    }
+    // Domain-based promotion requires verified email for security against unverified account spoofing
+    if (isEmailVerified && this.environment.platformAdminDomains.length > 0) {
+      const atIndex = normalized.lastIndexOf('@');
+      if (atIndex !== -1) {
+        const domain = normalized.slice(atIndex + 1);
+        if (this.environment.platformAdminDomains.includes(domain)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   // Platform-admin bootstrap (issue #101): promotes a user whose email is
-  // in PLATFORM_ADMIN_EMAILS, if not already flagged. Called on register
-  // and login so both a brand-new signup and an existing account added to
-  // the list later both get promoted without a separate step. Deliberately
-  // one-way -- removing an email from the list never demotes anyone; that
-  // needs a manual/future-admin-UI action.
+  // in PLATFORM_ADMIN_EMAILS or whose verified email belongs to PLATFORM_ADMIN_DOMAINS,
+  // if not already flagged. Called on register, login, and email verification so both
+  // a brand-new signup and an existing account added later get promoted without a
+  // separate step. Deliberately one-way -- removing an email/domain from the list
+  // never demotes anyone; that needs a manual/future-admin-UI action.
   private async syncPlatformAdminBootstrap(user: UserEntity): Promise<UserSummaryDto> {
-    if (user.isPlatformAdmin || !this.environment.platformAdminEmails.includes(user.email.toLowerCase())) {
+    if (user.isPlatformAdmin || !this.isPlatformAdminEligible(user.email, user.emailVerifiedAt !== null)) {
       return user.toDto();
     }
     await this.userRepository.grantPlatformAdmin(user.id);
