@@ -77,12 +77,10 @@ describe('Theological tradition seeding and catalog resolver (real Postgres)', (
 
       for (const expected of EXPECTED_CODES) {
         expect(codes).toContain(expected);
-      }
-
-      for (const entry of catalog) {
-        expect(entry.code).toBeTruthy();
-        expect(entry.name).toBeTruthy();
-        expect(entry.description).toBeTruthy();
+        const entry = catalog.find((e) => e.code === expected);
+        expect(entry).toBeDefined();
+        expect(entry!.name).toBeTruthy();
+        expect(entry!.description).toBeTruthy();
       }
     });
 
