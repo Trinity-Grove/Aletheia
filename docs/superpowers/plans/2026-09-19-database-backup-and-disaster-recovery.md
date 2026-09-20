@@ -37,12 +37,12 @@
   - `ObjectStorageService.listObjects(prefix)`
   - `ObjectStorageService.getObjectBuffer(key)`
 
-- [ ] **Step 1: Write failing contracts test in `packages/contracts/tests/backup.test.ts`**
-- [ ] **Step 2: Implement schemas in `packages/contracts/src/backup.ts` and export in `index.ts`**
-- [ ] **Step 3: Build contracts and verify contracts tests pass**
-- [ ] **Step 4: Add `putObject`, `listObjects`, and `getObjectBuffer` to `ObjectStorageService` with unit tests**
-- [ ] **Step 5: Run tests: `pnpm --filter @aletheia/contracts test && pnpm --filter @aletheia/api test src/platform/storage/`**
-- [ ] **Step 6: Commit: `feat(contracts): add database backup schemas and extend object storage service`**
+- [x] **Step 1: Write failing contracts test in `packages/contracts/tests/backup.test.ts`**
+- [x] **Step 2: Implement schemas in `packages/contracts/src/backup.ts` and export in `index.ts`**
+- [x] **Step 3: Build contracts and verify contracts tests pass**
+- [x] **Step 4: Add `putObject`, `listObjects`, and `getObjectBuffer` to `ObjectStorageService` with unit tests**
+- [x] **Step 5: Run tests: `pnpm --filter @aletheia/contracts test && pnpm --filter @aletheia/api test src/platform/storage/`**
+- [x] **Step 6: Commit: `feat(contracts): add database backup schemas and extend object storage service`**
 
 ---
 
@@ -61,11 +61,11 @@
   - `DatabaseBackupService.applyRetentionPolicy(): Promise<{ deletedCount: number }>`
   - Scheduled cron task: `@Cron('0 3 * * *')`
 
-- [ ] **Step 1: Update `apps/api/Dockerfile` to install `postgresql-client` in the runtime stage**
-- [ ] **Step 2: Write failing unit tests in `database-backup.service.spec.ts` testing connection extraction, dump mock, SHA-256 calculation, and retention filtering (7 daily / 4 weekly)**
-- [ ] **Step 3: Implement `DatabaseBackupService` with safe subprocess spawn of `pg_dump -Fc` and S3 upload**
-- [ ] **Step 4: Run unit tests and verify they pass: `pnpm --filter @aletheia/api test database-backup.service.spec.ts`**
-- [ ] **Step 5: Commit: `feat(backup): add DatabaseBackupService with pg_dump and retention policy`**
+- [x] **Step 1: Update `apps/api/Dockerfile` to install `postgresql-client` in the runtime stage**
+- [x] **Step 2: Write failing unit tests in `database-backup.service.spec.ts` testing connection extraction, dump mock, SHA-256 calculation, and retention filtering (7 daily / 4 weekly)**
+- [x] **Step 3: Implement `DatabaseBackupService` with safe subprocess spawn of `pg_dump -Fc` and S3 upload**
+- [x] **Step 4: Run unit tests and verify they pass: `pnpm --filter @aletheia/api test database-backup.service.spec.ts`**
+- [x] **Step 5: Commit: `feat(backup): add DatabaseBackupService with pg_dump and retention policy`**
 
 ---
 
@@ -83,12 +83,12 @@
   - `DatabaseRestoreService.restoreFromBackup(key?: string, targetDatabaseUrl?: string): Promise<{ success: boolean; key: string; durationMs: number }>`
   - CLI script: `pnpm run db:restore [key]`
 
-- [ ] **Step 1: Write failing unit tests in `database-restore.service.spec.ts` testing checksum validation and `pg_restore` execution**
-- [ ] **Step 2: Implement `DatabaseRestoreService` with checksum verification and safe subprocess spawn of `pg_restore --clean --if-exists --no-owner --no-privileges`**
-- [ ] **Step 3: Implement CLI script `apps/api/src/scripts/restore-database.ts` with CLI arguments parsing and exit code reporting**
-- [ ] **Step 4: Add `"db:restore": "node dist/scripts/restore-database.js"` to `apps/api/package.json`**
-- [ ] **Step 5: Run tests and verify: `pnpm --filter @aletheia/api test database-restore.service.spec.ts`**
-- [ ] **Step 6: Commit: `feat(backup): add DatabaseRestoreService and CLI restore script`**
+- [x] **Step 1: Write failing unit tests in `database-restore.service.spec.ts` testing checksum validation and `pg_restore` execution**
+- [x] **Step 2: Implement `DatabaseRestoreService` with checksum verification and safe subprocess spawn of `pg_restore --clean --if-exists --no-owner --no-privileges`**
+- [x] **Step 3: Implement CLI script `apps/api/src/scripts/restore-database.ts` with CLI arguments parsing and exit code reporting**
+- [x] **Step 4: Add `"db:restore": "node dist/scripts/restore-database.js"` to `apps/api/package.json`**
+- [x] **Step 5: Run tests and verify: `pnpm --filter @aletheia/api test database-restore.service.spec.ts`**
+- [x] **Step 6: Commit: `feat(backup): add DatabaseRestoreService and CLI restore script`**
 
 ---
 
@@ -107,11 +107,11 @@
   - `POST /api/v1/admin/backups/run` -> executes on-demand backup and returns `BackupRunResponseDto`
   - `BackupModule` wired into `AppModule`
 
-- [ ] **Step 1: Write unit tests in `admin-backup.controller.spec.ts` ensuring platform admin authorization and correct response formats**
-- [ ] **Step 2: Implement `AdminBackupController` with `@UseGuards(JwtAuthGuard, PlatformAdminGuard)`**
-- [ ] **Step 3: Create `BackupModule` and register in `AppModule`**
-- [ ] **Step 4: Run module tests and typecheck: `pnpm --filter @aletheia/api test admin-backup.controller.spec.ts && pnpm --filter @aletheia/api typecheck`**
-- [ ] **Step 5: Commit: `feat(backup): add AdminBackupController and wire BackupModule into AppModule`**
+- [x] **Step 1: Write unit tests in `admin-backup.controller.spec.ts` ensuring platform admin authorization and correct response formats**
+- [x] **Step 2: Implement `AdminBackupController` with `@UseGuards(JwtAuthGuard, PlatformAdminGuard)`**
+- [x] **Step 3: Create `BackupModule` and register in `AppModule`**
+- [x] **Step 4: Run module tests and typecheck: `pnpm --filter @aletheia/api test admin-backup.controller.spec.ts && pnpm --filter @aletheia/api typecheck`**
+- [x] **Step 5: Commit: `feat(backup): add AdminBackupController and wire BackupModule into AppModule`**
 
 ---
 
@@ -128,8 +128,9 @@
   - End-to-end integration test verifying backup creation, storage persistence, and full restore into a clean test database.
   - Comprehensive operational runbooks with RPO/RTO guidance.
 
-- [ ] **Step 1: Implement `disaster-recovery.integration-spec.ts` testing the complete roundtrip (seed -> backup -> restore -> verify)**
-- [ ] **Step 2: Create `docs/runbooks/disaster-recovery.md` documenting emergency restore steps, RPO/RTO, and troubleshooting**
-- [ ] **Step 3: Create `docs/runbooks/database-migration-rollback.md` documenting safe migration practices and roll-forward/rollback procedures**
-- [ ] **Step 4: Run full test suites across repo: contracts, api, web**
-- [ ] **Step 5: Commit: `test(backup): add disaster recovery drill integration test and operational runbooks (issue #30)`**
+- [x] **Step 1: Implement `disaster-recovery.integration-spec.ts` testing the complete roundtrip (seed -> backup -> restore -> verify)**
+- [x] **Step 2: Create `docs/runbooks/disaster-recovery.md` documenting emergency restore steps, RPO/RTO, and troubleshooting**
+- [x] **Step 3: Create `docs/runbooks/database-migration-rollback.md` documenting safe migration practices and roll-forward/rollback procedures**
+- [x] **Step 4: Run full test suites across repo: contracts, api, web**
+- [x] **Step 5: Commit: `test(backup): add disaster recovery drill integration test and operational runbooks (issue #30)`**
+
