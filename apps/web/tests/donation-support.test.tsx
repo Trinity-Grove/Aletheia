@@ -33,7 +33,7 @@ const mockDonationIntent: DonationIntentResponseDto = {
   frequency: 'ONE_TIME',
   pixCopiaECola: '00020126580014br.gov.bcb.pix0136test-pix-key',
   pixQrCodeUrl: 'https://pix.example.com/qr/22222222',
-  expiresAt: '2026-09-20T00:00:00.000Z',
+  expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
   createdAt: '2026-09-19T00:00:00.000Z',
 };
 

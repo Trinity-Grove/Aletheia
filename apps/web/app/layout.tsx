@@ -24,6 +24,9 @@ const lora = Lora({
 export const metadata: Metadata = {
   title: 'Aletheia — Faithful learning, thoughtfully guided.',
   description: 'A parent-first platform for faithful, thoughtful home education by Trinity Grove.',
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
