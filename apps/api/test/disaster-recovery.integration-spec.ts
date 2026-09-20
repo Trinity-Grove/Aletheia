@@ -41,7 +41,6 @@ describe('Disaster Recovery & Database Backup Integration (real Postgres + Objec
   let app: NestFastifyApplication;
   let prisma: PrismaService;
   let objectStorage: ObjectStorageService;
-  let backupService: DatabaseBackupService;
   let restoreService: DatabaseRestoreService;
 
   let adminCookie: string;
@@ -67,7 +66,6 @@ describe('Disaster Recovery & Database Backup Integration (real Postgres + Objec
 
     prisma = app.get(PrismaService);
     objectStorage = app.get(ObjectStorageService);
-    backupService = app.get(DatabaseBackupService);
     restoreService = app.get(DatabaseRestoreService);
 
     // Register admin user
