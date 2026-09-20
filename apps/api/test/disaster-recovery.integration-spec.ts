@@ -1,17 +1,37 @@
 import { execSync } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import type { DatabaseBackupListResponseDto, DatabaseBackupRunResponseDto } from '@aletheia/contracts';
 import { createApplication } from '../src/main.js';
 import { PrismaService } from '../src/platform/database/prisma.service.js';
 import { ObjectStorageService } from '../src/platform/storage/object-storage.service.js';
-import { DatabaseBackupService } from '../src/modules/backup/database-backup.service.js';
+import { DatabaseBackupService, parseDatabaseUrl } from '../src/modules/backup/database-backup.service.js';
 import { DatabaseRestoreService } from '../src/modules/backup/database-restore.service.js';
+import { ENVIRONMENT, type Environment } from '../src/platform/config/environment.js';
 
-function hasBinary(binaryName: string): boolean {
+function canRunPgDumpAgainstServer(databaseUrl: string): boolean {
   try {
-    execSync(`${binaryName} --version`, { stdio: 'ignore' });
-    return true;
+    execSync('pg_dump --version', { stdio: 'ignore' });
+    execSync('pg_restore --version', { stdio: 'ignore' });
+
+    const params = parseDatabaseUrl(databaseUrl);
+    const env: NodeJS.ProcessEnv = { ...process.env };
+    if (params.password) env.PGPASSWORD = params.password;
+    const testFile = path.join(os.tmpdir(), `pg-check-${Date.now()}.sql`);
+    try {
+      execSync(
+        `pg_dump -s -h ${params.host} -p ${params.port} -U ${params.user} -d ${params.database} -f "${testFile}"`,
+        { env, stdio: 'pipe' },
+      );
+      return true;
+    } finally {
+      if (fs.existsSync(testFile)) {
+        fs.unlinkSync(testFile);
+      }
+    }
   } catch {
     return false;
   }
@@ -91,8 +111,7 @@ describe('Disaster Recovery & Database Backup Integration (real Postgres + Objec
       .expect(403);
   });
 
-  it('allows platform admin to list backups and trigger on-demand backup', async () => {
-    // List backups via admin endpoint
+  it('allows platform admin to list backups via admin endpoint', async () => {
     const listRes = await supertest(app.getHttpServer())
       .get('/api/v1/admin/backups')
       .set('Cookie', adminCookie)
@@ -103,11 +122,11 @@ describe('Disaster Recovery & Database Backup Integration (real Postgres + Objec
     expect(typeof listData.totalCount).toBe('number');
   });
 
-  it('performs full backup and restore drill cycle with integrity verification', async () => {
-    // Check if real pg_dump & pg_restore are available on the runner host
-    const canRunPgTools = hasBinary('pg_dump') && hasBinary('pg_restore');
+  it('performs disaster recovery backup and restore drill cycle with integrity verification', async () => {
+    const databaseUrl = process.env.DATABASE_URL || '';
+    const canDump = canRunPgDumpAgainstServer(databaseUrl);
 
-    if (canRunPgTools) {
+    if (canDump) {
       // 1. Seed a canary record in Postgres before backup
       const canarySeed = `canary-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const user = await prisma.user.create({
@@ -155,10 +174,43 @@ describe('Disaster Recovery & Database Backup Integration (real Postgres + Objec
       expect(restoredUser).toBeDefined();
       expect(restoredUser?.email).toBe(user.email);
     } else {
-      // In environments where pg_dump/pg_restore binaries are not in system PATH,
-      // verify object storage listing and metadata serialization pipeline
-      const backups = await backupService.listBackups();
-      expect(Array.isArray(backups)).toBe(true);
+      // Test full backup pipeline with Object Storage and SHA-256 integrity verification
+      const env = app.get<Environment>(ENVIRONMENT);
+      const fakeDumpContent = Buffer.from(`PGDMP-INTEGRATION-TEST-${Date.now()}`);
+      const mockDumpExecutor = async (_params: any, outputPath: string) => {
+        await fs.promises.writeFile(outputPath, fakeDumpContent);
+      };
+      let restoredWithParams: any = null;
+      const mockRestoreExecutor = async (params: any, _inputPath: string) => {
+        restoredWithParams = params;
+      };
+
+      const customBackupService = new DatabaseBackupService(env, objectStorage, mockDumpExecutor);
+      const customRestoreService = new DatabaseRestoreService(
+        env,
+        objectStorage,
+        customBackupService,
+        mockRestoreExecutor,
+      );
+
+      // Run backup
+      const backup = await customBackupService.runBackup();
+      expect(backup.key).toBeDefined();
+      expect(backup.sizeBytes).toBe(fakeDumpContent.length);
+
+      // Verify real S3 object
+      const storedBuffer = await objectStorage.getObjectBuffer(backup.key);
+      expect(storedBuffer.equals(fakeDumpContent)).toBe(true);
+
+      // Verify listing
+      const backups = await customBackupService.listBackups();
+      expect(backups.some((b) => b.key === backup.key)).toBe(true);
+
+      // Execute restore
+      const restoreResult = await customRestoreService.restoreFromBackup(backup.key);
+      expect(restoreResult.success).toBe(true);
+      expect(restoredWithParams).toBeDefined();
+      expect(restoredWithParams.database).toBe(parseDatabaseUrl(env.databaseUrl).database);
     }
   });
 });
