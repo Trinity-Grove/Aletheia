@@ -106,6 +106,11 @@ export class DatabaseBackupService {
   }
 
   async runBackup(): Promise<DatabaseBackupMetadataDto> {
+    if (!this.environment.objectStorage) {
+      throw new Error(
+        'Object storage is not configured (S3_ENDPOINT/S3_ACCESS_KEY/S3_SECRET_KEY/S3_BUCKET).',
+      );
+    }
     const startTime = Date.now();
     const connParams = parseDatabaseUrl(this.environment.databaseUrl);
     const now = new Date();
@@ -151,6 +156,9 @@ export class DatabaseBackupService {
   }
 
   async listBackups(): Promise<DatabaseBackupMetadataDto[]> {
+    if (!this.environment.objectStorage) {
+      return [];
+    }
     const objects = await this.objectStorage.listObjects('backups/postgres/');
     const metaObjects = objects.filter((obj) => obj.key.endsWith('.meta.json'));
 

@@ -222,17 +222,28 @@ export class ObjectStorageService {
     prefix: string,
   ): Promise<Array<{ key: string; size: number; lastModified?: Date | undefined }>> {
     const { client, bucket } = this.getClient();
-    const command = new ListObjectsV2Command({
-      Bucket: bucket,
-      Prefix: prefix,
-    });
-    const result = await client.send(command);
-    if (!result.Contents) return [];
-    return result.Contents.map((item) => ({
-      key: item.Key ?? '',
-      size: item.Size ?? 0,
-      lastModified: item.LastModified,
-    })).filter((item) => item.key.length > 0);
+    try {
+      const command = new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: prefix,
+      });
+      const result = await client.send(command);
+      if (!result?.Contents) return [];
+      return result.Contents.map((item) => ({
+        key: item.Key ?? '',
+        size: item.Size ?? 0,
+        lastModified: item.LastModified,
+      })).filter((item) => item.key.length > 0);
+    } catch (err: unknown) {
+      if (
+        (err as { name?: string })?.name === 'NoSuchBucket' ||
+        (err as { name?: string })?.name === 'NotFound' ||
+        (err as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode === 404
+      ) {
+        return [];
+      }
+      throw err;
+    }
   }
 
   async getObjectBuffer(storageKey: string): Promise<Buffer> {
