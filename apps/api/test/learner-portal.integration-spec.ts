@@ -274,6 +274,26 @@ describe('Learner Portal: evidence submission + progress (real Postgres)', () =>
         .set('Cookie', guardianCookie)
         .expect(200);
     });
+
+    it('authenticates using accessToken via POST /api/v1/learner-access/token-login', async () => {
+      const grant = await supertest(app.getHttpServer())
+        .post(`/api/v1/families/${familyId}/learners/${learnerAId}/access/grant`)
+        .set('Cookie', guardianCookie)
+        .expect(201);
+
+      expect(grant.body.accessToken).toBeTruthy();
+      expect(grant.body.accessUrl).toBe(`/aluno/login?token=${grant.body.accessToken}`);
+
+      const tokenLogin = await supertest(app.getHttpServer())
+        .post('/api/v1/learner-access/token-login')
+        .send({ token: grant.body.accessToken })
+        .expect(200);
+
+      expect(tokenLogin.body.learnerId).toBe(learnerAId);
+      expect(tokenLogin.body.familyId).toBe(familyId);
+      const cookie = extractCookie(tokenLogin, 'aletheia_learner_session=');
+      expect(cookie).toBeTruthy();
+    });
   });
 
   describe('guardian-facing endpoints remain completely unchanged', () => {

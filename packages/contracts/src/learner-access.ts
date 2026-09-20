@@ -15,6 +15,8 @@ export type LearnerAccessGrantDto = z.infer<typeof learnerAccessGrantSchema>;
 export const learnerAccessCodeSchema = z.object({
   grant: learnerAccessGrantSchema,
   code: z.string(),
+  accessToken: z.string().optional(),
+  accessUrl: z.string().optional(),
 });
 
 export type LearnerAccessCodeDto = z.infer<typeof learnerAccessCodeSchema>;
@@ -32,6 +34,12 @@ export const learnerLoginSchema = z.object({
 });
 
 export type LearnerLoginDto = z.infer<typeof learnerLoginSchema>;
+
+export const learnerTokenLoginSchema = z.object({
+  token: z.string().min(10),
+});
+
+export type LearnerTokenLoginDto = z.infer<typeof learnerTokenLoginSchema>;
 
 // No token in the body -- the session lives only in the httpOnly cookie, to
 // limit what a page meant for shared/kiosk-style devices ever exposes to JS.

@@ -24,6 +24,13 @@ interface LearnerTokenPayload {
   typ: 'learner_session';
 }
 
+interface LearnerAccessTokenPayload {
+  sub: string;
+  familyId: string;
+  codeHash: string;
+  typ: 'learner_access_token';
+}
+
 function displayNameFor(learner: {
   firstName: string;
   lastName?: string | null | undefined;
@@ -71,15 +78,25 @@ export class LearnerAccessService {
     }
 
     const code = this.codeHasher.generateCode();
+    const codeHash = this.codeHasher.hash(code);
     const grant = await this.grantRepository.upsertForLearner({
       learnerId,
       familyId,
-      codeHash: this.codeHasher.hash(code),
+      codeHash,
       createdBy: guardianUserId,
       isRegeneration,
     });
 
-    return { grant: grant.toDto(), code };
+    const accessTokenPayload: LearnerAccessTokenPayload = {
+      sub: learnerId,
+      familyId,
+      codeHash,
+      typ: 'learner_access_token',
+    };
+    const accessToken = await this.jwtService.signAsync(accessTokenPayload, { expiresIn: '30d' });
+    const accessUrl = `/aluno/login?token=${accessToken}`;
+
+    return { grant: grant.toDto(), code, accessToken, accessUrl };
   }
 
   async setEnabled(familyId: string, learnerId: string, enabled: boolean): Promise<LearnerAccessGrantDto> {
@@ -147,6 +164,58 @@ export class LearnerAccessService {
 
     return {
       token,
+      session: {
+        learnerId,
+        familyId: grant.familyId,
+        displayName: displayNameFor(learner),
+        expiresAt,
+      },
+    };
+  }
+
+  async loginWithToken(token: string): Promise<{ session: LearnerSessionResponseDto; token: string }> {
+    let payload: LearnerAccessTokenPayload;
+    try {
+      payload = await this.jwtService.verifyAsync<LearnerAccessTokenPayload>(token);
+    } catch {
+      throw new UnauthorizedException('Invalid or expired access token.');
+    }
+
+    if (payload.typ !== 'learner_access_token') {
+      throw new UnauthorizedException('Invalid access token type.');
+    }
+
+    const learnerId = payload.sub;
+    const grant = await this.grantRepository.findByLearnerId(learnerId);
+    if (!grant || grant.familyId !== payload.familyId) {
+      throw new UnauthorizedException('Learner access grant not found.');
+    }
+
+    if (!grant.enabled) {
+      throw new ForbiddenException('Learner access is currently disabled.');
+    }
+
+    if (payload.codeHash && payload.codeHash !== grant.codeHash) {
+      throw new UnauthorizedException('This access link has expired because a new code was generated.');
+    }
+
+    const learner = await this.learnersApi.findLearnerById(grant.familyId, learnerId);
+    if (!learner) {
+      throw new NotFoundException(`Learner not found: ${learnerId}`);
+    }
+
+    await Promise.all([this.attemptRepository.reset(learnerId), this.grantRepository.recordUsage(learnerId)]);
+
+    const sessionPayload: LearnerTokenPayload = {
+      sub: learnerId,
+      familyId: grant.familyId,
+      typ: 'learner_session',
+    };
+    const sessionToken = await this.jwtService.signAsync(sessionPayload, { expiresIn: LEARNER_SESSION_TTL });
+    const expiresAt = new Date(Date.now() + LEARNER_SESSION_TTL_SECONDS * 1000).toISOString();
+
+    return {
+      token: sessionToken,
       session: {
         learnerId,
         familyId: grant.familyId,

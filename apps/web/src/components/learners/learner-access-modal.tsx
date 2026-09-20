@@ -24,12 +24,14 @@ export function LearnerAccessModal({
 }: LearnerAccessModalProps) {
   const [grant, setGrant] = useState<LearnerAccessGrantDto | null>(null);
   const [issuedCode, setIssuedCode] = useState<string | null>(null);
+  const [issuedUrl, setIssuedUrl] = useState<string | null>(null);
   const [compliance, setCompliance] = useState<ConsentComplianceCheckDto | null>(null);
   const [loading, setLoading] = useState(false);
   const [grantingConsentId, setGrantingConsentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [consentSuccess, setConsentSuccess] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
 
   const fetchCompliance = async (learnerId: string) => {
     try {
@@ -50,9 +52,12 @@ export function LearnerAccessModal({
     if (!isOpen || !learner || !familyId) {
       setGrant(null);
       setIssuedCode(null);
+      setIssuedUrl(null);
       setCompliance(null);
       setError(null);
       setConsentSuccess(null);
+      setCopied(false);
+      setCopiedUrl(false);
       return;
     }
 
@@ -108,6 +113,12 @@ export function LearnerAccessModal({
       const data: LearnerAccessCodeDto = await res.json();
       setGrant(data.grant);
       setIssuedCode(data.code);
+      if (data.accessUrl) {
+        const fullUrl = typeof window !== 'undefined' && window.location.origin
+          ? `${window.location.origin}${data.accessUrl}`
+          : data.accessUrl;
+        setIssuedUrl(fullUrl);
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Falha ao habilitar acesso.');
     } finally {
@@ -130,6 +141,12 @@ export function LearnerAccessModal({
       const data: LearnerAccessCodeDto = await res.json();
       setGrant(data.grant);
       setIssuedCode(data.code);
+      if (data.accessUrl) {
+        const fullUrl = typeof window !== 'undefined' && window.location.origin
+          ? `${window.location.origin}${data.accessUrl}`
+          : data.accessUrl;
+        setIssuedUrl(fullUrl);
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Falha ao regenerar código de acesso.');
     } finally {
@@ -191,6 +208,13 @@ export function LearnerAccessModal({
     void navigator.clipboard?.writeText(issuedCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 3000);
+  };
+
+  const handleCopyUrl = () => {
+    if (!issuedUrl) return;
+    void navigator.clipboard?.writeText(issuedUrl);
+    setCopiedUrl(true);
+    setTimeout(() => setCopiedUrl(false), 3000);
   };
 
   return (
@@ -350,9 +374,61 @@ export function LearnerAccessModal({
             <p style={{ margin: '0 0 1rem 0', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
               Guarde este código. Por motivos de segurança, ele é exibido apenas uma vez.
             </p>
-            <Button variant="secondary" size="sm" onClick={handleCopy}>
+            <Button variant="secondary" size="sm" data-testid="copy-access-code-btn" onClick={handleCopy}>
               {copied ? 'Código Copiado!' : 'Copiar Código'}
             </Button>
+
+            {issuedUrl && (
+              <div
+                data-testid="learner-access-url-section"
+                style={{
+                  marginTop: '1.25rem',
+                  padding: '1rem',
+                  backgroundColor: 'var(--bg-surface)',
+                  border: '1px solid var(--border-light)',
+                  borderRadius: 'var(--radius-md)',
+                  textAlign: 'left',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: 'var(--forest)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    display: 'block',
+                    marginBottom: '0.375rem',
+                  }}
+                >
+                  Link de Acesso Direto (Sem necessidade do login dos pais)
+                </span>
+                <div
+                  data-testid="access-url-display"
+                  style={{
+                    fontSize: '0.8125rem',
+                    fontFamily: 'var(--font-mono, monospace)',
+                    wordBreak: 'break-all',
+                    color: 'var(--text-secondary)',
+                    backgroundColor: 'var(--bg-canvas)',
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-light)',
+                    marginBottom: '0.75rem',
+                  }}
+                >
+                  {issuedUrl}
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  data-testid="copy-access-url-btn"
+                  onClick={handleCopyUrl}
+                >
+                  {copiedUrl ? 'Link Copiado!' : 'Copiar Link de Acesso'}
+                </Button>
+              </div>
+            )}
           </div>
         )}
 

@@ -11,19 +11,66 @@ function LearnerLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const familyParam = searchParams?.get('familyId');
+  const tokenParam = searchParams?.get('token');
 
   const [learners, setLearners] = useState<LearnerAccessOptionDto[]>([]);
   const [selectedLearner, setSelectedLearner] = useState<LearnerAccessOptionDto | null>(null);
   const [pinCode, setPinCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [authenticatingToken, setAuthenticatingToken] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (tokenParam) {
+      void handleTokenLogin(tokenParam);
+      return;
+    }
+
     const fam = familyParam || (typeof window !== 'undefined' ? localStorage.getItem('familyId') : null) || '';
     if (fam) {
       void loadLearners(fam);
     }
-  }, [familyParam]);
+  }, [tokenParam, familyParam]);
+
+  const handleTokenLogin = async (token: string) => {
+    try {
+      setLoading(true);
+      setAuthenticatingToken(true);
+      setError(null);
+      const res = await fetch('/api/v1/learner-access/token-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ token }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        if (res.status === 403) {
+          throw new Error('Acesso desativado pelo responsável. Peça ajuda ao seu guardião.');
+        }
+        throw new Error(err.message || 'Link de acesso inválido ou expirado.');
+      }
+
+      const session: LearnerSessionResponseDto = await res.json();
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(
+          'learner_session',
+          JSON.stringify({
+            learnerId: session.learnerId,
+            familyId: session.familyId,
+            displayName: session.displayName,
+          })
+        );
+      }
+      router.push('/aluno/agenda');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Falha ao autenticar com o link de acesso.');
+    } finally {
+      setLoading(false);
+      setAuthenticatingToken(false);
+    }
+  };
 
   const loadLearners = async (famId: string) => {
     try {
@@ -143,7 +190,9 @@ function LearnerLoginContent() {
             Portal do Aluno
           </h1>
           <p style={{ margin: '0.5rem 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
-            {selectedLearner
+            {authenticatingToken
+              ? 'Conectando ao portal de estudos...'
+              : selectedLearner
               ? `Olá, ${selectedLearner.displayName}! Digite seu PIN de acesso.`
               : 'Selecione quem está estudando hoje:'}
           </p>
@@ -155,7 +204,16 @@ function LearnerLoginContent() {
           </div>
         )}
 
-        {!selectedLearner ? (
+        {authenticatingToken ? (
+          <div data-testid="token-login-loading" style={{ padding: '2rem 1rem', textAlign: 'center' }}>
+            <p style={{ margin: 0, fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>
+              Autenticando acesso do educando...
+            </p>
+            <p style={{ margin: '0.5rem 0 0 0', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+              Por favor, aguarde enquanto preparamos sua agenda de estudos.
+            </p>
+          </div>
+        ) : !selectedLearner ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
             {learners.length > 0 ? (
               learners.map((l) => (
