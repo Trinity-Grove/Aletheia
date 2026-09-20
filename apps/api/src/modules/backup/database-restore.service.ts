@@ -4,7 +4,13 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import { promisify } from 'node:util';
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
 import { databaseBackupMetadataSchema } from '@aletheia/contracts';
 import { ENVIRONMENT, type Environment } from '../../platform/config/environment.js';
 import { ObjectStorageService } from '../../platform/storage/object-storage.service.js';
@@ -74,7 +80,7 @@ export class DatabaseRestoreService {
     @Inject(ENVIRONMENT) private readonly environment: Environment,
     private readonly objectStorage: ObjectStorageService,
     private readonly backupService: DatabaseBackupService,
-    restoreExecutor?: RestoreExecutor,
+    @Optional() restoreExecutor?: RestoreExecutor,
   ) {
     this.restoreExecutor = restoreExecutor ?? defaultRestoreExecutor;
   }

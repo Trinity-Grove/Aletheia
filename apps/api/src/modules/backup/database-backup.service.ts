@@ -4,7 +4,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import { promisify } from 'node:util';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import {
   databaseBackupMetadataSchema,
@@ -74,7 +74,7 @@ export class DatabaseBackupService {
   constructor(
     @Inject(ENVIRONMENT) private readonly environment: Environment,
     private readonly objectStorage: ObjectStorageService,
-    dumpExecutor?: DumpExecutor,
+    @Optional() dumpExecutor?: DumpExecutor,
   ) {
     this.dumpExecutor = dumpExecutor ?? defaultDumpExecutor;
   }
