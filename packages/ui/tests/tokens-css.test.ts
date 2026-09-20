@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 const stylesDirectory = resolve(process.cwd(), 'src/styles');
 
 async function readStyleFile(name: string) {
-  return readFile(resolve(stylesDirectory, name), 'utf8');
+  const content = await readFile(resolve(stylesDirectory, name), 'utf8');
+  return content.replace(/\r\n/g, '\n');
 }
 
 describe('CSS token layer contract', () => {
