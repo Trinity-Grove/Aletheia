@@ -68,17 +68,14 @@ export class LearnerAgendaController {
   }
 
   @Post('lessons/:lessonId/complete')
-  @ApiOperation({ summary: 'Mark one of the learner’s own lessons complete' })
+  @ApiOperation({ summary: "Mark one of the learner's own lessons complete" })
   @ApiResponse({ status: 200, description: 'Lesson marked complete.' })
   @ApiResponse({ status: 403, description: 'The lesson is not assigned to this learner.' })
   async completeLesson(
     @Param() params: { learnerId: string; lessonId: string },
-    @Req() reqOrDto: RequestWithLearner,
-    @Body() dtoOrReq?: CompleteLessonDto,
+    @Req() request: RequestWithLearner,
+    @Body() dto?: CompleteLessonDto,
   ): Promise<LessonPlanResponseDto> {
-    const request = ('learner' in reqOrDto ? reqOrDto : dtoOrReq) as RequestWithLearner;
-    const dto = ('learner' in reqOrDto ? dtoOrReq : reqOrDto) as CompleteLessonDto | undefined;
-
     const lesson = await this.lessonPlanApi.getLessonPlan(request.learner.familyId, params.lessonId);
     const isAssignedToLearner = lesson.learners.some((l) => l.learnerId === params.learnerId);
     if (!isAssignedToLearner) {
@@ -93,6 +90,13 @@ export class LearnerAgendaController {
       params.learnerId,
     );
 
+    const duration =
+      completed.actualDurationMinutes ??
+      dto?.actualDurationMinutes ??
+      lesson.actualDurationMinutes ??
+      lesson.durationMinutes ??
+      45;
+
     // 1. Incremental Learning Record in Diary (Idempotent)
     const existingRecords = await this.recordsApi.listRecords(request.learner.familyId, {
       learnerId: params.learnerId,
@@ -100,8 +104,7 @@ export class LearnerAgendaController {
     });
 
     if (existingRecords.length === 0) {
-      const duration = lesson.actualDurationMinutes ?? lesson.durationMinutes ?? 45;
-      const objectiveIds = (lesson as any).objectiveIds ?? lesson.objectives?.map((o) => o.objectiveId) ?? [];
+      const objectiveIds = lesson.objectives?.map((o) => o.objectiveId) ?? [];
       await this.recordsApi.createRecord(request.learner.familyId, {
         learnerId: params.learnerId,
         subjectId: lesson.subjectId,
@@ -125,7 +128,7 @@ export class LearnerAgendaController {
       endDate: completionDate,
     });
 
-    const lessonHours = Math.round(((lesson.actualDurationMinutes ?? lesson.durationMinutes ?? 45) / 60) * 100) / 100;
+    const lessonHours = Math.round((duration / 60) * 100) / 100;
 
     if (existingAttendance.length === 0) {
       await this.reportsApi.logAttendance(request.learner.familyId, {

@@ -298,5 +298,39 @@ describe('LearnerAgendaController', () => {
       expect(recordsApi.createRecord).not.toHaveBeenCalled();
       expect(reportsApi.logAttendance).not.toHaveBeenCalled();
     });
+
+    it('Test 7: uses actualDurationMinutes from completed lesson or dto when present', async () => {
+      const lessonWithShortDuration: LessonPlanResponseDto = {
+        ...mockLesson,
+        durationMinutes: 30,
+        actualDurationMinutes: null,
+      };
+      const completedWithActualDuration: LessonPlanResponseDto = {
+        ...lessonWithShortDuration,
+        status: 'COMPLETED',
+        actualDurationMinutes: 90,
+      };
+      lessonPlanApi.getLessonPlan.mockResolvedValue(lessonWithShortDuration);
+      lessonPlanApi.completeLesson.mockResolvedValue(completedWithActualDuration);
+      recordsApi.listRecords.mockResolvedValue([]);
+      recordsApi.createRecord.mockResolvedValue({ id: 'rec-1' } as never);
+      reportsApi.listAttendance.mockResolvedValue([]);
+      reportsApi.logAttendance.mockResolvedValue({ id: 'att-1' } as never);
+
+      await controller.completeLesson(mockParams, mockRequest, { actualDurationMinutes: 90 });
+
+      expect(recordsApi.createRecord).toHaveBeenCalledWith(
+        FAMILY_ID,
+        expect.objectContaining({
+          durationMinutes: 90,
+        }),
+      );
+      expect(reportsApi.logAttendance).toHaveBeenCalledWith(
+        FAMILY_ID,
+        expect.objectContaining({
+          hoursSpent: 1.5, // 90 min = 1.5 hours
+        }),
+      );
+    });
   });
 });
