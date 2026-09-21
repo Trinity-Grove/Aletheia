@@ -4,6 +4,7 @@ import React from 'react';
 import { AletheiaIcon, Badge, Button, Checkbox, Input } from '@aletheia/ui';
 import type { DailyAgendaDto, DailyAgendaItemDto, LearnerSummaryDto } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface DailyAgendaViewProps {
   agenda: DailyAgendaDto;
@@ -20,6 +21,14 @@ export interface DailyAgendaViewProps {
   onDeleteSlot?: (slotId: string) => Promise<void>;
 }
 
+const LESSON_STATUS_KEYS: Record<string, string> = {
+  PLANNED: 'lessons.statusPlanned',
+  IN_PROGRESS: 'lessons.statusInProgress',
+  COMPLETED: 'lessons.statusCompleted',
+  POSTPONED: 'lessons.statusPostponed',
+  CANCELLED: 'lessons.statusCancelled',
+};
+
 export function DailyAgendaView({
   agenda,
   selectedDate,
@@ -34,6 +43,7 @@ export function DailyAgendaView({
   onDeleteLesson,
   onDeleteSlot,
 }: DailyAgendaViewProps) {
+  const { t } = useLocale();
   const handleShiftDate = (days: number) => {
     const parts = selectedDate.split('-');
     const year = Number(parts[0]) || 2026;
@@ -298,7 +308,7 @@ export function DailyAgendaView({
                       {/* Status Badge */}
                       {item.status && (
                         <Badge data-testid={`item-status-${item.id}`} variant={statusBadgeVariant(item.status)}>
-                          {item.status}
+                          {LESSON_STATUS_KEYS[item.status] ? t(LESSON_STATUS_KEYS[item.status] as string) : item.status}
                         </Badge>
                       )}
                     </div>

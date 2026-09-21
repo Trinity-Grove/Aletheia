@@ -116,10 +116,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
 
   const refreshSession = useCallback(async (): Promise<void> => {
     try {
-      const [meResponse, familiesResponse] = await Promise.all([
-        api.get<UserSummaryDto>('/auth/me'),
-        api.get<FamilyResponseDto[]>('/families/mine').catch(() => [] as FamilyResponseDto[]),
-      ]);
+      // Sequential on purpose: with no valid session /auth/me fails and we stop
+      // there, instead of also firing /families/mine (a second, redundant 401).
+      const meResponse = await api.get<UserSummaryDto>('/auth/me');
+      const familiesResponse = await api
+        .get<FamilyResponseDto[]>('/families/mine')
+        .catch(() => [] as FamilyResponseDto[]);
 
       setUser(meResponse);
       const fetchedFamilies = Array.isArray(familiesResponse) ? familiesResponse : [];

@@ -33,9 +33,11 @@ export function DailyJourney({
         <div className="ui-daily-journey-header">
           <div>
             <CardTitle>Jornada Diária de Aprendizagem</CardTitle>
-            <p className="ui-daily-journey-subtitle">
-              Dia letivo #{daySequence} do ano acadêmico
-            </p>
+            {daySequence > 0 && (
+              <p className="ui-daily-journey-subtitle">
+                Dia letivo #{daySequence} do ano acadêmico
+              </p>
+            )}
           </div>
           <Badge variant={percentage >= 100 ? 'emerald' : 'indigo'} size="md">
             {percentage}% da Meta
