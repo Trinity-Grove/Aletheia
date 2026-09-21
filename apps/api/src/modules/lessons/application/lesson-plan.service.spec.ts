@@ -5,6 +5,7 @@ import { NotFoundException } from '@nestjs/common';
 describe('LessonPlanService', () => {
   let service: LessonPlanService;
   let lessonPlanRepo: any;
+  let recordsApi: any;
 
   const FAMILY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
   const LESSON_ID = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
@@ -108,9 +109,25 @@ describe('LessonPlanService', () => {
         return Promise.resolve(null);
       }),
       delete: jest.fn().mockImplementation((familyId, id) => Promise.resolve(id === LESSON_ID)),
+      reopenLesson: jest.fn().mockImplementation((familyId, id, learnerId) => {
+        if (id === LESSON_ID) {
+          return Promise.resolve(
+            mockLessonEntity({
+              familyId,
+              status: learnerId ? 'IN_PROGRESS' : 'PLANNED',
+              completedAt: null,
+            }),
+          );
+        }
+        return Promise.resolve(null);
+      }),
     };
 
-    service = new LessonPlanService(lessonPlanRepo);
+    recordsApi = {
+      deleteByLessonPlanId: jest.fn().mockResolvedValue(1),
+    };
+
+    service = new LessonPlanService(lessonPlanRepo, recordsApi);
   });
 
   describe('createLessonPlan', () => {
@@ -246,6 +263,39 @@ describe('LessonPlanService', () => {
 
     it('throws NotFoundException when deleting non-existent lesson', async () => {
       await expect(service.deleteLessonPlan(FAMILY_ID, 'non-existent')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('reopenLesson', () => {
+    it('reopens lesson and evicts associated diary records', async () => {
+      const res = await service.reopenLesson(FAMILY_ID, LESSON_ID, LEARNER_ID);
+
+      expect(lessonPlanRepo.reopenLesson).toHaveBeenCalledWith(FAMILY_ID, LESSON_ID, LEARNER_ID);
+      expect(recordsApi.deleteByLessonPlanId).toHaveBeenCalledWith(FAMILY_ID, LESSON_ID, LEARNER_ID);
+      expect(res.id).toBe(LESSON_ID);
+    });
+
+    it('reopens lesson for all learners without learnerId and evicts diary records', async () => {
+      const res = await service.reopenLesson(FAMILY_ID, LESSON_ID);
+
+      expect(lessonPlanRepo.reopenLesson).toHaveBeenCalledWith(FAMILY_ID, LESSON_ID, undefined);
+      expect(recordsApi.deleteByLessonPlanId).toHaveBeenCalledWith(FAMILY_ID, LESSON_ID, undefined);
+      expect(res.id).toBe(LESSON_ID);
+    });
+
+    it('works when recordsApi is not provided', async () => {
+      const serviceWithoutRecords = new LessonPlanService(lessonPlanRepo);
+      const res = await serviceWithoutRecords.reopenLesson(FAMILY_ID, LESSON_ID);
+
+      expect(lessonPlanRepo.reopenLesson).toHaveBeenCalledWith(FAMILY_ID, LESSON_ID, undefined);
+      expect(res.id).toBe(LESSON_ID);
+    });
+
+    it('throws NotFoundException when lesson is not found', async () => {
+      await expect(service.reopenLesson(FAMILY_ID, 'non-existent', LEARNER_ID)).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(recordsApi.deleteByLessonPlanId).not.toHaveBeenCalled();
     });
   });
 });

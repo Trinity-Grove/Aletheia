@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../../platform/database/database.module.js';
+import { RecordsModule } from '../records/records.module.js';
 import { LessonPlanRepository } from './infrastructure/lesson-plan.repository.js';
 import { ScheduleRepository } from './infrastructure/schedule.repository.js';
 import { LessonPlanService } from './application/lesson-plan.service.js';
@@ -10,7 +11,7 @@ import { LessonPlanController } from './presentation/lesson-plan.controller.js';
 import { ScheduleController } from './presentation/schedule.controller.js';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, RecordsModule],
   controllers: [LessonPlanController, ScheduleController],
   providers: [
     LessonPlanRepository,

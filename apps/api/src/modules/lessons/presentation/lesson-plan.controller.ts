@@ -99,6 +99,17 @@ export class LessonPlanController {
     return this.lessonPlanService.completeLesson(familyId, id, dto, learnerId);
   }
 
+  @Post(':id/reopen')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reopen completed lesson or learner assignment' })
+  async reopenLesson(
+    @Param('familyId') familyId: string,
+    @Param('id') id: string,
+    @Query('learnerId') learnerId?: string,
+  ): Promise<LessonPlanResponseDto> {
+    return this.lessonPlanService.reopenLesson(familyId, id, learnerId);
+  }
+
   @Post(':id/reschedule')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reschedule a lesson plan' })
