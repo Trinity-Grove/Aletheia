@@ -71,7 +71,15 @@ export function LearnerAccessModal({
         });
         if (res && res.ok) {
           const data: LearnerAccessGrantDto = await res.json();
-          if (isMounted) setGrant(data);
+          if (isMounted) {
+            setGrant(data);
+            if (data.accessUrl) {
+              const fullUrl = typeof window !== 'undefined' && window.location.origin
+                ? `${window.location.origin}${data.accessUrl}`
+                : data.accessUrl;
+              setIssuedUrl(fullUrl);
+            }
+          }
         } else if (res && res.status === 404) {
           if (isMounted) setGrant(null);
         } else if (res) {
@@ -377,58 +385,57 @@ export function LearnerAccessModal({
             <Button variant="secondary" size="sm" data-testid="copy-access-code-btn" onClick={handleCopy}>
               {copied ? 'Código Copiado!' : 'Copiar Código'}
             </Button>
+          </div>
+        )}
 
-            {issuedUrl && (
-              <div
-                data-testid="learner-access-url-section"
-                style={{
-                  marginTop: '1.25rem',
-                  padding: '1rem',
-                  backgroundColor: 'var(--bg-surface)',
-                  border: '1px solid var(--border-light)',
-                  borderRadius: 'var(--radius-md)',
-                  textAlign: 'left',
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    color: 'var(--forest)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    display: 'block',
-                    marginBottom: '0.375rem',
-                  }}
-                >
-                  Link de Acesso Direto (Sem necessidade do login dos pais)
-                </span>
-                <div
-                  data-testid="access-url-display"
-                  style={{
-                    fontSize: '0.8125rem',
-                    fontFamily: 'var(--font-mono, monospace)',
-                    wordBreak: 'break-all',
-                    color: 'var(--text-secondary)',
-                    backgroundColor: 'var(--bg-canvas)',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-light)',
-                    marginBottom: '0.75rem',
-                  }}
-                >
-                  {issuedUrl}
-                </div>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  data-testid="copy-access-url-btn"
-                  onClick={handleCopyUrl}
-                >
-                  {copiedUrl ? 'Link Copiado!' : 'Copiar Link de Acesso'}
-                </Button>
-              </div>
-            )}
+        {issuedUrl && hasGrant && grant?.enabled && (
+          <div
+            data-testid="learner-access-url-section"
+            style={{
+              padding: '1.25rem',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1.5px solid var(--border-light)',
+              borderRadius: 'var(--radius-lg)',
+              textAlign: 'left',
+            }}
+          >
+            <span
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                color: 'var(--forest)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                display: 'block',
+                marginBottom: '0.375rem',
+              }}
+            >
+              Link de Acesso Direto (Sem necessidade do login dos pais)
+            </span>
+            <div
+              data-testid="access-url-display"
+              style={{
+                fontSize: '0.8125rem',
+                fontFamily: 'var(--font-mono, monospace)',
+                wordBreak: 'break-all',
+                color: 'var(--text-secondary)',
+                backgroundColor: 'var(--bg-canvas)',
+                padding: '0.5rem 0.75rem',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-light)',
+                marginBottom: '0.75rem',
+              }}
+            >
+              {issuedUrl}
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              data-testid="copy-access-url-btn"
+              onClick={handleCopyUrl}
+            >
+              {copiedUrl ? 'Link Copiado!' : 'Copiar Link de Acesso'}
+            </Button>
           </div>
         )}
 

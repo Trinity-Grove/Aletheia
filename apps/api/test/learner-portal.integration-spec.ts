@@ -282,7 +282,8 @@ describe('Learner Portal: evidence submission + progress (real Postgres)', () =>
         .expect(201);
 
       expect(grant.body.accessToken).toBeTruthy();
-      expect(grant.body.accessUrl).toBe(`/aluno/login?token=${grant.body.accessToken}`);
+      expect(grant.body.accessToken.length).toBeLessThan(50);
+      expect(grant.body.accessUrl).toBe(`/aluno/login?t=${grant.body.accessToken}`);
 
       const tokenLogin = await supertest(app.getHttpServer())
         .post('/api/v1/learner-access/token-login')

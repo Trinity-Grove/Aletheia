@@ -163,8 +163,8 @@ describe('LearnerAccessModal', () => {
               lastUsedAt: null,
             },
             code: '749201',
-            accessToken: 'sample-jwt-token',
-            accessUrl: '/aluno/login?token=sample-jwt-token',
+            accessToken: 'sample-compact-token',
+            accessUrl: '/aluno/login?t=sample-compact-token',
           }),
         } as Response;
       }
@@ -207,18 +207,18 @@ describe('LearnerAccessModal', () => {
     await waitFor(() => {
       expect(screen.getByTestId('access-code-display')).toHaveTextContent('749201');
       expect(screen.getByTestId('learner-access-url-section')).toBeInTheDocument();
-      expect(screen.getByTestId('access-url-display')).toHaveTextContent('/aluno/login?token=sample-jwt-token');
+      expect(screen.getByTestId('access-url-display')).toHaveTextContent('/aluno/login?t=sample-compact-token');
       expect(screen.getByTestId('copy-access-url-btn')).toHaveTextContent('Copiar Link de Acesso');
     });
 
     fireEvent.click(screen.getByTestId('copy-access-url-btn'));
-    expect(writeTextMock).toHaveBeenCalledWith(expect.stringContaining('/aluno/login?token=sample-jwt-token'));
+    expect(writeTextMock).toHaveBeenCalledWith(expect.stringContaining('/aluno/login?t=sample-compact-token'));
     await waitFor(() => {
       expect(screen.getByTestId('copy-access-url-btn')).toHaveTextContent('Link Copiado!');
     });
   });
 
-  it('shows regenerate and revoke actions when access is already active', async () => {
+  it('shows regenerate and revoke actions and permanent access URL when access is already active', async () => {
     vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
       const url = String(input);
       if (url.includes('/access')) {
@@ -230,6 +230,7 @@ describe('LearnerAccessModal', () => {
             createdAt: '2026-09-10T00:00:00.000Z',
             regeneratedAt: null,
             lastUsedAt: null,
+            accessUrl: '/aluno/login?t=existing-compact-token',
           }),
         } as Response;
       }
@@ -254,6 +255,8 @@ describe('LearnerAccessModal', () => {
     await waitFor(() => {
       expect(screen.getByTestId('regenerate-access-btn')).toBeInTheDocument();
       expect(screen.getByTestId('revoke-access-btn')).toBeInTheDocument();
+      expect(screen.getByTestId('learner-access-url-section')).toBeInTheDocument();
+      expect(screen.getByTestId('access-url-display')).toHaveTextContent('/aluno/login?t=existing-compact-token');
     });
   });
 

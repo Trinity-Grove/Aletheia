@@ -6,6 +6,7 @@ export const learnerAccessGrantSchema = z.object({
   createdAt: z.string().nullable(),
   regeneratedAt: z.string().nullable(),
   lastUsedAt: z.string().nullable(),
+  accessUrl: z.string().optional(),
 });
 
 export type LearnerAccessGrantDto = z.infer<typeof learnerAccessGrantSchema>;
