@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { FamilyResponseDto } from '@aletheia/contracts';
+import { ISO3_COUNTRIES, type FamilyResponseDto } from '@aletheia/contracts';
 import { useAuth } from '../../../src/lib/auth/auth-context';
 import { api, ApiError } from '../../../src/lib/api';
 
@@ -132,10 +132,11 @@ export default function OnboardingPage() {
                 onChange={(e) => setCountryCode(e.target.value)}
                 disabled={loading}
               >
-                <option value="BRA">Brasil (BRA)</option>
-                <option value="USA">Estados Unidos (USA)</option>
-                <option value="PRT">Portugal (PRT)</option>
-                <option value="ESP">Espanha (ESP)</option>
+                {ISO3_COUNTRIES.map((country) => (
+                  <option key={country.code} value={country.code}>
+                    {country.name} ({country.code})
+                  </option>
+                ))}
               </select>
               <span className="onboarding-field-hint">
                 Define a jurisdição regulatória padrão para atendimento aos requisitos legais.
