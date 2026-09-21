@@ -5,6 +5,7 @@ import { notifications } from './notifications';
 import { learnerFocus } from './learner-focus';
 import { auth } from './auth';
 import { onboarding } from './onboarding';
+import { learnerPortal } from './learner-portal';
 
 export const esES: Dictionary = {
   common,
@@ -13,4 +14,5 @@ export const esES: Dictionary = {
   learnerFocus,
   auth,
   onboarding,
+  learnerPortal,
 };

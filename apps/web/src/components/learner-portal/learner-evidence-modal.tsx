@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Input, Modal, Select, Textarea } from '@aletheia/ui';
 import type { LearnerTrackedCompetency } from './types';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface LearnerEvidenceModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export function LearnerEvidenceModal({
   initialTrackingId,
   onSuccess,
 }: LearnerEvidenceModalProps) {
+  const { t } = useLocale();
   const [trackingId, setTrackingId] = useState<string>('');
   const [evidenceTypeCode, setEvidenceTypeCode] = useState<string>('WORK_SAMPLE');
   const [title, setTitle] = useState<string>('');
@@ -48,12 +50,12 @@ export function LearnerEvidenceModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!trackingId) {
-      setError('Por favor, selecione uma competência.');
+      setError(t('learnerPortal.evidenceModal.errorSelectCompetency'));
       return;
     }
 
     if (!title.trim() || title.trim().length < 3) {
-      setError('O título deve ter no mínimo 3 caracteres.');
+      setError(t('learnerPortal.evidenceModal.errorTitleMinLength'));
       return;
     }
 
@@ -90,13 +92,13 @@ export function LearnerEvidenceModal({
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || 'Falha ao enviar evidência.');
+        throw new Error(errData.message || t('learnerPortal.evidenceModal.errorSubmitFailed'));
       }
 
-      onSuccess('Parabéns! Sua evidência foi enviada aos seus responsáveis para validação!');
+      onSuccess(t('learnerPortal.evidenceModal.celebrationSuccess'));
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Falha ao enviar evidência.');
+      setError(err instanceof Error ? err.message : t('learnerPortal.evidenceModal.errorSubmitFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -104,7 +106,7 @@ export function LearnerEvidenceModal({
 
   const activeTrackings = trackings.filter((t) => t.status !== 'RETIRED');
   const trackingOptions = [
-    { value: '', label: 'Selecione a competência...' },
+    { value: '', label: t('learnerPortal.evidenceModal.selectCompetencyPlaceholder') },
     ...activeTrackings.map((t) => {
       const code = t.competency?.code || t.competencyCode || '';
       const titleText = t.competency?.title || t.competencyCode || t.id;
@@ -116,19 +118,19 @@ export function LearnerEvidenceModal({
   ];
 
   const typeOptions = [
-    { value: 'WORK_SAMPLE', label: 'Amostra de Trabalho' },
-    { value: 'PHOTO', label: 'Foto / Imagem' },
-    { value: 'DOCUMENT', label: 'Documento Escrito' },
-    { value: 'AUDIO', label: 'Gravação de Áudio' },
-    { value: 'TEXT', label: 'Texto / Narração' },
+    { value: 'WORK_SAMPLE', label: t('learnerPortal.evidenceModal.typeWorkSample') },
+    { value: 'PHOTO', label: t('learnerPortal.evidenceModal.typePhoto') },
+    { value: 'DOCUMENT', label: t('learnerPortal.evidenceModal.typeDocument') },
+    { value: 'AUDIO', label: t('learnerPortal.evidenceModal.typeAudio') },
+    { value: 'TEXT', label: t('learnerPortal.evidenceModal.typeText') },
   ];
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Enviar Trabalho ou Evidência"
-      description="Envie o que você produziu para seus pais ou responsáveis revisarem."
+      title={t('learnerPortal.evidenceModal.title')}
+      description={t('learnerPortal.evidenceModal.subtitle')}
       maxWidth="md"
       footer={
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', width: '100%' }}>
@@ -139,7 +141,7 @@ export function LearnerEvidenceModal({
             onClick={onClose}
             disabled={submitting}
           >
-            Cancelar
+            {t('learnerPortal.evidenceModal.cancelButton')}
           </Button>
           <Button
             type="submit"
@@ -148,7 +150,7 @@ export function LearnerEvidenceModal({
             data-testid="submit-evidence-btn"
             isLoading={submitting}
           >
-            Enviar Evidência
+            {t('learnerPortal.evidenceModal.submitButton')}
           </Button>
         </div>
       }
@@ -168,7 +170,7 @@ export function LearnerEvidenceModal({
           style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
         >
           <Select
-            label="Competência Relacionada *"
+            label={`${t('learnerPortal.evidenceModal.selectCompetencyLabel')} *`}
             data-testid="evidence-competency-select"
             value={trackingId}
             onChange={(e) => setTrackingId(e.target.value)}
@@ -177,7 +179,7 @@ export function LearnerEvidenceModal({
           />
 
           <Select
-            label="Tipo de Evidência *"
+            label={`${t('learnerPortal.evidenceModal.evidenceTypeLabel')} *`}
             data-testid="evidence-type-select"
             value={evidenceTypeCode}
             onChange={(e) => setEvidenceTypeCode(e.target.value)}
@@ -186,39 +188,39 @@ export function LearnerEvidenceModal({
           />
 
           <Input
-            label="Título do Trabalho *"
+            label={`${t('learnerPortal.evidenceModal.titleLabel')} *`}
             data-testid="evidence-title-input"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Ex: Redação sobre a Grécia Antiga, Desenho Botânico..."
+            placeholder={t('learnerPortal.evidenceModal.titlePlaceholder')}
             required
           />
 
           <Textarea
-            label="O que você aprendeu? (opcional)"
+            label={t('learnerPortal.evidenceModal.descriptionLabel')}
             data-testid="evidence-description-input"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
-            placeholder="Conte brevemente como realizou este trabalho e o que achou..."
+            placeholder={t('learnerPortal.evidenceModal.descriptionPlaceholder')}
           />
 
           <Input
             type="url"
-            label="Link do arquivo ou trabalho (opcional)"
+            label={t('learnerPortal.evidenceModal.urlLabel')}
             data-testid="evidence-url-input"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://exemplo.com/meu-trabalho"
+            placeholder={t('learnerPortal.evidenceModal.urlPlaceholder')}
           />
 
           <Textarea
-            label="Recado para seus pais (opcional)"
+            label={t('learnerPortal.evidenceModal.notesLabel')}
             data-testid="evidence-notes-input"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
-            placeholder="Ex: Consegui concluir todas as questões sem ajuda!"
+            placeholder={t('learnerPortal.evidenceModal.notesPlaceholder')}
           />
         </form>
       </div>

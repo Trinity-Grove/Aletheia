@@ -4,6 +4,7 @@ import { notifications } from './notifications';
 import { learnerFocus } from './learner-focus';
 import { auth } from './auth';
 import { onboarding } from './onboarding';
+import { learnerPortal } from './learner-portal';
 
 export const ptBR = {
   common,
@@ -12,4 +13,5 @@ export const ptBR = {
   learnerFocus,
   auth,
   onboarding,
+  learnerPortal,
 } as const;
