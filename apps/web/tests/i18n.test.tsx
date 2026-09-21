@@ -2,6 +2,9 @@ import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { LocaleProvider, useLocale } from '../src/lib/i18n/locale-context';
+import { ptBR } from '../src/lib/i18n/dictionaries/pt-BR';
+import { enUS } from '../src/lib/i18n/dictionaries/en-US';
+import { esES } from '../src/lib/i18n/dictionaries/es-ES';
 
 afterEach(() => {
   cleanup();
@@ -264,3 +267,52 @@ describe('i18n (Issue #33: Internacionalização, Dicionários e Formatadores)',
     });
   });
 });
+
+describe('Guardrails de Integridade Estrutural e Paridade de Dicionários', () => {
+  function collectKeysAndValues(obj: Record<string, any>, prefix = ''): { key: string; value: string }[] {
+    const entries: { key: string; value: string }[] = [];
+    for (const [k, v] of Object.entries(obj)) {
+      const fullKey = prefix ? `${prefix}.${k}` : k;
+      if (typeof v === 'string') {
+        entries.push({ key: fullKey, value: v });
+      } else if (v && typeof v === 'object') {
+        entries.push(...collectKeysAndValues(v, fullKey));
+      }
+    }
+    return entries;
+  }
+
+  function extractVariables(template: string): string[] {
+    const matches = [...template.matchAll(/\{(\w+)\}/g)];
+    return matches.map((m) => m[1]!).sort();
+  }
+
+  it('garante que nenhuma chave em nenhum idioma seja vazia ou apenas espaços', () => {
+    const ptEntries = collectKeysAndValues(ptBR);
+    const enEntries = collectKeysAndValues(enUS);
+    const esEntries = collectKeysAndValues(esES);
+
+    for (const entry of [...ptEntries, ...enEntries, ...esEntries]) {
+      expect(entry.value.trim().length, `Chave vazia detectada: ${entry.key}`).toBeGreaterThan(0);
+    }
+  });
+
+  it('garante simetria exata de chaves e variáveis de interpolação {var} entre todos os idiomas', () => {
+    const ptEntries = collectKeysAndValues(ptBR);
+    const enMap = new Map(collectKeysAndValues(enUS).map((e) => [e.key, e.value]));
+    const esMap = new Map(collectKeysAndValues(esES).map((e) => [e.key, e.value]));
+
+    for (const { key, value: ptValue } of ptEntries) {
+      expect(enMap.has(key), `Chave '${key}' presente em pt-BR mas ausente em en-US`).toBe(true);
+      expect(esMap.has(key), `Chave '${key}' presente em pt-BR mas ausente em es-ES`).toBe(true);
+
+      const ptVars = extractVariables(ptValue);
+      const enVars = extractVariables(enMap.get(key)!);
+      const esVars = extractVariables(esMap.get(key)!);
+
+      expect(enVars, `Discrepância de variáveis {var} na chave '${key}' entre pt-BR e en-US`).toEqual(ptVars);
+      expect(esVars, `Discrepância de variáveis {var} na chave '${key}' entre pt-BR e es-ES`).toEqual(ptVars);
+    }
+  });
+});
+
