@@ -5,6 +5,8 @@ import { LocaleProvider, useLocale } from '../src/lib/i18n/locale-context';
 import { ptBR } from '../src/lib/i18n/dictionaries/pt-BR';
 import { enUS } from '../src/lib/i18n/dictionaries/en-US';
 import { esES } from '../src/lib/i18n/dictionaries/es-ES';
+import { LoginForm } from '../src/components/auth/login-form';
+import { RoleBadge } from '../src/components/auth/role-badge';
 
 afterEach(() => {
   cleanup();
@@ -264,6 +266,69 @@ describe('i18n (Issue #33: Internacionalização, Dicionários e Formatadores)',
       render(<FormatterProbe date={fixedDate} numberValue={1000} currencyValue={50} />);
       expect(screen.getByTestId('formatted-date').textContent).toMatch(/17\/0?9\/2026/);
       expect(screen.getByTestId('formatted-currency').textContent).toMatch(/R\$\s?50,00/);
+    });
+  });
+
+  describe('Integração de i18n em Auth e Onboarding', () => {
+    it('renderiza LoginForm traduzido em en-US e es-ES', () => {
+      localStorage.setItem('aletheia_locale', 'en-US');
+      const { unmount } = render(
+        <LocaleProvider>
+          <LoginForm />
+        </LocaleProvider>
+      );
+      expect(screen.getByTestId('login-button')).toHaveTextContent('Sign in');
+      expect(screen.getByLabelText('Email')).toBeInTheDocument();
+      expect(screen.getByLabelText('Password')).toBeInTheDocument();
+      unmount();
+
+      localStorage.setItem('aletheia_locale', 'es-ES');
+      render(
+        <LocaleProvider>
+          <LoginForm />
+        </LocaleProvider>
+      );
+      expect(screen.getByTestId('login-button')).toHaveTextContent('Iniciar sesión');
+      expect(screen.getByLabelText('Correo electrónico')).toBeInTheDocument();
+      expect(screen.getByLabelText('Contraseña')).toBeInTheDocument();
+    });
+
+    it('renderiza RoleBadge com traduções em múltiplos idiomas', () => {
+      localStorage.setItem('aletheia_locale', 'en-US');
+      const { unmount } = render(
+        <LocaleProvider>
+          <RoleBadge role="OWNER_GUARDIAN" />
+        </LocaleProvider>
+      );
+      expect(screen.getByTestId('role-badge')).toHaveTextContent('Primary Guardian');
+      unmount();
+
+      localStorage.setItem('aletheia_locale', 'es-ES');
+      render(
+        <LocaleProvider>
+          <RoleBadge role="OWNER_GUARDIAN" />
+        </LocaleProvider>
+      );
+      expect(screen.getByTestId('role-badge')).toHaveTextContent('Tutor Principal');
+    });
+
+    it('traduz chaves de onboarding em en-US e es-ES', () => {
+      localStorage.setItem('aletheia_locale', 'en-US');
+      const { unmount } = render(
+        <LocaleProvider>
+          <Probe translationKey="onboarding.wizard.welcomeTitle" />
+        </LocaleProvider>
+      );
+      expect(screen.getByTestId('probe')).toHaveTextContent('Welcome to Aletheia!');
+      unmount();
+
+      localStorage.setItem('aletheia_locale', 'es-ES');
+      render(
+        <LocaleProvider>
+          <Probe translationKey="onboarding.wizard.welcomeTitle" />
+        </LocaleProvider>
+      );
+      expect(screen.getByTestId('probe')).toHaveTextContent('¡Bienvenido a Aletheia!');
     });
   });
 });

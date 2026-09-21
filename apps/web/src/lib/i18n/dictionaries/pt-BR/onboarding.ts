@@ -1,0 +1,27 @@
+export const onboarding = {
+  hero: {
+    badge: 'Fundação Soberana',
+    title: 'Educação com Raízes, Fé e Excelência.',
+    subtitle: 'O lar é a primeira e mais formativa escola. O Aletheia capacita os pais a liderarem com autoridade, clareza e fidelidade.',
+    quote: '“Instrui o menino no caminho em que deve andar, e até quando envelhecer não se desviará dele.”',
+    quoteAuthor: 'Provérbios 22:6',
+    isolationFooter: 'Ambiente com isolamento por família e soberania total sobre seus registros educacionais.',
+    ariaLabel: 'Apresentação Aletheia',
+  },
+  wizard: {
+    stepIndicator: 'Passo 1 de 2 • Núcleo Familiar',
+    welcomeTitle: 'Bem-vindo ao Aletheia!',
+    welcomeSubtitle: 'Vamos configurar o núcleo familiar soberano para sua jornada educacional.',
+    familyNameLabel: 'Nome da Família ou Núcleo',
+    familyNamePlaceholder: 'Ex: Família Oliveira',
+    familyNameHint: 'Identifica sua família em relatórios oficiais, históricos escolares e certificados.',
+    countryLabel: 'País de Residência (ISO-3)',
+    countryHint: 'Define a jurisdição regulatória padrão para atendimento aos requisitos legais.',
+    stateLabel: 'Estado / Província (Opcional)',
+    statePlaceholder: 'Ex: SP',
+    stateHint: 'Utilizado para alinhar matrizes curriculares e legislações regionais.',
+    submitButton: 'Criar e Começar',
+    submittingButton: 'Criando...',
+    errorCreateFamily: 'Falha ao criar família. Tente novamente.',
+  },
+} as const;

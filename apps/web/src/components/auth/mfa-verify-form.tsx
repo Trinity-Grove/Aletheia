@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface MfaVerifyFormProps {
   onSubmit?: (_data: { code: string }) => Promise<void> | void;
 }
 
 export function MfaVerifyForm({ onSubmit }: MfaVerifyFormProps) {
+  const { t } = useLocale();
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -16,7 +18,7 @@ export function MfaVerifyForm({ onSubmit }: MfaVerifyFormProps) {
     setError(null);
 
     if (!code.trim()) {
-      setError('Por favor, informe o código de autenticação ou recuperação.');
+      setError(t('auth.mfa.errorRequired'));
       return;
     }
 
@@ -26,7 +28,7 @@ export function MfaVerifyForm({ onSubmit }: MfaVerifyFormProps) {
         await onSubmit({ code });
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Código inválido. Tente novamente.';
+      const message = err instanceof Error ? err.message : t('auth.mfa.errorInvalid');
       setError(message);
     } finally {
       setLoading(false);
@@ -45,12 +47,11 @@ export function MfaVerifyForm({ onSubmit }: MfaVerifyFormProps) {
         className="auth-header-text"
         style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9375rem', margin: '0 0 0.5rem' }}
       >
-        Digite o código de 6 dígitos do seu aplicativo autenticador, ou um dos seus códigos de
-        recuperação.
+        {t('auth.mfa.instruction')}
       </p>
 
       <div className="form-group">
-        <label htmlFor="mfa-code">Código</label>
+        <label htmlFor="mfa-code">{t('auth.mfa.codeLabel')}</label>
         <input
           id="mfa-code"
           type="text"
@@ -59,7 +60,7 @@ export function MfaVerifyForm({ onSubmit }: MfaVerifyFormProps) {
           data-testid="mfa-code-input"
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          placeholder="000000"
+          placeholder={t('auth.mfa.codePlaceholder')}
           required
         />
       </div>
@@ -70,7 +71,7 @@ export function MfaVerifyForm({ onSubmit }: MfaVerifyFormProps) {
         disabled={loading}
         className="btn btn-primary"
       >
-        {loading ? 'Verificando...' : 'Verificar'}
+        {loading ? t('auth.mfa.submittingButton') : t('auth.mfa.submitButton')}
       </button>
     </form>
   );
