@@ -11,3 +11,11 @@ Antes de alterar catálogos, seeders ou definições de currículo, consulte est
 - Não introduza `country` ou equivalentes no modelo apenas para representar diferenças de sistemas escolares. Só crie uma variante jurisdicional quando houver requisito explícito do produto.
 
 Ao criar um novo catálogo, preserve esses códigos e dimensões; traduza apenas os nomes e descrições apresentados ao usuário.
+
+## Internacionalização Obrigatória no Frontend (i18n)
+
+- Todo texto de interface voltado ao usuário DEVE ser internacionalizado. Textos fixos ("hardcoded") em JSX são estritamente proibidos em novas features e refatorações.
+- Use `const { t, formatDate, formatCurrency, formatNumber } = useLocale()` de `@/lib/i18n/locale-context`.
+- Chaves de tradução devem ser organizadas por domínio dentro de `apps/web/src/lib/i18n/dictionaries/{pt-BR,en-US,es-ES}/<dominio>.ts`.
+- Toda nova chave adicionada em `pt-BR` DEVE obrigatoriamente ser acompanhada de suas respectivas traduções em `en-US` e `es-ES` no mesmo commit. O TypeScript (`Dictionary`) e os testes de paridade bloqueiam o build se faltar tradução ou variável `{var}`.
+- Datas, horários, números e moedas DEVEM utilizar os formatadores do `useLocale()`, respeitando a localidade ativa da família.
