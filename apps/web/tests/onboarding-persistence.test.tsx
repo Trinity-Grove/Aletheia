@@ -222,4 +222,17 @@ describe('OnboardingPage persistence and navigation', () => {
     expect(postSpy).not.toHaveBeenCalled();
     expect(mockPush).not.toHaveBeenCalled();
   });
+
+  it('renders all ISO-3 country options in the country select dropdown', () => {
+    renderWithAuth(<OnboardingPage />);
+
+    const countrySelect = screen.getByTestId('country-select') as HTMLSelectElement;
+    expect(countrySelect.options.length).toBeGreaterThan(240);
+    expect(countrySelect.value).toBe('BRA');
+
+    // Test changing to another country
+    fireEvent.change(countrySelect, { target: { value: 'CAN' } });
+    expect(countrySelect.value).toBe('CAN');
+  });
 });
+

@@ -44,3 +44,4 @@ export * from './learner-access.js';
 export * from './consent-definition.js';
 export * from './routine-generator.js';
 export * from './donation.js';
+export * from './countries.js';
