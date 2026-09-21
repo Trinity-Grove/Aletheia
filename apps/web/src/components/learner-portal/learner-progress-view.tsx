@@ -3,6 +3,7 @@
 import React from 'react';
 import { Alert, Badge, Button, Card } from '@aletheia/ui';
 import type { LearnerTrackedCompetency } from './types';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface LearnerProgressViewProps {
   learnerId: string;
@@ -18,6 +19,7 @@ export function LearnerProgressView({
   error,
   onOpenEvidenceModal,
 }: LearnerProgressViewProps) {
+  const { t } = useLocale();
   const activeTrackings = trackings.filter((t) => t.status !== 'RETIRED');
   const achievedCount = trackings.filter((t) => Boolean(t.achievedAt)).length;
   const inProgressCount = activeTrackings.filter((t) => !t.achievedAt).length;
@@ -51,7 +53,7 @@ export function LearnerProgressView({
               marginBottom: '0.25rem',
             }}
           >
-            Trilha de Conhecimento
+            {t('learnerPortal.progress.trackBadge')}
           </span>
           <h2
             style={{
@@ -62,10 +64,10 @@ export function LearnerProgressView({
               letterSpacing: '-0.01em',
             }}
           >
-            Meu Progresso
+            {t('learnerPortal.progress.title')}
           </h2>
           <p style={{ margin: '0.375rem 0 0 0', opacity: 0.85, fontSize: '0.9375rem' }}>
-            Acompanhe o que você já conquistou e envie novos trabalhos para validação.
+            {t('learnerPortal.progress.subtitle')}
           </p>
         </div>
 
@@ -83,7 +85,7 @@ export function LearnerProgressView({
             boxShadow: 'var(--shadow-sm)',
           }}
         >
-          Enviar Trabalho 📤
+          {t('learnerPortal.progress.sendWorkButton')}
         </Button>
       </div>
 
@@ -97,7 +99,7 @@ export function LearnerProgressView({
       >
         <Card style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-            Total de Competências
+            {t('learnerPortal.progress.totalCompetencies')}
           </span>
           <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--forest)' }}>
             {trackings.length}
@@ -106,7 +108,7 @@ export function LearnerProgressView({
 
         <Card style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-            Conquistadas
+            {t('learnerPortal.progress.completedCompetencies')}
           </span>
           <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--sage)' }}>
             {achievedCount}
@@ -115,7 +117,7 @@ export function LearnerProgressView({
 
         <Card style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-            Em Desenvolvimento
+            {t('learnerPortal.progress.inProgressCompetencies')}
           </span>
           <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--gold-dark)' }}>
             {inProgressCount}
@@ -136,7 +138,7 @@ export function LearnerProgressView({
             data-testid="progress-loading"
             style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}
           >
-            Carregando seu progresso...
+            {t('learnerPortal.progress.loadingProgress')}
           </div>
         ) : trackings.length === 0 ? (
           <div
@@ -151,10 +153,10 @@ export function LearnerProgressView({
           >
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📚</div>
             <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--forest)', fontSize: '1.25rem' }}>
-              Nenhuma competência ativa encontrada
+              {t('learnerPortal.progress.emptyTitle')}
             </h3>
             <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
-              Suas competências e objetivos de aprendizagem aparecerão aqui assim que seus responsáveis iniciarem seu plano de estudos.
+              {t('learnerPortal.progress.emptySubtitle')}
             </p>
           </div>
         ) : (
@@ -223,11 +225,11 @@ export function LearnerProgressView({
 
                       {isAchieved ? (
                         <Badge variant="emerald" data-testid={`competency-status-${tracking.id}`}>
-                          ✨ Conquistada
+                          {t('learnerPortal.progress.statusAchieved')}
                         </Badge>
                       ) : (
                         <Badge variant="amber" data-testid={`competency-status-${tracking.id}`}>
-                          Em Andamento
+                          {t('learnerPortal.progress.statusInProgress')}
                         </Badge>
                       )}
                     </div>
@@ -252,7 +254,12 @@ export function LearnerProgressView({
                           marginTop: '0.25rem',
                         }}
                       >
-                        📄 {tracking.evidenceCount} {tracking.evidenceCount === 1 ? 'trabalho enviado' : 'trabalhos enviados'}
+                        📄{' '}
+                        {tracking.evidenceCount === 1
+                          ? t('learnerPortal.progress.evidenceCountSingle')
+                          : t('learnerPortal.progress.evidenceCountMultiple', {
+                              count: tracking.evidenceCount,
+                            })}
                       </div>
                     )}
                   </div>
@@ -268,7 +275,7 @@ export function LearnerProgressView({
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      Enviar Trabalho
+                      {t('learnerPortal.progress.sendEvidenceForThis')}
                     </Button>
                   </div>
                 </article>

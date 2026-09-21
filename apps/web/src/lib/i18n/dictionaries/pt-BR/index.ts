@@ -4,6 +4,7 @@ import { notifications } from './notifications';
 import { learnerFocus } from './learner-focus';
 import { auth } from './auth';
 import { onboarding } from './onboarding';
+import { learnerPortal } from './learner-portal';
 import { lessons } from './lessons';
 
 export const ptBR = {
@@ -13,5 +14,6 @@ export const ptBR = {
   learnerFocus,
   auth,
   onboarding,
+  learnerPortal,
   lessons,
 } as const;

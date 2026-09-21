@@ -4,10 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Alert, Button } from '@aletheia/ui';
 import type { LearnerAccessOptionDto, LearnerSessionResponseDto } from '@aletheia/contracts';
+import { useLocale } from '../../../src/lib/i18n/locale-context';
 
 export const dynamic = 'force-dynamic';
 
 function LearnerLoginContent() {
+  const { t } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const familyParam = searchParams?.get('familyId');
@@ -47,9 +49,9 @@ function LearnerLoginContent() {
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         if (res.status === 403) {
-          throw new Error('Acesso desativado pelo responsável. Peça ajuda ao seu guardião.');
+          throw new Error(t('learnerPortal.login.errorTokenAccessDisabled'));
         }
-        throw new Error(err.message || 'Link de acesso inválido ou expirado.');
+        throw new Error(err.message || t('learnerPortal.login.errorTokenInvalid'));
       }
 
       const session: LearnerSessionResponseDto = await res.json();
@@ -65,7 +67,7 @@ function LearnerLoginContent() {
       }
       router.push('/aluno/agenda');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Falha ao autenticar com o link de acesso.');
+      setError(err instanceof Error ? err.message : t('learnerPortal.login.errorTokenGeneral'));
     } finally {
       setLoading(false);
       setAuthenticatingToken(false);
@@ -112,9 +114,9 @@ function LearnerLoginContent() {
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         if (res.status === 403) {
-          throw new Error('Acesso bloqueado temporariamente ou desativado. Peça ajuda ao seu guardião.');
+          throw new Error(t('learnerPortal.login.errorPinBlocked'));
         }
-        throw new Error(err.message || 'Código de acesso incorreto.');
+        throw new Error(err.message || t('learnerPortal.login.errorPinInvalid'));
       }
 
       const session: LearnerSessionResponseDto = await res.json();
@@ -130,7 +132,7 @@ function LearnerLoginContent() {
       }
       router.push('/aluno/agenda');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Falha ao acessar o portal.');
+      setError(err instanceof Error ? err.message : t('learnerPortal.login.errorGeneral'));
     } finally {
       setLoading(false);
     }
@@ -175,7 +177,7 @@ function LearnerLoginContent() {
               marginBottom: '1rem',
             }}
           >
-            Modo Educando
+            {t('learnerPortal.login.modeBadge')}
           </span>
           <h1
             style={{
@@ -187,14 +189,14 @@ function LearnerLoginContent() {
               letterSpacing: '-0.02em',
             }}
           >
-            Portal do Aluno
+            {t('learnerPortal.login.title')}
           </h1>
           <p style={{ margin: '0.5rem 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
             {authenticatingToken
-              ? 'Conectando ao portal de estudos...'
+              ? t('learnerPortal.login.connectingToken')
               : selectedLearner
-              ? `Olá, ${selectedLearner.displayName}! Digite seu PIN de acesso.`
-              : 'Selecione quem está estudando hoje:'}
+              ? t('learnerPortal.login.greetingWithPin', { name: selectedLearner.displayName })
+              : t('learnerPortal.login.selectLearnerPrompt')}
           </p>
         </div>
 
@@ -207,10 +209,10 @@ function LearnerLoginContent() {
         {authenticatingToken ? (
           <div data-testid="token-login-loading" style={{ padding: '2rem 1rem', textAlign: 'center' }}>
             <p style={{ margin: 0, fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>
-              Autenticando acesso do educando...
+              {t('learnerPortal.login.tokenAuthenticatingTitle')}
             </p>
             <p style={{ margin: '0.5rem 0 0 0', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-              Por favor, aguarde enquanto preparamos sua agenda de estudos.
+              {t('learnerPortal.login.tokenAuthenticatingSubtitle')}
             </p>
           </div>
         ) : !selectedLearner ? (
@@ -257,7 +259,7 @@ function LearnerLoginContent() {
               ))
             ) : (
               <div style={{ padding: '1.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                Nenhum educando com acesso ativado encontrado. Peça para o seu guardião habilitar seu acesso no painel familiar.
+                {t('learnerPortal.login.noLearnersFound')}
               </div>
             )}
           </div>
@@ -298,7 +300,7 @@ function LearnerLoginContent() {
                   marginLeft: '0.5rem',
                 }}
               >
-                Trocar
+                {t('learnerPortal.login.changeLearner')}
               </button>
             </div>
 
@@ -307,7 +309,7 @@ function LearnerLoginContent() {
                 htmlFor="learner-pin"
                 style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-primary)' }}
               >
-                Código PIN (6 dígitos)
+                {t('learnerPortal.login.pinLabel')}
               </label>
               <input
                 id="learner-pin"
@@ -318,7 +320,7 @@ function LearnerLoginContent() {
                 maxLength={16}
                 value={pinCode}
                 onChange={(e) => setPinCode(e.target.value)}
-                placeholder="••••••"
+                placeholder={t('learnerPortal.login.pinPlaceholder')}
                 required
                 disabled={loading}
                 autoFocus
@@ -345,7 +347,7 @@ function LearnerLoginContent() {
               onClick={handleLogin}
               style={{ width: '100%', height: '3rem', fontSize: '1rem' }}
             >
-              Entrar na Minha Agenda
+              {t('learnerPortal.login.submitButton')}
             </Button>
           </form>
         )}

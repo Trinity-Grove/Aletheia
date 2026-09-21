@@ -7,6 +7,11 @@ import { enUS } from '../src/lib/i18n/dictionaries/en-US';
 import { esES } from '../src/lib/i18n/dictionaries/es-ES';
 import { LoginForm } from '../src/components/auth/login-form';
 import { RoleBadge } from '../src/components/auth/role-badge';
+import {
+  LearnerProgressView,
+  LearnerEvidenceModal,
+  type LearnerTrackedCompetency,
+} from '../src/components/learner-portal';
 
 afterEach(() => {
   cleanup();
@@ -329,6 +334,114 @@ describe('i18n (Issue #33: Internacionalização, Dicionários e Formatadores)',
         </LocaleProvider>
       );
       expect(screen.getByTestId('probe')).toHaveTextContent('¡Bienvenido a Aletheia!');
+    });
+  });
+
+  describe('Integração de i18n no Portal do Aluno (Learner Portal)', () => {
+    const mockTrackings: LearnerTrackedCompetency[] = [
+      {
+        id: 'track-1',
+        familyId: 'f-1',
+        learnerId: 'l-1',
+        competencyDefinitionId: 'comp-1',
+        competencyVersion: 1,
+        status: 'ACTIVE',
+        activatedAt: '2026-09-01T00:00:00.000Z',
+        createdAt: '2026-09-01T00:00:00.000Z',
+        evidenceCount: 1,
+        competency: {
+          code: 'HIST-01',
+          title: 'World History',
+          domainTitle: 'History',
+        },
+      },
+      {
+        id: 'track-2',
+        familyId: 'f-1',
+        learnerId: 'l-1',
+        competencyDefinitionId: 'comp-2',
+        competencyVersion: 1,
+        status: 'ACTIVE',
+        achievedAt: '2026-09-10T00:00:00.000Z',
+        activatedAt: '2026-09-01T00:00:00.000Z',
+        createdAt: '2026-09-01T00:00:00.000Z',
+        evidenceCount: 2,
+        competency: {
+          code: 'MATH-01',
+          title: 'Algebra Basics',
+          domainTitle: 'Mathematics',
+        },
+      },
+    ];
+
+    it('renderiza LearnerProgressView em en-US', () => {
+      localStorage.setItem('aletheia_locale', 'en-US');
+      render(
+        <LocaleProvider>
+          <LearnerProgressView
+            learnerId="l-1"
+            trackings={mockTrackings}
+            loading={false}
+            error={null}
+            onOpenEvidenceModal={vi.fn()}
+          />
+        </LocaleProvider>
+      );
+
+      expect(screen.getByText('Knowledge Track')).toBeInTheDocument();
+      expect(screen.getByText('My Progress')).toBeInTheDocument();
+      expect(screen.getByText('Total Competencies')).toBeInTheDocument();
+      expect(screen.getByText('Mastered')).toBeInTheDocument();
+      expect(screen.getAllByText('In Progress').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByTestId('open-evidence-modal-btn')).toHaveTextContent('Submit Work 📤');
+      expect(screen.getByTestId('competency-status-track-1')).toHaveTextContent('In Progress');
+      expect(screen.getByTestId('competency-status-track-2')).toHaveTextContent('✨ Mastered');
+    });
+
+    it('renderiza LearnerProgressView em es-ES', () => {
+      localStorage.setItem('aletheia_locale', 'es-ES');
+      render(
+        <LocaleProvider>
+          <LearnerProgressView
+            learnerId="l-1"
+            trackings={mockTrackings}
+            loading={false}
+            error={null}
+            onOpenEvidenceModal={vi.fn()}
+          />
+        </LocaleProvider>
+      );
+
+      expect(screen.getByText('Ruta de Conocimiento')).toBeInTheDocument();
+      expect(screen.getByText('Mi Progreso')).toBeInTheDocument();
+      expect(screen.getByText('Total de Competencias')).toBeInTheDocument();
+      expect(screen.getByText('Conquistadas')).toBeInTheDocument();
+      expect(screen.getByText('En Desarrollo')).toBeInTheDocument();
+      expect(screen.getByTestId('open-evidence-modal-btn')).toHaveTextContent('Enviar Trabajo 📤');
+      expect(screen.getByTestId('competency-status-track-1')).toHaveTextContent('En Curso');
+      expect(screen.getByTestId('competency-status-track-2')).toHaveTextContent('✨ Conquistada');
+    });
+
+    it('renderiza LearnerEvidenceModal com formulário traduzido em en-US', () => {
+      localStorage.setItem('aletheia_locale', 'en-US');
+      render(
+        <LocaleProvider>
+          <LearnerEvidenceModal
+            isOpen={true}
+            onClose={vi.fn()}
+            learnerId="l-1"
+            trackings={mockTrackings}
+            onSuccess={vi.fn()}
+          />
+        </LocaleProvider>
+      );
+
+      expect(screen.getByText('Submit Work or Evidence')).toBeInTheDocument();
+      expect(screen.getByLabelText(/Related Competency/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Evidence Type/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Work Title/i)).toBeInTheDocument();
+      expect(screen.getByTestId('cancel-evidence-btn')).toHaveTextContent('Cancel');
+      expect(screen.getByTestId('submit-evidence-btn')).toHaveTextContent('Submit Evidence');
     });
   });
 });

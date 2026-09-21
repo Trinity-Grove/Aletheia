@@ -5,6 +5,7 @@ import { notifications } from './notifications';
 import { learnerFocus } from './learner-focus';
 import { auth } from './auth';
 import { onboarding } from './onboarding';
+import { learnerPortal } from './learner-portal';
 import { lessons } from './lessons';
 
 export const enUS: Dictionary = {
@@ -14,5 +15,6 @@ export const enUS: Dictionary = {
   learnerFocus,
   auth,
   onboarding,
+  learnerPortal,
   lessons,
 };

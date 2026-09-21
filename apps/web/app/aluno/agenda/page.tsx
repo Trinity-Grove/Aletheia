@@ -8,6 +8,7 @@ import {
   LearnerEvidenceModal,
   type LearnerTrackedCompetency,
 } from '../../../src/components/learner-portal';
+import { useLocale } from '../../../src/lib/i18n/locale-context';
 
 interface AgendaItem {
   id: string;
@@ -26,6 +27,7 @@ interface AgendaData {
 }
 
 export default function LearnerAgendaPage() {
+  const { t, formatDate } = useLocale();
   const router = useRouter();
 
   const [learnerId, setLearnerId] = useState<string>('');
@@ -63,7 +65,7 @@ export default function LearnerAgendaPage() {
         return;
       }
       setLearnerId(parsed.learnerId);
-      setDisplayName(parsed.displayName || 'Educando');
+      setDisplayName(parsed.displayName || t('learnerPortal.header.defaultLearnerName'));
       void loadAgenda(parsed.learnerId);
     } catch {
       router.replace('/aluno/login');
@@ -83,12 +85,12 @@ export default function LearnerAgendaPage() {
         return;
       }
       if (!res.ok) {
-        throw new Error('Falha ao carregar as atividades de hoje.');
+        throw new Error(t('learnerPortal.agenda.errorLoad'));
       }
       const data = await res.json();
       setAgenda(data);
     } catch (err: unknown) {
-      setAgendaError(err instanceof Error ? err.message : 'Erro ao carregar agenda.');
+      setAgendaError(err instanceof Error ? err.message : t('learnerPortal.agenda.errorGeneral'));
     } finally {
       setLoadingAgenda(false);
     }
@@ -107,12 +109,12 @@ export default function LearnerAgendaPage() {
         return;
       }
       if (!res.ok) {
-        throw new Error('Falha ao carregar o progresso de competências.');
+        throw new Error(t('learnerPortal.progress.errorLoad'));
       }
       const data = await res.json();
       setTrackings(Array.isArray(data) ? data : []);
     } catch (err: unknown) {
-      setProgressError(err instanceof Error ? err.message : 'Erro ao carregar progresso.');
+      setProgressError(err instanceof Error ? err.message : t('learnerPortal.progress.errorGeneral'));
     } finally {
       setLoadingProgress(false);
     }
@@ -158,7 +160,7 @@ export default function LearnerAgendaPage() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || 'Erro ao registrar conclusão da lição.');
+        throw new Error(errData.message || t('learnerPortal.agenda.errorComplete'));
       }
 
       setAgenda((prev) => {
@@ -173,13 +175,16 @@ export default function LearnerAgendaPage() {
         };
       });
 
-      const successMsg = `Parabéns, ${displayName}! Lição "${item.title}" concluída com sucesso! 🌟`;
+      const successMsg = t('learnerPortal.agenda.celebrationSuccess', {
+        name: displayName,
+        title: item.title,
+      });
       setCelebrationMsg(successMsg);
       setTimeout(() => {
         setCelebrationMsg((current) => (current === successMsg ? null : current));
       }, 4000);
     } catch (err: unknown) {
-      setAgendaError(err instanceof Error ? err.message : 'Falha ao concluir lição.');
+      setAgendaError(err instanceof Error ? err.message : t('learnerPortal.agenda.errorComplete'));
     } finally {
       setCompletingId(null);
     }
@@ -253,7 +258,7 @@ export default function LearnerAgendaPage() {
                 letterSpacing: '0.05em',
               }}
             >
-              Portal do Aluno
+              {t('learnerPortal.header.portalBadge')}
             </div>
             <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--forest)' }}>
               {displayName}
@@ -269,7 +274,7 @@ export default function LearnerAgendaPage() {
             onClick={() => handleOpenEvidenceModal()}
             style={{ fontSize: '0.875rem' }}
           >
-            Enviar Trabalho 📤
+            {t('learnerPortal.header.sendWorkButton')}
           </Button>
 
           <button
@@ -287,7 +292,7 @@ export default function LearnerAgendaPage() {
               transition: 'all 0.15s ease',
             }}
           >
-            Sair
+            {t('learnerPortal.header.logout')}
           </button>
         </div>
       </header>
@@ -305,7 +310,7 @@ export default function LearnerAgendaPage() {
         {/* Tab Navigation Selector */}
         <div
           role="tablist"
-          aria-label="Navegação do Portal do Aluno"
+          aria-label={t('learnerPortal.header.navAriaLabel')}
           style={{
             display: 'flex',
             gap: '0.5rem',
@@ -335,7 +340,7 @@ export default function LearnerAgendaPage() {
               gap: '0.5rem',
             }}
           >
-            <span>📅</span> Minha Agenda
+            <span>📅</span> {t('learnerPortal.tabs.agenda')}
           </button>
 
           <button
@@ -360,7 +365,7 @@ export default function LearnerAgendaPage() {
               gap: '0.5rem',
             }}
           >
-            <span>🌱</span> Meu Progresso
+            <span>🌱</span> {t('learnerPortal.tabs.progress')}
           </button>
         </div>
 
@@ -396,16 +401,16 @@ export default function LearnerAgendaPage() {
                     letterSpacing: '-0.01em',
                   }}
                 >
-                  Agenda de Hoje
+                  {t('learnerPortal.agenda.todayTitle')}
                 </h1>
                 <p style={{ margin: '0.375rem 0 1.25rem 0', opacity: 0.85, fontSize: '0.9375rem' }}>
                   {agenda?.date
-                    ? new Date(`${agenda.date}T12:00:00Z`).toLocaleDateString('pt-BR', {
+                    ? formatDate(new Date(`${agenda.date}T12:00:00Z`), {
                         weekday: 'long',
                         day: 'numeric',
                         month: 'long',
                       })
-                    : 'Carregando suas lições...'}
+                    : t('learnerPortal.agenda.loadingLessons')}
                 </p>
 
                 {totalCount > 0 && (
@@ -419,9 +424,13 @@ export default function LearnerAgendaPage() {
                         fontWeight: 600,
                       }}
                     >
-                      <span>Progresso do dia</span>
+                      <span>{t('learnerPortal.agenda.dailyProgress')}</span>
                       <span>
-                        {completedCount} de {totalCount} concluídas ({progressPercent}%)
+                        {t('learnerPortal.agenda.progressRatio', {
+                          completed: completedCount,
+                          total: totalCount,
+                          percent: progressPercent,
+                        })}
                       </span>
                     </div>
                     <div
@@ -452,7 +461,7 @@ export default function LearnerAgendaPage() {
             <section>
               {loadingAgenda ? (
                 <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-                  Carregando atividades...
+                  {t('learnerPortal.agenda.loadingActivities')}
                 </div>
               ) : !agenda || !agenda.items || agenda.items.length === 0 ? (
                 <div
@@ -466,10 +475,10 @@ export default function LearnerAgendaPage() {
                 >
                   <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✨</div>
                   <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--forest)', fontSize: '1.25rem' }}>
-                    Tudo tranquilo por hoje!
+                    {t('learnerPortal.agenda.emptyTitle')}
                   </h3>
                   <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
-                    Nenhuma lição pendente na sua agenda hoje. Aproveite para descansar ou ler um bom livro.
+                    {t('learnerPortal.agenda.emptySubtitle')}
                   </p>
                 </div>
               ) : (
@@ -549,7 +558,7 @@ export default function LearnerAgendaPage() {
                                 fontWeight: 700,
                               }}
                             >
-                              <span>✓</span> Concluída
+                              <span>✓</span> {t('learnerPortal.agenda.completedBadge')}
                             </div>
                           ) : (
                             <Button
@@ -565,7 +574,7 @@ export default function LearnerAgendaPage() {
                                 fontWeight: 600,
                               }}
                             >
-                              Concluir Lição
+                              {t('learnerPortal.agenda.completeButton')}
                             </Button>
                           )}
                         </div>
