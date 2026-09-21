@@ -113,6 +113,9 @@ export class LearningRecordRepository {
     if (filter.academicYearId) {
       where.academicYearId = filter.academicYearId;
     }
+    if (filter.lessonPlanId) {
+      where.lessonPlanId = filter.lessonPlanId;
+    }
     if (filter.type) {
       where.type = filter.type;
     }
@@ -246,6 +249,19 @@ export class LearningRecordRepository {
 
     await this.prisma.learningRecord.delete({ where: { id } });
     return true;
+  }
+
+  async deleteByLessonPlanId(
+    familyId: string,
+    lessonPlanId: string,
+    learnerId?: string,
+  ): Promise<number> {
+    const where: any = { familyId, lessonPlanId };
+    if (learnerId) {
+      where.learnerId = learnerId;
+    }
+    const result = await this.prisma.learningRecord.deleteMany({ where });
+    return result.count;
   }
 
   private mapLearningRecord(row: any): LearningRecordEntity {

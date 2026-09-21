@@ -17,6 +17,11 @@ export interface LessonPlanPublicApi {
     dto: CompleteLessonDto,
     learnerId?: string,
   ): Promise<LessonPlanResponseDto>;
+  reopenLesson(
+    familyId: string,
+    id: string,
+    learnerId?: string,
+  ): Promise<LessonPlanResponseDto>;
 }
 
 export const SCHEDULE_PUBLIC_API = Symbol('SCHEDULE_PUBLIC_API');

@@ -310,6 +310,50 @@ export class LessonPlanRepository {
     return this.findById(familyId, id);
   }
 
+  async reopenLesson(
+    familyId: string,
+    id: string,
+    learnerId?: string,
+  ): Promise<LessonPlanEntity | null> {
+    const existing = await this.findById(familyId, id);
+    if (!existing) return null;
+
+    if (learnerId) {
+      await this.prisma.lessonPlanLearner.updateMany({
+        where: { lessonPlanId: id, learnerId },
+        data: { completed: false },
+      });
+
+      const allLearners = await this.prisma.lessonPlanLearner.findMany({
+        where: { lessonPlanId: id },
+      });
+      const anyCompleted = allLearners.some((l: any) => l.completed);
+
+      await this.prisma.lessonPlan.update({
+        where: { id },
+        data: {
+          status: anyCompleted ? "IN_PROGRESS" : "PLANNED",
+          completedAt: anyCompleted ? existing.completedAt : null,
+        },
+      });
+    } else {
+      await this.prisma.lessonPlanLearner.updateMany({
+        where: { lessonPlanId: id },
+        data: { completed: false },
+      });
+
+      await this.prisma.lessonPlan.update({
+        where: { id },
+        data: {
+          status: "PLANNED",
+          completedAt: null,
+        },
+      });
+    }
+
+    return this.findById(familyId, id);
+  }
+
   async reschedule(
     familyId: string,
     id: string,

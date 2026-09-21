@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { LessonPlanFilter, LessonPlanRepository } from '../infrastructure/lesson-plan.repository.js';
 import type {
   CompleteLessonDto,
@@ -7,12 +7,21 @@ import type {
   RescheduleLessonDto,
   UpdateLessonPlanDto,
 } from '@aletheia/contracts';
+import {
+  LEARNING_RECORDS_PUBLIC_API,
+  type LearningRecordsPublicApi,
+} from '../../records/application/public-api.js';
 
 import type { LessonPlanPublicApi } from './public-api.js';
 
 @Injectable()
 export class LessonPlanService implements LessonPlanPublicApi {
-  constructor(private readonly lessonPlanRepo: LessonPlanRepository) {}
+  constructor(
+    private readonly lessonPlanRepo: LessonPlanRepository,
+    @Optional()
+    @Inject(LEARNING_RECORDS_PUBLIC_API)
+    private readonly recordsApi?: LearningRecordsPublicApi,
+  ) {}
 
   async createLessonPlan(familyId: string, dto: CreateLessonPlanDto): Promise<LessonPlanResponseDto> {
     const lesson = await this.lessonPlanRepo.create(familyId, dto);
@@ -61,6 +70,21 @@ export class LessonPlanService implements LessonPlanPublicApi {
 
     if (!updated) {
       throw new NotFoundException('Lesson plan not found');
+    }
+    return updated.toResponseDto();
+  }
+
+  async reopenLesson(
+    familyId: string,
+    id: string,
+    learnerId?: string,
+  ): Promise<LessonPlanResponseDto> {
+    const updated = await this.lessonPlanRepo.reopenLesson(familyId, id, learnerId);
+    if (!updated) {
+      throw new NotFoundException('Lesson plan not found');
+    }
+    if (this.recordsApi) {
+      await this.recordsApi.deleteByLessonPlanId(familyId, id, learnerId);
     }
     return updated.toResponseDto();
   }

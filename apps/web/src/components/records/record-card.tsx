@@ -12,9 +12,10 @@ import { Can } from '../auth/role-guard';
 
 export interface RecordCardProps {
   record: LearningRecordResponseDto;
-  onEdit?: (record: LearningRecordResponseDto) => void;
-  onDelete?: (recordId: string) => void;
-  onAddEvidence?: (record: LearningRecordResponseDto) => void;
+  onEdit?: ((record: LearningRecordResponseDto) => void) | undefined;
+  onDelete?: ((recordId: string) => void) | undefined;
+  onAddEvidence?: ((record: LearningRecordResponseDto) => void) | undefined;
+  onReopenLesson?: ((record: LearningRecordResponseDto) => void) | undefined;
 }
 
 export const MASTERY_CONFIG: Record<
@@ -50,7 +51,7 @@ export const RECORD_TYPE_LABELS: Record<LearningRecordType, { label: string; ico
   HABIT_PRACTICE: { label: 'Prática de Hábito', icon: <AletheiaIcon name="heart" size={14} /> },
 };
 
-export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCardProps) {
+export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLesson }: RecordCardProps) {
   const mastery = MASTERY_CONFIG[record.masteryLevel] || MASTERY_CONFIG.DEVELOPING;
   const assessmentLabel = ASSESSMENT_LABELS[record.assessmentMethod] || record.assessmentMethod;
   const recordType = RECORD_TYPE_LABELS[record.type] || { label: record.type, icon: <AletheiaIcon name="file-text" size={14} /> };
@@ -110,6 +111,13 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
             <Badge data-testid={`record-learner-badge-${record.id}`} variant="amber" size="sm">
               <AletheiaIcon name="graduation-cap" size={12} />
               <span>{record.learnerName}</span>
+            </Badge>
+          )}
+
+          {record.lessonPlanId && (
+            <Badge data-testid={`record-lesson-badge-${record.id}`} variant="indigo" size="sm">
+              <AletheiaIcon name="check-circle" size={12} />
+              <span>Concluído na Agenda</span>
             </Badge>
           )}
         </div>
@@ -303,6 +311,27 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence }: RecordCa
         </div>
 
         <div style={{ display: 'flex', gap: '0.375rem' }}>
+          {record.lessonPlanId && onReopenLesson && (
+            <Can action="log_learning">
+              <Button
+                variant="outline"
+                size="sm"
+                data-testid={`reopen-lesson-btn-${record.id}`}
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      'Deseja reabrir esta atividade? Ela voltará para a agenda do educando como pendente e este registro será estornado do diário.',
+                    )
+                  ) {
+                    onReopenLesson(record);
+                  }
+                }}
+                leftIcon={<AletheiaIcon name="rotate-ccw" size={12} />}
+              >
+                Reabrir Atividade
+              </Button>
+            </Can>
+          )}
           {onEdit && (
             <Can action="log_learning">
               <Button

@@ -96,6 +96,18 @@ describe('Learning Record Contracts', () => {
     expect(parsed.type).toBe('HABIT_PRACTICE');
   });
 
+  it('validates filter query schema with lessonPlanId', () => {
+    const filter = {
+      learnerId: LEARNER_ID,
+      lessonPlanId: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
+      type: 'HABIT_PRACTICE' as const,
+    };
+
+    const parsed = learningRecordFilterSchema.parse(filter);
+    expect(parsed.learnerId).toBe(LEARNER_ID);
+    expect(parsed.lessonPlanId).toBe('e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55');
+  });
+
   it('validates learning record response schema', () => {
     const response = {
       id: RECORD_ID,

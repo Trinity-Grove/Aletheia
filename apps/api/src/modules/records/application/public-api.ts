@@ -12,4 +12,5 @@ export interface LearningRecordsPublicApi {
   getRecord(familyId: string, id: string): Promise<LearningRecordResponseDto>;
   listRecords(familyId: string, filter?: LearningRecordFilterDto): Promise<LearningRecordResponseDto[]>;
   getProgressSummary(familyId: string, learnerId: string): Promise<LearnerProgressSummaryDto>;
+  deleteByLessonPlanId(familyId: string, lessonPlanId: string, learnerId?: string): Promise<number>;
 }
