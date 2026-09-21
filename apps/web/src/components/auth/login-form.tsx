@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface LoginFormProps {
   onSubmit?: (_data: { email: string; password: string }) => Promise<void> | void;
 }
 
 export function LoginForm({ onSubmit }: LoginFormProps) {
+  const { t } = useLocale();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +19,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
     setError(null);
 
     if (!email.trim() || !password) {
-      setError('Por favor, preencha todos os campos obrigatórios.');
+      setError(t('auth.login.errorRequired'));
       return;
     }
 
@@ -27,7 +29,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
         await onSubmit({ email, password });
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Falha na autenticação. Verifique suas credenciais.';
+      const message = err instanceof Error ? err.message : t('auth.login.errorFailed');
       setError(message);
     } finally {
       setLoading(false);
@@ -43,27 +45,27 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
       )}
 
       <div className="form-group">
-        <label htmlFor="login-email">E-mail</label>
+        <label htmlFor="login-email">{t('auth.login.emailLabel')}</label>
         <input
           id="login-email"
           type="email"
           data-testid="login-email-input"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="seu.email@exemplo.com"
+          placeholder={t('auth.login.emailPlaceholder')}
           required
         />
       </div>
 
       <div className="form-group">
-        <label htmlFor="login-password">Senha</label>
+        <label htmlFor="login-password">{t('auth.login.passwordLabel')}</label>
         <input
           id="login-password"
           type="password"
           data-testid="login-password-input"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
+          placeholder={t('auth.login.passwordPlaceholder')}
           required
         />
       </div>
@@ -74,7 +76,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
         disabled={loading}
         className="btn btn-primary"
       >
-        {loading ? 'Entrando...' : 'Entrar'}
+        {loading ? t('auth.login.submittingButton') : t('auth.login.submitButton')}
       </button>
     </form>
   );

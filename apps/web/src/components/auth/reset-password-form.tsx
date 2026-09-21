@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface ResetPasswordFormProps {
   token: string | null;
@@ -8,6 +9,7 @@ export interface ResetPasswordFormProps {
 }
 
 export function ResetPasswordForm({ token, onSubmit }: ResetPasswordFormProps) {
+  const { t } = useLocale();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +19,7 @@ export function ResetPasswordForm({ token, onSubmit }: ResetPasswordFormProps) {
   if (!token) {
     return (
       <div className="alert alert-error" data-testid="reset-password-invalid-link" role="alert">
-        Este link de redefinição de senha é inválido. Solicite um novo link.
+        {t('auth.resetPassword.invalidLinkError')}
       </div>
     );
   }
@@ -27,17 +29,17 @@ export function ResetPasswordForm({ token, onSubmit }: ResetPasswordFormProps) {
     setError(null);
 
     if (!newPassword) {
-      setError('Por favor, preencha todos os campos obrigatórios.');
+      setError(t('auth.resetPassword.errorRequired'));
       return;
     }
 
     if (newPassword.length < 8) {
-      setError('A senha deve conter no mínimo 8 caracteres.');
+      setError(t('auth.resetPassword.errorMinLength'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError('As senhas não conferem.');
+      setError(t('auth.resetPassword.errorMismatch'));
       return;
     }
 
@@ -48,7 +50,7 @@ export function ResetPasswordForm({ token, onSubmit }: ResetPasswordFormProps) {
       }
       setSubmitted(true);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Falha ao redefinir a senha. O link pode ter expirado.';
+      const message = err instanceof Error ? err.message : t('auth.resetPassword.errorFailed');
       setError(message);
     } finally {
       setLoading(false);
@@ -58,7 +60,7 @@ export function ResetPasswordForm({ token, onSubmit }: ResetPasswordFormProps) {
   if (submitted) {
     return (
       <div className="auth-form" data-testid="reset-password-success">
-        <p>Sua senha foi redefinida. Você já pode entrar com a nova senha.</p>
+        <p>{t('auth.resetPassword.successMessage')}</p>
       </div>
     );
   }
@@ -72,27 +74,27 @@ export function ResetPasswordForm({ token, onSubmit }: ResetPasswordFormProps) {
       )}
 
       <div className="form-group">
-        <label htmlFor="reset-password-new">Nova senha (mínimo 8 caracteres)</label>
+        <label htmlFor="reset-password-new">{t('auth.resetPassword.newPasswordLabel')}</label>
         <input
           id="reset-password-new"
           type="password"
           data-testid="reset-password-new-input"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
-          placeholder="••••••••"
+          placeholder={t('auth.resetPassword.newPasswordPlaceholder')}
           required
         />
       </div>
 
       <div className="form-group">
-        <label htmlFor="reset-password-confirm">Confirmar nova senha</label>
+        <label htmlFor="reset-password-confirm">{t('auth.resetPassword.confirmPasswordLabel')}</label>
         <input
           id="reset-password-confirm"
           type="password"
           data-testid="reset-password-confirm-input"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
-          placeholder="••••••••"
+          placeholder={t('auth.resetPassword.confirmPasswordPlaceholder')}
           required
         />
       </div>
@@ -103,7 +105,7 @@ export function ResetPasswordForm({ token, onSubmit }: ResetPasswordFormProps) {
         disabled={loading}
         className="btn btn-primary"
       >
-        {loading ? 'Redefinindo...' : 'Redefinir senha'}
+        {loading ? t('auth.resetPassword.submittingButton') : t('auth.resetPassword.submitButton')}
       </button>
     </form>
   );

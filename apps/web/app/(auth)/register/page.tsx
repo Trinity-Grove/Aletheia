@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { RegisterForm } from '../../../src/components/auth/register-form';
 import { useAuth } from '../../../src/lib/auth/auth-context';
+import { useLocale } from '../../../src/lib/i18n/locale-context';
 
 export default function RegisterPage() {
+  const { t } = useLocale();
   const router = useRouter();
   const { register } = useAuth();
 
@@ -19,17 +21,17 @@ export default function RegisterPage() {
     <main className="auth-page-container">
       <div className="auth-card">
         <div className="auth-header">
-          <h1>Cadastro de Guardião</h1>
-          <p>Crie sua conta soberana para liderar a jornada educacional familiar.</p>
+          <h1>{t('auth.register.title')}</h1>
+          <p>{t('auth.register.subtitle')}</p>
         </div>
 
         <RegisterForm onSubmit={handleRegister} />
 
         <div className="auth-footer">
           <p>
-            Já possui uma conta de guardião?{' '}
+            {t('auth.register.hasAccountText')}{' '}
             <Link href="/login" className="auth-link">
-              Acesse aqui
+              {t('auth.register.loginLink')}
             </Link>
           </p>
         </div>

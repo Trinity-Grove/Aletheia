@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ResetPasswordForm } from '../../../src/components/auth/reset-password-form';
 import { api } from '../../../src/lib/api';
+import { useLocale } from '../../../src/lib/i18n/locale-context';
 
 function ResetPasswordFormWrapper() {
   const searchParams = useSearchParams();
@@ -18,23 +19,25 @@ function ResetPasswordFormWrapper() {
 }
 
 export default function ResetPasswordPage() {
+  const { t } = useLocale();
+
   return (
     <main className="auth-page-container">
       <div className="auth-card">
         <div className="auth-header">
-          <h1>Redefinir senha</h1>
-          <p>Escolha uma nova senha para sua conta.</p>
+          <h1>{t('auth.resetPassword.title')}</h1>
+          <p>{t('auth.resetPassword.subtitle')}</p>
         </div>
 
-        <Suspense fallback={<p data-testid="reset-password-loading">Carregando...</p>}>
+        <Suspense fallback={<p data-testid="reset-password-loading">{t('auth.resetPassword.loading')}</p>}>
           <ResetPasswordFormWrapper />
         </Suspense>
 
         <div className="auth-footer">
           <p>
-            Lembrou a senha?{' '}
+            {t('auth.resetPassword.rememberPasswordText')}{' '}
             <Link href="/login" className="auth-link">
-              Voltar para o login
+              {t('auth.resetPassword.backToLogin')}
             </Link>
           </p>
         </div>

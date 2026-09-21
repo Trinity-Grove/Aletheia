@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { LoginForm } from '../../../src/components/auth/login-form';
 import { MfaVerifyForm } from '../../../src/components/auth/mfa-verify-form';
 import { useAuth } from '../../../src/lib/auth/auth-context';
+import { useLocale } from '../../../src/lib/i18n/locale-context';
 
 // Only ever follow a same-origin, relative redirect target. A `redirect`
 // query param is attacker-controllable (e.g. a crafted link), so an
@@ -19,6 +20,7 @@ export function sanitizeRedirectTarget(value: string | null | undefined): string
 }
 
 function LoginFormWrapper() {
+  const { t } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, verifyMfa } = useAuth();
@@ -41,7 +43,7 @@ function LoginFormWrapper() {
 
   const handleVerify = async (data: { code: string }) => {
     if (!challengeToken) {
-      throw new Error('Sessão de verificação expirada. Entre novamente.');
+      throw new Error(t('auth.login.mfaExpired'));
     }
     await verifyMfa({ challengeToken, code: data.code });
     redirectTo();
@@ -69,7 +71,7 @@ function LoginFormWrapper() {
             cursor: 'pointer',
           }}
         >
-          Voltar para o login
+          {t('auth.mfa.backToLogin')}
         </button>
       </>
     );
@@ -79,12 +81,14 @@ function LoginFormWrapper() {
 }
 
 export default function LoginPage() {
+  const { t } = useLocale();
+
   return (
     <main className="auth-page-container">
       <div className="auth-card">
         <div className="auth-header">
-          <h1>Entrar no Aletheia</h1>
-          <p>Acesse o portal do guardião e gerencie o currículo da sua família.</p>
+          <h1>{t('auth.login.title')}</h1>
+          <p>{t('auth.login.subtitle')}</p>
         </div>
 
         <Suspense fallback={<LoginForm />}>
@@ -94,13 +98,13 @@ export default function LoginPage() {
         <div className="auth-footer">
           <p>
             <Link href="/forgot-password" className="auth-link">
-              Esqueceu sua senha?
+              {t('auth.login.forgotPasswordLink')}
             </Link>
           </p>
           <p>
-            Ainda não possui conta de guardião?{' '}
+            {t('auth.login.noAccountText')}{' '}
             <Link href="/register" className="auth-link">
-              Cadastre-se aqui
+              {t('auth.login.registerLink')}
             </Link>
           </p>
         </div>

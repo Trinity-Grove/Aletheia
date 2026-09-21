@@ -1,5 +1,6 @@
 import React from 'react';
 import type { FamilyRole } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface RoleBadgeProps {
   role: FamilyRole | string | null | undefined;
@@ -7,6 +8,13 @@ export interface RoleBadgeProps {
   className?: string;
   style?: React.CSSProperties;
 }
+
+export const ROLE_KEYS: Record<FamilyRole, string> = {
+  OWNER_GUARDIAN: 'auth.roles.ownerGuardian',
+  GUARDIAN: 'auth.roles.guardian',
+  CO_GUARDIAN: 'auth.roles.coGuardian',
+  EDUCATOR: 'auth.roles.educator',
+};
 
 export const ROLE_LABELS: Record<FamilyRole, string> = {
   OWNER_GUARDIAN: 'Guardião Principal',
@@ -56,12 +64,15 @@ export function RoleBadge({
   className = '',
   style = {},
 }: RoleBadgeProps) {
+  const { t } = useLocale();
+
   if (!role) {
     return null;
   }
 
   const roleKey = role as FamilyRole;
-  const label = ROLE_LABELS[roleKey] || role;
+  const translationKey = ROLE_KEYS[roleKey];
+  const label = translationKey ? t(translationKey) : (ROLE_LABELS[roleKey] || role);
   const theme = ROLE_STYLES[roleKey] || {
     backgroundColor: '#F3F4F6',
     color: '#374151',

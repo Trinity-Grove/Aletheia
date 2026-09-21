@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import { ISO3_COUNTRIES, type FamilyResponseDto } from '@aletheia/contracts';
 import { useAuth } from '../../../src/lib/auth/auth-context';
 import { api, ApiError } from '../../../src/lib/api';
+import { useLocale } from '../../../src/lib/i18n/locale-context';
 
 export default function OnboardingPage() {
+  const { t } = useLocale();
   const router = useRouter();
   const { setActiveFamilyFromCreated } = useAuth();
 
@@ -36,11 +38,11 @@ export default function OnboardingPage() {
       router.push('/learners');
     } catch (err: unknown) {
       if (err instanceof ApiError) {
-        setErrorMessage(err.message || 'Falha ao criar família.');
+        setErrorMessage(err.message || t('onboarding.wizard.errorCreateFamily'));
       } else if (err instanceof Error) {
         setErrorMessage(err.message);
       } else {
-        setErrorMessage('Falha ao criar família. Tente novamente.');
+        setErrorMessage(t('onboarding.wizard.errorCreateFamily'));
       }
     } finally {
       setLoading(false);
@@ -50,11 +52,11 @@ export default function OnboardingPage() {
   return (
     <main className="onboarding-page-wrapper onboarding-container" data-testid="onboarding-page">
       {/* Left Panel: Trinity Grove Sovereign Education Showcase */}
-      <aside className="onboarding-hero-panel" aria-label="Apresentação Aletheia">
+      <aside className="onboarding-hero-panel" aria-label={t('onboarding.hero.ariaLabel')}>
         <div className="onboarding-hero-header">
           <div className="onboarding-hero-badge">
             <span className="badge-dot" />
-            <span>Fundação Soberana</span>
+            <span>{t('onboarding.hero.badge')}</span>
           </div>
 
           <div className="onboarding-hero-icon" aria-hidden="true">
@@ -64,24 +66,24 @@ export default function OnboardingPage() {
             </svg>
           </div>
 
-          <h2 className="onboarding-hero-title">Educação com Raízes, Fé e Excelência.</h2>
+          <h2 className="onboarding-hero-title">{t('onboarding.hero.title')}</h2>
           <p className="onboarding-hero-subtitle">
-            O lar é a primeira e mais formativa escola. O Aletheia capacita os pais a liderarem com autoridade, clareza e fidelidade.
+            {t('onboarding.hero.subtitle')}
           </p>
         </div>
 
         <div className="onboarding-hero-quote-card">
           <p className="onboarding-hero-quote">
-            “Instrui o menino no caminho em que deve andar, e até quando envelhecer não se desviará dele.”
+            {t('onboarding.hero.quote')}
           </p>
-          <p className="onboarding-hero-author">Provérbios 22:6</p>
+          <p className="onboarding-hero-author">{t('onboarding.hero.quoteAuthor')}</p>
         </div>
 
         <div className="onboarding-hero-footer">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
-          <span>Ambiente com isolamento por família e soberania total sobre seus registros educacionais.</span>
+          <span>{t('onboarding.hero.isolationFooter')}</span>
         </div>
       </aside>
 
@@ -89,14 +91,12 @@ export default function OnboardingPage() {
       <section className="onboarding-main-panel">
         <div className="onboarding-card-wrapper onboarding-card">
           <div className="onboarding-step-indicator">
-            <span>Passo 1 de 2</span>
-            <span>•</span>
-            <span>Núcleo Familiar</span>
+            <span>{t('onboarding.wizard.stepIndicator')}</span>
           </div>
 
           <div className="onboarding-card-header onboarding-header">
-            <h1>Bem-vindo ao Aletheia!</h1>
-            <p>Vamos configurar o núcleo familiar soberano para sua jornada educacional.</p>
+            <h1>{t('onboarding.wizard.welcomeTitle')}</h1>
+            <p>{t('onboarding.wizard.welcomeSubtitle')}</p>
           </div>
 
           {errorMessage && (
@@ -107,24 +107,24 @@ export default function OnboardingPage() {
 
           <form onSubmit={handleSubmit} className="onboarding-form" data-testid="family-onboarding-form">
             <div className="form-group">
-              <label htmlFor="family-name">Nome da Família ou Núcleo</label>
+              <label htmlFor="family-name">{t('onboarding.wizard.familyNameLabel')}</label>
               <input
                 id="family-name"
                 type="text"
                 data-testid="family-name-input"
                 value={familyName}
                 onChange={(e) => setFamilyName(e.target.value)}
-                placeholder="Ex: Família Oliveira"
+                placeholder={t('onboarding.wizard.familyNamePlaceholder')}
                 required
                 disabled={loading}
               />
               <span className="onboarding-field-hint">
-                Identifica sua família em relatórios oficiais, históricos escolares e certificados.
+                {t('onboarding.wizard.familyNameHint')}
               </span>
             </div>
 
             <div className="form-group">
-              <label htmlFor="country-code">País de Residência (ISO-3)</label>
+              <label htmlFor="country-code">{t('onboarding.wizard.countryLabel')}</label>
               <select
                 id="country-code"
                 data-testid="country-select"
@@ -139,23 +139,23 @@ export default function OnboardingPage() {
                 ))}
               </select>
               <span className="onboarding-field-hint">
-                Define a jurisdição regulatória padrão para atendimento aos requisitos legais.
+                {t('onboarding.wizard.countryHint')}
               </span>
             </div>
 
             <div className="form-group">
-              <label htmlFor="state-province">Estado / Província (Opcional)</label>
+              <label htmlFor="state-province">{t('onboarding.wizard.stateLabel')}</label>
               <input
                 id="state-province"
                 type="text"
                 data-testid="state-input"
                 value={stateProvince}
                 onChange={(e) => setStateProvince(e.target.value)}
-                placeholder="Ex: SP"
+                placeholder={t('onboarding.wizard.statePlaceholder')}
                 disabled={loading}
               />
               <span className="onboarding-field-hint">
-                Utilizado para alinhar matrizes curriculares e legislações regionais.
+                {t('onboarding.wizard.stateHint')}
               </span>
             </div>
 
@@ -165,7 +165,7 @@ export default function OnboardingPage() {
               className="btn btn-primary onboarding-submit-btn"
               disabled={loading}
             >
-              {loading ? 'Criando...' : 'Criar e Começar'}
+              {loading ? t('onboarding.wizard.submittingButton') : t('onboarding.wizard.submitButton')}
             </button>
           </form>
         </div>

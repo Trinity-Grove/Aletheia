@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface ForgotPasswordFormProps {
   onSubmit?: (_data: { email: string }) => Promise<void> | void;
 }
 
 export function ForgotPasswordForm({ onSubmit }: ForgotPasswordFormProps) {
+  const { t } = useLocale();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -17,7 +19,7 @@ export function ForgotPasswordForm({ onSubmit }: ForgotPasswordFormProps) {
     setError(null);
 
     if (!email.trim()) {
-      setError('Por favor, informe seu e-mail.');
+      setError(t('auth.forgotPassword.errorRequired'));
       return;
     }
 
@@ -30,7 +32,7 @@ export function ForgotPasswordForm({ onSubmit }: ForgotPasswordFormProps) {
       // the API itself never reveals that either.
       setSubmitted(true);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Falha ao solicitar redefinição. Tente novamente mais tarde.';
+      const message = err instanceof Error ? err.message : t('auth.forgotPassword.errorFailed');
       setError(message);
     } finally {
       setLoading(false);
@@ -40,10 +42,7 @@ export function ForgotPasswordForm({ onSubmit }: ForgotPasswordFormProps) {
   if (submitted) {
     return (
       <div className="auth-form" data-testid="forgot-password-success">
-        <p>
-          Se houver uma conta com o e-mail <strong>{email}</strong>, enviamos um link para
-          redefinir a senha. Verifique sua caixa de entrada.
-        </p>
+        <p>{t('auth.forgotPassword.successMessage', { email })}</p>
       </div>
     );
   }
@@ -57,14 +56,14 @@ export function ForgotPasswordForm({ onSubmit }: ForgotPasswordFormProps) {
       )}
 
       <div className="form-group">
-        <label htmlFor="forgot-password-email">E-mail</label>
+        <label htmlFor="forgot-password-email">{t('auth.forgotPassword.emailLabel')}</label>
         <input
           id="forgot-password-email"
           type="email"
           data-testid="forgot-password-email-input"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="seu.email@exemplo.com"
+          placeholder={t('auth.forgotPassword.emailPlaceholder')}
         />
       </div>
 
@@ -74,7 +73,7 @@ export function ForgotPasswordForm({ onSubmit }: ForgotPasswordFormProps) {
         disabled={loading}
         className="btn btn-primary"
       >
-        {loading ? 'Enviando...' : 'Enviar link de redefinição'}
+        {loading ? t('auth.forgotPassword.submittingButton') : t('auth.forgotPassword.submitButton')}
       </button>
     </form>
   );
