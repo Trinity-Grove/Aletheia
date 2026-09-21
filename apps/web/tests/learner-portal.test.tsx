@@ -132,6 +132,35 @@ describe('Learner Portal (Modo Educando)', () => {
       });
     });
 
+    it('authenticates learner automatically using short t query parameter', async () => {
+      mockSearchParams = new URLSearchParams('t=sample-compact-token-35chars');
+
+      const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          learnerId: 'l-token-2',
+          familyId: 'f-1',
+          displayName: 'Mariazinha',
+          expiresAt: '2026-09-18T00:00:00.000Z',
+        }),
+      } as Response);
+
+      render(<LearnerLoginPage />);
+
+      expect(screen.getByTestId('learner-login-page')).toBeInTheDocument();
+
+      await waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledWith(
+          '/api/v1/learner-access/token-login',
+          expect.objectContaining({
+            method: 'POST',
+            body: JSON.stringify({ token: 'sample-compact-token-35chars' }),
+          })
+        );
+        expect(mockPush).toHaveBeenCalledWith('/aluno/agenda');
+      });
+    });
+
     it('displays error message when token login fails or access was revoked', async () => {
       mockSearchParams = new URLSearchParams('token=expired-or-revoked-token');
 

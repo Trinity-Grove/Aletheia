@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { ForbiddenException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type {
@@ -87,14 +88,8 @@ export class LearnerAccessService {
       isRegeneration,
     });
 
-    const accessTokenPayload: LearnerAccessTokenPayload = {
-      sub: learnerId,
-      familyId,
-      codeHash,
-      typ: 'learner_access_token',
-    };
-    const accessToken = await this.jwtService.signAsync(accessTokenPayload, { expiresIn: '30d' });
-    const accessUrl = `/aluno/login?token=${accessToken}`;
+    const accessToken = this.createCompactAccessToken(learnerId, codeHash);
+    const accessUrl = `/aluno/login?t=${accessToken}`;
 
     return { grant: grant.toDto(), code, accessToken, accessUrl };
   }
@@ -118,7 +113,72 @@ export class LearnerAccessService {
         lastUsedAt: null,
       };
     }
-    return grant.toDto();
+    const dto = grant.toDto();
+    if (grant.enabled) {
+      const accessToken = this.createCompactAccessToken(learnerId, grant.codeHash);
+      dto.accessUrl = `/aluno/login?t=${accessToken}`;
+    }
+    return dto;
+  }
+
+  private createCompactAccessToken(learnerId: string, codeHash: string): string {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(learnerId);
+    const idBuf = isUuid
+      ? Buffer.from(learnerId.replace(/-/g, ''), 'hex')
+      : Buffer.from(learnerId, 'utf-8');
+    const secret = process.env.JWT_SECRET || 'aletheia-learner-compact-secret';
+    const sig = createHmac('sha256', secret)
+      .update(idBuf)
+      .update(codeHash)
+      .digest()
+      .subarray(0, 10);
+    const prefix = isUuid ? 'u_' : 's_';
+    return `${prefix}${idBuf.toString('base64url')}.${sig.toString('base64url')}`;
+  }
+
+  private parseCompactAccessToken(token: string): { learnerId: string; sig: Buffer } | null {
+    if (!token.startsWith('u_') && !token.startsWith('s_')) {
+      return null;
+    }
+    const dotIndex = token.indexOf('.');
+    if (dotIndex === -1) {
+      return null;
+    }
+    try {
+      const isUuid = token.startsWith('u_');
+      const idPart = token.slice(2, dotIndex);
+      const sigPart = token.slice(dotIndex + 1);
+      const idBuf = Buffer.from(idPart, 'base64url');
+      const sig = Buffer.from(sigPart, 'base64url');
+      if (sig.length !== 10) {
+        return null;
+      }
+      let learnerId: string;
+      if (isUuid) {
+        if (idBuf.length !== 16) return null;
+        const hex = idBuf.toString('hex');
+        learnerId = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+      } else {
+        learnerId = idBuf.toString('utf-8');
+      }
+      return { learnerId, sig };
+    } catch {
+      return null;
+    }
+  }
+
+  private verifyCompactAccessToken(learnerId: string, codeHash: string, sig: Buffer): boolean {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(learnerId);
+    const idBuf = isUuid
+      ? Buffer.from(learnerId.replace(/-/g, ''), 'hex')
+      : Buffer.from(learnerId, 'utf-8');
+    const secret = process.env.JWT_SECRET || 'aletheia-learner-compact-secret';
+    const expectedSig = createHmac('sha256', secret)
+      .update(idBuf)
+      .update(codeHash)
+      .digest()
+      .subarray(0, 10);
+    return sig.length === expectedSig.length && timingSafeEqual(sig, expectedSig);
   }
 
   // --- Public, unauthenticated (learner-facing) ---
@@ -174,20 +234,43 @@ export class LearnerAccessService {
   }
 
   async loginWithToken(token: string): Promise<{ session: LearnerSessionResponseDto; token: string }> {
-    let payload: LearnerAccessTokenPayload;
-    try {
-      payload = await this.jwtService.verifyAsync<LearnerAccessTokenPayload>(token);
-    } catch {
-      throw new UnauthorizedException('Invalid or expired access token.');
+    let learnerId: string;
+    let expectedFamilyId: string | null = null;
+    let requiredCodeHash: string | null = null;
+
+    const compact = this.parseCompactAccessToken(token);
+    if (compact) {
+      learnerId = compact.learnerId;
+      const grant = await this.grantRepository.findByLearnerId(learnerId);
+      if (!grant) {
+        throw new UnauthorizedException('Learner access grant not found.');
+      }
+      if (!grant.enabled) {
+        throw new ForbiddenException('Learner access is currently disabled.');
+      }
+      if (!this.verifyCompactAccessToken(learnerId, grant.codeHash, compact.sig)) {
+        throw new UnauthorizedException('This access link has expired because a new code was generated.');
+      }
+      expectedFamilyId = grant.familyId;
+    } else {
+      let payload: LearnerAccessTokenPayload;
+      try {
+        payload = await this.jwtService.verifyAsync<LearnerAccessTokenPayload>(token);
+      } catch {
+        throw new UnauthorizedException('Invalid or expired access token.');
+      }
+
+      if (payload.typ !== 'learner_access_token') {
+        throw new UnauthorizedException('Invalid access token type.');
+      }
+
+      learnerId = payload.sub;
+      expectedFamilyId = payload.familyId;
+      requiredCodeHash = payload.codeHash;
     }
 
-    if (payload.typ !== 'learner_access_token') {
-      throw new UnauthorizedException('Invalid access token type.');
-    }
-
-    const learnerId = payload.sub;
     const grant = await this.grantRepository.findByLearnerId(learnerId);
-    if (!grant || grant.familyId !== payload.familyId) {
+    if (!grant || (expectedFamilyId && grant.familyId !== expectedFamilyId)) {
       throw new UnauthorizedException('Learner access grant not found.');
     }
 
@@ -195,7 +278,7 @@ export class LearnerAccessService {
       throw new ForbiddenException('Learner access is currently disabled.');
     }
 
-    if (payload.codeHash && payload.codeHash !== grant.codeHash) {
+    if (requiredCodeHash && requiredCodeHash !== grant.codeHash) {
       throw new UnauthorizedException('This access link has expired because a new code was generated.');
     }
 

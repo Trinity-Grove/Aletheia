@@ -11,7 +11,7 @@ function LearnerLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const familyParam = searchParams?.get('familyId');
-  const tokenParam = searchParams?.get('token');
+  const tokenParam = searchParams?.get('token') || searchParams?.get('t');
 
   const [learners, setLearners] = useState<LearnerAccessOptionDto[]>([]);
   const [selectedLearner, setSelectedLearner] = useState<LearnerAccessOptionDto | null>(null);

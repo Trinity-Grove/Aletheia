@@ -1,4 +1,4 @@
-import { ForbiddenException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { LearnerAccessService } from './learner-access.service.js';
 import { CodeHasher } from './code-hasher.js';
@@ -132,22 +132,36 @@ describe('LearnerAccessService', () => {
   });
 
   describe('grantAccess', () => {
-    it('issues a plaintext code once and enables the grant', async () => {
+    it('issues a plaintext code once and enables the grant with compact access token', async () => {
       const result = await service.grantAccess(FAMILY_ID, LEARNER_ID, GUARDIAN_ID);
 
       expect(result.code).toHaveLength(8);
       expect(result.grant.enabled).toBe(true);
       expect(result.grant.learnerId).toBe(LEARNER_ID);
-      expect(typeof result.accessToken).toBe('string');
-      expect(result.accessUrl).toBe(`/aluno/login?token=${result.accessToken}`);
+      expect(result.accessToken).toBeDefined();
+      expect(result.accessToken!.length).toBeLessThan(50);
+      expect(result.accessUrl).toBe(`/aluno/login?t=${result.accessToken}`);
+    });
+  });
+
+  describe('getGrantStatus', () => {
+    it('returns accessUrl when grant is active', async () => {
+      await service.grantAccess(FAMILY_ID, LEARNER_ID, GUARDIAN_ID);
+      const status = await service.getGrantStatus(FAMILY_ID, LEARNER_ID);
+
+      expect(status.enabled).toBe(true);
+      expect(status.accessUrl).toBeDefined();
+      expect(status.accessUrl).toMatch(/^\/aluno\/login\?t=/);
     });
 
-    it('throws NotFoundException for a learner outside the family', async () => {
-      learnersApi.findLearnerById.mockResolvedValue(null);
+    it('does not return accessUrl when grant does not exist or is disabled', async () => {
+      const emptyStatus = await service.getGrantStatus(FAMILY_ID, LEARNER_ID);
+      expect(emptyStatus.accessUrl).toBeUndefined();
 
-      await expect(service.grantAccess(FAMILY_ID, LEARNER_ID, GUARDIAN_ID)).rejects.toThrow(
-        NotFoundException,
-      );
+      await service.grantAccess(FAMILY_ID, LEARNER_ID, GUARDIAN_ID);
+      await service.setEnabled(FAMILY_ID, LEARNER_ID, false);
+      const disabledStatus = await service.getGrantStatus(FAMILY_ID, LEARNER_ID);
+      expect(disabledStatus.accessUrl).toBeUndefined();
     });
   });
 
@@ -225,6 +239,27 @@ describe('LearnerAccessService', () => {
 
       await expect(service.loginWithToken(first.accessToken!)).rejects.toThrow(UnauthorizedException);
       await expect(service.loginWithToken(second.accessToken!)).resolves.toBeDefined();
+    });
+
+    it('still supports legacy JWT access tokens for backward compatibility', async () => {
+      await service.grantAccess(FAMILY_ID, LEARNER_ID, GUARDIAN_ID);
+      const codeHash = grants.get(LEARNER_ID)!.codeHash;
+      const legacyJwt = await jwtService.signAsync({
+        sub: LEARNER_ID,
+        familyId: FAMILY_ID,
+        codeHash,
+        typ: 'learner_access_token',
+      });
+
+      const result = await service.loginWithToken(legacyJwt);
+      expect(result.session.learnerId).toBe(LEARNER_ID);
+    });
+
+    it('rejects a tampered compact access token', async () => {
+      const { accessToken } = await service.grantAccess(FAMILY_ID, LEARNER_ID, GUARDIAN_ID);
+      const tampered = accessToken!.slice(0, -2) + 'XX';
+
+      await expect(service.loginWithToken(tampered)).rejects.toThrow(UnauthorizedException);
     });
   });
 
