@@ -49,6 +49,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
         <input
           id="login-email"
           type="email"
+          autoComplete="email"
           data-testid="login-email-input"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -62,6 +63,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
         <input
           id="login-password"
           type="password"
+          autoComplete="current-password"
           data-testid="login-password-input"
           value={password}
           onChange={(e) => setPassword(e.target.value)}

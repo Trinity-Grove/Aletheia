@@ -131,6 +131,23 @@ describe('AuthContext and useAuth', () => {
     expect(getApiAuthToken()).toBeNull();
   });
 
+  it('does not request /families/mine when /auth/me reports no session', async () => {
+    const getSpy = vi.spyOn(api, 'get').mockRejectedValue(new ApiError(401, 'Unauthorized', 'No session'));
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AuthProvider>{children}</AuthProvider>
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.status).toBe('unauthenticated');
+    });
+
+    expect(getSpy).toHaveBeenCalledWith('/auth/me');
+    expect(getSpy).not.toHaveBeenCalledWith('/families/mine');
+  });
+
   it('treats a network failure on initial mount the same as no session', async () => {
     vi.spyOn(api, 'get').mockRejectedValue(new TypeError('Failed to fetch'));
 
