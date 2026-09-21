@@ -185,6 +185,38 @@ export default function RecordsPage() {
     }
   };
 
+  const handleReopenLesson = async (record: LearningRecordResponseDto) => {
+    if (!familyId || !record.lessonPlanId) return;
+    try {
+      const res = await fetch(
+        `/api/v1/families/${familyId}/lessons/${record.lessonPlanId}/reopen?learnerId=${record.learnerId}`,
+        {
+          method: 'POST',
+          credentials: 'include',
+        },
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Erro ao reabrir atividade');
+      }
+      toast({
+        title: 'Atividade reaberta',
+        description: 'A atividade voltou para a agenda do educando e o registro foi estornado.',
+        variant: 'success',
+      });
+      setRecords((prev) => prev.filter((r) => r.id !== record.id));
+      if (activeLearnerId) {
+        fetchProgressSummary();
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Falha ao reabrir',
+        description: error.message || 'Não foi possível reabrir a atividade.',
+        variant: 'error',
+      });
+    }
+  };
+
   const handleSaveEvidence = async (dto: CreatePortfolioItemDto): Promise<PortfolioItemResponseDto> => {
     if (!familyId) throw new Error('Família não autenticada');
     const res = await fetch(`/api/v1/families/${familyId}/portfolio`, {
@@ -330,6 +362,7 @@ export default function RecordsPage() {
             onEditRecord={handleEditRecord}
             onDeleteRecord={handleDeleteRecord}
             onAddEvidence={handleOpenAddEvidence}
+            onReopenLesson={handleReopenLesson}
           />
         ) : familyId ? (
           <CompetencyTrackingPanel familyId={familyId} learnerId={activeLearnerId} />

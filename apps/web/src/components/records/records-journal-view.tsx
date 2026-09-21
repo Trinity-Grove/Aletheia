@@ -22,6 +22,7 @@ export interface RecordsJournalViewProps {
   onEditRecord: (record: LearningRecordResponseDto) => void;
   onDeleteRecord: (recordId: string) => void;
   onAddEvidence: (record: LearningRecordResponseDto) => void;
+  onReopenLesson?: ((record: LearningRecordResponseDto) => void) | undefined;
 }
 
 export function RecordsJournalView({
@@ -34,6 +35,7 @@ export function RecordsJournalView({
   onEditRecord,
   onDeleteRecord,
   onAddEvidence,
+  onReopenLesson,
 }: RecordsJournalViewProps) {
   const [filterType, setFilterType] = useState<string>('');
   const [filterSubject, setFilterSubject] = useState<string>('');
@@ -259,6 +261,7 @@ export function RecordsJournalView({
               onEdit={onEditRecord}
               onDelete={onDeleteRecord}
               onAddEvidence={onAddEvidence}
+              onReopenLesson={onReopenLesson}
             />
           ))}
         </div>

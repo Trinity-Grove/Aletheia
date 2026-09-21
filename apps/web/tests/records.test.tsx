@@ -210,6 +210,8 @@ const mockPortfolioItems: PortfolioItemResponseDto[] = [
 describe('Learning Journal, Mastery & Portfolio Web Components', () => {
   afterEach(() => {
     cleanup();
+    vi.restoreAllMocks();
+    window.confirm = vi.fn(() => true);
   });
 
   describe('RecordCard', () => {
@@ -288,6 +290,93 @@ describe('Learning Journal, Mastery & Portfolio Web Components', () => {
       expect(screen.getByTestId('add-evidence-btn-rec-1')).toBeDefined();
       expect(screen.queryByTestId('delete-record-btn-rec-1')).toBeNull();
     });
+
+    it('renders "Concluído na Agenda" badge and "Reabrir Atividade" button when record.lessonPlanId is set', () => {
+      const reopenMock = vi.fn();
+      const recordWithLesson: LearningRecordResponseDto = {
+        ...mockRecords[0]!,
+        id: 'rec-lesson-1',
+        lessonPlanId: 'lesson-plan-123',
+      };
+
+      render(
+        <AuthProvider role="OWNER_GUARDIAN">
+          <RecordCard
+            record={recordWithLesson}
+            onReopenLesson={reopenMock}
+          />
+        </AuthProvider>
+      );
+
+      const badge = screen.getByTestId('record-lesson-badge-rec-lesson-1');
+      expect(badge).toBeDefined();
+      expect(badge.textContent).toContain('Concluído na Agenda');
+
+      const reopenBtn = screen.getByTestId('reopen-lesson-btn-rec-lesson-1');
+      expect(reopenBtn).toBeDefined();
+      expect(reopenBtn.textContent).toContain('Reabrir Atividade');
+    });
+
+    it('clicking "Reabrir Atividade" triggers confirmation and calls onReopenLesson', () => {
+      const reopenMock = vi.fn();
+      const recordWithLesson: LearningRecordResponseDto = {
+        ...mockRecords[0]!,
+        id: 'rec-lesson-2',
+        lessonPlanId: 'lesson-plan-456',
+      };
+
+      const confirmSpy = vi.spyOn(window, 'confirm');
+
+      // First test: user cancels confirmation
+      confirmSpy.mockReturnValueOnce(false);
+      const { unmount } = render(
+        <AuthProvider role="OWNER_GUARDIAN">
+          <RecordCard
+            record={recordWithLesson}
+            onReopenLesson={reopenMock}
+          />
+        </AuthProvider>
+      );
+
+      fireEvent.click(screen.getByTestId('reopen-lesson-btn-rec-lesson-2'));
+      expect(confirmSpy).toHaveBeenCalledWith(
+        'Deseja reabrir esta atividade? Ela voltará para a agenda do educando como pendente e este registro será estornado do diário.'
+      );
+      expect(reopenMock).not.toHaveBeenCalled();
+
+      unmount();
+
+      // Second test: user confirms
+      confirmSpy.mockReturnValueOnce(true);
+      render(
+        <AuthProvider role="OWNER_GUARDIAN">
+          <RecordCard
+            record={recordWithLesson}
+            onReopenLesson={reopenMock}
+          />
+        </AuthProvider>
+      );
+
+      fireEvent.click(screen.getByTestId('reopen-lesson-btn-rec-lesson-2'));
+      expect(reopenMock).toHaveBeenCalledWith(recordWithLesson);
+
+      confirmSpy.mockImplementation(() => true);
+    });
+
+    it('does NOT render "Reabrir Atividade" or badge when record.lessonPlanId is null/undefined', () => {
+      const reopenMock = vi.fn();
+      render(
+        <AuthProvider role="OWNER_GUARDIAN">
+          <RecordCard
+            record={mockRecords[0]!}
+            onReopenLesson={reopenMock}
+          />
+        </AuthProvider>
+      );
+
+      expect(screen.queryByTestId('record-lesson-badge-rec-1')).toBeNull();
+      expect(screen.queryByTestId('reopen-lesson-btn-rec-1')).toBeNull();
+    });
   });
 
   describe('RecordsJournalView', () => {
@@ -349,6 +438,38 @@ describe('Learning Journal, Mastery & Portfolio Web Components', () => {
 
       expect(screen.getByTestId('records-empty-state')).toBeDefined();
       expect(screen.getByTestId('metric-total-records').textContent).toContain('0');
+    });
+
+    it('passes onReopenLesson to RecordCard when records have lessonPlanId', () => {
+      const reopenMock = vi.fn();
+      const recordsWithLesson: LearningRecordResponseDto[] = [
+        {
+          ...mockRecords[0]!,
+          id: 'rec-journal-lesson',
+          lessonPlanId: 'lesson-plan-789',
+        },
+      ];
+
+      render(
+        <AuthProvider role="OWNER_GUARDIAN">
+          <RecordsJournalView
+            records={recordsWithLesson}
+            learners={mockLearners}
+            subjects={mockSubjects}
+            activeLearnerId={null}
+            onOpenCreateRecord={vi.fn()}
+            onEditRecord={vi.fn()}
+            onDeleteRecord={vi.fn()}
+            onAddEvidence={vi.fn()}
+            onReopenLesson={reopenMock}
+          />
+        </AuthProvider>
+      );
+
+      const btn = screen.getByTestId('reopen-lesson-btn-rec-journal-lesson');
+      expect(btn).toBeDefined();
+      fireEvent.click(btn);
+      expect(reopenMock).toHaveBeenCalledWith(recordsWithLesson[0]);
     });
   });
 
