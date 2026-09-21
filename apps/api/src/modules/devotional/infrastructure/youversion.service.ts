@@ -11,6 +11,16 @@ export const POPULAR_BIBLE_VERSIONS: BibleVersionDto[] = [
   { id: '1', name: 'King James Version', language: 'en', abbreviation: 'KJV' },
 ];
 
+// The devotional form sends the translation by abbreviation slug ("ara",
+// "nvi", ...), while YouVersion's API path needs its numeric Bible id.
+// Numeric ids pass through unchanged; an unknown slug is passed as-is and
+// simply yields no content upstream.
+function resolveYouVersionBibleId(versionId: string): string {
+  const slug = versionId.trim().toLowerCase();
+  const known = POPULAR_BIBLE_VERSIONS.find((version) => version.abbreviation.toLowerCase() === slug);
+  return known?.id ?? versionId;
+}
+
 @Injectable()
 export class YouVersionService {
   private readonly appKey: string | null;
@@ -46,7 +56,7 @@ export class YouVersionService {
     }
 
     try {
-      const url = `https://api.youversion.com/v1/bibles/${encodeURIComponent(versionId)}/passages/${encodeURIComponent(parsed.usfm)}`;
+      const url = `https://api.youversion.com/v1/bibles/${encodeURIComponent(resolveYouVersionBibleId(versionId))}/passages/${encodeURIComponent(parsed.usfm)}`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {
