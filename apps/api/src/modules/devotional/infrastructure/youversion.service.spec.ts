@@ -76,6 +76,28 @@ describe('YouVersionService', () => {
       });
     });
 
+    // Regression: the devotional form sends the slug ("ara"), but YouVersion
+    // only accepts the numeric id, so the lookup silently returned no text.
+    it.each([['ara', '1608'], ['ARA', '1608'], ['nvi', '129'], ['naa', '1840'], ['kjv', '1'], ['esv', '59'], ['1608', '1608']])(
+      'maps the version "%s" to YouVersion Bible id %s',
+      async (versionId, expectedId) => {
+        process.env.YOUVERSION_APP_KEY = 'test-key-123';
+        const fetchSpy = jest.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ content: 'texto' }),
+        } as Response);
+
+        const service = new YouVersionService();
+        const result = await service.fetchPassage('Salmos 23:1', versionId);
+
+        expect(fetchSpy).toHaveBeenCalledWith(
+          `https://api.youversion.com/v1/bibles/${expectedId}/passages/PSA.23.1`,
+          expect.any(Object),
+        );
+        expect(result?.content).toBe('texto');
+      },
+    );
+
     it('converts a Portuguese reference with a verse range to USFM', async () => {
       process.env.YOUVERSION_APP_KEY = 'test-key-123';
 

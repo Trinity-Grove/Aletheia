@@ -78,6 +78,7 @@ export function ResetPasswordForm({ token, onSubmit }: ResetPasswordFormProps) {
         <input
           id="reset-password-new"
           type="password"
+          autoComplete="new-password"
           data-testid="reset-password-new-input"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
@@ -91,6 +92,7 @@ export function ResetPasswordForm({ token, onSubmit }: ResetPasswordFormProps) {
         <input
           id="reset-password-confirm"
           type="password"
+          autoComplete="new-password"
           data-testid="reset-password-confirm-input"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}

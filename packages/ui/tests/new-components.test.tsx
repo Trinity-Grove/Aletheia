@@ -704,6 +704,19 @@ describe('New UI Components & Patterns', () => {
       expect(screen.getByText('3/6')).toBeInTheDocument();
     });
 
+    it('shows the school-day counter only when the day sequence is known', () => {
+      const { rerender } = render(
+        <DailyJourney completedMinutes={0} targetMinutes={60} completedLessons={0} totalLessons={1} daySequence={12} />
+      );
+      expect(screen.getByText('Dia letivo #12 do ano acadêmico')).toBeInTheDocument();
+
+      // The API reports 0 when it cannot compute the sequence; never show a bogus "#0".
+      rerender(
+        <DailyJourney completedMinutes={0} targetMinutes={60} completedLessons={0} totalLessons={1} daySequence={0} />
+      );
+      expect(screen.queryByText(/Dia letivo/)).not.toBeInTheDocument();
+    });
+
     it('exports DailyJourney with a finite zero-width progress bar for a zero-minute target', () => {
       render(
         <DailyJourney

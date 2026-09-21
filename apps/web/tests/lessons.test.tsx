@@ -224,6 +224,28 @@ describe('Lessons and Schedule Web Components', () => {
       expect(openCompleteMock).toHaveBeenCalledWith(secondItem);
     });
 
+    it('shows a translated label instead of the raw lesson status enum', () => {
+      render(
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <DailyAgendaView
+            agenda={mockDailyAgenda}
+            selectedDate="2026-08-26"
+            learners={mockLearners}
+            onDateChange={vi.fn()}
+            onOpenCreateLesson={vi.fn()}
+            onOpenCreateSlot={vi.fn()}
+            onOpenCompleteLesson={vi.fn()}
+            onOpenRescheduleLesson={vi.fn()}
+          />
+        </AuthProvider>,
+      );
+
+      expect(screen.queryByText('PLANNED')).not.toBeInTheDocument();
+      expect(screen.queryByText('COMPLETED')).not.toBeInTheDocument();
+      expect(screen.getAllByText('Planejada').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Concluída').length).toBeGreaterThan(0);
+    });
+
     it('renders empty state when there are no agenda items', () => {
       render(
         <AuthProvider initialRole="OWNER_GUARDIAN">

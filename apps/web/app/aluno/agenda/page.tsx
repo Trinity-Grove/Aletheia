@@ -152,6 +152,8 @@ export default function LearnerAgendaPage() {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          // Fastify rejects a JSON request with an empty body (400).
+          body: JSON.stringify({}),
           credentials: 'include',
         }
       );

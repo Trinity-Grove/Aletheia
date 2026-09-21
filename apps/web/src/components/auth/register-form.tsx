@@ -87,6 +87,7 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
         <input
           id="reg-password"
           type="password"
+          autoComplete="new-password"
           data-testid="reg-password-input"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -100,6 +101,7 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
         <input
           id="reg-confirm"
           type="password"
+          autoComplete="new-password"
           data-testid="reg-confirm-password-input"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}

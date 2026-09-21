@@ -6,6 +6,7 @@ import { learnerFocus } from './learner-focus';
 import { auth } from './auth';
 import { onboarding } from './onboarding';
 import { learnerPortal } from './learner-portal';
+import { lessons } from './lessons';
 
 export const enUS: Dictionary = {
   common,
@@ -15,4 +16,5 @@ export const enUS: Dictionary = {
   auth,
   onboarding,
   learnerPortal,
+  lessons,
 };

@@ -120,7 +120,7 @@ test.describe('Real golden-path homologation journey (#23)', () => {
       await expect(page.getByTestId('actual-duration-input')).toBeVisible();
       await page.getByTestId('actual-duration-input').fill('45');
       await page.getByTestId('confirm-complete-btn').click();
-      await expect(page.getByTestId(`item-status-${lessonItemId}`)).toContainText(/COMPLETED/i, {
+      await expect(page.getByTestId(`item-status-${lessonItemId}`)).toContainText(/Conclu[ií]da/i, {
         timeout: 15_000,
       });
     });
