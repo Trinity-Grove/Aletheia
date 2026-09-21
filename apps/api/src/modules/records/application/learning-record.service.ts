@@ -9,9 +9,10 @@ import type {
   MasteryDistributionDto,
   UpdateLearningRecordDto,
 } from '@aletheia/contracts';
+import type { LearningRecordsPublicApi } from './public-api.js';
 
 @Injectable()
-export class LearningRecordService {
+export class LearningRecordService implements LearningRecordsPublicApi {
   constructor(private readonly recordRepo: LearningRecordRepository) {}
 
   async createRecord(familyId: string, dto: CreateLearningRecordDto): Promise<LearningRecordResponseDto> {
@@ -53,6 +54,14 @@ export class LearningRecordService {
       throw new NotFoundException('Learning record not found');
     }
     return true;
+  }
+
+  async deleteByLessonPlanId(
+    familyId: string,
+    lessonPlanId: string,
+    learnerId?: string,
+  ): Promise<number> {
+    return this.recordRepo.deleteByLessonPlanId(familyId, lessonPlanId, learnerId);
   }
 
   async getProgressSummary(familyId: string, learnerId: string): Promise<LearnerProgressSummaryDto> {

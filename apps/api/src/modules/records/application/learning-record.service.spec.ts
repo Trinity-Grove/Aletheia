@@ -99,6 +99,7 @@ describe('LearningRecordService', () => {
         ),
       ),
       delete: jest.fn().mockResolvedValue(true),
+      deleteByLessonPlanId: jest.fn().mockResolvedValue(2),
     };
 
     service = new LearningRecordService(recordRepo);
@@ -147,6 +148,18 @@ describe('LearningRecordService', () => {
     const res = await service.deleteRecord(FAMILY_ID, RECORD_ID);
     expect(res).toBe(true);
     expect(recordRepo.delete).toHaveBeenCalledWith(FAMILY_ID, RECORD_ID);
+  });
+
+  it('deletes records by lessonPlanId delegating to repository', async () => {
+    const res = await service.deleteByLessonPlanId(FAMILY_ID, 'lesson-plan-123', LEARNER_ID);
+    expect(res).toBe(2);
+    expect(recordRepo.deleteByLessonPlanId).toHaveBeenCalledWith(FAMILY_ID, 'lesson-plan-123', LEARNER_ID);
+  });
+
+  it('deletes records by lessonPlanId without learnerId', async () => {
+    const res = await service.deleteByLessonPlanId(FAMILY_ID, 'lesson-plan-123');
+    expect(res).toBe(2);
+    expect(recordRepo.deleteByLessonPlanId).toHaveBeenCalledWith(FAMILY_ID, 'lesson-plan-123', undefined);
   });
 
   it('computes learner progress summary with correct breakdown and metrics', async () => {

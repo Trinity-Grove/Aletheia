@@ -66,6 +66,7 @@ export const learningRecordFilterSchema = z.object({
   learnerId: z.string().uuid().optional(),
   subjectId: z.string().uuid().optional(),
   academicYearId: z.string().uuid().optional(),
+  lessonPlanId: z.string().uuid().optional(),
   type: learningRecordTypeSchema.optional(),
   masteryLevel: masteryLevelSchema.optional(),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
