@@ -125,6 +125,8 @@ describe('LessonPlanService', () => {
 
     recordsApi = {
       deleteByLessonPlanId: jest.fn().mockResolvedValue(1),
+      listRecords: jest.fn().mockResolvedValue([]),
+      createRecord: jest.fn().mockResolvedValue({ id: 'record-1' }),
     };
 
     service = new LessonPlanService(lessonPlanRepo, recordsApi);
@@ -225,6 +227,64 @@ describe('LessonPlanService', () => {
       await expect(
         service.completeLesson(FAMILY_ID, 'non-existent', {}),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    // Regression (#218): completing a lesson from the guardian-side
+    // schedule never created a diary entry, even though the same records
+    // dependency was already wired for reopenLesson's cleanup.
+    it('creates a diary LearningRecord for the completed learner', async () => {
+      await service.completeLesson(
+        FAMILY_ID,
+        LESSON_ID,
+        { actualDurationMinutes: 55, notes: 'Great lesson' },
+        LEARNER_ID,
+      );
+
+      expect(recordsApi.listRecords).toHaveBeenCalledWith(FAMILY_ID, {
+        learnerId: LEARNER_ID,
+        lessonPlanId: LESSON_ID,
+      });
+      expect(recordsApi.createRecord).toHaveBeenCalledWith(
+        FAMILY_ID,
+        expect.objectContaining({
+          learnerId: LEARNER_ID,
+          lessonPlanId: LESSON_ID,
+          subjectId: SUBJECT_ID,
+          type: 'PLANNED_LESSON',
+          durationMinutes: 55,
+          notes: 'Great lesson',
+          objectiveIds: ['obj-1'],
+        }),
+      );
+    });
+
+    it('creates one diary record per completed learner when no learnerId is given', async () => {
+      await service.completeLesson(FAMILY_ID, LESSON_ID, { actualDurationMinutes: 55 });
+
+      // mockLessonEntity's completeLesson stub always returns Alice as
+      // completed:true regardless of learnerId, mirroring "mark entire
+      // lesson completed" -- one learner here, so exactly one record.
+      expect(recordsApi.createRecord).toHaveBeenCalledTimes(1);
+      expect(recordsApi.createRecord).toHaveBeenCalledWith(
+        FAMILY_ID,
+        expect.objectContaining({ learnerId: LEARNER_ID, lessonPlanId: LESSON_ID }),
+      );
+    });
+
+    it('does not create a duplicate diary record when one already exists', async () => {
+      recordsApi.listRecords.mockResolvedValue([{ id: 'existing-record' }]);
+
+      await service.completeLesson(FAMILY_ID, LESSON_ID, {}, LEARNER_ID);
+
+      expect(recordsApi.createRecord).not.toHaveBeenCalled();
+    });
+
+    it('does not touch the records API when none is injected', async () => {
+      const serviceWithoutRecords = new LessonPlanService(lessonPlanRepo);
+
+      await expect(
+        serviceWithoutRecords.completeLesson(FAMILY_ID, LESSON_ID, {}, LEARNER_ID),
+      ).resolves.toBeDefined();
     });
   });
 

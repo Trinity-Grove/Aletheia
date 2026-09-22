@@ -71,7 +71,60 @@ export class LessonPlanService implements LessonPlanPublicApi {
     if (!updated) {
       throw new NotFoundException('Lesson plan not found');
     }
-    return updated.toResponseDto();
+    const response = updated.toResponseDto();
+    await this.createDiaryRecordsForCompletion(familyId, response, dto, learnerId, completedAt);
+    return response;
+  }
+
+  // Mirrors LearnerAgendaController's own-completion diary entry (issue
+  // #34 / #218): guardian-side completion via this same service was
+  // wired for RecordsModule (see the constructor and reopenLesson's
+  // deleteByLessonPlanId below) but never actually created a
+  // LearningRecord, so a lesson completed from the guardian schedule
+  // never appeared in the diary. Idempotent per learner via
+  // listRecords(lessonPlanId, learnerId) -- safe to call on every
+  // completion, including a second completion call for an
+  // already-completed learner.
+  private async createDiaryRecordsForCompletion(
+    familyId: string,
+    lesson: LessonPlanResponseDto,
+    dto: CompleteLessonDto,
+    learnerId: string | undefined,
+    completedAt: Date,
+  ): Promise<void> {
+    if (!this.recordsApi) return;
+
+    const targetLearnerIds = learnerId
+      ? [learnerId]
+      : lesson.learners.filter((l) => l.completed).map((l) => l.learnerId);
+    if (targetLearnerIds.length === 0) return;
+
+    const completionDate = completedAt.toISOString().slice(0, 10);
+    const duration = lesson.actualDurationMinutes ?? lesson.durationMinutes ?? 45;
+    const objectiveIds = lesson.objectives.map((o) => o.objectiveId);
+
+    for (const targetLearnerId of targetLearnerIds) {
+      const existing = await this.recordsApi.listRecords(familyId, {
+        learnerId: targetLearnerId,
+        lessonPlanId: lesson.id,
+      });
+      if (existing.length > 0) continue;
+
+      await this.recordsApi.createRecord(familyId, {
+        learnerId: targetLearnerId,
+        subjectId: lesson.subjectId,
+        academicYearId: lesson.academicYearId,
+        lessonPlanId: lesson.id,
+        type: 'PLANNED_LESSON',
+        title: lesson.title,
+        description: lesson.description,
+        date: completionDate,
+        durationMinutes: duration,
+        notes: dto.learnerNotes?.[targetLearnerId] ?? dto.notes ?? 'Atividade concluída na agenda.',
+        objectiveIds,
+        evidenceItemIds: [],
+      });
+    }
   }
 
   async reopenLesson(
