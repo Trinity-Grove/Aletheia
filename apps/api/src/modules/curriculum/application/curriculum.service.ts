@@ -235,6 +235,14 @@ export class CurriculumService implements CurriculumPublicApi {
     };
   }
 
+  async getCurrentAcademicYearWindow(
+    familyId: string,
+  ): Promise<{ startDate: Date; endDate: Date | null } | null> {
+    const year = await this.curriculumRepo.findCurrentAcademicYear(familyId);
+    if (!year || !year.startDate) return null;
+    return { startDate: year.startDate, endDate: year.endDate };
+  }
+
   private serializeYear(y: any): AcademicYearResponseDto {
     return {
       id: y.id,

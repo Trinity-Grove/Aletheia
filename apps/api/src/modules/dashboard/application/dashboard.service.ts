@@ -18,6 +18,10 @@ import {
   SCHEDULE_PUBLIC_API,
   type SchedulePublicApi,
 } from '../../lessons/application/public-api.js';
+import {
+  CURRICULUM_PUBLIC_API,
+  type CurriculumPublicApi,
+} from '../../curriculum/application/public-api.js';
 
 function minutesBetween(start?: string | null, end?: string | null): number {
   if (!start || !end) return 0;
@@ -38,6 +42,32 @@ function minutesBetween(start?: string | null, end?: string | null): number {
   }
 
   return Math.max(0, endHour * 60 + endMinute - startHour * 60 - startMinute);
+}
+
+// The Nth day of the current academic year, 1-indexed by calendar days
+// from its start date (inclusive). Returns 0 -- the documented "unknown"
+// value per the dashboard spec -- when there is no current academic year,
+// it has no start date, or the requested date falls outside its window;
+// the UI hides the counter rather than showing a misleading number.
+function computeDaySequence(
+  targetDate: string,
+  window: { startDate: Date; endDate: Date | null } | null,
+): number {
+  if (!window) return 0;
+
+  const target = new Date(`${targetDate}T00:00:00.000Z`);
+  const start = new Date(
+    Date.UTC(window.startDate.getUTCFullYear(), window.startDate.getUTCMonth(), window.startDate.getUTCDate()),
+  );
+  if (Number.isNaN(target.getTime())) return 0;
+  if (window.endDate) {
+    const end = new Date(
+      Date.UTC(window.endDate.getUTCFullYear(), window.endDate.getUTCMonth(), window.endDate.getUTCDate()),
+    );
+    if (target.getTime() > end.getTime()) return 0;
+  }
+  const diffDays = Math.round((target.getTime() - start.getTime()) / 86_400_000);
+  return diffDays >= 0 ? diffDays + 1 : 0;
 }
 
 function learnerDisplayName(learner: LearnerSummaryDto): string {
@@ -69,6 +99,8 @@ export class DashboardService {
     private readonly learnersApi: LearnersPublicApi,
     @Inject(SCHEDULE_PUBLIC_API)
     private readonly scheduleApi: SchedulePublicApi,
+    @Inject(CURRICULUM_PUBLIC_API)
+    private readonly curriculumApi: CurriculumPublicApi,
   ) {}
 
   async getDashboard(
@@ -88,9 +120,10 @@ export class DashboardService {
       }
     }
 
-    const [learners, agenda] = await Promise.all([
+    const [learners, agenda, academicYearWindow] = await Promise.all([
       this.learnersApi.listActiveLearners(familyId),
       this.scheduleApi.getDailyAgenda(familyId, query.date, query.learnerId),
+      this.curriculumApi.getCurrentAcademicYearWindow(familyId),
     ]);
     const lessonItems = agenda.items.filter((item) => item.type === 'LESSON');
 
@@ -117,7 +150,7 @@ export class DashboardService {
         ),
         completedLessons: lessonItems.filter((item) => item.isCompleted).length,
         totalLessons: lessonItems.length,
-        daySequence: 0,
+        daySequence: computeDaySequence(query.date, academicYearWindow),
       },
       activities: agenda.items.map(mapActivity),
     };

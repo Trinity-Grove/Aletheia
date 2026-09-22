@@ -20,6 +20,10 @@ import {
   SCHEDULE_PUBLIC_API,
   type SchedulePublicApi,
 } from '../src/modules/lessons/application/public-api.js';
+import {
+  CURRICULUM_PUBLIC_API,
+  type CurriculumPublicApi,
+} from '../src/modules/curriculum/application/public-api.js';
 
 const FAMILY_A_ID = '00000000-0000-4000-8000-000000000001';
 const FAMILY_B_ID = '00000000-0000-4000-8000-000000000002';
@@ -122,6 +126,12 @@ describe('Family dashboard E2E', () => {
           ? populatedAgenda
           : { date, dayOfWeek: 6, items: [] },
     );
+
+    // Day-sequence math is unit-tested in dashboard.service.spec.ts; this
+    // e2e test only needs a defined, family-scoped response, so keep it at
+    // the documented "no current academic year" value (0).
+    const curriculumApi = app.get<CurriculumPublicApi>(CURRICULUM_PUBLIC_API);
+    jest.spyOn(curriculumApi, 'getCurrentAcademicYearWindow').mockResolvedValue(null);
 
     await app.init();
     await app.getHttpAdapter().getInstance().ready();

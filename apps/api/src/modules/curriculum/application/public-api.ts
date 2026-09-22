@@ -11,6 +11,13 @@ export interface CurriculumPublicApi {
     familyId: string,
     learnerId: string,
   ): Promise<{ totalObjectives: number; achievedObjectives: number }>;
+
+  // Consumed by DashboardModule (issue #216) to compute the academic-year
+  // day sequence shown on the "Jornada Diária" card. Returns null when the
+  // family has no current academic year, or that year has no start date.
+  getCurrentAcademicYearWindow(
+    familyId: string,
+  ): Promise<{ startDate: Date; endDate: Date | null } | null>;
 }
 
 // Consumed by LearnerAccessModule (issue #34) to let a learner submit
