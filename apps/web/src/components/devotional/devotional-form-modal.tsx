@@ -13,13 +13,16 @@ export interface DevotionalFormModalProps {
   onSubmit: (_data: UpsertDailyDevotionalDto) => Promise<void> | void;
 }
 
+// Kept in sync with YouVersionService's POPULAR_BIBLE_VERSIONS
+// (apps/api/.../youversion.service.ts) -- offering a version that isn't
+// in that list 404s upstream and the lookup silently returns no text
+// (#214). Almeida (ARA/ARC), Nova Almeida Atualizada, ESV and KJV are
+// not available through this app's YouVersion key.
 const BIBLE_VERSION_OPTIONS = [
   { value: 'nvi', label: 'NVI (Nova Versão Internacional)' },
-  { value: 'ara', label: 'ARA (Almeida Revista e Atualizada)' },
-  { value: 'arc', label: 'ARC (Almeida Revista e Corrigida)' },
-  { value: 'naa', label: 'NAA (Nova Almeida Atualizada)' },
-  { value: 'kjv', label: 'KJV (King James Version)' },
-  { value: 'esv', label: 'ESV (English Standard Version)' },
+  { value: 'blt', label: 'BLT (Bíblia Livre Para Todos)' },
+  { value: 'bsb', label: 'BSB (Berean Standard Bible)' },
+  { value: 'niv11', label: 'NIV (New International Version)' },
 ];
 
 export function DevotionalFormModal({
@@ -89,6 +92,11 @@ export function DevotionalFormModal({
       const data = await res.json();
       if (data && data.content) {
         setPassageText(data.content);
+      } else {
+        // The lookup endpoint responds 200 with an empty passage when the
+        // upstream provider has no text for this reference/version (#214)
+        // -- surface that instead of leaving the field silently blank.
+        setError('Não foi encontrado texto para essa referência nessa versão. Tente outra versão ou digite o texto manualmente.');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erro ao buscar texto bíblico.';
