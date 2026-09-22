@@ -7,6 +7,7 @@ import type {
 import type { FamilyPublicApi } from '../../families/application/public-api.js';
 import type { LearnersPublicApi } from '../../learners/application/public-api.js';
 import type { SchedulePublicApi } from '../../lessons/application/public-api.js';
+import type { CurriculumPublicApi } from '../../curriculum/application/public-api.js';
 import { DashboardService } from './dashboard.service.js';
 
 const USER_ID = 'f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66';
@@ -95,6 +96,7 @@ describe('DashboardService', () => {
   let familyApi: jest.Mocked<FamilyPublicApi>;
   let learnersApi: jest.Mocked<LearnersPublicApi>;
   let scheduleApi: jest.Mocked<SchedulePublicApi>;
+  let curriculumApi: jest.Mocked<CurriculumPublicApi>;
   let service: DashboardService;
 
   beforeEach(() => {
@@ -109,7 +111,14 @@ describe('DashboardService', () => {
     scheduleApi = {
       getDailyAgenda: jest.fn().mockResolvedValue(populatedAgenda),
     };
-    service = new DashboardService(familyApi, learnersApi, scheduleApi);
+    curriculumApi = {
+      getLearnerCurriculumSummary: jest.fn().mockResolvedValue({ totalObjectives: 0, achievedObjectives: 0 }),
+      // 2026-08-28 (DATE) is the 5th day of an academic year starting 2026-08-24.
+      getCurrentAcademicYearWindow: jest
+        .fn()
+        .mockResolvedValue({ startDate: new Date('2026-08-24T00:00:00.000Z'), endDate: null }),
+    };
+    service = new DashboardService(familyApi, learnersApi, scheduleApi, curriculumApi);
   });
 
   it('builds a family-wide dashboard with display-name precedence and mapped agenda items', async () => {
@@ -128,7 +137,7 @@ describe('DashboardService', () => {
         targetMinutes: 125,
         completedLessons: 2,
         totalLessons: 3,
-        daySequence: 0,
+        daySequence: 5,
       },
       activities: [
         {
@@ -227,9 +236,28 @@ describe('DashboardService', () => {
         targetMinutes: 0,
         completedLessons: 0,
         totalLessons: 0,
-        daySequence: 0,
+        daySequence: 5,
       },
       activities: [],
     });
+  });
+
+  it('reports daySequence 0 when the family has no current academic year', async () => {
+    curriculumApi.getCurrentAcademicYearWindow.mockResolvedValue(null);
+
+    const result = await service.getDashboard(USER_ID, FAMILY_ID, { date: DATE });
+
+    expect(result.journey.daySequence).toBe(0);
+  });
+
+  it('reports daySequence 0 for a date outside the academic year window', async () => {
+    curriculumApi.getCurrentAcademicYearWindow.mockResolvedValue({
+      startDate: new Date('2026-08-24T00:00:00.000Z'),
+      endDate: new Date('2026-08-26T00:00:00.000Z'),
+    });
+
+    const result = await service.getDashboard(USER_ID, FAMILY_ID, { date: DATE });
+
+    expect(result.journey.daySequence).toBe(0);
   });
 });
