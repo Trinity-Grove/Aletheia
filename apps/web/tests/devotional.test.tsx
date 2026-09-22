@@ -191,6 +191,38 @@ describe('Devotional & Prayer Components', () => {
       });
     });
 
+    // Regression (#214): a version not in the API's catalog 404s upstream,
+    // and the lookup endpoint responds 200 with an empty passage instead
+    // of an error -- the form must surface that instead of staying blank.
+    it('shows an error when the lookup succeeds but finds no passage text', async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ reference: 'João 3:16', versionId: 'nvi', content: '' }),
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      render(
+        <DevotionalFormModal
+          isOpen={true}
+          currentDate="2026-08-25"
+          initialData={null}
+          familyId="f0000000-0000-0000-0000-000000000001"
+          onClose={vi.fn()}
+          onSubmit={vi.fn()}
+        />
+      );
+
+      fireEvent.change(screen.getByTestId('devotional-reference-input'), {
+        target: { value: 'João 3:16' },
+      });
+      fireEvent.click(screen.getByTestId('scripture-lookup-btn'));
+
+      await waitFor(() => {
+        expect(screen.getByText(/não foi encontrado texto/i)).toBeInTheDocument();
+      });
+      expect((screen.getByTestId('devotional-passage-input') as HTMLTextAreaElement).value).toBe('');
+    });
+
     it('submits devotional data properly', () => {
       const onSubmit = vi.fn();
       const onClose = vi.fn();

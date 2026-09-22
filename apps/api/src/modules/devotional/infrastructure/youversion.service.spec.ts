@@ -18,7 +18,7 @@ describe('YouVersionService', () => {
       const bibles = await service.getAvailableBibles();
       expect(bibles).toEqual(POPULAR_BIBLE_VERSIONS);
       expect(bibles.some((b) => b.abbreviation === 'BSB')).toBe(true);
-      expect(bibles.some((b) => b.abbreviation === 'ARA')).toBe(true);
+      expect(bibles.some((b) => b.abbreviation === 'NVI')).toBe(true);
     });
   });
 
@@ -76,9 +76,11 @@ describe('YouVersionService', () => {
       });
     });
 
-    // Regression: the devotional form sends the slug ("ara"), but YouVersion
+    // Regression: the devotional form sends the slug ("nvi"), but YouVersion
     // only accepts the numeric id, so the lookup silently returned no text.
-    it.each([['ara', '1608'], ['ARA', '1608'], ['nvi', '129'], ['naa', '1840'], ['kjv', '1'], ['esv', '59'], ['1608', '1608']])(
+    // Only versions confirmed to exist for this app's YouVersion key belong
+    // in this table -- see the comment on POPULAR_BIBLE_VERSIONS (#214).
+    it.each([['nvi', '129'], ['NVI', '129'], ['blt', '3254'], ['bsb', '3034'], ['niv11', '111'], ['129', '129']])(
       'maps the version "%s" to YouVersion Bible id %s',
       async (versionId, expectedId) => {
         process.env.YOUVERSION_APP_KEY = 'test-key-123';

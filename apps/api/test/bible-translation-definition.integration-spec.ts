@@ -162,21 +162,26 @@ describe('Bible translation definition (real Postgres)', () => {
   it('compares a passage across multiple published translations, family-scoped and read-only', async () => {
     // Depends on the seeder test above having run and published the
     // catalog rows -- the compare endpoint resolves by code against
-    // PUBLISHED BibleTranslationDefinition rows.
-    const nvi = POPULAR_BIBLE_VERSIONS.find((v) => v.abbreviation === 'NVI')!;
-    const ara = POPULAR_BIBLE_VERSIONS.find((v) => v.abbreviation === 'ARA')!;
+    // PUBLISHED BibleTranslationDefinition rows. Picked generically by
+    // index (not by a specific abbreviation) so this test doesn't depend
+    // on which translations happen to be in POPULAR_BIBLE_VERSIONS (#214
+    // trimmed it to only versions that actually resolve upstream).
+    const [first, second] = POPULAR_BIBLE_VERSIONS;
+    if (!first || !second) {
+      throw new Error('POPULAR_BIBLE_VERSIONS must have at least two entries for this test.');
+    }
 
     const response = await supertest(app.getHttpServer())
       .get(`/api/v1/families/${familyId}/curriculum/bible-translations/compare`)
       .set('Cookie', familyCookie)
-      .query({ reference: 'John 3:16', translationCodes: `${nvi.abbreviation},${ara.abbreviation}` })
+      .query({ reference: 'John 3:16', translationCodes: `${first.abbreviation},${second.abbreviation}` })
       .expect(200);
 
     expect(response.body.reference).toBe('John 3:16');
     expect(response.body.results).toHaveLength(2);
     const codes = response.body.results.map((r: { translationCode: string }) => r.translationCode);
-    expect(codes).toContain('NVI');
-    expect(codes).toContain('ARA');
+    expect(codes).toContain(first.abbreviation);
+    expect(codes).toContain(second.abbreviation);
     // Real passage text is not asserted here -- no YOUVERSION_APP_KEY is
     // configured in this test environment, so YouVersionService returns
     // an empty content fallback (see youversion.service.ts). The point

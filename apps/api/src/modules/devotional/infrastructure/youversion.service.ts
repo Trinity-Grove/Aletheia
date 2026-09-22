@@ -2,13 +2,17 @@ import { Injectable } from '@nestjs/common';
 import type { BiblePassageDto, BibleVersionDto } from '@aletheia/contracts';
 import { parseScriptureReference } from './scripture-reference.js';
 
+// Verified 2026-09-22 against the live API with the production app key
+// (GET /v1/bibles?language_ranges[]=pt|en, and GET /v1/bibles/{id} for
+// each id below): only these translations resolve for this key. Almeida
+// (ARA/ARC), Nova Almeida Atualizada, ESV and KJV are NOT in this app's
+// catalog -- offering them 404s upstream and the lookup silently returns
+// no text (#214). Re-verify with the same calls before adding an entry.
 export const POPULAR_BIBLE_VERSIONS: BibleVersionDto[] = [
-  { id: '1608', name: 'Almeida Revista e Atualizada', language: 'pt', abbreviation: 'ARA' },
   { id: '129', name: 'Nova Versão Internacional', language: 'pt', abbreviation: 'NVI' },
-  { id: '1840', name: 'Nova Almeida Atualizada', language: 'pt', abbreviation: 'NAA' },
+  { id: '3254', name: 'Bíblia Livre Para Todos', language: 'pt', abbreviation: 'BLT' },
   { id: '3034', name: 'Berean Standard Bible', language: 'en', abbreviation: 'BSB' },
-  { id: '59', name: 'English Standard Version', language: 'en', abbreviation: 'ESV' },
-  { id: '1', name: 'King James Version', language: 'en', abbreviation: 'KJV' },
+  { id: '111', name: 'New International Version (2011)', language: 'en', abbreviation: 'NIV11' },
 ];
 
 // The devotional form sends the translation by abbreviation slug ("ara",
