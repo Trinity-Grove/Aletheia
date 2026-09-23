@@ -94,6 +94,9 @@ import { FamilyCurriculumPackMediaService } from './application/family-curriculu
 import { FamilyCurriculumPackMediaController } from './presentation/family-curriculum-pack-media.controller.js';
 import { DefinitionVersionOperationsService } from './application/definition-version-operations.service.js';
 import { DefinitionVersionOperationsController } from './presentation/definition-version-operations.controller.js';
+import { DefinitionTagsService } from './application/definition-tags.service.js';
+import { DefinitionTagsRepository } from './infrastructure/definition-tags.repository.js';
+import { DefinitionTagsController } from './presentation/definition-tags.controller.js';
 
 @Module({
   imports: [DatabaseModule, DevotionalModule, StorageModule],
@@ -112,6 +115,7 @@ import { DefinitionVersionOperationsController } from './presentation/definition
     FamilyCurriculumPackController,
     FamilyCurriculumPackMediaController,
     DefinitionVersionOperationsController,
+    DefinitionTagsController,
   ],
   providers: [
     ProgressionRepository,
@@ -162,6 +166,7 @@ import { DefinitionVersionOperationsController } from './presentation/definition
     TradesMechanicalElectricalHomeSeeder,
     FoundationalCurriculumSeeder,
     DefinitionsRepository,
+    DefinitionTagsRepository,
     ProfilesRepository,
     EvidenceSubmissionRepository,
     AssessmentResultRepository,
@@ -187,6 +192,7 @@ import { DefinitionVersionOperationsController } from './presentation/definition
     FamilyCurriculumPackService,
     FamilyCurriculumPackMediaService,
     DefinitionVersionOperationsService,
+    DefinitionTagsService,
     {
       provide: CURRICULUM_PUBLIC_API,
       useExisting: CurriculumService,

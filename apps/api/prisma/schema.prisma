@@ -1977,6 +1977,35 @@ model DefinitionVersionOperationLog {
   @@map("definition_version_operation_logs")
 }
 
+// Generic tagging (issue #96 section 38): annotates any Definition/Version
+// row without a schema change per table -- same polymorphic-by-plain-string
+// shape as DefinitionVersionOperationLog.affectedEntityType above, not a
+// new FK-per-table pattern. `definitionId` is the specific row's id (one
+// exact version, not "the code across all versions" -- a tag on a DRAFT
+// doesn't silently apply to a later PUBLISHED version, matching the
+// Definition/Version immutability discipline everywhere else here).
+//
+// `namespace` lets more than one taxonomy coexist on the same row (e.g.
+// "theme" vs. "difficulty" vs. a community-authored classification) without
+// them colliding or requiring a closed list of namespaces -- "pode haver
+// taxonomias diferentes" is the namespace value being a data value, not an
+// enum. Tags never replace a structural relation (domainId, competencyId,
+// ...); they are a pure annotation layer, always additive and removable
+// without touching what a definition structurally is.
+model DefinitionTag {
+  id           String   @id @default(uuid()) @db.Uuid
+  entityType   String   @map("entity_type")
+  definitionId String   @map("definition_id") @db.Uuid
+  namespace    String   @default("general")
+  tag          String
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([entityType, definitionId, namespace, tag])
+  @@index([entityType, definitionId])
+  @@index([namespace, tag])
+  @@map("definition_tags")
+}
+
 // Bible translation registry (issue #96 Fase 3, section 16) --
 // METADATA ONLY. This table records which translations exist and their
 // properties; it never stores the actual scriptural text. Real passage
