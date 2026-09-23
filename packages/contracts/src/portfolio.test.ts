@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   createPortfolioItemSchema,
+  createPortfolioItemFromEvidenceSubmissionSchema,
   updatePortfolioItemSchema,
   portfolioItemFilterSchema,
   portfolioItemResponseSchema,
@@ -118,5 +119,35 @@ describe('Portfolio Contracts', () => {
     expect(parsed.id).toBe(PORTFOLIO_ID);
     expect(parsed.isHighlight).toBe(true);
     expect(parsed.tags).toEqual(['arte', 'aquarela']);
+  });
+
+  it('accepts an evidenceSubmissionId on the response schema', () => {
+    const response = {
+      id: PORTFOLIO_ID,
+      familyId: FAMILY_ID,
+      learnerId: LEARNER_ID,
+      evidenceSubmissionId: RECORD_ID,
+      title: 'Horta comunitária',
+      type: 'DOCUMENT' as const,
+      isHighlight: false,
+      tags: [],
+      createdAt: '2026-03-17T10:00:00.000Z',
+      updatedAt: '2026-03-17T10:00:00.000Z',
+    };
+
+    const parsed = portfolioItemResponseSchema.parse(response);
+    expect(parsed.evidenceSubmissionId).toBe(RECORD_ID);
+  });
+
+  it('validates the promote-from-evidence-submission schema with defaults', () => {
+    const parsed = createPortfolioItemFromEvidenceSubmissionSchema.parse({
+      title: 'Horta comunitária',
+    });
+    expect(parsed.isHighlight).toBe(false);
+    expect(parsed.tags).toEqual([]);
+  });
+
+  it('rejects a promote-from-evidence-submission payload without a title', () => {
+    expect(() => createPortfolioItemFromEvidenceSubmissionSchema.parse({})).toThrow();
   });
 });

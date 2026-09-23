@@ -3,9 +3,32 @@ import { PrismaService } from '../../../platform/database/prisma.service.js';
 import { PortfolioItemEntity } from '../domain/portfolio-item.entity.js';
 import type {
   CreatePortfolioItemDto,
+  EvidenceType,
   PortfolioItemFilterDto,
   UpdatePortfolioItemDto,
 } from '@aletheia/contracts';
+
+// Issue #230: input for promoting a validated EvidenceSubmission into a
+// portfolio item. Separate from CreatePortfolioItemDto -- the
+// file/content fields here come from the evidence submission itself
+// (resolved server-side by PortfolioService), not from a client payload.
+export interface CreatePortfolioItemFromEvidenceSubmissionInput {
+  learnerId: string;
+  evidenceSubmissionId: string;
+  type: EvidenceType;
+  title: string;
+  description: string | null;
+  academicYearId: string | null;
+  subjectId: string | null;
+  fileUrl: string | null;
+  textContent: string | null;
+  mimeType: string | null;
+  fileSizeBytes: number | null;
+  checksumSha256: string | null;
+  capturedAt: string | null;
+  isHighlight: boolean;
+  tags: string[];
+}
 
 @Injectable()
 export class PortfolioRepository {
@@ -32,6 +55,42 @@ export class PortfolioRepository {
 
     const created = await this.prisma.portfolioItem.create({
       data,
+      include: {
+        learner: true,
+        subject: true,
+      },
+    });
+
+    return this.mapPortfolioItem(created);
+  }
+
+  // Issue #230. Note: no checksumSha256 write here on purpose -- unlike
+  // the direct-upload flow (confirmUpload), this content was already
+  // validated/stored by EvidenceSubmission's own write path, so we take
+  // its checksum as-is rather than recomputing it.
+  async createFromEvidenceSubmission(
+    familyId: string,
+    input: CreatePortfolioItemFromEvidenceSubmissionInput,
+  ): Promise<PortfolioItemEntity> {
+    const created = await this.prisma.portfolioItem.create({
+      data: {
+        familyId,
+        learnerId: input.learnerId,
+        evidenceSubmissionId: input.evidenceSubmissionId,
+        academicYearId: input.academicYearId,
+        subjectId: input.subjectId,
+        title: input.title,
+        description: input.description,
+        type: input.type,
+        fileUrl: input.fileUrl,
+        textContent: input.textContent,
+        mimeType: input.mimeType,
+        fileSizeBytes: input.fileSizeBytes,
+        checksumSha256: input.checksumSha256,
+        capturedAt: input.capturedAt ? new Date(input.capturedAt) : null,
+        isHighlight: input.isHighlight,
+        tags: input.tags,
+      },
       include: {
         learner: true,
         subject: true,
@@ -206,6 +265,7 @@ export class PortfolioRepository {
       row.updatedAt,
       learnerName,
       row.subject?.name ?? null,
+      row.evidenceSubmissionId ?? null,
     );
   }
 }

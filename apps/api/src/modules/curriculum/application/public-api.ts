@@ -26,12 +26,45 @@ export interface CurriculumPublicApi {
 // new validation or write path, just a narrower gate in front of it.
 export const EVIDENCE_SUBMISSION_PUBLIC_API = Symbol('EVIDENCE_SUBMISSION_PUBLIC_API');
 
+// Consumed by RecordsModule (issue #230) to promote a validated
+// EvidenceSubmission (the ActivityDefinition/ProjectDefinition-catalog
+// evidence system) into a family's PortfolioItem (the older
+// Subject/LearningRecord-facing evidence system) -- the fix for those
+// two systems having been completely disconnected. Deliberately its
+// own small shape rather than reusing EvidenceSubmissionResponseDto:
+// the portfolio only ever needs the file/content payload and the
+// evidence type's *code* (PortfolioItem has no notion of the
+// EvidenceTypeDefinition catalog's row id), never the competency links
+// or assessment results that DTO also carries.
+export interface EvidenceSubmissionPortfolioSourceDto {
+  id: string;
+  familyId: string;
+  learnerId: string;
+  evidenceTypeCode: string;
+  validationStatus: string;
+  textContent: string | null;
+  fileUrl: string | null;
+  storageKey: string | null;
+  mimeType: string | null;
+  fileSizeBytes: number | null;
+  checksumSha256: string | null;
+  createdAt: string;
+}
+
 export interface EvidenceSubmissionPublicApi {
   createEvidenceSubmission(
     familyId: string,
     authorId: string,
     dto: CreateEvidenceSubmissionOutput,
   ): Promise<EvidenceSubmissionResponseDto>;
+
+  // Returns null when the submission does not exist or does not belong
+  // to this family -- callers turn that into their own 404, this API
+  // never throws for a lookup miss.
+  getEvidenceSubmissionForPortfolio(
+    familyId: string,
+    id: string,
+  ): Promise<EvidenceSubmissionPortfolioSourceDto | null>;
 }
 
 // Consumed by LearnerAccessModule (issue #34) for the learner-facing

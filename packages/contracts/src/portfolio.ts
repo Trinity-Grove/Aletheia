@@ -56,6 +56,10 @@ export const portfolioItemResponseSchema = z.object({
   academicYearId: z.string().uuid().nullable().optional(),
   subjectId: z.string().uuid().nullable().optional(),
   subjectName: z.string().nullable().optional(),
+  // Issue #230: set when this item was promoted from an EvidenceSubmission
+  // (the ActivityDefinition/ProjectDefinition-catalog evidence system)
+  // rather than uploaded directly.
+  evidenceSubmissionId: z.string().uuid().nullable().optional(),
   title: z.string(),
   description: z.string().nullable().optional(),
   type: evidenceTypeSchema,
@@ -71,6 +75,32 @@ export const portfolioItemResponseSchema = z.object({
 });
 
 export type PortfolioItemResponseDto = z.infer<typeof portfolioItemResponseSchema>;
+
+// Promotes a validated EvidenceSubmission into a portfolio item (issue
+// #230). Deliberately its own small schema, not a variant of
+// createPortfolioItemSchema: the file/content payload (fileUrl,
+// textContent, mimeType, ...) and the learner it belongs to are read
+// server-side from the evidence submission itself -- copying them
+// client-side here would let a caller claim a mismatched learner/file
+// for a submission that isn't theirs. Only presentation fields the
+// evidence submission has no opinion on (title, description, which
+// academic year/subject to file it under, highlight, tags) are taken
+// from the caller.
+export const createPortfolioItemFromEvidenceSubmissionSchema = z.object({
+  title: z.string().min(1).max(200),
+  description: z.string().nullish(),
+  academicYearId: z.string().uuid().nullish(),
+  subjectId: z.string().uuid().nullish(),
+  isHighlight: z.boolean().default(false),
+  tags: z.array(z.string().min(1).max(50)).default([]),
+});
+
+export type CreatePortfolioItemFromEvidenceSubmissionDto = z.input<
+  typeof createPortfolioItemFromEvidenceSubmissionSchema
+>;
+export type CreatePortfolioItemFromEvidenceSubmissionOutput = z.output<
+  typeof createPortfolioItemFromEvidenceSubmissionSchema
+>;
 
 // Evidence upload (issue #29): direct-to-storage presigned URL flow. The
 // allowlist and size cap are shared between client-side and server-side

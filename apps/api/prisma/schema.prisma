@@ -692,12 +692,22 @@ model LearningRecordObjective {
 }
 
 model PortfolioItem {
-  id               String       @id @default(uuid()) @db.Uuid
-  familyId         String       @map("family_id") @db.Uuid
-  learnerId        String       @map("learner_id") @db.Uuid
-  learningRecordId String?      @map("learning_record_id") @db.Uuid
-  academicYearId   String?      @map("academic_year_id") @db.Uuid
-  subjectId        String?      @map("subject_id") @db.Uuid
+  id                  String       @id @default(uuid()) @db.Uuid
+  familyId            String       @map("family_id") @db.Uuid
+  learnerId           String       @map("learner_id") @db.Uuid
+  learningRecordId    String?      @map("learning_record_id") @db.Uuid
+  academicYearId      String?      @map("academic_year_id") @db.Uuid
+  subjectId           String?      @map("subject_id") @db.Uuid
+  // Issue #230: optional back-reference to the EvidenceSubmission (the
+  // ActivityDefinition/ProjectDefinition-catalog evidence system) this
+  // item was promoted from. Unique because promotion is a one-time,
+  // explicit action (PortfolioService.createFromEvidenceSubmission) --
+  // never automatic, never duplicated. Nullable/SetNull because most
+  // portfolio items still come from a direct upload with no catalog
+  // evidence behind them, and a promoted item must outlive its source
+  // (deleting/deprecating the source evidence never erases the
+  // portfolio record already shown to the family).
+  evidenceSubmissionId String?     @unique @map("evidence_submission_id") @db.Uuid
   title            String
   description      String?
   type             EvidenceType
@@ -714,11 +724,12 @@ model PortfolioItem {
   createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime     @updatedAt @map("updated_at") @db.Timestamptz
 
-  family         Family          @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  learner        Learner         @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  learningRecord LearningRecord? @relation(fields: [learningRecordId], references: [id], onDelete: SetNull)
-  academicYear   AcademicYear?   @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
-  subject        Subject?        @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  family             Family              @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner            Learner             @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  learningRecord     LearningRecord?     @relation(fields: [learningRecordId], references: [id], onDelete: SetNull)
+  academicYear       AcademicYear?       @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  subject            Subject?            @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  evidenceSubmission EvidenceSubmission? @relation(fields: [evidenceSubmissionId], references: [id], onDelete: SetNull)
 
   @@index([familyId])
   @@index([familyId, learnerId])
@@ -1744,6 +1755,9 @@ model EvidenceSubmission {
   validatedBy       User?                          @relation("EvidenceSubmissionValidator", fields: [validatedByUserId], references: [id], onDelete: SetNull)
   competencies      EvidenceSubmissionCompetency[]
   assessmentResults AssessmentResult[]
+  // Reverse side of PortfolioItem.evidenceSubmissionId (issue #230) --
+  // at most one, since promotion is a unique, one-time action.
+  portfolioItem     PortfolioItem?
 
   @@index([familyId])
   @@index([familyId, learnerId])
