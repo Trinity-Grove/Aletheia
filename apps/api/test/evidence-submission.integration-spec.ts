@@ -298,4 +298,58 @@ describe('Evidence Submission (real Postgres)', () => {
       .get(`/api/v1/families/${familyAId}/curriculum/evidence-submissions`)
       .expect(401);
   });
+
+  // Issue #96 section 8: "pode gerar múltiplas evidências" -- a project
+  // instance can produce more than one EvidenceSubmission, each traced
+  // back to it via the same optional projectDefinitionId.
+  it('links multiple evidence submissions to the same interdisciplinary project', async () => {
+    const competency = await createCompetency(`PROJECT.${Date.now()}`);
+    const project = await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-definitions/project-definitions')
+      .set('Cookie', adminCookie)
+      .send({ code: `TEST.EVIDENCE.PROJECT.${Date.now()}`, name: 'Construir uma horta (Test)' })
+      .expect(201);
+
+    const first = await supertest(app.getHttpServer())
+      .post(`/api/v1/families/${familyAId}/curriculum/evidence-submissions`)
+      .set('Cookie', familyACookie)
+      .send({
+        learnerId: familyALearnerId,
+        evidenceTypeId,
+        projectDefinitionId: project.body.id,
+        competencies: [{ competencyDefinitionId: competency.id }],
+        textContent: 'Fotos do canteiro preparado.',
+      })
+      .expect(201);
+    expect(first.body.projectDefinitionId).toBe(project.body.id);
+
+    const second = await supertest(app.getHttpServer())
+      .post(`/api/v1/families/${familyAId}/curriculum/evidence-submissions`)
+      .set('Cookie', familyACookie)
+      .send({
+        learnerId: familyALearnerId,
+        evidenceTypeId,
+        projectDefinitionId: project.body.id,
+        competencies: [{ competencyDefinitionId: competency.id }],
+        textContent: 'Registro da colheita.',
+      })
+      .expect(201);
+    expect(second.body.projectDefinitionId).toBe(project.body.id);
+    expect(second.body.id).not.toBe(first.body.id);
+  });
+
+  it('rejects an evidence submission referencing a project definition that does not exist, 400 not 500', async () => {
+    const competency = await createCompetency(`PROJECT.MISSING.${Date.now()}`);
+    await supertest(app.getHttpServer())
+      .post(`/api/v1/families/${familyAId}/curriculum/evidence-submissions`)
+      .set('Cookie', familyACookie)
+      .send({
+        learnerId: familyALearnerId,
+        evidenceTypeId,
+        projectDefinitionId: '00000000-0000-0000-0000-000000000000',
+        competencies: [{ competencyDefinitionId: competency.id }],
+        textContent: 'x',
+      })
+      .expect(400);
+  });
 });

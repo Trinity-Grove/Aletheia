@@ -16,6 +16,11 @@ import type {
   ActivityDefinition,
   ActivityDefinitionCompetency,
   ActivityDefinitionEvidenceType,
+  ProjectDefinition,
+  ProjectDefinitionDomain,
+  ProjectDefinitionCompetency,
+  ProjectDefinitionMilestone,
+  CurriculumDefinitionProject,
   TheologicalTraditionDefinition,
   TheologicalPositionDefinition,
   ProgressionPolicy,
@@ -39,6 +44,11 @@ import type {
   CreateActivityDefinitionOutput,
   AddActivityDefinitionCompetencyOutput,
   AddActivityDefinitionEvidenceTypeOutput,
+  CreateProjectDefinitionOutput,
+  AddProjectDefinitionDomainOutput,
+  AddProjectDefinitionCompetencyOutput,
+  AddProjectDefinitionMilestoneOutput,
+  AddCurriculumDefinitionProjectOutput,
   CreateTheologicalTraditionDefinitionOutput,
   CreateTheologicalPositionDefinitionOutput,
   CreateProgressionPolicyOutput,
@@ -440,6 +450,107 @@ export class DefinitionsRepository {
 
   listActivityDefinitionEvidenceTypes(activityId: string): Promise<ActivityDefinitionEvidenceType[]> {
     return this.prisma.activityDefinitionEvidenceType.findMany({ where: { activityId } });
+  }
+
+  addCurriculumDefinitionProject(
+    curriculumDefinitionId: string,
+    dto: AddCurriculumDefinitionProjectOutput,
+  ): Promise<CurriculumDefinitionProject> {
+    return this.prisma.curriculumDefinitionProject.create({
+      data: {
+        curriculumDefinitionId,
+        projectId: dto.projectId,
+        required: dto.required,
+        order: dto.order,
+      },
+    });
+  }
+
+  listCurriculumDefinitionProjects(curriculumDefinitionId: string): Promise<CurriculumDefinitionProject[]> {
+    return this.prisma.curriculumDefinitionProject.findMany({
+      where: { curriculumDefinitionId },
+      orderBy: { order: 'asc' },
+    });
+  }
+
+  // Project Definition
+  createProjectDefinition(dto: CreateProjectDefinitionOutput): Promise<ProjectDefinition> {
+    return this.prisma.projectDefinition.create({
+      data: {
+        code: dto.code,
+        version: dto.version,
+        status: dto.status,
+        schemaVersion: dto.schemaVersion,
+        name: dto.name,
+        description: dto.description ?? null,
+        estimatedDurationDays: dto.estimatedDurationDays ?? null,
+        rubricDefinitionId: dto.rubricDefinitionId ?? null,
+        metadata: dto.metadata as Prisma.InputJsonValue,
+      },
+    });
+  }
+
+  listProjectDefinitions(): Promise<ProjectDefinition[]> {
+    return this.prisma.projectDefinition.findMany({ orderBy: [{ code: 'asc' }, { version: 'desc' }] });
+  }
+
+  findProjectDefinitionById(id: string): Promise<ProjectDefinition | null> {
+    return this.prisma.projectDefinition.findUnique({ where: { id } });
+  }
+
+  updateProjectDefinitionStatus(id: string, update: DefinitionStatusUpdate): Promise<ProjectDefinition> {
+    return this.prisma.projectDefinition.update({ where: { id }, data: update });
+  }
+
+  addProjectDefinitionDomain(
+    projectId: string,
+    dto: AddProjectDefinitionDomainOutput,
+  ): Promise<ProjectDefinitionDomain> {
+    return this.prisma.projectDefinitionDomain.create({
+      data: { projectId, domainId: dto.domainId },
+    });
+  }
+
+  listProjectDefinitionDomains(projectId: string): Promise<ProjectDefinitionDomain[]> {
+    return this.prisma.projectDefinitionDomain.findMany({ where: { projectId } });
+  }
+
+  addProjectDefinitionCompetency(
+    projectId: string,
+    dto: AddProjectDefinitionCompetencyOutput,
+  ): Promise<ProjectDefinitionCompetency> {
+    return this.prisma.projectDefinitionCompetency.create({
+      data: { projectId, competencyId: dto.competencyId, required: dto.required, order: dto.order },
+    });
+  }
+
+  listProjectDefinitionCompetencies(projectId: string): Promise<ProjectDefinitionCompetency[]> {
+    return this.prisma.projectDefinitionCompetency.findMany({
+      where: { projectId },
+      orderBy: { order: 'asc' },
+    });
+  }
+
+  addProjectDefinitionMilestone(
+    projectId: string,
+    dto: AddProjectDefinitionMilestoneOutput,
+  ): Promise<ProjectDefinitionMilestone> {
+    return this.prisma.projectDefinitionMilestone.create({
+      data: {
+        projectId,
+        code: dto.code,
+        title: dto.title,
+        description: dto.description ?? null,
+        order: dto.order,
+      },
+    });
+  }
+
+  listProjectDefinitionMilestones(projectId: string): Promise<ProjectDefinitionMilestone[]> {
+    return this.prisma.projectDefinitionMilestone.findMany({
+      where: { projectId },
+      orderBy: { order: 'asc' },
+    });
   }
 
   // Theological Tradition Definition

@@ -40,6 +40,7 @@ describe('Curriculum definitions admin API -- rubric/evidence/curriculum/activit
     'evidence-type-definitions',
     'curriculum-definitions',
     'activity-definitions',
+    'project-definitions',
   ])('lists and enforces the lifecycle of %s', async (resource) => {
     const base = `/api/v1/admin/curriculum-definitions/${resource}`;
     await supertest(app.getHttpServer()).get(base).expect(401);
@@ -295,5 +296,159 @@ describe('Curriculum definitions admin API -- rubric/evidence/curriculum/activit
       .send({ status: 'PUBLISHED' })
       .expect(200);
     expect(published.body.status).toBe('PUBLISHED');
+  });
+
+  // Issue #96 section 8's own literal test: "Construir uma horta" pode
+  // validar Matemática, Ciências, Cultivo e Planejamento sem criar
+  // lógica especial para horta. Every call below is the exact same
+  // generic admin CRUD surface every other Definition/Version table
+  // already uses -- nothing "garden-specific" exists anywhere in the
+  // engine.
+  it('creates an interdisciplinary project mapping multiple domains and competencies, with milestones and a rubric', async () => {
+    const stamp = Date.now();
+    const domainMath = await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-definitions/learning-domains')
+      .set('Cookie', adminCookie)
+      .send({ code: `TEST.PROJ.MATH.${stamp}`, name: 'Matemática (Test)' })
+      .expect(201);
+    const domainScience = await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-definitions/learning-domains')
+      .set('Cookie', adminCookie)
+      .send({ code: `TEST.PROJ.SCIENCE.${stamp}`, name: 'Ciências (Test)' })
+      .expect(201);
+    const domainGardening = await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-definitions/learning-domains')
+      .set('Cookie', adminCookie)
+      .send({ code: `TEST.PROJ.GARDENING.${stamp}`, name: 'Cultivo (Test)' })
+      .expect(201);
+    const domainPlanning = await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-definitions/learning-domains')
+      .set('Cookie', adminCookie)
+      .send({ code: `TEST.PROJ.PLANNING.${stamp}`, name: 'Planejamento (Test)' })
+      .expect(201);
+
+    const competencyMath = await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-definitions/competency-definitions')
+      .set('Cookie', adminCookie)
+      .send({
+        code: `TEST.PROJ.MATH.AREA.${stamp}`,
+        domainId: domainMath.body.id,
+        title: 'Calcular a área do canteiro',
+      })
+      .expect(201);
+    const competencyGardening = await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-definitions/competency-definitions')
+      .set('Cookie', adminCookie)
+      .send({
+        code: `TEST.PROJ.GARDENING.SOIL.${stamp}`,
+        domainId: domainGardening.body.id,
+        title: 'Preparar o solo para plantio',
+      })
+      .expect(201);
+
+    const rubric = await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-definitions/rubric-definitions')
+      .set('Cookie', adminCookie)
+      .send({ code: `TEST.PROJ.RUBRIC.${stamp}`, name: 'Rubrica do projeto de horta' })
+      .expect(201);
+
+    const project = await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-definitions/project-definitions')
+      .set('Cookie', adminCookie)
+      .send({
+        code: `GARDEN_BUILD.${stamp}`,
+        name: 'Construir uma horta',
+        description: 'Projeto interdisciplinar de planejamento e cultivo de uma horta familiar.',
+        estimatedDurationDays: 30,
+        rubricDefinitionId: rubric.body.id,
+      })
+      .expect(201);
+    expect(project.body.rubricDefinitionId).toBe(rubric.body.id);
+
+    for (const domain of [domainMath, domainScience, domainGardening, domainPlanning]) {
+      await supertest(app.getHttpServer())
+        .post(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/domains`)
+        .set('Cookie', adminCookie)
+        .send({ domainId: domain.body.id })
+        .expect(201);
+    }
+
+    for (const competency of [competencyMath, competencyGardening]) {
+      await supertest(app.getHttpServer())
+        .post(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/competencies`)
+        .set('Cookie', adminCookie)
+        .send({ competencyId: competency.body.id })
+        .expect(201);
+    }
+
+    await supertest(app.getHttpServer())
+      .post(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/milestones`)
+      .set('Cookie', adminCookie)
+      .send({ code: 'PLANNING', title: 'Planejar o canteiro e a lista de espécies', order: 0 })
+      .expect(201);
+    await supertest(app.getHttpServer())
+      .post(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/milestones`)
+      .set('Cookie', adminCookie)
+      .send({ code: 'SOIL_PREP', title: 'Preparar o solo', order: 1 })
+      .expect(201);
+    await supertest(app.getHttpServer())
+      .post(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/milestones`)
+      .set('Cookie', adminCookie)
+      .send({ code: 'HARVEST', title: 'Colher e registrar os resultados', order: 2 })
+      .expect(201);
+
+    const domainsList = await supertest(app.getHttpServer())
+      .get(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/domains`)
+      .set('Cookie', adminCookie)
+      .expect(200);
+    expect(domainsList.body).toHaveLength(4);
+
+    const competenciesList = await supertest(app.getHttpServer())
+      .get(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/competencies`)
+      .set('Cookie', adminCookie)
+      .expect(200);
+    expect(competenciesList.body).toHaveLength(2);
+
+    const milestonesList = await supertest(app.getHttpServer())
+      .get(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/milestones`)
+      .set('Cookie', adminCookie)
+      .expect(200);
+    expect(milestonesList.body.map((m: { code: string }) => m.code)).toEqual([
+      'PLANNING',
+      'SOIL_PREP',
+      'HARVEST',
+    ]);
+
+    // Reusable: the same published project can be linked into a real
+    // curriculum, same as any activity.
+    const curriculum = await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-definitions/curriculum-definitions')
+      .set('Cookie', adminCookie)
+      .send({ code: `TEST.PROJ.CURRICULUM.${stamp}`, name: 'Curriculum with a project' })
+      .expect(201);
+    await supertest(app.getHttpServer())
+      .patch(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/status`)
+      .set('Cookie', adminCookie)
+      .send({ status: 'PUBLISHED' })
+      .expect(200);
+    await supertest(app.getHttpServer())
+      .post(`/api/v1/admin/curriculum-definitions/curriculum-definitions/${curriculum.body.id}/projects`)
+      .set('Cookie', adminCookie)
+      .send({ projectId: project.body.id })
+      .expect(201);
+    const curriculumProjectsList = await supertest(app.getHttpServer())
+      .get(`/api/v1/admin/curriculum-definitions/curriculum-definitions/${curriculum.body.id}/projects`)
+      .set('Cookie', adminCookie)
+      .expect(200);
+    expect(curriculumProjectsList.body).toHaveLength(1);
+    expect(curriculumProjectsList.body[0].projectId).toBe(project.body.id);
+
+    // Linking a domain that doesn't exist is a 400 (FK violation), not a
+    // raw 500 -- same discipline as every other join in this file.
+    await supertest(app.getHttpServer())
+      .post(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/domains`)
+      .set('Cookie', adminCookie)
+      .send({ domainId: '00000000-0000-0000-0000-000000000000' })
+      .expect(400);
   });
 });

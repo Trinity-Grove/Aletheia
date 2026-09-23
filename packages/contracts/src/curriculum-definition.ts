@@ -153,3 +153,24 @@ export const curriculumDefinitionActivityResponseSchema = z.object({
 });
 
 export type CurriculumDefinitionActivityResponseDto = z.infer<typeof curriculumDefinitionActivityResponseSchema>;
+
+// Project link -- added alongside ProjectDefinition (issue #96 section 8).
+export const addCurriculumDefinitionProjectSchema = z.object({
+  projectId: z.string().uuid(),
+  required: z.boolean().default(true),
+  order: z.number().int().min(0).default(0),
+});
+
+export type AddCurriculumDefinitionProjectDto = z.input<typeof addCurriculumDefinitionProjectSchema>;
+export type AddCurriculumDefinitionProjectOutput = z.output<typeof addCurriculumDefinitionProjectSchema>;
+
+export const curriculumDefinitionProjectResponseSchema = z.object({
+  id: z.string().uuid(),
+  curriculumDefinitionId: z.string().uuid(),
+  projectId: z.string().uuid(),
+  required: z.boolean(),
+  order: z.number().int(),
+  createdAt: z.string(),
+});
+
+export type CurriculumDefinitionProjectResponseDto = z.infer<typeof curriculumDefinitionProjectResponseSchema>;
