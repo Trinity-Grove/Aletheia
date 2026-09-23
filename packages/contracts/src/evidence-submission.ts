@@ -24,6 +24,10 @@ export const evidenceSubmissionCompetencyLinkSchema = z.object({
 const createEvidenceSubmissionBaseSchema = z.object({
   learnerId: z.string().uuid(),
   evidenceTypeId: z.string().uuid(),
+  // Which interdisciplinary project (if any) produced this evidence
+  // (issue #96 section 8: "pode gerar múltiplas evidências") -- most
+  // evidence is not project work, so this stays optional.
+  projectDefinitionId: z.string().uuid().nullish(),
   competencies: z.array(evidenceSubmissionCompetencyLinkSchema).min(1),
   textContent: z.string().max(20000).nullish(),
   fileUrl: z.string().url().nullish(),
@@ -89,6 +93,7 @@ export const evidenceSubmissionResponseSchema = z.object({
   familyId: z.string().uuid(),
   learnerId: z.string().uuid(),
   evidenceTypeId: z.string().uuid(),
+  projectDefinitionId: z.string().uuid().nullable().optional(),
   authorId: z.string().uuid(),
   textContent: z.string().nullable().optional(),
   fileUrl: z.string().nullable().optional(),

@@ -17,6 +17,11 @@ import type {
   ActivityDefinition,
   ActivityDefinitionCompetency,
   ActivityDefinitionEvidenceType,
+  ProjectDefinition,
+  ProjectDefinitionDomain,
+  ProjectDefinitionCompetency,
+  ProjectDefinitionMilestone,
+  CurriculumDefinitionProject,
   TheologicalTraditionDefinition,
   TheologicalPositionDefinition,
   ProgressionPolicy,
@@ -55,6 +60,16 @@ import type {
   ActivityDefinitionCompetencyResponseDto,
   AddActivityDefinitionEvidenceTypeOutput,
   ActivityDefinitionEvidenceTypeResponseDto,
+  CreateProjectDefinitionOutput,
+  ProjectDefinitionResponseDto,
+  AddProjectDefinitionDomainOutput,
+  ProjectDefinitionDomainResponseDto,
+  AddProjectDefinitionCompetencyOutput,
+  ProjectDefinitionCompetencyResponseDto,
+  AddProjectDefinitionMilestoneOutput,
+  ProjectDefinitionMilestoneResponseDto,
+  AddCurriculumDefinitionProjectOutput,
+  CurriculumDefinitionProjectResponseDto,
   CreateTheologicalTraditionDefinitionOutput,
   TheologicalTraditionDefinitionResponseDto,
   CreateTheologicalPositionDefinitionOutput,
@@ -403,6 +418,102 @@ export class DefinitionsService {
     return rows.map((row) => this.toActivityDefinitionEvidenceTypeDto(row));
   }
 
+  async addCurriculumDefinitionProject(
+    curriculumDefinitionId: string,
+    dto: AddCurriculumDefinitionProjectOutput,
+  ): Promise<CurriculumDefinitionProjectResponseDto> {
+    await this.requireCurriculumDefinition(curriculumDefinitionId);
+    const row = await this.withWriteErrorMapping(() =>
+      this.repository.addCurriculumDefinitionProject(curriculumDefinitionId, dto),
+    );
+    return this.toCurriculumDefinitionProjectDto(row);
+  }
+
+  async listCurriculumDefinitionProjects(
+    curriculumDefinitionId: string,
+  ): Promise<CurriculumDefinitionProjectResponseDto[]> {
+    await this.requireCurriculumDefinition(curriculumDefinitionId);
+    const rows = await this.repository.listCurriculumDefinitionProjects(curriculumDefinitionId);
+    return rows.map((row) => this.toCurriculumDefinitionProjectDto(row));
+  }
+
+  // Project Definition (issue #96 section 8): an interdisciplinary
+  // project mapping multiple domains and competencies at once -- same
+  // admin CRUD shape as ActivityDefinition, plus milestones.
+  async createProjectDefinition(dto: CreateProjectDefinitionOutput): Promise<ProjectDefinitionResponseDto> {
+    const row = await this.withWriteErrorMapping(() => this.repository.createProjectDefinition(dto));
+    return this.toProjectDefinitionDto(row);
+  }
+
+  async listProjectDefinitions(): Promise<ProjectDefinitionResponseDto[]> {
+    const rows = await this.repository.listProjectDefinitions();
+    return rows.map((row) => this.toProjectDefinitionDto(row));
+  }
+
+  async transitionProjectDefinitionStatus(
+    id: string,
+    status: DefinitionStatus,
+  ): Promise<ProjectDefinitionResponseDto> {
+    const existing = await this.repository.findProjectDefinitionById(id);
+    if (!existing) throw new NotFoundException('Project definition not found.');
+    const update = computeStatusTransition(existing.status as DefinitionStatus, status);
+    const row = await this.repository.updateProjectDefinitionStatus(id, update);
+    return this.toProjectDefinitionDto(row);
+  }
+
+  async addProjectDefinitionDomain(
+    projectId: string,
+    dto: AddProjectDefinitionDomainOutput,
+  ): Promise<ProjectDefinitionDomainResponseDto> {
+    await this.requireProjectDefinition(projectId);
+    const row = await this.withWriteErrorMapping(() =>
+      this.repository.addProjectDefinitionDomain(projectId, dto),
+    );
+    return this.toProjectDefinitionDomainDto(row);
+  }
+
+  async listProjectDefinitionDomains(projectId: string): Promise<ProjectDefinitionDomainResponseDto[]> {
+    await this.requireProjectDefinition(projectId);
+    const rows = await this.repository.listProjectDefinitionDomains(projectId);
+    return rows.map((row) => this.toProjectDefinitionDomainDto(row));
+  }
+
+  async addProjectDefinitionCompetency(
+    projectId: string,
+    dto: AddProjectDefinitionCompetencyOutput,
+  ): Promise<ProjectDefinitionCompetencyResponseDto> {
+    await this.requireProjectDefinition(projectId);
+    const row = await this.withWriteErrorMapping(() =>
+      this.repository.addProjectDefinitionCompetency(projectId, dto),
+    );
+    return this.toProjectDefinitionCompetencyDto(row);
+  }
+
+  async listProjectDefinitionCompetencies(
+    projectId: string,
+  ): Promise<ProjectDefinitionCompetencyResponseDto[]> {
+    await this.requireProjectDefinition(projectId);
+    const rows = await this.repository.listProjectDefinitionCompetencies(projectId);
+    return rows.map((row) => this.toProjectDefinitionCompetencyDto(row));
+  }
+
+  async addProjectDefinitionMilestone(
+    projectId: string,
+    dto: AddProjectDefinitionMilestoneOutput,
+  ): Promise<ProjectDefinitionMilestoneResponseDto> {
+    await this.requireProjectDefinition(projectId);
+    const row = await this.withWriteErrorMapping(() =>
+      this.repository.addProjectDefinitionMilestone(projectId, dto),
+    );
+    return this.toProjectDefinitionMilestoneDto(row);
+  }
+
+  async listProjectDefinitionMilestones(projectId: string): Promise<ProjectDefinitionMilestoneResponseDto[]> {
+    await this.requireProjectDefinition(projectId);
+    const rows = await this.repository.listProjectDefinitionMilestones(projectId);
+    return rows.map((row) => this.toProjectDefinitionMilestoneDto(row));
+  }
+
   // Theological Tradition Definition
   async createTheologicalTraditionDefinition(
     dto: CreateTheologicalTraditionDefinitionOutput,
@@ -510,6 +621,11 @@ export class DefinitionsService {
   private async requireActivityDefinition(id: string): Promise<void> {
     const existing = await this.repository.findActivityDefinitionById(id);
     if (!existing) throw new NotFoundException('Activity definition not found.');
+  }
+
+  private async requireProjectDefinition(id: string): Promise<void> {
+    const existing = await this.repository.findProjectDefinitionById(id);
+    if (!existing) throw new NotFoundException('Project definition not found.');
   }
 
   // Join-table and cross-referencing writes can fail on a missing FK
@@ -713,6 +829,73 @@ export class DefinitionsService {
       id: row.id,
       curriculumDefinitionId: row.curriculumDefinitionId,
       rubricId: row.rubricId,
+      createdAt: row.createdAt.toISOString(),
+    };
+  }
+
+  private toCurriculumDefinitionProjectDto(
+    row: CurriculumDefinitionProject,
+  ): CurriculumDefinitionProjectResponseDto {
+    return {
+      id: row.id,
+      curriculumDefinitionId: row.curriculumDefinitionId,
+      projectId: row.projectId,
+      required: row.required,
+      order: row.order,
+      createdAt: row.createdAt.toISOString(),
+    };
+  }
+
+  private toProjectDefinitionDto(row: ProjectDefinition): ProjectDefinitionResponseDto {
+    return {
+      id: row.id,
+      code: row.code,
+      version: row.version,
+      status: row.status as DefinitionStatus,
+      schemaVersion: row.schemaVersion,
+      name: row.name,
+      description: row.description,
+      estimatedDurationDays: row.estimatedDurationDays,
+      rubricDefinitionId: row.rubricDefinitionId,
+      metadata: row.metadata as Record<string, unknown>,
+      createdAt: row.createdAt.toISOString(),
+      publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,
+      deprecatedAt: row.deprecatedAt ? row.deprecatedAt.toISOString() : null,
+    };
+  }
+
+  private toProjectDefinitionDomainDto(row: ProjectDefinitionDomain): ProjectDefinitionDomainResponseDto {
+    return {
+      id: row.id,
+      projectId: row.projectId,
+      domainId: row.domainId,
+      createdAt: row.createdAt.toISOString(),
+    };
+  }
+
+  private toProjectDefinitionCompetencyDto(
+    row: ProjectDefinitionCompetency,
+  ): ProjectDefinitionCompetencyResponseDto {
+    return {
+      id: row.id,
+      projectId: row.projectId,
+      competencyId: row.competencyId,
+      required: row.required,
+      order: row.order,
+      createdAt: row.createdAt.toISOString(),
+    };
+  }
+
+  private toProjectDefinitionMilestoneDto(
+    row: ProjectDefinitionMilestone,
+  ): ProjectDefinitionMilestoneResponseDto {
+    return {
+      id: row.id,
+      projectId: row.projectId,
+      code: row.code,
+      title: row.title,
+      description: row.description,
+      order: row.order,
       createdAt: row.createdAt.toISOString(),
     };
   }

@@ -42,10 +42,15 @@ export class EvidenceSubmissionService {
       );
     }
 
+    if (dto.projectDefinitionId && !(await this.repository.projectDefinitionExists(dto.projectDefinitionId))) {
+      throw new BadRequestException('Referenced project definition does not exist.');
+    }
+
     const created = await this.repository.create({
       familyId,
       learnerId: dto.learnerId,
       evidenceTypeId: dto.evidenceTypeId,
+      projectDefinitionId: dto.projectDefinitionId,
       authorId,
       textContent: dto.textContent,
       fileUrl: dto.fileUrl,
@@ -98,6 +103,7 @@ export class EvidenceSubmissionService {
       familyId: row.familyId,
       learnerId: row.learnerId,
       evidenceTypeId: row.evidenceTypeId,
+      projectDefinitionId: row.projectDefinitionId,
       authorId: row.authorId,
       textContent: row.textContent,
       fileUrl: row.fileUrl,

@@ -17,6 +17,11 @@ import {
   createActivityDefinitionSchema,
   addActivityDefinitionCompetencySchema,
   addActivityDefinitionEvidenceTypeSchema,
+  addCurriculumDefinitionProjectSchema,
+  createProjectDefinitionSchema,
+  addProjectDefinitionDomainSchema,
+  addProjectDefinitionCompetencySchema,
+  addProjectDefinitionMilestoneSchema,
   createTheologicalTraditionDefinitionSchema,
   createTheologicalPositionDefinitionSchema,
   createProgressionPolicySchema,
@@ -54,6 +59,16 @@ import {
   type ActivityDefinitionCompetencyResponseDto,
   type AddActivityDefinitionEvidenceTypeOutput,
   type ActivityDefinitionEvidenceTypeResponseDto,
+  type AddCurriculumDefinitionProjectOutput,
+  type CurriculumDefinitionProjectResponseDto,
+  type CreateProjectDefinitionOutput,
+  type ProjectDefinitionResponseDto,
+  type AddProjectDefinitionDomainOutput,
+  type ProjectDefinitionDomainResponseDto,
+  type AddProjectDefinitionCompetencyOutput,
+  type ProjectDefinitionCompetencyResponseDto,
+  type AddProjectDefinitionMilestoneOutput,
+  type ProjectDefinitionMilestoneResponseDto,
   type CreateTheologicalTraditionDefinitionOutput,
   type TheologicalTraditionDefinitionResponseDto,
   type CreateTheologicalPositionDefinitionOutput,
@@ -371,6 +386,24 @@ export class DefinitionsController {
     return this.definitionsService.listCurriculumDefinitionActivities(curriculumId);
   }
 
+  @Post('curriculum-definitions/:curriculumId/projects')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Link a project definition to a curriculum definition' })
+  async addCurriculumDefinitionProject(
+    @Param('curriculumId') curriculumId: string,
+    @Body(new ZodValidationPipe(addCurriculumDefinitionProjectSchema)) dto: AddCurriculumDefinitionProjectOutput,
+  ): Promise<CurriculumDefinitionProjectResponseDto> {
+    return this.definitionsService.addCurriculumDefinitionProject(curriculumId, dto);
+  }
+
+  @Get('curriculum-definitions/:curriculumId/projects')
+  @ApiOperation({ summary: 'List project definitions linked to a curriculum definition' })
+  async listCurriculumDefinitionProjects(
+    @Param('curriculumId') curriculumId: string,
+  ): Promise<CurriculumDefinitionProjectResponseDto[]> {
+    return this.definitionsService.listCurriculumDefinitionProjects(curriculumId);
+  }
+
   // Activity Definitions
   @Post('activity-definitions')
   @HttpCode(HttpStatus.CREATED)
@@ -431,6 +464,85 @@ export class DefinitionsController {
     @Param('activityId') activityId: string,
   ): Promise<ActivityDefinitionEvidenceTypeResponseDto[]> {
     return this.definitionsService.listActivityDefinitionEvidenceTypes(activityId);
+  }
+
+  // Project Definitions (issue #96 section 8)
+  @Post('project-definitions')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create an interdisciplinary project definition' })
+  async createProjectDefinition(
+    @Body(new ZodValidationPipe(createProjectDefinitionSchema)) dto: CreateProjectDefinitionOutput,
+  ): Promise<ProjectDefinitionResponseDto> {
+    return this.definitionsService.createProjectDefinition(dto);
+  }
+
+  @Get('project-definitions')
+  @ApiOperation({ summary: 'List project definitions' })
+  async listProjectDefinitions(): Promise<ProjectDefinitionResponseDto[]> {
+    return this.definitionsService.listProjectDefinitions();
+  }
+
+  @Patch('project-definitions/:id/status')
+  @ApiOperation({ summary: 'Transition a project definition status' })
+  async transitionProjectDefinitionStatus(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(transitionDefinitionStatusSchema)) dto: TransitionDefinitionStatusDto,
+  ): Promise<ProjectDefinitionResponseDto> {
+    return this.definitionsService.transitionProjectDefinitionStatus(id, dto.status);
+  }
+
+  @Post('project-definitions/:projectId/domains')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Link a learning domain to a project definition' })
+  async addProjectDefinitionDomain(
+    @Param('projectId') projectId: string,
+    @Body(new ZodValidationPipe(addProjectDefinitionDomainSchema)) dto: AddProjectDefinitionDomainOutput,
+  ): Promise<ProjectDefinitionDomainResponseDto> {
+    return this.definitionsService.addProjectDefinitionDomain(projectId, dto);
+  }
+
+  @Get('project-definitions/:projectId/domains')
+  @ApiOperation({ summary: 'List learning domains linked to a project definition' })
+  async listProjectDefinitionDomains(
+    @Param('projectId') projectId: string,
+  ): Promise<ProjectDefinitionDomainResponseDto[]> {
+    return this.definitionsService.listProjectDefinitionDomains(projectId);
+  }
+
+  @Post('project-definitions/:projectId/competencies')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Link a competency definition to a project definition' })
+  async addProjectDefinitionCompetency(
+    @Param('projectId') projectId: string,
+    @Body(new ZodValidationPipe(addProjectDefinitionCompetencySchema)) dto: AddProjectDefinitionCompetencyOutput,
+  ): Promise<ProjectDefinitionCompetencyResponseDto> {
+    return this.definitionsService.addProjectDefinitionCompetency(projectId, dto);
+  }
+
+  @Get('project-definitions/:projectId/competencies')
+  @ApiOperation({ summary: 'List competency definitions linked to a project definition' })
+  async listProjectDefinitionCompetencies(
+    @Param('projectId') projectId: string,
+  ): Promise<ProjectDefinitionCompetencyResponseDto[]> {
+    return this.definitionsService.listProjectDefinitionCompetencies(projectId);
+  }
+
+  @Post('project-definitions/:projectId/milestones')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Add a milestone to a project definition' })
+  async addProjectDefinitionMilestone(
+    @Param('projectId') projectId: string,
+    @Body(new ZodValidationPipe(addProjectDefinitionMilestoneSchema)) dto: AddProjectDefinitionMilestoneOutput,
+  ): Promise<ProjectDefinitionMilestoneResponseDto> {
+    return this.definitionsService.addProjectDefinitionMilestone(projectId, dto);
+  }
+
+  @Get('project-definitions/:projectId/milestones')
+  @ApiOperation({ summary: 'List milestones for a project definition' })
+  async listProjectDefinitionMilestones(
+    @Param('projectId') projectId: string,
+  ): Promise<ProjectDefinitionMilestoneResponseDto[]> {
+    return this.definitionsService.listProjectDefinitionMilestones(projectId);
   }
 
   // Theological Tradition Definitions

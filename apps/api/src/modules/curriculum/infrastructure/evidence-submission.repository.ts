@@ -10,6 +10,7 @@ export interface CreateEvidenceSubmissionInput {
   familyId: string;
   learnerId: string;
   evidenceTypeId: string;
+  projectDefinitionId?: string | null | undefined;
   authorId: string;
   textContent?: string | null | undefined;
   fileUrl?: string | null | undefined;
@@ -50,12 +51,18 @@ export class EvidenceSubmissionRepository {
     return new Map(rows.map((row) => [row.id, row.version]));
   }
 
+  async projectDefinitionExists(id: string): Promise<boolean> {
+    const row = await this.prisma.projectDefinition.findUnique({ where: { id }, select: { id: true } });
+    return row !== null;
+  }
+
   async create(input: CreateEvidenceSubmissionInput): Promise<EvidenceSubmissionWithCompetencies> {
     return this.prisma.evidenceSubmission.create({
       data: {
         familyId: input.familyId,
         learnerId: input.learnerId,
         evidenceTypeId: input.evidenceTypeId,
+        projectDefinitionId: input.projectDefinitionId ?? null,
         authorId: input.authorId,
         textContent: input.textContent ?? null,
         fileUrl: input.fileUrl ?? null,

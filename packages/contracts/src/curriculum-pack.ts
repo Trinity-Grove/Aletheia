@@ -23,6 +23,7 @@ export const CURRICULUM_PACK_DEFINITION_TYPES = [
   'RubricDefinition',
   'EvidenceTypeDefinition',
   'ActivityDefinition',
+  'ProjectDefinition',
   'CurriculumDefinition',
   'PedagogicalModelDefinition',
   'TheologicalTraditionDefinition',
