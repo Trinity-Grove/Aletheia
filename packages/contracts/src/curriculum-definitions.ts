@@ -30,6 +30,10 @@ export type DefinitionStatus = z.infer<typeof definitionStatusSchema>;
 // CRUD surface).
 export const transitionDefinitionStatusSchema = z.object({
   status: definitionStatusSchema,
+  // Optional -- issue #96 section 32: "motivo da alteração quando
+  // necessário". Recorded in the audit log's metadata, never required
+  // (most transitions are self-explanatory, e.g. DRAFT -> PUBLISHED).
+  reason: z.string().max(2000).nullish(),
 });
 
 export type TransitionDefinitionStatusDto = z.infer<typeof transitionDefinitionStatusSchema>;

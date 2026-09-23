@@ -30,6 +30,7 @@ export const ROLLBACK_ELIGIBLE_ENTITY_TYPES = [
   'EvidenceTypeDefinition',
   'CurriculumDefinition',
   'ActivityDefinition',
+  'ProjectDefinition',
   'TheologicalTraditionDefinition',
   'TheologicalPositionDefinition',
   'ProgressionPolicy',
@@ -80,7 +81,12 @@ export type MigrateCompetencyTrackingReferencesResultDto = z.infer<
   typeof migrateCompetencyTrackingReferencesResultSchema
 >;
 
-export const definitionVersionOperationTypeSchema = z.enum(['MIGRATE_REFERENCES', 'ROLLBACK']);
+export const definitionVersionOperationTypeSchema = z.enum([
+  'MIGRATE_REFERENCES',
+  'ROLLBACK',
+  'CREATE',
+  'STATUS_TRANSITION',
+]);
 export type DefinitionVersionOperationType = z.infer<typeof definitionVersionOperationTypeSchema>;
 
 export const definitionVersionOperationLogResponseSchema = z.object({
