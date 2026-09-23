@@ -133,6 +133,7 @@ describe('Curriculum Web Components', () => {
             objectives={mockObjectives}
             activeLearner={mockLearner}
             learnerPlan={mockPlan}
+            templateCatalog={mockCatalog}
             onApplyTemplate={vi.fn()}
             onCreateSubject={vi.fn()}
             onUpdateSubject={vi.fn()}
@@ -146,7 +147,9 @@ describe('Curriculum Web Components', () => {
       );
 
       expect(screen.getByText('Currículo de Samuca')).toBeDefined();
-      expect(screen.getByTestId('pedagogical-framework-badge').textContent).toContain('Clássica (Trívio)');
+      // The badge shows the catalog's real name for the code, not a
+      // hardcoded string duplicated from a switch.
+      expect(screen.getByTestId('pedagogical-framework-badge').textContent).toContain('Educação Clássica (Trívio)');
       expect(screen.getByTestId('overall-progress-text').textContent).toContain('1 de 2 objetivos concluídos (50%)');
       expect(screen.getByTestId(`subject-card-${mockSubject.id}`)).toBeDefined();
       expect(screen.getByTestId('open-template-modal-btn')).toBeDefined();
@@ -165,6 +168,7 @@ describe('Curriculum Web Components', () => {
             objectives={[]}
             activeLearner={mockLearner}
             learnerPlan={null}
+            templateCatalog={mockCatalog}
             onApplyTemplate={vi.fn()}
             onCreateSubject={vi.fn()}
             onUpdateSubject={vi.fn()}
@@ -178,6 +182,71 @@ describe('Curriculum Web Components', () => {
       );
 
       expect(screen.getByTestId('curriculum-empty-state')).toBeDefined();
+    });
+
+    // Regression (issue #96, anti-hardcode): before this fix, any
+    // framework the old switch didn't special-case -- Montessori, Unit
+    // Studies, Project Based, Guided Unschooling, Eclético, or any future
+    // catalog-only model -- silently rendered as "Personalizado", as if
+    // the family had never chosen a framework at all.
+    it('shows the catalog name for a framework the legacy switch never special-cased', () => {
+      render(
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <CurriculumView
+            familyId="fam-1"
+            years={[mockYear]}
+            activeYearId={mockYear.id}
+            onSelectYear={vi.fn()}
+            subjects={[mockSubject]}
+            objectives={mockObjectives}
+            activeLearner={mockLearner}
+            learnerPlan={{ ...mockPlan, pedagogicalFramework: 'MONTESSORI' }}
+            templateCatalog={mockCatalog}
+            onApplyTemplate={vi.fn()}
+            onCreateSubject={vi.fn()}
+            onUpdateSubject={vi.fn()}
+            onArchiveSubject={vi.fn()}
+            onCreateObjective={vi.fn()}
+            onUpdateObjective={vi.fn()}
+            onToggleObjectiveStatus={vi.fn()}
+            onDeleteObjective={vi.fn()}
+          />
+        </AuthProvider>
+      );
+
+      const badge = screen.getByTestId('pedagogical-framework-badge').textContent;
+      expect(badge).toContain('Montessori');
+      expect(badge).not.toContain('Personalizado');
+    });
+
+    it('falls back to the raw code when the catalog has no matching entry, never "Personalizado"', () => {
+      render(
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <CurriculumView
+            familyId="fam-1"
+            years={[mockYear]}
+            activeYearId={mockYear.id}
+            onSelectYear={vi.fn()}
+            subjects={[mockSubject]}
+            objectives={mockObjectives}
+            activeLearner={mockLearner}
+            learnerPlan={mockPlan}
+            templateCatalog={[]}
+            onApplyTemplate={vi.fn()}
+            onCreateSubject={vi.fn()}
+            onUpdateSubject={vi.fn()}
+            onArchiveSubject={vi.fn()}
+            onCreateObjective={vi.fn()}
+            onUpdateObjective={vi.fn()}
+            onToggleObjectiveStatus={vi.fn()}
+            onDeleteObjective={vi.fn()}
+          />
+        </AuthProvider>
+      );
+
+      const badge = screen.getByTestId('pedagogical-framework-badge').textContent;
+      expect(badge).toContain('CLASSICAL_TRIVIUM');
+      expect(badge).not.toContain('Personalizado');
     });
   });
 
