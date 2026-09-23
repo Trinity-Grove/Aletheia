@@ -1,9 +1,16 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PortfolioRepository } from '../infrastructure/portfolio.repository.js';
 import { ObjectStorageService } from '../../../platform/storage/object-storage.service.js';
 import { AV_SCANNER, type AvScanner } from '../../../platform/storage/av-scanner.js';
+import {
+  EVIDENCE_SUBMISSION_PUBLIC_API,
+  type EvidenceSubmissionPublicApi,
+} from '../../curriculum/application/public-api.js';
+import { mapEvidenceTypeCodeToLegacyType } from './evidence-type-code.mapper.js';
 import type {
   CreatePortfolioItemDto,
+  CreatePortfolioItemFromEvidenceSubmissionOutput,
   PortfolioDownloadUrlResponseDto,
   PortfolioItemFilterDto,
   PortfolioItemResponseDto,
@@ -18,10 +25,62 @@ export class PortfolioService {
     private readonly portfolioRepo: PortfolioRepository,
     private readonly objectStorage: ObjectStorageService,
     @Inject(AV_SCANNER) private readonly avScanner: AvScanner,
+    @Inject(EVIDENCE_SUBMISSION_PUBLIC_API)
+    private readonly evidenceSubmissionApi: EvidenceSubmissionPublicApi,
   ) {}
 
   async createItem(familyId: string, dto: CreatePortfolioItemDto): Promise<PortfolioItemResponseDto> {
     const item = await this.portfolioRepo.create(familyId, dto);
+    return item.toResponseDto();
+  }
+
+  // Issue #230: promotes a validated EvidenceSubmission (the
+  // ActivityDefinition/ProjectDefinition-catalog evidence system) into
+  // this family's portfolio -- an explicit action, never an automatic
+  // trigger on validation, matching this codebase's "no implicit writes"
+  // discipline for the Definition/Version catalog.
+  async createItemFromEvidenceSubmission(
+    familyId: string,
+    evidenceSubmissionId: string,
+    dto: CreatePortfolioItemFromEvidenceSubmissionOutput,
+  ): Promise<PortfolioItemResponseDto> {
+    const source = await this.evidenceSubmissionApi.getEvidenceSubmissionForPortfolio(
+      familyId,
+      evidenceSubmissionId,
+    );
+    if (!source) {
+      throw new NotFoundException('Evidence submission not found.');
+    }
+    if (source.validationStatus !== 'VALIDATED') {
+      throw new BadRequestException('Only a validated evidence submission can be added to the portfolio.');
+    }
+
+    let item;
+    try {
+      item = await this.portfolioRepo.createFromEvidenceSubmission(familyId, {
+        learnerId: source.learnerId,
+        evidenceSubmissionId: source.id,
+        type: mapEvidenceTypeCodeToLegacyType(source.evidenceTypeCode),
+        title: dto.title,
+        description: dto.description ?? null,
+        academicYearId: dto.academicYearId ?? null,
+        subjectId: dto.subjectId ?? null,
+        fileUrl: source.fileUrl,
+        textContent: source.textContent,
+        mimeType: source.mimeType,
+        fileSizeBytes: source.fileSizeBytes,
+        checksumSha256: source.checksumSha256,
+        capturedAt: source.createdAt.slice(0, 10),
+        isHighlight: dto.isHighlight,
+        tags: dto.tags,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new BadRequestException('This evidence submission has already been added to the portfolio.');
+      }
+      throw error;
+    }
+
     return item.toResponseDto();
   }
 

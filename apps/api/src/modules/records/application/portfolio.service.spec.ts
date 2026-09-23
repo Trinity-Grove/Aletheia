@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { PortfolioService } from './portfolio.service.js';
 import { PortfolioItemEntity } from '../domain/portfolio-item.entity.js';
 
@@ -6,6 +7,7 @@ describe('PortfolioService', () => {
   let portfolioRepo: any;
   let objectStorage: any;
   let avScanner: any;
+  let evidenceSubmissionApi: any;
 
   const FAMILY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
   const LEARNER_ID = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
@@ -101,6 +103,36 @@ describe('PortfolioService', () => {
           ),
         ),
       ),
+      createFromEvidenceSubmission: jest.fn().mockImplementation((familyId, input) =>
+        Promise.resolve(
+          new PortfolioItemEntity(
+            ITEM_ID,
+            familyId,
+            input.learnerId,
+            null,
+            input.academicYearId ?? null,
+            input.subjectId ?? null,
+            input.title,
+            input.description ?? null,
+            input.type,
+            input.fileUrl ?? null,
+            input.textContent ?? null,
+            input.mimeType ?? null,
+            input.fileSizeBytes ?? null,
+            null,
+            input.checksumSha256 ?? null,
+            null,
+            input.capturedAt ? new Date(input.capturedAt) : null,
+            input.isHighlight ?? false,
+            input.tags ?? [],
+            new Date(),
+            new Date(),
+            'Alice Smith',
+            null,
+            input.evidenceSubmissionId,
+          ),
+        ),
+      ),
       softDelete: jest.fn().mockResolvedValue(true),
       savePendingUpload: jest.fn().mockResolvedValue(true),
       confirmUpload: jest.fn().mockImplementation((familyId, id, data) =>
@@ -153,7 +185,11 @@ describe('PortfolioService', () => {
       scan: jest.fn().mockResolvedValue({ clean: true }),
     };
 
-    service = new PortfolioService(portfolioRepo, objectStorage, avScanner);
+    evidenceSubmissionApi = {
+      getEvidenceSubmissionForPortfolio: jest.fn(),
+    };
+
+    service = new PortfolioService(portfolioRepo, objectStorage, avScanner, evidenceSubmissionApi);
   });
 
   it('creates a portfolio item successfully', async () => {
@@ -226,6 +262,87 @@ describe('PortfolioService', () => {
     });
     expect(res.title).toBe('Updated Artwork');
     expect(res.isHighlight).toBe(false);
+  });
+
+  describe('createItemFromEvidenceSubmission', () => {
+    const EVIDENCE_SUBMISSION_ID = 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44';
+
+    const validatedSource = {
+      id: EVIDENCE_SUBMISSION_ID,
+      familyId: FAMILY_ID,
+      learnerId: LEARNER_ID,
+      evidenceTypeCode: 'PHOTO',
+      validationStatus: 'VALIDATED',
+      textContent: null,
+      fileUrl: 'https://storage.example.com/evidence/garden.jpg',
+      storageKey: null,
+      mimeType: 'image/jpeg',
+      fileSizeBytes: 4096,
+      checksumSha256: 'b'.repeat(64),
+      createdAt: '2026-05-10T12:00:00.000Z',
+    };
+
+    it('promotes a validated evidence submission, mapping its type code to the legacy enum', async () => {
+      evidenceSubmissionApi.getEvidenceSubmissionForPortfolio.mockResolvedValue(validatedSource);
+
+      const res = await service.createItemFromEvidenceSubmission(FAMILY_ID, EVIDENCE_SUBMISSION_ID, {
+        title: 'Horta comunitária',
+        isHighlight: false,
+        tags: [],
+      });
+
+      expect(res.title).toBe('Horta comunitária');
+      expect(res.type).toBe('IMAGE');
+      expect(res.evidenceSubmissionId).toBe(EVIDENCE_SUBMISSION_ID);
+      expect(portfolioRepo.createFromEvidenceSubmission).toHaveBeenCalledWith(
+        FAMILY_ID,
+        expect.objectContaining({
+          learnerId: LEARNER_ID,
+          evidenceSubmissionId: EVIDENCE_SUBMISSION_ID,
+          type: 'IMAGE',
+          fileUrl: validatedSource.fileUrl,
+          capturedAt: '2026-05-10',
+        }),
+      );
+    });
+
+    it('throws NotFoundException when the evidence submission does not exist for this family', async () => {
+      evidenceSubmissionApi.getEvidenceSubmissionForPortfolio.mockResolvedValue(null);
+      await expect(
+        service.createItemFromEvidenceSubmission(FAMILY_ID, 'missing', { title: 'X', isHighlight: false, tags: [] }),
+      ).rejects.toThrow('Evidence submission not found.');
+    });
+
+    it('rejects an evidence submission that has not been validated yet', async () => {
+      evidenceSubmissionApi.getEvidenceSubmissionForPortfolio.mockResolvedValue({
+        ...validatedSource,
+        validationStatus: 'UNVALIDATED',
+      });
+      await expect(
+        service.createItemFromEvidenceSubmission(FAMILY_ID, EVIDENCE_SUBMISSION_ID, {
+          title: 'X',
+          isHighlight: false,
+          tags: [],
+        }),
+      ).rejects.toThrow('Only a validated evidence submission can be added to the portfolio.');
+    });
+
+    it('rejects promoting the same evidence submission twice', async () => {
+      evidenceSubmissionApi.getEvidenceSubmissionForPortfolio.mockResolvedValue(validatedSource);
+      const prismaError = new Prisma.PrismaClientKnownRequestError('duplicate', {
+        code: 'P2002',
+        clientVersion: '6.19.3',
+      });
+      portfolioRepo.createFromEvidenceSubmission.mockRejectedValueOnce(prismaError);
+
+      await expect(
+        service.createItemFromEvidenceSubmission(FAMILY_ID, EVIDENCE_SUBMISSION_ID, {
+          title: 'X',
+          isHighlight: false,
+          tags: [],
+        }),
+      ).rejects.toThrow('This evidence submission has already been added to the portfolio.');
+    });
   });
 
   describe('deleteItem', () => {

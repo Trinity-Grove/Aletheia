@@ -88,6 +88,19 @@ export class EvidenceSubmissionRepository {
     });
   }
 
+  // Issue #230: the evidence type's *code* is what RecordsModule needs
+  // to classify a promoted portfolio item -- it has no reason to know
+  // about EvidenceTypeDefinition's own row id.
+  findByIdWithEvidenceTypeCode(
+    familyId: string,
+    id: string,
+  ): Promise<(EvidenceSubmission & { evidenceType: { code: string } }) | null> {
+    return this.prisma.evidenceSubmission.findFirst({
+      where: { id, familyId },
+      include: { evidenceType: { select: { code: true } } },
+    });
+  }
+
   list(familyId: string, learnerId?: string): Promise<EvidenceSubmissionWithCompetencies[]> {
     const where: Prisma.EvidenceSubmissionWhereInput = { familyId };
     if (learnerId) where.learnerId = learnerId;

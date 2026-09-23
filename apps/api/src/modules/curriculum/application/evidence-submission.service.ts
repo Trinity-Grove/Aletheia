@@ -9,6 +9,7 @@ import {
   type EvidenceSubmissionWithCompetencies,
 } from '../infrastructure/evidence-submission.repository.js';
 import { AchievementRepository } from '../infrastructure/achievement.repository.js';
+import type { EvidenceSubmissionPortfolioSourceDto } from './public-api.js';
 
 // Family-scoped evidence submission workflow (issue #96 Fase 2, section
 // 9). Deliberately NOT wired into LearningObjective/LearningRecord --
@@ -84,6 +85,30 @@ export class EvidenceSubmissionService {
     const row = await this.repository.findById(familyId, id);
     if (!row) throw new NotFoundException('Evidence submission not found.');
     return this.toDto(row);
+  }
+
+  // Issue #230 -- see public-api.ts for why this returns a narrower shape
+  // than getEvidenceSubmission, and null instead of throwing on a miss.
+  async getEvidenceSubmissionForPortfolio(
+    familyId: string,
+    id: string,
+  ): Promise<EvidenceSubmissionPortfolioSourceDto | null> {
+    const row = await this.repository.findByIdWithEvidenceTypeCode(familyId, id);
+    if (!row) return null;
+    return {
+      id: row.id,
+      familyId: row.familyId,
+      learnerId: row.learnerId,
+      evidenceTypeCode: row.evidenceType.code,
+      validationStatus: row.validationStatus,
+      textContent: row.textContent,
+      fileUrl: row.fileUrl,
+      storageKey: row.storageKey,
+      mimeType: row.mimeType,
+      fileSizeBytes: row.fileSizeBytes,
+      checksumSha256: row.checksumSha256,
+      createdAt: row.createdAt.toISOString(),
+    };
   }
 
   async validateEvidenceSubmission(
