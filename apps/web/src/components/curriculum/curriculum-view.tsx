@@ -10,7 +10,7 @@ import type {
   LearnerSummaryDto,
   ObjectiveResponseDto,
   ObjectiveStatus,
-  PedagogicalFramework,
+  PedagogicalModelCatalogEntryDto,
   SubjectResponseDto,
   UpdateObjectiveDto,
   UpdateSubjectDto,
@@ -32,6 +32,11 @@ export interface CurriculumViewProps {
   objectives: ObjectiveResponseDto[];
   activeLearner: LearnerSummaryDto | null;
   learnerPlan: LearnerPlanResponseDto | null;
+  // Published pedagogical model catalog (issue #96 section 2/anti-hardcode):
+  // supplies the human-readable name for learnerPlan.pedagogicalFramework's
+  // code below, so the badge isn't a switch over a closed enum that only
+  // recognizes a handful of codes.
+  templateCatalog: PedagogicalModelCatalogEntryDto[];
   // Any published pedagogical model catalog code, not just the legacy
   // PedagogicalFramework enum (issue #96 section 35) -- see
   // TemplateModal, which fetches the live catalog instead of a hardcoded
@@ -55,6 +60,7 @@ export function CurriculumView({
   objectives,
   activeLearner,
   learnerPlan,
+  templateCatalog,
   onApplyTemplate,
   onCreateSubject,
   onUpdateSubject,
@@ -71,17 +77,16 @@ export function CurriculumView({
   const [selectedSubjectForObjective, setSelectedSubjectForObjective] = useState<SubjectResponseDto | null>(null);
   const [objectiveToEdit, setObjectiveToEdit] = useState<ObjectiveResponseDto | null>(null);
 
-  const getFrameworkLabel = (framework?: PedagogicalFramework) => {
-    switch (framework) {
-      case 'CLASSICAL_TRIVIUM':
-        return 'Clássica (Trívio)';
-      case 'CHARLOTTE_MASON':
-        return 'Charlotte Mason';
-      case 'TRADITIONAL':
-        return 'Tradicional';
-      default:
-        return 'Personalizado';
-    }
+  // Looks up the human-readable name from the published catalog by code,
+  // instead of a switch over a closed enum -- a framework this component
+  // doesn't have a hardcoded case for (Montessori, Unit Studies, Project
+  // Based, Guided Unschooling, Eclético) previously fell through to
+  // "Personalizado" here, silently mislabeling a real, deliberate choice
+  // as if no framework had been chosen at all.
+  const getFrameworkLabel = (framework?: string) => {
+    if (!framework || framework === 'CUSTOM') return 'Personalizado';
+    const catalogEntry = templateCatalog.find((entry) => entry.code === framework);
+    return catalogEntry?.name ?? framework;
   };
 
   const totalObjectives = objectives.length;

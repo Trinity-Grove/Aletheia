@@ -10,6 +10,7 @@ import type {
   LearnerSummaryDto,
   ObjectiveResponseDto,
   ObjectiveStatus,
+  PedagogicalModelCatalogEntryDto,
   SubjectResponseDto,
   UpdateObjectiveDto,
   UpdateSubjectDto,
@@ -27,6 +28,7 @@ export default function CurriculumPage() {
   const [subjects, setSubjects] = useState<SubjectResponseDto[]>([]);
   const [objectives, setObjectives] = useState<ObjectiveResponseDto[]>([]);
   const [learnerPlan, setLearnerPlan] = useState<LearnerPlanResponseDto | null>(null);
+  const [templateCatalog, setTemplateCatalog] = useState<PedagogicalModelCatalogEntryDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -94,6 +96,19 @@ export default function CurriculumPage() {
           setSubjects(sData);
         } else {
           setLoadError("Não foi possível carregar as disciplinas.");
+        }
+
+        // Load the published pedagogical model catalog (issue #96 section
+        // 2/anti-hardcode) -- gives the badge below a real name per
+        // framework code instead of a hardcoded switch that only knows
+        // 3 of the 9 possible codes. Best-effort: an empty catalog just
+        // falls back to the raw code, never blocks the page.
+        const catalogRes = await fetch(
+          `/api/v1/families/${storedFamilyId}/curriculum/templates/catalog`,
+          { credentials: 'include' },
+        );
+        if (catalogRes.ok) {
+          setTemplateCatalog(await catalogRes.json());
         }
       } catch {
         setLoadError("Não foi possível carregar o currículo. Verifique sua conexão.");
@@ -305,6 +320,7 @@ export default function CurriculumPage() {
           objectives={objectives}
           activeLearner={activeLearner}
           learnerPlan={learnerPlan}
+          templateCatalog={templateCatalog}
           onApplyTemplate={handleApplyTemplate}
           onCreateSubject={handleCreateSubject}
           onUpdateSubject={handleUpdateSubject}
