@@ -1952,6 +1952,8 @@ enum LearnerCompetencyTrackingStatus {
 enum DefinitionVersionOperationType {
   MIGRATE_REFERENCES
   ROLLBACK
+  CREATE
+  STATUS_TRANSITION
 
   @@map("definition_version_operation_types")
 }
