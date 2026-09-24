@@ -13,39 +13,64 @@ import type {
 const MERCADOPAGO_API_BASE = 'https://api.mercadopago.com';
 
 // Real Mercado Pago integration (issue: "assinatura com Mercado Pago e
-// checkout transparente para doações"). Two products:
+// checkout transparente para doações"). Two products, deliberately on
+// TWO SEPARATE Mercado Pago applications (own credentials, own webhook
+// secret each) -- the donations app ("aletheiaphos") handles one-time
+// PIX; a second, dedicated application handles recurring Subscriptions.
+// Each operation below picks the token/secret pair for the app it
+// actually belongs to; nothing here ever mixes the two.
 //
 // - One-time donations -> Checkout Transparente via the Orders API
-//   (POST /v1/orders). This is Mercado Pago's current-generation
-//   transparent-checkout endpoint; the older /v1/payments endpoint still
-//   works but is feature-frozen (security/stability fixes only) per MP's
-//   own migration notice, so new integrations should use Orders.
-// - Recurring monthly support -> Subscriptions (POST /preapproval),
-//   using the "pending payments" variant (`status: "pending"`, no
-//   `card_token_id`): this codebase collects no card token client-side
-//   (no Bricks/CardForm), so the payer completes their card details on
-//   Mercado Pago's own hosted page. `createSubscriptionIntent` returns
-//   that hosted-checkout link so the frontend can redirect there.
+//   (POST /v1/orders), on the donations app. This is Mercado Pago's
+//   current-generation transparent-checkout endpoint; the older
+//   /v1/payments endpoint still works but is feature-frozen
+//   (security/stability fixes only) per MP's own migration notice, so a
+//   new integration targets Orders.
+// - Recurring monthly support -> Subscriptions (POST /preapproval), on
+//   the subscriptions app, using the "pending payments" variant
+//   (`status: "pending"`, no `card_token_id`): this codebase collects no
+//   card token client-side (no Bricks/CardForm), so the payer completes
+//   their card details on Mercado Pago's own hosted page.
+//   `createSubscriptionIntent` returns that hosted-checkout link so the
+//   frontend can redirect there.
 //
 // Webhook signature verification follows MP's documented manifest
 // exactly (see parseWebhook below) -- this is the one part of an
 // integration where guessing the format silently breaks security, so
 // every literal string here is transcribed from MP's own notifications
-// docs, not reconstructed from memory.
+// docs, not reconstructed from memory. Which secret to verify against is
+// picked by the notification's own topic/type (subscription_* -> the
+// subscriptions app's secret, everything else -> the donations app's),
+// never by which URL path the request arrived on -- keeps the two apps'
+// credentials correctly scoped even if both webhooks ever shared one
+// endpoint.
 @Injectable()
 export class MercadoPagoDonationGateway implements DonationGateway {
   private readonly logger = new Logger(MercadoPagoDonationGateway.name);
-  private readonly accessToken?: string | undefined;
-  private readonly webhookSecret?: string | undefined;
+  private readonly donationsAccessToken?: string | undefined;
+  private readonly donationsWebhookSecret?: string | undefined;
+  // Falls back to the donations app's credentials when unset, so a
+  // single-application local/test setup (one token for everything)
+  // keeps working without every caller having to configure two apps.
+  private readonly subscriptionsAccessToken?: string | undefined;
+  private readonly subscriptionsWebhookSecret?: string | undefined;
   private readonly isProduction: boolean;
 
   constructor(@Optional() private readonly config?: ConfigService) {
-    this.accessToken =
+    this.donationsAccessToken =
       this.config?.get('MERCADOPAGO_ACCESS_TOKEN') ??
       process.env['MERCADOPAGO_ACCESS_TOKEN'];
-    this.webhookSecret =
+    this.donationsWebhookSecret =
       this.config?.get('MERCADOPAGO_WEBHOOK_SECRET') ??
       process.env['MERCADOPAGO_WEBHOOK_SECRET'];
+    this.subscriptionsAccessToken =
+      this.config?.get('MERCADOPAGO_SUBSCRIPTIONS_ACCESS_TOKEN') ??
+      process.env['MERCADOPAGO_SUBSCRIPTIONS_ACCESS_TOKEN'] ??
+      this.donationsAccessToken;
+    this.subscriptionsWebhookSecret =
+      this.config?.get('MERCADOPAGO_SUBSCRIPTIONS_WEBHOOK_SECRET') ??
+      process.env['MERCADOPAGO_SUBSCRIPTIONS_WEBHOOK_SECRET'] ??
+      this.donationsWebhookSecret;
     const nodeEnv =
       this.config?.get('NODE_ENV') ??
       process.env['NODE_ENV'] ??
@@ -53,20 +78,25 @@ export class MercadoPagoDonationGateway implements DonationGateway {
     this.isProduction = nodeEnv === 'production';
   }
 
-  private ensureConfigured(): void {
-    if (this.isProduction && !this.accessToken) {
+  private ensureConfigured(accessToken?: string, envVarName = 'MERCADOPAGO_ACCESS_TOKEN'): void {
+    if (this.isProduction && !accessToken) {
       throw new Error(
-        'MercadoPago access token is required in production environment (MERCADOPAGO_ACCESS_TOKEN)',
+        `MercadoPago access token is required in production environment (${envVarName})`,
       );
     }
   }
 
   private async request<T>(
     path: string,
-    init: { method: 'POST' | 'PUT' | 'GET'; body?: unknown; idempotencyKey?: string },
+    init: {
+      method: 'POST' | 'PUT' | 'GET';
+      body?: unknown;
+      idempotencyKey?: string;
+      accessToken?: string | undefined;
+    },
   ): Promise<T> {
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${this.accessToken ?? ''}`,
+      Authorization: `Bearer ${init.accessToken ?? this.donationsAccessToken ?? ''}`,
       'Content-Type': 'application/json',
       Accept: 'application/json',
     };
@@ -99,7 +129,7 @@ export class MercadoPagoDonationGateway implements DonationGateway {
   async createOneTimeIntent(
     params: CreateOneTimeIntentParams,
   ): Promise<CreateOneTimeIntentResult> {
-    this.ensureConfigured();
+    this.ensureConfigured(this.donationsAccessToken, 'MERCADOPAGO_ACCESS_TOKEN');
 
     const totalAmount = (params.amountCents / 100).toFixed(2);
     const paymentMethodId = params.paymentMethod === 'PIX' ? 'pix' : undefined;
@@ -119,9 +149,12 @@ export class MercadoPagoDonationGateway implements DonationGateway {
           },
         ],
       },
-      payer: {
-        ...(params.donorEmail ? { email: params.donorEmail } : {}),
-      },
+      // Mercado Pago rejects `payer: {}` outright ("minimum_properties":
+      // "'$.payer' - minimum 1 properties allowed, but found 0
+      // properties") -- confirmed live in production when a donor leaves
+      // the optional email blank. Omit the whole key rather than send an
+      // empty object; `payer` itself is optional on this endpoint.
+      ...(params.donorEmail ? { payer: { email: params.donorEmail } } : {}),
     };
 
     const order = await this.request<{
@@ -133,7 +166,12 @@ export class MercadoPagoDonationGateway implements DonationGateway {
           payment_method?: { qr_code?: string; qr_code_base64?: string };
         }>;
       };
-    }>('/v1/orders', { method: 'POST', body, idempotencyKey: params.donationId });
+    }>('/v1/orders', {
+      method: 'POST',
+      body,
+      idempotencyKey: params.donationId,
+      accessToken: this.donationsAccessToken,
+    });
 
     const payment = order.transactions?.payments?.[0];
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
@@ -153,7 +191,7 @@ export class MercadoPagoDonationGateway implements DonationGateway {
   async createSubscriptionIntent(
     params: CreateSubscriptionIntentParams,
   ): Promise<CreateSubscriptionIntentResult> {
-    this.ensureConfigured();
+    this.ensureConfigured(this.subscriptionsAccessToken, 'MERCADOPAGO_SUBSCRIPTIONS_ACCESS_TOKEN');
 
     const body: Record<string, unknown> = {
       reason: 'Apoio comunitário mensal - Aletheia',
@@ -173,7 +211,12 @@ export class MercadoPagoDonationGateway implements DonationGateway {
 
     const preapproval = await this.request<{ id: string; init_point?: string }>(
       '/preapproval',
-      { method: 'POST', body, idempotencyKey: params.subscriptionId },
+      {
+        method: 'POST',
+        body,
+        idempotencyKey: params.subscriptionId,
+        accessToken: this.subscriptionsAccessToken,
+      },
     );
 
     return {
@@ -183,10 +226,11 @@ export class MercadoPagoDonationGateway implements DonationGateway {
   }
 
   async cancelSubscription(gatewaySubscriptionId: string): Promise<void> {
-    this.ensureConfigured();
+    this.ensureConfigured(this.subscriptionsAccessToken, 'MERCADOPAGO_SUBSCRIPTIONS_ACCESS_TOKEN');
     await this.request(`/preapproval/${gatewaySubscriptionId}`, {
       method: 'PUT',
       body: { status: 'cancelled' },
+      accessToken: this.subscriptionsAccessToken,
     });
   }
 
@@ -195,12 +239,8 @@ export class MercadoPagoDonationGateway implements DonationGateway {
     headers: Record<string, string | string[] | undefined>,
     query?: Record<string, string | undefined>,
   ): Promise<WebhookEventResult> {
-    this.ensureConfigured();
-
     const raw =
       payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
-
-    this.verifySignature(headers, query);
 
     const rawData =
       raw['data'] && typeof raw['data'] === 'object'
@@ -212,12 +252,20 @@ export class MercadoPagoDonationGateway implements DonationGateway {
         ? String(raw['id'])
         : `mp_evt_${randomUUID()}`;
 
+    // `query.type` doubles as the topic name Mercado Pago sends
+    // ("order", "payment", "subscription_preapproval", ...) -- read
+    // before the action/type fallback below so a subscription
+    // notification is recognized even when its body only has `action`.
     const eventType =
-      typeof raw['action'] === 'string'
-        ? raw['action']
-        : typeof raw['type'] === 'string'
-          ? raw['type']
-          : 'payment.updated';
+      typeof query?.['type'] === 'string' && query['type'].startsWith('subscription')
+        ? query['type']
+        : typeof raw['action'] === 'string'
+          ? raw['action']
+          : typeof raw['type'] === 'string'
+            ? raw['type']
+            : 'payment.updated';
+
+    this.verifySignature(eventType, headers, query);
 
     const resourceId =
       typeof query?.['data.id'] === 'string'
@@ -253,20 +301,28 @@ export class MercadoPagoDonationGateway implements DonationGateway {
     | { kind: 'subscription'; status: WebhookEventResult['status']; paidAt?: Date }
     | undefined
   > {
-    const isSubscriptionEvent = eventType.startsWith('subscription_preapproval');
+    // Covers all three subscription topics this app subscribes to
+    // (subscription_preapproval, subscription_preapproval_plan,
+    // subscription_authorized_payment) -- all resolve against the same
+    // /preapproval/{id} endpoint, since a plan or authorized-payment
+    // notification's `data.id` is still the subscription's own id.
+    const isSubscriptionEvent = eventType.startsWith('subscription');
     try {
       if (isSubscriptionEvent) {
+        this.ensureConfigured(this.subscriptionsAccessToken, 'MERCADOPAGO_SUBSCRIPTIONS_ACCESS_TOKEN');
         const sub = await this.request<{ status: string }>(`/preapproval/${resourceId}`, {
           method: 'GET',
+          accessToken: this.subscriptionsAccessToken,
         });
         return { kind: 'subscription', status: this.mapStatus(sub.status) };
       }
 
+      this.ensureConfigured(this.donationsAccessToken, 'MERCADOPAGO_ACCESS_TOKEN');
       const order = await this.request<{
         status: string;
         total_amount?: string;
         transactions?: { payments?: Array<{ status?: string }> };
-      }>(`/v1/orders/${resourceId}`, { method: 'GET' });
+      }>(`/v1/orders/${resourceId}`, { method: 'GET', accessToken: this.donationsAccessToken });
       const paymentStatus = order.transactions?.payments?.[0]?.status ?? order.status;
       return {
         kind: 'order',
@@ -295,14 +351,19 @@ export class MercadoPagoDonationGateway implements DonationGateway {
   // missing from the notification is dropped from the manifest, per MP's
   // own note, rather than treated as an empty string.
   private verifySignature(
+    eventType: string,
     headers: Record<string, string | string[] | undefined>,
     query?: Record<string, string | undefined>,
   ): void {
-    if (!this.webhookSecret) {
+    const isSubscriptionEvent = eventType.startsWith('subscription');
+    const secret = isSubscriptionEvent ? this.subscriptionsWebhookSecret : this.donationsWebhookSecret;
+    const envVarName = isSubscriptionEvent
+      ? 'MERCADOPAGO_SUBSCRIPTIONS_WEBHOOK_SECRET'
+      : 'MERCADOPAGO_WEBHOOK_SECRET';
+
+    if (!secret) {
       if (this.isProduction) {
-        throw new Error(
-          'MercadoPago webhook secret is required in production (MERCADOPAGO_WEBHOOK_SECRET)',
-        );
+        throw new Error(`MercadoPago webhook secret is required in production (${envVarName})`);
       }
       return;
     }
@@ -336,7 +397,7 @@ export class MercadoPagoDonationGateway implements DonationGateway {
     manifestParts.push(`ts:${ts}`);
     const manifest = manifestParts.join(';') + ';';
 
-    const computed = createHmac('sha256', this.webhookSecret).update(manifest).digest('hex');
+    const computed = createHmac('sha256', secret).update(manifest).digest('hex');
 
     const computedBuffer = Buffer.from(computed, 'hex');
     const hashBuffer = Buffer.from(hash, 'hex');

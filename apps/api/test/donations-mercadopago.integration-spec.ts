@@ -12,11 +12,18 @@ import { createApplication } from '../src/main.js';
 // service, real Postgres persistence, webhook signature verification)
 // is exercised for real, exactly as every other integration spec in
 // this session does for internal state.
-const WEBHOOK_SECRET = 'whsec_test_integration_secret';
+//
+// Donations and Subscriptions run on TWO SEPARATE Mercado Pago
+// applications, each with its own access token and webhook secret --
+// this suite configures both distinctly (never the same value) so a
+// test that accidentally used the wrong app's credential would fail
+// loudly instead of silently passing.
+const DONATIONS_WEBHOOK_SECRET = 'whsec_test_donations_app';
+const SUBSCRIPTIONS_WEBHOOK_SECRET = 'whsec_test_subscriptions_app';
 
-function signWebhook(dataId: string, requestId: string, ts: string): string {
+function signWebhook(secret: string, dataId: string, requestId: string, ts: string): string {
   const manifest = `id:${dataId.toLowerCase()};request-id:${requestId};ts:${ts};`;
-  const hash = createHmac('sha256', WEBHOOK_SECRET).update(manifest).digest('hex');
+  const hash = createHmac('sha256', secret).update(manifest).digest('hex');
   return `ts=${ts},v1=${hash}`;
 }
 
@@ -45,8 +52,10 @@ describe('Donations against the real Mercado Pago gateway (real Postgres, mocked
 
   beforeAll(async () => {
     process.env.DONATION_GATEWAY_PROVIDER = 'mercadopago';
-    process.env.MERCADOPAGO_ACCESS_TOKEN = 'TEST-integration-token';
-    process.env.MERCADOPAGO_WEBHOOK_SECRET = WEBHOOK_SECRET;
+    process.env.MERCADOPAGO_ACCESS_TOKEN = 'TEST-donations-app-token';
+    process.env.MERCADOPAGO_WEBHOOK_SECRET = DONATIONS_WEBHOOK_SECRET;
+    process.env.MERCADOPAGO_SUBSCRIPTIONS_ACCESS_TOKEN = 'TEST-subscriptions-app-token';
+    process.env.MERCADOPAGO_SUBSCRIPTIONS_WEBHOOK_SECRET = SUBSCRIPTIONS_WEBHOOK_SECRET;
 
     app = await createApplication();
     await app.init();
@@ -62,6 +71,8 @@ describe('Donations against the real Mercado Pago gateway (real Postgres, mocked
     delete process.env.DONATION_GATEWAY_PROVIDER;
     delete process.env.MERCADOPAGO_ACCESS_TOKEN;
     delete process.env.MERCADOPAGO_WEBHOOK_SECRET;
+    delete process.env.MERCADOPAGO_SUBSCRIPTIONS_ACCESS_TOKEN;
+    delete process.env.MERCADOPAGO_SUBSCRIPTIONS_WEBHOOK_SECRET;
   });
 
   beforeEach(() => {
@@ -152,6 +163,74 @@ describe('Donations against the real Mercado Pago gateway (real Postgres, mocked
     expect(
       subscriptions.body.some((s: { gatewaySubscriptionId: string }) => s.gatewaySubscriptionId === preapprovalId),
     ).toBe(true);
+
+    // The subscription creation call itself must have used the
+    // subscriptions app's token, never the donations app's.
+    const [, initArgs] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(initArgs.headers.Authorization).toBe('Bearer TEST-subscriptions-app-token');
+  });
+
+  it('confirms a subscription end-to-end through a webhook signed with the subscriptions app secret -- the donations app secret must not work here', async () => {
+    const preapprovalId = `preapproval-${randomUUID()}`;
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ id: preapprovalId, init_point: 'https://www.mercadopago.com.br/subscriptions/checkout' }),
+    }) as unknown as typeof fetch;
+
+    await supertest(app.getHttpServer())
+      .post(`/api/v1/families/${familyAId}/donations/create-intent`)
+      .set('Cookie', familyACookie)
+      .send({ amountCents: 6000, frequency: 'MONTHLY', paymentMethod: 'GOOGLE_PAY' })
+      .expect(201);
+
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ id: preapprovalId, status: 'authorized' }),
+    }) as unknown as typeof fetch;
+
+    const requestId = randomUUID();
+    const ts = Date.now().toString();
+
+    // Signed with the DONATIONS secret -- must be rejected for a
+    // subscription topic.
+    const wrongSignature = signWebhook(DONATIONS_WEBHOOK_SECRET, preapprovalId, requestId, ts);
+    await supertest(app.getHttpServer())
+      .post('/api/v1/donations/webhooks/mercadopago-subscriptions')
+      .query({ 'data.id': preapprovalId, type: 'subscription_preapproval' })
+      .set('x-signature', wrongSignature)
+      .set('x-request-id', requestId)
+      .send({ action: 'subscription_preapproval.updated', data: { id: preapprovalId } })
+      .expect(500);
+
+    const stillPending = await supertest(app.getHttpServer())
+      .get(`/api/v1/families/${familyAId}/donations/subscriptions`)
+      .set('Cookie', familyACookie)
+      .expect(200);
+    expect(
+      stillPending.body.find((s: { gatewaySubscriptionId: string }) => s.gatewaySubscriptionId === preapprovalId)
+        ?.status,
+    ).toBe('PENDING');
+
+    // Signed with the correct SUBSCRIPTIONS secret -- must succeed.
+    const rightSignature = signWebhook(SUBSCRIPTIONS_WEBHOOK_SECRET, preapprovalId, requestId, ts);
+    await supertest(app.getHttpServer())
+      .post('/api/v1/donations/webhooks/mercadopago-subscriptions')
+      .query({ 'data.id': preapprovalId, type: 'subscription_preapproval' })
+      .set('x-signature', rightSignature)
+      .set('x-request-id', requestId)
+      .send({ action: 'subscription_preapproval.updated', data: { id: preapprovalId } })
+      .expect(200);
+
+    const nowConfirmed = await supertest(app.getHttpServer())
+      .get(`/api/v1/families/${familyAId}/donations/subscriptions`)
+      .set('Cookie', familyACookie)
+      .expect(200);
+    expect(
+      nowConfirmed.body.find((s: { gatewaySubscriptionId: string }) => s.gatewaySubscriptionId === preapprovalId)
+        ?.status,
+    ).toBe('CONFIRMED');
   });
 
   it('confirms a donation end-to-end through a real, correctly-signed webhook', async () => {
@@ -186,7 +265,7 @@ describe('Donations against the real Mercado Pago gateway (real Postgres, mocked
 
     const requestId = randomUUID();
     const ts = Date.now().toString();
-    const signature = signWebhook(orderId, requestId, ts);
+    const signature = signWebhook(DONATIONS_WEBHOOK_SECRET, orderId, requestId, ts);
 
     const webhookResponse = await supertest(app.getHttpServer())
       .post('/api/v1/donations/webhooks/mercadopago')
