@@ -246,10 +246,36 @@ describe('Donation Gateways & Factory', () => {
           id: 'pix',
           type: 'bank_transfer',
         });
+        expect(body.payer).toEqual({ email: 'donor@example.com' });
 
         expect(result.gatewayTransactionId).toBe('ORD01HRYFWNYRE1MR1E60MW3X0T2P');
         expect(result.pixCopiaECola).toBe('00020126580014br.gov.bcb.pix...real...');
         expect(result.pixQrCodeUrl).toBe('data:image/png;base64,iVBORw0KGgo=');
+      });
+
+      it('omits payer entirely when no donorEmail is given -- MercadoPago rejects payer:{} with "minimum_properties" (found live in production)', async () => {
+        const fetchMock = jest.fn().mockResolvedValue(
+          jsonResponse({
+            id: 'ORD_NO_EMAIL',
+            status: 'action_required',
+            transactions: { payments: [{ id: 'PAY_NO_EMAIL', payment_method: {} }] },
+          }),
+        );
+        global.fetch = fetchMock as unknown as typeof fetch;
+
+        const mpGateway = new MercadoPagoDonationGateway(
+          configWith({ MERCADOPAGO_ACCESS_TOKEN: 'TEST-token' }),
+        );
+
+        await mpGateway.createOneTimeIntent({
+          donationId: 'donation-no-email',
+          amountCents: 3000,
+          paymentMethod: 'PIX',
+        });
+
+        const [, init] = fetchMock.mock.calls[0];
+        const body = JSON.parse(init.body as string);
+        expect(body.payer).toBeUndefined();
       });
 
       it('surfaces a MercadoPago error response as a thrown error, not a silently fake success', async () => {
@@ -306,6 +332,59 @@ describe('Donation Gateways & Factory', () => {
           'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_id=abc123',
         );
       });
+
+      it('uses the dedicated MERCADOPAGO_SUBSCRIPTIONS_ACCESS_TOKEN when configured -- never the donations app token', async () => {
+        const fetchMock = jest.fn().mockResolvedValue(jsonResponse({ id: 'sub-2' }));
+        global.fetch = fetchMock as unknown as typeof fetch;
+
+        const mpGateway = new MercadoPagoDonationGateway(
+          configWith({
+            MERCADOPAGO_ACCESS_TOKEN: 'donations-app-token',
+            MERCADOPAGO_SUBSCRIPTIONS_ACCESS_TOKEN: 'subscriptions-app-token',
+          }),
+        );
+
+        await mpGateway.createSubscriptionIntent({
+          subscriptionId: 'sub-2',
+          familyId: 'fam-1',
+          amountCents: 3000,
+          paymentMethod: 'GOOGLE_PAY',
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          'https://api.mercadopago.com/preapproval',
+          expect.objectContaining({
+            headers: expect.objectContaining({ Authorization: 'Bearer subscriptions-app-token' }),
+          }),
+        );
+      });
+    });
+
+    it('keeps createOneTimeIntent on the donations app token even when a different subscriptions token is configured -- proves the two apps never bleed into each other', async () => {
+      const fetchMock = jest.fn().mockResolvedValue(
+        jsonResponse({ id: 'ORD_ISOLATION', status: 'action_required', transactions: { payments: [{ id: 'PAY1', payment_method: {} }] } }),
+      );
+      global.fetch = fetchMock as unknown as typeof fetch;
+
+      const mpGateway = new MercadoPagoDonationGateway(
+        configWith({
+          MERCADOPAGO_ACCESS_TOKEN: 'donations-app-token',
+          MERCADOPAGO_SUBSCRIPTIONS_ACCESS_TOKEN: 'subscriptions-app-token',
+        }),
+      );
+
+      await mpGateway.createOneTimeIntent({
+        donationId: 'donation-isolation',
+        amountCents: 1000,
+        paymentMethod: 'PIX',
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://api.mercadopago.com/v1/orders',
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer donations-app-token' }),
+        }),
+      );
     });
 
     describe('cancelSubscription', () => {
@@ -444,6 +523,60 @@ describe('Donation Gateways & Factory', () => {
         );
         expect(result.gatewaySubscriptionId).toBe(dataId);
         expect(result.status).toBe('CONFIRMED');
+      });
+
+      it('verifies a subscription webhook against MERCADOPAGO_SUBSCRIPTIONS_WEBHOOK_SECRET, a distinct secret from the donations app', async () => {
+        const SUBSCRIPTIONS_SECRET = 'whsec_subscriptions_app_456';
+        const dataId = 'preapproval-two-app';
+        const requestId = 'req-two-app-1';
+        const ts = '1700000000003';
+        const signature = signWebhook(SUBSCRIPTIONS_SECRET, dataId, requestId, ts);
+
+        global.fetch = jest
+          .fn()
+          .mockResolvedValue(jsonResponse({ id: dataId, status: 'authorized' })) as unknown as typeof fetch;
+
+        const mpGateway = new MercadoPagoDonationGateway(
+          configWith({
+            MERCADOPAGO_ACCESS_TOKEN: 't',
+            MERCADOPAGO_WEBHOOK_SECRET: SECRET,
+            MERCADOPAGO_SUBSCRIPTIONS_WEBHOOK_SECRET: SUBSCRIPTIONS_SECRET,
+          }),
+        );
+
+        const result = await mpGateway.parseWebhook(
+          { action: 'subscription_preapproval.updated', data: { id: dataId } },
+          { 'x-signature': signature, 'x-request-id': requestId },
+          { 'data.id': dataId, type: 'subscription_preapproval' },
+        );
+
+        expect(result.status).toBe('CONFIRMED');
+      });
+
+      it('rejects a subscription webhook signed with the donations app secret instead of the subscriptions app secret', async () => {
+        const SUBSCRIPTIONS_SECRET = 'whsec_subscriptions_app_456';
+        const dataId = 'preapproval-cross-app';
+        const requestId = 'req-two-app-2';
+        const ts = '1700000000004';
+        // Signed with the DONATIONS secret, but this is a subscription
+        // topic -- must be verified against the subscriptions secret.
+        const wrongSignature = signWebhook(SECRET, dataId, requestId, ts);
+
+        const mpGateway = new MercadoPagoDonationGateway(
+          configWith({
+            MERCADOPAGO_ACCESS_TOKEN: 't',
+            MERCADOPAGO_WEBHOOK_SECRET: SECRET,
+            MERCADOPAGO_SUBSCRIPTIONS_WEBHOOK_SECRET: SUBSCRIPTIONS_SECRET,
+          }),
+        );
+
+        await expect(
+          mpGateway.parseWebhook(
+            { action: 'subscription_preapproval.updated', data: { id: dataId } },
+            { 'x-signature': wrongSignature, 'x-request-id': requestId },
+            { 'data.id': dataId, type: 'subscription_preapproval' },
+          ),
+        ).rejects.toThrow(/invalid mercadopago webhook signature/i);
       });
 
       it('requires MERCADOPAGO_WEBHOOK_SECRET in production', async () => {
