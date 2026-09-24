@@ -220,10 +220,27 @@ export class DonationsService {
     let allIdempotent = true;
 
     if (event.gatewayTransactionId) {
-      const record =
+      let record =
         await this.repository.findDonationRecordByGatewayTransactionId(
           event.gatewayTransactionId,
         );
+
+      if (!record && event.externalReference) {
+        // Checkout Pro one-time card donations: the record was created
+        // with a preference id as a placeholder gatewayTransactionId,
+        // since the real payment id doesn't exist until the payer
+        // completes checkout. The first payment webhook links back via
+        // externalReference (the donationId) instead, then backfills the
+        // real payment id so later webhooks match it directly.
+        record = await this.repository.findDonationRecordById(
+          event.externalReference,
+        );
+        if (record) {
+          await this.repository.updateDonationRecordGatewayData(record.id, {
+            gatewayTransactionId: event.gatewayTransactionId,
+          });
+        }
+      }
 
       if (record) {
         handled = true;

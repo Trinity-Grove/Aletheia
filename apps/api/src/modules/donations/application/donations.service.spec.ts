@@ -639,6 +639,61 @@ describe('DonationsService', () => {
       expect(response).toEqual({ received: true });
     });
 
+    it('falls back to matching by externalReference (donationId) when gatewayTransactionId lookup misses, then backfills the real payment id -- Checkout Pro one-time card donations only get a real payment id once the webhook arrives', async () => {
+      const webhookEvent: WebhookEventResult = {
+        eventId: 'evt_card_1',
+        eventType: 'payment.updated',
+        gatewayTransactionId: 'real-payment-id-999',
+        externalReference: DONATION_ID,
+        status: 'CONFIRMED',
+        paidAt: NOW,
+      };
+
+      mockGateway.parseWebhook.mockResolvedValue(webhookEvent);
+      mockRepository.findDonationRecordByGatewayTransactionId.mockResolvedValue(null);
+
+      const pendingCardRecord = {
+        id: DONATION_ID,
+        familyId: FAMILY_ID,
+        donorName: null,
+        donorEmail: null,
+        amountCents: 2000,
+        currency: 'BRL',
+        frequency: 'ONE_TIME' as DonationFrequency,
+        paymentMethod: 'CREDIT_CARD' as DonationPaymentMethod,
+        status: 'PENDING' as DonationStatus,
+        gatewayProvider: 'mock',
+        // Placeholder set at creation time to the Checkout Pro preference
+        // id -- not the real payment id, which doesn't exist yet.
+        gatewayTransactionId: 'preference-id-placeholder',
+        gatewaySubscriptionId: null,
+        pixQrCodeUrl: null,
+        pixCopiaECola: null,
+        notes: null,
+        confirmedAt: null,
+        createdAt: NOW,
+        updatedAt: NOW,
+      };
+
+      mockRepository.findDonationRecordById.mockResolvedValue(pendingCardRecord);
+
+      const response = await service.handleWebhook('mock', { raw: 'data' }, 'sig_header');
+
+      expect(mockRepository.findDonationRecordByGatewayTransactionId).toHaveBeenCalledWith(
+        'real-payment-id-999',
+      );
+      expect(mockRepository.findDonationRecordById).toHaveBeenCalledWith(DONATION_ID);
+      expect(mockRepository.updateDonationRecordGatewayData).toHaveBeenCalledWith(DONATION_ID, {
+        gatewayTransactionId: 'real-payment-id-999',
+      });
+      expect(mockRepository.updateDonationRecordStatus).toHaveBeenCalledWith(
+        DONATION_ID,
+        'CONFIRMED',
+        NOW,
+      );
+      expect(response).toEqual({ received: true });
+    });
+
     it('is strictly idempotent: does not re-update or throw when transaction is ALREADY CONFIRMED', async () => {
       const webhookEvent: WebhookEventResult = {
         eventId: 'evt_dup',

@@ -55,6 +55,10 @@ export class MercadoPagoDonationGateway implements DonationGateway {
   private readonly subscriptionsAccessToken?: string | undefined;
   private readonly subscriptionsWebhookSecret?: string | undefined;
   private readonly isProduction: boolean;
+  // Base URL for Checkout Pro's back_urls (where the payer lands after
+  // leaving Mercado Pago's hosted page). Not security-sensitive -- just
+  // where to bounce the browser back to.
+  private readonly webAppUrl: string;
 
   constructor(@Optional() private readonly config?: ConfigService) {
     this.donationsAccessToken =
@@ -76,6 +80,10 @@ export class MercadoPagoDonationGateway implements DonationGateway {
       process.env['NODE_ENV'] ??
       'development';
     this.isProduction = nodeEnv === 'production';
+    this.webAppUrl =
+      this.config?.get('WEB_APP_URL') ??
+      process.env['WEB_APP_URL'] ??
+      'https://aletheiaphos.app';
   }
 
   private ensureConfigured(accessToken?: string, envVarName = 'MERCADOPAGO_ACCESS_TOKEN'): void {
@@ -130,6 +138,16 @@ export class MercadoPagoDonationGateway implements DonationGateway {
     params: CreateOneTimeIntentParams,
   ): Promise<CreateOneTimeIntentResult> {
     this.ensureConfigured(this.donationsAccessToken, 'MERCADOPAGO_ACCESS_TOKEN');
+
+    // Credit-card one-time donations collect no card token client-side
+    // (no Bricks/CardForm here), so they can't go through the Orders API
+    // the way PIX does -- that requires a real card_token_id. Checkout
+    // Pro (POST /checkout/preferences) is Mercado Pago's hosted-checkout
+    // product for exactly this case: the payer completes card entry on
+    // MP's own page, same idea as the subscription flow below.
+    if (params.paymentMethod === 'CREDIT_CARD') {
+      return this.createOneTimeCardIntent(params);
+    }
 
     const totalAmount = (params.amountCents / 100).toFixed(2);
     const paymentMethodId = params.paymentMethod === 'PIX' ? 'pix' : undefined;
@@ -190,6 +208,55 @@ export class MercadoPagoDonationGateway implements DonationGateway {
         ? { pixQrCodeUrl: `data:image/png;base64,${payment.payment_method.qr_code_base64}` }
         : {}),
       expiresAt,
+    };
+  }
+
+  // Checkout Pro (Preferences API), confirmed against MP's own docs:
+  // POST /checkout/preferences with `items`/`external_reference`/
+  // `back_urls`/`auto_return`, response has `init_point` (hosted redirect
+  // URL). The preference's own `id` is NOT a payment id -- the payer
+  // hasn't paid yet, so no payment exists until they complete checkout.
+  // The real payment id only arrives via the `payment` webhook, matched
+  // back to this donation through `external_reference` (see parseWebhook
+  // and DonationsService.handleWebhook's fallback lookup).
+  private async createOneTimeCardIntent(
+    params: CreateOneTimeIntentParams,
+  ): Promise<CreateOneTimeIntentResult> {
+    const unitPrice = params.amountCents / 100;
+
+    const body: Record<string, unknown> = {
+      items: [
+        {
+          title: 'Apoio comunitário - Aletheia',
+          quantity: 1,
+          unit_price: unitPrice,
+          currency_id: 'BRL',
+        },
+      ],
+      external_reference: params.donationId,
+      ...(params.donorEmail ? { payer: { email: params.donorEmail } } : {}),
+      back_urls: {
+        success: `${this.webAppUrl}/support?donationId=${params.donationId}&status=success`,
+        pending: `${this.webAppUrl}/support?donationId=${params.donationId}&status=pending`,
+        failure: `${this.webAppUrl}/support?donationId=${params.donationId}&status=failure`,
+      },
+      auto_return: 'approved',
+    };
+
+    const preference = await this.request<{ id: string; init_point?: string }>(
+      '/checkout/preferences',
+      {
+        method: 'POST',
+        body,
+        idempotencyKey: params.donationId,
+        accessToken: this.donationsAccessToken,
+      },
+    );
+
+    return {
+      gatewayTransactionId: preference.id,
+      ...(preference.init_point ? { authorizationUrl: preference.init_point } : {}),
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     };
   }
 
@@ -259,10 +326,14 @@ export class MercadoPagoDonationGateway implements DonationGateway {
 
     // `query.type` doubles as the topic name Mercado Pago sends
     // ("order", "payment", "subscription_preapproval", ...) -- read
-    // before the action/type fallback below so a subscription
-    // notification is recognized even when its body only has `action`.
+    // before the action/type fallback below, since the body's own
+    // `action` field is a noisier sub-event string (e.g. "payment.created"
+    // for a "payment" topic notification, confirmed in MP's own docs) that
+    // would otherwise stop an exact topic match like `eventType ===
+    // 'payment'` from ever firing.
     const eventType =
-      typeof query?.['type'] === 'string' && query['type'].startsWith('subscription')
+      typeof query?.['type'] === 'string' &&
+      (query['type'].startsWith('subscription') || query['type'] === 'payment')
         ? query['type']
         : typeof raw['action'] === 'string'
           ? raw['action']
@@ -288,13 +359,18 @@ export class MercadoPagoDonationGateway implements DonationGateway {
     return {
       eventId,
       eventType,
-      gatewayTransactionId: resolved?.kind === 'order' ? resourceId : undefined,
+      gatewayTransactionId:
+        resolved?.kind === 'order' || resolved?.kind === 'payment' ? resourceId : undefined,
       gatewaySubscriptionId: resolved?.kind === 'subscription' ? resourceId : undefined,
       status: resolved?.status ?? 'FAILED',
-      ...(resolved?.kind === 'order' && resolved.amountCents !== undefined
+      ...((resolved?.kind === 'order' || resolved?.kind === 'payment') &&
+      resolved.amountCents !== undefined
         ? { amountCents: resolved.amountCents }
         : {}),
       ...(resolved?.paidAt ? { paidAt: resolved.paidAt } : {}),
+      ...(resolved?.kind === 'payment' && resolved.externalReference
+        ? { externalReference: resolved.externalReference }
+        : {}),
     };
   }
 
@@ -304,6 +380,13 @@ export class MercadoPagoDonationGateway implements DonationGateway {
   ): Promise<
     | { kind: 'order'; status: WebhookEventResult['status']; amountCents?: number; paidAt?: Date }
     | { kind: 'subscription'; status: WebhookEventResult['status']; paidAt?: Date }
+    | {
+        kind: 'payment';
+        status: WebhookEventResult['status'];
+        amountCents?: number;
+        paidAt?: Date;
+        externalReference?: string;
+      }
     | undefined
   > {
     // Covers all three subscription topics this app subscribes to
@@ -312,6 +395,11 @@ export class MercadoPagoDonationGateway implements DonationGateway {
     // /preapproval/{id} endpoint, since a plan or authorized-payment
     // notification's `data.id` is still the subscription's own id.
     const isSubscriptionEvent = eventType.startsWith('subscription');
+    // Confirmed via MP's own webhooks docs: the classic Checkout Pro
+    // "payment" topic is a distinct, exact topic string ("type=payment")
+    // from the Orders API's "order" topic -- they never collide, so this
+    // check is safe alongside the Orders/PIX branch below.
+    const isClassicPaymentEvent = eventType === 'payment';
     try {
       if (isSubscriptionEvent) {
         this.ensureConfigured(this.subscriptionsAccessToken, 'MERCADOPAGO_SUBSCRIPTIONS_ACCESS_TOKEN');
@@ -320,6 +408,25 @@ export class MercadoPagoDonationGateway implements DonationGateway {
           accessToken: this.subscriptionsAccessToken,
         });
         return { kind: 'subscription', status: this.mapStatus(sub.status) };
+      }
+
+      if (isClassicPaymentEvent) {
+        this.ensureConfigured(this.donationsAccessToken, 'MERCADOPAGO_ACCESS_TOKEN');
+        const payment = await this.request<{
+          status: string;
+          external_reference?: string;
+          transaction_amount?: number;
+        }>(`/v1/payments/${resourceId}`, { method: 'GET', accessToken: this.donationsAccessToken });
+        const status = this.mapStatus(payment.status);
+        return {
+          kind: 'payment',
+          status,
+          ...(payment.transaction_amount !== undefined
+            ? { amountCents: Math.round(payment.transaction_amount * 100) }
+            : {}),
+          ...(status === 'CONFIRMED' ? { paidAt: new Date() } : {}),
+          ...(payment.external_reference ? { externalReference: payment.external_reference } : {}),
+        };
       }
 
       this.ensureConfigured(this.donationsAccessToken, 'MERCADOPAGO_ACCESS_TOKEN');

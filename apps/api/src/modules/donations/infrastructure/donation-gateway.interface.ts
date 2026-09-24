@@ -13,6 +13,10 @@ export interface CreateOneTimeIntentResult {
   pixQrCodeUrl?: string | undefined;
   pixCopiaECola?: string | undefined;
   clientSecret?: string | undefined;
+  // Card-based one-time donations with no client-side tokenization use a
+  // hosted checkout redirect too (same shape as the subscription flow's
+  // authorizationUrl below).
+  authorizationUrl?: string | undefined;
   expiresAt: Date;
 }
 
@@ -44,6 +48,13 @@ export interface WebhookEventResult {
   status: 'CONFIRMED' | 'FAILED' | 'CANCELLED';
   amountCents?: number | undefined;
   paidAt?: Date | undefined;
+  // Set only for classic `payment` topic events (Checkout Pro one-time
+  // card donations): the record was created with a preference id as a
+  // placeholder gatewayTransactionId, since the real payment id doesn't
+  // exist until the payer completes checkout on Mercado Pago's hosted
+  // page. The first webhook links back via this (the donationId we sent
+  // as `external_reference`) instead of gatewayTransactionId.
+  externalReference?: string | undefined;
 }
 
 export interface DonationGateway {
