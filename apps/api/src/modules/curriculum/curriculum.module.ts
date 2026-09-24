@@ -97,6 +97,9 @@ import { DefinitionVersionOperationsController } from './presentation/definition
 import { AuthorTrustRepository } from './infrastructure/author-trust.repository.js';
 import { AuthorTrustService } from './application/author-trust.service.js';
 import { CurriculumPackCommunityController } from './presentation/curriculum-pack-community.controller.js';
+import { CurriculumPackReportRepository } from './infrastructure/curriculum-pack-report.repository.js';
+import { CurriculumPackReportService } from './application/curriculum-pack-report.service.js';
+import { CurriculumPackReportController } from './presentation/curriculum-pack-report.controller.js';
 
 @Module({
   imports: [DatabaseModule, DevotionalModule, StorageModule],
@@ -116,6 +119,7 @@ import { CurriculumPackCommunityController } from './presentation/curriculum-pac
     FamilyCurriculumPackMediaController,
     DefinitionVersionOperationsController,
     CurriculumPackCommunityController,
+    CurriculumPackReportController,
   ],
   providers: [
     ProgressionRepository,
@@ -193,6 +197,8 @@ import { CurriculumPackCommunityController } from './presentation/curriculum-pac
     DefinitionVersionOperationsService,
     AuthorTrustRepository,
     AuthorTrustService,
+    CurriculumPackReportRepository,
+    CurriculumPackReportService,
     {
       provide: CURRICULUM_PUBLIC_API,
       useExisting: CurriculumService,
@@ -214,6 +220,8 @@ import { CurriculumPackCommunityController } from './presentation/curriculum-pac
     LEARNER_COMPETENCY_TRACKING_PUBLIC_API,
     AuthorTrustService,
     AuthorTrustRepository,
+    CurriculumPackReportRepository,
+    CurriculumPackReportService,
   ],
 })
 export class CurriculumModule {}
