@@ -113,7 +113,7 @@ describe('donation contracts', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].path).toEqual(['paymentMethod']);
+        expect(result.error.issues[0]?.path).toEqual(['paymentMethod']);
       }
     });
 
