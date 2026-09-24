@@ -43,6 +43,11 @@ model User {
   definitionVersionOperationLogs DefinitionVersionOperationLog[]
   consentRecords          ConsentRecord[]
   complianceManualOverrides ComplianceManualOverride[]
+  authoredCurriculumPacks   CurriculumPack[]       @relation("CurriculumPackAuthor")
+  moderatedCurriculumPacks  CurriculumPack[]       @relation("CurriculumPackModerator")
+  authorTrustProfile        AuthorTrustProfile?
+  submittedPackReports      CurriculumPackReport[] @relation("PackReportReporter")
+  resolvedPackReports       CurriculumPackReport[] @relation("PackReportResolver")
 
   @@map("users")
 }
@@ -200,6 +205,7 @@ model Family {
   complianceManualOverrides ComplianceManualOverride[]
   donations              DonationRecord[]
   supporterSubscriptions SupporterSubscription[]
+  curriculumPackReports     CurriculumPackReport[]
 
   @@map("families")
 }
@@ -2053,17 +2059,27 @@ model CurriculumPack {
   name          String
   description   String?
   metadata      Json             @default("{}")
+  authorUserId      String?                         @map("author_user_id") @db.Uuid
+  moderationStatus  CurriculumPackModerationStatus @default(DRAFT) @map("moderation_status")
+  moderationNotes   String?                         @map("moderation_notes")
+  moderatedAt       DateTime?                       @map("moderated_at") @db.Timestamptz
+  moderatedByUserId String?                         @map("moderated_by_user_id") @db.Uuid
   createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz
   publishedAt   DateTime?        @map("published_at") @db.Timestamptz
   deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
 
+  author          User?                      @relation("CurriculumPackAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
+  moderatedBy     User?                      @relation("CurriculumPackModerator", fields: [moderatedByUserId], references: [id], onDelete: SetNull)
   items           CurriculumPackItem[]
   dependencies    CurriculumPackDependency[]
   familyInstances FamilyCurriculumPack[]
+  reports         CurriculumPackReport[]
 
   @@unique([code, version])
   @@index([code])
   @@index([status])
+  @@index([moderationStatus])
+  @@index([authorUserId])
   @@map("curriculum_packs")
 }
 
@@ -2177,6 +2193,74 @@ model CurriculumPackDependency {
   @@unique([packId, dependsOnCode, dependsOnVersion])
   @@index([packId])
   @@map("curriculum_pack_dependencies")
+}
+
+enum CurriculumPackModerationStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  SUSPENDED
+  REJECTED
+}
+
+enum AuthorTrustTier {
+  NOVICE
+  VERIFIED
+  TRUSTED
+}
+
+enum PackReportReason {
+  SPAM_COMMERCIAL
+  HARMFUL_INAPPROPRIATE
+  COPYRIGHT_PLAGIARISM
+  MALFORMED_QUALITY
+  OTHER
+}
+
+enum PackReportStatus {
+  OPEN
+  UPHELD
+  DISMISSED
+}
+
+model AuthorTrustProfile {
+  userId             String          @id @map("user_id") @db.Uuid
+  trustScore         Int             @default(10) @map("trust_score")
+  tier               AuthorTrustTier @default(NOVICE)
+  approvedPacksCount Int             @default(0) @map("approved_packs_count")
+  rejectedPacksCount Int             @default(0) @map("rejected_packs_count")
+  upheldReportsCount Int             @default(0) @map("upheld_reports_count")
+  lastEvaluatedAt    DateTime        @default(now()) @map("last_evaluated_at") @db.Timestamptz
+  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tier])
+  @@map("author_trust_profiles")
+}
+
+model CurriculumPackReport {
+  id               String           @id @default(uuid()) @db.Uuid
+  packId           String           @map("pack_id") @db.Uuid
+  reporterUserId   String           @map("reporter_user_id") @db.Uuid
+  reporterFamilyId String           @map("reporter_family_id") @db.Uuid
+  reason           PackReportReason
+  details          String?
+  status           PackReportStatus @default(OPEN)
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  resolvedAt       DateTime?        @map("resolved_at") @db.Timestamptz
+  resolvedByUserId String?          @map("resolved_by_user_id") @db.Uuid
+
+  pack             CurriculumPack   @relation(fields: [packId], references: [id], onDelete: Cascade)
+  reporterUser     User             @relation("PackReportReporter", fields: [reporterUserId], references: [id], onDelete: Cascade)
+  reporterFamily   Family           @relation(fields: [reporterFamilyId], references: [id], onDelete: Cascade)
+  resolvedByUser   User?            @relation("PackReportResolver", fields: [resolvedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([packId, reporterFamilyId], name: "curriculum_pack_reports_pack_family_unique")
+  @@index([packId, status])
+  @@index([reporterFamilyId])
+  @@map("curriculum_pack_reports")
 }
 
 enum ConsentScope {
