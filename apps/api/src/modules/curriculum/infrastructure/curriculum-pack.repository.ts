@@ -71,6 +71,15 @@ export class CurriculumPackRepository {
     });
   }
 
+  listModerationQueue(): Promise<CurriculumPack[]> {
+    return this.prisma.curriculumPack.findMany({
+      where: {
+        moderationStatus: { in: ['PENDING_REVIEW', 'SUSPENDED'] },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   findPackById(id: string): Promise<CurriculumPack | null> {
     return this.prisma.curriculumPack.findUnique({ where: { id } });
   }

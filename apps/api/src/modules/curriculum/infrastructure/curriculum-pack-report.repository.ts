@@ -26,6 +26,12 @@ export class CurriculumPackReportRepository {
     });
   }
 
+  findReportById(id: string): Promise<CurriculumPackReport | null> {
+    return this.prisma.curriculumPackReport.findUnique({
+      where: { id },
+    });
+  }
+
   findReportByPackAndFamily(
     packId: string,
     reporterFamilyId: string,
