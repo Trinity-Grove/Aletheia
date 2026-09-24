@@ -4,6 +4,8 @@ import type {
   CreateCurriculumPackOutput,
   AddCurriculumPackItemOutput,
   AddCurriculumPackDependencyOutput,
+  CurriculumPackModerationStatus,
+  DefinitionStatus,
 } from '@aletheia/contracts';
 import { PrismaService } from '../../../platform/database/prisma.service.js';
 import type { DefinitionStatusUpdate } from '../application/definition-status-transition.js';
@@ -35,13 +37,36 @@ export class CurriculumPackRepository {
     });
   }
 
+  createCommunityPack(userId: string, dto: CreateCurriculumPackOutput): Promise<CurriculumPack> {
+    return this.prisma.curriculumPack.create({
+      data: {
+        code: dto.code,
+        version: dto.version,
+        status: 'DRAFT',
+        schemaVersion: dto.schemaVersion,
+        name: dto.name,
+        description: dto.description ?? null,
+        metadata: dto.metadata as Prisma.InputJsonValue,
+        authorUserId: userId,
+        moderationStatus: 'DRAFT',
+      },
+    });
+  }
+
   listPacks(): Promise<CurriculumPack[]> {
     return this.prisma.curriculumPack.findMany({ orderBy: [{ code: 'asc' }, { version: 'desc' }] });
   }
 
   listPublishedPacks(): Promise<CurriculumPack[]> {
     return this.prisma.curriculumPack.findMany({
-      where: { status: 'PUBLISHED' },
+      where: { status: 'PUBLISHED', moderationStatus: 'APPROVED' },
+      orderBy: [{ name: 'asc' }, { version: 'desc' }],
+    });
+  }
+
+  listMyAuthoredPacks(authorUserId: string): Promise<CurriculumPack[]> {
+    return this.prisma.curriculumPack.findMany({
+      where: { authorUserId },
       orderBy: [{ name: 'asc' }, { version: 'desc' }],
     });
   }
@@ -56,6 +81,30 @@ export class CurriculumPackRepository {
 
   updatePackStatus(id: string, update: DefinitionStatusUpdate): Promise<CurriculumPack> {
     return this.prisma.curriculumPack.update({ where: { id }, data: update });
+  }
+
+  updateModeration(
+    id: string,
+    data: {
+      moderationStatus: CurriculumPackModerationStatus;
+      moderationNotes?: string | null;
+      moderatedAt?: Date | null;
+      moderatedByUserId?: string | null;
+      status?: DefinitionStatus;
+      publishedAt?: Date | null;
+    },
+  ): Promise<CurriculumPack> {
+    return this.prisma.curriculumPack.update({
+      where: { id },
+      data: {
+        moderationStatus: data.moderationStatus,
+        ...(data.moderationNotes !== undefined && { moderationNotes: data.moderationNotes }),
+        ...(data.moderatedAt !== undefined && { moderatedAt: data.moderatedAt }),
+        ...(data.moderatedByUserId !== undefined && { moderatedByUserId: data.moderatedByUserId }),
+        ...(data.status !== undefined && { status: data.status }),
+        ...(data.publishedAt !== undefined && { publishedAt: data.publishedAt }),
+      },
+    });
   }
 
   addItem(packId: string, dto: AddCurriculumPackItemOutput): Promise<CurriculumPackItem> {

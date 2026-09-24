@@ -96,6 +96,7 @@ import { DefinitionVersionOperationsService } from './application/definition-ver
 import { DefinitionVersionOperationsController } from './presentation/definition-version-operations.controller.js';
 import { AuthorTrustRepository } from './infrastructure/author-trust.repository.js';
 import { AuthorTrustService } from './application/author-trust.service.js';
+import { CurriculumPackCommunityController } from './presentation/curriculum-pack-community.controller.js';
 
 @Module({
   imports: [DatabaseModule, DevotionalModule, StorageModule],
@@ -114,6 +115,7 @@ import { AuthorTrustService } from './application/author-trust.service.js';
     FamilyCurriculumPackController,
     FamilyCurriculumPackMediaController,
     DefinitionVersionOperationsController,
+    CurriculumPackCommunityController,
   ],
   providers: [
     ProgressionRepository,

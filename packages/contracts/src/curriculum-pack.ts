@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { definitionStatusSchema } from './curriculum-definitions.js';
+import { curriculumPackModerationStatusSchema } from './curriculum-pack-moderation.js';
 
 // --- Curriculum pack (Aletheia issue #96, Fase 4, section 27) ---
 //
@@ -61,6 +62,11 @@ export const curriculumPackResponseSchema = z.object({
   description: z.string().nullable().optional(),
   metadata: z.record(z.string(), z.unknown()),
   manifest: z.record(z.string(), z.unknown()).optional(),
+  authorUserId: z.string().uuid().nullable().optional(),
+  moderationStatus: curriculumPackModerationStatusSchema.optional(),
+  moderationNotes: z.string().nullable().optional(),
+  moderatedAt: z.string().nullable().optional(),
+  moderatedByUserId: z.string().uuid().nullable().optional(),
   createdAt: z.string(),
   publishedAt: z.string().nullable().optional(),
   deprecatedAt: z.string().nullable().optional(),
