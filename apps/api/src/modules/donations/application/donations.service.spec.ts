@@ -144,6 +144,48 @@ describe('DonationsService', () => {
       });
     });
 
+    it('marks the record FAILED (instead of leaving it PENDING forever) when the gateway rejects intent creation', async () => {
+      const dto: CreateDonationIntentDto = {
+        amountCents: 2500,
+        frequency: 'ONE_TIME',
+        paymentMethod: 'PIX',
+      };
+
+      mockRepository.createDonationRecord.mockResolvedValue({
+        id: DONATION_ID,
+        familyId: FAMILY_ID,
+        donorName: null,
+        donorEmail: null,
+        amountCents: 2500,
+        currency: 'BRL',
+        frequency: 'ONE_TIME' as DonationFrequency,
+        paymentMethod: 'PIX' as DonationPaymentMethod,
+        status: 'PENDING' as DonationStatus,
+        gatewayProvider: 'mock',
+        gatewayTransactionId: null,
+        gatewaySubscriptionId: null,
+        pixQrCodeUrl: null,
+        pixCopiaECola: null,
+        notes: null,
+        confirmedAt: null,
+        createdAt: NOW,
+        updatedAt: NOW,
+      });
+
+      const gatewayError = new Error('MercadoPago POST /v1/orders failed: 400');
+      mockGateway.createOneTimeIntent.mockRejectedValue(gatewayError);
+
+      await expect(service.createIntent(FAMILY_ID, dto)).rejects.toThrow(
+        gatewayError,
+      );
+
+      expect(mockRepository.updateDonationRecordStatus).toHaveBeenCalledWith(
+        DONATION_ID,
+        'FAILED',
+      );
+      expect(mockRepository.updateDonationRecordGatewayData).not.toHaveBeenCalled();
+    });
+
     it('falls back to the logged-in account email when donorEmail is left blank -- Mercado Pago requires payer.email (found live in production)', async () => {
       const USER_ID = '55555555-5555-4555-8555-555555555555';
       const dto: CreateDonationIntentDto = {
