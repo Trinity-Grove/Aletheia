@@ -118,13 +118,23 @@ export class DonationsService {
       gatewayProvider: this.gatewayProviderName,
     });
 
-    const intent = await this.gateway.createOneTimeIntent({
-      donationId: record.id,
-      amountCents: record.amountCents,
-      paymentMethod: record.paymentMethod,
-      donorName: dto.donorName,
-      donorEmail: effectiveDonorEmail,
-    });
+    let intent;
+    try {
+      intent = await this.gateway.createOneTimeIntent({
+        donationId: record.id,
+        amountCents: record.amountCents,
+        paymentMethod: record.paymentMethod,
+        donorName: dto.donorName,
+        donorEmail: effectiveDonorEmail,
+      });
+    } catch (error) {
+      // The record above is already persisted as PENDING. Without this,
+      // a gateway failure here (confirmed live in production twice) left
+      // it PENDING forever with no gatewayTransactionId -- no webhook can
+      // ever reach it, so it never resolves.
+      await this.repository.updateDonationRecordStatus(record.id, 'FAILED');
+      throw error;
+    }
 
     await this.repository.updateDonationRecordGatewayData(record.id, {
       gatewayTransactionId: intent.gatewayTransactionId,
