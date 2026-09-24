@@ -94,6 +94,8 @@ import { FamilyCurriculumPackMediaService } from './application/family-curriculu
 import { FamilyCurriculumPackMediaController } from './presentation/family-curriculum-pack-media.controller.js';
 import { DefinitionVersionOperationsService } from './application/definition-version-operations.service.js';
 import { DefinitionVersionOperationsController } from './presentation/definition-version-operations.controller.js';
+import { AuthorTrustRepository } from './infrastructure/author-trust.repository.js';
+import { AuthorTrustService } from './application/author-trust.service.js';
 
 @Module({
   imports: [DatabaseModule, DevotionalModule, StorageModule],
@@ -187,6 +189,8 @@ import { DefinitionVersionOperationsController } from './presentation/definition
     FamilyCurriculumPackService,
     FamilyCurriculumPackMediaService,
     DefinitionVersionOperationsService,
+    AuthorTrustRepository,
+    AuthorTrustService,
     {
       provide: CURRICULUM_PUBLIC_API,
       useExisting: CurriculumService,
@@ -206,6 +210,8 @@ import { DefinitionVersionOperationsController } from './presentation/definition
     ObjectiveService,
     EVIDENCE_SUBMISSION_PUBLIC_API,
     LEARNER_COMPETENCY_TRACKING_PUBLIC_API,
+    AuthorTrustService,
+    AuthorTrustRepository,
   ],
 })
 export class CurriculumModule {}
