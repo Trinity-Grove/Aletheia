@@ -105,6 +105,36 @@ describe('donation contracts', () => {
       }
     });
 
+    it('rejects a MONTHLY + PIX combination -- Mercado Pago subscriptions are card-based, no recurring PIX exists', () => {
+      const result = createDonationIntentSchema.safeParse({
+        amountCents: 3000,
+        frequency: 'MONTHLY',
+        paymentMethod: 'PIX',
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0]?.path).toEqual(['paymentMethod']);
+      }
+    });
+
+    it('accepts MONTHLY + GOOGLE_PAY', () => {
+      const result = createDonationIntentSchema.safeParse({
+        amountCents: 3000,
+        frequency: 'MONTHLY',
+        paymentMethod: 'GOOGLE_PAY',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('accepts ONE_TIME + PIX', () => {
+      const result = createDonationIntentSchema.safeParse({
+        amountCents: 3000,
+        frequency: 'ONE_TIME',
+        paymentMethod: 'PIX',
+      });
+      expect(result.success).toBe(true);
+    });
+
     it('enforces minimum amount of 500 cents (R$ 5,00)', () => {
       expect(createDonationIntentSchema.safeParse({ amountCents: 500 }).success).toBe(true);
       expect(createDonationIntentSchema.safeParse({ amountCents: 499 }).success).toBe(false);
@@ -189,6 +219,22 @@ describe('donation contracts', () => {
       };
 
       expect(donationIntentResponseSchema.safeParse(invalid).success).toBe(false);
+    });
+
+    it('validates a MONTHLY response carrying a hosted authorizationUrl', () => {
+      const response: DonationIntentResponseDto = {
+        donationId: '123e4567-e89b-12d3-a456-426614174000',
+        amountCents: 5000,
+        currency: 'BRL',
+        status: 'PENDING',
+        paymentMethod: 'GOOGLE_PAY',
+        frequency: 'MONTHLY',
+        authorizationUrl: 'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_id=abc123',
+        expiresAt: '2026-09-18T20:30:00.000Z',
+        createdAt: '2026-09-18T20:00:00.000Z',
+      };
+
+      expect(donationIntentResponseSchema.safeParse(response).success).toBe(true);
     });
   });
 

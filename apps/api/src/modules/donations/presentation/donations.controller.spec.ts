@@ -171,20 +171,25 @@ describe('DonationsController & DonationWebhooksController', () => {
 
   describe('DonationWebhooksController', () => {
     describe('POST /:provider', () => {
-      it('delegates to DonationsService.handleWebhook with provider, body, and signature', async () => {
+      it('delegates to DonationsService.handleWebhook with provider, body, query, signature, and request id', async () => {
         const payload = { action: 'payment.updated', data: { id: 'mp_123' } };
+        const query = { 'data.id': 'mp_123', type: 'payment' };
         mockService.handleWebhook.mockResolvedValue({ received: true });
 
         const result = await webhooksController.handleWebhook(
           'mercadopago',
           payload,
+          query,
           'v1,ts=123,sig=abc',
+          'req-123',
         );
 
         expect(mockService.handleWebhook).toHaveBeenCalledWith(
           'mercadopago',
           payload,
           'v1,ts=123,sig=abc',
+          'req-123',
+          query,
         );
         expect(result).toEqual({ received: true });
       });
