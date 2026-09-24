@@ -173,6 +173,20 @@ export function CurriculumView({
             <AletheiaIcon name="package" size="sm" />
             <span>Pacotes & Plugins</span>
           </a>
+          <a
+            href="/curriculum/activities"
+            className="ui-button ui-button--secondary ui-button--sm"
+            data-testid="explore-family-activities-btn"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+              textDecoration: 'none',
+            }}
+          >
+            <AletheiaIcon name="sparkles" size="sm" />
+            <span>Minhas Atividades</span>
+          </a>
           {activeLearner && (
             <Can action="manage_curriculum">
               <Button
