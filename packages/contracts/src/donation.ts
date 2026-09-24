@@ -9,13 +9,24 @@ export type DonationPaymentMethod = z.infer<typeof donationPaymentMethodSchema>;
 export const donationStatusSchema = z.enum(['PENDING', 'CONFIRMED', 'FAILED', 'CANCELLED']);
 export type DonationStatus = z.infer<typeof donationStatusSchema>;
 
-export const createDonationIntentSchema = z.object({
-  amountCents: z.number().int().min(500, 'Valor mínimo de apoio é R$ 5,00'),
-  frequency: donationFrequencySchema.default('ONE_TIME'),
-  paymentMethod: donationPaymentMethodSchema.default('PIX'),
-  donorName: z.string().min(2).max(150).optional(),
-  donorEmail: z.string().email().optional(),
-});
+export const createDonationIntentSchema = z
+  .object({
+    amountCents: z.number().int().min(500, 'Valor mínimo de apoio é R$ 5,00'),
+    frequency: donationFrequencySchema.default('ONE_TIME'),
+    paymentMethod: donationPaymentMethodSchema.default('PIX'),
+    donorName: z.string().min(2).max(150).optional(),
+    donorEmail: z.string().email().optional(),
+  })
+  // Mercado Pago's recurring-billing product (Subscriptions/preapproval)
+  // is card-based -- there is no real "recurring PIX" equivalent behind
+  // it, so a MONTHLY+PIX combination can never actually be created
+  // against the real gateway. Rejecting it here, not just letting it
+  // fail against the gateway later, keeps the error a clear 400 instead
+  // of a confusing gateway-side failure.
+  .refine((dto) => !(dto.frequency === 'MONTHLY' && dto.paymentMethod === 'PIX'), {
+    message: 'Apoio mensal recorrente não está disponível via PIX -- escolha cartão.',
+    path: ['paymentMethod'],
+  });
 
 export type CreateDonationIntentDto = z.input<typeof createDonationIntentSchema>;
 export type CreateDonationIntentOutput = z.output<typeof createDonationIntentSchema>;
@@ -30,6 +41,10 @@ export const donationIntentResponseSchema = z.object({
   pixQrCodeUrl: z.string().optional(),
   pixCopiaECola: z.string().optional(),
   gatewayClientSecret: z.string().optional(),
+  // Set for a MONTHLY subscription intent against the real gateway: a
+  // hosted Mercado Pago page where the payer picks a payment method and
+  // authorizes the recurring charge (no card token collected here).
+  authorizationUrl: z.string().url().optional(),
   expiresAt: z.string(),
   createdAt: z.string(),
 });

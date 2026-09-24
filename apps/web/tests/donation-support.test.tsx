@@ -116,6 +116,56 @@ describe('Donation & Voluntary Support Components', () => {
       expect(screen.getByLabelText(/google pay/i)).toBeInTheDocument();
     });
 
+    it('disables PIX and switches away from it when Apoio Mensal is selected -- Mercado Pago subscriptions are card-based, no recurring PIX exists', () => {
+      render(<DonationFormCard familyId={testFamilyId} />);
+
+      const pixRadio = screen.getByLabelText(/^pix/i) as HTMLInputElement;
+      expect(pixRadio.checked).toBe(true);
+
+      fireEvent.click(screen.getByRole('button', { name: /apoio mensal/i }));
+
+      expect(pixRadio.disabled).toBe(true);
+      expect(pixRadio.checked).toBe(false);
+      expect(screen.getByLabelText(/google pay/i)).toBeChecked();
+      expect(screen.getByText(/indisponível para apoio mensal recorrente/i)).toBeInTheDocument();
+    });
+
+    it('redirects to the hosted authorizationUrl on a MONTHLY subscription intent, never showing a PIX QR code', async () => {
+      const originalLocation = window.location;
+      Object.defineProperty(window, 'location', {
+        writable: true,
+        value: { ...originalLocation, href: '' },
+      });
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          donationId: 'sub-donation-1',
+          amountCents: 5000,
+          currency: 'BRL',
+          status: 'PENDING',
+          paymentMethod: 'GOOGLE_PAY',
+          frequency: 'MONTHLY',
+          authorizationUrl: 'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_id=abc123',
+          expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+          createdAt: new Date().toISOString(),
+        }),
+      });
+      globalThis.fetch = fetchMock;
+
+      render(<DonationFormCard familyId={testFamilyId} />);
+      fireEvent.click(screen.getByRole('button', { name: /apoio mensal/i }));
+      fireEvent.click(screen.getByTestId('google-pay-button'));
+
+      await waitFor(() => {
+        expect(window.location.href).toBe(
+          'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_id=abc123',
+        );
+      });
+
+      Object.defineProperty(window, 'location', { writable: true, value: originalLocation });
+    });
+
     it('validates custom amount to enforce minimum of R$ 5,00 (500 cents)', async () => {
       render(<DonationFormCard familyId={testFamilyId} />);
 

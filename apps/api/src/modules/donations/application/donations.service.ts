@@ -87,6 +87,7 @@ export class DonationsService {
         paymentMethod: initialRecord.paymentMethod,
         frequency: 'MONTHLY',
         ...(subIntent.clientSecret ? { gatewayClientSecret: subIntent.clientSecret } : {}),
+        ...(subIntent.authorizationUrl ? { authorizationUrl: subIntent.authorizationUrl } : {}),
         expiresAt,
         createdAt: initialRecord.createdAt.toISOString(),
       };
@@ -192,12 +193,15 @@ export class DonationsService {
     provider: string,
     payload: unknown,
     signatureHeader?: string | string[],
+    requestIdHeader?: string | string[],
+    query?: Record<string, string | undefined>,
   ): Promise<{ received: boolean; idempotent?: boolean; handled?: boolean }> {
     const headers: Record<string, string | string[] | undefined> = {
       'x-signature': signatureHeader,
+      'x-request-id': requestIdHeader,
     };
 
-    const event = await this.gateway.parseWebhook(payload, headers);
+    const event = await this.gateway.parseWebhook(payload, headers, query);
 
     let handled = false;
     let anyUpdated = false;

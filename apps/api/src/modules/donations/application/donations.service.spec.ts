@@ -501,6 +501,7 @@ describe('DonationsService', () => {
       expect(mockGateway.parseWebhook).toHaveBeenCalledWith(
         { raw: 'data' },
         expect.objectContaining({ 'x-signature': 'sig_header' }),
+        undefined,
       );
       expect(mockRepository.updateDonationRecordStatus).toHaveBeenCalledWith(
         DONATION_ID,
