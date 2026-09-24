@@ -94,6 +94,18 @@ describe('ProductShell adapter', () => {
     expect(screen.getByTestId('appshell-nav-learners')).not.toHaveAttribute('aria-current');
   });
 
+  it('always shows "Apoiar o Projeto" in the sidebar, not only when already on /support', () => {
+    nextNavigation.pathname = '/learners';
+
+    render(
+      <ProductShell>
+        <p>Conteúdo</p>
+      </ProductShell>,
+    );
+
+    expect(screen.getByTestId('appshell-nav-support')).toBeInTheDocument();
+  });
+
   it('derives the active route from Next and renders Next-integrated desktop and overflow-sheet links', () => {
     nextNavigation.pathname = '/curriculum';
 
