@@ -25,6 +25,7 @@ describe('DonationsService', () => {
 
   beforeEach(() => {
     mockRepository = {
+      findUserEmail: jest.fn().mockResolvedValue(null),
       createDonationRecord: jest.fn(),
       findDonationRecordById: jest.fn(),
       findDonationRecordByGatewayTransactionId: jest.fn(),
@@ -141,6 +142,133 @@ describe('DonationsService', () => {
         pixQrCodeUrl: 'data:image/svg+xml;utf8,<svg></svg>',
         pixCopiaECola: '00020126580014br.gov.bcb.pix...',
       });
+    });
+
+    it('falls back to the logged-in account email when donorEmail is left blank -- Mercado Pago requires payer.email (found live in production)', async () => {
+      const USER_ID = '55555555-5555-4555-8555-555555555555';
+      const dto: CreateDonationIntentDto = {
+        amountCents: 1500,
+        frequency: 'ONE_TIME',
+        paymentMethod: 'PIX',
+      };
+
+      mockRepository.findUserEmail.mockResolvedValue('guardian@example.com');
+      mockRepository.createDonationRecord.mockResolvedValue({
+        id: DONATION_ID,
+        familyId: FAMILY_ID,
+        donorName: null,
+        donorEmail: 'guardian@example.com',
+        amountCents: 1500,
+        currency: 'BRL',
+        frequency: 'ONE_TIME' as DonationFrequency,
+        paymentMethod: 'PIX' as DonationPaymentMethod,
+        status: 'PENDING' as DonationStatus,
+        gatewayProvider: 'mock',
+        gatewayTransactionId: null,
+        gatewaySubscriptionId: null,
+        pixQrCodeUrl: null,
+        pixCopiaECola: null,
+        notes: null,
+        confirmedAt: null,
+        createdAt: NOW,
+        updatedAt: NOW,
+      });
+      mockGateway.createOneTimeIntent.mockResolvedValue({
+        gatewayTransactionId: 'mock_tx_456',
+        expiresAt: new Date(NOW.getTime() + 30 * 60 * 1000),
+      });
+
+      await service.createIntent(FAMILY_ID, dto, USER_ID);
+
+      expect(mockRepository.findUserEmail).toHaveBeenCalledWith(USER_ID);
+      expect(mockRepository.createDonationRecord).toHaveBeenCalledWith(
+        expect.objectContaining({ donorEmail: 'guardian@example.com' }),
+      );
+      expect(mockGateway.createOneTimeIntent).toHaveBeenCalledWith(
+        expect.objectContaining({ donorEmail: 'guardian@example.com' }),
+      );
+    });
+
+    it('prefers an explicitly given donorEmail over the account email', async () => {
+      const USER_ID = '66666666-6666-4666-8666-666666666666';
+      const dto: CreateDonationIntentDto = {
+        amountCents: 1500,
+        frequency: 'ONE_TIME',
+        paymentMethod: 'PIX',
+        donorEmail: 'explicit-donor@example.com',
+      };
+
+      mockRepository.findUserEmail.mockResolvedValue('guardian@example.com');
+      mockRepository.createDonationRecord.mockResolvedValue({
+        id: DONATION_ID,
+        familyId: FAMILY_ID,
+        donorName: null,
+        donorEmail: 'explicit-donor@example.com',
+        amountCents: 1500,
+        currency: 'BRL',
+        frequency: 'ONE_TIME' as DonationFrequency,
+        paymentMethod: 'PIX' as DonationPaymentMethod,
+        status: 'PENDING' as DonationStatus,
+        gatewayProvider: 'mock',
+        gatewayTransactionId: null,
+        gatewaySubscriptionId: null,
+        pixQrCodeUrl: null,
+        pixCopiaECola: null,
+        notes: null,
+        confirmedAt: null,
+        createdAt: NOW,
+        updatedAt: NOW,
+      });
+      mockGateway.createOneTimeIntent.mockResolvedValue({
+        gatewayTransactionId: 'mock_tx_789',
+        expiresAt: new Date(NOW.getTime() + 30 * 60 * 1000),
+      });
+
+      await service.createIntent(FAMILY_ID, dto, USER_ID);
+
+      expect(mockGateway.createOneTimeIntent).toHaveBeenCalledWith(
+        expect.objectContaining({ donorEmail: 'explicit-donor@example.com' }),
+      );
+    });
+
+    it('does not look up an account email when no currentUserId is given (e.g. an unauthenticated or system-initiated call)', async () => {
+      const dto: CreateDonationIntentDto = {
+        amountCents: 1500,
+        frequency: 'ONE_TIME',
+        paymentMethod: 'PIX',
+      };
+
+      mockRepository.createDonationRecord.mockResolvedValue({
+        id: DONATION_ID,
+        familyId: FAMILY_ID,
+        donorName: null,
+        donorEmail: null,
+        amountCents: 1500,
+        currency: 'BRL',
+        frequency: 'ONE_TIME' as DonationFrequency,
+        paymentMethod: 'PIX' as DonationPaymentMethod,
+        status: 'PENDING' as DonationStatus,
+        gatewayProvider: 'mock',
+        gatewayTransactionId: null,
+        gatewaySubscriptionId: null,
+        pixQrCodeUrl: null,
+        pixCopiaECola: null,
+        notes: null,
+        confirmedAt: null,
+        createdAt: NOW,
+        updatedAt: NOW,
+      });
+      mockGateway.createOneTimeIntent.mockResolvedValue({
+        gatewayTransactionId: 'mock_tx_000',
+        expiresAt: new Date(NOW.getTime() + 30 * 60 * 1000),
+      });
+
+      await service.createIntent(FAMILY_ID, dto);
+
+      expect(mockRepository.findUserEmail).not.toHaveBeenCalled();
+      expect(mockGateway.createOneTimeIntent).toHaveBeenCalledWith(
+        expect.objectContaining({ donorEmail: undefined }),
+      );
     });
 
     it('creates ONE_TIME CREDIT_CARD donation intent with gateway client secret', async () => {

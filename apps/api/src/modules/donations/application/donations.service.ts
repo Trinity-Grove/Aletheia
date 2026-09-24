@@ -33,6 +33,7 @@ export class DonationsService {
   async createIntent(
     familyId: string,
     dto: CreateDonationIntentDto,
+    currentUserId?: string,
   ): Promise<DonationIntentResponseDto> {
     if (dto.amountCents < 500) {
       throw new BadRequestException('Valor mínimo de apoio é R$ 5,00');
@@ -40,6 +41,17 @@ export class DonationsService {
 
     const frequency = dto.frequency ?? 'ONE_TIME';
     const paymentMethod = dto.paymentMethod ?? 'PIX';
+
+    // Mercado Pago requires payer.email on this endpoint (confirmed live
+    // in production -- a donor leaving the optional donorEmail blank
+    // caused a real 500). Rather than force every donor to type an
+    // email, fall back to the logged-in guardian's own account email --
+    // it's their family's donation either way, so this is the real
+    // donor, not a fabricated identity.
+    const accountEmail = currentUserId
+      ? await this.repository.findUserEmail(currentUserId)
+      : null;
+    const effectiveDonorEmail = dto.donorEmail ?? accountEmail ?? undefined;
 
     if (frequency === 'MONTHLY') {
       const subscriptionId = randomUUID();
@@ -50,7 +62,7 @@ export class DonationsService {
         amountCents: dto.amountCents,
         paymentMethod,
         donorName: dto.donorName,
-        donorEmail: dto.donorEmail,
+        donorEmail: effectiveDonorEmail,
       });
 
       await this.repository.createSupporterSubscription({
@@ -67,7 +79,7 @@ export class DonationsService {
       const initialRecord = await this.repository.createDonationRecord({
         familyId,
         donorName: dto.donorName ?? null,
-        donorEmail: dto.donorEmail ?? null,
+        donorEmail: effectiveDonorEmail ?? null,
         amountCents: dto.amountCents,
         currency: 'BRL',
         frequency: 'MONTHLY',
@@ -97,7 +109,7 @@ export class DonationsService {
     const record = await this.repository.createDonationRecord({
       familyId,
       donorName: dto.donorName ?? null,
-      donorEmail: dto.donorEmail ?? null,
+      donorEmail: effectiveDonorEmail ?? null,
       amountCents: dto.amountCents,
       currency: 'BRL',
       frequency: 'ONE_TIME',
@@ -111,7 +123,7 @@ export class DonationsService {
       amountCents: record.amountCents,
       paymentMethod: record.paymentMethod,
       donorName: dto.donorName,
-      donorEmail: dto.donorEmail,
+      donorEmail: effectiveDonorEmail,
     });
 
     await this.repository.updateDonationRecordGatewayData(record.id, {

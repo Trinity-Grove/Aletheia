@@ -23,7 +23,7 @@ import {
   type SupporterSubscriptionResponseDto,
 } from '@aletheia/contracts';
 import { DonationsService } from '../application/donations.service.js';
-import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
+import { JwtAuthGuard, FamilyTenantGuard, CurrentUser } from '../../../platform/auth/index.js';
 import { ZodValidationPipe } from '../../../platform/validation/index.js';
 
 @ApiTags('Donations')
@@ -42,10 +42,11 @@ export class DonationsController {
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async createIntent(
     @Param('familyId') familyId: string,
+    @CurrentUser('userId') currentUserId: string,
     @Body(new ZodValidationPipe(createDonationIntentSchema))
     dto: CreateDonationIntentDto,
   ): Promise<DonationIntentResponseDto> {
-    return this.donationsService.createIntent(familyId, dto);
+    return this.donationsService.createIntent(familyId, dto, currentUserId);
   }
 
   @Get(':id/status')

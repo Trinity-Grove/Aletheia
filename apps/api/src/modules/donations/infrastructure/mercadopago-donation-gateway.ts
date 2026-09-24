@@ -149,12 +149,17 @@ export class MercadoPagoDonationGateway implements DonationGateway {
           },
         ],
       },
-      // Mercado Pago rejects `payer: {}` outright ("minimum_properties":
-      // "'$.payer' - minimum 1 properties allowed, but found 0
-      // properties") -- confirmed live in production when a donor leaves
-      // the optional email blank. Omit the whole key rather than send an
-      // empty object; `payer` itself is optional on this endpoint.
-      ...(params.donorEmail ? { payer: { email: params.donorEmail } } : {}),
+      // `payer.email` is required for PIX on this endpoint -- confirmed
+      // live in production twice: omitting `payer` entirely still gets
+      // rejected ("'$.payer' - minimum 1 properties allowed, but found 0
+      // properties" -- Mercado Pago treats a missing `payer` the same as
+      // an empty one for this validation). DonationsService already
+      // resolves a real fallback (the logged-in guardian's own account
+      // email) before calling this gateway; the synthetic address below
+      // is only the last-resort safety net for the rare case that lookup
+      // itself comes back empty -- it must never be the common path, but
+      // PIX creation must never 500 for want of an email either.
+      payer: { email: params.donorEmail ?? `donation+${params.donationId}@aletheiaphos.app` },
     };
 
     const order = await this.request<{

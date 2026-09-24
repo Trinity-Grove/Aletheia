@@ -47,6 +47,18 @@ export interface CreateSupporterSubscriptionData {
 export class DonationsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  // Fallback for Mercado Pago's payer.email requirement (issue: live
+  // production 500 when a donor leaves the optional donorEmail blank).
+  // Reads the authenticated user's own account email rather than
+  // fabricating a placeholder address.
+  async findUserEmail(userId: string): Promise<string | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    return user?.email ?? null;
+  }
+
   async createDonationRecord(data: CreateDonationRecordData): Promise<DonationRecord> {
     return this.prisma.donationRecord.create({
       data: {
