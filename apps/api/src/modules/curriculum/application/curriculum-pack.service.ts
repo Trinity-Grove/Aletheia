@@ -53,6 +53,14 @@ export class CurriculumPackService {
       throw new ForbiddenException('You can only submit packs that you have authored.');
     }
 
+    if (
+      existing.status !== 'DRAFT' ||
+      existing.moderationStatus === 'APPROVED' ||
+      existing.moderationStatus === 'SUSPENDED'
+    ) {
+      throw new BadRequestException('Only unapproved draft packs can be submitted for review.');
+    }
+
     const profile = await this.authorTrustService.getOrCreateProfile(userId);
     if (profile.tier === 'TRUSTED') {
       const now = new Date();

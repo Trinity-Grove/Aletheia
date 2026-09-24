@@ -1,4 +1,4 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { CurriculumPackService } from './curriculum-pack.service.js';
 import type { CurriculumPack, AuthorTrustProfile } from '@prisma/client';
 import type { CreateCurriculumPackOutput } from '@aletheia/contracts';
@@ -205,6 +205,47 @@ describe('CurriculumPackService - Community & Moderation', () => {
 
       expect(repository.updateModeration).not.toHaveBeenCalled();
       expect(authorTrustService.getOrCreateProfile).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when submitting an already APPROVED pack', async () => {
+      const approvedPack: CurriculumPack = {
+        ...mockPack,
+        status: 'PUBLISHED',
+        moderationStatus: 'APPROVED',
+      };
+      repository.findPackById.mockResolvedValue(approvedPack);
+
+      await expect(service.submitPack(packId, authorUserId)).rejects.toThrow(BadRequestException);
+
+      expect(repository.updateModeration).not.toHaveBeenCalled();
+      expect(authorTrustService.onPackApproved).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when submitting a SUSPENDED pack', async () => {
+      const suspendedPack: CurriculumPack = {
+        ...mockPack,
+        moderationStatus: 'SUSPENDED',
+      };
+      repository.findPackById.mockResolvedValue(suspendedPack);
+
+      await expect(service.submitPack(packId, authorUserId)).rejects.toThrow(BadRequestException);
+
+      expect(repository.updateModeration).not.toHaveBeenCalled();
+      expect(authorTrustService.onPackApproved).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when submitting a pack whose status is not DRAFT', async () => {
+      const archivedPack: CurriculumPack = {
+        ...mockPack,
+        status: 'ARCHIVED',
+        moderationStatus: 'DRAFT',
+      };
+      repository.findPackById.mockResolvedValue(archivedPack);
+
+      await expect(service.submitPack(packId, authorUserId)).rejects.toThrow(BadRequestException);
+
+      expect(repository.updateModeration).not.toHaveBeenCalled();
+      expect(authorTrustService.onPackApproved).not.toHaveBeenCalled();
     });
   });
 
