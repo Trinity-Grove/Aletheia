@@ -31,9 +31,12 @@ describe('Donations against the real Mercado Pago gateway (real Postgres, mocked
   let app: NestFastifyApplication;
   let familyACookie: string;
   let familyAId: string;
+  let familyAEmail: string;
   let originalFetch: typeof fetch;
 
-  async function registerWithFamily(prefix: string): Promise<{ cookie: string; familyId: string }> {
+  async function registerWithFamily(
+    prefix: string,
+  ): Promise<{ cookie: string; familyId: string; email: string }> {
     const email = `${prefix}-${randomUUID()}@example.com`;
     const registerResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
@@ -47,7 +50,7 @@ describe('Donations against the real Mercado Pago gateway (real Postgres, mocked
       .send({ name: `${prefix} Family`, countryCode: 'BR' })
       .expect(201);
 
-    return { cookie, familyId: familyResponse.body.id };
+    return { cookie, familyId: familyResponse.body.id, email };
   }
 
   beforeAll(async () => {
@@ -64,6 +67,7 @@ describe('Donations against the real Mercado Pago gateway (real Postgres, mocked
     const familyA = await registerWithFamily('donations-mp-family-a');
     familyACookie = familyA.cookie;
     familyAId = familyA.familyId;
+    familyAEmail = familyA.email;
   }, 30000);
 
   afterAll(async () => {
@@ -114,6 +118,14 @@ describe('Donations against the real Mercado Pago gateway (real Postgres, mocked
     expect(created.body.pixCopiaECola).toBe('00020126580014br.gov.bcb.pix...integration...');
     expect(created.body.pixQrCodeUrl).toBe('data:image/png;base64,iVBORw0KGgo=');
     expect(created.body.status).toBe('PENDING');
+
+    // Real, live production requirement: Mercado Pago rejects the order
+    // outright without payer.email. donorEmail wasn't provided above, so
+    // this must have fallen back to the logged-in guardian's own account
+    // email (never a fabricated address, never omitted).
+    const [, initArgs] = (global.fetch as jest.Mock).mock.calls[0];
+    const sentBody = JSON.parse(initArgs.body as string);
+    expect(sentBody.payer).toEqual({ email: familyAEmail });
 
     const status = await supertest(app.getHttpServer())
       .get(`/api/v1/families/${familyAId}/donations/${created.body.donationId}/status`)

@@ -253,7 +253,7 @@ describe('Donation Gateways & Factory', () => {
         expect(result.pixQrCodeUrl).toBe('data:image/png;base64,iVBORw0KGgo=');
       });
 
-      it('omits payer entirely when no donorEmail is given -- MercadoPago rejects payer:{} with "minimum_properties" (found live in production)', async () => {
+      it('falls back to a synthetic payer.email scoped to the donation when no donorEmail is given -- MercadoPago requires payer.email and rejects a missing/empty payer outright (found live in production twice)', async () => {
         const fetchMock = jest.fn().mockResolvedValue(
           jsonResponse({
             id: 'ORD_NO_EMAIL',
@@ -275,7 +275,11 @@ describe('Donation Gateways & Factory', () => {
 
         const [, init] = fetchMock.mock.calls[0];
         const body = JSON.parse(init.body as string);
-        expect(body.payer).toBeUndefined();
+        // This is the last-resort safety net only -- DonationsService is
+        // expected to resolve a real account email first and pass it in
+        // as donorEmail; this path is what runs if that lookup itself
+        // comes back empty.
+        expect(body.payer).toEqual({ email: 'donation+donation-no-email@aletheiaphos.app' });
       });
 
       it('surfaces a MercadoPago error response as a thrown error, not a silently fake success', async () => {
