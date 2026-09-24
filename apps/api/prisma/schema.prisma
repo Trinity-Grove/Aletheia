@@ -43,6 +43,8 @@ model User {
   definitionVersionOperationLogs DefinitionVersionOperationLog[]
   consentRecords          ConsentRecord[]
   complianceManualOverrides ComplianceManualOverride[]
+  mentorGrantsAsMentor    MentorGrant[] @relation("MentorGrantMentor")
+  mentorGrantsInvited     MentorGrant[] @relation("MentorGrantInviter")
 
   @@map("users")
 }
@@ -200,6 +202,7 @@ model Family {
   complianceManualOverrides ComplianceManualOverride[]
   donations              DonationRecord[]
   supporterSubscriptions SupporterSubscription[]
+  mentorGrants           MentorGrant[]
 
   @@map("families")
 }
@@ -256,6 +259,7 @@ model Learner {
   competencyTrackings    LearnerCompetencyTracking[]
   consentRecords         ConsentRecord[]
   complianceManualOverrides ComplianceManualOverride[]
+  mentorGrants           MentorGrant[]
 
   @@index([familyId])
   @@index([familyId, archivedAt])
@@ -2352,4 +2356,66 @@ model SupporterSubscription {
 
   @@index([familyId])
   @@map("supporter_subscriptions")
+}
+
+enum MentorGrantStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+
+  @@map("mentor_grant_statuses")
+}
+
+// Mentor/external instructor model (issue #95 section 30, issue #232):
+// a mentor, tutor, pastor or "mestre de ofício" is external to the
+// family, so the grant exists from the moment of invite -- same
+// invite-by-email + hashed-token pattern as FamilyInvitation (families
+// module), before there's necessarily any User to point at yet.
+// `mentorUserId` is only set once the invite is accepted by a real
+// account.
+//
+// `role` is a free-form string ("professor de música", "mestre de
+// ofício", "pastor", ...), not a closed enum -- a catalog of mentor
+// specialties would be exactly the anti-pattern already rejected for
+// `assessorType` (assessment-result.ts) and tag/namespace values
+// (definition-tag.ts): whoever invites decides, no list to keep in
+// sync with product decisions.
+//
+// Scoped to one learner, not the whole family -- section 30's own
+// framing is a mentor for a specific child's track (e.g. woodworking),
+// not automatically every child. A mentor active for several children
+// gets one grant per learner, same as a family inviting them once per
+// child they actually mentor.
+//
+// This does NOT add a field to AssessmentResult: `assessorUserId`
+// there already points at User and is nullable -- when the assessor is
+// a mentor with an accepted grant, the caller sets assessorUserId to
+// that real user id instead of leaving assessorType as a bare string.
+// Enforcing that link at write time would special-case one value of a
+// field this codebase deliberately keeps free-form; this model exists
+// so the link *can* be made, not to gate it.
+model MentorGrant {
+  id           String            @id @default(uuid()) @db.Uuid
+  familyId     String            @map("family_id") @db.Uuid
+  learnerId    String            @map("learner_id") @db.Uuid
+  email        String
+  role         String
+  status       MentorGrantStatus @default(PENDING)
+  tokenHash    String            @unique @map("token_hash")
+  invitedBy    String            @map("invited_by") @db.Uuid
+  mentorUserId String?           @map("mentor_user_id") @db.Uuid
+  expiresAt    DateTime          @map("expires_at") @db.Timestamptz
+  acceptedAt   DateTime?         @map("accepted_at") @db.Timestamptz
+  revokedAt    DateTime?         @map("revoked_at") @db.Timestamptz
+  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz
+
+  family     Family  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner    Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  mentorUser User?   @relation("MentorGrantMentor", fields: [mentorUserId], references: [id], onDelete: SetNull)
+  invitedByUser User @relation("MentorGrantInviter", fields: [invitedBy], references: [id], onDelete: Restrict)
+
+  @@index([familyId])
+  @@index([learnerId])
+  @@index([email])
+  @@map("mentor_grants")
 }

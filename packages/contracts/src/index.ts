@@ -36,6 +36,7 @@ export * from './lesson.js';
 export * from './schedule.js';
 export * from './record.js';
 export * from './portfolio.js';
+export * from './mentor-grant.js';
 export * from './attendance.js';
 export * from './report.js';
 export * from './settings.js';
