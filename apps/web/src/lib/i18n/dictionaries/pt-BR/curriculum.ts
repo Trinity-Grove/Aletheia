@@ -1,0 +1,27 @@
+export const curriculum = {
+  moderation: {
+    reportModalTitle: 'Denunciar Pacote Curricular',
+    reportBtn: 'Denunciar Pacote 🚩',
+    reportBtnShort: 'Denunciar',
+    reasonLabel: 'Motivo da Denúncia',
+    reasons: {
+      SPAM_COMMERCIAL: 'Spam ou Conteúdo Comercial',
+      HARMFUL_INAPPROPRIATE: 'Conteúdo Nocivo ou Impróprio',
+      COPYRIGHT_PLAGIARISM: 'Violação de Direitos Autorais ou Plágio',
+      MALFORMED_QUALITY: 'Estrutura Corrompida ou Baixa Qualidade Técnica',
+      OTHER: 'Outro Motivo',
+    },
+    detailsLabel: 'Detalhes da Denúncia (opcional)',
+    detailsPlaceholder: 'Descreva detalhadamente o problema observado neste pacote...',
+    cancelBtn: 'Cancelar',
+    submitReport: 'Enviar Denúncia',
+    submittingReport: 'Enviando...',
+    reportSuccessMsg: 'Denúncia enviada aos moderadores da plataforma.',
+    reportConflictMsg: 'Sua família já enviou uma denúncia para este pacote.',
+    reportErrorMsg: 'Falha ao enviar denúncia. Tente novamente mais tarde.',
+    badgeNovice: 'Autor Iniciante',
+    badgeVerified: 'Autor Verificado',
+    badgeTrusted: 'Autor Confiável',
+    scoreTooltip: 'Índice de Confiabilidade: {score}/100',
+  },
+} as const;

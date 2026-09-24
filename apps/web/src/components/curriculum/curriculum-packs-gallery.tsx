@@ -3,18 +3,23 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Card } from '@aletheia/ui';
 import type {
+  AuthorTrustTier,
   CurriculumPackResponseDto,
   FamilyCurriculumPackResponseDto,
 } from '@aletheia/contracts';
 import { FamilyCurriculumPackModal } from './family-curriculum-pack-modal';
 import { CurriculumPackImportModal } from './curriculum-pack-import-modal';
 import { CurriculumPackDetailModal } from './curriculum-pack-detail-modal';
+import { AuthorTrustBadge } from './author-trust-badge';
+import { PackReportModal } from './pack-report-modal';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 interface CurriculumPacksGalleryProps {
   familyId: string;
 }
 
 export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps) {
+  const { t } = useLocale();
   const [catalogPacks, setCatalogPacks] = useState<CurriculumPackResponseDto[]>([]);
   const [installedPacks, setInstalledPacks] = useState<FamilyCurriculumPackResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +29,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
     catalog: CurriculumPackResponseDto | null;
   } | null>(null);
   const [selectedDetailPack, setSelectedDetailPack] = useState<CurriculumPackResponseDto | null>(null);
+  const [reportingPack, setReportingPack] = useState<CurriculumPackResponseDto | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [error, setError] = useState<string | null>(null);
@@ -308,6 +314,8 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
             const installedInstance = installedPackMap.get(pack.id);
             const meta = (pack.metadata as Record<string, any>) || {};
             const isWorking = installingId === pack.id;
+            const authorTier = ((meta.authorTrustTier || meta.authorTier || meta.tier) as AuthorTrustTier) || 'NOVICE';
+            const authorTrustScore = (meta.authorTrustScore ?? meta.trustScore) as number | null | undefined;
 
             return (
               <Card
@@ -325,22 +333,25 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
                 }}
               >
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                    {meta.category ? (
-                      <span
-                        style={{
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          color: 'var(--gold-dark)',
-                          letterSpacing: '0.04em',
-                        }}
-                      >
-                        {meta.category}
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Currículo Geral</span>
-                    )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {meta.category ? (
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            color: 'var(--gold-dark)',
+                            letterSpacing: '0.04em',
+                          }}
+                        >
+                          {meta.category}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Currículo Geral</span>
+                      )}
+                      <AuthorTrustBadge tier={authorTier} trustScore={authorTrustScore} />
+                    </div>
                     <span
                       style={{
                         fontSize: '0.6875rem',
@@ -483,6 +494,16 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
                   >
                     Exportar JSON 📤
                   </Button>
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    data-testid={`report-pack-btn-${pack.id}`}
+                    onClick={() => setReportingPack(pack)}
+                    style={{ width: '100%', fontSize: '0.8125rem', fontWeight: 500 }}
+                  >
+                    🚩 {t('curriculum.moderation.reportBtnShort')}
+                  </Button>
                 </div>
               </Card>
             );
@@ -523,6 +544,17 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
         onClose={() => setIsImportModalOpen(false)}
         onImportSuccess={loadData}
       />
+
+      {/* Modal de Denúncia do Pacote Curricular */}
+      {reportingPack && (
+        <PackReportModal
+          isOpen={Boolean(reportingPack)}
+          packId={reportingPack.id}
+          packTitle={reportingPack.name}
+          familyId={familyId}
+          onClose={() => setReportingPack(null)}
+        />
+      )}
     </div>
   );
 }
