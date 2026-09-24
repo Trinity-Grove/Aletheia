@@ -282,6 +282,56 @@ describe('Donation Gateways & Factory', () => {
         expect(body.payer).toEqual({ email: 'donation+donation-no-email@aletheiaphos.app' });
       });
 
+      it('creates a real Checkout Pro preference via POST /checkout/preferences for CREDIT_CARD and returns the hosted authorizationUrl', async () => {
+        const fetchMock = jest.fn().mockResolvedValue(
+          jsonResponse({
+            id: 'pref-abc-123',
+            init_point: 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref-abc-123',
+          }),
+        );
+        global.fetch = fetchMock as unknown as typeof fetch;
+
+        const mpGateway = new MercadoPagoDonationGateway(
+          configWith({ MERCADOPAGO_ACCESS_TOKEN: 'TEST-token' }),
+        );
+
+        const result = await mpGateway.createOneTimeIntent({
+          donationId: 'donation-card-1',
+          amountCents: 5000,
+          paymentMethod: 'CREDIT_CARD',
+          donorEmail: 'donor@example.com',
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          'https://api.mercadopago.com/checkout/preferences',
+          expect.objectContaining({
+            method: 'POST',
+            headers: expect.objectContaining({
+              Authorization: 'Bearer TEST-token',
+              'X-Idempotency-Key': 'donation-card-1',
+            }),
+          }),
+        );
+        const [, init] = fetchMock.mock.calls[0];
+        const body = JSON.parse(init.body as string);
+        expect(body.external_reference).toBe('donation-card-1');
+        expect(body.items).toEqual([
+          expect.objectContaining({ quantity: 1, unit_price: 50, currency_id: 'BRL' }),
+        ]);
+        expect(body.payer).toEqual({ email: 'donor@example.com' });
+        expect(body.auto_return).toBe('approved');
+
+        // The preference id is NOT a payment id -- no payment exists yet
+        // until the payer completes checkout. It's stored as a
+        // placeholder gatewayTransactionId and backfilled by the webhook
+        // (see DonationsService.handleWebhook's externalReference
+        // fallback), so this just proves it round-trips.
+        expect(result.gatewayTransactionId).toBe('pref-abc-123');
+        expect(result.authorizationUrl).toBe(
+          'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref-abc-123',
+        );
+      });
+
       it('surfaces a MercadoPago error response as a thrown error, not a silently fake success', async () => {
         global.fetch = jest
           .fn()
@@ -527,6 +577,70 @@ describe('Donation Gateways & Factory', () => {
         );
         expect(result.gatewaySubscriptionId).toBe(dataId);
         expect(result.status).toBe('CONFIRMED');
+      });
+
+      it('resolves a classic "payment" topic webhook (Checkout Pro one-time card donation) against GET /v1/payments/:id, returning externalReference to link back to the donation', async () => {
+        const dataId = '123456789';
+        const requestId = 'req-payment-1';
+        const ts = '1700000000004';
+        const validSignature = signWebhook(SECRET, dataId, requestId, ts);
+
+        const fetchMock = jest.fn().mockResolvedValue(
+          jsonResponse({
+            id: Number(dataId),
+            status: 'approved',
+            status_detail: 'accredited',
+            transaction_amount: 30,
+            external_reference: 'donation-card-xyz',
+          }),
+        );
+        global.fetch = fetchMock as unknown as typeof fetch;
+
+        const mpGateway = new MercadoPagoDonationGateway(
+          configWith({ MERCADOPAGO_ACCESS_TOKEN: 't', MERCADOPAGO_WEBHOOK_SECRET: SECRET }),
+        );
+
+        const result = await mpGateway.parseWebhook(
+          { action: 'payment.updated', data: { id: dataId } },
+          { 'x-signature': validSignature, 'x-request-id': requestId },
+          { 'data.id': dataId, type: 'payment' },
+        );
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          `https://api.mercadopago.com/v1/payments/${dataId}`,
+          expect.objectContaining({ method: 'GET' }),
+        );
+        expect(result.status).toBe('CONFIRMED');
+        expect(result.gatewayTransactionId).toBe(dataId);
+        expect(result.externalReference).toBe('donation-card-xyz');
+        expect(result.amountCents).toBe(3000);
+      });
+
+      it('never confuses the Orders API "order" topic (PIX) with the classic "payment" topic (Checkout Pro card) -- distinct topics, distinct endpoints', async () => {
+        const dataId = 'ORD01M28P44G5FG8RJPM579EH56FV';
+        const requestId = 'req-order-not-payment';
+        const ts = '1700000000005';
+        const validSignature = signWebhook(SECRET, dataId, requestId, ts);
+
+        const fetchMock = jest.fn().mockResolvedValue(
+          jsonResponse({ id: dataId, status: 'processed', transactions: { payments: [{ status: 'processed' }] } }),
+        );
+        global.fetch = fetchMock as unknown as typeof fetch;
+
+        const mpGateway = new MercadoPagoDonationGateway(
+          configWith({ MERCADOPAGO_ACCESS_TOKEN: 't', MERCADOPAGO_WEBHOOK_SECRET: SECRET }),
+        );
+
+        await mpGateway.parseWebhook(
+          { action: 'order.processed', data: { id: dataId } },
+          { 'x-signature': validSignature, 'x-request-id': requestId },
+          { 'data.id': dataId, type: 'order' },
+        );
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          `https://api.mercadopago.com/v1/orders/${dataId}`,
+          expect.objectContaining({ method: 'GET' }),
+        );
       });
 
       it('verifies a subscription webhook against MERCADOPAGO_SUBSCRIPTIONS_WEBHOOK_SECRET, a distinct secret from the donations app', async () => {
