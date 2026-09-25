@@ -1,0 +1,35 @@
+{
+  "name": "@aletheia/backoffice",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prebuild": "pnpm --filter @aletheia/contracts build && pnpm --filter @aletheia/ui build",
+    "build": "next build",
+    "dev": "next dev -p 3002",
+    "lint": "eslint . --config ../../packages/eslint-config/index.mjs --ignore-pattern .next",
+    "start": "next start -p 3002",
+    "pretest": "pnpm --filter @aletheia/contracts build && pnpm --filter @aletheia/ui build",
+    "test": "vitest run",
+    "pretypecheck": "pnpm --filter @aletheia/contracts build && pnpm --filter @aletheia/ui build",
+    "typecheck": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "@aletheia/contracts": "workspace:*",
+    "@aletheia/ui": "workspace:*",
+    "next": "16.3.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.1.0",
+    "jsdom": "^27.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}
