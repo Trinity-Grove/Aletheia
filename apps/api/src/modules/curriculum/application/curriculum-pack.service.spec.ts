@@ -247,6 +247,20 @@ describe('CurriculumPackService - Community & Moderation', () => {
       expect(repository.updateModeration).not.toHaveBeenCalled();
       expect(authorTrustService.onPackApproved).not.toHaveBeenCalled();
     });
+
+    it('throws BadRequestException when submitting an already PENDING_REVIEW pack', async () => {
+      const pendingPack: CurriculumPack = {
+        ...mockPack,
+        status: 'DRAFT',
+        moderationStatus: 'PENDING_REVIEW',
+      };
+      repository.findPackById.mockResolvedValue(pendingPack);
+
+      await expect(service.submitPack(packId, authorUserId)).rejects.toThrow(BadRequestException);
+
+      expect(repository.updateModeration).not.toHaveBeenCalled();
+      expect(authorTrustService.onPackApproved).not.toHaveBeenCalled();
+    });
   });
 
   describe('listPublicPacks', () => {

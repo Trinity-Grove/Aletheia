@@ -56,7 +56,8 @@ export class CurriculumPackService {
     if (
       existing.status !== 'DRAFT' ||
       existing.moderationStatus === 'APPROVED' ||
-      existing.moderationStatus === 'SUSPENDED'
+      existing.moderationStatus === 'SUSPENDED' ||
+      existing.moderationStatus === 'PENDING_REVIEW'
     ) {
       throw new BadRequestException('Only unapproved draft packs can be submitted for review.');
     }

@@ -93,7 +93,6 @@ export function PackModerationDashboard() {
 
   const handleFilterChange = (filter: ReportFilterType) => {
     setReportFilter(filter);
-    loadReports(filter);
   };
 
   const openPackModal = (

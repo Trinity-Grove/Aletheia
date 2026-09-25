@@ -329,6 +329,33 @@ describe('CurriculumPackModerationService - Admin Moderation Queue, Pack Actions
       );
       expect(packRepository.updateModeration).not.toHaveBeenCalled();
     });
+
+    it('is idempotent when pack is already in the target state (does not re-invoke trust triggers)', async () => {
+      const alreadyApprovedPack: CurriculumPack = {
+        ...mockPendingPack,
+        moderationStatus: 'APPROVED',
+        status: 'PUBLISHED',
+      };
+      packRepository.findPackById.mockResolvedValue(alreadyApprovedPack);
+
+      const result = await service.moderatePack(pendingPackId, adminUserId, { action: 'APPROVE' });
+
+      expect(result.moderationStatus).toBe('APPROVED');
+      expect(packRepository.updateModeration).not.toHaveBeenCalled();
+      expect(authorTrustService.onPackApproved).not.toHaveBeenCalled();
+
+      const alreadyRejectedPack: CurriculumPack = {
+        ...mockPendingPack,
+        moderationStatus: 'REJECTED',
+      };
+      packRepository.findPackById.mockResolvedValue(alreadyRejectedPack);
+
+      const rejectResult = await service.moderatePack(pendingPackId, adminUserId, { action: 'REJECT' });
+
+      expect(rejectResult.moderationStatus).toBe('REJECTED');
+      expect(packRepository.updateModeration).not.toHaveBeenCalled();
+      expect(authorTrustService.onPackRejected).not.toHaveBeenCalled();
+    });
   });
 
   describe('listReports', () => {
@@ -425,6 +452,22 @@ describe('CurriculumPackModerationService - Admin Moderation Queue, Pack Actions
       await expect(service.resolveReport('non-existent-report', adminUserId, dto)).rejects.toThrow(
         NotFoundException,
       );
+      expect(reportRepository.updateReportStatus).not.toHaveBeenCalled();
+      expect(authorTrustService.onReportUpheld).not.toHaveBeenCalled();
+    });
+
+    it('is idempotent when report is already in the target resolved status', async () => {
+      const alreadyUpheldReport: CurriculumPackReport = {
+        ...mockReport,
+        status: 'UPHELD',
+        resolvedAt: new Date('2026-09-24T04:00:00Z'),
+        resolvedByUserId: adminUserId,
+      };
+      reportRepository.findReportById.mockResolvedValue(alreadyUpheldReport);
+
+      const result = await service.resolveReport(reportId, adminUserId, { status: 'UPHELD' });
+
+      expect(result.status).toBe('UPHELD');
       expect(reportRepository.updateReportStatus).not.toHaveBeenCalled();
       expect(authorTrustService.onReportUpheld).not.toHaveBeenCalled();
     });

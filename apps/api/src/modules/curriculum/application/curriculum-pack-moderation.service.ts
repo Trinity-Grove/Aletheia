@@ -115,6 +115,10 @@ export class CurriculumPackModerationService {
 
     switch (dto.action) {
       case 'APPROVE': {
+        if (existing.moderationStatus === 'APPROVED') {
+          return toPackDto(existing);
+        }
+
         const updated = await this.packRepository.updateModeration(packId, {
           moderationStatus: 'APPROVED',
           status: 'PUBLISHED',
@@ -132,6 +136,10 @@ export class CurriculumPackModerationService {
       }
 
       case 'REJECT': {
+        if (existing.moderationStatus === 'REJECTED') {
+          return toPackDto(existing);
+        }
+
         const updated = await this.packRepository.updateModeration(packId, {
           moderationStatus: 'REJECTED',
           moderatedAt: now,
@@ -147,6 +155,10 @@ export class CurriculumPackModerationService {
       }
 
       case 'SUSPEND': {
+        if (existing.moderationStatus === 'SUSPENDED') {
+          return toPackDto(existing);
+        }
+
         const updated = await this.packRepository.updateModeration(packId, {
           moderationStatus: 'SUSPENDED',
           moderatedAt: now,
@@ -158,6 +170,10 @@ export class CurriculumPackModerationService {
       }
 
       case 'RESTORE': {
+        if (existing.moderationStatus === 'APPROVED') {
+          return toPackDto(existing);
+        }
+
         const updated = await this.packRepository.updateModeration(packId, {
           moderationStatus: 'APPROVED',
           status: 'PUBLISHED',
@@ -197,9 +213,13 @@ export class CurriculumPackModerationService {
       throw new NotFoundException('Curriculum pack report not found.');
     }
 
+    if (report.status === dto.status) {
+      return toPackReportDto(report);
+    }
+
     const now = new Date();
 
-    if (dto.status === 'UPHELD') {
+    if (dto.status === 'UPHELD' && report.status !== 'UPHELD') {
       const pack = await this.packRepository.findPackById(report.packId);
       if (pack?.authorUserId) {
         await this.authorTrustService.onReportUpheld(pack.authorUserId);
