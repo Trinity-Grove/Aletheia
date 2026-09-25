@@ -39,7 +39,10 @@ export class OperationsController {
     @Query('limit') limit?: string,
     @Query('acknowledged') acknowledged?: string,
   ): Promise<OperationalAlertEventDto[]> {
-    const parsedLimit = limit !== undefined ? Number.parseInt(limit, 10) : undefined;
+    const parsedLimit =
+      limit !== undefined && !Number.isNaN(Number.parseInt(limit, 10))
+        ? Math.max(1, Number.parseInt(limit, 10))
+        : undefined;
     const parsedAcknowledged = acknowledged !== undefined ? acknowledged === 'true' : undefined;
     return this.operationsService.listAlerts({
       ...(parsedLimit !== undefined ? { limit: parsedLimit } : {}),

@@ -159,7 +159,7 @@ export class OperationsService {
     }
 
     const existingPayload =
-      typeof existing.payload === 'object' && existing.payload !== null
+      typeof existing.payload === 'object' && existing.payload !== null && !Array.isArray(existing.payload)
         ? (existing.payload as Record<string, unknown>)
         : {};
 
@@ -240,7 +240,7 @@ export class OperationsService {
     acknowledgedBy: string | null;
   }): OperationalAlertEventDto {
     const payloadRecord =
-      typeof alert.payload === 'object' && alert.payload !== null
+      typeof alert.payload === 'object' && alert.payload !== null && !Array.isArray(alert.payload)
         ? (alert.payload as Record<string, unknown>)
         : {};
 
