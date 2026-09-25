@@ -97,6 +97,9 @@ import { DefinitionVersionOperationsController } from './presentation/definition
 import { DefinitionTagsService } from './application/definition-tags.service.js';
 import { DefinitionTagsRepository } from './infrastructure/definition-tags.repository.js';
 import { DefinitionTagsController } from './presentation/definition-tags.controller.js';
+import { FamilyActivityRepository } from './infrastructure/family-activity.repository.js';
+import { FamilyActivityService } from './application/family-activity.service.js';
+import { FamilyActivityController } from './presentation/family-activity.controller.js';
 
 @Module({
   imports: [DatabaseModule, DevotionalModule, StorageModule],
@@ -116,6 +119,7 @@ import { DefinitionTagsController } from './presentation/definition-tags.control
     FamilyCurriculumPackMediaController,
     DefinitionVersionOperationsController,
     DefinitionTagsController,
+    FamilyActivityController,
   ],
   providers: [
     ProgressionRepository,
@@ -178,6 +182,7 @@ import { DefinitionTagsController } from './presentation/definition-tags.control
     OfficialCurriculumPacksSeeder,
     FamilyCurriculumPackRepository,
     FamilyCurriculumPackMediaRepository,
+    FamilyActivityRepository,
     CurriculumService,
     ObjectiveService,
     DefinitionsService,
@@ -191,6 +196,7 @@ import { DefinitionTagsController } from './presentation/definition-tags.control
     LearnerCompetencyTrackingService,
     FamilyCurriculumPackService,
     FamilyCurriculumPackMediaService,
+    FamilyActivityService,
     DefinitionVersionOperationsService,
     DefinitionTagsService,
     {
