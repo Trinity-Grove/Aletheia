@@ -6,6 +6,7 @@ import { auth } from './auth';
 import { onboarding } from './onboarding';
 import { learnerPortal } from './learner-portal';
 import { lessons } from './lessons';
+import { curriculum } from './curriculum';
 
 export const ptBR = {
   common,
@@ -16,4 +17,5 @@ export const ptBR = {
   onboarding,
   learnerPortal,
   lessons,
+  curriculum,
 } as const;

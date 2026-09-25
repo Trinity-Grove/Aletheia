@@ -94,6 +94,14 @@ import { FamilyCurriculumPackMediaService } from './application/family-curriculu
 import { FamilyCurriculumPackMediaController } from './presentation/family-curriculum-pack-media.controller.js';
 import { DefinitionVersionOperationsService } from './application/definition-version-operations.service.js';
 import { DefinitionVersionOperationsController } from './presentation/definition-version-operations.controller.js';
+import { AuthorTrustRepository } from './infrastructure/author-trust.repository.js';
+import { AuthorTrustService } from './application/author-trust.service.js';
+import { CurriculumPackCommunityController } from './presentation/curriculum-pack-community.controller.js';
+import { CurriculumPackReportRepository } from './infrastructure/curriculum-pack-report.repository.js';
+import { CurriculumPackReportService } from './application/curriculum-pack-report.service.js';
+import { CurriculumPackReportController } from './presentation/curriculum-pack-report.controller.js';
+import { CurriculumPackModerationService } from './application/curriculum-pack-moderation.service.js';
+import { CurriculumPackModerationAdminController } from './presentation/curriculum-pack-moderation-admin.controller.js';
 import { DefinitionTagsService } from './application/definition-tags.service.js';
 import { DefinitionTagsRepository } from './infrastructure/definition-tags.repository.js';
 import { DefinitionTagsController } from './presentation/definition-tags.controller.js';
@@ -118,6 +126,9 @@ import { FamilyActivityController } from './presentation/family-activity.control
     FamilyCurriculumPackController,
     FamilyCurriculumPackMediaController,
     DefinitionVersionOperationsController,
+    CurriculumPackCommunityController,
+    CurriculumPackReportController,
+    CurriculumPackModerationAdminController,
     DefinitionTagsController,
     FamilyActivityController,
   ],
@@ -198,6 +209,11 @@ import { FamilyActivityController } from './presentation/family-activity.control
     FamilyCurriculumPackMediaService,
     FamilyActivityService,
     DefinitionVersionOperationsService,
+    AuthorTrustRepository,
+    AuthorTrustService,
+    CurriculumPackReportRepository,
+    CurriculumPackReportService,
+    CurriculumPackModerationService,
     DefinitionTagsService,
     {
       provide: CURRICULUM_PUBLIC_API,
@@ -218,6 +234,11 @@ import { FamilyActivityController } from './presentation/family-activity.control
     ObjectiveService,
     EVIDENCE_SUBMISSION_PUBLIC_API,
     LEARNER_COMPETENCY_TRACKING_PUBLIC_API,
+    AuthorTrustService,
+    AuthorTrustRepository,
+    CurriculumPackReportRepository,
+    CurriculumPackReportService,
+    CurriculumPackModerationService,
   ],
 })
 export class CurriculumModule {}

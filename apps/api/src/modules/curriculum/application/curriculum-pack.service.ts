@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, type CurriculumPack, type CurriculumPackItem, type CurriculumPackDependency } from '@prisma/client';
 import type {
   CreateCurriculumPackOutput,
@@ -8,10 +8,12 @@ import type {
   AddCurriculumPackDependencyOutput,
   CurriculumPackDependencyResponseDto,
   CurriculumPackDefinitionType,
+  CurriculumPackModerationStatus,
   DefinitionStatus,
 } from '@aletheia/contracts';
 import { CurriculumPackRepository } from '../infrastructure/curriculum-pack.repository.js';
 import { computeStatusTransition } from './definition-status-transition.js';
+import { AuthorTrustService } from './author-trust.service.js';
 
 // Admin CRUD for CurriculumPack + manifest + dependencies (issue #96
 // Fase 4, section 27). Nothing here resolves or validates that manifest
@@ -22,11 +24,72 @@ import { computeStatusTransition } from './definition-status-transition.js';
 // other Definition/Version table's DRAFT stage).
 @Injectable()
 export class CurriculumPackService {
-  constructor(private readonly repository: CurriculumPackRepository) {}
+  constructor(
+    private readonly repository: CurriculumPackRepository,
+    private readonly authorTrustService: AuthorTrustService,
+  ) {}
 
   async createPack(dto: CreateCurriculumPackOutput): Promise<CurriculumPackResponseDto> {
     const row = await this.withWriteErrorMapping(() => this.repository.createPack(dto));
     return this.toPackDto(row);
+  }
+
+  async createCommunityPack(
+    userId: string,
+    dto: CreateCurriculumPackOutput,
+  ): Promise<CurriculumPackResponseDto> {
+    const row = await this.withWriteErrorMapping(() =>
+      this.repository.createCommunityPack(userId, dto),
+    );
+    return this.toPackDto(row);
+  }
+
+  async submitPack(packId: string, userId: string): Promise<CurriculumPackResponseDto> {
+    const existing = await this.repository.findPackById(packId);
+    if (!existing) {
+      throw new NotFoundException('Curriculum pack not found.');
+    }
+    if (existing.authorUserId !== userId) {
+      throw new ForbiddenException('You can only submit packs that you have authored.');
+    }
+
+    if (
+      existing.status !== 'DRAFT' ||
+      existing.moderationStatus === 'APPROVED' ||
+      existing.moderationStatus === 'SUSPENDED' ||
+      existing.moderationStatus === 'PENDING_REVIEW'
+    ) {
+      throw new BadRequestException('Only unapproved draft packs can be submitted for review.');
+    }
+
+    const profile = await this.authorTrustService.getOrCreateProfile(userId);
+    if (profile.tier === 'TRUSTED') {
+      const now = new Date();
+      const updated = await this.repository.updateModeration(packId, {
+        moderationStatus: 'APPROVED',
+        status: 'PUBLISHED',
+        publishedAt: now,
+        moderatedAt: now,
+        moderationNotes: 'Auto-approved (TRUSTED author)',
+      });
+      await this.authorTrustService.onPackApproved(userId);
+      return this.toPackDto(updated);
+    }
+
+    const updated = await this.repository.updateModeration(packId, {
+      moderationStatus: 'PENDING_REVIEW',
+    });
+    return this.toPackDto(updated);
+  }
+
+  async listPublicPacks(): Promise<CurriculumPackResponseDto[]> {
+    const rows = await this.repository.listPublishedPacks();
+    return rows.map((row) => this.toPackDto(row));
+  }
+
+  async listMyAuthoredPacks(userId: string): Promise<CurriculumPackResponseDto[]> {
+    const rows = await this.repository.listMyAuthoredPacks(userId);
+    return rows.map((row) => this.toPackDto(row));
   }
 
   async listPacks(): Promise<CurriculumPackResponseDto[]> {
@@ -44,7 +107,10 @@ export class CurriculumPackService {
     const existing = await this.repository.findPackById(id);
     if (!existing) throw new NotFoundException('Curriculum pack not found.');
     const update = computeStatusTransition(existing.status as DefinitionStatus, status);
-    const row = await this.repository.updatePackStatus(id, update);
+    const row = await this.repository.updatePackStatus(id, {
+      ...update,
+      ...(status === 'PUBLISHED' && { moderationStatus: 'APPROVED' }),
+    });
     return this.toPackDto(row);
   }
 
@@ -106,6 +172,11 @@ export class CurriculumPackService {
       name: row.name,
       description: row.description,
       metadata: row.metadata as Record<string, unknown>,
+      authorUserId: row.authorUserId ?? null,
+      moderationStatus: row.moderationStatus as CurriculumPackModerationStatus,
+      moderationNotes: row.moderationNotes ?? null,
+      moderatedAt: row.moderatedAt ? row.moderatedAt.toISOString() : null,
+      moderatedByUserId: row.moderatedByUserId ?? null,
       createdAt: row.createdAt.toISOString(),
       publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,
       deprecatedAt: row.deprecatedAt ? row.deprecatedAt.toISOString() : null,

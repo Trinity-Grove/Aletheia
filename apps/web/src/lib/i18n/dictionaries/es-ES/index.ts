@@ -7,6 +7,7 @@ import { auth } from './auth';
 import { onboarding } from './onboarding';
 import { learnerPortal } from './learner-portal';
 import { lessons } from './lessons';
+import { curriculum } from './curriculum';
 
 export const esES: Dictionary = {
   common,
@@ -17,4 +18,5 @@ export const esES: Dictionary = {
   onboarding,
   learnerPortal,
   lessons,
+  curriculum,
 };
