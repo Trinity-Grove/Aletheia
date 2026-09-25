@@ -48,14 +48,14 @@ flowchart TD
         RailwayMetrics["Railway Metrics Engine<br/>Latência p50/p95/p99, Erros HTTP, CPU/RAM"]
         RailwayAlerts["Railway Alerts / Webhooks"]
         Postgres[(PostgreSQL)]
-        MinIO[(MinIO Object Storage)]
+        ObjectStorage[(Object Storage<br/>Railway Bucket: aletheia-storage<br/>Local: MinIO)]
     end
 
     Web -->|"/api/v1/families/*, /auth/*"| API
     Backoffice -->|"/api/v1/admin/*"| API
     RailwayAlerts -->|"POST /api/v1/webhooks/railway"| API
     API --> Postgres
-    API --> MinIO
+    API --> ObjectStorage
     Backoffice -.->|"Deep Links Operacionais"| RailwayMetrics
 ```
 
