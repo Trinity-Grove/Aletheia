@@ -7,7 +7,6 @@ import type {
   AuthorTrustProfileResponseDto,
   CurriculumPackResponseDto,
   PackReportResponseDto,
-  PackReportStatus,
 } from '@aletheia/contracts';
 import { Alert, Badge, Button, EmptyState, Modal } from '@aletheia/ui';
 import { AuthorTrustBadge } from '../curriculum/author-trust-badge';

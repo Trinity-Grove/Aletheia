@@ -33,6 +33,7 @@ export class CurriculumPackRepository {
         name: dto.name,
         description: dto.description ?? null,
         metadata: dto.metadata as Prisma.InputJsonValue,
+        moderationStatus: dto.status === 'PUBLISHED' ? 'APPROVED' : 'DRAFT',
       },
     });
   }
@@ -59,7 +60,10 @@ export class CurriculumPackRepository {
 
   listPublishedPacks(): Promise<CurriculumPack[]> {
     return this.prisma.curriculumPack.findMany({
-      where: { status: 'PUBLISHED', moderationStatus: 'APPROVED' },
+      where: {
+        status: 'PUBLISHED',
+        OR: [{ moderationStatus: 'APPROVED' }, { authorUserId: null }],
+      },
       orderBy: [{ name: 'asc' }, { version: 'desc' }],
     });
   }
@@ -88,7 +92,10 @@ export class CurriculumPackRepository {
     return this.prisma.curriculumPack.findUnique({ where: { code_version: { code, version } } });
   }
 
-  updatePackStatus(id: string, update: DefinitionStatusUpdate): Promise<CurriculumPack> {
+  updatePackStatus(
+    id: string,
+    update: DefinitionStatusUpdate & { moderationStatus?: CurriculumPackModerationStatus },
+  ): Promise<CurriculumPack> {
     return this.prisma.curriculumPack.update({ where: { id }, data: update });
   }
 

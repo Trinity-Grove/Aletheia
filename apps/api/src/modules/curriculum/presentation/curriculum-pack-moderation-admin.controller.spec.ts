@@ -7,10 +7,7 @@ import type {
 } from '@aletheia/contracts';
 import { JwtAuthGuard, PlatformAdminGuard } from '../../../platform/auth/index.js';
 import { CurriculumPackModerationAdminController } from './curriculum-pack-moderation-admin.controller.js';
-import type {
-  CurriculumPackModerationService,
-  ModerationQueueItem,
-} from '../application/curriculum-pack-moderation.service.js';
+import type { ModerationQueueItem } from '../application/curriculum-pack-moderation.service.js';
 
 describe('CurriculumPackModerationAdminController', () => {
   const adminUserId = '88888888-8888-4888-8888-888888888888';

@@ -107,7 +107,10 @@ export class CurriculumPackService {
     const existing = await this.repository.findPackById(id);
     if (!existing) throw new NotFoundException('Curriculum pack not found.');
     const update = computeStatusTransition(existing.status as DefinitionStatus, status);
-    const row = await this.repository.updatePackStatus(id, update);
+    const row = await this.repository.updatePackStatus(id, {
+      ...update,
+      ...(status === 'PUBLISHED' && { moderationStatus: 'APPROVED' }),
+    });
     return this.toPackDto(row);
   }
 

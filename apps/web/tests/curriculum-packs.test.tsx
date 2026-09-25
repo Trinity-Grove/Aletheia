@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { CurriculumPacksGallery } from '../src/components/curriculum/curriculum-packs-gallery';
 import { AuthorTrustBadge } from '../src/components/curriculum/author-trust-badge';
-import { PackReportModal } from '../src/components/curriculum/pack-report-modal';
 import { LocaleProvider } from '../src/lib/i18n/locale-context';
 
 const mockPublishedPacks = [
