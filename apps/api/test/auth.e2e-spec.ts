@@ -135,8 +135,7 @@ describe('Identity Auth E2E', () => {
       .send({
         email: 'guardian@test.com',
         password: 'password123',
-        fullName: 'Test Guardian',
-      })
+        fullName: 'Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
 
     expect(response.body.accessToken).toBe('fake-jwt-token-12345');

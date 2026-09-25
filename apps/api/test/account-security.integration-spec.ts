@@ -29,7 +29,7 @@ describe('Account security: change password & change email (real Postgres)', () 
 
     const registerResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'oldPassword123', fullName: 'Change Password Test' })
+      .send({ email, password: 'oldPassword123', fullName: 'Change Password Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
 
     const accessCookie = [registerResponse.headers['set-cookie']]
@@ -66,7 +66,7 @@ describe('Account security: change password & change email (real Postgres)', () 
 
     const registerResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'oldPassword123', fullName: 'Change Password Wrong Test' })
+      .send({ email, password: 'oldPassword123', fullName: 'Change Password Wrong Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
 
     const accessCookie = [registerResponse.headers['set-cookie']]
@@ -86,7 +86,7 @@ describe('Account security: change password & change email (real Postgres)', () 
 
     const registerResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'password12345', fullName: 'Change Email Test' })
+      .send({ email, password: 'password12345', fullName: 'Change Email Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
 
     const accessCookie = [registerResponse.headers['set-cookie']]
@@ -131,12 +131,12 @@ describe('Account security: change password & change email (real Postgres)', () 
 
     await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: emailB, password: 'password12345', fullName: 'Existing User' })
+      .send({ email: emailB, password: 'password12345', fullName: 'Existing User', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
 
     const registerA = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: emailA, password: 'password12345', fullName: 'Requesting User' })
+      .send({ email: emailA, password: 'password12345', fullName: 'Requesting User', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
 
     const accessCookieA = [registerA.headers['set-cookie']]

@@ -23,7 +23,7 @@ describe('Pedagogical & Theological Profiles (real Postgres)', () => {
     const email = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
     const registerResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Profiles Test Guardian' })
+      .send({ email, password: 'somePassword123', fullName: 'Profiles Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     const cookie = [registerResponse.headers['set-cookie']]
       .flat()

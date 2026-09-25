@@ -29,7 +29,7 @@ describe('Refresh token rotation and revocation (real Postgres)', () => {
 
     const registerResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'password12345', fullName: 'Refresh Test' })
+      .send({ email, password: 'password12345', fullName: 'Refresh Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
 
     const originalRefreshCookie = extractCookie(
@@ -66,7 +66,7 @@ describe('Refresh token rotation and revocation (real Postgres)', () => {
 
     const registerResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'password12345', fullName: 'Logout Test' })
+      .send({ email, password: 'password12345', fullName: 'Logout Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
 
     const refreshCookie = extractCookie(registerResponse.headers['set-cookie'], 'aletheia_refresh');

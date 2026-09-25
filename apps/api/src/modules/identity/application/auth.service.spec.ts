@@ -29,7 +29,50 @@ import { TotpSecretCipher } from '../../../platform/security/totp-secret-cipher.
 import { hashRecoveryCode } from '../../../platform/security/totp.js';
 import type { MailMessage, MailSender } from '../../../platform/mail/mail-sender.js';
 import type { Environment } from '../../../platform/config/environment.js';
-import type { AccountAuditEventType } from '@aletheia/contracts';
+import type { AccountAuditEventType, ConsentDefinitionResponseDto } from '@aletheia/contracts';
+import type { PrivacyPublicApi } from '../../privacy/application/public-api.js';
+
+const NOW_ISO = new Date().toISOString();
+
+function fakeConsentDefinition(code: string): ConsentDefinitionResponseDto {
+  return {
+    id: `consent-def-${code}`,
+    code,
+    version: 1,
+    status: 'PUBLISHED',
+    schemaVersion: 1,
+    scope: 'FAMILY',
+    mandatory: true,
+    title: code,
+    description: null,
+    content: 'placeholder',
+    purposes: ['test'],
+    metadata: null,
+    publishedAt: NOW_ISO,
+    deprecatedAt: null,
+    createdAt: NOW_ISO,
+    updatedAt: NOW_ISO,
+  };
+}
+
+// Tests register with countryCode: 'BRA' by default, so LGPD must always
+// be resolvable; a couple of tests exercise other regimes explicitly.
+const FAKE_PUBLISHED_FAMILY_DEFINITIONS: ConsentDefinitionResponseDto[] = [
+  fakeConsentDefinition('TERMS_OF_USE_LGPD'),
+  fakeConsentDefinition('PRIVACY_POLICY_LGPD'),
+  fakeConsentDefinition('TERMS_OF_USE_GDPR'),
+  fakeConsentDefinition('PRIVACY_POLICY_GDPR'),
+  fakeConsentDefinition('TERMS_OF_USE_GENERIC'),
+  fakeConsentDefinition('PRIVACY_POLICY_GENERIC'),
+];
+
+const fakePrivacyPublicApi: PrivacyPublicApi = {
+  getPublishedDefinitions: async () => FAKE_PUBLISHED_FAMILY_DEFINITIONS,
+  checkMandatoryCompliance: async () => ({ compliant: true, pendingMandatoryTerms: [] }),
+  grantConsent: async () => {
+    throw new Error('not used by AuthService tests');
+  },
+};
 
 // otplib v13 ships ESM-only runtime deps that ts-jest can't transform. The
 // unit tests assert service orchestration, not real TOTP math (that's the
@@ -62,6 +105,10 @@ describe('AuthService', () => {
   let mfaSetupChallengeRepository: MfaSetupChallengeRepository;
   let mfaLoginChallengeRepository: MfaLoginChallengeRepository;
   let totpSecretCipher: TotpSecretCipher;
+  let capturedCreateCalls: Array<{
+    termsOfUseDefinitionId: string;
+    privacyPolicyDefinitionId: string;
+  }>;
   let fakeSetupChallenges: Map<
     string,
     { id: string; encryptedSecret: string; recoveryCodeHashes: string[]; expiresAt: Date }
@@ -85,7 +132,7 @@ describe('AuthService', () => {
 
   it.each([false, true])('exposes persisted platform admin=%s in registration, login, refresh and profile', async (isAdmin) => {
     environment.platformAdminEmails = isAdmin ? ['admin@example.com'] : [];
-    const registered = await authService.register({ email: 'admin@example.com', fullName: 'Admin', password: 'password12345' });
+    const registered = await authService.register({ email: 'admin@example.com', fullName: 'Admin', password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     expect(registered.user).toHaveProperty('isPlatformAdmin', isAdmin);
     const loggedIn = await authService.login({ email: 'admin@example.com', password: 'password12345' });
     expectAuthSession(loggedIn);
@@ -95,7 +142,7 @@ describe('AuthService', () => {
   });
 
   it('returns the newly granted platform admin flag on the first login after bootstrap changes', async () => {
-    await authService.register({ email: 'admin@example.com', fullName: 'Admin', password: 'password12345' });
+    await authService.register({ email: 'admin@example.com', fullName: 'Admin', password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     environment.platformAdminEmails = ['admin@example.com'];
     const result = await authService.login({ email: 'admin@example.com', password: 'password12345' });
     expectAuthSession(result);
@@ -104,6 +151,7 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     fakeUsers = new Map();
+    capturedCreateCalls = [];
     hasher = new PasswordHasher();
     jwtService = new JwtService({ secret: 'test-secret' });
 
@@ -115,7 +163,17 @@ describe('AuthService', () => {
         }
         return null;
       },
-      create: async (data: { email: string; passwordHash: string; fullName: string }) => {
+      create: async (data: {
+        email: string;
+        passwordHash: string;
+        fullName: string;
+        termsOfUseDefinitionId: string;
+        privacyPolicyDefinitionId: string;
+      }) => {
+        capturedCreateCalls.push({
+          termsOfUseDefinitionId: data.termsOfUseDefinitionId,
+          privacyPolicyDefinitionId: data.privacyPolicyDefinitionId,
+        });
         const entity = new UserEntity({
           id: 'user-uuid-1',
           email: data.email.toLowerCase().trim(),
@@ -448,6 +506,7 @@ describe('AuthService', () => {
       mfaSetupChallengeRepository,
       mfaLoginChallengeRepository,
       totpSecretCipher,
+      fakePrivacyPublicApi,
       mailSender,
       environment,
     );
@@ -458,8 +517,7 @@ describe('AuthService', () => {
       authService.register({
         email: 'parent@example.com',
         fullName: 'Parent User',
-        password: 'short',
-      }),
+        password: 'short', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true }),
     ).rejects.toThrow(BadRequestException);
   });
 
@@ -467,8 +525,7 @@ describe('AuthService', () => {
     const result = await authService.register({
       email: 'guardian@example.com',
       fullName: 'Faithful Guardian',
-      password: 'strongPassword123!',
-    });
+      password: 'strongPassword123!', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
     expect(result.accessToken).toBeDefined();
     expect(result.refreshToken).toBeDefined();
@@ -481,8 +538,7 @@ describe('AuthService', () => {
     await authService.register({
       email: 'guardian@example.com',
       fullName: 'Faithful Guardian',
-      password: 'strongPassword123!',
-    });
+      password: 'strongPassword123!', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
     expect(sentEmails).toHaveLength(1);
     expect(sentEmails[0]!.to).toBe('guardian@example.com');
@@ -498,8 +554,7 @@ describe('AuthService', () => {
       authService.register({
         email: 'guardian@example.com',
         fullName: 'Faithful Guardian',
-        password: 'strongPassword123!',
-      }),
+        password: 'strongPassword123!', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true }),
     ).resolves.toMatchObject({ user: { email: 'guardian@example.com' } });
   });
 
@@ -507,15 +562,13 @@ describe('AuthService', () => {
     await authService.register({
       email: 'duplicate@example.com',
       fullName: 'First',
-      password: 'password123',
-    });
+      password: 'password123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
     await expect(
       authService.register({
         email: 'duplicate@example.com',
         fullName: 'Second',
-        password: 'password123',
-      }),
+        password: 'password123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true }),
     ).rejects.toThrow(BadRequestException);
 
     // Anti-enumeration: the message must not confirm an account exists —
@@ -526,8 +579,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'duplicate@example.com',
         fullName: 'Second',
-        password: 'password123',
-      });
+        password: 'password123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     } catch (error) {
       expect(error).toBeInstanceOf(BadRequestException);
       const message = (error as BadRequestException).message;
@@ -540,8 +592,7 @@ describe('AuthService', () => {
     await authService.register({
       email: 'login@example.com',
       fullName: 'User',
-      password: 'securePassword888',
-    });
+      password: 'securePassword888', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
     const loginResult = await authService.login({
       email: 'login@example.com',
@@ -557,8 +608,7 @@ describe('AuthService', () => {
     await authService.register({
       email: 'verify@example.com',
       fullName: 'User',
-      password: 'securePassword888',
-    });
+      password: 'securePassword888', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
     const loginResult = await authService.login({
       email: 'verify@example.com',
@@ -584,8 +634,7 @@ describe('AuthService', () => {
     await authService.register({
       email: 'wrongpass@example.com',
       fullName: 'User',
-      password: 'correctPassword123',
-    });
+      password: 'correctPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
     await expect(
       authService.login({
@@ -600,8 +649,7 @@ describe('AuthService', () => {
       const { refreshToken } = await authService.register({
         email: 'refresh@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
       const refreshed = await authService.refresh(refreshToken);
 
@@ -619,8 +667,7 @@ describe('AuthService', () => {
       const { refreshToken } = await authService.register({
         email: 'expired@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       fakeRefreshTokens.get(refreshToken)!.expiresAt = new Date(Date.now() - 1000);
 
       await expect(authService.refresh(refreshToken)).rejects.toThrow(UnauthorizedException);
@@ -630,8 +677,7 @@ describe('AuthService', () => {
       const { refreshToken } = await authService.register({
         email: 'reuse@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
       const first = await authService.refresh(refreshToken);
 
@@ -649,8 +695,7 @@ describe('AuthService', () => {
       const { refreshToken } = await authService.register({
         email: 'logout@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
       await authService.revokeRefreshToken(refreshToken);
 
@@ -663,8 +708,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'verify@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       const [, token] = [...fakeVerificationTokens.entries()][0]!;
 
       await authService.verifyEmail(token.plainToken);
@@ -681,8 +725,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'verify-twice@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       const [, token] = [...fakeVerificationTokens.entries()][0]!;
 
       await authService.verifyEmail(token.plainToken);
@@ -694,8 +737,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'verify-expired@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       const [, token] = [...fakeVerificationTokens.entries()][0]!;
       token.expiresAt = new Date(Date.now() - 1000);
 
@@ -708,8 +750,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'resend@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       sentEmails.length = 0;
 
       await authService.resendVerificationEmail('user-uuid-1');
@@ -722,8 +763,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'already-verified@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       const [, token] = [...fakeVerificationTokens.entries()][0]!;
       await authService.verifyEmail(token.plainToken);
       sentEmails.length = 0;
@@ -739,8 +779,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'forgot@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       sentEmails.length = 0;
 
       await authService.forgotPassword('forgot@example.com');
@@ -764,8 +803,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'reset@example.com',
         fullName: 'User',
-        password: 'oldPassword123',
-      });
+        password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       await authService.forgotPassword('reset@example.com');
       const [, token] = [...fakePasswordResetTokens.entries()][0]!;
 
@@ -787,8 +825,7 @@ describe('AuthService', () => {
       const { refreshToken } = await authService.register({
         email: 'reset-revoke@example.com',
         fullName: 'User',
-        password: 'oldPassword123',
-      });
+        password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       await authService.forgotPassword('reset-revoke@example.com');
       const [, token] = [...fakePasswordResetTokens.entries()][0]!;
 
@@ -801,8 +838,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'reset-weak@example.com',
         fullName: 'User',
-        password: 'oldPassword123',
-      });
+        password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       await authService.forgotPassword('reset-weak@example.com');
       const [, token] = [...fakePasswordResetTokens.entries()][0]!;
 
@@ -821,8 +857,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'reset-twice@example.com',
         fullName: 'User',
-        password: 'oldPassword123',
-      });
+        password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       await authService.forgotPassword('reset-twice@example.com');
       const [, token] = [...fakePasswordResetTokens.entries()][0]!;
 
@@ -837,8 +872,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'reset-expired@example.com',
         fullName: 'User',
-        password: 'oldPassword123',
-      });
+        password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       await authService.forgotPassword('reset-expired@example.com');
       const [, token] = [...fakePasswordResetTokens.entries()][0]!;
       token.expiresAt = new Date(Date.now() - 1000);
@@ -854,8 +888,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'change-pw@example.com',
         fullName: 'User',
-        password: 'oldPassword123',
-      });
+        password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
       await authService.changePassword('user-uuid-1', 'oldPassword123', 'newPassword456');
 
@@ -874,8 +907,7 @@ describe('AuthService', () => {
       const { refreshToken } = await authService.register({
         email: 'change-pw-revoke@example.com',
         fullName: 'User',
-        password: 'oldPassword123',
-      });
+        password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
       await authService.changePassword('user-uuid-1', 'oldPassword123', 'newPassword456');
 
@@ -886,8 +918,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'change-pw-wrong@example.com',
         fullName: 'User',
-        password: 'oldPassword123',
-      });
+        password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
       await expect(
         authService.changePassword('user-uuid-1', 'wrongPassword', 'newPassword456'),
@@ -898,8 +929,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'change-pw-weak@example.com',
         fullName: 'User',
-        password: 'oldPassword123',
-      });
+        password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
       await expect(
         authService.changePassword('user-uuid-1', 'oldPassword123', 'short'),
@@ -912,8 +942,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'change-email@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       sentEmails.length = 0;
 
       await authService.changeEmail('user-uuid-1', 'password12345', 'new-address@example.com');
@@ -929,8 +958,7 @@ describe('AuthService', () => {
       const { refreshToken } = await authService.register({
         email: 'change-email-revoke@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
       await authService.changeEmail('user-uuid-1', 'password12345', 'new-address-2@example.com');
 
@@ -941,8 +969,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'change-email-wrong@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
       await expect(
         authService.changeEmail('user-uuid-1', 'wrongPassword', 'new-address-3@example.com'),
@@ -953,8 +980,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'change-email-same@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
       await expect(
         authService.changeEmail('user-uuid-1', 'password12345', 'change-email-same@example.com'),
@@ -965,13 +991,11 @@ describe('AuthService', () => {
       await authService.register({
         email: 'change-email-taken@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       await authService.register({
         email: 'change-email-target@example.com',
         fullName: 'Other User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
       await expect(
         authService.changeEmail('user-uuid-1', 'password12345', 'change-email-target@example.com'),
@@ -984,8 +1008,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'audit-login@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       auditLog.length = 0;
 
       await expect(
@@ -1001,8 +1024,7 @@ describe('AuthService', () => {
       const { refreshToken } = await authService.register({
         email: 'audit-logout@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       auditLog.length = 0;
 
       await authService.revokeRefreshToken(refreshToken);
@@ -1015,8 +1037,7 @@ describe('AuthService', () => {
       const { refreshToken } = await authService.register({
         email: 'audit-reuse@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       await authService.refresh(refreshToken);
       auditLog.length = 0;
 
@@ -1029,8 +1050,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'audit-full@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       const [, verifyToken] = [...fakeVerificationTokens.entries()][0]!;
       auditLog.length = 0;
 
@@ -1054,8 +1074,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'audit-broken@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       accountAuditLogRepository.record = async () => {
         throw new Error('Audit store is down');
       };
@@ -1071,8 +1090,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'audit-list@example.com',
         fullName: 'User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       auditLog.length = 0;
 
       await authService.login({ email: 'audit-list@example.com', password: 'password12345' });
@@ -1091,8 +1109,7 @@ describe('AuthService', () => {
       await authService.register({
         email: 'mfa@example.com',
         fullName: 'MFA User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       return 'user-uuid-1';
     }
 
@@ -1286,6 +1303,70 @@ describe('AuthService', () => {
     });
   });
 
+  describe('Terms of Use / Privacy Policy acceptance on registration', () => {
+    it('records the LGPD-regime definitions when countryCode is BRA', async () => {
+      await authService.register({
+        email: 'guardian-lgpd@example.com',
+        fullName: 'Guardian',
+        password: 'strongPassword123!',
+        countryCode: 'BRA',
+        acceptedTermsOfUse: true,
+        acceptedPrivacyPolicy: true,
+      });
+
+      expect(capturedCreateCalls).toHaveLength(1);
+      expect(capturedCreateCalls[0]?.termsOfUseDefinitionId).toBe('consent-def-TERMS_OF_USE_LGPD');
+      expect(capturedCreateCalls[0]?.privacyPolicyDefinitionId).toBe('consent-def-PRIVACY_POLICY_LGPD');
+    });
+
+    it('records the GDPR-regime definitions for an EU country', async () => {
+      await authService.register({
+        email: 'guardian-gdpr@example.com',
+        fullName: 'Guardian',
+        password: 'strongPassword123!',
+        countryCode: 'DEU',
+        acceptedTermsOfUse: true,
+        acceptedPrivacyPolicy: true,
+      });
+
+      expect(capturedCreateCalls[0]?.termsOfUseDefinitionId).toBe('consent-def-TERMS_OF_USE_GDPR');
+      expect(capturedCreateCalls[0]?.privacyPolicyDefinitionId).toBe('consent-def-PRIVACY_POLICY_GDPR');
+    });
+
+    it('records the GENERIC-regime definitions for a country outside every specific regime', async () => {
+      await authService.register({
+        email: 'guardian-generic@example.com',
+        fullName: 'Guardian',
+        password: 'strongPassword123!',
+        countryCode: 'JPN',
+        acceptedTermsOfUse: true,
+        acceptedPrivacyPolicy: true,
+      });
+
+      expect(capturedCreateCalls[0]?.termsOfUseDefinitionId).toBe('consent-def-TERMS_OF_USE_GENERIC');
+      expect(capturedCreateCalls[0]?.privacyPolicyDefinitionId).toBe('consent-def-PRIVACY_POLICY_GENERIC');
+    });
+
+    it('rejects registration when the required consent definitions are not published for the resolved regime', async () => {
+      const originalGetPublished = fakePrivacyPublicApi.getPublishedDefinitions;
+      fakePrivacyPublicApi.getPublishedDefinitions = async () => [];
+
+      await expect(
+        authService.register({
+          email: 'guardian-missing-seed@example.com',
+          fullName: 'Guardian',
+          password: 'strongPassword123!',
+          countryCode: 'BRA',
+          acceptedTermsOfUse: true,
+          acceptedPrivacyPolicy: true,
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(capturedCreateCalls).toHaveLength(0);
+      fakePrivacyPublicApi.getPublishedDefinitions = originalGetPublished;
+    });
+  });
+
   describe('platform-admin bootstrap (issue #101)', () => {
     it('promotes a matching email on register', async () => {
       environment.platformAdminEmails = ['admin@example.com'];
@@ -1293,8 +1374,7 @@ describe('AuthService', () => {
       const result = await authService.register({
         email: 'admin@example.com',
         fullName: 'Admin User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       expectAuthSession(result);
 
       await expect(authService.isPlatformAdmin(result.user.id)).resolves.toBe(true);
@@ -1306,8 +1386,7 @@ describe('AuthService', () => {
       const result = await authService.register({
         email: 'parent@example.com',
         fullName: 'Parent User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       expectAuthSession(result);
 
       await expect(authService.isPlatformAdmin(result.user.id)).resolves.toBe(false);
@@ -1317,8 +1396,7 @@ describe('AuthService', () => {
       const registered = await authService.register({
         email: 'later-admin@example.com',
         fullName: 'Later Admin',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       expectAuthSession(registered);
       await expect(authService.isPlatformAdmin(registered.user.id)).resolves.toBe(false);
 
@@ -1333,8 +1411,7 @@ describe('AuthService', () => {
       const result = await authService.register({
         email: 'sticky-admin@example.com',
         fullName: 'Sticky Admin',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       expectAuthSession(result);
       await expect(authService.isPlatformAdmin(result.user.id)).resolves.toBe(true);
 
@@ -1350,8 +1427,7 @@ describe('AuthService', () => {
       const result = await authService.register({
         email: 'leader@trinitygrove.org',
         fullName: 'Leader',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       expectAuthSession(result);
       await expect(authService.isPlatformAdmin(result.user.id)).resolves.toBe(false);
     });
@@ -1362,8 +1438,7 @@ describe('AuthService', () => {
       const result = await authService.register({
         email: 'leader@trinitygrove.org',
         fullName: 'Leader',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       expectAuthSession(result);
       await expect(authService.isPlatformAdmin(result.user.id)).resolves.toBe(false);
 
@@ -1381,8 +1456,7 @@ describe('AuthService', () => {
       const registered = await authService.register({
         email: 'staff@aletheiaphos.app',
         fullName: 'Staff',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       const tokenRecord = Array.from(fakeVerificationTokens.values()).find(
         (t) => t.userId === registered.user.id,
       );
@@ -1401,8 +1475,7 @@ describe('AuthService', () => {
       const registered = await authService.register({
         email: 'someone@otherdomain.com',
         fullName: 'Other User',
-        password: 'password12345',
-      });
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
       const tokenRecord = Array.from(fakeVerificationTokens.values()).find(
         (t) => t.userId === registered.user.id,
       );

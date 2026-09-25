@@ -40,6 +40,7 @@ describe('learner contracts', () => {
       const payload = {
         firstName: 'John',
         birthDate: '2016-05-14',
+        acceptedDataConsent: true as const,
       };
 
       const result = createLearnerSchema.safeParse(payload);
@@ -53,10 +54,10 @@ describe('learner contracts', () => {
 
     it('normalizes legacy stage aliases to the universal taxonomy', () => {
       expect(
-        createLearnerSchema.parse({ firstName: 'John', birthDate: '2016-05-14', stage: 'PRIMARY_GRAMMAR' }).stage,
+        createLearnerSchema.parse({ firstName: 'John', birthDate: '2016-05-14', stage: 'PRIMARY_GRAMMAR', acceptedDataConsent: true }).stage,
       ).toBe('PRIMARY');
       expect(
-        createLearnerSchema.parse({ firstName: 'John', birthDate: '2012-05-14', stage: 'MIDDLE_LOGIC' }).stage,
+        createLearnerSchema.parse({ firstName: 'John', birthDate: '2012-05-14', stage: 'MIDDLE_LOGIC', acceptedDataConsent: true }).stage,
       ).toBe('LOWER_SECONDARY');
       expect(
         updateLearnerSchema.parse({ stage: 'HIGH_RHETORIC' }).stage,
@@ -74,6 +75,7 @@ describe('learner contracts', () => {
         avatarColor: '#4F46E5',
         specialNeeds: 'ADHD accommodation needed',
         notes: 'Enjoys reading and puzzles',
+        acceptedDataConsent: true,
       };
 
       const result = createLearnerSchema.safeParse(payload);

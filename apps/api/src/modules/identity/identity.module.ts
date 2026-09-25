@@ -17,6 +17,7 @@ import { JwtAuthGuard } from '../../platform/auth/index.js';
 import { ENVIRONMENT, type Environment } from '../../platform/config/environment.js';
 import { DatabaseModule } from '../../platform/database/database.module.js';
 import { MailModule } from '../../platform/mail/mail.module.js';
+import { PrivacyModule } from '../privacy/privacy.module.js';
 import { TotpSecretCipher } from '../../platform/security/totp-secret-cipher.js';
 
 @Global()
@@ -24,6 +25,7 @@ import { TotpSecretCipher } from '../../platform/security/totp-secret-cipher.js'
   imports: [
     DatabaseModule,
     MailModule,
+    PrivacyModule,
     JwtModule.registerAsync({
       inject: [ENVIRONMENT],
       useFactory: (environment: Environment) => ({

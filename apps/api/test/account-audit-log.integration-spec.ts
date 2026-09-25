@@ -20,7 +20,7 @@ describe('Account audit log (real Postgres)', () => {
 
     const registerResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'oldPassword123', fullName: 'Audit Log Test' })
+      .send({ email, password: 'oldPassword123', fullName: 'Audit Log Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
 
     const accessCookie = [registerResponse.headers['set-cookie']]
@@ -64,7 +64,7 @@ describe('Account audit log (real Postgres)', () => {
 
     const registerResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'correctPassword123', fullName: 'Audit Failed Login Test' })
+      .send({ email, password: 'correctPassword123', fullName: 'Audit Failed Login Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
 
     const accessCookie = [registerResponse.headers['set-cookie']]

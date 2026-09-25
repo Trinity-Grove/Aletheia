@@ -1,17 +1,66 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { LearnerService } from './learner.service.js';
 import { LearnerRepository } from '../infrastructure/learner.repository.js';
 import { LearnerEntity } from '../domain/learner.entity.js';
-import { normalizeEducationalStage, type CreateLearnerDto, type UpdateLearnerDto } from '@aletheia/contracts';
+import {
+  normalizeEducationalStage,
+  type ConsentDefinitionResponseDto,
+  type CreateLearnerDto,
+  type UpdateLearnerDto,
+} from '@aletheia/contracts';
+import type { PrivacyPublicApi } from '../../privacy/application/public-api.js';
+
+const ACTOR_USER_ID = 'user-1';
+
+const FAKE_LEARNER_DATA_PROCESSING_LGPD: ConsentDefinitionResponseDto = {
+  id: 'consent-def-LEARNER_DATA_PROCESSING_LGPD',
+  code: 'LEARNER_DATA_PROCESSING_LGPD',
+  version: 1,
+  status: 'PUBLISHED',
+  schemaVersion: 1,
+  scope: 'LEARNER',
+  mandatory: true,
+  title: 'Consentimento',
+  description: null,
+  content: 'placeholder',
+  purposes: ['test'],
+  metadata: null,
+  publishedAt: new Date().toISOString(),
+  deprecatedAt: null,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
 
 describe('LearnerService', () => {
   let learnerService: LearnerService;
   let fakeLearners: Map<string, LearnerEntity>;
+  let grantedConsents: Array<{ familyId: string; learnerId: string | undefined }>;
 
   beforeEach(() => {
     fakeLearners = new Map();
+    grantedConsents = [];
+
+    const fakePrivacyPublicApi: PrivacyPublicApi = {
+      getPublishedDefinitions: async () => [FAKE_LEARNER_DATA_PROCESSING_LGPD],
+      checkMandatoryCompliance: async () => ({ compliant: true, pendingMandatoryTerms: [] }),
+      grantConsent: async (familyId, _userId, dto) => {
+        grantedConsents.push({ familyId, learnerId: dto.learnerId });
+        return {
+          id: `consent-record-${grantedConsents.length}`,
+          familyId,
+          learnerId: dto.learnerId ?? null,
+          consentDefinitionId: dto.consentDefinitionId,
+          action: 'GRANTED',
+          consentedByUserId: ACTOR_USER_ID,
+          ipAddress: null,
+          userAgent: null,
+          createdAt: new Date().toISOString(),
+        };
+      },
+    };
 
     const mockRepo = {
+      findFamilyCountryCode: async () => 'BRA',
       create: async (familyId: string, dto: CreateLearnerDto) => {
         const id = `learner-${fakeLearners.size + 1}`;
         const entity = new LearnerEntity({
@@ -77,7 +126,7 @@ describe('LearnerService', () => {
       },
     } as unknown as LearnerRepository;
 
-    learnerService = new LearnerService(mockRepo);
+    learnerService = new LearnerService(mockRepo, fakePrivacyPublicApi);
   });
 
   describe('createLearner', () => {
@@ -86,8 +135,7 @@ describe('LearnerService', () => {
         firstName: 'Lucas',
         lastName: 'Silva',
         birthDate: '2016-05-12',
-        stage: 'PRIMARY_GRAMMAR',
-      });
+        stage: 'PRIMARY_GRAMMAR', acceptedDataConsent: true}, ACTOR_USER_ID);
 
       expect(result.id).toBeDefined();
       expect(result.familyId).toBe('fam-1');
@@ -97,6 +145,40 @@ describe('LearnerService', () => {
       expect(result.stage).toBe('PRIMARY');
       expect(result.archivedAt).toBeNull();
     });
+
+    it('grants the family-country-appropriate LEARNER_DATA_PROCESSING consent for the new learner', async () => {
+      const result = await learnerService.createLearner(
+        'fam-1',
+        { firstName: 'Lucas', birthDate: '2016-05-12', acceptedDataConsent: true },
+        ACTOR_USER_ID,
+      );
+
+      expect(grantedConsents).toEqual([{ familyId: 'fam-1', learnerId: result.id }]);
+    });
+
+    it('rejects learner creation (before any learner is persisted) when no consent definition is published for the regime', async () => {
+      const emptyPrivacyPublicApi: PrivacyPublicApi = {
+        getPublishedDefinitions: async () => [],
+        checkMandatoryCompliance: async () => ({ compliant: true, pendingMandatoryTerms: [] }),
+        grantConsent: async () => {
+          throw new Error('should never be called');
+        },
+      };
+      const serviceWithNoDefinitions = new LearnerService(
+        learnerService['learnerRepository'],
+        emptyPrivacyPublicApi,
+      );
+
+      await expect(
+        serviceWithNoDefinitions.createLearner(
+          'fam-1',
+          { firstName: 'Lucas', birthDate: '2016-05-12', acceptedDataConsent: true },
+          ACTOR_USER_ID,
+        ),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(await learnerService.getFamilyLearners('fam-1')).toHaveLength(0);
+    });
   });
 
   describe('getFamilyLearners', () => {
@@ -104,13 +186,11 @@ describe('LearnerService', () => {
       await learnerService.createLearner('fam-1', {
         firstName: 'Older Child',
         birthDate: '2012-01-01',
-        stage: 'PRIMARY_GRAMMAR',
-      });
+        stage: 'PRIMARY_GRAMMAR', acceptedDataConsent: true}, ACTOR_USER_ID);
       await learnerService.createLearner('fam-1', {
         firstName: 'Younger Child',
         birthDate: '2018-06-01',
-        stage: 'EARLY_YEARS',
-      });
+        stage: 'EARLY_YEARS', acceptedDataConsent: true}, ACTOR_USER_ID);
 
       const learners = await learnerService.getFamilyLearners('fam-1');
       expect(learners).toHaveLength(2);
@@ -122,8 +202,7 @@ describe('LearnerService', () => {
       const created = await learnerService.createLearner('fam-1', {
         firstName: 'Archived Child',
         birthDate: '2014-01-01',
-        stage: 'PRIMARY_GRAMMAR',
-      });
+        stage: 'PRIMARY_GRAMMAR', acceptedDataConsent: true}, ACTOR_USER_ID);
       await learnerService.archiveLearner('fam-1', created.id);
 
       const active = await learnerService.getFamilyLearners('fam-1');
@@ -140,8 +219,7 @@ describe('LearnerService', () => {
       const created = await learnerService.createLearner('fam-1', {
         firstName: 'Ana',
         birthDate: '2015-08-20',
-        stage: 'PRIMARY_GRAMMAR',
-      });
+        stage: 'PRIMARY_GRAMMAR', acceptedDataConsent: true}, ACTOR_USER_ID);
 
       const found = await learnerService.getLearnerById('fam-1', created.id);
       expect(found.id).toBe(created.id);
@@ -156,8 +234,7 @@ describe('LearnerService', () => {
       const created = await learnerService.createLearner('fam-1', {
         firstName: 'Ana',
         birthDate: '2015-08-20',
-        stage: 'PRIMARY_GRAMMAR',
-      });
+        stage: 'PRIMARY_GRAMMAR', acceptedDataConsent: true}, ACTOR_USER_ID);
       await expect(learnerService.getLearnerById('fam-2', created.id)).rejects.toThrow(
         NotFoundException,
       );
@@ -169,8 +246,7 @@ describe('LearnerService', () => {
       const created = await learnerService.createLearner('fam-1', {
         firstName: 'Pedro',
         birthDate: '2017-03-10',
-        stage: 'PRIMARY_GRAMMAR',
-      });
+        stage: 'PRIMARY_GRAMMAR', acceptedDataConsent: true}, ACTOR_USER_ID);
 
       const updated = await learnerService.updateLearner('fam-1', created.id, {
         firstName: 'Pedro Henrique',
@@ -193,8 +269,7 @@ describe('LearnerService', () => {
       const created = await learnerService.createLearner('fam-1', {
         firstName: 'Lucas',
         birthDate: '2016-05-12',
-        stage: 'PRIMARY_GRAMMAR',
-      });
+        stage: 'PRIMARY_GRAMMAR', acceptedDataConsent: true}, ACTOR_USER_ID);
 
       const archived = await learnerService.archiveLearner('fam-1', created.id);
       expect(archived.archivedAt).not.toBeNull();

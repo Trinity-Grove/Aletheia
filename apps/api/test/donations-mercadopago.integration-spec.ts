@@ -40,7 +40,7 @@ describe('Donations against the real Mercado Pago gateway (real Postgres, mocked
     const email = `${prefix}-${randomUUID()}@example.com`;
     const registerResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Donations Test Guardian' })
+      .send({ email, password: 'somePassword123', fullName: 'Donations Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     const cookie = [registerResponse.headers['set-cookie']].flat().find((c) => c?.startsWith('aletheia_session='))!;
 

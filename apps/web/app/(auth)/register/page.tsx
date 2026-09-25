@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import type { RegisterGuardianDto } from '@aletheia/contracts';
 import { RegisterForm } from '../../../src/components/auth/register-form';
 import { useAuth } from '../../../src/lib/auth/auth-context';
 import { useLocale } from '../../../src/lib/i18n/locale-context';
@@ -12,8 +13,13 @@ export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();
 
-  const handleRegister = async (data: { fullName: string; email: string; password: string }) => {
+  const handleRegister = async (data: RegisterGuardianDto) => {
     await register(data);
+    // Pre-fills onboarding's own country field with what was already
+    // chosen here, so the guardian isn't asked twice.
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('aletheia.registrationCountryCode', data.countryCode);
+    }
     router.push('/onboarding');
   };
 

@@ -27,7 +27,7 @@ describe('Progression evaluation (real Postgres)', () => {
     db = app.get(PrismaService);
     const email = `progression-${randomUUID()}@example.com`;
     const registered = await supertest(app.getHttpServer()).post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Progression Guardian' }).expect(201);
+      .send({ email, password: 'somePassword123', fullName: 'Progression Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true }).expect(201);
     cookie = [registered.headers['set-cookie']].flat().find((value) => value?.startsWith('aletheia_session='))!;
     authorId = (await db.user.findUniqueOrThrow({ where: { email } })).id;
     const family = await supertest(app.getHttpServer()).post('/api/v1/families').set('Cookie', cookie)

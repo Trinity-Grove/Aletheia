@@ -63,14 +63,14 @@ describe('Privacy & Versioned Consent Integration (real Postgres)', () => {
     // 1. Register Platform Admin
     const adminRes = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'StrongPassword123!', fullName: 'Platform Admin' })
+      .send({ email: adminEmail, password: 'StrongPassword123!', fullName: 'Platform Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     adminCookie = extractCookie(adminRes, 'aletheia_session=');
 
     // 2. Register Guardian A (Family A)
     const guardianARes = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: guardianAEmail, password: 'StrongPassword123!', fullName: 'Guardian Alpha' })
+      .send({ email: guardianAEmail, password: 'StrongPassword123!', fullName: 'Guardian Alpha', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     guardianACookie = extractCookie(guardianARes, 'aletheia_session=');
     guardianAUserId = guardianARes.body.user.id;
@@ -78,7 +78,7 @@ describe('Privacy & Versioned Consent Integration (real Postgres)', () => {
     // 3. Register Guardian B (Family B)
     const guardianBRes = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: guardianBEmail, password: 'StrongPassword123!', fullName: 'Guardian Beta' })
+      .send({ email: guardianBEmail, password: 'StrongPassword123!', fullName: 'Guardian Beta', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     guardianBCookie = extractCookie(guardianBRes, 'aletheia_session=');
 
@@ -93,14 +93,14 @@ describe('Privacy & Versioned Consent Integration (real Postgres)', () => {
     const learnerA1Res = await supertest(app.getHttpServer())
       .post(`/api/v1/families/${familyAId}/learners`)
       .set('Cookie', guardianACookie)
-      .send({ firstName: 'Alice', lastName: 'Alpha', birthDate: '2016-01-01', stage: 'PRIMARY_GRAMMAR' })
+      .send({ firstName: 'Alice', lastName: 'Alpha', birthDate: '2016-01-01', stage: 'PRIMARY_GRAMMAR', acceptedDataConsent: true })
       .expect(201);
     learnerA1Id = learnerA1Res.body.id;
 
     const learnerA2Res = await supertest(app.getHttpServer())
       .post(`/api/v1/families/${familyAId}/learners`)
       .set('Cookie', guardianACookie)
-      .send({ firstName: 'Arthur', lastName: 'Alpha', birthDate: '2014-01-01', stage: 'MIDDLE_LOGIC' })
+      .send({ firstName: 'Arthur', lastName: 'Alpha', birthDate: '2014-01-01', stage: 'MIDDLE_LOGIC', acceptedDataConsent: true })
       .expect(201);
     learnerA2Id = learnerA2Res.body.id;
 
@@ -115,7 +115,7 @@ describe('Privacy & Versioned Consent Integration (real Postgres)', () => {
     const learnerB1Res = await supertest(app.getHttpServer())
       .post(`/api/v1/families/${familyBId}/learners`)
       .set('Cookie', guardianBCookie)
-      .send({ firstName: 'Bob', lastName: 'Beta', birthDate: '2015-05-05', stage: 'PRIMARY_GRAMMAR' })
+      .send({ firstName: 'Bob', lastName: 'Beta', birthDate: '2015-05-05', stage: 'PRIMARY_GRAMMAR', acceptedDataConsent: true })
       .expect(201);
     learnerB1Id = learnerB1Res.body.id;
   }, 60000);
@@ -400,14 +400,21 @@ describe('Privacy & Versioned Consent Integration (real Postgres)', () => {
 
   describe('6. Compliance Check & Version Upgrade', () => {
     it('verifies compliance check, version upgrade detection (OUTDATED), and re-grant compliance', async () => {
-      // GET /api/v1/families/:familyAId/consents/compliance returns compliant: true and pendingMandatoryTerms: []
+      // GET /api/v1/families/:familyAId/consents/compliance: TERMS_OF_SERVICE (this
+      // test's own mandatory definition, already granted above) is not pending.
+      // Not asserting overall compliant:true/pendingMandatoryTerms:[] here -- the
+      // seeded real Terms of Use/Privacy Policy/learner-data-processing
+      // definitions (issue: guardian consent) are mandatory and genuinely
+      // pending for this family too, which is correct, just outside what this
+      // test is about.
       const initialCompliance = await supertest(app.getHttpServer())
         .get(`/api/v1/families/${familyAId}/consents/compliance`)
         .set('Cookie', guardianACookie)
         .expect(200);
 
-      expect(initialCompliance.body.compliant).toBe(true);
-      expect(initialCompliance.body.pendingMandatoryTerms).toHaveLength(0);
+      expect(
+        initialCompliance.body.pendingMandatoryTerms.some((t: any) => t.code === 'TERMS_OF_SERVICE'),
+      ).toBe(false);
 
       // Admin creates and publishes v2 of TERMS_OF_SERVICE
       const createTosV2Res = await supertest(app.getHttpServer())
@@ -435,17 +442,21 @@ describe('Privacy & Versioned Consent Integration (real Postgres)', () => {
         .send({ status: 'PUBLISHED' })
         .expect(200);
 
-      // GET /api/v1/families/:familyAId/consents/compliance now returns compliant: false with v2 in pendingMandatoryTerms
+      // GET /api/v1/families/:familyAId/consents/compliance now includes v2 of
+      // TERMS_OF_SERVICE in pendingMandatoryTerms (compliant is already false
+      // regardless, per the seeded definitions noted above).
       const outdatedCompliance = await supertest(app.getHttpServer())
         .get(`/api/v1/families/${familyAId}/consents/compliance`)
         .set('Cookie', guardianACookie)
         .expect(200);
 
       expect(outdatedCompliance.body.compliant).toBe(false);
-      expect(outdatedCompliance.body.pendingMandatoryTerms).toHaveLength(1);
-      expect(outdatedCompliance.body.pendingMandatoryTerms[0]!.id).toBe(tosV2Id);
-      expect(outdatedCompliance.body.pendingMandatoryTerms[0]!.code).toBe('TERMS_OF_SERVICE');
-      expect(outdatedCompliance.body.pendingMandatoryTerms[0]!.version).toBe(2);
+      const pendingTosV2 = outdatedCompliance.body.pendingMandatoryTerms.find(
+        (t: any) => t.code === 'TERMS_OF_SERVICE',
+      );
+      expect(pendingTosV2).toBeDefined();
+      expect(pendingTosV2.id).toBe(tosV2Id);
+      expect(pendingTosV2.version).toBe(2);
 
       // GET /api/v1/families/:familyAId/consents overview shows status OUTDATED for TERMS_OF_SERVICE
       const overviewRes = await supertest(app.getHttpServer())
@@ -472,14 +483,16 @@ describe('Privacy & Versioned Consent Integration (real Postgres)', () => {
       expect(grantV2Res.body.action).toBe('GRANTED');
       expect(grantV2Res.body.consentDefinitionId).toBe(tosV2Id);
 
-      // GET /api/v1/families/:familyAId/consents/compliance returns compliant: true
+      // GET /api/v1/families/:familyAId/consents/compliance: TERMS_OF_SERVICE v2
+      // is no longer pending now that it's granted.
       const finalCompliance = await supertest(app.getHttpServer())
         .get(`/api/v1/families/${familyAId}/consents/compliance`)
         .set('Cookie', guardianACookie)
         .expect(200);
 
-      expect(finalCompliance.body.compliant).toBe(true);
-      expect(finalCompliance.body.pendingMandatoryTerms).toHaveLength(0);
+      expect(
+        finalCompliance.body.pendingMandatoryTerms.some((t: any) => t.code === 'TERMS_OF_SERVICE'),
+      ).toBe(false);
     });
   });
 });

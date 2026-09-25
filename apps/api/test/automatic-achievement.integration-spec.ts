@@ -17,7 +17,7 @@ describe('Automatic competency achievements (real Postgres)', () => {
 
   async function register(email: string) {
     const response = await supertest(app.getHttpServer()).post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Achievement Test Guardian' }).expect(201);
+      .send({ email, password: 'somePassword123', fullName: 'Achievement Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true }).expect(201);
     return [response.headers['set-cookie']].flat().find((value) => value?.startsWith('aletheia_session='))!;
   }
 
@@ -28,7 +28,7 @@ describe('Automatic competency achievements (real Postgres)', () => {
       .send({ name: 'Achievement Family', countryCode: 'BR' }).expect(201);
     const familyId = created.body.id as string;
     const learner = await supertest(app.getHttpServer()).post(`/api/v1/families/${familyId}/learners`)
-      .set('Cookie', cookie).send({ firstName: 'Learner', birthDate: '2015-01-01', stage: 'PRIMARY_GRAMMAR' }).expect(201);
+      .set('Cookie', cookie).send({ firstName: 'Learner', birthDate: '2015-01-01', stage: 'PRIMARY_GRAMMAR', acceptedDataConsent: true }).expect(201);
     const actorId = (await db.user.findUniqueOrThrow({ where: { email } })).id;
     return { cookie, familyId, learnerId: learner.body.id as string, actorId };
   }

@@ -48,6 +48,7 @@
     "seed:service-community-formation": "node dist/scripts/seed-service-community-formation.js",
     "seed:foundational-curriculum": "node dist/scripts/seed-foundational-curriculum.js",
     "seed:curriculum-packs": "node dist/scripts/seed-curriculum-packs.js",
+    "seed:legal-consent-definitions": "node dist/scripts/seed-legal-consent-definitions.js",
     "lint": "eslint . --config ../../packages/eslint-config/index.mjs --ignore-pattern dist --global require --global module",
     "prisma": "prisma",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",

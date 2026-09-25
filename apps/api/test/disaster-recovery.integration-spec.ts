@@ -71,14 +71,14 @@ describe('Disaster Recovery & Database Backup Integration (real Postgres + Objec
     // Register admin user
     const adminRes = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'StrongPassword123!', fullName: 'DR Admin' })
+      .send({ email: adminEmail, password: 'StrongPassword123!', fullName: 'DR Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     adminCookie = extractCookie(adminRes, 'aletheia_session=');
 
     // Register regular user
     const regRes = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: regularUserEmail, password: 'RegularPassword123!', fullName: 'Regular User' })
+      .send({ email: regularUserEmail, password: 'RegularPassword123!', fullName: 'Regular User', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     regularUserCookie = extractCookie(regRes, 'aletheia_session=');
   });

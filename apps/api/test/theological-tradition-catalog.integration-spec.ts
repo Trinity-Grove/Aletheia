@@ -22,7 +22,7 @@ describe('Theological tradition catalog (real Postgres)', () => {
 
     const adminResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Tradition Catalog Admin' })
+      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Tradition Catalog Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     adminCookie = [adminResponse.headers['set-cookie']]
       .flat()
@@ -31,7 +31,7 @@ describe('Theological tradition catalog (real Postgres)', () => {
     const familyEmail = `tradition-catalog-family-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
     const familyRegisterResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: familyEmail, password: 'somePassword123', fullName: 'Tradition Catalog Family' })
+      .send({ email: familyEmail, password: 'somePassword123', fullName: 'Tradition Catalog Family', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     familyCookie = [familyRegisterResponse.headers['set-cookie']]
       .flat()
@@ -100,7 +100,7 @@ describe('Theological tradition catalog (real Postgres)', () => {
     const otherEmail = `tradition-catalog-other-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
     const otherResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: otherEmail, password: 'somePassword123', fullName: 'Other Guardian' })
+      .send({ email: otherEmail, password: 'somePassword123', fullName: 'Other Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     const otherCookie = [otherResponse.headers['set-cookie']]
       .flat()

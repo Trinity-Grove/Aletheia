@@ -42,6 +42,8 @@ import {
 } from '../../../platform/security/totp.js';
 import { MAIL_SENDER, type MailSender } from '../../../platform/mail/mail-sender.js';
 import { ENVIRONMENT, type Environment } from '../../../platform/config/environment.js';
+import { resolvePrivacyRegime } from '@aletheia/contracts';
+import { PRIVACY_PUBLIC_API, type PrivacyPublicApi } from '../../privacy/application/public-api.js';
 import type { AuthenticatedUserPayload, IdentityPublicApi } from './public-api.js';
 
 const ACCESS_TOKEN_TTL = '1h';
@@ -72,6 +74,7 @@ export class AuthService implements IdentityPublicApi {
     private readonly mfaSetupChallengeRepository: MfaSetupChallengeRepository,
     private readonly mfaLoginChallengeRepository: MfaLoginChallengeRepository,
     private readonly totpSecretCipher: TotpSecretCipher,
+    @Inject(PRIVACY_PUBLIC_API) private readonly privacyPublicApi: PrivacyPublicApi,
     @Inject(MAIL_SENDER) private readonly mailSender: MailSender,
     @Inject(ENVIRONMENT) private readonly environment: Environment,
   ) {}
@@ -94,11 +97,34 @@ export class AuthService implements IdentityPublicApi {
       throw new BadRequestException('Não foi possível concluir o cadastro com os dados fornecidos.');
     }
 
+    const regime = resolvePrivacyRegime(dto.countryCode);
+    const familyScopedDefinitions = await this.privacyPublicApi.getPublishedDefinitions('FAMILY');
+    const termsOfUseDefinition = familyScopedDefinitions.find(
+      (def) => def.code === `TERMS_OF_USE_${regime}`,
+    );
+    const privacyPolicyDefinition = familyScopedDefinitions.find(
+      (def) => def.code === `PRIVACY_POLICY_${regime}`,
+    );
+    if (!termsOfUseDefinition || !privacyPolicyDefinition) {
+      // Real production failure mode this guards against: the legal
+      // consent definitions seed (pnpm run seed:legal-consent-definitions)
+      // hasn't been run yet -- fail loudly instead of silently letting
+      // registration through with no recorded acceptance.
+      throw new BadRequestException(
+        'Termos de Uso e Política de Privacidade não estão disponíveis no momento. Tente novamente em instantes.',
+      );
+    }
+
     const passwordHash = this.passwordHasher.hash(dto.password);
+    const now = new Date();
     const user = await this.userRepository.create({
       email: dto.email,
       fullName: dto.fullName,
       passwordHash,
+      termsOfUseDefinitionId: termsOfUseDefinition.id,
+      termsOfUseAcceptedAt: now,
+      privacyPolicyDefinitionId: privacyPolicyDefinition.id,
+      privacyPolicyAcceptedAt: now,
     });
 
     await this.sendVerificationEmail(user.id, user.email, user.fullName);

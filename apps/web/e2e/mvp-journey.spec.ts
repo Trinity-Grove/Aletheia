@@ -213,6 +213,8 @@ test.describe('Real Family MVP End-to-End Journey', () => {
     await page.getByTestId('reg-email-input').fill(email);
     await page.getByTestId('reg-password-input').fill(password);
     await page.getByTestId('reg-confirm-password-input').fill(password);
+    await page.getByTestId('reg-terms-of-use-checkbox').check();
+    await page.getByTestId('reg-privacy-policy-checkbox').check();
     await page.getByTestId('register-button').click();
 
     // 2. Onboarding Family Setup
@@ -229,6 +231,7 @@ test.describe('Real Family MVP End-to-End Journey', () => {
     await expect(page.getByTestId('learner-first-name-input')).toBeVisible();
     await page.getByTestId('learner-first-name-input').fill(learnerName);
     await page.getByTestId('learner-birth-date-input').fill('2018-05-15');
+    await page.getByTestId('learner-data-consent-checkbox').check();
     await page.getByTestId('learner-submit-btn').click();
     await expect(page.getByText(learnerName)).toBeVisible();
 

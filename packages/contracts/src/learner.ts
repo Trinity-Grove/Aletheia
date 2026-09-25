@@ -50,6 +50,11 @@ export const createLearnerSchema = z.object({
   avatarColor: z.string().nullish(),
   specialNeeds: z.string().nullish(),
   notes: z.string().nullish(),
+  // Guardian consent for processing this learner's data (issue: guardian
+  // consent at learner creation). z.literal(true) rejects at the contract
+  // layer if unchecked. .partial() on updateLearnerSchema below makes this
+  // optional on update -- only creation requires (re-)consenting.
+  acceptedDataConsent: z.literal(true),
 });
 
 export type CreateLearnerDto = z.input<typeof createLearnerSchema>;

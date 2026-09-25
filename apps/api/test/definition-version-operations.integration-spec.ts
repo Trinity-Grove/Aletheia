@@ -30,7 +30,7 @@ describe('Definition/Version operations: migration + rollback (real Postgres)', 
   async function register(email: string) {
     const response = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Def Version Ops Test' })
+      .send({ email, password: 'somePassword123', fullName: 'Def Version Ops Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     return [response.headers['set-cookie']].flat().find((value) => value?.startsWith('aletheia_session='))!;
   }
@@ -47,7 +47,7 @@ describe('Definition/Version operations: migration + rollback (real Postgres)', 
     const learnerResponse = await supertest(app.getHttpServer())
       .post(`/api/v1/families/${familyId}/learners`)
       .set('Cookie', cookie)
-      .send({ firstName: 'Learner', birthDate: '2015-01-01', stage: 'PRIMARY_GRAMMAR' })
+      .send({ firstName: 'Learner', birthDate: '2015-01-01', stage: 'PRIMARY_GRAMMAR', acceptedDataConsent: true })
       .expect(201);
     return { cookie, familyId, learnerId: learnerResponse.body.id as string };
   }

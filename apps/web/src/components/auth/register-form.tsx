@@ -1,10 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { ISO3_COUNTRIES, resolvePrivacyRegime, type RegisterGuardianDto } from '@aletheia/contracts';
 import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface RegisterFormProps {
-  onSubmit?: (_data: { fullName: string; email: string; password: string }) => Promise<void> | void;
+  onSubmit?: (_data: RegisterGuardianDto) => Promise<void> | void;
+}
+
+interface PublicConsentDefinition {
+  code: string;
+  title: string;
+  content: string;
 }
 
 export function RegisterForm({ onSubmit }: RegisterFormProps) {
@@ -13,8 +20,24 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [countryCode, setCountryCode] = useState('BRA');
+  const [acceptedTermsOfUse, setAcceptedTermsOfUse] = useState(false);
+  const [acceptedPrivacyPolicy, setAcceptedPrivacyPolicy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [publishedDefinitions, setPublishedDefinitions] = useState<PublicConsentDefinition[]>([]);
+  const [viewingDocument, setViewingDocument] = useState<PublicConsentDefinition | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/consent-definitions/published?scope=FAMILY')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((defs: PublicConsentDefinition[]) => setPublishedDefinitions(Array.isArray(defs) ? defs : []))
+      .catch(() => setPublishedDefinitions([]));
+  }, []);
+
+  const regime = resolvePrivacyRegime(countryCode);
+  const termsOfUseDefinition = publishedDefinitions.find((d) => d.code === `TERMS_OF_USE_${regime}`);
+  const privacyPolicyDefinition = publishedDefinitions.find((d) => d.code === `PRIVACY_POLICY_${regime}`);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,10 +58,22 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
       return;
     }
 
+    if (!acceptedTermsOfUse || !acceptedPrivacyPolicy) {
+      setError(t('auth.register.errorConsentRequired'));
+      return;
+    }
+
     try {
       setLoading(true);
       if (onSubmit) {
-        await onSubmit({ fullName, email, password });
+        await onSubmit({
+          fullName,
+          email,
+          password,
+          countryCode,
+          acceptedTermsOfUse: true,
+          acceptedPrivacyPolicy: true,
+        });
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : t('auth.register.errorFailed');
@@ -110,6 +145,76 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
         />
       </div>
 
+      <div className="form-group">
+        <label htmlFor="reg-country">{t('auth.register.countryLabel')}</label>
+        <select
+          id="reg-country"
+          data-testid="reg-country-select"
+          value={countryCode}
+          onChange={(e) => setCountryCode(e.target.value)}
+        >
+          {ISO3_COUNTRIES.map((country) => (
+            <option key={country.code} value={country.code}>
+              {country.name} ({country.code})
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+          <input
+            type="checkbox"
+            data-testid="reg-terms-of-use-checkbox"
+            checked={acceptedTermsOfUse}
+            onChange={(e) => setAcceptedTermsOfUse(e.target.checked)}
+          />
+          <span>
+            {t('auth.register.acceptTermsOfUseLabel')}{' '}
+            {termsOfUseDefinition ? (
+              <button
+                type="button"
+                data-testid="reg-view-terms-of-use"
+                onClick={() => setViewingDocument(termsOfUseDefinition)}
+                className="auth-link"
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+              >
+                {t('auth.register.termsOfUseLinkText')}
+              </button>
+            ) : (
+              t('auth.register.termsOfUseLinkText')
+            )}
+          </span>
+        </label>
+      </div>
+
+      <div className="form-group">
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+          <input
+            type="checkbox"
+            data-testid="reg-privacy-policy-checkbox"
+            checked={acceptedPrivacyPolicy}
+            onChange={(e) => setAcceptedPrivacyPolicy(e.target.checked)}
+          />
+          <span>
+            {t('auth.register.acceptPrivacyPolicyLabel')}{' '}
+            {privacyPolicyDefinition ? (
+              <button
+                type="button"
+                data-testid="reg-view-privacy-policy"
+                onClick={() => setViewingDocument(privacyPolicyDefinition)}
+                className="auth-link"
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+              >
+                {t('auth.register.privacyPolicyLinkText')}
+              </button>
+            ) : (
+              t('auth.register.privacyPolicyLinkText')
+            )}
+          </span>
+        </label>
+      </div>
+
       <button
         type="submit"
         data-testid="register-button"
@@ -118,6 +223,46 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
       >
         {loading ? t('auth.register.submittingButton') : t('auth.register.submitButton')}
       </button>
+
+      {viewingDocument && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-testid="reg-document-viewer"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              maxWidth: '32rem',
+              width: '100%',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              backgroundColor: 'var(--bg-surface, #fff)',
+              borderRadius: '0.5rem',
+              padding: '1.5rem',
+            }}
+          >
+            <h2 style={{ marginTop: 0 }}>{viewingDocument.title}</h2>
+            <p style={{ whiteSpace: 'pre-wrap' }}>{viewingDocument.content}</p>
+            <button
+              type="button"
+              onClick={() => setViewingDocument(null)}
+              className="btn btn-secondary"
+            >
+              {t('auth.register.viewDocumentCloseButton')}
+            </button>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

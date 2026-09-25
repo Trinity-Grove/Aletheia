@@ -77,7 +77,7 @@ describe('MFA (TOTP) — real Postgres + real otplib', () => {
   async function register(email: string) {
     const res = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'password12345', fullName: 'MFA Test User' })
+      .send({ email, password: 'password12345', fullName: 'MFA Test User', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     return { session: sessionCookie(res), refresh: refreshCookie(res) };
   }

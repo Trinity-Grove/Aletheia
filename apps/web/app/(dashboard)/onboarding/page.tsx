@@ -13,7 +13,11 @@ export default function OnboardingPage() {
   const { setActiveFamilyFromCreated } = useAuth();
 
   const [familyName, setFamilyName] = useState('');
-  const [countryCode, setCountryCode] = useState('BRA');
+  const [countryCode, setCountryCode] = useState(() =>
+    typeof window !== 'undefined'
+      ? localStorage.getItem('aletheia.registrationCountryCode') || 'BRA'
+      : 'BRA',
+  );
   const [stateProvince, setStateProvince] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);

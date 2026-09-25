@@ -21,7 +21,7 @@ describe('Bible translation definition (real Postgres)', () => {
     const email = `${emailPrefix}-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
     const response = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Bible Translation Test' })
+      .send({ email, password: 'somePassword123', fullName: 'Bible Translation Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     return [response.headers['set-cookie']].flat().find((c) => c?.startsWith('aletheia_session='))!;
   }
@@ -35,7 +35,7 @@ describe('Bible translation definition (real Postgres)', () => {
 
     const adminResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Bible Translation Admin' })
+      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Bible Translation Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     adminCookie = [adminResponse.headers['set-cookie']]
       .flat()

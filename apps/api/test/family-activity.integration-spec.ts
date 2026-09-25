@@ -13,7 +13,14 @@ describe('Family-created activities (issue #96 section 7, issue #245) (real Post
     const email = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
     const response = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Family Activity Test' })
+      .send({
+        email,
+        password: 'somePassword123',
+        fullName: 'Family Activity Test',
+        countryCode: 'BRA',
+        acceptedTermsOfUse: true,
+        acceptedPrivacyPolicy: true,
+      })
       .expect(201);
     return [response.headers['set-cookie']]
       .flat()

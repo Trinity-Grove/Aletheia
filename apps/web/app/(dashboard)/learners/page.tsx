@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, useToast } from '@aletheia/ui';
-import type { CreateLearnerDto, LearnerResponseDto } from '@aletheia/contracts';
+import type { LearnerResponseDto } from '@aletheia/contracts';
 import { ProductShell } from '../../../src/components/product-shell';
 import { LearnersList } from '../../../src/components/learners/learners-list';
-import { LearnerFormModal } from '../../../src/components/learners/learner-form-modal';
+import { LearnerFormModal, type LearnerFormSubmitDto } from '../../../src/components/learners/learner-form-modal';
 import { LearnerAccessModal } from '../../../src/components/learners/learner-access-modal';
 import { Can } from '../../../src/components/auth/role-guard';
 
@@ -85,7 +85,7 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
     })();
   };
 
-  const handleSubmitForm = async (data: CreateLearnerDto) => {
+  const handleSubmitForm = async (data: LearnerFormSubmitDto) => {
     const familyId = localStorage.getItem('familyId');
     if (!familyId) {
       throw new Error('Sessão inválida. Faça login novamente.');
@@ -167,6 +167,7 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
 
         <LearnerFormModal
           isOpen={isModalOpen}
+          familyId={typeof window !== 'undefined' ? localStorage.getItem('familyId') || '' : ''}
           initialData={editingLearner}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleSubmitForm}

@@ -37,7 +37,7 @@ describe('Email verification (real Postgres, captured mail sender)', () => {
 
     await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'password12345', fullName: 'Verification Test' })
+      .send({ email, password: 'password12345', fullName: 'Verification Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
 
     expect(sentEmails).toHaveLength(1);
@@ -68,7 +68,7 @@ describe('Email verification (real Postgres, captured mail sender)', () => {
 
     const registerResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'password12345', fullName: 'Resend Test' })
+      .send({ email, password: 'password12345', fullName: 'Resend Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
 
     const accessCookie = [registerResponse.headers['set-cookie']]

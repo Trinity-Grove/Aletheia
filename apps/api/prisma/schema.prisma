@@ -21,8 +21,21 @@ model User {
   // /admin/curriculum-definitions. Never auto-demoted -- see
   // AuthService's platform-admin bootstrap sync for how this gets set.
   isPlatformAdmin         Boolean                   @default(false) @map("is_platform_admin")
+  // Terms of Use / Privacy Policy acceptance at registration -- a fact
+  // about this person, not about a family (no family exists yet at
+  // registration time), so it lives here rather than on ConsentRecord
+  // (which requires a familyId). Points at the specific ConsentDefinition
+  // version accepted (LGPD/GDPR/GENERIC, picked by the country the user
+  // selected at registration), so which exact text they agreed to stays
+  // auditable even after a newer version publishes.
+  termsOfUseDefinitionId      String?             @map("terms_of_use_definition_id") @db.Uuid
+  termsOfUseAcceptedAt        DateTime?           @map("terms_of_use_accepted_at") @db.Timestamptz
+  privacyPolicyDefinitionId   String?             @map("privacy_policy_definition_id") @db.Uuid
+  privacyPolicyAcceptedAt     DateTime?           @map("privacy_policy_accepted_at") @db.Timestamptz
   createdAt               DateTime                  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt               DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
+  termsOfUseDefinition    ConsentDefinition? @relation("UserTermsOfUse", fields: [termsOfUseDefinitionId], references: [id], onDelete: Restrict)
+  privacyPolicyDefinition ConsentDefinition? @relation("UserPrivacyPolicy", fields: [privacyPolicyDefinitionId], references: [id], onDelete: Restrict)
   memberships             FamilyMember[]
   notifications           NotificationItem[]
   exportJobs              DataExportJob[]
@@ -2387,6 +2400,8 @@ model ConsentDefinition {
   updatedAt     DateTime         @updatedAt @map("updated_at") @db.Timestamptz
 
   records       ConsentRecord[]
+  usersAcceptedAsTermsOfUse    User[] @relation("UserTermsOfUse")
+  usersAcceptedAsPrivacyPolicy User[] @relation("UserPrivacyPolicy")
 
   @@unique([code, version])
   @@index([status, code])

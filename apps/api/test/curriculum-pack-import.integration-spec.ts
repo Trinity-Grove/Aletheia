@@ -70,7 +70,7 @@ describe('Curriculum pack import (real Postgres)', () => {
 
     const adminResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Curriculum Pack Import Admin' })
+      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Curriculum Pack Import Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     adminCookie = [adminResponse.headers['set-cookie']]
       .flat()
