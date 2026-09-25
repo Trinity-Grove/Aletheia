@@ -45,6 +45,8 @@ test.describe('Real CRUD edit/delete coverage (#21)', () => {
       await page.getByTestId('reg-email-input').fill(email);
       await page.getByTestId('reg-password-input').fill(password);
       await page.getByTestId('reg-confirm-password-input').fill(password);
+      await page.getByTestId('reg-terms-of-use-checkbox').check();
+      await page.getByTestId('reg-privacy-policy-checkbox').check();
       await page.getByTestId('register-button').click();
       await expect(page).toHaveURL(/.*onboarding/, { timeout: 15_000 });
 
@@ -56,6 +58,7 @@ test.describe('Real CRUD edit/delete coverage (#21)', () => {
       await page.getByTestId('add-learner-btn').click();
       await page.getByTestId('learner-first-name-input').fill(learnerFirstName);
       await page.getByTestId('learner-birth-date-input').fill('2017-03-10');
+      await page.getByTestId('learner-data-consent-checkbox').check();
       await page.getByTestId('learner-submit-btn').click();
       await expect(page.getByText(learnerFirstName)).toBeVisible({ timeout: 15_000 });
 

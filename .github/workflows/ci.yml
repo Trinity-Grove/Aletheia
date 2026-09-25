@@ -188,6 +188,17 @@ jobs:
       - name: Prove migration deployment is idempotent
         run: pnpm --filter @aletheia/api prisma migrate deploy
 
+      - name: Build the API
+        run: pnpm --filter @aletheia/api build
+
+      # Terms of Use / Privacy Policy / learner data-processing consent
+      # definitions are never seeded automatically in production either --
+      # registration and learner creation fail loudly instead of silently
+      # skipping consent when they're missing, so tests need them seeded
+      # here the same way a real deploy would.
+      - name: Seed legal consent definitions
+        run: pnpm --filter @aletheia/api run seed:legal-consent-definitions
+
       - name: Probe real application readiness
         run: pnpm --filter @aletheia/api test:integration
 
@@ -277,6 +288,13 @@ jobs:
 
       - name: Build the API
         run: pnpm --filter @aletheia/api build
+
+      # Same rationale as the postgres-integration job: registration and
+      # learner creation fail loudly (not silently) without a real
+      # published Terms of Use / Privacy Policy / learner data-processing
+      # consent definition to reference.
+      - name: Seed legal consent definitions
+        run: pnpm --filter @aletheia/api run seed:legal-consent-definitions
 
       - name: Start the API in the background
         run: |
