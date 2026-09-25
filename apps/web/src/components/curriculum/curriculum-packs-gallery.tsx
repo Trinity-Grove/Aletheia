@@ -12,6 +12,8 @@ import { CurriculumPackImportModal } from './curriculum-pack-import-modal';
 import { CurriculumPackDetailModal } from './curriculum-pack-detail-modal';
 import { AuthorTrustBadge } from './author-trust-badge';
 import { PackReportModal } from './pack-report-modal';
+import { PublishToCommunityModal } from './publish-to-community-modal';
+import { MyAuthoredPacksPanel } from './my-authored-packs-panel';
 import { useLocale } from '../../lib/i18n/locale-context';
 
 interface CurriculumPacksGalleryProps {
@@ -30,6 +32,8 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
   } | null>(null);
   const [selectedDetailPack, setSelectedDetailPack] = useState<CurriculumPackResponseDto | null>(null);
   const [reportingPack, setReportingPack] = useState<CurriculumPackResponseDto | null>(null);
+  const [publishingPack, setPublishingPack] = useState<FamilyCurriculumPackResponseDto | null>(null);
+  const [activeView, setActiveView] = useState<'catalog' | 'my-packs'>('catalog');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [error, setError] = useState<string | null>(null);
@@ -215,6 +219,50 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
       {successMsg && <Alert variant="success">{successMsg}</Alert>}
       {error && <Alert variant="error">{error}</Alert>}
 
+      {/* Catalog vs. My Community Packs toggle */}
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <button
+          type="button"
+          data-testid="curriculum-view-tab-catalog"
+          onClick={() => setActiveView('catalog')}
+          style={{
+            padding: '0.5rem 1rem',
+            borderRadius: 'var(--radius-full)',
+            fontSize: '0.875rem',
+            fontWeight: 700,
+            border: '1px solid',
+            borderColor: activeView === 'catalog' ? 'var(--forest)' : 'var(--border-light)',
+            backgroundColor: activeView === 'catalog' ? 'var(--forest)' : 'var(--bg-surface)',
+            color: activeView === 'catalog' ? '#ffffff' : 'var(--text-secondary)',
+            cursor: 'pointer',
+          }}
+        >
+          {t('curriculum.community.tabCatalog')}
+        </button>
+        <button
+          type="button"
+          data-testid="curriculum-view-tab-my-packs"
+          onClick={() => setActiveView('my-packs')}
+          style={{
+            padding: '0.5rem 1rem',
+            borderRadius: 'var(--radius-full)',
+            fontSize: '0.875rem',
+            fontWeight: 700,
+            border: '1px solid',
+            borderColor: activeView === 'my-packs' ? 'var(--forest)' : 'var(--border-light)',
+            backgroundColor: activeView === 'my-packs' ? 'var(--forest)' : 'var(--bg-surface)',
+            color: activeView === 'my-packs' ? '#ffffff' : 'var(--text-secondary)',
+            cursor: 'pointer',
+          }}
+        >
+          {t('curriculum.community.tabMyPacks')}
+        </button>
+      </div>
+
+      {activeView === 'my-packs' ? (
+        <MyAuthoredPacksPanel />
+      ) : (
+        <>
       {/* Filter and Search controls */}
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -454,6 +502,16 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
                       <Button
                         variant="secondary"
                         size="sm"
+                        data-testid={`publish-to-community-btn-${pack.id}`}
+                        onClick={() => setPublishingPack(installedInstance!)}
+                        style={{ width: '100%', fontSize: '0.8125rem', fontWeight: 600 }}
+                      >
+                        {t('curriculum.community.publishBtn')}
+                      </Button>
+
+                      <Button
+                        variant="secondary"
+                        size="sm"
                         data-testid={`manage-pack-btn-${pack.id}`}
                         onClick={() => setManagingPack({ installed: installedInstance!, catalog: pack })}
                         style={{ width: '100%', fontSize: '0.8125rem', fontWeight: 600 }}
@@ -510,6 +568,8 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
           })}
         </div>
       )}
+        </>
+      )}
 
       {/* Modal de Detalhamento e Conhecimento do Pacote Curricular */}
       <CurriculumPackDetailModal
@@ -553,6 +613,21 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
           packTitle={reportingPack.name}
           familyId={familyId}
           onClose={() => setReportingPack(null)}
+        />
+      )}
+
+      {/* Modal de Publicação do Pacote na Comunidade */}
+      {publishingPack && (
+        <PublishToCommunityModal
+          isOpen={Boolean(publishingPack)}
+          familyId={familyId}
+          familyCurriculumPackId={publishingPack.id}
+          sourceName={publishingPack.document.pack.name}
+          onClose={() => setPublishingPack(null)}
+          onSuccess={() => {
+            setSuccessMsg(t('curriculum.community.publishSuccessMsg'));
+            setTimeout(() => setSuccessMsg(null), 5000);
+          }}
         />
       )}
     </div>

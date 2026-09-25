@@ -829,4 +829,145 @@ describe('CurriculumPacksGallery (Task 7 & 8: Plugins / Pacotes Curriculares)', 
       });
     });
   });
+
+  describe('Publicar pacote customizado na comunidade (issue #244)', () => {
+    it('publishes an installed pack via the modal and shows a success message', async () => {
+      const publishedPack = {
+        id: 'community-pack-1',
+        code: 'MY.FAMILY.PACK',
+        version: 1,
+        status: 'DRAFT',
+        schemaVersion: '1.0.0',
+        name: 'Meu Pacote de Família',
+        description: null,
+        metadata: {},
+        authorUserId: 'user-1',
+        moderationStatus: 'DRAFT',
+        createdAt: '2026-09-25T00:00:00.000Z',
+        publishedAt: null,
+        deprecatedAt: null,
+      };
+
+      vi.spyOn(global, 'fetch').mockImplementation(async (input, init) => {
+        const url = String(input);
+        if (url.includes('/available')) {
+          return { ok: true, json: async () => mockPublishedPacks } as Response;
+        }
+        if (url.endsWith('/curriculum-packs')) {
+          return { ok: true, json: async () => mockInstalledPacks } as Response;
+        }
+        if (url.includes('/publish-to-community') && init?.method === 'POST') {
+          return { ok: true, status: 201, json: async () => publishedPack } as Response;
+        }
+        return { ok: false, status: 404 } as Response;
+      });
+
+      render(<CurriculumPacksGallery familyId="fam-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('publish-to-community-btn-pack-1')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('publish-to-community-btn-pack-1'));
+
+      expect(screen.getByTestId('publish-to-community-modal')).toBeInTheDocument();
+
+      fireEvent.change(screen.getByTestId('publish-code-input'), {
+        target: { value: 'my.family.pack' },
+      });
+      fireEvent.change(screen.getByTestId('publish-name-input'), {
+        target: { value: 'Meu Pacote de Família' },
+      });
+
+      fireEvent.click(screen.getByTestId('submit-publish-btn'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('publish-success-alert')).toBeInTheDocument();
+      });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/v1/families/fam-1/curriculum-packs/inst-1/publish-to-community',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ code: 'MY.FAMILY.PACK', name: 'Meu Pacote de Família' }),
+        })
+      );
+    });
+
+    it('shows a conflict message when the chosen code already exists', async () => {
+      vi.spyOn(global, 'fetch').mockImplementation(async (input, init) => {
+        const url = String(input);
+        if (url.includes('/available')) {
+          return { ok: true, json: async () => mockPublishedPacks } as Response;
+        }
+        if (url.endsWith('/curriculum-packs')) {
+          return { ok: true, json: async () => mockInstalledPacks } as Response;
+        }
+        if (url.includes('/publish-to-community') && init?.method === 'POST') {
+          return { ok: false, status: 400, json: async () => ({ message: 'Code taken' }) } as Response;
+        }
+        return { ok: false, status: 404 } as Response;
+      });
+
+      render(<CurriculumPacksGallery familyId="fam-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('publish-to-community-btn-pack-1')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('publish-to-community-btn-pack-1'));
+      fireEvent.change(screen.getByTestId('publish-code-input'), { target: { value: 'TAKEN' } });
+      fireEvent.change(screen.getByTestId('publish-name-input'), { target: { value: 'X' } });
+      fireEvent.click(screen.getByTestId('submit-publish-btn'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('publish-conflict-alert')).toBeInTheDocument();
+      });
+    });
+
+    it('switches to the "Meus Packs Comunitários" tab and renders the author panel', async () => {
+      vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
+        const url = String(input);
+        if (url.includes('/available')) {
+          return { ok: true, json: async () => mockPublishedPacks } as Response;
+        }
+        if (url.endsWith('/curriculum-packs')) {
+          return { ok: true, json: async () => [] } as Response;
+        }
+        if (url.includes('/curriculum-packs/my-packs')) {
+          return { ok: true, json: async () => [] } as Response;
+        }
+        if (url.includes('/curriculum-packs/author-profile')) {
+          return {
+            ok: true,
+            json: async () => ({
+              userId: 'user-1',
+              trustScore: 10,
+              tier: 'NOVICE',
+              approvedPacksCount: 0,
+              rejectedPacksCount: 0,
+              upheldReportsCount: 0,
+              lastEvaluatedAt: '2026-09-25T00:00:00.000Z',
+              createdAt: '2026-09-25T00:00:00.000Z',
+              updatedAt: '2026-09-25T00:00:00.000Z',
+            }),
+          } as Response;
+        }
+        return { ok: false, status: 404 } as Response;
+      });
+
+      render(<CurriculumPacksGallery familyId="fam-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('curriculum-view-tab-my-packs')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('curriculum-view-tab-my-packs'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('my-authored-packs-panel')).toBeInTheDocument();
+        expect(screen.getByTestId('my-authored-packs-empty')).toBeInTheDocument();
+      });
+    });
+  });
 });

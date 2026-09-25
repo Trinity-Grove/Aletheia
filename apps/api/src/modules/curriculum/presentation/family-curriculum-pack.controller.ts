@@ -2,14 +2,16 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, UseGuard
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   installFamilyCurriculumPackSchema,
+  publishFamilyCurriculumPackToCommunitySchema,
   updateFamilyCurriculumPackSchema,
   type CurriculumPackResponseDto,
   type FamilyCurriculumPackResponseDto,
   type FamilyCurriculumPackRevisionResponseDto,
   type InstallFamilyCurriculumPackDto,
+  type PublishFamilyCurriculumPackToCommunityOutput,
   type UpdateFamilyCurriculumPackDto,
 } from '@aletheia/contracts';
-import { FamilyTenantGuard, JwtAuthGuard } from '../../../platform/auth/index.js';
+import { CurrentUser, FamilyTenantGuard, JwtAuthGuard } from '../../../platform/auth/index.js';
 import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { FamilyCurriculumPackService } from '../application/family-curriculum-pack.service.js';
 
@@ -68,5 +70,18 @@ export class FamilyCurriculumPackController {
     @Param('id') id: string,
   ): Promise<FamilyCurriculumPackRevisionResponseDto[]> {
     return this.service.revisions(familyId, id);
+  }
+
+  @Post(':id/publish-to-community')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Publish the family\'s customized pack as a new community submission (DRAFT)' })
+  async publishToCommunity(
+    @Param('familyId') familyId: string,
+    @Param('id') id: string,
+    @CurrentUser('userId') userId: string,
+    @Body(new ZodValidationPipe(publishFamilyCurriculumPackToCommunitySchema))
+    dto: PublishFamilyCurriculumPackToCommunityOutput,
+  ): Promise<CurriculumPackResponseDto> {
+    return this.service.publishToCommunity(familyId, id, userId, dto);
   }
 }

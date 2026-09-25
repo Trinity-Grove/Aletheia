@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   installFamilyCurriculumPackSchema,
   updateFamilyCurriculumPackSchema,
+  publishFamilyCurriculumPackToCommunitySchema,
 } from './family-curriculum-pack.js';
 
 const document = {
@@ -33,5 +34,30 @@ describe('family curriculum pack contracts', () => {
       },
     });
     expect(result.success).toBe(true);
+  });
+
+  describe('publishFamilyCurriculumPackToCommunitySchema', () => {
+    it('accepts an upper snake/dot case code with a name', () => {
+      const result = publishFamilyCurriculumPackToCommunitySchema.safeParse({
+        code: 'MY_FAMILY_TRIVIUM_PACK',
+        name: 'My Family Trivium Pack',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('rejects a lowercase code', () => {
+      const result = publishFamilyCurriculumPackToCommunitySchema.safeParse({
+        code: 'my_family_pack',
+        name: 'My Family Pack',
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects a missing name', () => {
+      const result = publishFamilyCurriculumPackToCommunitySchema.safeParse({
+        code: 'MY_FAMILY_PACK',
+      });
+      expect(result.success).toBe(false);
+    });
   });
 });

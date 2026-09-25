@@ -43,3 +43,25 @@ export const familyCurriculumPackRevisionResponseSchema = z.object({
 export type FamilyCurriculumPackRevisionResponseDto = z.infer<
   typeof familyCurriculumPackRevisionResponseSchema
 >;
+
+// Publish a family's customized pack as a new, distinct community
+// submission (issue #244) -- a derivative work, not a mutation of the
+// original installed pack, so it always needs its own identity.
+const PACK_CODE_REGEX = /^[A-Z0-9][A-Z0-9_.]*$/;
+
+export const publishFamilyCurriculumPackToCommunitySchema = z.object({
+  code: z
+    .string()
+    .min(1)
+    .max(150)
+    .regex(PACK_CODE_REGEX, 'code must be upper snake/dot case, e.g. MY_FAMILY_TRIVIUM_PACK'),
+  name: z.string().min(1).max(250),
+  description: z.string().max(2000).nullish(),
+});
+
+export type PublishFamilyCurriculumPackToCommunityDto = z.input<
+  typeof publishFamilyCurriculumPackToCommunitySchema
+>;
+export type PublishFamilyCurriculumPackToCommunityOutput = z.output<
+  typeof publishFamilyCurriculumPackToCommunitySchema
+>;

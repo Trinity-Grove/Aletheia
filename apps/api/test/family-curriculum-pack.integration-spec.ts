@@ -200,4 +200,108 @@ describe('Family curriculum pack instances (real Postgres)', () => {
     expect(codes).toContain(published.body.code);
     expect(codes).not.toContain(draft.body.code);
   });
+
+  describe('publish-to-community (issue #244)', () => {
+    it('publishes a customized family pack as a new, distinct community submission', async () => {
+      const source = await supertest(app.getHttpServer())
+        .post('/api/v1/admin/curriculum-packs')
+        .set('Cookie', adminCookie)
+        .send({ code: `FAMILY.PUBLISH.SOURCE.${Date.now()}`, name: 'Publish Source Template' })
+        .expect(201);
+
+      await supertest(app.getHttpServer())
+        .patch(`/api/v1/admin/curriculum-packs/${source.body.id}/status`)
+        .set('Cookie', adminCookie)
+        .send({ status: 'PUBLISHED' })
+        .expect(200);
+
+      const installed = await supertest(app.getHttpServer())
+        .post(`/api/v1/families/${familyId}/curriculum-packs`)
+        .set('Cookie', familyCookie)
+        .send({ sourcePackId: source.body.id })
+        .expect(201);
+
+      const communityCode = `MY.FAMILY.PACK.${Date.now()}`;
+      const published = await supertest(app.getHttpServer())
+        .post(`/api/v1/families/${familyId}/curriculum-packs/${installed.body.id}/publish-to-community`)
+        .set('Cookie', familyCookie)
+        .send({ code: communityCode, name: 'Minha versão publicada', description: 'Uma adaptação da família' })
+        .expect(201);
+
+      expect(published.body.code).toBe(communityCode);
+      expect(published.body.version).toBe(1);
+      expect(published.body.name).toBe('Minha versão publicada');
+      expect(published.body.moderationStatus).toBe('DRAFT');
+      expect(published.body.authorUserId).not.toBeNull();
+
+      // Submitting for review moves it into the moderation queue -- the
+      // existing community endpoint, unchanged by this issue.
+      const submitted = await supertest(app.getHttpServer())
+        .post(`/api/v1/curriculum-packs/${published.body.id}/submit`)
+        .set('Cookie', familyCookie)
+        .expect(200);
+      expect(submitted.body.moderationStatus).toBe('PENDING_REVIEW');
+    });
+
+    it('rejects publishing with a code that already exists', async () => {
+      const source = await supertest(app.getHttpServer())
+        .post('/api/v1/admin/curriculum-packs')
+        .set('Cookie', adminCookie)
+        .send({ code: `FAMILY.PUBLISH.DUP.${Date.now()}`, name: 'Dup Source Template' })
+        .expect(201);
+
+      await supertest(app.getHttpServer())
+        .patch(`/api/v1/admin/curriculum-packs/${source.body.id}/status`)
+        .set('Cookie', adminCookie)
+        .send({ status: 'PUBLISHED' })
+        .expect(200);
+
+      const installed = await supertest(app.getHttpServer())
+        .post(`/api/v1/families/${familyId}/curriculum-packs`)
+        .set('Cookie', familyCookie)
+        .send({ sourcePackId: source.body.id })
+        .expect(201);
+
+      await supertest(app.getHttpServer())
+        .post(`/api/v1/families/${familyId}/curriculum-packs/${installed.body.id}/publish-to-community`)
+        .set('Cookie', familyCookie)
+        .send({ code: source.body.code, name: 'Colisão de código' })
+        .expect(400);
+    });
+
+    it('never lets one family publish another family\'s installed pack', async () => {
+      const source = await supertest(app.getHttpServer())
+        .post('/api/v1/admin/curriculum-packs')
+        .set('Cookie', adminCookie)
+        .send({ code: `FAMILY.PUBLISH.CROSS.${Date.now()}`, name: 'Cross Family Template' })
+        .expect(201);
+
+      await supertest(app.getHttpServer())
+        .patch(`/api/v1/admin/curriculum-packs/${source.body.id}/status`)
+        .set('Cookie', adminCookie)
+        .send({ status: 'PUBLISHED' })
+        .expect(200);
+
+      const installed = await supertest(app.getHttpServer())
+        .post(`/api/v1/families/${familyId}/curriculum-packs`)
+        .set('Cookie', familyCookie)
+        .send({ sourcePackId: source.body.id })
+        .expect(201);
+
+      const otherFamilyCookie = await registerAndGetCookie('family-pack-other-guardian');
+      const otherFamily = await supertest(app.getHttpServer())
+        .post('/api/v1/families')
+        .set('Cookie', otherFamilyCookie)
+        .send({ name: 'Other Family', countryCode: 'BRA' })
+        .expect(201);
+
+      await supertest(app.getHttpServer())
+        .post(
+          `/api/v1/families/${otherFamily.body.id}/curriculum-packs/${installed.body.id}/publish-to-community`,
+        )
+        .set('Cookie', otherFamilyCookie)
+        .send({ code: `SHOULD.NOT.EXIST.${Date.now()}`, name: 'Should not work' })
+        .expect(404);
+    });
+  });
 });
