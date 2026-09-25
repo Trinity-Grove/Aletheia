@@ -81,8 +81,9 @@ export class ReportController {
   async exportCsv(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
+    @CurrentUser('userId') userId?: string,
   ): Promise<{ content: string; mimeType: string; filename: string }> {
-    return this.reportService.exportReport(familyId, id, 'CSV');
+    return this.reportService.exportReport(familyId, id, 'CSV', userId);
   }
 
   @Get(':id/export/pdf')
@@ -91,8 +92,9 @@ export class ReportController {
     @Param('familyId') familyId: string,
     @Param('id') id: string,
     @Res({ passthrough: true }) reply: FastifyReply,
+    @CurrentUser('userId') userId?: string,
   ): Promise<Buffer> {
-    const { bytes, filename, documentHash } = await this.reportService.exportReportPdf(familyId, id);
+    const { bytes, filename, documentHash } = await this.reportService.exportReportPdf(familyId, id, userId);
     const safeAscii = filename
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -110,8 +112,9 @@ export class ReportController {
   async deleteReport(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
+    @CurrentUser('userId') userId: string,
   ): Promise<{ success: boolean }> {
-    const success = await this.reportService.deleteReport(familyId, id);
+    const success = await this.reportService.deleteReport(familyId, id, userId);
     return { success };
   }
 }

@@ -5,7 +5,7 @@ import {
   type DataExportJobResponseDto,
   type FamilyDataExportPackageDto,
 } from "@aletheia/contracts";
-import { JwtAuthGuard, FamilyTenantGuard } from "../../../platform/auth/index.js";
+import { JwtAuthGuard, FamilyTenantGuard, CurrentUser } from "../../../platform/auth/index.js";
 import { ZodValidationPipe } from "../../../platform/validation/index.js";
 import { DataExportService } from "../application/data-export.service.js";
 
@@ -27,8 +27,9 @@ export class DataExportController {
   @Get("package")
   async getFullExportPackage(
     @Param("familyId") familyId: string,
+    @CurrentUser("userId") userId: string,
   ): Promise<FamilyDataExportPackageDto> {
-    return this.dataExportService.exportFamilyData(familyId);
+    return this.dataExportService.exportFamilyData(familyId, userId);
   }
 
   @Get(":id")

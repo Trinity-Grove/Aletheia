@@ -5,6 +5,9 @@ import { ConsentDefinitionsService } from './application/consent-definitions.ser
 import { FamilyConsentRepository } from './infrastructure/family-consent.repository.js';
 import { FamilyConsentService } from './application/family-consent.service.js';
 import { LegalConsentDefinitionsSeeder } from './infrastructure/legal-consent-definitions.seeder.js';
+import { SensitiveDataAuditRepository } from './infrastructure/sensitive-data-audit.repository.js';
+import { SensitiveDataAuditService } from './application/sensitive-data-audit.service.js';
+import { PrivacyFacadeService } from './application/privacy-facade.service.js';
 import { PRIVACY_PUBLIC_API } from './application/public-api.js';
 import { ConsentDefinitionsController } from './presentation/consent-definitions.controller.js';
 import { PublicConsentDefinitionsController } from './presentation/public-consent-definitions.controller.js';
@@ -23,9 +26,12 @@ import { FamilyConsentController } from './presentation/family-consent.controlle
     FamilyConsentRepository,
     FamilyConsentService,
     LegalConsentDefinitionsSeeder,
+    SensitiveDataAuditRepository,
+    SensitiveDataAuditService,
+    PrivacyFacadeService,
     {
       provide: PRIVACY_PUBLIC_API,
-      useExisting: FamilyConsentService,
+      useExisting: PrivacyFacadeService,
     },
   ],
   exports: [ConsentDefinitionsService, FamilyConsentService, PRIVACY_PUBLIC_API],

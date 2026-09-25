@@ -35,10 +35,12 @@ describe('LearnerService', () => {
   let learnerService: LearnerService;
   let fakeLearners: Map<string, LearnerEntity>;
   let grantedConsents: Array<{ familyId: string; learnerId: string | undefined }>;
+  let recordedAccess: Array<Record<string, unknown>>;
 
   beforeEach(() => {
     fakeLearners = new Map();
     grantedConsents = [];
+    recordedAccess = [];
 
     const fakePrivacyPublicApi: PrivacyPublicApi = {
       getPublishedDefinitions: async () => [FAKE_LEARNER_DATA_PROCESSING_LGPD],
@@ -56,6 +58,9 @@ describe('LearnerService', () => {
           userAgent: null,
           createdAt: new Date().toISOString(),
         };
+      },
+      recordSensitiveDataAccess: async (entry) => {
+        recordedAccess.push(entry as unknown as Record<string, unknown>);
       },
     };
 
@@ -156,11 +161,33 @@ describe('LearnerService', () => {
       expect(grantedConsents).toEqual([{ familyId: 'fam-1', learnerId: result.id }]);
     });
 
+    it('records a sensitive data access log entry for the new learner', async () => {
+      const result = await learnerService.createLearner(
+        'fam-1',
+        { firstName: 'Lucas', birthDate: '2016-05-12', acceptedDataConsent: true },
+        ACTOR_USER_ID,
+      );
+
+      expect(recordedAccess).toContainEqual(
+        expect.objectContaining({
+          actorUserId: ACTOR_USER_ID,
+          familyId: 'fam-1',
+          learnerId: result.id,
+          action: 'CREATE',
+          resourceType: 'LEARNER',
+          resourceId: result.id,
+        }),
+      );
+    });
+
     it('rejects learner creation (before any learner is persisted) when no consent definition is published for the regime', async () => {
       const emptyPrivacyPublicApi: PrivacyPublicApi = {
         getPublishedDefinitions: async () => [],
         checkMandatoryCompliance: async () => ({ compliant: true, pendingMandatoryTerms: [] }),
         grantConsent: async () => {
+          throw new Error('should never be called');
+        },
+        recordSensitiveDataAccess: async () => {
           throw new Error('should never be called');
         },
       };
@@ -248,18 +275,29 @@ describe('LearnerService', () => {
         birthDate: '2017-03-10',
         stage: 'PRIMARY_GRAMMAR', acceptedDataConsent: true}, ACTOR_USER_ID);
 
-      const updated = await learnerService.updateLearner('fam-1', created.id, {
-        firstName: 'Pedro Henrique',
-        stage: 'MIDDLE_LOGIC',
-      });
+      const updated = await learnerService.updateLearner(
+        'fam-1',
+        created.id,
+        { firstName: 'Pedro Henrique', stage: 'MIDDLE_LOGIC' },
+        ACTOR_USER_ID,
+      );
 
       expect(updated.firstName).toBe('Pedro Henrique');
       expect(updated.stage).toBe('LOWER_SECONDARY');
+      expect(recordedAccess).toContainEqual(
+        expect.objectContaining({
+          actorUserId: ACTOR_USER_ID,
+          familyId: 'fam-1',
+          learnerId: created.id,
+          action: 'UPDATE',
+          resourceType: 'LEARNER',
+        }),
+      );
     });
 
     it('throws NotFoundException if learner not found for update', async () => {
       await expect(
-        learnerService.updateLearner('fam-1', 'non-existent', { firstName: 'New' }),
+        learnerService.updateLearner('fam-1', 'non-existent', { firstName: 'New' }, ACTOR_USER_ID),
       ).rejects.toThrow(NotFoundException);
     });
   });

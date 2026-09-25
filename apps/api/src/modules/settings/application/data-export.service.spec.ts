@@ -2,6 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { DataExportService } from './data-export.service.js';
 import { DataExportRepository } from '../infrastructure/data-export.repository.js';
 import { DataExportJobEntity } from '../domain/data-export-job.entity.js';
+import type { PrivacyPublicApi } from '../../privacy/application/public-api.js';
 import type {
   ExportStatus,
   FamilyDataExportPackageDto,
@@ -11,9 +12,11 @@ describe('DataExportService', () => {
   let service: DataExportService;
   let jobs: Map<string, DataExportJobEntity>;
   let mockExportData: FamilyDataExportPackageDto;
+  let recordedAccess: Array<Record<string, unknown>>;
 
   beforeEach(() => {
     jobs = new Map();
+    recordedAccess = [];
 
     mockExportData = {
       exportedAt: new Date().toISOString(),
@@ -104,7 +107,13 @@ describe('DataExportService', () => {
       },
     } as unknown as DataExportRepository;
 
-    service = new DataExportService(mockRepo);
+    const fakePrivacyPublicApi: Pick<PrivacyPublicApi, 'recordSensitiveDataAccess'> = {
+      recordSensitiveDataAccess: async (entry) => {
+        recordedAccess.push(entry as unknown as Record<string, unknown>);
+      },
+    };
+
+    service = new DataExportService(mockRepo, fakePrivacyPublicApi as PrivacyPublicApi);
   });
 
   describe('createExportJob', () => {
@@ -117,6 +126,19 @@ describe('DataExportService', () => {
       expect(job.status).toBe('PENDING');
       expect(job.downloadUrl).toBeNull();
       expect(job.fileSizeBytes).toBeNull();
+    });
+
+    it('records a sensitive data access log entry for the export job', async () => {
+      const job = await service.createExportJob('fam-1', 'user-1');
+
+      expect(recordedAccess).toHaveLength(1);
+      expect(recordedAccess[0]).toMatchObject({
+        actorUserId: 'user-1',
+        familyId: 'fam-1',
+        action: 'CREATE',
+        resourceType: 'DATA_EXPORT_PACKAGE',
+        resourceId: job.id,
+      });
     });
   });
 
@@ -150,7 +172,7 @@ describe('DataExportService', () => {
 
   describe('exportFamilyData', () => {
     it('aggregates complete family data across all domains into FamilyDataExportPackageDto', async () => {
-      const result = await service.exportFamilyData('fam-1');
+      const result = await service.exportFamilyData('fam-1', 'user-1');
 
       expect(result.version).toBe('1.0.0');
       expect(result.family).toBeDefined();
@@ -170,6 +192,18 @@ describe('DataExportService', () => {
       expect(result.complianceRequirements).toHaveLength(1);
       expect(result.officialReports).toHaveLength(1);
       expect(result.notifications).toHaveLength(1);
+    });
+
+    it('records a sensitive data access log entry for the export', async () => {
+      await service.exportFamilyData('fam-1', 'user-1');
+
+      expect(recordedAccess).toHaveLength(1);
+      expect(recordedAccess[0]).toMatchObject({
+        actorUserId: 'user-1',
+        familyId: 'fam-1',
+        action: 'EXPORT',
+        resourceType: 'DATA_EXPORT_PACKAGE',
+      });
     });
   });
 

@@ -72,6 +72,9 @@ const fakePrivacyPublicApi: PrivacyPublicApi = {
   grantConsent: async () => {
     throw new Error('not used by AuthService tests');
   },
+  recordSensitiveDataAccess: async () => {
+    // not used by AuthService tests
+  },
 };
 
 // otplib v13 ships ESM-only runtime deps that ts-jest can't transform. The

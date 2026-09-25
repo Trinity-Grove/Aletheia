@@ -15,10 +15,9 @@ import type {
 } from '@aletheia/contracts';
 import { FamilyConsentRepository } from '../infrastructure/family-consent.repository.js';
 import { ConsentDefinitionsRepository } from '../infrastructure/consent-definitions.repository.js';
-import type { PrivacyPublicApi } from './public-api.js';
 
 @Injectable()
-export class FamilyConsentService implements PrivacyPublicApi {
+export class FamilyConsentService {
   constructor(
     private readonly repository: FamilyConsentRepository,
     private readonly consentDefsRepo: ConsentDefinitionsRepository,

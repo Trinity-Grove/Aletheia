@@ -7,6 +7,7 @@ import {
   EVIDENCE_SUBMISSION_PUBLIC_API,
   type EvidenceSubmissionPublicApi,
 } from '../../curriculum/application/public-api.js';
+import { PRIVACY_PUBLIC_API, type PrivacyPublicApi } from '../../privacy/application/public-api.js';
 import { mapEvidenceTypeCodeToLegacyType } from './evidence-type-code.mapper.js';
 import type {
   CreatePortfolioItemDto,
@@ -27,6 +28,8 @@ export class PortfolioService {
     @Inject(AV_SCANNER) private readonly avScanner: AvScanner,
     @Inject(EVIDENCE_SUBMISSION_PUBLIC_API)
     private readonly evidenceSubmissionApi: EvidenceSubmissionPublicApi,
+    @Inject(PRIVACY_PUBLIC_API)
+    private readonly privacyPublicApi: PrivacyPublicApi,
   ) {}
 
   async createItem(familyId: string, dto: CreatePortfolioItemDto): Promise<PortfolioItemResponseDto> {
@@ -112,7 +115,7 @@ export class PortfolioService {
     return updated.toResponseDto();
   }
 
-  async deleteItem(familyId: string, id: string): Promise<boolean> {
+  async deleteItem(familyId: string, id: string, actorUserId: string): Promise<boolean> {
     const item = await this.portfolioRepo.findById(familyId, id);
     if (!item) {
       throw new NotFoundException('Portfolio item not found');
@@ -123,6 +126,16 @@ export class PortfolioService {
     }
 
     await this.portfolioRepo.softDelete(familyId, id);
+
+    await this.privacyPublicApi.recordSensitiveDataAccess({
+      actorUserId,
+      familyId,
+      learnerId: item.learnerId,
+      action: 'DELETE',
+      resourceType: 'PORTFOLIO_ITEM',
+      resourceId: id,
+    });
+
     return true;
   }
 
@@ -185,7 +198,11 @@ export class PortfolioService {
     return updated.toResponseDto();
   }
 
-  async getDownloadUrl(familyId: string, id: string): Promise<PortfolioDownloadUrlResponseDto> {
+  async getDownloadUrl(
+    familyId: string,
+    id: string,
+    actorUserId: string,
+  ): Promise<PortfolioDownloadUrlResponseDto> {
     const item = await this.portfolioRepo.findById(familyId, id);
     if (!item || !item.storageKey) {
       throw new NotFoundException('Portfolio item not found');
@@ -194,6 +211,16 @@ export class PortfolioService {
     const { downloadUrl, expiresAt } = await this.objectStorage.getPresignedDownloadUrl(
       item.storageKey,
     );
+
+    await this.privacyPublicApi.recordSensitiveDataAccess({
+      actorUserId,
+      familyId,
+      learnerId: item.learnerId,
+      action: 'READ',
+      resourceType: 'PORTFOLIO_ITEM',
+      resourceId: id,
+    });
+
     return { downloadUrl, expiresAt: expiresAt.toISOString() };
   }
 }

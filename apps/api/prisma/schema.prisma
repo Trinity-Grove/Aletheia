@@ -63,6 +63,7 @@ model User {
   resolvedPackReports       CurriculumPackReport[] @relation("PackReportResolver")
   mentorGrantsAsMentor    MentorGrant[] @relation("MentorGrantMentor")
   mentorGrantsInvited     MentorGrant[] @relation("MentorGrantInviter")
+  sensitiveDataAccessLogs SensitiveDataAccessLog[]
 
   @@map("users")
 }
@@ -94,6 +95,44 @@ model AccountAuditLogEntry {
 
   @@index([userId, createdAt])
   @@map("account_audit_log_entries")
+}
+
+enum SensitiveDataAction {
+  READ
+  CREATE
+  UPDATE
+  DELETE
+  EXPORT
+
+  @@map("sensitive_data_actions")
+}
+
+enum SensitiveDataResourceType {
+  LEARNER
+  PORTFOLIO_ITEM
+  EVIDENCE_SUBMISSION
+  OFFICIAL_REPORT
+  DATA_EXPORT_PACKAGE
+
+  @@map("sensitive_data_resource_types")
+}
+
+model SensitiveDataAccessLog {
+  id           String                    @id @default(uuid()) @db.Uuid
+  actorUserId  String                    @map("actor_user_id") @db.Uuid
+  familyId     String                    @map("family_id") @db.Uuid
+  learnerId    String?                   @map("learner_id") @db.Uuid
+  action       SensitiveDataAction
+  resourceType SensitiveDataResourceType @map("resource_type")
+  resourceId   String?                   @map("resource_id")
+  metadata     Json?
+  createdAt    DateTime                  @default(now()) @map("created_at") @db.Timestamptz
+  actor        User                      @relation(fields: [actorUserId], references: [id], onDelete: Cascade)
+  family       Family                    @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  @@index([familyId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@map("sensitive_data_access_logs")
 }
 
 model EmailVerificationToken {
@@ -223,6 +262,7 @@ model Family {
   curriculumPackReports     CurriculumPackReport[]
   mentorGrants           MentorGrant[]
   activities             FamilyActivity[]
+  sensitiveDataAccessLogs SensitiveDataAccessLog[]
 
   @@map("families")
 }

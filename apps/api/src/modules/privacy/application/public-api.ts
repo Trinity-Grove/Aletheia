@@ -5,6 +5,7 @@ import type {
   ConsentScope,
   GrantConsentDto,
 } from '@aletheia/contracts';
+import type { SensitiveDataAccessLogEntry } from '../infrastructure/sensitive-data-audit.repository.js';
 
 export const PRIVACY_PUBLIC_API = Symbol('PRIVACY_PUBLIC_API');
 
@@ -17,4 +18,5 @@ export interface PrivacyPublicApi {
     dto: GrantConsentDto,
     context: { ipAddress?: string | null; userAgent?: string | null },
   ): Promise<ConsentRecordResponseDto>;
+  recordSensitiveDataAccess(entry: SensitiveDataAccessLogEntry): Promise<void>;
 }

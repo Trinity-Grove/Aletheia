@@ -11,6 +11,8 @@ describe('ReportService', () => {
   let portfolioRenderer: any;
   let complianceRenderer: any;
   let settingsApi: any;
+  let privacyPublicApi: any;
+  let recordedAccess: Array<Record<string, unknown>>;
 
   const FAMILY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
   const LEARNER_ID = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
@@ -254,6 +256,13 @@ describe('ReportService', () => {
       }),
     };
 
+    recordedAccess = [];
+    privacyPublicApi = {
+      recordSensitiveDataAccess: jest.fn(async (entry: Record<string, unknown>) => {
+        recordedAccess.push(entry);
+      }),
+    };
+
     service = new ReportService(
       prisma,
       reportRepo,
@@ -263,6 +272,7 @@ describe('ReportService', () => {
       portfolioRenderer,
       complianceRenderer,
       settingsApi,
+      privacyPublicApi,
     );
   });
 
@@ -343,6 +353,27 @@ describe('ReportService', () => {
         expect.anything(),
         USER_ID,
       );
+      expect(recordedAccess).toContainEqual(
+        expect.objectContaining({
+          actorUserId: USER_ID,
+          familyId: FAMILY_ID,
+          action: 'CREATE',
+          resourceType: 'OFFICIAL_REPORT',
+        }),
+      );
+    });
+
+    it('does not record sensitive data access when no user id is provided', async () => {
+      await service.generateReport(FAMILY_ID, {
+        learnerId: LEARNER_ID,
+        academicYearId: YEAR_ID,
+        type: 'ACADEMIC_TRANSCRIPT',
+        title: 'Official Transcript 2026',
+        gradingScale: 'LETTER_A_F',
+        includeAttendance: true,
+      });
+
+      expect(recordedAccess).toHaveLength(0);
     });
 
     it('generates Attendance Summary report', async () => {
@@ -395,6 +426,21 @@ describe('ReportService', () => {
       expect(exportData.content).toContain('Attendance Summary');
     });
 
+    it('records a sensitive data access log entry when an actor is provided', async () => {
+      const USER_ID = 'u0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66';
+      await service.exportReport(FAMILY_ID, REPORT_ID, 'CSV', USER_ID);
+
+      expect(recordedAccess).toContainEqual(
+        expect.objectContaining({
+          actorUserId: USER_ID,
+          familyId: FAMILY_ID,
+          action: 'EXPORT',
+          resourceType: 'OFFICIAL_REPORT',
+          resourceId: REPORT_ID,
+        }),
+      );
+    });
+
     it('exports report as JSON', async () => {
       const exportData = await service.exportReport(FAMILY_ID, REPORT_ID, 'JSON');
 
@@ -407,6 +453,36 @@ describe('ReportService', () => {
       await expect(service.exportReport(FAMILY_ID, REPORT_ID, 'PDF')).rejects.toThrow(
         'GET :id/export/pdf',
       );
+    });
+  });
+
+  describe('deleteReport', () => {
+    it('deletes the report and records a sensitive data access log entry', async () => {
+      const USER_ID = 'u0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66';
+      const result = await service.deleteReport(FAMILY_ID, REPORT_ID, USER_ID);
+
+      expect(result).toBe(true);
+      expect(reportRepo.delete).toHaveBeenCalledWith(FAMILY_ID, REPORT_ID);
+      expect(recordedAccess).toContainEqual(
+        expect.objectContaining({
+          actorUserId: USER_ID,
+          familyId: FAMILY_ID,
+          learnerId: LEARNER_ID,
+          action: 'DELETE',
+          resourceType: 'OFFICIAL_REPORT',
+          resourceId: REPORT_ID,
+        }),
+      );
+    });
+
+    it('throws NotFoundException without recording access when the report does not exist', async () => {
+      reportRepo.delete.mockResolvedValue(false);
+      const USER_ID = 'u0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66';
+
+      await expect(service.deleteReport(FAMILY_ID, 'missing-id', USER_ID)).rejects.toThrow(
+        'Official report not found',
+      );
+      expect(recordedAccess).toHaveLength(0);
     });
   });
 
