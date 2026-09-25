@@ -216,6 +216,7 @@ model Family {
   donations              DonationRecord[]
   supporterSubscriptions SupporterSubscription[]
   mentorGrants           MentorGrant[]
+  activities             FamilyActivity[]
 
   @@map("families")
 }
@@ -1535,6 +1536,47 @@ model ActivityDefinitionCompetency {
   @@index([activityId])
   @@index([competencyId])
   @@map("activity_definition_competencies")
+}
+
+// Family-owned Activity (issue #96 section 7: "Pode ser criada pela
+// família" -- the sibling checklist item to the platform-catalog
+// ActivityDefinition above). Deliberately its own model rather than a
+// familyId column on ActivityDefinition: that model's code/version/
+// status(DRAFT/PUBLISHED) lifecycle is a platform-catalog governance
+// concern, not something personal family content needs.
+//
+// `visibility` (issue #244/#245): anything that isn't a fork/copy of
+// catalog content gets a visibility choice controlled by its own
+// creator -- PRIVATE by default, PUBLIC if the family opts in. No
+// approval queue gates this; moderation (if ever needed) is reactive,
+// via reports against PUBLIC content, not pre-publication review.
+model FamilyActivity {
+  id                       String                   @id @default(uuid()) @db.Uuid
+  familyId                 String                   @map("family_id") @db.Uuid
+  name                     String
+  description              String?
+  ageMin                   Int?                     @map("age_min")
+  ageMax                   Int?                     @map("age_max")
+  estimatedDurationMinutes Int?                     @map("estimated_duration_minutes")
+  supervisionRequired      Boolean                  @default(false) @map("supervision_required")
+  riskLevel                String?                  @map("risk_level")
+  evidenceRequirementMode  String                   @default("ANY") @map("evidence_requirement_mode")
+  metadata                 Json                     @default("{}")
+  visibility               FamilyContentVisibility  @default(PRIVATE)
+  createdAt                DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  @@index([familyId])
+  @@map("family_activities")
+}
+
+enum FamilyContentVisibility {
+  PRIVATE
+  PUBLIC
+
+  @@map("family_content_visibilities")
 }
 
 model ActivityDefinitionEvidenceType {
