@@ -3,11 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import { AletheiaIcon } from '@aletheia/ui';
 import type { LearnerSummaryDto } from '@aletheia/contracts';
+import { useLocale } from '../../../src/lib/i18n/locale-context';
 import { ProductShell } from '../../../src/components/layout/product-shell';
 import { DonationFormCard } from '../../../src/components/support/donation-form-card';
 import { DonationReceiptsTable } from '../../../src/components/support/donation-receipts-table';
 
 export default function SupportPage() {
+  const { t } = useLocale();
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
   const [activeLearnerId, setActiveLearnerId] = useState<string | null>(null);
@@ -62,24 +64,24 @@ export default function SupportPage() {
               <AletheiaIcon name="heart" size={28} />
             </span>
             <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-              Apoio Comunitário Voluntário
+              {t('support.pageTitle')}
             </h1>
           </div>
           <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 1rem 0', maxWidth: '800px' }}>
-            Acreditamos que a educação domiciliar e a soberania da família sobre o aprendizado de seus filhos devem ser acessíveis a todos, independentemente de condição financeira. Por isso, o Aletheia é 100% gratuito e sem restrições.
+            {t('support.pageSubtitle')}
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', fontSize: '0.875rem', color: 'var(--forest)', fontWeight: 600 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
               <AletheiaIcon name="check" size={16} />
-              <span>Sem paywalls ou bloqueios</span>
+              <span>{t('support.featureNoPaywalls')}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
               <AletheiaIcon name="check" size={16} />
-              <span>Sem limites de educandos ou disciplinas</span>
+              <span>{t('support.featureNoLimits')}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
               <AletheiaIcon name="check" size={16} />
-              <span>100% livre e soberano</span>
+              <span>{t('support.featureFreeAndSovereign')}</span>
             </div>
           </div>
         </div>

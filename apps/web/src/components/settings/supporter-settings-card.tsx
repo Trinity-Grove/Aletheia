@@ -7,12 +7,14 @@ import type {
   DonationRecordResponseDto,
   SupporterSubscriptionResponseDto,
 } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface SupporterSettingsCardProps {
   familyId?: string | null;
 }
 
 export function SupporterSettingsCard({ familyId }: SupporterSettingsCardProps) {
+  const { t, formatDate, formatCurrency } = useLocale();
   const [history, setHistory] = useState<DonationRecordResponseDto[]>([]);
   const [subscriptions, setSubscriptions] = useState<SupporterSubscriptionResponseDto[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -45,11 +47,11 @@ export function SupporterSettingsCard({ familyId }: SupporterSettingsCardProps) 
         setSubscriptions(Array.isArray(subsData) ? subsData : []);
       }
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Falha ao carregar informações de apoio.');
+      setErrorMessage(err instanceof Error ? err.message : t('support.loadInfoError'));
     } finally {
       setLoading(false);
     }
-  }, [activeFamilyId]);
+  }, [activeFamilyId, t]);
 
   useEffect(() => {
     void loadData();
@@ -76,28 +78,25 @@ export function SupporterSettingsCard({ familyId }: SupporterSettingsCardProps) 
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || 'Falha ao cancelar apoio mensal.');
+        throw new Error(errData.message || t('support.cancelSubscriptionError'));
       }
 
       setSubToCancel(null);
       await loadData();
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Falha ao cancelar apoio mensal.');
+      setErrorMessage(err instanceof Error ? err.message : t('support.cancelSubscriptionError'));
     } finally {
       setCancelling(false);
     }
   };
 
   const formatCurrencyValue = (cents: number): string => {
-    return (cents / 100).toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    });
+    return formatCurrency(cents / 100, 'BRL');
   };
 
   const formatDateValue = (dateStr: string): string => {
     try {
-      return new Date(dateStr).toLocaleDateString('pt-BR', {
+      return formatDate(dateStr, {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -116,11 +115,11 @@ export function SupporterSettingsCard({ familyId }: SupporterSettingsCardProps) 
               <AletheiaIcon name="heart" size={22} />
             </span>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-              Apoio Comunitário & Mecenato
+              {t('support.settingsTitle')}
             </h2>
           </div>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
-            Gerencie sua contribuição voluntária para manter o Aletheia soberano, livre e gratuito.
+            {t('support.settingsDescription')}
           </p>
         </div>
 
@@ -141,7 +140,7 @@ export function SupporterSettingsCard({ familyId }: SupporterSettingsCardProps) 
           }}
         >
           <AletheiaIcon name="heart" size={16} />
-          <span>Fazer uma Contribuição</span>
+          <span>{t('support.makeContributionButton')}</span>
         </Link>
       </div>
 
@@ -169,19 +168,21 @@ export function SupporterSettingsCard({ familyId }: SupporterSettingsCardProps) 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Status Atual:</span>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                {t('support.currentStatusLabel')}
+              </span>
               {activeSubscription ? (
-                <Badge variant="emerald">Apoiador Mensal Ativo</Badge>
+                <Badge variant="emerald">{t('support.statusActiveMonthly')}</Badge>
               ) : hasConfirmedDonations ? (
-                <Badge variant="slate">Apoiador da Comunidade</Badge>
+                <Badge variant="slate">{t('support.statusCommunitySupporter')}</Badge>
               ) : (
-                <Badge variant="slate">Sem apoio recorrente ativo</Badge>
+                <Badge variant="slate">{t('support.statusNoActive')}</Badge>
               )}
             </div>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0 }}>
               {activeSubscription
-                ? `Apoio mensal recorrente de ${formatCurrencyValue(activeSubscription.amountCents)}.`
-                : 'O Aletheia é 100% livre e sem paywalls. Qualquer família pode contribuir voluntariamente quando desejar.'}
+                ? t('support.statusActiveDescription', { amount: formatCurrencyValue(activeSubscription.amountCents) })
+                : t('support.statusFreeDescription')}
             </p>
           </div>
 
@@ -192,7 +193,7 @@ export function SupporterSettingsCard({ familyId }: SupporterSettingsCardProps) 
               onClick={() => setSubToCancel(activeSubscription)}
               style={{ color: 'var(--color-error, #dc2626)', fontSize: '0.8125rem' }}
             >
-              Cancelar Apoio Mensal
+              {t('support.cancelMonthlySupport')}
             </Button>
           )}
         </div>
@@ -201,13 +202,13 @@ export function SupporterSettingsCard({ familyId }: SupporterSettingsCardProps) 
       {/* Recent Receipts Summary */}
       <div>
         <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
-          Recibos Recentes
+          {t('support.recentReceiptsTitle')}
         </h3>
 
         {loading ? (
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Carregando recibos...</p>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{t('support.loadingReceipts')}</p>
         ) : history.length === 0 ? (
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Nenhum recibo registrado ainda.</p>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{t('support.emptyReceipts')}</p>
         ) : (
           <div style={{ display: 'grid', gap: '0.5rem' }}>
             {history.slice(0, 5).map((record) => (
@@ -229,14 +230,14 @@ export function SupporterSettingsCard({ familyId }: SupporterSettingsCardProps) 
                     {formatCurrencyValue(record.amountCents)}
                   </span>
                   <span style={{ color: 'var(--text-secondary)' }}>
-                    ({record.frequency === 'MONTHLY' ? 'Mensal' : 'Única'})
+                    ({record.frequency === 'MONTHLY' ? t('support.frequencyMonthlyShort') : t('support.frequencyOneTimeShort')})
                   </span>
                   <span style={{ color: 'var(--text-secondary)' }}>
                     {formatDateValue(record.createdAt)}
                   </span>
                 </div>
                 <Badge variant={record.status === 'CONFIRMED' ? 'emerald' : 'slate'}>
-                  {record.status === 'CONFIRMED' ? 'Confirmado' : record.status}
+                  {record.status === 'CONFIRMED' ? t('support.statusConfirmed') : record.status}
                 </Badge>
               </div>
             ))}
@@ -249,19 +250,18 @@ export function SupporterSettingsCard({ familyId }: SupporterSettingsCardProps) 
         <Modal
           isOpen={!!subToCancel}
           onClose={() => setSubToCancel(null)}
-          title="Cancelar Apoio Mensal?"
+          title={t('support.cancelModalTitle')}
         >
           <div style={{ display: 'grid', gap: '1rem', padding: '0.5rem 0' }}>
             <p style={{ margin: 0, fontSize: '0.9375rem', color: 'var(--text-primary)', lineHeight: 1.5 }}>
-              Tem certeza de que deseja cancelar sua contribuição voluntária mensal de{' '}
-              <strong>{formatCurrencyValue(subToCancel.amountCents)}</strong>?
+              {t('support.cancelModalPrompt', { amount: formatCurrencyValue(subToCancel.amountCents) })}
             </p>
             <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              Lembrando que o Aletheia continuará 100% gratuito e com todas as ferramentas liberadas para a sua família. Nenhuma função é restrita ao cancelar.
+              {t('support.cancelModalReassurance')}
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
               <Button variant="secondary" onClick={() => setSubToCancel(null)} disabled={cancelling}>
-                Manter Apoio
+                {t('support.keepSupportButton')}
               </Button>
               <Button
                 variant="primary"
@@ -269,7 +269,7 @@ export function SupporterSettingsCard({ familyId }: SupporterSettingsCardProps) 
                 disabled={cancelling}
                 style={{ backgroundColor: 'var(--color-error, #dc2626)', borderColor: 'var(--color-error, #dc2626)' }}
               >
-                {cancelling ? 'Cancelando...' : 'Confirmar Cancelamento'}
+                {cancelling ? t('support.cancellingButton') : t('support.confirmCancelButton')}
               </Button>
             </div>
           </div>

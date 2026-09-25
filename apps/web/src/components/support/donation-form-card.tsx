@@ -10,6 +10,7 @@ import type {
   DonationPaymentMethod,
   DonationRecordResponseDto,
 } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface DonationFormCardProps {
   familyId?: string | null;
@@ -19,10 +20,10 @@ export interface DonationFormCardProps {
 }
 
 const QUICK_AMOUNTS = [
-  { label: 'R$ 15', cents: 1500 },
-  { label: 'R$ 30', cents: 3000 },
-  { label: 'R$ 50', cents: 5000 },
-  { label: 'R$ 100', cents: 10000 },
+  { cents: 1500 },
+  { cents: 3000 },
+  { cents: 5000 },
+  { cents: 10000 },
 ];
 
 export function DonationFormCard({
@@ -31,6 +32,7 @@ export function DonationFormCard({
   pollingIntervalMs = 3000,
   maxPollingAttempts = 300,
 }: DonationFormCardProps) {
+  const { t, formatCurrency } = useLocale();
   const [frequency, setFrequency] = useState<DonationFrequency>('ONE_TIME');
   const [selectedCents, setSelectedCents] = useState<number>(3000);
   const [customAmountText, setCustomAmountText] = useState<string>('');
@@ -134,13 +136,13 @@ export function DonationFormCard({
     const amountCents = getEffectiveCents();
 
     if (amountCents < 500) {
-      setErrorMessage('O valor mínimo para apoio é R$ 5,00');
+      setErrorMessage(t('support.minAmountError', { amount: formatCurrency(5, 'BRL') }));
       return;
     }
 
     const targetFamilyId = familyId || (typeof localStorage !== 'undefined' ? localStorage.getItem('familyId') : null);
     if (!targetFamilyId) {
-      setErrorMessage('Identificação da família não encontrada para registrar a contribuição.');
+      setErrorMessage(t('support.familyNotFoundError'));
       return;
     }
 
@@ -167,7 +169,7 @@ export function DonationFormCard({
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Falha ao iniciar o fluxo de contribuição.');
+        throw new Error(errorData.message || t('support.initFlowError'));
       }
 
       const intent: DonationIntentResponseDto = await res.json();
@@ -195,7 +197,7 @@ export function DonationFormCard({
         startPollingStatus(intent.donationId, targetFamilyId, intent.expiresAt);
       }
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Erro ao processar apoio voluntário.');
+      setErrorMessage(err instanceof Error ? err.message : t('support.processError'));
     } finally {
       setLoading(false);
     }
@@ -221,11 +223,11 @@ export function DonationFormCard({
             <AletheiaIcon name="heart" size={24} />
           </span>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-            Apoio Voluntário & Comunitário
+            {t('support.formTitle')}
           </h2>
         </div>
         <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
-          O Aletheia é e sempre será <strong>100% gratuito</strong> para todas as famílias educadoras, sem restrições ou bloqueios. Sua contribuição voluntária sustenta nossos servidores, apoia o desenvolvimento contínuo e preserva a nossa independência.
+          {t('support.formDescription')}
         </p>
       </div>
 
@@ -244,10 +246,10 @@ export function DonationFormCard({
             <AletheiaIcon name="check-circle-2" size={40} />
           </div>
           <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
-            Muito obrigado pelo seu apoio! ❤️
+            {t('support.successTitle')}
           </h3>
           <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', margin: '0 0 1.25rem 0' }}>
-            Sua contribuição voluntária foi confirmada com sucesso e fortalece a missão de uma educação soberana e acessível para todos.
+            {t('support.successDescription')}
           </p>
           <Button
             variant="secondary"
@@ -257,23 +259,23 @@ export function DonationFormCard({
               setQrCodeDataUrl(null);
             }}
           >
-            Fazer outra contribuição
+            {t('support.anotherContribution')}
           </Button>
         </div>
       ) : intentResponse && paymentMethod === 'PIX' ? (
         <div data-testid="pix-intent-details" style={{ textAlign: 'center', padding: '1rem 0' }}>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-            Pague com PIX para apoiar
+            {t('support.pixTitle')}
           </h3>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-            Abra o app do seu banco, escolha <strong>Pagar via PIX</strong> e aponte a câmera para o QR Code abaixo:
+            {t('support.pixInstruction')}
           </p>
 
           {qrCodeDataUrl && (
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
               <img
                 src={qrCodeDataUrl}
-                alt="QR Code PIX"
+                alt={t('support.pixQrCodeAlt')}
                 data-testid="pix-qr-code-image"
                 style={{
                   width: '200px',
@@ -299,7 +301,7 @@ export function DonationFormCard({
                   marginBottom: '0.25rem',
                 }}
               >
-                Código PIX Copia e Cola:
+                {t('support.pixCopyPasteLabel')}
               </label>
               <div
                 data-testid="pix-copia-cola-text"
@@ -327,14 +329,14 @@ export function DonationFormCard({
                 style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
               >
                 <AletheiaIcon name={copied ? 'check' : 'clipboard-check'} size={16} />
-                <span>{copied ? 'Código copiado!' : 'Copiar código PIX'}</span>
+                <span>{copied ? t('support.pixCopied') : t('support.pixCopyButton')}</span>
               </Button>
             </div>
           )}
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
             <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-emerald-500, #10b981)', animation: 'pulse 1.5s infinite' }} />
-            <span>Aguardando confirmação do banco em tempo real...</span>
+            <span>{t('support.pixWaiting')}</span>
           </div>
         </div>
       ) : (
@@ -354,7 +356,7 @@ export function DonationFormCard({
           {/* Frequency Toggle */}
           <div>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-              Frequência da Contribuição
+              {t('support.frequencyLabel')}
             </label>
             <div
               style={{
@@ -382,7 +384,7 @@ export function DonationFormCard({
                   transition: 'all 0.15s ease',
                 }}
               >
-                Doação Única
+                {t('support.frequencyOneTime')}
               </button>
               <button
                 type="button"
@@ -406,7 +408,7 @@ export function DonationFormCard({
                   transition: 'all 0.15s ease',
                 }}
               >
-                Apoio Mensal
+                {t('support.frequencyMonthly')}
               </button>
             </div>
           </div>
@@ -414,7 +416,7 @@ export function DonationFormCard({
           {/* Quick Amount Selector */}
           <div>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-              Escolha um Valor
+              {t('support.amountLabel')}
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '0.75rem' }}>
               {QUICK_AMOUNTS.map((item) => {
@@ -436,7 +438,7 @@ export function DonationFormCard({
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    {item.label}
+                    {formatCurrency(item.cents / 100, 'BRL')}
                   </button>
                 );
               })}
@@ -447,7 +449,7 @@ export function DonationFormCard({
               <input
                 type="text"
                 data-testid="custom-amount-input"
-                placeholder="Ou digite outro valor (ex: 25,00)"
+                placeholder={t('support.customAmountPlaceholder')}
                 value={customAmountText}
                 onChange={handleCustomAmountChange}
                 style={{
@@ -469,7 +471,7 @@ export function DonationFormCard({
                   marginTop: '0.25rem',
                 }}
               >
-                Mínimo de R$ 5,00
+                {t('support.minimumNote', { amount: formatCurrency(5, 'BRL') })}
               </span>
             </div>
           </div>
@@ -477,7 +479,7 @@ export function DonationFormCard({
           {/* Payment Method Selector */}
           <div>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-              Forma de Pagamento
+              {t('support.paymentMethodLabel')}
             </label>
             <div style={{ display: 'grid', gap: '0.5rem' }}>
               <label
@@ -503,11 +505,11 @@ export function DonationFormCard({
                   style={{ accentColor: 'var(--forest)' }}
                 />
                 <div style={{ flex: 1 }}>
-                  <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>PIX</span>
+                  <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>{t('support.pixMethodTitle')}</span>
                   <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                     {frequency === 'MONTHLY'
-                      ? 'Indisponível para apoio mensal recorrente -- escolha cartão'
-                      : 'Instantâneo, sem taxas intermediárias, confirmação em segundos'}
+                      ? t('support.pixUnavailableMonthly')
+                      : t('support.pixMethodSubtitle')}
                   </span>
                 </div>
               </label>
@@ -533,9 +535,9 @@ export function DonationFormCard({
                   style={{ accentColor: 'var(--forest)' }}
                 />
                 <div style={{ flex: 1 }}>
-                  <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>Cartão de Crédito</span>
+                  <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>{t('support.creditCardTitle')}</span>
                   <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                    Você será redirecionado ao checkout seguro do Mercado Pago para concluir o pagamento
+                    {t('support.creditCardSubtitle')}
                   </span>
                 </div>
               </label>
@@ -551,12 +553,12 @@ export function DonationFormCard({
             style={{ width: '100%', justifyContent: 'center' }}
           >
             {loading
-              ? 'Processando...'
+              ? t('support.submitLoading')
               : frequency === 'MONTHLY'
-                ? 'Iniciar Apoio Mensal'
+                ? t('support.submitMonthly')
                 : paymentMethod === 'PIX'
-                  ? 'Gerar PIX para Apoiar'
-                  : 'Continuar para Pagamento'}
+                  ? t('support.submitPix')
+                  : t('support.submitCard')}
           </Button>
         </form>
       )}

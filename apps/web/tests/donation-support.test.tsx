@@ -13,6 +13,8 @@ import { SupporterSettingsCard } from '../src/components/settings/supporter-sett
 import { MAIN_NAV_ITEMS } from '../src/components/layout/product-shell';
 import { ptBR } from '../src/lib/i18n/dictionaries/pt-BR';
 import { enUS } from '../src/lib/i18n/dictionaries/en-US';
+import { esES } from '../src/lib/i18n/dictionaries/es-ES';
+import { LocaleProvider } from '../src/lib/i18n/locale-context';
 
 vi.mock('qrcode', () => ({
   default: {
@@ -598,12 +600,139 @@ describe('Donation & Voluntary Support Components', () => {
       expect(supportItem?.label).toBe('nav.support');
     });
 
-    it('has translation for nav.support in pt-BR and en-US dictionaries', () => {
+    it('has translation for nav.support in pt-BR, en-US, and es-ES dictionaries', () => {
       expect((ptBR.nav as Record<string, string>)['support']).toBeDefined();
       expect((ptBR.nav as Record<string, string>)['support']).toMatch(/apoiar|apoio/i);
 
       expect((enUS.nav as Record<string, string>)['support']).toBeDefined();
       expect((enUS.nav as Record<string, string>)['support']).toMatch(/support/i);
+
+      expect((esES.nav as Record<string, string>)['support']).toBeDefined();
+      expect((esES.nav as Record<string, string>)['support']).toMatch(/apoy/i);
+    });
+
+    it('renders DonationFormCard translated in en-US and es-ES', () => {
+      // en-US
+      localStorage.setItem('aletheia_locale', 'en-US');
+      const { unmount: unmountEn } = render(
+        <LocaleProvider>
+          <DonationFormCard familyId={testFamilyId} />
+        </LocaleProvider>,
+      );
+
+      expect(screen.getByText(/voluntary & community support/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /one-time donation/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /monthly support/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /generate pix to support/i })).toBeInTheDocument();
+      unmountEn();
+
+      // es-ES
+      localStorage.setItem('aletheia_locale', 'es-ES');
+      const { unmount: unmountEs } = render(
+        <LocaleProvider>
+          <DonationFormCard familyId={testFamilyId} />
+        </LocaleProvider>,
+      );
+
+      expect(screen.getByText(/apoyo voluntario y comunitario/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /donación única/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /apoyo mensual/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /generar pix para apoyar/i })).toBeInTheDocument();
+      unmountEs();
+    });
+
+    it('renders DonationReceiptsTable translated in en-US and es-ES', async () => {
+      const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+        if (url.includes('/donations/history')) {
+          return { ok: true, json: async () => mockHistory };
+        }
+        if (url.includes('/donations/subscriptions')) {
+          return { ok: true, json: async () => mockSubscriptions };
+        }
+        return { ok: false, status: 404 };
+      });
+      globalThis.fetch = fetchMock;
+
+      // en-US
+      localStorage.setItem('aletheia_locale', 'en-US');
+      const { unmount: unmountEn } = render(
+        <LocaleProvider>
+          <DonationReceiptsTable familyId={testFamilyId} />
+        </LocaleProvider>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/active monthly supporter/i)).toBeInTheDocument();
+        expect(screen.getByText(/contribution history & receipts/i)).toBeInTheDocument();
+        expect(screen.getByRole('columnheader', { name: /date/i })).toBeInTheDocument();
+        expect(screen.getByRole('columnheader', { name: /amount/i })).toBeInTheDocument();
+        expect(screen.getByRole('columnheader', { name: /status/i })).toBeInTheDocument();
+        expect(screen.getByText(/confirmed/i)).toBeInTheDocument();
+      });
+      unmountEn();
+
+      // es-ES
+      localStorage.setItem('aletheia_locale', 'es-ES');
+      const { unmount: unmountEs } = render(
+        <LocaleProvider>
+          <DonationReceiptsTable familyId={testFamilyId} />
+        </LocaleProvider>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/seguidor mensual activo/i)).toBeInTheDocument();
+        expect(screen.getByText(/historial de contribuciones y recibos/i)).toBeInTheDocument();
+        expect(screen.getByRole('columnheader', { name: /fecha/i })).toBeInTheDocument();
+        expect(screen.getByRole('columnheader', { name: /monto/i })).toBeInTheDocument();
+        expect(screen.getByRole('columnheader', { name: /estado/i })).toBeInTheDocument();
+      });
+      unmountEs();
+    });
+
+    it('renders SupporterSettingsCard translated in en-US and es-ES', async () => {
+      const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+        if (url.includes('/donations/history')) {
+          return { ok: true, json: async () => mockHistory };
+        }
+        if (url.includes('/donations/subscriptions')) {
+          return { ok: true, json: async () => mockSubscriptions };
+        }
+        return { ok: false, status: 404 };
+      });
+      globalThis.fetch = fetchMock;
+
+      // en-US
+      localStorage.setItem('aletheia_locale', 'en-US');
+      const { unmount: unmountEn } = render(
+        <LocaleProvider>
+          <SupporterSettingsCard familyId={testFamilyId} />
+        </LocaleProvider>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/community support & patronage/i)).toBeInTheDocument();
+        expect(screen.getByText(/active monthly supporter/i)).toBeInTheDocument();
+        expect(screen.getByText(/make a contribution/i)).toBeInTheDocument();
+        expect(screen.getByText(/recent receipts/i)).toBeInTheDocument();
+      });
+      unmountEn();
+
+      // es-ES
+      localStorage.setItem('aletheia_locale', 'es-ES');
+      const { unmount: unmountEs } = render(
+        <LocaleProvider>
+          <SupporterSettingsCard familyId={testFamilyId} />
+        </LocaleProvider>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/apoyo comunitario y mecenazgo/i)).toBeInTheDocument();
+        expect(screen.getByText(/seguidor mensual activo/i)).toBeInTheDocument();
+        expect(screen.getByText(/hacer una contribución/i)).toBeInTheDocument();
+        expect(screen.getByText(/recibos recientes/i)).toBeInTheDocument();
+      });
+      unmountEs();
     });
   });
 });
+
