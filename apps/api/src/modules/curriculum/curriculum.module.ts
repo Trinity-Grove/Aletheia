@@ -5,6 +5,7 @@ import { ProgressionController } from './presentation/progression.controller.js'
 import { DatabaseModule } from '../../platform/database/database.module.js';
 import { StorageModule } from '../../platform/storage/storage.module.js';
 import { DevotionalModule } from '../devotional/devotional.module.js';
+import { PrivacyModule } from '../privacy/privacy.module.js';
 import { CurriculumRepository } from './infrastructure/curriculum.repository.js';
 import { ObjectiveRepository } from './infrastructure/objective.repository.js';
 import { CurriculumTemplateEngine } from './infrastructure/curriculum-template.engine.js';
@@ -110,7 +111,7 @@ import { FamilyActivityService } from './application/family-activity.service.js'
 import { FamilyActivityController } from './presentation/family-activity.controller.js';
 
 @Module({
-  imports: [DatabaseModule, DevotionalModule, StorageModule],
+  imports: [DatabaseModule, DevotionalModule, StorageModule, PrivacyModule],
   controllers: [
     ProgressionController,
     CurriculumController,

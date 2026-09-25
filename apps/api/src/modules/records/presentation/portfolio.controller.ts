@@ -27,7 +27,7 @@ import {
   type RequestPortfolioUploadDto,
   type UpdatePortfolioItemDto,
 } from '@aletheia/contracts';
-import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
+import { JwtAuthGuard, FamilyTenantGuard, CurrentUser } from '../../../platform/auth/index.js';
 import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { PortfolioService } from '../application/portfolio.service.js';
 
@@ -109,8 +109,9 @@ export class PortfolioController {
   async deleteItem(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
+    @CurrentUser('userId') userId: string,
   ): Promise<{ success: boolean }> {
-    const success = await this.portfolioService.deleteItem(familyId, id);
+    const success = await this.portfolioService.deleteItem(familyId, id, userId);
     return { success };
   }
 
@@ -140,7 +141,8 @@ export class PortfolioController {
   async getDownloadUrl(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
+    @CurrentUser('userId') userId: string,
   ): Promise<PortfolioDownloadUrlResponseDto> {
-    return this.portfolioService.getDownloadUrl(familyId, id);
+    return this.portfolioService.getDownloadUrl(familyId, id, userId);
   }
 }

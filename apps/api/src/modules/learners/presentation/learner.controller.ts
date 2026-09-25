@@ -81,8 +81,9 @@ export class LearnerController {
     @Param('familyId') familyId: string,
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateLearnerSchema)) dto: UpdateLearnerDto,
+    @CurrentUser('userId') actorUserId: string,
   ): Promise<LearnerResponseDto> {
-    return this.learnerService.updateLearner(familyId, id, dto);
+    return this.learnerService.updateLearner(familyId, id, dto, actorUserId);
   }
 
   @Post(':id/archive')

@@ -8,10 +8,13 @@ describe('PortfolioService', () => {
   let objectStorage: any;
   let avScanner: any;
   let evidenceSubmissionApi: any;
+  let privacyPublicApi: any;
+  let recordedAccess: Array<Record<string, unknown>>;
 
   const FAMILY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
   const LEARNER_ID = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
   const ITEM_ID = 'p0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33';
+  const ACTOR_USER_ID = 'u0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66';
   const STORAGE_KEY = `families/${FAMILY_ID}/portfolio/${ITEM_ID}/abc-tree.png`;
 
   beforeEach(() => {
@@ -189,7 +192,20 @@ describe('PortfolioService', () => {
       getEvidenceSubmissionForPortfolio: jest.fn(),
     };
 
-    service = new PortfolioService(portfolioRepo, objectStorage, avScanner, evidenceSubmissionApi);
+    recordedAccess = [];
+    privacyPublicApi = {
+      recordSensitiveDataAccess: jest.fn(async (entry: Record<string, unknown>) => {
+        recordedAccess.push(entry);
+      }),
+    };
+
+    service = new PortfolioService(
+      portfolioRepo,
+      objectStorage,
+      avScanner,
+      evidenceSubmissionApi,
+      privacyPublicApi,
+    );
   });
 
   it('creates a portfolio item successfully', async () => {
@@ -347,10 +363,20 @@ describe('PortfolioService', () => {
 
   describe('deleteItem', () => {
     it('deletes the storage object and soft-deletes the row when a file is attached', async () => {
-      const res = await service.deleteItem(FAMILY_ID, ITEM_ID);
+      const res = await service.deleteItem(FAMILY_ID, ITEM_ID, ACTOR_USER_ID);
       expect(res).toBe(true);
       expect(objectStorage.deleteObject).toHaveBeenCalledWith(STORAGE_KEY);
       expect(portfolioRepo.softDelete).toHaveBeenCalledWith(FAMILY_ID, ITEM_ID);
+      expect(recordedAccess).toContainEqual(
+        expect.objectContaining({
+          actorUserId: ACTOR_USER_ID,
+          familyId: FAMILY_ID,
+          learnerId: LEARNER_ID,
+          action: 'DELETE',
+          resourceType: 'PORTFOLIO_ITEM',
+          resourceId: ITEM_ID,
+        }),
+      );
     });
 
     it('skips storage deletion when the item has no attached file', async () => {
@@ -361,13 +387,13 @@ describe('PortfolioService', () => {
           null, null, null, null, false, [], new Date(), new Date(),
         ),
       );
-      await service.deleteItem(FAMILY_ID, ITEM_ID);
+      await service.deleteItem(FAMILY_ID, ITEM_ID, ACTOR_USER_ID);
       expect(objectStorage.deleteObject).not.toHaveBeenCalled();
     });
 
     it('throws NotFoundException when the item does not exist', async () => {
       portfolioRepo.findById.mockResolvedValue(null);
-      await expect(service.deleteItem(FAMILY_ID, 'missing')).rejects.toThrow('Portfolio item not found');
+      await expect(service.deleteItem(FAMILY_ID, 'missing', ACTOR_USER_ID)).rejects.toThrow('Portfolio item not found');
     });
   });
 
@@ -444,9 +470,19 @@ describe('PortfolioService', () => {
 
   describe('getDownloadUrl', () => {
     it('returns a presigned download URL when a file is attached', async () => {
-      const res = await service.getDownloadUrl(FAMILY_ID, ITEM_ID);
+      const res = await service.getDownloadUrl(FAMILY_ID, ITEM_ID, ACTOR_USER_ID);
       expect(objectStorage.getPresignedDownloadUrl).toHaveBeenCalledWith(STORAGE_KEY);
       expect(res.downloadUrl).toBe('https://storage.local/download-signed');
+      expect(recordedAccess).toContainEqual(
+        expect.objectContaining({
+          actorUserId: ACTOR_USER_ID,
+          familyId: FAMILY_ID,
+          learnerId: LEARNER_ID,
+          action: 'READ',
+          resourceType: 'PORTFOLIO_ITEM',
+          resourceId: ITEM_ID,
+        }),
+      );
     });
 
     it('throws NotFoundException when there is no attached file', async () => {
@@ -457,7 +493,7 @@ describe('PortfolioService', () => {
           null, null, null, null, false, [], new Date(), new Date(),
         ),
       );
-      await expect(service.getDownloadUrl(FAMILY_ID, ITEM_ID)).rejects.toThrow('Portfolio item not found');
+      await expect(service.getDownloadUrl(FAMILY_ID, ITEM_ID, ACTOR_USER_ID)).rejects.toThrow('Portfolio item not found');
     });
   });
 });

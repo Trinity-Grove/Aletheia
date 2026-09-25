@@ -12,6 +12,7 @@ import {
   SETTINGS_PUBLIC_API,
   type SettingsPublicApi,
 } from '../../settings/application/public-api.js';
+import { PRIVACY_PUBLIC_API, type PrivacyPublicApi } from '../../privacy/application/public-api.js';
 import type {
   AcademicTranscriptDto,
   AnnualComplianceReportDto,
@@ -40,6 +41,8 @@ export class ReportService {
     private readonly complianceRenderer: AnnualCompliancePdfRenderer,
     @Inject(SETTINGS_PUBLIC_API)
     private readonly settingsApi: SettingsPublicApi,
+    @Inject(PRIVACY_PUBLIC_API)
+    private readonly privacyPublicApi: PrivacyPublicApi,
   ) {}
 
   async generateReport(
@@ -77,6 +80,19 @@ export class ReportService {
     }
 
     const report = await this.reportRepo.create(familyId, dto, reportContent, generatedByUserId);
+
+    if (generatedByUserId) {
+      await this.privacyPublicApi.recordSensitiveDataAccess({
+        actorUserId: generatedByUserId,
+        familyId,
+        learnerId: report.learnerId,
+        action: 'CREATE',
+        resourceType: 'OFFICIAL_REPORT',
+        resourceId: report.id,
+        metadata: { reportType: report.type },
+      });
+    }
+
     return report.toResponseDto();
   }
 
@@ -96,11 +112,22 @@ export class ReportService {
     return reports.map((r) => r.toResponseDto());
   }
 
-  async deleteReport(familyId: string, id: string): Promise<boolean> {
+  async deleteReport(familyId: string, id: string, actorUserId: string): Promise<boolean> {
+    const report = await this.reportRepo.findById(familyId, id);
     const deleted = await this.reportRepo.delete(familyId, id);
     if (!deleted) {
       throw new NotFoundException('Official report not found');
     }
+
+    await this.privacyPublicApi.recordSensitiveDataAccess({
+      actorUserId,
+      familyId,
+      learnerId: report?.learnerId ?? null,
+      action: 'DELETE',
+      resourceType: 'OFFICIAL_REPORT',
+      resourceId: id,
+    });
+
     return true;
   }
 
@@ -108,8 +135,21 @@ export class ReportService {
     familyId: string,
     id: string,
     format: ExportFormat = 'JSON',
+    actorUserId?: string,
   ): Promise<{ content: string; mimeType: string; filename: string }> {
     const report = await this.getReport(familyId, id);
+
+    if (actorUserId) {
+      await this.privacyPublicApi.recordSensitiveDataAccess({
+        actorUserId,
+        familyId,
+        learnerId: report.learnerId,
+        action: 'EXPORT',
+        resourceType: 'OFFICIAL_REPORT',
+        resourceId: report.id,
+        metadata: { format },
+      });
+    }
 
     if (format === 'CSV') {
       const csv = this.convertReportToCsv(report);
@@ -136,8 +176,21 @@ export class ReportService {
   async exportReportPdf(
     familyId: string,
     id: string,
+    actorUserId?: string,
   ): Promise<{ bytes: Uint8Array; filename: string; documentHash: string }> {
     const report = await this.getReport(familyId, id);
+
+    if (actorUserId) {
+      await this.privacyPublicApi.recordSensitiveDataAccess({
+        actorUserId,
+        familyId,
+        learnerId: report.learnerId,
+        action: 'EXPORT',
+        resourceType: 'OFFICIAL_REPORT',
+        resourceId: report.id,
+        metadata: { format: 'PDF' },
+      });
+    }
 
     let generatedByLabel: string | null = null;
     if (report.generatedByUserId) {

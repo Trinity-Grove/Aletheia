@@ -49,6 +49,15 @@ export class LearnerService implements LearnersPublicApi {
       { ipAddress: null, userAgent: null },
     );
 
+    await this.privacyPublicApi.recordSensitiveDataAccess({
+      actorUserId,
+      familyId,
+      learnerId: learner.id,
+      action: 'CREATE',
+      resourceType: 'LEARNER',
+      resourceId: learner.id,
+    });
+
     return learner.toResponseDto();
   }
 
@@ -69,11 +78,22 @@ export class LearnerService implements LearnersPublicApi {
     familyId: string,
     learnerId: string,
     dto: UpdateLearnerDto,
+    actorUserId: string,
   ): Promise<LearnerResponseDto> {
     const updated = await this.learnerRepository.update(familyId, learnerId, dto);
     if (!updated) {
       throw new NotFoundException(`Learner not found: ${learnerId}`);
     }
+
+    await this.privacyPublicApi.recordSensitiveDataAccess({
+      actorUserId,
+      familyId,
+      learnerId,
+      action: 'UPDATE',
+      resourceType: 'LEARNER',
+      resourceId: learnerId,
+    });
+
     return updated.toResponseDto();
   }
 

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../../platform/database/database.module.js';
 import { EnvironmentModule } from '../../platform/config/environment.module.js';
 import { MailModule } from '../../platform/mail/mail.module.js';
+import { PrivacyModule } from '../privacy/privacy.module.js';
 import { FamilySettingsRepository } from './infrastructure/family-settings.repository.js';
 import { NotificationRepository } from './infrastructure/notification.repository.js';
 import { DataExportRepository } from './infrastructure/data-export.repository.js';
@@ -14,7 +15,7 @@ import { NotificationController } from './presentation/notification.controller.j
 import { DataExportController } from './presentation/data-export.controller.js';
 
 @Module({
-  imports: [DatabaseModule, EnvironmentModule, MailModule],
+  imports: [DatabaseModule, EnvironmentModule, MailModule, PrivacyModule],
   controllers: [
     FamilySettingsController,
     NotificationController,

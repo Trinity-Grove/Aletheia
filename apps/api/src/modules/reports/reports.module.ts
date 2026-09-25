@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../../platform/database/database.module.js';
 import { SettingsModule } from '../settings/settings.module.js';
+import { PrivacyModule } from '../privacy/privacy.module.js';
 import { AttendanceRepository } from './infrastructure/attendance.repository.js';
 import { ComplianceRepository } from './infrastructure/compliance.repository.js';
 import { ReportRepository } from './infrastructure/report.repository.js';
@@ -16,7 +17,7 @@ import { ReportController } from './presentation/report.controller.js';
 import { PublicReportVerificationController } from './presentation/public-report-verification.controller.js';
 
 @Module({
-  imports: [DatabaseModule, SettingsModule],
+  imports: [DatabaseModule, SettingsModule, PrivacyModule],
   controllers: [AttendanceController, ReportController, PublicReportVerificationController],
   providers: [
     AttendanceRepository,

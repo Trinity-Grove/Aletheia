@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type {
   CreateEvidenceSubmissionOutput,
   EvidenceSubmissionResponseDto,
@@ -10,6 +10,7 @@ import {
 } from '../infrastructure/evidence-submission.repository.js';
 import { AchievementRepository } from '../infrastructure/achievement.repository.js';
 import type { EvidenceSubmissionPortfolioSourceDto } from './public-api.js';
+import { PRIVACY_PUBLIC_API, type PrivacyPublicApi } from '../../privacy/application/public-api.js';
 
 // Family-scoped evidence submission workflow (issue #96 Fase 2, section
 // 9). Deliberately NOT wired into LearningObjective/LearningRecord --
@@ -22,7 +23,11 @@ import type { EvidenceSubmissionPortfolioSourceDto } from './public-api.js';
 // learner).
 @Injectable()
 export class EvidenceSubmissionService {
-  constructor(private readonly repository: EvidenceSubmissionRepository, private readonly achievementRepository: AchievementRepository) {}
+  constructor(
+    private readonly repository: EvidenceSubmissionRepository,
+    private readonly achievementRepository: AchievementRepository,
+    @Inject(PRIVACY_PUBLIC_API) private readonly privacyPublicApi: PrivacyPublicApi,
+  ) {}
 
   async createEvidenceSubmission(
     familyId: string,
@@ -68,6 +73,15 @@ export class EvidenceSubmissionService {
         // original one).
         competencyVersion: versionsById.get(c.competencyDefinitionId)!,
       })),
+    });
+
+    await this.privacyPublicApi.recordSensitiveDataAccess({
+      actorUserId: authorId,
+      familyId,
+      learnerId: dto.learnerId,
+      action: 'CREATE',
+      resourceType: 'EVIDENCE_SUBMISSION',
+      resourceId: created.id,
     });
 
     return this.toDto(created);

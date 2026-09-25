@@ -1,14 +1,18 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type {
   CreateExportJobDto,
   DataExportJobResponseDto,
   FamilyDataExportPackageDto,
 } from '@aletheia/contracts';
 import { DataExportRepository } from '../infrastructure/data-export.repository.js';
+import { PRIVACY_PUBLIC_API, type PrivacyPublicApi } from '../../privacy/application/public-api.js';
 
 @Injectable()
 export class DataExportService {
-  constructor(private readonly dataExportRepository: DataExportRepository) {}
+  constructor(
+    private readonly dataExportRepository: DataExportRepository,
+    @Inject(PRIVACY_PUBLIC_API) private readonly privacyPublicApi: PrivacyPublicApi,
+  ) {}
 
   async createExportJob(
     familyId: string,
@@ -16,6 +20,13 @@ export class DataExportService {
     _dto?: CreateExportJobDto,
   ): Promise<DataExportJobResponseDto> {
     const job = await this.dataExportRepository.createJob(familyId, requestedById);
+    await this.privacyPublicApi.recordSensitiveDataAccess({
+      actorUserId: requestedById,
+      familyId,
+      action: 'CREATE',
+      resourceType: 'DATA_EXPORT_PACKAGE',
+      resourceId: job.id,
+    });
     return job.toResponseDto();
   }
 
@@ -32,8 +43,15 @@ export class DataExportService {
     return jobs.map((job) => job.toResponseDto());
   }
 
-  async exportFamilyData(familyId: string): Promise<FamilyDataExportPackageDto> {
-    return this.dataExportRepository.aggregateFamilyData(familyId);
+  async exportFamilyData(familyId: string, actorUserId: string): Promise<FamilyDataExportPackageDto> {
+    const data = await this.dataExportRepository.aggregateFamilyData(familyId);
+    await this.privacyPublicApi.recordSensitiveDataAccess({
+      actorUserId,
+      familyId,
+      action: 'EXPORT',
+      resourceType: 'DATA_EXPORT_PACKAGE',
+    });
+    return data;
   }
 
   async processExportJob(
