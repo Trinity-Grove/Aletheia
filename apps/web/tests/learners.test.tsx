@@ -122,7 +122,8 @@ describe('Learner Components', () => {
       render(
         <ToastProvider>
           <LearnerFormModal
-            isOpen={true}
+        familyId="family-1"
+        isOpen={true}
             onClose={onClose}
             onSubmit={onSubmit}
           />
@@ -135,6 +136,7 @@ describe('Learner Components', () => {
       fireEvent.change(screen.getByTestId('learner-birth-date-input'), {
         target: { value: '2018-09-20' },
       });
+      fireEvent.click(screen.getByTestId('learner-data-consent-checkbox'));
 
       const submitBtn = screen.getByTestId('learner-submit-btn');
       fireEvent.click(submitBtn);
@@ -144,6 +146,7 @@ describe('Learner Components', () => {
           firstName: 'Lucas',
           birthDate: '2018-09-20',
           stage: 'PRIMARY',
+          acceptedDataConsent: true,
         })
       );
     });
@@ -155,7 +158,8 @@ describe('Learner Components', () => {
       render(
         <ToastProvider>
           <LearnerFormModal
-            isOpen={true}
+        familyId="family-1"
+        isOpen={true}
             initialData={mockLearner}
             onClose={onClose}
             onSubmit={onSubmit}
@@ -184,7 +188,8 @@ describe('Learner Components', () => {
       render(
         <ToastProvider>
           <LearnerFormModal
-            isOpen={true}
+        familyId="family-1"
+        isOpen={true}
             onClose={onClose}
             onSubmit={onSubmit}
           />
@@ -210,7 +215,8 @@ describe('Learner Components', () => {
       render(
         <ToastProvider>
           <LearnerFormModal
-            isOpen={true}
+        familyId="family-1"
+        isOpen={true}
             onClose={onClose}
             onSubmit={onSubmit}
           />
@@ -223,6 +229,7 @@ describe('Learner Components', () => {
       fireEvent.change(screen.getByTestId('learner-birth-date-input'), {
         target: { value: '2018-09-20' },
       });
+      fireEvent.click(screen.getByTestId('learner-data-consent-checkbox'));
       fireEvent.click(screen.getByTestId('learner-submit-btn'));
 
       expect(await screen.findByTestId('toast')).toHaveTextContent('Educando criado com sucesso.');

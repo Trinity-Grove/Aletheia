@@ -37,7 +37,7 @@ describe('Learner Portal: evidence submission + progress (real Postgres)', () =>
 
     const adminResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Learner Portal Admin' })
+      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Learner Portal Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     adminCookie = extractCookie(adminResponse, 'aletheia_session=');
 
@@ -88,7 +88,7 @@ describe('Learner Portal: evidence submission + progress (real Postgres)', () =>
     const guardianEmail = `learner-portal-guardian-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
     const guardianResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: guardianEmail, password: 'somePassword123', fullName: 'Learner Portal Test Guardian' })
+      .send({ email: guardianEmail, password: 'somePassword123', fullName: 'Learner Portal Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     guardianCookie = extractCookie(guardianResponse, 'aletheia_session=');
 
@@ -102,14 +102,14 @@ describe('Learner Portal: evidence submission + progress (real Postgres)', () =>
     const learnerA = await supertest(app.getHttpServer())
       .post(`/api/v1/families/${familyId}/learners`)
       .set('Cookie', guardianCookie)
-      .send({ firstName: 'Ana', lastName: 'Sibling', birthDate: '2015-01-01', stage: 'PRIMARY_GRAMMAR' })
+      .send({ firstName: 'Ana', lastName: 'Sibling', birthDate: '2015-01-01', stage: 'PRIMARY_GRAMMAR', acceptedDataConsent: true })
       .expect(201);
     learnerAId = learnerA.body.id;
 
     const learnerB = await supertest(app.getHttpServer())
       .post(`/api/v1/families/${familyId}/learners`)
       .set('Cookie', guardianCookie)
-      .send({ firstName: 'Beto', lastName: 'Sibling', birthDate: '2013-01-01', stage: 'MIDDLE_LOGIC' })
+      .send({ firstName: 'Beto', lastName: 'Sibling', birthDate: '2013-01-01', stage: 'MIDDLE_LOGIC', acceptedDataConsent: true })
       .expect(201);
     learnerBId = learnerB.body.id;
 

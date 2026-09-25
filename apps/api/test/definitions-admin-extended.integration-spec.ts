@@ -23,7 +23,7 @@ describe('Curriculum definitions admin API -- rubric/evidence/curriculum/activit
 
     const adminResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Definitions Admin Ext Test' })
+      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Definitions Admin Ext Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     adminCookie = [adminResponse.headers['set-cookie']]
       .flat()

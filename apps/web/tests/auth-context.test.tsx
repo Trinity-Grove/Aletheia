@@ -72,7 +72,7 @@ describe('AuthContext and useAuth', () => {
     expect(result.current.user?.isPlatformAdmin).toBe(isPlatformAdmin);
     await act(async () => { await result.current.login({ email: mockUser.email, password: 'password123' }); });
     expect(result.current.user?.isPlatformAdmin).toBe(isPlatformAdmin);
-    await act(async () => { await result.current.register({ email: mockUser.email, password: 'password123', fullName: mockUser.fullName }); });
+    await act(async () => { await result.current.register({ email: mockUser.email, password: 'password123', fullName: mockUser.fullName, countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true }); });
     expect(result.current.user?.isPlatformAdmin).toBe(isPlatformAdmin);
     await act(async () => { await result.current.verifyMfa({ challengeToken: 'challenge', code: '123456' }); });
     expect(result.current.user?.isPlatformAdmin).toBe(isPlatformAdmin);
@@ -337,6 +337,9 @@ describe('AuthContext and useAuth', () => {
         fullName: 'Guardian Silva',
         email: 'guardian@example.com',
         password: 'secretPassword123',
+        countryCode: 'BRA',
+        acceptedTermsOfUse: true,
+        acceptedPrivacyPolicy: true,
       });
     });
 
@@ -344,6 +347,9 @@ describe('AuthContext and useAuth', () => {
       fullName: 'Guardian Silva',
       email: 'guardian@example.com',
       password: 'secretPassword123',
+      countryCode: 'BRA',
+      acceptedTermsOfUse: true,
+      acceptedPrivacyPolicy: true,
     });
 
     expect(result.current.status).toBe('authenticated');

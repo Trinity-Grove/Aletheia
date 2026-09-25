@@ -2,13 +2,22 @@
 
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Input, Modal, Select, Textarea, useToast } from '@aletheia/ui';
-import type { CreateLearnerDto, EducationalStage, LearnerResponseDto } from '@aletheia/contracts';
+import { resolvePrivacyRegime, type CreateLearnerDto, type EducationalStage, type LearnerResponseDto } from '@aletheia/contracts';
+
+// acceptedDataConsent is only ever included on creation, never on edit
+// (see updateLearnerSchema.partial() on the backend) -- optional here so
+// the edit path can omit it entirely rather than send a `false` that
+// would fail contract validation.
+export type LearnerFormSubmitDto = Omit<CreateLearnerDto, 'acceptedDataConsent'> & {
+  acceptedDataConsent?: true;
+};
 
 export interface LearnerFormModalProps {
   isOpen: boolean;
+  familyId: string;
   initialData?: LearnerResponseDto | null;
   onClose: () => void;
-  onSubmit: (_data: CreateLearnerDto) => Promise<void> | void;
+  onSubmit: (_data: LearnerFormSubmitDto) => Promise<void> | void;
 }
 
 const STAGE_OPTIONS: { value: EducationalStage; label: string }[] = [
@@ -21,6 +30,7 @@ const STAGE_OPTIONS: { value: EducationalStage; label: string }[] = [
 
 export function LearnerFormModal({
   isOpen,
+  familyId,
   initialData,
   onClose,
   onSubmit,
@@ -39,6 +49,14 @@ export function LearnerFormModal({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [firstNameError, setFirstNameError] = useState<string | null>(null);
   const [birthDateError, setBirthDateError] = useState<string | null>(null);
+  // Guardian consent for processing this learner's data -- only required
+  // when creating a new learner, not when editing one that already has a
+  // consent record (see updateLearnerSchema.partial()).
+  const [acceptedDataConsent, setAcceptedDataConsent] = useState(false);
+  const [consentError, setConsentError] = useState<string | null>(null);
+  const [consentText, setConsentText] = useState<string | null>(null);
+  const [consentLoading, setConsentLoading] = useState(false);
+  const [showFullConsentText, setShowFullConsentText] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -65,7 +83,36 @@ export function LearnerFormModal({
     setSubmitError(null);
     setFirstNameError(null);
     setBirthDateError(null);
+    setAcceptedDataConsent(false);
+    setConsentError(null);
+    setShowFullConsentText(false);
   }, [initialData, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || initialData || !familyId) return;
+
+    async function loadConsentText() {
+      try {
+        setConsentLoading(true);
+        const familyRes = await fetch(`/api/v1/families/${familyId}`, { credentials: 'include' });
+        const family = familyRes.ok ? await familyRes.json() : null;
+        const regime = resolvePrivacyRegime(family?.countryCode ?? '');
+
+        const defsRes = await fetch('/api/v1/consent-definitions/published?scope=LEARNER');
+        if (defsRes.ok) {
+          const defs: Array<{ code: string; content: string }> = await defsRes.json();
+          const match = defs.find((d) => d.code === `LEARNER_DATA_PROCESSING_${regime}`);
+          setConsentText(match?.content ?? null);
+        }
+      } catch {
+        // Non-fatal: the checkbox still works, just without a preview link.
+      } finally {
+        setConsentLoading(false);
+      }
+    }
+
+    void loadConsentText();
+  }, [isOpen, initialData, familyId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,10 +120,15 @@ export function LearnerFormModal({
 
     const nextFirstNameError = firstName.trim() ? null : 'Nome é obrigatório.';
     const nextBirthDateError = birthDate ? null : 'Data de nascimento é obrigatória.';
+    const nextConsentError =
+      !initialData && !acceptedDataConsent
+        ? 'É necessário consentir com o tratamento de dados do educando.'
+        : null;
     setFirstNameError(nextFirstNameError);
     setBirthDateError(nextBirthDateError);
+    setConsentError(nextConsentError);
 
-    if (nextFirstNameError || nextBirthDateError) {
+    if (nextFirstNameError || nextBirthDateError || nextConsentError) {
       return;
     }
 
@@ -92,6 +144,7 @@ export function LearnerFormModal({
         avatarColor: avatarColor.trim() || undefined,
         specialNeeds: specialNeeds.trim() || undefined,
         notes: notes.trim() || undefined,
+        ...(initialData ? {} : { acceptedDataConsent: true as const }),
       });
       toast({
         variant: 'success',
@@ -224,7 +277,69 @@ export function LearnerFormModal({
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Interesses, pontos fortes, ritmo de aprendizado..."
         />
+
+        {!initialData && (
+          <div className="ui-form-group">
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.875rem' }}>
+              <input
+                type="checkbox"
+                data-testid="learner-data-consent-checkbox"
+                checked={acceptedDataConsent}
+                onChange={(e) => setAcceptedDataConsent(e.target.checked)}
+                style={{ marginTop: '0.2rem' }}
+              />
+              <span>
+                Declaro ser o pai, a mãe ou o responsável legal por este estudante, ou ter autorização
+                expressa de quem seja, e consinto com o tratamento dos dados dele para organizar e registrar
+                suas atividades educacionais na plataforma, conforme a{' '}
+                {consentLoading ? (
+                  'Política de Privacidade'
+                ) : consentText ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowFullConsentText(true)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      color: 'var(--forest)',
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                      font: 'inherit',
+                    }}
+                  >
+                    Política de Privacidade
+                  </button>
+                ) : (
+                  'Política de Privacidade'
+                )}
+                .
+              </span>
+            </label>
+            {consentError && (
+              <p style={{ color: 'var(--color-danger, #dc2626)', fontSize: '0.8125rem', margin: '0.25rem 0 0 0' }}>
+                {consentError}
+              </p>
+            )}
+          </div>
+        )}
       </form>
+
+      {showFullConsentText && consentText && (
+        <Modal
+          isOpen
+          onClose={() => setShowFullConsentText(false)}
+          title="Consentimento para tratamento de dados do educando"
+          maxWidth="md"
+          footer={
+            <Button variant="secondary" onClick={() => setShowFullConsentText(false)}>
+              Fechar
+            </Button>
+          }
+        >
+          <p style={{ whiteSpace: 'pre-wrap' }}>{consentText}</p>
+        </Modal>
+      )}
     </Modal>
   );
 }

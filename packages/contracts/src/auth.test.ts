@@ -35,10 +35,34 @@ describe('auth contracts', () => {
         email: 'guardian@example.com',
         password: 'securePassword123!',
         fullName: 'Jane Doe',
+        countryCode: 'BRA',
+        acceptedTermsOfUse: true,
+        acceptedPrivacyPolicy: true,
       };
 
       const result = registerGuardianSchema.safeParse(payload);
       expect(result.success).toBe(true);
+    });
+
+    it('rejects registration when Terms of Use or Privacy Policy are not accepted', () => {
+      const base = {
+        email: 'guardian@example.com',
+        password: 'securePassword123!',
+        fullName: 'Jane Doe',
+        countryCode: 'BRA',
+      };
+
+      expect(
+        registerGuardianSchema.safeParse({ ...base, acceptedTermsOfUse: false, acceptedPrivacyPolicy: true })
+          .success,
+      ).toBe(false);
+      expect(
+        registerGuardianSchema.safeParse({ ...base, acceptedTermsOfUse: true, acceptedPrivacyPolicy: false })
+          .success,
+      ).toBe(false);
+      expect(
+        registerGuardianSchema.safeParse({ ...base, acceptedTermsOfUse: true }).success,
+      ).toBe(false);
     });
 
     it('rejects invalid email addresses', () => {

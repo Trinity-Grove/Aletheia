@@ -29,7 +29,7 @@ describe('Portfolio evidence upload/storage (real Postgres + real S3-compatible 
     const email = `portfolio-storage-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
     const registerResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'ownerPassword123', fullName: 'Owner Guardian' })
+      .send({ email, password: 'ownerPassword123', fullName: 'Owner Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     const sessionCookie = extractSessionCookie(registerResponse.headers['set-cookie']);
 
@@ -43,7 +43,7 @@ describe('Portfolio evidence upload/storage (real Postgres + real S3-compatible 
     const learnerResponse = await supertest(app.getHttpServer())
       .post(`/api/v1/families/${familyId}/learners`)
       .set('Cookie', sessionCookie)
-      .send({ firstName: 'Evidence', lastName: 'Learner', birthDate: '2015-01-01' })
+      .send({ firstName: 'Evidence', lastName: 'Learner', birthDate: '2015-01-01', acceptedDataConsent: true })
       .expect(201);
     const learnerId = learnerResponse.body.id as string;
 

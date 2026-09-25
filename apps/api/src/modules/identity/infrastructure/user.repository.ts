@@ -42,12 +42,24 @@ export class UserRepository {
     });
   }
 
-  async create(data: { email: string; passwordHash: string; fullName: string }): Promise<UserEntity> {
+  async create(data: {
+    email: string;
+    passwordHash: string;
+    fullName: string;
+    termsOfUseDefinitionId: string;
+    termsOfUseAcceptedAt: Date;
+    privacyPolicyDefinitionId: string;
+    privacyPolicyAcceptedAt: Date;
+  }): Promise<UserEntity> {
     const created = await this.prisma.user.create({
       data: {
         email: data.email.toLowerCase().trim(),
         passwordHash: data.passwordHash,
         fullName: data.fullName.trim(),
+        termsOfUseDefinitionId: data.termsOfUseDefinitionId,
+        termsOfUseAcceptedAt: data.termsOfUseAcceptedAt,
+        privacyPolicyDefinitionId: data.privacyPolicyDefinitionId,
+        privacyPolicyAcceptedAt: data.privacyPolicyAcceptedAt,
       },
     });
     return new UserEntity({

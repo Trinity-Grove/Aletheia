@@ -19,7 +19,7 @@ import {
   type UpdateLearnerDto,
 } from '@aletheia/contracts';
 import { LearnerService } from '../application/learner.service.js';
-import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
+import { JwtAuthGuard, FamilyTenantGuard, CurrentUser } from '../../../platform/auth/index.js';
 import { ZodValidationPipe } from '../../../platform/validation/index.js';
 
 @ApiTags('Learners')
@@ -39,8 +39,9 @@ export class LearnerController {
   async createLearner(
     @Param('familyId') familyId: string,
     @Body(new ZodValidationPipe(createLearnerSchema)) dto: CreateLearnerDto,
+    @CurrentUser('userId') actorUserId: string,
   ): Promise<LearnerResponseDto> {
-    return this.learnerService.createLearner(familyId, dto);
+    return this.learnerService.createLearner(familyId, dto, actorUserId);
   }
 
   @Get()

@@ -25,7 +25,7 @@ describe('Generic definition tagging (real Postgres)', () => {
 
     const adminResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Definition Tags Admin Test' })
+      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Definition Tags Admin Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     adminCookie = [adminResponse.headers['set-cookie']]
       .flat()

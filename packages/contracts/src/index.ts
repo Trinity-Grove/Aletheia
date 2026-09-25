@@ -45,6 +45,7 @@ export * from './backup.js';
 export * from './dashboard.js';
 export * from './learner-access.js';
 export * from './consent-definition.js';
+export * from './privacy-regime.js';
 export * from './routine-generator.js';
 export * from './donation.js';
 export * from './countries.js';

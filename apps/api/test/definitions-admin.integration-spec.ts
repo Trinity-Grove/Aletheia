@@ -19,7 +19,7 @@ describe('Curriculum definitions admin API (real Postgres)', () => {
     const email = `${emailPrefix}-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
     const response = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Definitions Admin Test' })
+      .send({ email, password: 'somePassword123', fullName: 'Definitions Admin Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     return [response.headers['set-cookie']].flat().find((c) => c?.startsWith('aletheia_session='))!;
   }
@@ -37,7 +37,7 @@ describe('Curriculum definitions admin API (real Postgres)', () => {
     // this is the real bootstrap path, not a test-only shortcut.
     const adminResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Definitions Admin Test' })
+      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Definitions Admin Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     adminCookie = [adminResponse.headers['set-cookie']]
       .flat()

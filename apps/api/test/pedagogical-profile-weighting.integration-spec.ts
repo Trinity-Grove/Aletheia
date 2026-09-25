@@ -26,7 +26,7 @@ describe('PedagogicalProfile-weighted applyTemplate (real Postgres, issue #95)',
 
   async function register(email: string): Promise<string> {
     const response = await supertest(app.getHttpServer()).post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Weighting Acceptance' }).expect(201);
+      .send({ email, password: 'somePassword123', fullName: 'Weighting Acceptance', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true }).expect(201);
     const cookie = [response.headers['set-cookie']].flat()
       .find((value) => value?.startsWith('aletheia_session='));
     expect(cookie).toBeDefined();
@@ -40,7 +40,7 @@ describe('PedagogicalProfile-weighted applyTemplate (real Postgres, issue #95)',
       .set('Cookie', cookie).send({ name: `Weighting ${label}`, countryCode: 'BR' }).expect(201);
     const familyId = created.body.id as string;
     const learner = await supertest(app.getHttpServer()).post(`/api/v1/families/${familyId}/learners`)
-      .set('Cookie', cookie).send({ firstName: 'Learner', birthDate: '2017-03-10' }).expect(201);
+      .set('Cookie', cookie).send({ firstName: 'Learner', birthDate: '2017-03-10', acceptedDataConsent: true }).expect(201);
     const year = await supertest(app.getHttpServer())
       .post(`/api/v1/families/${familyId}/curriculum/academic-years`).set('Cookie', cookie)
       .send({ year: 2026, title: 'Weighting acceptance year', isCurrent: true }).expect(201);

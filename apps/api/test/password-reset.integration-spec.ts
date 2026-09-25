@@ -37,7 +37,7 @@ describe('Password reset (real Postgres, captured mail sender)', () => {
 
     const registerResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'oldPassword123', fullName: 'Reset Test' })
+      .send({ email, password: 'oldPassword123', fullName: 'Reset Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
 
     const refreshCookie = [registerResponse.headers['set-cookie']]

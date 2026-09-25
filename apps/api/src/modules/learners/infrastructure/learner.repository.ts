@@ -108,6 +108,14 @@ export class LearnerRepository {
     return this.mapToEntity(updated as LearnerDbRecord);
   }
 
+  async findFamilyCountryCode(familyId: string): Promise<string | null> {
+    const family = await this.prisma.family.findUnique({
+      where: { id: familyId },
+      select: { countryCode: true },
+    });
+    return family?.countryCode ?? null;
+  }
+
   private mapToEntity(record: LearnerDbRecord): LearnerEntity {
     return new LearnerEntity({
       id: record.id,

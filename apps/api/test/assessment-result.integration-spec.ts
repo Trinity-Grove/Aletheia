@@ -25,7 +25,7 @@ describe('Assessment Result (real Postgres)', () => {
     const email = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
     const registerResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Assessment Result Test Guardian' })
+      .send({ email, password: 'somePassword123', fullName: 'Assessment Result Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     const cookie = [registerResponse.headers['set-cookie']]
       .flat()
@@ -41,7 +41,7 @@ describe('Assessment Result (real Postgres)', () => {
     const learnerResponse = await supertest(app.getHttpServer())
       .post(`/api/v1/families/${familyId}/learners`)
       .set('Cookie', cookie)
-      .send({ firstName: 'Test', lastName: 'Learner', birthDate: '2015-01-01', stage: 'PRIMARY_GRAMMAR' })
+      .send({ firstName: 'Test', lastName: 'Learner', birthDate: '2015-01-01', stage: 'PRIMARY_GRAMMAR', acceptedDataConsent: true })
       .expect(201);
 
     return { cookie, familyId, learnerId: learnerResponse.body.id };
@@ -70,7 +70,7 @@ describe('Assessment Result (real Postgres)', () => {
 
     const adminResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Assessment Result Admin' })
+      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Assessment Result Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     adminCookie = [adminResponse.headers['set-cookie']]
       .flat()
@@ -250,7 +250,7 @@ describe('Assessment Result (real Postgres)', () => {
     const familyBLearner = await supertest(app.getHttpServer())
       .post(`/api/v1/families/${familyBId}/learners`)
       .set('Cookie', familyBCookie)
-      .send({ firstName: 'B', lastName: 'Learner', birthDate: '2016-01-01', stage: 'PRIMARY_GRAMMAR' })
+      .send({ firstName: 'B', lastName: 'Learner', birthDate: '2016-01-01', stage: 'PRIMARY_GRAMMAR', acceptedDataConsent: true })
       .expect(201);
 
     await supertest(app.getHttpServer())

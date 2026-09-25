@@ -148,7 +148,7 @@ describe('Learners E2E & Multi-Tenant Isolation', () => {
 
       await supertest(app.getHttpServer())
         .post(`/api/v1/families/${familyAId}/learners`)
-        .send({ firstName: 'Test', birthDate: '2016-05-15' })
+        .send({ firstName: 'Test', birthDate: '2016-05-15', acceptedDataConsent: true })
         .expect(401);
     });
 
@@ -172,7 +172,7 @@ describe('Learners E2E & Multi-Tenant Isolation', () => {
       await supertest(app.getHttpServer())
         .post(`/api/v1/families/${familyAId}/learners`)
         .set('Authorization', `Bearer ${guardianBToken}`)
-        .send({ firstName: 'Intruder', birthDate: '2016-05-15' })
+        .send({ firstName: 'Intruder', birthDate: '2016-05-15', acceptedDataConsent: true })
         .expect(403);
 
       // Guardian A tries to access Family B's endpoints
@@ -195,8 +195,7 @@ describe('Learners E2E & Multi-Tenant Isolation', () => {
           preferredName: 'Johnny',
           birthDate: '2016-05-15',
           stage: 'PRIMARY_GRAMMAR',
-          notes: 'Loves reading and history',
-        })
+          notes: 'Loves reading and history', acceptedDataConsent: true })
         .expect(201);
 
       const learnerId = createRes.body.id;

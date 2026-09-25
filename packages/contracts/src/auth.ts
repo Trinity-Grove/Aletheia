@@ -16,6 +16,14 @@ export const registerGuardianSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   fullName: z.string().min(1),
+  // ISO 3166-1 alpha-3, same format as Family.countryCode -- used only to
+  // pick which Terms of Use / Privacy Policy regime (LGPD/GDPR/generic)
+  // to show and record acceptance against, before a family exists.
+  countryCode: z.string().length(3),
+  // z.literal(true) rejects at the contract layer if either box is left
+  // unchecked -- no service-level enforcement needed.
+  acceptedTermsOfUse: z.literal(true),
+  acceptedPrivacyPolicy: z.literal(true),
 });
 
 export type RegisterGuardianDto = z.infer<typeof registerGuardianSchema>;

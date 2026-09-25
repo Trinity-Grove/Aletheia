@@ -25,7 +25,7 @@ describe('Learner Competency Tracking (real Postgres)', () => {
     const email = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
     const registerResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Competency Tracking Test Guardian' })
+      .send({ email, password: 'somePassword123', fullName: 'Competency Tracking Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     const cookie = [registerResponse.headers['set-cookie']]
       .flat()
@@ -41,7 +41,7 @@ describe('Learner Competency Tracking (real Postgres)', () => {
     const learnerResponse = await supertest(app.getHttpServer())
       .post(`/api/v1/families/${familyId}/learners`)
       .set('Cookie', cookie)
-      .send({ firstName: 'Test', lastName: 'Learner', birthDate: '2015-01-01', stage: 'PRIMARY_GRAMMAR' })
+      .send({ firstName: 'Test', lastName: 'Learner', birthDate: '2015-01-01', stage: 'PRIMARY_GRAMMAR', acceptedDataConsent: true })
       .expect(201);
 
     return { cookie, familyId, learnerId: learnerResponse.body.id };
@@ -97,7 +97,7 @@ describe('Learner Competency Tracking (real Postgres)', () => {
 
     const adminResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Competency Tracking Admin' })
+      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Competency Tracking Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     adminCookie = [adminResponse.headers['set-cookie']]
       .flat()

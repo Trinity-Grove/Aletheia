@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../../platform/database/database.module.js';
+import { PrivacyModule } from '../privacy/privacy.module.js';
 import { LearnerRepository } from './infrastructure/learner.repository.js';
 import { LearnerService } from './application/learner.service.js';
 import { LEARNERS_PUBLIC_API } from './application/public-api.js';
 import { LearnerController } from './presentation/learner.controller.js';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, PrivacyModule],
   controllers: [LearnerController],
   providers: [
     LearnerRepository,

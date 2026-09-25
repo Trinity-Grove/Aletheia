@@ -115,13 +115,35 @@ describe('Auth Forms Component Tests', () => {
 
       // Now correct password
       fireEvent.change(screen.getByTestId('reg-confirm-password-input'), { target: { value: 'password123' } });
+      fireEvent.click(screen.getByTestId('reg-terms-of-use-checkbox'));
+      fireEvent.click(screen.getByTestId('reg-privacy-policy-checkbox'));
       fireEvent.click(submitBtn);
 
       expect(handleSubmit).toHaveBeenCalledWith({
         fullName: 'Guardian Parent',
         email: 'guardian@test.com',
         password: 'password123',
+        countryCode: 'BRA',
+        acceptedTermsOfUse: true,
+        acceptedPrivacyPolicy: true,
       });
+    });
+
+    it('requires both Terms of Use and Privacy Policy acceptance before submitting', async () => {
+      const handleSubmit = vi.fn();
+      render(<RegisterForm onSubmit={handleSubmit} />);
+
+      fireEvent.change(screen.getByTestId('reg-name-input'), { target: { value: 'Guardian Parent' } });
+      fireEvent.change(screen.getByTestId('reg-email-input'), { target: { value: 'guardian@test.com' } });
+      fireEvent.change(screen.getByTestId('reg-password-input'), { target: { value: 'password123' } });
+      fireEvent.change(screen.getByTestId('reg-confirm-password-input'), { target: { value: 'password123' } });
+
+      fireEvent.click(screen.getByTestId('register-button'));
+
+      expect(screen.getByTestId('error-message')).toHaveTextContent(
+        'É necessário aceitar os Termos de Uso e a Política de Privacidade para se cadastrar.',
+      );
+      expect(handleSubmit).not.toHaveBeenCalled();
     });
 
     it('validates minimum password length', async () => {
@@ -152,6 +174,8 @@ describe('Auth Forms Component Tests', () => {
       fireEvent.change(screen.getByTestId('reg-email-input'), { target: { value: 'guardian@test.com' } });
       fireEvent.change(screen.getByTestId('reg-password-input'), { target: { value: 'password123' } });
       fireEvent.change(screen.getByTestId('reg-confirm-password-input'), { target: { value: 'password123' } });
+      fireEvent.click(screen.getByTestId('reg-terms-of-use-checkbox'));
+      fireEvent.click(screen.getByTestId('reg-privacy-policy-checkbox'));
 
       const submitBtn = screen.getByTestId('register-button');
       fireEvent.click(submitBtn);

@@ -29,7 +29,7 @@ describe('Family invitations (real Postgres, token hashing)', () => {
     const email = `invite-hash-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
     const registerResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'ownerPassword123', fullName: 'Owner Guardian' })
+      .send({ email, password: 'ownerPassword123', fullName: 'Owner Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
 
     const sessionCookie = extractSessionCookie(registerResponse.headers['set-cookie']);
@@ -68,7 +68,7 @@ describe('Family invitations (real Postgres, token hashing)', () => {
     const inviteeEmail = `invitee-${Date.now()}@example.com`;
     const inviteeRegisterResponse = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: inviteeEmail, password: 'inviteePassword123', fullName: 'Invitee' })
+      .send({ email: inviteeEmail, password: 'inviteePassword123', fullName: 'Invitee', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
     const inviteeSessionCookie = extractSessionCookie(inviteeRegisterResponse.headers['set-cookie']);
 
