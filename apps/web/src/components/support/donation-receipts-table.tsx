@@ -6,12 +6,14 @@ import type {
   DonationRecordResponseDto,
   SupporterSubscriptionResponseDto,
 } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface DonationReceiptsTableProps {
   familyId?: string | null;
 }
 
 export function DonationReceiptsTable({ familyId }: DonationReceiptsTableProps) {
+  const { t, formatDate, formatCurrency } = useLocale();
   const [history, setHistory] = useState<DonationRecordResponseDto[]>([]);
   const [subscriptions, setSubscriptions] = useState<SupporterSubscriptionResponseDto[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -46,11 +48,11 @@ export function DonationReceiptsTable({ familyId }: DonationReceiptsTableProps) 
         setSubscriptions(Array.isArray(subsData) ? subsData : []);
       }
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Falha ao carregar histórico de apoio.');
+      setErrorMessage(err instanceof Error ? err.message : t('support.loadHistoryError'));
     } finally {
       setLoading(false);
     }
-  }, [activeFamilyId]);
+  }, [activeFamilyId, t]);
 
   useEffect(() => {
     void loadData();
@@ -75,28 +77,25 @@ export function DonationReceiptsTable({ familyId }: DonationReceiptsTableProps) 
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || 'Falha ao cancelar apoio mensal.');
+        throw new Error(errData.message || t('support.cancelSubscriptionError'));
       }
 
       setSubToCancel(null);
       await loadData();
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Falha ao cancelar apoio mensal.');
+      setErrorMessage(err instanceof Error ? err.message : t('support.cancelSubscriptionError'));
     } finally {
       setCancelling(false);
     }
   };
 
   const formatCurrencyValue = (cents: number): string => {
-    return (cents / 100).toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    });
+    return formatCurrency(cents / 100, 'BRL');
   };
 
   const formatDateValue = (dateStr: string): string => {
     try {
-      return new Date(dateStr).toLocaleDateString('pt-BR', {
+      return formatDate(dateStr, {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -109,30 +108,30 @@ export function DonationReceiptsTable({ familyId }: DonationReceiptsTableProps) 
   const renderStatusBadge = (status: string) => {
     switch (status) {
       case 'CONFIRMED':
-        return <Badge variant="emerald">Confirmado</Badge>;
+        return <Badge variant="emerald">{t('support.statusConfirmed')}</Badge>;
       case 'PENDING':
-        return <Badge variant="amber">Pendente</Badge>;
+        return <Badge variant="amber">{t('support.statusPending')}</Badge>;
       case 'FAILED':
-        return <Badge variant="rose">Falhou</Badge>;
+        return <Badge variant="rose">{t('support.statusFailed')}</Badge>;
       case 'CANCELLED':
-        return <Badge variant="slate">Cancelado</Badge>;
+        return <Badge variant="slate">{t('support.statusCancelled')}</Badge>;
       default:
         return <Badge variant="slate">{status}</Badge>;
     }
   };
 
   const formatFrequency = (freq: string) => {
-    return freq === 'MONTHLY' ? 'Apoio Mensal' : 'Doação Única';
+    return freq === 'MONTHLY' ? t('support.frequencyMonthly') : t('support.frequencyOneTime');
   };
 
   const formatPaymentMethod = (method: string) => {
     switch (method) {
       case 'PIX':
-        return 'PIX';
+        return t('support.methodPix');
       case 'GOOGLE_PAY':
-        return 'Google Pay';
+        return t('support.methodGooglePay');
       case 'CREDIT_CARD':
-        return 'Cartão';
+        return t('support.methodCard');
       default:
         return method;
     }
@@ -179,13 +178,15 @@ export function DonationReceiptsTable({ familyId }: DonationReceiptsTableProps) 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
-                  Apoiador Ativo Mensal
+                  {t('support.activeSubscriberTitle')}
                 </h3>
-                <Badge variant="emerald">Ativo</Badge>
+                <Badge variant="emerald">{t('support.activeBadge')}</Badge>
               </div>
               <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0.125rem 0 0 0' }}>
-                Contribuição recorrente de {formatCurrencyValue(activeSubscription.amountCents)} / mês via{' '}
-                {formatPaymentMethod(activeSubscription.paymentMethod)}.
+                {t('support.activeSubscriberDescription', {
+                  amount: formatCurrencyValue(activeSubscription.amountCents),
+                  method: formatPaymentMethod(activeSubscription.paymentMethod),
+                })}
               </p>
             </div>
           </div>
@@ -196,7 +197,7 @@ export function DonationReceiptsTable({ familyId }: DonationReceiptsTableProps) 
             onClick={() => setSubToCancel(activeSubscription)}
             style={{ color: 'var(--color-error, #dc2626)' }}
           >
-            Cancelar Apoio Mensal
+            {t('support.cancelMonthlySupport')}
           </Button>
         </Card>
       )}
@@ -206,21 +207,21 @@ export function DonationReceiptsTable({ familyId }: DonationReceiptsTableProps) 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
           <div>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
-              Histórico de Contribuições & Recibos
+              {t('support.receiptsTitle')}
             </h3>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-              Transparência integral de todos os apoios voluntários registrados para a sua família.
+              {t('support.receiptsDescription')}
             </p>
           </div>
           <Button variant="ghost" onClick={loadData} disabled={loading} style={{ fontSize: '0.8125rem' }}>
             <AletheiaIcon name="refresh-cw" size={14} />
-            <span>Atualizar</span>
+            <span>{t('support.refreshButton')}</span>
           </Button>
         </div>
 
         {loading ? (
           <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-            Carregando histórico de contribuições...
+            {t('support.loadingHistory')}
           </div>
         ) : history.length === 0 ? (
           <div data-testid="empty-receipts-state" style={{ padding: '2rem 1rem', textAlign: 'center' }}>
@@ -228,10 +229,10 @@ export function DonationReceiptsTable({ familyId }: DonationReceiptsTableProps) 
               <AletheiaIcon name="hand-heart" size={36} />
             </div>
             <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 0.25rem 0' }}>
-              Nenhuma contribuição registrada ainda
+              {t('support.emptyHistoryTitle')}
             </p>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0 }}>
-              Quando você fizer um apoio voluntário, seus recibos detalhados e confirmações bancárias aparecerão aqui.
+              {t('support.emptyHistoryDescription')}
             </p>
           </div>
         ) : (
@@ -247,11 +248,11 @@ export function DonationReceiptsTable({ familyId }: DonationReceiptsTableProps) 
             >
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border-light, #e2e8f0)', color: 'var(--text-secondary)' }}>
-                  <th style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>Data</th>
-                  <th style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>Valor</th>
-                  <th style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>Frequência</th>
-                  <th style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>Método</th>
-                  <th style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>Status</th>
+                  <th style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>{t('support.tableColDate')}</th>
+                  <th style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>{t('support.tableColAmount')}</th>
+                  <th style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>{t('support.tableColFrequency')}</th>
+                  <th style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>{t('support.tableColMethod')}</th>
+                  <th style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>{t('support.tableColStatus')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -289,19 +290,18 @@ export function DonationReceiptsTable({ familyId }: DonationReceiptsTableProps) 
         <Modal
           isOpen={!!subToCancel}
           onClose={() => setSubToCancel(null)}
-          title="Cancelar Apoio Mensal?"
+          title={t('support.cancelModalTitle')}
         >
           <div style={{ display: 'grid', gap: '1rem', padding: '0.5rem 0' }}>
             <p style={{ margin: 0, fontSize: '0.9375rem', color: 'var(--text-primary)', lineHeight: 1.5 }}>
-              Tem certeza de que deseja cancelar sua contribuição voluntária mensal de{' '}
-              <strong>{formatCurrencyValue(subToCancel.amountCents)}</strong>?
+              {t('support.cancelModalPrompt', { amount: formatCurrencyValue(subToCancel.amountCents) })}
             </p>
             <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              Lembrando que o Aletheia continuará 100% gratuito e com todas as ferramentas liberadas para a sua família. Nenhuma função é restrita ao cancelar.
+              {t('support.cancelModalReassurance')}
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
               <Button variant="secondary" onClick={() => setSubToCancel(null)} disabled={cancelling}>
-                Manter Apoio
+                {t('support.keepSupportButton')}
               </Button>
               <Button
                 variant="primary"
@@ -310,7 +310,7 @@ export function DonationReceiptsTable({ familyId }: DonationReceiptsTableProps) 
                 disabled={cancelling}
                 style={{ backgroundColor: 'var(--color-error, #dc2626)', borderColor: 'var(--color-error, #dc2626)' }}
               >
-                {cancelling ? 'Cancelando...' : 'Confirmar Cancelamento'}
+                {cancelling ? t('support.cancellingButton') : t('support.confirmCancelButton')}
               </Button>
             </div>
           </div>
