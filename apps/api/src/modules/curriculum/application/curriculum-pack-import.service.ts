@@ -39,7 +39,11 @@ export class CurriculumPackImportService {
     private readonly packRepository: CurriculumPackRepository,
   ) {}
 
-  async importPack(document: CurriculumPackExportDocument, dryRun: boolean): Promise<CurriculumPackImportReport> {
+  async importPack(
+    document: CurriculumPackExportDocument,
+    dryRun: boolean,
+    authorUserId?: string,
+  ): Promise<CurriculumPackImportReport> {
     if (document.formatVersion !== CURRICULUM_PACK_EXPORT_FORMAT_VERSION) {
       throw new BadRequestException(
         `Unsupported export format version "${document.formatVersion}" -- this importer supports ` +
@@ -106,15 +110,18 @@ export class CurriculumPackImportService {
     // Real import: create the pack itself first (if it doesn't already
     // exist), then fixed-point-create every non-conflicting item.
     if (!packAlreadyExists) {
-      await this.packRepository.createPack({
-        code: document.pack.code,
-        version: document.pack.version,
-        status: 'DRAFT',
-        schemaVersion: document.pack.schemaVersion,
-        name: document.pack.name,
-        description: document.pack.description ?? null,
-        metadata: document.pack.metadata,
-      });
+      await this.packRepository.createPack(
+        {
+          code: document.pack.code,
+          version: document.pack.version,
+          status: 'DRAFT',
+          schemaVersion: document.pack.schemaVersion,
+          name: document.pack.name,
+          description: document.pack.description ?? null,
+          metadata: document.pack.metadata,
+        },
+        authorUserId,
+      );
     }
 
     // Locally-created-this-run ids, so later items in the same document

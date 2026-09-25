@@ -23,7 +23,7 @@ import type { DefinitionStatusUpdate } from '../application/definition-status-tr
 export class CurriculumPackRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  createPack(dto: CreateCurriculumPackOutput): Promise<CurriculumPack> {
+  createPack(dto: CreateCurriculumPackOutput, authorUserId?: string): Promise<CurriculumPack> {
     return this.prisma.curriculumPack.create({
       data: {
         code: dto.code,
@@ -33,6 +33,7 @@ export class CurriculumPackRepository {
         name: dto.name,
         description: dto.description ?? null,
         metadata: dto.metadata as Prisma.InputJsonValue,
+        authorUserId: authorUserId ?? null,
         moderationStatus: dto.status === 'PUBLISHED' ? 'APPROVED' : 'DRAFT',
       },
     });

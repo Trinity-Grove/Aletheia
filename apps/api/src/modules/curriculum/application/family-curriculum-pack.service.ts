@@ -8,9 +8,12 @@ import {
   type FamilyCurriculumPackResponseDto,
   type FamilyCurriculumPackRevisionResponseDto,
   type InstallFamilyCurriculumPackDto,
+  type PublishFamilyCurriculumPackToCommunityOutput,
   type UpdateFamilyCurriculumPackDto,
 } from '@aletheia/contracts';
 import { CurriculumPackExportService } from './curriculum-pack-export.service.js';
+import { CurriculumPackImportService } from './curriculum-pack-import.service.js';
+import { CurriculumPackService } from './curriculum-pack.service.js';
 import { CurriculumPackRepository } from '../infrastructure/curriculum-pack.repository.js';
 import { FamilyCurriculumPackRepository } from '../infrastructure/family-curriculum-pack.repository.js';
 
@@ -20,6 +23,8 @@ export class FamilyCurriculumPackService {
     private readonly repository: FamilyCurriculumPackRepository,
     private readonly curriculumPackRepository: CurriculumPackRepository,
     private readonly exportService: CurriculumPackExportService,
+    private readonly importService: CurriculumPackImportService,
+    private readonly curriculumPackService: CurriculumPackService,
   ) {}
 
   async install(
@@ -88,6 +93,51 @@ export class FamilyCurriculumPackService {
     await this.requireInstance(familyId, id);
     const rows = await this.repository.listRevisions(id);
     return rows.map((row) => this.toRevisionDto(row));
+  }
+
+  // Publish the family's customized copy as a new, distinct community
+  // submission (issue #244) -- a derivative work, not a mutation of the
+  // pack it was installed from, so it always needs its own code/version.
+  // Reuses CurriculumPackImportService.importPack, which already knows
+  // how to turn a CurriculumPackExportDocument into real CurriculumPack/
+  // CurriculumPackItem rows against the shared catalog -- the family's
+  // document already IS that shape (see install() above).
+  async publishToCommunity(
+    familyId: string,
+    id: string,
+    userId: string,
+    dto: PublishFamilyCurriculumPackToCommunityOutput,
+  ): Promise<CurriculumPackResponseDto> {
+    const instance = await this.requireInstance(familyId, id);
+
+    const alreadyExists = await this.curriculumPackRepository.findPackByCodeVersion(dto.code, 1);
+    if (alreadyExists) {
+      throw new BadRequestException(
+        `A curriculum pack with code "${dto.code}" already exists. Choose a different code.`,
+      );
+    }
+
+    const sourceDocument = this.parseDocument(instance.document as CurriculumPackExportDocument);
+    const newDocument: CurriculumPackExportDocument = {
+      ...sourceDocument,
+      exportedAt: new Date().toISOString(),
+      pack: {
+        ...sourceDocument.pack,
+        code: dto.code,
+        version: 1,
+        status: 'DRAFT',
+        name: dto.name,
+        description: dto.description ?? sourceDocument.pack.description ?? null,
+      },
+    };
+
+    await this.importService.importPack(newDocument, false, userId);
+
+    const created = await this.curriculumPackRepository.findPackByCodeVersion(dto.code, 1);
+    if (!created) {
+      throw new BadRequestException('Failed to create the community curriculum pack.');
+    }
+    return this.curriculumPackService.getPack(created.id);
   }
 
   private async requireInstance(familyId: string, id: string): Promise<FamilyCurriculumPack> {
