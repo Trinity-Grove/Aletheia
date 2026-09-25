@@ -21,6 +21,7 @@ import { JurisdictionsModule } from './modules/jurisdictions/jurisdictions.modul
 import { PrivacyModule } from './modules/privacy/privacy.module.js';
 import { DonationsModule } from './modules/donations/donations.module.js';
 import { BackupModule } from './modules/backup/backup.module.js';
+import { MentorsModule } from './modules/mentors/mentors.module.js';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { BackupModule } from './modules/backup/backup.module.js';
     PrivacyModule,
     DonationsModule,
     BackupModule,
+    MentorsModule,
   ],
   providers: [
     {

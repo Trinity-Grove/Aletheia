@@ -13,10 +13,12 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
+  createPortfolioItemFromEvidenceSubmissionSchema,
   createPortfolioItemSchema,
   requestPortfolioUploadSchema,
   updatePortfolioItemSchema,
   type CreatePortfolioItemDto,
+  type CreatePortfolioItemFromEvidenceSubmissionOutput,
   type EvidenceType,
   type PortfolioDownloadUrlResponseDto,
   type PortfolioItemFilterDto,
@@ -44,6 +46,18 @@ export class PortfolioController {
     @Body(new ZodValidationPipe(createPortfolioItemSchema)) dto: CreatePortfolioItemDto,
   ): Promise<PortfolioItemResponseDto> {
     return this.portfolioService.createItem(familyId, dto);
+  }
+
+  @Post('from-evidence-submission/:evidenceSubmissionId')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Promote a validated evidence submission into a portfolio item (issue #230)' })
+  async createItemFromEvidenceSubmission(
+    @Param('familyId') familyId: string,
+    @Param('evidenceSubmissionId') evidenceSubmissionId: string,
+    @Body(new ZodValidationPipe(createPortfolioItemFromEvidenceSubmissionSchema))
+    dto: CreatePortfolioItemFromEvidenceSubmissionOutput,
+  ): Promise<PortfolioItemResponseDto> {
+    return this.portfolioService.createItemFromEvidenceSubmission(familyId, evidenceSubmissionId, dto);
   }
 
   @Get()

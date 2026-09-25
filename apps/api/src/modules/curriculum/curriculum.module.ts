@@ -102,6 +102,12 @@ import { CurriculumPackReportService } from './application/curriculum-pack-repor
 import { CurriculumPackReportController } from './presentation/curriculum-pack-report.controller.js';
 import { CurriculumPackModerationService } from './application/curriculum-pack-moderation.service.js';
 import { CurriculumPackModerationAdminController } from './presentation/curriculum-pack-moderation-admin.controller.js';
+import { DefinitionTagsService } from './application/definition-tags.service.js';
+import { DefinitionTagsRepository } from './infrastructure/definition-tags.repository.js';
+import { DefinitionTagsController } from './presentation/definition-tags.controller.js';
+import { FamilyActivityRepository } from './infrastructure/family-activity.repository.js';
+import { FamilyActivityService } from './application/family-activity.service.js';
+import { FamilyActivityController } from './presentation/family-activity.controller.js';
 
 @Module({
   imports: [DatabaseModule, DevotionalModule, StorageModule],
@@ -123,6 +129,8 @@ import { CurriculumPackModerationAdminController } from './presentation/curricul
     CurriculumPackCommunityController,
     CurriculumPackReportController,
     CurriculumPackModerationAdminController,
+    DefinitionTagsController,
+    FamilyActivityController,
   ],
   providers: [
     ProgressionRepository,
@@ -173,6 +181,7 @@ import { CurriculumPackModerationAdminController } from './presentation/curricul
     TradesMechanicalElectricalHomeSeeder,
     FoundationalCurriculumSeeder,
     DefinitionsRepository,
+    DefinitionTagsRepository,
     ProfilesRepository,
     EvidenceSubmissionRepository,
     AssessmentResultRepository,
@@ -184,6 +193,7 @@ import { CurriculumPackModerationAdminController } from './presentation/curricul
     OfficialCurriculumPacksSeeder,
     FamilyCurriculumPackRepository,
     FamilyCurriculumPackMediaRepository,
+    FamilyActivityRepository,
     CurriculumService,
     ObjectiveService,
     DefinitionsService,
@@ -197,12 +207,14 @@ import { CurriculumPackModerationAdminController } from './presentation/curricul
     LearnerCompetencyTrackingService,
     FamilyCurriculumPackService,
     FamilyCurriculumPackMediaService,
+    FamilyActivityService,
     DefinitionVersionOperationsService,
     AuthorTrustRepository,
     AuthorTrustService,
     CurriculumPackReportRepository,
     CurriculumPackReportService,
     CurriculumPackModerationService,
+    DefinitionTagsService,
     {
       provide: CURRICULUM_PUBLIC_API,
       useExisting: CurriculumService,

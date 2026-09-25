@@ -79,7 +79,7 @@ import {
   type BibleTranslationDefinitionResponseDto,
   type TransitionDefinitionStatusDto,
 } from '@aletheia/contracts';
-import { JwtAuthGuard, PlatformAdminGuard } from '../../../platform/auth/index.js';
+import { JwtAuthGuard, PlatformAdminGuard, CurrentUser } from '../../../platform/auth/index.js';
 import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { DefinitionsService } from '../application/definitions.service.js';
 
@@ -103,8 +103,9 @@ export class DefinitionsController {
   @ApiOperation({ summary: 'Create a learning domain definition' })
   async createLearningDomain(
     @Body(new ZodValidationPipe(createLearningDomainSchema)) dto: CreateLearningDomainOutput,
+    @CurrentUser('userId') actorId: string,
   ): Promise<LearningDomainResponseDto> {
-    return this.definitionsService.createLearningDomain(dto);
+    return this.definitionsService.createLearningDomain(dto, actorId);
   }
 
   @Get('learning-domains')
@@ -118,8 +119,9 @@ export class DefinitionsController {
   async transitionLearningDomainStatus(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(transitionDefinitionStatusSchema)) dto: TransitionDefinitionStatusDto,
+    @CurrentUser('userId') actorId: string,
   ): Promise<LearningDomainResponseDto> {
-    return this.definitionsService.transitionLearningDomainStatus(id, dto.status);
+    return this.definitionsService.transitionLearningDomainStatus(id, dto.status, actorId, dto.reason);
   }
 
   // Competency Definitions
@@ -128,8 +130,9 @@ export class DefinitionsController {
   @ApiOperation({ summary: 'Create a competency definition' })
   async createCompetencyDefinition(
     @Body(new ZodValidationPipe(createCompetencyDefinitionSchema)) dto: CreateCompetencyDefinitionOutput,
+    @CurrentUser('userId') actorId: string,
   ): Promise<CompetencyDefinitionResponseDto> {
-    return this.definitionsService.createCompetencyDefinition(dto);
+    return this.definitionsService.createCompetencyDefinition(dto, actorId);
   }
 
   @Get('competency-definitions')
@@ -143,8 +146,9 @@ export class DefinitionsController {
   async transitionCompetencyDefinitionStatus(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(transitionDefinitionStatusSchema)) dto: TransitionDefinitionStatusDto,
+    @CurrentUser('userId') actorId: string,
   ): Promise<CompetencyDefinitionResponseDto> {
-    return this.definitionsService.transitionCompetencyDefinitionStatus(id, dto.status);
+    return this.definitionsService.transitionCompetencyDefinitionStatus(id, dto.status, actorId, dto.reason);
   }
 
   // Pedagogical Model Definitions
@@ -153,8 +157,9 @@ export class DefinitionsController {
   @ApiOperation({ summary: 'Create a pedagogical model definition' })
   async createPedagogicalModelDefinition(
     @Body(new ZodValidationPipe(createPedagogicalModelDefinitionSchema)) dto: CreatePedagogicalModelDefinitionOutput,
+    @CurrentUser('userId') actorId: string,
   ): Promise<PedagogicalModelDefinitionResponseDto> {
-    return this.definitionsService.createPedagogicalModelDefinition(dto);
+    return this.definitionsService.createPedagogicalModelDefinition(dto, actorId);
   }
 
   @Get('pedagogical-model-definitions')
@@ -168,8 +173,9 @@ export class DefinitionsController {
   async transitionPedagogicalModelDefinitionStatus(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(transitionDefinitionStatusSchema)) dto: TransitionDefinitionStatusDto,
+    @CurrentUser('userId') actorId: string,
   ): Promise<PedagogicalModelDefinitionResponseDto> {
-    return this.definitionsService.transitionPedagogicalModelDefinitionStatus(id, dto.status);
+    return this.definitionsService.transitionPedagogicalModelDefinitionStatus(id, dto.status, actorId, dto.reason);
   }
 
   // Learning Paths
@@ -178,8 +184,9 @@ export class DefinitionsController {
   @ApiOperation({ summary: 'Create a learning path definition' })
   async createLearningPath(
     @Body(new ZodValidationPipe(createLearningPathSchema)) dto: CreateLearningPathOutput,
+    @CurrentUser('userId') actorId: string,
   ): Promise<LearningPathResponseDto> {
-    return this.definitionsService.createLearningPath(dto);
+    return this.definitionsService.createLearningPath(dto, actorId);
   }
 
   @Get('learning-paths')
@@ -193,8 +200,9 @@ export class DefinitionsController {
   async transitionLearningPathStatus(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(transitionDefinitionStatusSchema)) dto: TransitionDefinitionStatusDto,
+    @CurrentUser('userId') actorId: string,
   ): Promise<LearningPathResponseDto> {
-    return this.definitionsService.transitionLearningPathStatus(id, dto.status);
+    return this.definitionsService.transitionLearningPathStatus(id, dto.status, actorId, dto.reason);
   }
 
   // Skill Definitions
@@ -203,8 +211,9 @@ export class DefinitionsController {
   @ApiOperation({ summary: 'Create a skill definition' })
   async createSkillDefinition(
     @Body(new ZodValidationPipe(createSkillDefinitionSchema)) dto: CreateSkillDefinitionOutput,
+    @CurrentUser('userId') actorId: string,
   ): Promise<SkillDefinitionResponseDto> {
-    return this.definitionsService.createSkillDefinition(dto);
+    return this.definitionsService.createSkillDefinition(dto, actorId);
   }
 
   @Get('skill-definitions')
@@ -218,8 +227,9 @@ export class DefinitionsController {
   async transitionSkillDefinitionStatus(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(transitionDefinitionStatusSchema)) dto: TransitionDefinitionStatusDto,
+    @CurrentUser('userId') actorId: string,
   ): Promise<SkillDefinitionResponseDto> {
-    return this.definitionsService.transitionSkillDefinitionStatus(id, dto.status);
+    return this.definitionsService.transitionSkillDefinitionStatus(id, dto.status, actorId, dto.reason);
   }
 
   // Rubric Definitions
@@ -228,8 +238,9 @@ export class DefinitionsController {
   @ApiOperation({ summary: 'Create a rubric definition' })
   async createRubricDefinition(
     @Body(new ZodValidationPipe(createRubricDefinitionSchema)) dto: CreateRubricDefinitionOutput,
+    @CurrentUser('userId') actorId: string,
   ): Promise<RubricDefinitionResponseDto> {
-    return this.definitionsService.createRubricDefinition(dto);
+    return this.definitionsService.createRubricDefinition(dto, actorId);
   }
 
   @Get('rubric-definitions')
@@ -243,8 +254,9 @@ export class DefinitionsController {
   async transitionRubricDefinitionStatus(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(transitionDefinitionStatusSchema)) dto: TransitionDefinitionStatusDto,
+    @CurrentUser('userId') actorId: string,
   ): Promise<RubricDefinitionResponseDto> {
-    return this.definitionsService.transitionRubricDefinitionStatus(id, dto.status);
+    return this.definitionsService.transitionRubricDefinitionStatus(id, dto.status, actorId, dto.reason);
   }
 
   @Post('rubric-definitions/:rubricId/criteria')
@@ -269,8 +281,9 @@ export class DefinitionsController {
   @ApiOperation({ summary: 'Create an evidence type definition' })
   async createEvidenceTypeDefinition(
     @Body(new ZodValidationPipe(createEvidenceTypeDefinitionSchema)) dto: CreateEvidenceTypeDefinitionOutput,
+    @CurrentUser('userId') actorId: string,
   ): Promise<EvidenceTypeDefinitionResponseDto> {
-    return this.definitionsService.createEvidenceTypeDefinition(dto);
+    return this.definitionsService.createEvidenceTypeDefinition(dto, actorId);
   }
 
   @Get('evidence-type-definitions')
@@ -284,8 +297,9 @@ export class DefinitionsController {
   async transitionEvidenceTypeDefinitionStatus(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(transitionDefinitionStatusSchema)) dto: TransitionDefinitionStatusDto,
+    @CurrentUser('userId') actorId: string,
   ): Promise<EvidenceTypeDefinitionResponseDto> {
-    return this.definitionsService.transitionEvidenceTypeDefinitionStatus(id, dto.status);
+    return this.definitionsService.transitionEvidenceTypeDefinitionStatus(id, dto.status, actorId, dto.reason);
   }
 
   // Curriculum Definitions
@@ -294,8 +308,9 @@ export class DefinitionsController {
   @ApiOperation({ summary: 'Create a curriculum definition' })
   async createCurriculumDefinition(
     @Body(new ZodValidationPipe(createCurriculumDefinitionSchema)) dto: CreateCurriculumDefinitionOutput,
+    @CurrentUser('userId') actorId: string,
   ): Promise<CurriculumDefinitionResponseDto> {
-    return this.definitionsService.createCurriculumDefinition(dto);
+    return this.definitionsService.createCurriculumDefinition(dto, actorId);
   }
 
   @Get('curriculum-definitions')
@@ -309,8 +324,9 @@ export class DefinitionsController {
   async transitionCurriculumDefinitionStatus(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(transitionDefinitionStatusSchema)) dto: TransitionDefinitionStatusDto,
+    @CurrentUser('userId') actorId: string,
   ): Promise<CurriculumDefinitionResponseDto> {
-    return this.definitionsService.transitionCurriculumDefinitionStatus(id, dto.status);
+    return this.definitionsService.transitionCurriculumDefinitionStatus(id, dto.status, actorId, dto.reason);
   }
 
   @Post('curriculum-definitions/:curriculumId/domains')
@@ -410,8 +426,9 @@ export class DefinitionsController {
   @ApiOperation({ summary: 'Create an activity definition' })
   async createActivityDefinition(
     @Body(new ZodValidationPipe(createActivityDefinitionSchema)) dto: CreateActivityDefinitionOutput,
+    @CurrentUser('userId') actorId: string,
   ): Promise<ActivityDefinitionResponseDto> {
-    return this.definitionsService.createActivityDefinition(dto);
+    return this.definitionsService.createActivityDefinition(dto, actorId);
   }
 
   @Get('activity-definitions')
@@ -425,8 +442,9 @@ export class DefinitionsController {
   async transitionActivityDefinitionStatus(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(transitionDefinitionStatusSchema)) dto: TransitionDefinitionStatusDto,
+    @CurrentUser('userId') actorId: string,
   ): Promise<ActivityDefinitionResponseDto> {
-    return this.definitionsService.transitionActivityDefinitionStatus(id, dto.status);
+    return this.definitionsService.transitionActivityDefinitionStatus(id, dto.status, actorId, dto.reason);
   }
 
   @Post('activity-definitions/:activityId/competencies')
@@ -472,8 +490,9 @@ export class DefinitionsController {
   @ApiOperation({ summary: 'Create an interdisciplinary project definition' })
   async createProjectDefinition(
     @Body(new ZodValidationPipe(createProjectDefinitionSchema)) dto: CreateProjectDefinitionOutput,
+    @CurrentUser('userId') actorId: string,
   ): Promise<ProjectDefinitionResponseDto> {
-    return this.definitionsService.createProjectDefinition(dto);
+    return this.definitionsService.createProjectDefinition(dto, actorId);
   }
 
   @Get('project-definitions')
@@ -487,8 +506,9 @@ export class DefinitionsController {
   async transitionProjectDefinitionStatus(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(transitionDefinitionStatusSchema)) dto: TransitionDefinitionStatusDto,
+    @CurrentUser('userId') actorId: string,
   ): Promise<ProjectDefinitionResponseDto> {
-    return this.definitionsService.transitionProjectDefinitionStatus(id, dto.status);
+    return this.definitionsService.transitionProjectDefinitionStatus(id, dto.status, actorId, dto.reason);
   }
 
   @Post('project-definitions/:projectId/domains')
@@ -552,8 +572,9 @@ export class DefinitionsController {
   async createTheologicalTraditionDefinition(
     @Body(new ZodValidationPipe(createTheologicalTraditionDefinitionSchema))
     dto: CreateTheologicalTraditionDefinitionOutput,
+    @CurrentUser('userId') actorId: string,
   ): Promise<TheologicalTraditionDefinitionResponseDto> {
-    return this.definitionsService.createTheologicalTraditionDefinition(dto);
+    return this.definitionsService.createTheologicalTraditionDefinition(dto, actorId);
   }
 
   @Get('theological-tradition-definitions')
@@ -567,8 +588,9 @@ export class DefinitionsController {
   async transitionTheologicalTraditionDefinitionStatus(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(transitionDefinitionStatusSchema)) dto: TransitionDefinitionStatusDto,
+    @CurrentUser('userId') actorId: string,
   ): Promise<TheologicalTraditionDefinitionResponseDto> {
-    return this.definitionsService.transitionTheologicalTraditionDefinitionStatus(id, dto.status);
+    return this.definitionsService.transitionTheologicalTraditionDefinitionStatus(id, dto.status, actorId, dto.reason);
   }
 
   // Theological Position Definitions
@@ -578,8 +600,9 @@ export class DefinitionsController {
   async createTheologicalPositionDefinition(
     @Body(new ZodValidationPipe(createTheologicalPositionDefinitionSchema))
     dto: CreateTheologicalPositionDefinitionOutput,
+    @CurrentUser('userId') actorId: string,
   ): Promise<TheologicalPositionDefinitionResponseDto> {
-    return this.definitionsService.createTheologicalPositionDefinition(dto);
+    return this.definitionsService.createTheologicalPositionDefinition(dto, actorId);
   }
 
   @Get('theological-position-definitions')
@@ -593,8 +616,9 @@ export class DefinitionsController {
   async transitionTheologicalPositionDefinitionStatus(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(transitionDefinitionStatusSchema)) dto: TransitionDefinitionStatusDto,
+    @CurrentUser('userId') actorId: string,
   ): Promise<TheologicalPositionDefinitionResponseDto> {
-    return this.definitionsService.transitionTheologicalPositionDefinitionStatus(id, dto.status);
+    return this.definitionsService.transitionTheologicalPositionDefinitionStatus(id, dto.status, actorId, dto.reason);
   }
 
   // Progression Policies
@@ -603,8 +627,9 @@ export class DefinitionsController {
   @ApiOperation({ summary: 'Create a progression policy' })
   async createProgressionPolicy(
     @Body(new ZodValidationPipe(createProgressionPolicySchema)) dto: CreateProgressionPolicyOutput,
+    @CurrentUser('userId') actorId: string,
   ): Promise<ProgressionPolicyResponseDto> {
-    return this.definitionsService.createProgressionPolicy(dto);
+    return this.definitionsService.createProgressionPolicy(dto, actorId);
   }
 
   @Get('progression-policies')
@@ -618,8 +643,9 @@ export class DefinitionsController {
   async transitionProgressionPolicyStatus(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(transitionDefinitionStatusSchema)) dto: TransitionDefinitionStatusDto,
+    @CurrentUser('userId') actorId: string,
   ): Promise<ProgressionPolicyResponseDto> {
-    return this.definitionsService.transitionProgressionPolicyStatus(id, dto.status);
+    return this.definitionsService.transitionProgressionPolicyStatus(id, dto.status, actorId, dto.reason);
   }
 
   // Bible Translation Definitions
@@ -628,8 +654,9 @@ export class DefinitionsController {
   @ApiOperation({ summary: 'Create a Bible translation definition' })
   async createBibleTranslationDefinition(
     @Body(new ZodValidationPipe(createBibleTranslationDefinitionSchema)) dto: CreateBibleTranslationDefinitionOutput,
+    @CurrentUser('userId') actorId: string,
   ): Promise<BibleTranslationDefinitionResponseDto> {
-    return this.definitionsService.createBibleTranslationDefinition(dto);
+    return this.definitionsService.createBibleTranslationDefinition(dto, actorId);
   }
 
   @Get('bible-translation-definitions')
@@ -643,7 +670,8 @@ export class DefinitionsController {
   async transitionBibleTranslationDefinitionStatus(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(transitionDefinitionStatusSchema)) dto: TransitionDefinitionStatusDto,
+    @CurrentUser('userId') actorId: string,
   ): Promise<BibleTranslationDefinitionResponseDto> {
-    return this.definitionsService.transitionBibleTranslationDefinitionStatus(id, dto.status);
+    return this.definitionsService.transitionBibleTranslationDefinitionStatus(id, dto.status, actorId, dto.reason);
   }
 }

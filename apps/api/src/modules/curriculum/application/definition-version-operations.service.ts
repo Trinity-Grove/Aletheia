@@ -38,6 +38,7 @@ const MODEL_ACCESSOR: Record<RollbackEligibleEntityType, string> = {
   EvidenceTypeDefinition: 'evidenceTypeDefinition',
   CurriculumDefinition: 'curriculumDefinition',
   ActivityDefinition: 'activityDefinition',
+  ProjectDefinition: 'projectDefinition',
   TheologicalTraditionDefinition: 'theologicalTraditionDefinition',
   TheologicalPositionDefinition: 'theologicalPositionDefinition',
   ProgressionPolicy: 'progressionPolicy',
@@ -251,6 +252,54 @@ export class DefinitionVersionOperationsService {
       });
 
       return { migratedTrackingIds, skippedTrackingIds, logId: log.id };
+    });
+  }
+
+  // --- Auditoria (issue #96 section 32) ---
+  //
+  // Reuses this exact log, generically, for every Definition/Version
+  // table's two lifecycle actions -- creation and status transition --
+  // instead of adding a createdByUserId/publishedByUserId column to each
+  // of the 13 tables (which would also require a matching back-relation
+  // on User for every one). `entityType` is deliberately a free string
+  // here, not RollbackEligibleEntityType: unlike rollback/migration,
+  // every Definition/Version table is auditable this way, including ones
+  // rollback doesn't (yet) support.
+  async logCreate(entityType: string, code: string, version: number, performedByUserId: string): Promise<void> {
+    await this.prisma.definitionVersionOperationLog.create({
+      data: {
+        operationType: 'CREATE',
+        definitionCode: code,
+        fromVersion: version,
+        toVersion: version,
+        affectedEntityType: entityType,
+        affectedEntityIds: [],
+        performedByUserId,
+        metadata: {},
+      },
+    });
+  }
+
+  async logStatusTransition(
+    entityType: string,
+    code: string,
+    version: number,
+    performedByUserId: string,
+    fromStatus: string,
+    toStatus: string,
+    reason?: string | null,
+  ): Promise<void> {
+    await this.prisma.definitionVersionOperationLog.create({
+      data: {
+        operationType: 'STATUS_TRANSITION',
+        definitionCode: code,
+        fromVersion: version,
+        toVersion: version,
+        affectedEntityType: entityType,
+        affectedEntityIds: [],
+        performedByUserId,
+        metadata: { fromStatus, toStatus, reason: reason ?? null },
+      },
     });
   }
 

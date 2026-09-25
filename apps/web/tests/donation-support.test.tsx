@@ -113,7 +113,57 @@ describe('Donation & Voluntary Support Components', () => {
 
       // Payment method selectors
       expect(screen.getByLabelText(/pix/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/google pay/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/cartão de crédito/i)).toBeInTheDocument();
+    });
+
+    it('disables PIX and switches away from it when Apoio Mensal is selected -- Mercado Pago subscriptions are card-based, no recurring PIX exists', () => {
+      render(<DonationFormCard familyId={testFamilyId} />);
+
+      const pixRadio = screen.getByLabelText(/^pix/i) as HTMLInputElement;
+      expect(pixRadio.checked).toBe(true);
+
+      fireEvent.click(screen.getByRole('button', { name: /apoio mensal/i }));
+
+      expect(pixRadio.disabled).toBe(true);
+      expect(pixRadio.checked).toBe(false);
+      expect(screen.getByLabelText(/cartão de crédito/i)).toBeChecked();
+      expect(screen.getByText(/indisponível para apoio mensal recorrente/i)).toBeInTheDocument();
+    });
+
+    it('redirects to the hosted authorizationUrl on a MONTHLY subscription intent, never showing a PIX QR code', async () => {
+      const originalLocation = window.location;
+      Object.defineProperty(window, 'location', {
+        writable: true,
+        value: { ...originalLocation, href: '' },
+      });
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          donationId: 'sub-donation-1',
+          amountCents: 5000,
+          currency: 'BRL',
+          status: 'PENDING',
+          paymentMethod: 'CREDIT_CARD',
+          frequency: 'MONTHLY',
+          authorizationUrl: 'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_id=abc123',
+          expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+          createdAt: new Date().toISOString(),
+        }),
+      });
+      globalThis.fetch = fetchMock;
+
+      render(<DonationFormCard familyId={testFamilyId} />);
+      fireEvent.click(screen.getByRole('button', { name: /apoio mensal/i }));
+      fireEvent.click(screen.getByTestId('submit-donation-button'));
+
+      await waitFor(() => {
+        expect(window.location.href).toBe(
+          'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_id=abc123',
+        );
+      });
+
+      Object.defineProperty(window, 'location', { writable: true, value: originalLocation });
     });
 
     it('validates custom amount to enforce minimum of R$ 5,00 (500 cents)', async () => {
@@ -216,26 +266,31 @@ describe('Donation & Voluntary Support Components', () => {
       });
     });
 
-    it('submits Google Pay donation intent when Google Pay is selected', async () => {
-      const fetchMock = vi.fn();
-      globalThis.fetch = fetchMock;
+    it('redirects to the hosted authorizationUrl for a one-time CREDIT_CARD donation -- no client-side card tokenization exists, so the payer completes payment on Mercado Pago itself', async () => {
+      const originalLocation = window.location;
+      Object.defineProperty(window, 'location', {
+        writable: true,
+        value: { ...originalLocation, href: '' },
+      });
 
-      fetchMock.mockResolvedValueOnce({
+      const fetchMock = vi.fn().mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           ...mockDonationIntent,
-          paymentMethod: 'GOOGLE_PAY',
-          gatewayClientSecret: 'pi_secret_123',
+          paymentMethod: 'CREDIT_CARD',
+          pixCopiaECola: undefined,
+          pixQrCodeUrl: undefined,
+          authorizationUrl: 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=abc123',
         }),
       });
+      globalThis.fetch = fetchMock;
 
       render(<DonationFormCard familyId={testFamilyId} />);
 
-      // Switch to Google Pay
-      const googlePayRadio = screen.getByLabelText(/google pay/i);
-      fireEvent.click(googlePayRadio);
+      const creditCardRadio = screen.getByLabelText(/cartão de crédito/i);
+      fireEvent.click(creditCardRadio);
 
-      const submitBtn = screen.getByTestId('google-pay-button');
+      const submitBtn = screen.getByTestId('submit-donation-button');
       fireEvent.click(submitBtn);
 
       await waitFor(() => {
@@ -243,10 +298,18 @@ describe('Donation & Voluntary Support Components', () => {
           `/api/v1/families/${testFamilyId}/donations/create-intent`,
           expect.objectContaining({
             method: 'POST',
-            body: expect.stringContaining('"paymentMethod":"GOOGLE_PAY"'),
+            body: expect.stringContaining('"paymentMethod":"CREDIT_CARD"'),
           }),
         );
       });
+
+      await waitFor(() => {
+        expect(window.location.href).toBe(
+          'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=abc123',
+        );
+      });
+
+      Object.defineProperty(window, 'location', { writable: true, value: originalLocation });
     });
 
     it('correctly parses custom amount with Brazilian thousand separators like 1.500,00', async () => {

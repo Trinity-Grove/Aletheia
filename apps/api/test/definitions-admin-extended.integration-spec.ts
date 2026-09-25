@@ -74,13 +74,43 @@ describe('Curriculum definitions admin API -- rubric/evidence/curriculum/activit
       .set('Cookie', adminCookie)
       .send({ status: 'DRAFT' })
       .expect(400);
+
+    // Issue #96 section 32 (Auditoria): creation and every status
+    // transition are logged generically, with who and (optionally) why --
+    // same log every other Definition/Version table already uses for
+    // migrate/rollback, reused here for CREATE/STATUS_TRANSITION.
+    const logsAfterPublish = await supertest(app.getHttpServer())
+      .get(`/api/v1/admin/curriculum-definitions/version-operations/logs?code=${created.body.code}`)
+      .set('Cookie', adminCookie)
+      .expect(200);
+    const createLog = logsAfterPublish.body.find((l: { operationType: string }) => l.operationType === 'CREATE');
+    expect(createLog).toBeTruthy();
+    expect(createLog.performedByUserId).toBeTruthy();
+    const publishLog = logsAfterPublish.body.find(
+      (l: { operationType: string; metadata: { toStatus: string } }) =>
+        l.operationType === 'STATUS_TRANSITION' && l.metadata.toStatus === 'PUBLISHED',
+    );
+    expect(publishLog).toBeTruthy();
+    expect(publishLog.metadata.fromStatus).toBe('DRAFT');
+
     const deprecated = await supertest(app.getHttpServer())
       .patch(statusUrl)
       .set('Cookie', adminCookie)
-      .send({ status: 'DEPRECATED' })
+      .send({ status: 'DEPRECATED', reason: 'Superseded by a newer version for this lifecycle test.' })
       .expect(200);
     expect(deprecated.body.status).toBe('DEPRECATED');
     expect(deprecated.body.deprecatedAt).not.toBeNull();
+
+    const logsAfterDeprecate = await supertest(app.getHttpServer())
+      .get(`/api/v1/admin/curriculum-definitions/version-operations/logs?code=${created.body.code}`)
+      .set('Cookie', adminCookie)
+      .expect(200);
+    const deprecateLog = logsAfterDeprecate.body.find(
+      (l: { operationType: string; metadata: { toStatus: string } }) =>
+        l.operationType === 'STATUS_TRANSITION' && l.metadata.toStatus === 'DEPRECATED',
+    );
+    expect(deprecateLog.metadata.reason).toBe('Superseded by a newer version for this lifecycle test.');
+
     await supertest(app.getHttpServer())
       .patch(`${base}/00000000-0000-0000-0000-000000000000/status`)
       .set('Cookie', adminCookie)

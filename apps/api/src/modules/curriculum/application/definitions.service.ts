@@ -81,6 +81,7 @@ import type {
   DefinitionStatus,
 } from '@aletheia/contracts';
 import { DefinitionsRepository } from '../infrastructure/definitions.repository.js';
+import { DefinitionVersionOperationsService } from './definition-version-operations.service.js';
 import { computeStatusTransition } from './definition-status-transition.js';
 
 // Admin CRUD for the data-driven curriculum foundation (issue #96 Fase 0,
@@ -97,11 +98,20 @@ import { computeStatusTransition } from './definition-status-transition.js';
 // human-approved PR.
 @Injectable()
 export class DefinitionsService {
-  constructor(private readonly repository: DefinitionsRepository) {}
+  constructor(
+    private readonly repository: DefinitionsRepository,
+    private readonly operationsService: DefinitionVersionOperationsService,
+  ) {}
 
   // Learning Domain
-  async createLearningDomain(dto: CreateLearningDomainOutput): Promise<LearningDomainResponseDto> {
+  async createLearningDomain(
+    dto: CreateLearningDomainOutput,
+    actorUserId?: string,
+  ): Promise<LearningDomainResponseDto> {
     const row = await this.repository.createLearningDomain(dto);
+    if (actorUserId) {
+      await this.operationsService.logCreate('LearningDomain', row.code, row.version, actorUserId);
+    }
     return this.toLearningDomainDto(row);
   }
 
@@ -110,17 +120,33 @@ export class DefinitionsService {
     return rows.map((row) => this.toLearningDomainDto(row));
   }
 
-  async transitionLearningDomainStatus(id: string, status: DefinitionStatus): Promise<LearningDomainResponseDto> {
+  async transitionLearningDomainStatus(
+    id: string,
+    status: DefinitionStatus,
+    actorUserId?: string,
+    reason?: string | null,
+  ): Promise<LearningDomainResponseDto> {
     const existing = await this.repository.findLearningDomainById(id);
     if (!existing) throw new NotFoundException('Learning domain not found.');
     const update = computeStatusTransition(existing.status as DefinitionStatus, status);
     const row = await this.repository.updateLearningDomainStatus(id, update);
+    if (actorUserId) {
+      await this.operationsService.logStatusTransition(
+        'LearningDomain', row.code, row.version, actorUserId, existing.status, row.status, reason,
+        );
+    }
     return this.toLearningDomainDto(row);
   }
 
   // Competency Definition
-  async createCompetencyDefinition(dto: CreateCompetencyDefinitionOutput): Promise<CompetencyDefinitionResponseDto> {
+  async createCompetencyDefinition(
+    dto: CreateCompetencyDefinitionOutput,
+    actorUserId?: string,
+  ): Promise<CompetencyDefinitionResponseDto> {
     const row = await this.repository.createCompetencyDefinition(dto);
+    if (actorUserId) {
+      await this.operationsService.logCreate('CompetencyDefinition', row.code, row.version, actorUserId);
+    }
     return this.toCompetencyDefinitionDto(row);
   }
 
@@ -132,19 +158,30 @@ export class DefinitionsService {
   async transitionCompetencyDefinitionStatus(
     id: string,
     status: DefinitionStatus,
+    actorUserId?: string,
+    reason?: string | null,
   ): Promise<CompetencyDefinitionResponseDto> {
     const existing = await this.repository.findCompetencyDefinitionById(id);
     if (!existing) throw new NotFoundException('Competency definition not found.');
     const update = computeStatusTransition(existing.status as DefinitionStatus, status);
     const row = await this.repository.updateCompetencyDefinitionStatus(id, update);
+    if (actorUserId) {
+      await this.operationsService.logStatusTransition(
+        'CompetencyDefinition', row.code, row.version, actorUserId, existing.status, row.status, reason,
+        );
+    }
     return this.toCompetencyDefinitionDto(row);
   }
 
   // Pedagogical Model Definition
   async createPedagogicalModelDefinition(
     dto: CreatePedagogicalModelDefinitionOutput,
+    actorUserId?: string,
   ): Promise<PedagogicalModelDefinitionResponseDto> {
     const row = await this.repository.createPedagogicalModelDefinition(dto);
+    if (actorUserId) {
+      await this.operationsService.logCreate('PedagogicalModelDefinition', row.code, row.version, actorUserId);
+    }
     return this.toPedagogicalModelDefinitionDto(row);
   }
 
@@ -156,17 +193,30 @@ export class DefinitionsService {
   async transitionPedagogicalModelDefinitionStatus(
     id: string,
     status: DefinitionStatus,
+    actorUserId?: string,
+    reason?: string | null,
   ): Promise<PedagogicalModelDefinitionResponseDto> {
     const existing = await this.repository.findPedagogicalModelDefinitionById(id);
     if (!existing) throw new NotFoundException('Pedagogical model definition not found.');
     const update = computeStatusTransition(existing.status as DefinitionStatus, status);
     const row = await this.repository.updatePedagogicalModelDefinitionStatus(id, update);
+    if (actorUserId) {
+      await this.operationsService.logStatusTransition(
+        'PedagogicalModelDefinition', row.code, row.version, actorUserId, existing.status, row.status, reason,
+        );
+    }
     return this.toPedagogicalModelDefinitionDto(row);
   }
 
   // Learning Path
-  async createLearningPath(dto: CreateLearningPathOutput): Promise<LearningPathResponseDto> {
+  async createLearningPath(
+    dto: CreateLearningPathOutput,
+    actorUserId?: string,
+  ): Promise<LearningPathResponseDto> {
     const row = await this.repository.createLearningPath(dto);
+    if (actorUserId) {
+      await this.operationsService.logCreate('LearningPath', row.code, row.version, actorUserId);
+    }
     return this.toLearningPathDto(row);
   }
 
@@ -175,17 +225,33 @@ export class DefinitionsService {
     return rows.map((row) => this.toLearningPathDto(row));
   }
 
-  async transitionLearningPathStatus(id: string, status: DefinitionStatus): Promise<LearningPathResponseDto> {
+  async transitionLearningPathStatus(
+    id: string,
+    status: DefinitionStatus,
+    actorUserId?: string,
+    reason?: string | null,
+  ): Promise<LearningPathResponseDto> {
     const existing = await this.repository.findLearningPathById(id);
     if (!existing) throw new NotFoundException('Learning path not found.');
     const update = computeStatusTransition(existing.status as DefinitionStatus, status);
     const row = await this.repository.updateLearningPathStatus(id, update);
+    if (actorUserId) {
+      await this.operationsService.logStatusTransition(
+        'LearningPath', row.code, row.version, actorUserId, existing.status, row.status, reason,
+        );
+    }
     return this.toLearningPathDto(row);
   }
 
   // Skill Definition
-  async createSkillDefinition(dto: CreateSkillDefinitionOutput): Promise<SkillDefinitionResponseDto> {
+  async createSkillDefinition(
+    dto: CreateSkillDefinitionOutput,
+    actorUserId?: string,
+  ): Promise<SkillDefinitionResponseDto> {
     const row = await this.repository.createSkillDefinition(dto);
+    if (actorUserId) {
+      await this.operationsService.logCreate('SkillDefinition', row.code, row.version, actorUserId);
+    }
     return this.toSkillDefinitionDto(row);
   }
 
@@ -194,17 +260,33 @@ export class DefinitionsService {
     return rows.map((row) => this.toSkillDefinitionDto(row));
   }
 
-  async transitionSkillDefinitionStatus(id: string, status: DefinitionStatus): Promise<SkillDefinitionResponseDto> {
+  async transitionSkillDefinitionStatus(
+    id: string,
+    status: DefinitionStatus,
+    actorUserId?: string,
+    reason?: string | null,
+  ): Promise<SkillDefinitionResponseDto> {
     const existing = await this.repository.findSkillDefinitionById(id);
     if (!existing) throw new NotFoundException('Skill definition not found.');
     const update = computeStatusTransition(existing.status as DefinitionStatus, status);
     const row = await this.repository.updateSkillDefinitionStatus(id, update);
+    if (actorUserId) {
+      await this.operationsService.logStatusTransition(
+        'SkillDefinition', row.code, row.version, actorUserId, existing.status, row.status, reason,
+        );
+    }
     return this.toSkillDefinitionDto(row);
   }
 
   // Rubric Definition
-  async createRubricDefinition(dto: CreateRubricDefinitionOutput): Promise<RubricDefinitionResponseDto> {
+  async createRubricDefinition(
+    dto: CreateRubricDefinitionOutput,
+    actorUserId?: string,
+  ): Promise<RubricDefinitionResponseDto> {
     const row = await this.withWriteErrorMapping(() => this.repository.createRubricDefinition(dto));
+    if (actorUserId) {
+      await this.operationsService.logCreate('RubricDefinition', row.code, row.version, actorUserId);
+    }
     return this.toRubricDefinitionDto(row);
   }
 
@@ -213,11 +295,21 @@ export class DefinitionsService {
     return rows.map((row) => this.toRubricDefinitionDto(row));
   }
 
-  async transitionRubricDefinitionStatus(id: string, status: DefinitionStatus): Promise<RubricDefinitionResponseDto> {
+  async transitionRubricDefinitionStatus(
+    id: string,
+    status: DefinitionStatus,
+    actorUserId?: string,
+    reason?: string | null,
+  ): Promise<RubricDefinitionResponseDto> {
     const existing = await this.repository.findRubricDefinitionById(id);
     if (!existing) throw new NotFoundException('Rubric definition not found.');
     const update = computeStatusTransition(existing.status as DefinitionStatus, status);
     const row = await this.repository.updateRubricDefinitionStatus(id, update);
+    if (actorUserId) {
+      await this.operationsService.logStatusTransition(
+        'RubricDefinition', row.code, row.version, actorUserId, existing.status, row.status, reason,
+        );
+    }
     return this.toRubricDefinitionDto(row);
   }
 
@@ -241,8 +333,12 @@ export class DefinitionsService {
   // Evidence Type Definition
   async createEvidenceTypeDefinition(
     dto: CreateEvidenceTypeDefinitionOutput,
+    actorUserId?: string,
   ): Promise<EvidenceTypeDefinitionResponseDto> {
     const row = await this.withWriteErrorMapping(() => this.repository.createEvidenceTypeDefinition(dto));
+    if (actorUserId) {
+      await this.operationsService.logCreate('EvidenceTypeDefinition', row.code, row.version, actorUserId);
+    }
     return this.toEvidenceTypeDefinitionDto(row);
   }
 
@@ -254,17 +350,30 @@ export class DefinitionsService {
   async transitionEvidenceTypeDefinitionStatus(
     id: string,
     status: DefinitionStatus,
+    actorUserId?: string,
+    reason?: string | null,
   ): Promise<EvidenceTypeDefinitionResponseDto> {
     const existing = await this.repository.findEvidenceTypeDefinitionById(id);
     if (!existing) throw new NotFoundException('Evidence type definition not found.');
     const update = computeStatusTransition(existing.status as DefinitionStatus, status);
     const row = await this.repository.updateEvidenceTypeDefinitionStatus(id, update);
+    if (actorUserId) {
+      await this.operationsService.logStatusTransition(
+        'EvidenceTypeDefinition', row.code, row.version, actorUserId, existing.status, row.status, reason,
+        );
+    }
     return this.toEvidenceTypeDefinitionDto(row);
   }
 
   // Curriculum Definition
-  async createCurriculumDefinition(dto: CreateCurriculumDefinitionOutput): Promise<CurriculumDefinitionResponseDto> {
+  async createCurriculumDefinition(
+    dto: CreateCurriculumDefinitionOutput,
+    actorUserId?: string,
+  ): Promise<CurriculumDefinitionResponseDto> {
     const row = await this.withWriteErrorMapping(() => this.repository.createCurriculumDefinition(dto));
+    if (actorUserId) {
+      await this.operationsService.logCreate('CurriculumDefinition', row.code, row.version, actorUserId);
+    }
     return this.toCurriculumDefinitionDto(row);
   }
 
@@ -276,11 +385,18 @@ export class DefinitionsService {
   async transitionCurriculumDefinitionStatus(
     id: string,
     status: DefinitionStatus,
+    actorUserId?: string,
+    reason?: string | null,
   ): Promise<CurriculumDefinitionResponseDto> {
     const existing = await this.repository.findCurriculumDefinitionById(id);
     if (!existing) throw new NotFoundException('Curriculum definition not found.');
     const update = computeStatusTransition(existing.status as DefinitionStatus, status);
     const row = await this.repository.updateCurriculumDefinitionStatus(id, update);
+    if (actorUserId) {
+      await this.operationsService.logStatusTransition(
+        'CurriculumDefinition', row.code, row.version, actorUserId, existing.status, row.status, reason,
+        );
+    }
     return this.toCurriculumDefinitionDto(row);
   }
 
@@ -361,8 +477,14 @@ export class DefinitionsService {
   }
 
   // Activity Definition
-  async createActivityDefinition(dto: CreateActivityDefinitionOutput): Promise<ActivityDefinitionResponseDto> {
+  async createActivityDefinition(
+    dto: CreateActivityDefinitionOutput,
+    actorUserId?: string,
+  ): Promise<ActivityDefinitionResponseDto> {
     const row = await this.withWriteErrorMapping(() => this.repository.createActivityDefinition(dto));
+    if (actorUserId) {
+      await this.operationsService.logCreate('ActivityDefinition', row.code, row.version, actorUserId);
+    }
     return this.toActivityDefinitionDto(row);
   }
 
@@ -374,11 +496,18 @@ export class DefinitionsService {
   async transitionActivityDefinitionStatus(
     id: string,
     status: DefinitionStatus,
+    actorUserId?: string,
+    reason?: string | null,
   ): Promise<ActivityDefinitionResponseDto> {
     const existing = await this.repository.findActivityDefinitionById(id);
     if (!existing) throw new NotFoundException('Activity definition not found.');
     const update = computeStatusTransition(existing.status as DefinitionStatus, status);
     const row = await this.repository.updateActivityDefinitionStatus(id, update);
+    if (actorUserId) {
+      await this.operationsService.logStatusTransition(
+        'ActivityDefinition', row.code, row.version, actorUserId, existing.status, row.status, reason,
+        );
+    }
     return this.toActivityDefinitionDto(row);
   }
 
@@ -440,8 +569,14 @@ export class DefinitionsService {
   // Project Definition (issue #96 section 8): an interdisciplinary
   // project mapping multiple domains and competencies at once -- same
   // admin CRUD shape as ActivityDefinition, plus milestones.
-  async createProjectDefinition(dto: CreateProjectDefinitionOutput): Promise<ProjectDefinitionResponseDto> {
+  async createProjectDefinition(
+    dto: CreateProjectDefinitionOutput,
+    actorUserId?: string,
+  ): Promise<ProjectDefinitionResponseDto> {
     const row = await this.withWriteErrorMapping(() => this.repository.createProjectDefinition(dto));
+    if (actorUserId) {
+      await this.operationsService.logCreate('ProjectDefinition', row.code, row.version, actorUserId);
+    }
     return this.toProjectDefinitionDto(row);
   }
 
@@ -453,11 +588,18 @@ export class DefinitionsService {
   async transitionProjectDefinitionStatus(
     id: string,
     status: DefinitionStatus,
+    actorUserId?: string,
+    reason?: string | null,
   ): Promise<ProjectDefinitionResponseDto> {
     const existing = await this.repository.findProjectDefinitionById(id);
     if (!existing) throw new NotFoundException('Project definition not found.');
     const update = computeStatusTransition(existing.status as DefinitionStatus, status);
     const row = await this.repository.updateProjectDefinitionStatus(id, update);
+    if (actorUserId) {
+      await this.operationsService.logStatusTransition(
+        'ProjectDefinition', row.code, row.version, actorUserId, existing.status, row.status, reason,
+        );
+    }
     return this.toProjectDefinitionDto(row);
   }
 
@@ -517,10 +659,14 @@ export class DefinitionsService {
   // Theological Tradition Definition
   async createTheologicalTraditionDefinition(
     dto: CreateTheologicalTraditionDefinitionOutput,
+    actorUserId?: string,
   ): Promise<TheologicalTraditionDefinitionResponseDto> {
     const row = await this.withWriteErrorMapping(() =>
       this.repository.createTheologicalTraditionDefinition(dto),
     );
+    if (actorUserId) {
+      await this.operationsService.logCreate('TheologicalTraditionDefinition', row.code, row.version, actorUserId);
+    }
     return this.toTheologicalTraditionDefinitionDto(row);
   }
 
@@ -532,21 +678,32 @@ export class DefinitionsService {
   async transitionTheologicalTraditionDefinitionStatus(
     id: string,
     status: DefinitionStatus,
+    actorUserId?: string,
+    reason?: string | null,
   ): Promise<TheologicalTraditionDefinitionResponseDto> {
     const existing = await this.repository.findTheologicalTraditionDefinitionById(id);
     if (!existing) throw new NotFoundException('Theological tradition definition not found.');
     const update = computeStatusTransition(existing.status as DefinitionStatus, status);
     const row = await this.repository.updateTheologicalTraditionDefinitionStatus(id, update);
+    if (actorUserId) {
+      await this.operationsService.logStatusTransition(
+        'TheologicalTraditionDefinition', row.code, row.version, actorUserId, existing.status, row.status, reason,
+        );
+    }
     return this.toTheologicalTraditionDefinitionDto(row);
   }
 
   // Theological Position Definition
   async createTheologicalPositionDefinition(
     dto: CreateTheologicalPositionDefinitionOutput,
+    actorUserId?: string,
   ): Promise<TheologicalPositionDefinitionResponseDto> {
     const row = await this.withWriteErrorMapping(() =>
       this.repository.createTheologicalPositionDefinition(dto),
     );
+    if (actorUserId) {
+      await this.operationsService.logCreate('TheologicalPositionDefinition', row.code, row.version, actorUserId);
+    }
     return this.toTheologicalPositionDefinitionDto(row);
   }
 
@@ -558,17 +715,30 @@ export class DefinitionsService {
   async transitionTheologicalPositionDefinitionStatus(
     id: string,
     status: DefinitionStatus,
+    actorUserId?: string,
+    reason?: string | null,
   ): Promise<TheologicalPositionDefinitionResponseDto> {
     const existing = await this.repository.findTheologicalPositionDefinitionById(id);
     if (!existing) throw new NotFoundException('Theological position definition not found.');
     const update = computeStatusTransition(existing.status as DefinitionStatus, status);
     const row = await this.repository.updateTheologicalPositionDefinitionStatus(id, update);
+    if (actorUserId) {
+      await this.operationsService.logStatusTransition(
+        'TheologicalPositionDefinition', row.code, row.version, actorUserId, existing.status, row.status, reason,
+        );
+    }
     return this.toTheologicalPositionDefinitionDto(row);
   }
 
   // Progression Policy
-  async createProgressionPolicy(dto: CreateProgressionPolicyOutput): Promise<ProgressionPolicyResponseDto> {
+  async createProgressionPolicy(
+    dto: CreateProgressionPolicyOutput,
+    actorUserId?: string,
+  ): Promise<ProgressionPolicyResponseDto> {
     const row = await this.withWriteErrorMapping(() => this.repository.createProgressionPolicy(dto));
+    if (actorUserId) {
+      await this.operationsService.logCreate('ProgressionPolicy', row.code, row.version, actorUserId);
+    }
     return this.toProgressionPolicyDto(row);
   }
 
@@ -580,19 +750,30 @@ export class DefinitionsService {
   async transitionProgressionPolicyStatus(
     id: string,
     status: DefinitionStatus,
+    actorUserId?: string,
+    reason?: string | null,
   ): Promise<ProgressionPolicyResponseDto> {
     const existing = await this.repository.findProgressionPolicyById(id);
     if (!existing) throw new NotFoundException('Progression policy not found.');
     const update = computeStatusTransition(existing.status as DefinitionStatus, status);
     const row = await this.repository.updateProgressionPolicyStatus(id, update);
+    if (actorUserId) {
+      await this.operationsService.logStatusTransition(
+        'ProgressionPolicy', row.code, row.version, actorUserId, existing.status, row.status, reason,
+        );
+    }
     return this.toProgressionPolicyDto(row);
   }
 
   // Bible Translation Definition
   async createBibleTranslationDefinition(
     dto: CreateBibleTranslationDefinitionOutput,
+    actorUserId?: string,
   ): Promise<BibleTranslationDefinitionResponseDto> {
     const row = await this.withWriteErrorMapping(() => this.repository.createBibleTranslationDefinition(dto));
+    if (actorUserId) {
+      await this.operationsService.logCreate('BibleTranslationDefinition', row.code, row.version, actorUserId);
+    }
     return this.toBibleTranslationDefinitionDto(row);
   }
 
@@ -604,11 +785,18 @@ export class DefinitionsService {
   async transitionBibleTranslationDefinitionStatus(
     id: string,
     status: DefinitionStatus,
+    actorUserId?: string,
+    reason?: string | null,
   ): Promise<BibleTranslationDefinitionResponseDto> {
     const existing = await this.repository.findBibleTranslationDefinitionById(id);
     if (!existing) throw new NotFoundException('Bible translation definition not found.');
     const update = computeStatusTransition(existing.status as DefinitionStatus, status);
     const row = await this.repository.updateBibleTranslationDefinitionStatus(id, update);
+    if (actorUserId) {
+      await this.operationsService.logStatusTransition(
+        'BibleTranslationDefinition', row.code, row.version, actorUserId, existing.status, row.status, reason,
+        );
+    }
     return this.toBibleTranslationDefinitionDto(row);
   }
 

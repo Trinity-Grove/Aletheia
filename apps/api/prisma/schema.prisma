@@ -48,6 +48,8 @@ model User {
   authorTrustProfile        AuthorTrustProfile?
   submittedPackReports      CurriculumPackReport[] @relation("PackReportReporter")
   resolvedPackReports       CurriculumPackReport[] @relation("PackReportResolver")
+  mentorGrantsAsMentor    MentorGrant[] @relation("MentorGrantMentor")
+  mentorGrantsInvited     MentorGrant[] @relation("MentorGrantInviter")
 
   @@map("users")
 }
@@ -206,6 +208,8 @@ model Family {
   donations              DonationRecord[]
   supporterSubscriptions SupporterSubscription[]
   curriculumPackReports     CurriculumPackReport[]
+  mentorGrants           MentorGrant[]
+  activities             FamilyActivity[]
 
   @@map("families")
 }
@@ -262,6 +266,7 @@ model Learner {
   competencyTrackings    LearnerCompetencyTracking[]
   consentRecords         ConsentRecord[]
   complianceManualOverrides ComplianceManualOverride[]
+  mentorGrants           MentorGrant[]
 
   @@index([familyId])
   @@index([familyId, archivedAt])
@@ -698,12 +703,22 @@ model LearningRecordObjective {
 }
 
 model PortfolioItem {
-  id               String       @id @default(uuid()) @db.Uuid
-  familyId         String       @map("family_id") @db.Uuid
-  learnerId        String       @map("learner_id") @db.Uuid
-  learningRecordId String?      @map("learning_record_id") @db.Uuid
-  academicYearId   String?      @map("academic_year_id") @db.Uuid
-  subjectId        String?      @map("subject_id") @db.Uuid
+  id                  String       @id @default(uuid()) @db.Uuid
+  familyId            String       @map("family_id") @db.Uuid
+  learnerId           String       @map("learner_id") @db.Uuid
+  learningRecordId    String?      @map("learning_record_id") @db.Uuid
+  academicYearId      String?      @map("academic_year_id") @db.Uuid
+  subjectId           String?      @map("subject_id") @db.Uuid
+  // Issue #230: optional back-reference to the EvidenceSubmission (the
+  // ActivityDefinition/ProjectDefinition-catalog evidence system) this
+  // item was promoted from. Unique because promotion is a one-time,
+  // explicit action (PortfolioService.createFromEvidenceSubmission) --
+  // never automatic, never duplicated. Nullable/SetNull because most
+  // portfolio items still come from a direct upload with no catalog
+  // evidence behind them, and a promoted item must outlive its source
+  // (deleting/deprecating the source evidence never erases the
+  // portfolio record already shown to the family).
+  evidenceSubmissionId String?     @unique @map("evidence_submission_id") @db.Uuid
   title            String
   description      String?
   type             EvidenceType
@@ -720,11 +735,12 @@ model PortfolioItem {
   createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime     @updatedAt @map("updated_at") @db.Timestamptz
 
-  family         Family          @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  learner        Learner         @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  learningRecord LearningRecord? @relation(fields: [learningRecordId], references: [id], onDelete: SetNull)
-  academicYear   AcademicYear?   @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
-  subject        Subject?        @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  family             Family              @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner            Learner             @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  learningRecord     LearningRecord?     @relation(fields: [learningRecordId], references: [id], onDelete: SetNull)
+  academicYear       AcademicYear?       @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  subject            Subject?            @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  evidenceSubmission EvidenceSubmission? @relation(fields: [evidenceSubmissionId], references: [id], onDelete: SetNull)
 
   @@index([familyId])
   @@index([familyId, learnerId])
@@ -1515,6 +1531,47 @@ model ActivityDefinitionCompetency {
   @@map("activity_definition_competencies")
 }
 
+// Family-owned Activity (issue #96 section 7: "Pode ser criada pela
+// família" -- the sibling checklist item to the platform-catalog
+// ActivityDefinition above). Deliberately its own model rather than a
+// familyId column on ActivityDefinition: that model's code/version/
+// status(DRAFT/PUBLISHED) lifecycle is a platform-catalog governance
+// concern, not something personal family content needs.
+//
+// `visibility` (issue #244/#245): anything that isn't a fork/copy of
+// catalog content gets a visibility choice controlled by its own
+// creator -- PRIVATE by default, PUBLIC if the family opts in. No
+// approval queue gates this; moderation (if ever needed) is reactive,
+// via reports against PUBLIC content, not pre-publication review.
+model FamilyActivity {
+  id                       String                   @id @default(uuid()) @db.Uuid
+  familyId                 String                   @map("family_id") @db.Uuid
+  name                     String
+  description              String?
+  ageMin                   Int?                     @map("age_min")
+  ageMax                   Int?                     @map("age_max")
+  estimatedDurationMinutes Int?                     @map("estimated_duration_minutes")
+  supervisionRequired      Boolean                  @default(false) @map("supervision_required")
+  riskLevel                String?                  @map("risk_level")
+  evidenceRequirementMode  String                   @default("ANY") @map("evidence_requirement_mode")
+  metadata                 Json                     @default("{}")
+  visibility               FamilyContentVisibility  @default(PRIVATE)
+  createdAt                DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  @@index([familyId])
+  @@map("family_activities")
+}
+
+enum FamilyContentVisibility {
+  PRIVATE
+  PUBLIC
+
+  @@map("family_content_visibilities")
+}
+
 model ActivityDefinitionEvidenceType {
   id             String   @id @default(uuid()) @db.Uuid
   activityId     String   @map("activity_id") @db.Uuid
@@ -1750,6 +1807,9 @@ model EvidenceSubmission {
   validatedBy       User?                          @relation("EvidenceSubmissionValidator", fields: [validatedByUserId], references: [id], onDelete: SetNull)
   competencies      EvidenceSubmissionCompetency[]
   assessmentResults AssessmentResult[]
+  // Reverse side of PortfolioItem.evidenceSubmissionId (issue #230) --
+  // at most one, since promotion is a unique, one-time action.
+  portfolioItem     PortfolioItem?
 
   @@index([familyId])
   @@index([familyId, learnerId])
@@ -1958,6 +2018,8 @@ enum LearnerCompetencyTrackingStatus {
 enum DefinitionVersionOperationType {
   MIGRATE_REFERENCES
   ROLLBACK
+  CREATE
+  STATUS_TRANSITION
 
   @@map("definition_version_operation_types")
 }
@@ -1979,6 +2041,35 @@ model DefinitionVersionOperationLog {
   @@index([definitionCode])
   @@index([operationType])
   @@map("definition_version_operation_logs")
+}
+
+// Generic tagging (issue #96 section 38): annotates any Definition/Version
+// row without a schema change per table -- same polymorphic-by-plain-string
+// shape as DefinitionVersionOperationLog.affectedEntityType above, not a
+// new FK-per-table pattern. `definitionId` is the specific row's id (one
+// exact version, not "the code across all versions" -- a tag on a DRAFT
+// doesn't silently apply to a later PUBLISHED version, matching the
+// Definition/Version immutability discipline everywhere else here).
+//
+// `namespace` lets more than one taxonomy coexist on the same row (e.g.
+// "theme" vs. "difficulty" vs. a community-authored classification) without
+// them colliding or requiring a closed list of namespaces -- "pode haver
+// taxonomias diferentes" is the namespace value being a data value, not an
+// enum. Tags never replace a structural relation (domainId, competencyId,
+// ...); they are a pure annotation layer, always additive and removable
+// without touching what a definition structurally is.
+model DefinitionTag {
+  id           String   @id @default(uuid()) @db.Uuid
+  entityType   String   @map("entity_type")
+  definitionId String   @map("definition_id") @db.Uuid
+  namespace    String   @default("general")
+  tag          String
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([entityType, definitionId, namespace, tag])
+  @@index([entityType, definitionId])
+  @@index([namespace, tag])
+  @@map("definition_tags")
 }
 
 // Bible translation registry (issue #96 Fase 3, section 16) --
@@ -2391,4 +2482,66 @@ model SupporterSubscription {
 
   @@index([familyId])
   @@map("supporter_subscriptions")
+}
+
+enum MentorGrantStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+
+  @@map("mentor_grant_statuses")
+}
+
+// Mentor/external instructor model (issue #95 section 30, issue #232):
+// a mentor, tutor, pastor or "mestre de ofício" is external to the
+// family, so the grant exists from the moment of invite -- same
+// invite-by-email + hashed-token pattern as FamilyInvitation (families
+// module), before there's necessarily any User to point at yet.
+// `mentorUserId` is only set once the invite is accepted by a real
+// account.
+//
+// `role` is a free-form string ("professor de música", "mestre de
+// ofício", "pastor", ...), not a closed enum -- a catalog of mentor
+// specialties would be exactly the anti-pattern already rejected for
+// `assessorType` (assessment-result.ts) and tag/namespace values
+// (definition-tag.ts): whoever invites decides, no list to keep in
+// sync with product decisions.
+//
+// Scoped to one learner, not the whole family -- section 30's own
+// framing is a mentor for a specific child's track (e.g. woodworking),
+// not automatically every child. A mentor active for several children
+// gets one grant per learner, same as a family inviting them once per
+// child they actually mentor.
+//
+// This does NOT add a field to AssessmentResult: `assessorUserId`
+// there already points at User and is nullable -- when the assessor is
+// a mentor with an accepted grant, the caller sets assessorUserId to
+// that real user id instead of leaving assessorType as a bare string.
+// Enforcing that link at write time would special-case one value of a
+// field this codebase deliberately keeps free-form; this model exists
+// so the link *can* be made, not to gate it.
+model MentorGrant {
+  id           String            @id @default(uuid()) @db.Uuid
+  familyId     String            @map("family_id") @db.Uuid
+  learnerId    String            @map("learner_id") @db.Uuid
+  email        String
+  role         String
+  status       MentorGrantStatus @default(PENDING)
+  tokenHash    String            @unique @map("token_hash")
+  invitedBy    String            @map("invited_by") @db.Uuid
+  mentorUserId String?           @map("mentor_user_id") @db.Uuid
+  expiresAt    DateTime          @map("expires_at") @db.Timestamptz
+  acceptedAt   DateTime?         @map("accepted_at") @db.Timestamptz
+  revokedAt    DateTime?         @map("revoked_at") @db.Timestamptz
+  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz
+
+  family     Family  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner    Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  mentorUser User?   @relation("MentorGrantMentor", fields: [mentorUserId], references: [id], onDelete: SetNull)
+  invitedByUser User @relation("MentorGrantInviter", fields: [invitedBy], references: [id], onDelete: Restrict)
+
+  @@index([familyId])
+  @@index([learnerId])
+  @@index([email])
+  @@map("mentor_grants")
 }

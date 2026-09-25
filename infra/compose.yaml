@@ -32,7 +32,11 @@ services:
       start_period: 5s
 
   minio:
-    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    # MinIO revoked anonymous pulls of its official images on both Docker Hub
+    # and quay.io/minio/minio in 2025 -- CI and any fresh local pull started
+    # failing with "unauthorized" regardless of tag. Mirrored to this org's
+    # own GHCR (public, no auth required) instead of chasing a new vendor.
+    image: ghcr.io/trinity-grove/minio:RELEASE.2025-09-07T16-13-09Z@sha256:a1a8bd4ac40ad7881a245bab97323e18f971e4d4cba2c2007ec1bedd21cbaba2
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:

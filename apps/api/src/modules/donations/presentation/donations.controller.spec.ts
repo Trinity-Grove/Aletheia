@@ -12,6 +12,7 @@ describe('DonationsController & DonationWebhooksController', () => {
   const FAMILY_ID = '11111111-1111-4111-8111-111111111111';
   const DONATION_ID = '22222222-2222-4222-8222-222222222222';
   const SUBSCRIPTION_ID = '33333333-3333-4333-8333-333333333333';
+  const USER_ID = '44444444-4444-4444-8444-444444444444';
 
   let donationsController: DonationsController;
   let webhooksController: DonationWebhooksController;
@@ -55,9 +56,9 @@ describe('DonationsController & DonationWebhooksController', () => {
 
         mockService.createIntent.mockResolvedValue(expectedResponse);
 
-        const result = await donationsController.createIntent(FAMILY_ID, dto);
+        const result = await donationsController.createIntent(FAMILY_ID, USER_ID, dto);
 
-        expect(mockService.createIntent).toHaveBeenCalledWith(FAMILY_ID, dto);
+        expect(mockService.createIntent).toHaveBeenCalledWith(FAMILY_ID, dto, USER_ID);
         expect(result).toEqual(expectedResponse);
       });
     });
@@ -171,20 +172,25 @@ describe('DonationsController & DonationWebhooksController', () => {
 
   describe('DonationWebhooksController', () => {
     describe('POST /:provider', () => {
-      it('delegates to DonationsService.handleWebhook with provider, body, and signature', async () => {
+      it('delegates to DonationsService.handleWebhook with provider, body, query, signature, and request id', async () => {
         const payload = { action: 'payment.updated', data: { id: 'mp_123' } };
+        const query = { 'data.id': 'mp_123', type: 'payment' };
         mockService.handleWebhook.mockResolvedValue({ received: true });
 
         const result = await webhooksController.handleWebhook(
           'mercadopago',
           payload,
+          query,
           'v1,ts=123,sig=abc',
+          'req-123',
         );
 
         expect(mockService.handleWebhook).toHaveBeenCalledWith(
           'mercadopago',
           payload,
           'v1,ts=123,sig=abc',
+          'req-123',
+          query,
         );
         expect(result).toEqual({ received: true });
       });

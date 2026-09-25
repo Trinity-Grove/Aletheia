@@ -129,8 +129,8 @@ export function DonationFormCard({
     }, pollingIntervalMs);
   };
 
-  const handleSubmit = async (overridePaymentMethod?: DonationPaymentMethod) => {
-    const effectiveMethod = overridePaymentMethod || paymentMethod;
+  const handleSubmit = async () => {
+    const effectiveMethod = paymentMethod;
     const amountCents = getEffectiveCents();
 
     if (amountCents < 500) {
@@ -173,6 +173,14 @@ export function DonationFormCard({
       const intent: DonationIntentResponseDto = await res.json();
       setIntentResponse(intent);
 
+      if (intent.authorizationUrl) {
+        // Card-based donations (one-time or monthly) collect no card
+        // token client-side, so the payer completes payment on Mercado
+        // Pago's own hosted checkout page.
+        window.location.href = intent.authorizationUrl;
+        return;
+      }
+
       if (effectiveMethod === 'PIX' && (intent.pixCopiaECola || intent.pixQrCodeUrl)) {
         const pixPayload = intent.pixCopiaECola || intent.pixQrCodeUrl!;
         try {
@@ -185,10 +193,6 @@ export function DonationFormCard({
           }
         }
         startPollingStatus(intent.donationId, targetFamilyId, intent.expiresAt);
-      } else if (effectiveMethod === 'GOOGLE_PAY') {
-        // Google Pay intent created: simulates instant confirmation or external token processing
-        setIsConfirmed(true);
-        onDonationSuccess?.();
       }
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'Erro ao processar apoio voluntário.');
@@ -337,9 +341,7 @@ export function DonationFormCard({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (paymentMethod === 'PIX') {
-              handleSubmit();
-            }
+            handleSubmit();
           }}
           style={{ display: 'grid', gap: '1.25rem' }}
         >
@@ -384,7 +386,13 @@ export function DonationFormCard({
               </button>
               <button
                 type="button"
-                onClick={() => setFrequency('MONTHLY')}
+                onClick={() => {
+                  setFrequency('MONTHLY');
+                  // Mercado Pago's subscription product is card-based --
+                  // there is no recurring-PIX equivalent, so switching to
+                  // monthly support can never keep PIX selected.
+                  setPaymentMethod((current) => (current === 'PIX' ? 'CREDIT_CARD' : current));
+                }}
                 style={{
                   padding: '0.625rem',
                   border: 'none',
@@ -481,7 +489,8 @@ export function DonationFormCard({
                   borderRadius: '0.375rem',
                   border: paymentMethod === 'PIX' ? '1px solid var(--forest)' : '1px solid var(--border-light, #e2e8f0)',
                   backgroundColor: paymentMethod === 'PIX' ? 'rgba(46, 125, 50, 0.04)' : 'transparent',
-                  cursor: 'pointer',
+                  cursor: frequency === 'MONTHLY' ? 'not-allowed' : 'pointer',
+                  opacity: frequency === 'MONTHLY' ? 0.5 : 1,
                 }}
               >
                 <input
@@ -489,13 +498,16 @@ export function DonationFormCard({
                   name="paymentMethod"
                   value="PIX"
                   checked={paymentMethod === 'PIX'}
+                  disabled={frequency === 'MONTHLY'}
                   onChange={() => setPaymentMethod('PIX')}
                   style={{ accentColor: 'var(--forest)' }}
                 />
                 <div style={{ flex: 1 }}>
                   <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>PIX</span>
                   <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                    Instantâneo, sem taxas intermediárias, confirmação em segundos
+                    {frequency === 'MONTHLY'
+                      ? 'Indisponível para apoio mensal recorrente -- escolha cartão'
+                      : 'Instantâneo, sem taxas intermediárias, confirmação em segundos'}
                   </span>
                 </div>
               </label>
@@ -507,23 +519,23 @@ export function DonationFormCard({
                   gap: '0.75rem',
                   padding: '0.75rem',
                   borderRadius: '0.375rem',
-                  border: paymentMethod === 'GOOGLE_PAY' ? '1px solid var(--forest)' : '1px solid var(--border-light, #e2e8f0)',
-                  backgroundColor: paymentMethod === 'GOOGLE_PAY' ? 'rgba(46, 125, 50, 0.04)' : 'transparent',
+                  border: paymentMethod === 'CREDIT_CARD' ? '1px solid var(--forest)' : '1px solid var(--border-light, #e2e8f0)',
+                  backgroundColor: paymentMethod === 'CREDIT_CARD' ? 'rgba(46, 125, 50, 0.04)' : 'transparent',
                   cursor: 'pointer',
                 }}
               >
                 <input
                   type="radio"
                   name="paymentMethod"
-                  value="GOOGLE_PAY"
-                  checked={paymentMethod === 'GOOGLE_PAY'}
-                  onChange={() => setPaymentMethod('GOOGLE_PAY')}
+                  value="CREDIT_CARD"
+                  checked={paymentMethod === 'CREDIT_CARD'}
+                  onChange={() => setPaymentMethod('CREDIT_CARD')}
                   style={{ accentColor: 'var(--forest)' }}
                 />
                 <div style={{ flex: 1 }}>
-                  <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>Google Pay</span>
+                  <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>Cartão de Crédito</span>
                   <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                    Rápido e seguro através da sua conta Google
+                    Você será redirecionado ao checkout seguro do Mercado Pago para concluir o pagamento
                   </span>
                 </div>
               </label>
@@ -531,43 +543,21 @@ export function DonationFormCard({
           </div>
 
           {/* Submission action */}
-          {paymentMethod === 'GOOGLE_PAY' ? (
-            <button
-              type="button"
-              data-testid="google-pay-button"
-              onClick={() => handleSubmit('GOOGLE_PAY')}
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                backgroundColor: '#1f1f1f',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '0.375rem',
-                fontWeight: 600,
-                fontSize: '0.9375rem',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
-              }}
-            >
-              <span>Contribuir com</span>
-              <span style={{ fontWeight: 700 }}>Google Pay</span>
-            </button>
-          ) : (
-            <Button
-              type="submit"
-              variant="primary"
-              data-testid="submit-donation-button"
-              disabled={loading}
-              style={{ width: '100%', justifyContent: 'center' }}
-            >
-              {loading ? 'Gerando QR Code...' : frequency === 'MONTHLY' ? 'Iniciar Apoio Mensal via PIX' : 'Gerar PIX para Apoiar'}
-            </Button>
-          )}
+          <Button
+            type="submit"
+            variant="primary"
+            data-testid="submit-donation-button"
+            disabled={loading}
+            style={{ width: '100%', justifyContent: 'center' }}
+          >
+            {loading
+              ? 'Processando...'
+              : frequency === 'MONTHLY'
+                ? 'Iniciar Apoio Mensal'
+                : paymentMethod === 'PIX'
+                  ? 'Gerar PIX para Apoiar'
+                  : 'Continuar para Pagamento'}
+          </Button>
         </form>
       )}
     </Card>

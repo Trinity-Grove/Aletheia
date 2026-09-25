@@ -28,6 +28,7 @@ export class PortfolioItemEntity {
     public readonly updatedAt: Date,
     public readonly learnerName?: string,
     public readonly subjectName?: string | null,
+    public readonly evidenceSubmissionId?: string | null,
   ) {}
 
   private formatDateOnly(date: Date): string {
@@ -58,6 +59,9 @@ export class PortfolioItemEntity {
     }
     if (this.subjectId !== undefined) {
       dto.subjectId = this.subjectId;
+    }
+    if (this.evidenceSubmissionId !== undefined) {
+      dto.evidenceSubmissionId = this.evidenceSubmissionId;
     }
     if (this.subjectName !== undefined) {
       dto.subjectName = this.subjectName;
