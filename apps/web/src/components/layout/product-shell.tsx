@@ -238,14 +238,12 @@ export function ProductShell({
   // with an accessible state that says nothing about what the page holds.
   const requiredPermission = PATH_PERMISSIONS[activePath];
   const accessDenied =
-    (activePath.startsWith('/admin') && !isPlatformAdmin) ||
-    (requiredPermission !== undefined &&
-      profileUser !== undefined &&
-      !permissions.can(requiredPermission));
+    requiredPermission !== undefined &&
+    profileUser !== undefined &&
+    !permissions.can(requiredPermission);
 
   const navigationItems = MAIN_NAV_ITEMS
     .filter((item) => {
-      if (item.id === 'admin-catalog') return isPlatformAdmin;
       const requiredPermission = NAV_ITEM_PERMISSIONS[item.id];
       return requiredPermission === undefined || permissions.can(requiredPermission);
     })
