@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { AdminAuthProvider } from '../src/lib/auth/admin-auth-context';
+import { LocaleProvider } from '../src/lib/i18n/locale-context';
 import '@aletheia/ui/css';
 import './globals.css';
 
@@ -13,7 +14,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
       <body className="admin-body">
-        <AdminAuthProvider>{children}</AdminAuthProvider>
+        <AdminAuthProvider>
+          <LocaleProvider>{children}</LocaleProvider>
+        </AdminAuthProvider>
       </body>
     </html>
   );
