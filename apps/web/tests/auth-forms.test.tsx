@@ -96,6 +96,98 @@ describe('Auth Forms Component Tests', () => {
   });
 
   describe('RegisterForm', () => {
+    it('keeps both consent checkboxes disabled until their document has been opened and read', async () => {
+      vi.spyOn(global, 'fetch').mockResolvedValue({
+        ok: true,
+        json: async () => [
+          { code: 'TERMS_OF_USE_LGPD', title: 'Termos de Uso', content: '# Termos\n\nConteúdo curto.' },
+          { code: 'PRIVACY_POLICY_LGPD', title: 'Política de Privacidade', content: '# Política\n\nConteúdo curto.' },
+        ],
+      } as Response);
+
+      render(<RegisterForm onSubmit={vi.fn()} />);
+
+      const termsCheckbox = screen.getByTestId('reg-terms-of-use-checkbox') as HTMLInputElement;
+      const privacyCheckbox = screen.getByTestId('reg-privacy-policy-checkbox') as HTMLInputElement;
+
+      expect(termsCheckbox).toBeDisabled();
+      expect(privacyCheckbox).toBeDisabled();
+      expect(screen.getByTestId('reg-terms-of-use-hint')).toBeInTheDocument();
+
+      // Opening and closing the Terms of Use document is enough to mark
+      // it read in this test environment (jsdom reports no scrollable
+      // overflow), matching the "document fits without scrolling" case
+      // -- the dedicated scroll-tracking behavior itself is covered by
+      // the two tests below.
+      fireEvent.click(screen.getByTestId('reg-view-terms-of-use'));
+      expect(screen.getByTestId('reg-document-viewer')).toBeInTheDocument();
+      fireEvent.click(screen.getByText('Fechar'));
+
+      await waitFor(() => {
+        expect(termsCheckbox).not.toBeDisabled();
+      });
+      expect(privacyCheckbox).toBeDisabled();
+    });
+
+    it('only enables the checkbox once the document viewer is scrolled all the way to the bottom', async () => {
+      vi.spyOn(global, 'fetch').mockResolvedValue({
+        ok: true,
+        json: async () => [
+          { code: 'TERMS_OF_USE_LGPD', title: 'Termos de Uso', content: '# Termos\n\nConteúdo longo.' },
+        ],
+      } as Response);
+
+      // jsdom does no real layout (scrollHeight/clientHeight are always
+      // 0), so a genuinely scrollable, not-yet-fully-read document has
+      // to be simulated by stubbing these getters before the component
+      // ever measures them.
+      const scrollHeightSpy = vi.spyOn(Element.prototype, 'scrollHeight', 'get').mockReturnValue(1000);
+      const clientHeightSpy = vi.spyOn(Element.prototype, 'clientHeight', 'get').mockReturnValue(400);
+
+      try {
+        render(<RegisterForm onSubmit={vi.fn()} />);
+
+        // Let the mocked published-definitions fetch resolve before
+        // opening the document -- otherwise the viewer opens with no
+        // definition yet loaded and auto-marks itself read (nothing to
+        // gate on), which is a different, already separately-tested
+        // path (see "always shows both consent links as clickable...").
+        await act(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        });
+
+        fireEvent.click(screen.getByTestId('reg-view-terms-of-use'));
+        const scrollArea = screen.getByTestId('reg-document-viewer-scroll-area');
+        expect(screen.getByTestId('reg-terms-of-use-checkbox')).toBeDisabled();
+
+        fireEvent.scroll(scrollArea, { target: { scrollTop: 100 } });
+        expect(screen.getByTestId('reg-terms-of-use-checkbox')).toBeDisabled();
+
+        fireEvent.scroll(scrollArea, { target: { scrollTop: 600 } }); // 600 + 400 === 1000 -- reached the end
+        await waitFor(() => {
+          expect(screen.getByTestId('reg-terms-of-use-checkbox')).not.toBeDisabled();
+        });
+      } finally {
+        scrollHeightSpy.mockRestore();
+        clientHeightSpy.mockRestore();
+      }
+    });
+
+    it('always shows both consent links as clickable, even when the document fails to load', async () => {
+      vi.spyOn(global, 'fetch').mockResolvedValue({ ok: false } as Response);
+
+      render(<RegisterForm onSubmit={vi.fn()} />);
+
+      fireEvent.click(screen.getByTestId('reg-view-terms-of-use'));
+      expect(screen.getByTestId('reg-document-unavailable')).toBeInTheDocument();
+
+      // Nothing to read -- the checkbox must not stay permanently
+      // disabled just because the document failed to load.
+      await waitFor(() => {
+        expect(screen.getByTestId('reg-terms-of-use-checkbox')).not.toBeDisabled();
+      });
+    });
+
     it('renders RegisterForm and validates password confirmation', async () => {
       const handleSubmit = vi.fn();
       render(<RegisterForm onSubmit={handleSubmit} />);

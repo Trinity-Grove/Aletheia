@@ -44,6 +44,8 @@ export const auth: Dictionary['auth'] = {
     privacyPolicyLinkText: 'Política de Privacidad',
     viewDocumentCloseButton: 'Cerrar',
     loadingDocument: 'Cargando...',
+    mustReadDocumentHint: 'Abra y lea el documento hasta el final para habilitar la aceptación.',
+    documentUnavailableMessage: 'Documento no disponible en este momento. Intente de nuevo más tarde.',
   },
   forgotPassword: {
     title: '¿Olvidó su contraseña?',

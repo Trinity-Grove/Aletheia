@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Button, Input, Modal, Select, Textarea, useToast } from '@aletheia/ui';
 import { resolvePrivacyRegime, type CreateLearnerDto, type EducationalStage, type LearnerResponseDto } from '@aletheia/contracts';
 import { LegalDocumentContent } from '../shared/legal-document-content';
@@ -12,6 +12,11 @@ import { LegalDocumentContent } from '../shared/legal-document-content';
 export type LearnerFormSubmitDto = Omit<CreateLearnerDto, 'acceptedDataConsent'> & {
   acceptedDataConsent?: true;
 };
+
+// A scroll position within this many pixels of the bottom counts as
+// "reached the end" -- exact equality is unreliable across browsers due
+// to fractional-pixel layout/zoom rounding.
+const SCROLL_END_THRESHOLD_PX = 4;
 
 export interface LearnerFormModalProps {
   isOpen: boolean;
@@ -56,8 +61,11 @@ export function LearnerFormModal({
   const [acceptedDataConsent, setAcceptedDataConsent] = useState(false);
   const [consentError, setConsentError] = useState<string | null>(null);
   const [consentText, setConsentText] = useState<string | null>(null);
+  const [consentTextFetchFailed, setConsentTextFetchFailed] = useState(false);
   const [consentLoading, setConsentLoading] = useState(false);
   const [showFullConsentText, setShowFullConsentText] = useState(false);
+  const [hasReadConsentText, setHasReadConsentText] = useState(false);
+  const consentScrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (initialData) {
@@ -87,6 +95,8 @@ export function LearnerFormModal({
     setAcceptedDataConsent(false);
     setConsentError(null);
     setShowFullConsentText(false);
+    setHasReadConsentText(false);
+    setConsentTextFetchFailed(false);
   }, [initialData, isOpen]);
 
   useEffect(() => {
@@ -104,9 +114,14 @@ export function LearnerFormModal({
           const defs: Array<{ code: string; content: string }> = await defsRes.json();
           const match = defs.find((d) => d.code === `LEARNER_DATA_PROCESSING_${regime}`);
           setConsentText(match?.content ?? null);
+          if (!match) setConsentTextFetchFailed(true);
+        } else {
+          setConsentTextFetchFailed(true);
         }
       } catch {
-        // Non-fatal: the checkbox still works, just without a preview link.
+        // Nothing to read in this case either -- the checkbox must not
+        // stay permanently disabled because of a transient fetch error.
+        setConsentTextFetchFailed(true);
       } finally {
         setConsentLoading(false);
       }
@@ -114,6 +129,27 @@ export function LearnerFormModal({
 
     void loadConsentText();
   }, [isOpen, initialData, familyId]);
+
+  // Nothing to gate reading on if the text never loaded -- don't
+  // permanently block the checkbox because of that.
+  useEffect(() => {
+    if (consentTextFetchFailed) setHasReadConsentText(true);
+  }, [consentTextFetchFailed]);
+
+  // Some documents may fit entirely within the viewer without ever
+  // needing to scroll -- nothing to gate on in that case either.
+  useEffect(() => {
+    if (!showFullConsentText) return;
+    const el = consentScrollRef.current;
+    if (el && el.scrollHeight <= el.clientHeight) {
+      setHasReadConsentText(true);
+    }
+  }, [showFullConsentText, consentText]);
+
+  const handleConsentScroll = (el: HTMLDivElement) => {
+    const reachedEnd = el.scrollHeight - el.scrollTop - el.clientHeight <= SCROLL_END_THRESHOLD_PX;
+    if (reachedEnd) setHasReadConsentText(true);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -286,6 +322,7 @@ export function LearnerFormModal({
                 type="checkbox"
                 data-testid="learner-data-consent-checkbox"
                 checked={acceptedDataConsent}
+                disabled={!hasReadConsentText}
                 onChange={(e) => setAcceptedDataConsent(e.target.checked)}
                 style={{ marginTop: '0.2rem' }}
               />
@@ -293,28 +330,29 @@ export function LearnerFormModal({
                 Declaro ser o pai, a mãe ou o responsável legal por este estudante, ou ter autorização
                 expressa de quem seja, e consinto com o tratamento dos dados dele para organizar e registrar
                 suas atividades educacionais na plataforma, conforme a{' '}
-                {consentLoading ? (
-                  'Política de Privacidade'
-                ) : consentText ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowFullConsentText(true)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                      color: 'var(--forest)',
-                      textDecoration: 'underline',
-                      cursor: 'pointer',
-                      font: 'inherit',
-                    }}
-                  >
-                    Política de Privacidade
-                  </button>
-                ) : (
-                  'Política de Privacidade'
+                <button
+                  type="button"
+                  data-testid="learner-view-consent-text"
+                  onClick={() => setShowFullConsentText(true)}
+                  disabled={consentLoading}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    color: 'var(--forest)',
+                    textDecoration: 'underline',
+                    cursor: consentLoading ? 'default' : 'pointer',
+                    font: 'inherit',
+                  }}
+                >
+                  Política de Privacidade
+                </button>
+                .{' '}
+                {!hasReadConsentText && !consentLoading && (
+                  <span data-testid="learner-consent-hint" style={{ fontSize: '0.8125rem', opacity: 0.75 }}>
+                    (Abra e leia o documento até o final para habilitar o aceite.)
+                  </span>
                 )}
-                .
               </span>
             </label>
             {consentError && (
@@ -326,7 +364,7 @@ export function LearnerFormModal({
         )}
       </form>
 
-      {showFullConsentText && consentText && (
+      {showFullConsentText && (
         <Modal
           isOpen
           onClose={() => setShowFullConsentText(false)}
@@ -338,7 +376,20 @@ export function LearnerFormModal({
             </Button>
           }
         >
-          <LegalDocumentContent content={consentText} />
+          {consentText ? (
+            <div
+              ref={consentScrollRef}
+              data-testid="learner-consent-scroll-area"
+              onScroll={(e) => handleConsentScroll(e.currentTarget)}
+              style={{ maxHeight: '50vh', overflowY: 'auto' }}
+            >
+              <LegalDocumentContent content={consentText} />
+            </div>
+          ) : (
+            <p data-testid="learner-consent-unavailable">
+              Documento não disponível no momento. Tente novamente mais tarde.
+            </p>
+          )}
         </Modal>
       )}
     </Modal>

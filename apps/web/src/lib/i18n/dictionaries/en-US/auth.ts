@@ -44,6 +44,8 @@ export const auth: Dictionary['auth'] = {
     privacyPolicyLinkText: 'Privacy Policy',
     viewDocumentCloseButton: 'Close',
     loadingDocument: 'Loading...',
+    mustReadDocumentHint: 'Open and read the document to the end to enable acceptance.',
+    documentUnavailableMessage: 'Document unavailable right now. Please try again later.',
   },
   forgotPassword: {
     title: 'Forgot your password?',

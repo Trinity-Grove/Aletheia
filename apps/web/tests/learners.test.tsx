@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ToastProvider } from '@aletheia/ui';
 import type { LearnerResponseDto } from '@aletheia/contracts';
 import { AuthProvider } from '../src/lib/auth/rbac-context';
@@ -42,6 +42,7 @@ const mockArchivedLearner: LearnerResponseDto = {
 describe('Learner Components', () => {
   afterEach(() => {
     cleanup();
+    vi.restoreAllMocks();
   });
 
   describe('LearnerCard', () => {
@@ -115,6 +116,63 @@ describe('Learner Components', () => {
   });
 
   describe('LearnerFormModal', () => {
+    it('keeps the data consent checkbox disabled until the document has been opened and read', async () => {
+      vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
+        const url = String(input);
+        if (url.includes('/families/')) {
+          return { ok: true, json: async () => ({ countryCode: 'BRA' }) } as Response;
+        }
+        if (url.includes('/consent-definitions/published')) {
+          return {
+            ok: true,
+            json: async () => [
+              { code: 'LEARNER_DATA_PROCESSING_LGPD', content: '# Consentimento\n\nConteúdo curto.' },
+            ],
+          } as Response;
+        }
+        return { ok: false } as Response;
+      });
+
+      render(
+        <ToastProvider>
+          <LearnerFormModal familyId="family-1" isOpen={true} onClose={vi.fn()} onSubmit={vi.fn()} />
+        </ToastProvider>
+      );
+
+      const checkbox = screen.getByTestId('learner-data-consent-checkbox') as HTMLInputElement;
+      expect(checkbox).toBeDisabled();
+      expect(await screen.findByTestId('learner-consent-hint')).toBeInTheDocument();
+
+      fireEvent.click(await screen.findByTestId('learner-view-consent-text'));
+      expect(screen.getByTestId('learner-consent-scroll-area')).toBeInTheDocument();
+      fireEvent.click(screen.getByText('Fechar'));
+
+      await waitFor(() => {
+        expect(checkbox).not.toBeDisabled();
+      });
+    });
+
+    it('always shows the consent link as clickable, even when the document fails to load', async () => {
+      vi.spyOn(global, 'fetch').mockResolvedValue({ ok: false } as Response);
+
+      render(
+        <ToastProvider>
+          <LearnerFormModal familyId="family-1" isOpen={true} onClose={vi.fn()} onSubmit={vi.fn()} />
+        </ToastProvider>
+      );
+
+      const consentLink = screen.getByTestId('learner-view-consent-text');
+      await waitFor(() => {
+        expect(consentLink).not.toBeDisabled();
+      });
+      fireEvent.click(consentLink);
+      expect(screen.getByTestId('learner-consent-unavailable')).toBeInTheDocument();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('learner-data-consent-checkbox')).not.toBeDisabled();
+      });
+    });
+
     it('handles create learner form submission', () => {
       const onSubmit = vi.fn();
       const onClose = vi.fn();

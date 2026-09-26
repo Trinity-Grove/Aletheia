@@ -42,6 +42,8 @@ export const auth = {
     privacyPolicyLinkText: 'Política de Privacidade',
     viewDocumentCloseButton: 'Fechar',
     loadingDocument: 'Carregando...',
+    mustReadDocumentHint: 'Abra e leia o documento até o final para habilitar o aceite.',
+    documentUnavailableMessage: 'Documento não disponível no momento. Tente novamente mais tarde.',
   },
   forgotPassword: {
     title: 'Esqueceu sua senha?',
