@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Input, Modal, Select, Textarea, useToast } from '@aletheia/ui';
 import { resolvePrivacyRegime, type CreateLearnerDto, type EducationalStage, type LearnerResponseDto } from '@aletheia/contracts';
+import { LegalDocumentContent } from '../shared/legal-document-content';
 
 // acceptedDataConsent is only ever included on creation, never on edit
 // (see updateLearnerSchema.partial() on the backend) -- optional here so
@@ -337,7 +338,7 @@ export function LearnerFormModal({
             </Button>
           }
         >
-          <p style={{ whiteSpace: 'pre-wrap' }}>{consentText}</p>
+          <LegalDocumentContent content={consentText} />
         </Modal>
       )}
     </Modal>

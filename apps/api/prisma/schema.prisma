@@ -97,6 +97,21 @@ model AccountAuditLogEntry {
   @@map("account_audit_log_entries")
 }
 
+// Liquibase-style changelog for data migrations (seed-like scripts that
+// are hard requirements for the app to function, not optional catalog
+// content) run automatically on real server boot -- see
+// DataMigrationRunner. `code` is the migration's stable identifier and
+// never changes once it has run anywhere; a row's mere presence means
+// "already applied, never run again".
+model DataMigrationLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  code       String   @unique
+  executedAt DateTime @default(now()) @map("executed_at") @db.Timestamptz
+  notes      String?
+
+  @@map("data_migration_log")
+}
+
 enum SensitiveDataAction {
   READ
   CREATE

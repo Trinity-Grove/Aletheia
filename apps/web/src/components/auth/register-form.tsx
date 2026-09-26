@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { ISO3_COUNTRIES, resolvePrivacyRegime, type RegisterGuardianDto } from '@aletheia/contracts';
 import { useLocale } from '../../lib/i18n/locale-context';
+import { LegalDocumentContent } from '../shared/legal-document-content';
 
 export interface RegisterFormProps {
   onSubmit?: (_data: RegisterGuardianDto) => Promise<void> | void;
@@ -252,7 +253,7 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
             }}
           >
             <h2 style={{ marginTop: 0 }}>{viewingDocument.title}</h2>
-            <p style={{ whiteSpace: 'pre-wrap' }}>{viewingDocument.content}</p>
+            <LegalDocumentContent content={viewingDocument.content} />
             <button
               type="button"
               onClick={() => setViewingDocument(null)}
