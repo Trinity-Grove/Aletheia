@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ISO3_COUNTRIES, resolvePrivacyRegime, type RegisterGuardianDto } from '@aletheia/contracts';
 import { useLocale } from '../../lib/i18n/locale-context';
+import { LegalDocumentContent } from '../shared/legal-document-content';
 
 export interface RegisterFormProps {
   onSubmit?: (_data: RegisterGuardianDto) => Promise<void> | void;
@@ -13,6 +14,13 @@ interface PublicConsentDefinition {
   title: string;
   content: string;
 }
+
+type LegalDocumentKind = 'TERMS_OF_USE' | 'PRIVACY_POLICY';
+
+// A scroll position within this many pixels of the bottom counts as
+// "reached the end" -- exact equality is unreliable across browsers due
+// to fractional-pixel layout/zoom rounding.
+const SCROLL_END_THRESHOLD_PX = 4;
 
 export function RegisterForm({ onSubmit }: RegisterFormProps) {
   const { t } = useLocale();
@@ -26,7 +34,10 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [publishedDefinitions, setPublishedDefinitions] = useState<PublicConsentDefinition[]>([]);
-  const [viewingDocument, setViewingDocument] = useState<PublicConsentDefinition | null>(null);
+  const [viewingKind, setViewingKind] = useState<LegalDocumentKind | null>(null);
+  const [hasReadTermsOfUse, setHasReadTermsOfUse] = useState(false);
+  const [hasReadPrivacyPolicy, setHasReadPrivacyPolicy] = useState(false);
+  const documentScrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     fetch('/api/v1/consent-definitions/published?scope=FAMILY')
@@ -38,6 +49,36 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
   const regime = resolvePrivacyRegime(countryCode);
   const termsOfUseDefinition = publishedDefinitions.find((d) => d.code === `TERMS_OF_USE_${regime}`);
   const privacyPolicyDefinition = publishedDefinitions.find((d) => d.code === `PRIVACY_POLICY_${regime}`);
+  const viewingDefinition =
+    viewingKind === 'TERMS_OF_USE' ? termsOfUseDefinition : viewingKind === 'PRIVACY_POLICY' ? privacyPolicyDefinition : null;
+
+  const markRead = (kind: LegalDocumentKind) => {
+    if (kind === 'TERMS_OF_USE') setHasReadTermsOfUse(true);
+    else setHasReadPrivacyPolicy(true);
+  };
+
+  const checkScrolledToEnd = (el: HTMLDivElement) => {
+    if (!viewingKind) return;
+    const reachedEnd = el.scrollHeight - el.scrollTop - el.clientHeight <= SCROLL_END_THRESHOLD_PX;
+    if (reachedEnd) markRead(viewingKind);
+  };
+
+  // Some documents may fit entirely within the viewer without ever
+  // needing to scroll -- nothing to gate on in that case, so mark it
+  // read as soon as it's rendered. Also covers a document that failed
+  // to load (nothing there to read either).
+  useEffect(() => {
+    if (!viewingKind) return;
+    if (!viewingDefinition) {
+      markRead(viewingKind);
+      return;
+    }
+    const el = documentScrollRef.current;
+    if (el && el.scrollHeight <= el.clientHeight) {
+      markRead(viewingKind);
+    }
+    // Only re-check when the open document (or its content) changes.
+  }, [viewingKind, viewingDefinition?.content]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,22 +208,27 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
             type="checkbox"
             data-testid="reg-terms-of-use-checkbox"
             checked={acceptedTermsOfUse}
+            disabled={!hasReadTermsOfUse}
             onChange={(e) => setAcceptedTermsOfUse(e.target.checked)}
           />
           <span>
             {t('auth.register.acceptTermsOfUseLabel')}{' '}
-            {termsOfUseDefinition ? (
-              <button
-                type="button"
-                data-testid="reg-view-terms-of-use"
-                onClick={() => setViewingDocument(termsOfUseDefinition)}
-                className="auth-link"
-                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
-              >
-                {t('auth.register.termsOfUseLinkText')}
-              </button>
-            ) : (
-              t('auth.register.termsOfUseLinkText')
+            <button
+              type="button"
+              data-testid="reg-view-terms-of-use"
+              onClick={() => setViewingKind('TERMS_OF_USE')}
+              className="auth-link"
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+            >
+              {t('auth.register.termsOfUseLinkText')}
+            </button>
+            {!hasReadTermsOfUse && (
+              <>
+                {' '}
+                <span data-testid="reg-terms-of-use-hint" style={{ fontSize: '0.8125rem', opacity: 0.75 }}>
+                  ({t('auth.register.mustReadDocumentHint')})
+                </span>
+              </>
             )}
           </span>
         </label>
@@ -194,22 +240,27 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
             type="checkbox"
             data-testid="reg-privacy-policy-checkbox"
             checked={acceptedPrivacyPolicy}
+            disabled={!hasReadPrivacyPolicy}
             onChange={(e) => setAcceptedPrivacyPolicy(e.target.checked)}
           />
           <span>
             {t('auth.register.acceptPrivacyPolicyLabel')}{' '}
-            {privacyPolicyDefinition ? (
-              <button
-                type="button"
-                data-testid="reg-view-privacy-policy"
-                onClick={() => setViewingDocument(privacyPolicyDefinition)}
-                className="auth-link"
-                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
-              >
-                {t('auth.register.privacyPolicyLinkText')}
-              </button>
-            ) : (
-              t('auth.register.privacyPolicyLinkText')
+            <button
+              type="button"
+              data-testid="reg-view-privacy-policy"
+              onClick={() => setViewingKind('PRIVACY_POLICY')}
+              className="auth-link"
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+            >
+              {t('auth.register.privacyPolicyLinkText')}
+            </button>
+            {!hasReadPrivacyPolicy && (
+              <>
+                {' '}
+                <span data-testid="reg-privacy-policy-hint" style={{ fontSize: '0.8125rem', opacity: 0.75 }}>
+                  ({t('auth.register.mustReadDocumentHint')})
+                </span>
+              </>
             )}
           </span>
         </label>
@@ -224,7 +275,7 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
         {loading ? t('auth.register.submittingButton') : t('auth.register.submitButton')}
       </button>
 
-      {viewingDocument && (
+      {viewingKind && (
         <div
           role="dialog"
           aria-modal="true"
@@ -241,6 +292,9 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
           }}
         >
           <div
+            ref={documentScrollRef}
+            data-testid="reg-document-viewer-scroll-area"
+            onScroll={(e) => checkScrolledToEnd(e.currentTarget)}
             style={{
               maxWidth: '32rem',
               width: '100%',
@@ -251,11 +305,18 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
               padding: '1.5rem',
             }}
           >
-            <h2 style={{ marginTop: 0 }}>{viewingDocument.title}</h2>
-            <p style={{ whiteSpace: 'pre-wrap' }}>{viewingDocument.content}</p>
+            <h2 style={{ marginTop: 0 }}>
+              {viewingDefinition?.title ??
+                t(viewingKind === 'TERMS_OF_USE' ? 'auth.register.termsOfUseLinkText' : 'auth.register.privacyPolicyLinkText')}
+            </h2>
+            {viewingDefinition ? (
+              <LegalDocumentContent content={viewingDefinition.content} />
+            ) : (
+              <p data-testid="reg-document-unavailable">{t('auth.register.documentUnavailableMessage')}</p>
+            )}
             <button
               type="button"
-              onClick={() => setViewingDocument(null)}
+              onClick={() => setViewingKind(null)}
               className="btn btn-secondary"
             >
               {t('auth.register.viewDocumentCloseButton')}

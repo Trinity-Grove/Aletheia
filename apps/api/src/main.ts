@@ -11,6 +11,9 @@ import type { IncomingMessage } from 'node:http';
 import { AppModule } from './app.module';
 import { parseEnvironment } from './platform/config/environment';
 import { PinoNestLoggerService } from './platform/logging/pino-nest-logger.service';
+import { DataMigrationRunner } from './platform/database/data-migration-runner';
+import { LegalConsentDefinitionsSeeder } from './modules/privacy/infrastructure/legal-consent-definitions.seeder';
+import { JurisdictionDefinitionSeeder } from './modules/jurisdictions/infrastructure/jurisdiction-definition.seeder';
 
 // Fields that must never appear in logs even if they end up in a logged
 // request/response — auth material, secrets, and PII passed through
@@ -79,8 +82,37 @@ export async function createApplication(): Promise<NestFastifyApplication> {
   return app;
 }
 
+// Data migrations that are hard requirements for the app to function,
+// not optional catalog content -- unlike every other seed:* script in
+// this codebase (which stay manual, run only when someone deliberately
+// publishes new content), these run automatically on every real server
+// boot, tracked by DataMigrationLog so each only ever runs once. Only
+// called from bootstrap(), never from createApplication() -- tests
+// (which all go through createApplication() directly) are unaffected
+// and keep relying on the explicit `seed:*` step already run in CI.
+async function runDataMigrationsOnBoot(app: NestFastifyApplication): Promise<void> {
+  const runner = app.get(DataMigrationRunner);
+  const legalConsentSeeder = app.get(LegalConsentDefinitionsSeeder);
+  const jurisdictionSeeder = app.get(JurisdictionDefinitionSeeder);
+
+  await runner.run([
+    {
+      code: 'legal-consent-definitions',
+      run: async () => {
+        const result = await legalConsentSeeder.seed();
+        return `${result.created} created, ${result.existing} already present (total: ${result.total})`;
+      },
+    },
+    {
+      code: 'jurisdiction-definitions',
+      run: async () => `${await jurisdictionSeeder.seed()} jurisdiction definitions created`,
+    },
+  ]);
+}
+
 async function bootstrap(): Promise<void> {
   const app = await createApplication();
+  await runDataMigrationsOnBoot(app);
   const port = Number.parseInt(process.env.PORT ?? '3001', 10);
   const host = process.env.HOST ?? '0.0.0.0';
   await app.listen(port, host);

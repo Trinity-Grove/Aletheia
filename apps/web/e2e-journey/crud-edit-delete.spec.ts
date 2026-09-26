@@ -1,4 +1,26 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+// Consent checkboxes stay disabled until their document has been
+// opened and scrolled all the way to the end -- against real, lengthy
+// seeded legal content, that requires an actual scroll. Jumps straight
+// to the bottom rather than a gradual scroll -- only the end state
+// matters here, not the motion.
+async function readAndAcceptDocument(
+  page: Page,
+  viewButtonTestId: string,
+  scrollAreaTestId: string,
+  checkboxTestId: string,
+): Promise<void> {
+  await page.getByTestId(viewButtonTestId).click();
+  const scrollArea = page.getByTestId(scrollAreaTestId);
+  await expect(scrollArea).toBeVisible();
+  await scrollArea.evaluate((el) => {
+    el.scrollTop = el.scrollHeight;
+  });
+  await page.getByText('Fechar').click();
+  await expect(page.getByTestId(checkboxTestId)).toBeEnabled();
+  await page.getByTestId(checkboxTestId).check();
+}
 
 // Real, no-mocks coverage of edit and delete across every domain — issue
 // #21's "Playwright cobre criar, editar, listar e remover onde aplicável"
@@ -45,8 +67,18 @@ test.describe('Real CRUD edit/delete coverage (#21)', () => {
       await page.getByTestId('reg-email-input').fill(email);
       await page.getByTestId('reg-password-input').fill(password);
       await page.getByTestId('reg-confirm-password-input').fill(password);
-      await page.getByTestId('reg-terms-of-use-checkbox').check();
-      await page.getByTestId('reg-privacy-policy-checkbox').check();
+      await readAndAcceptDocument(
+        page,
+        'reg-view-terms-of-use',
+        'reg-document-viewer-scroll-area',
+        'reg-terms-of-use-checkbox',
+      );
+      await readAndAcceptDocument(
+        page,
+        'reg-view-privacy-policy',
+        'reg-document-viewer-scroll-area',
+        'reg-privacy-policy-checkbox',
+      );
       await page.getByTestId('register-button').click();
       await expect(page).toHaveURL(/.*onboarding/, { timeout: 15_000 });
 
@@ -58,7 +90,12 @@ test.describe('Real CRUD edit/delete coverage (#21)', () => {
       await page.getByTestId('add-learner-btn').click();
       await page.getByTestId('learner-first-name-input').fill(learnerFirstName);
       await page.getByTestId('learner-birth-date-input').fill('2017-03-10');
-      await page.getByTestId('learner-data-consent-checkbox').check();
+      await readAndAcceptDocument(
+        page,
+        'learner-view-consent-text',
+        'learner-consent-scroll-area',
+        'learner-data-consent-checkbox',
+      );
       await page.getByTestId('learner-submit-btn').click();
       await expect(page.getByText(learnerFirstName)).toBeVisible({ timeout: 15_000 });
 
