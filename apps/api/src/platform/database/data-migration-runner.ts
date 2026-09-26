@@ -20,12 +20,18 @@ export class DataMigrationRunner {
 
   async run(migrations: DataMigration[]): Promise<void> {
     for (const migration of migrations) {
-      const already = await this.prisma.dataMigrationLog.findUnique({
-        where: { code: migration.code },
-      });
-      if (already) continue;
-
+      // The changelog lookup itself can throw (e.g. the database is
+      // unreachable, or this table's migration hasn't been applied yet
+      // in this environment) -- that must never crash the whole boot,
+      // the same as a migration's own run() failing below. Liveness
+      // has to succeed independently of database health; readiness
+      // reports that separately.
       try {
+        const already = await this.prisma.dataMigrationLog.findUnique({
+          where: { code: migration.code },
+        });
+        if (already) continue;
+
         const summary = await migration.run();
         await this.prisma.dataMigrationLog.create({
           data: { code: migration.code, notes: summary },

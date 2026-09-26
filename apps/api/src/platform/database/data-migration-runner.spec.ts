@@ -43,6 +43,19 @@ describe('DataMigrationRunner', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
+  it('does not crash when the changelog lookup itself throws (e.g. an unreachable database) -- liveness must not depend on database health', async () => {
+    const findUnique = jest.fn().mockRejectedValue(new Error('connection refused'));
+    const create = jest.fn();
+    const prisma = { dataMigrationLog: { findUnique, create } } as unknown as PrismaService;
+    const runner = new DataMigrationRunner(prisma);
+
+    const run = jest.fn();
+    await expect(runner.run([{ code: 'my-migration', run }])).resolves.toBeUndefined();
+
+    expect(run).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
+
   it('continues to the next migration even if an earlier one fails', async () => {
     const findUnique = jest.fn().mockResolvedValue(null);
     const create = jest.fn().mockResolvedValue({});
