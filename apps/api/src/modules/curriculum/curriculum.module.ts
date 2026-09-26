@@ -22,6 +22,7 @@ import { BibleTranslationDefinitionSeeder } from './infrastructure/bible-transla
 import { BiblicalFormationSeeder } from './infrastructure/biblical-formation.seeder.js';
 import { BiblicalFormationIntermediateSeeder } from './infrastructure/biblical-formation-intermediate.seeder.js';
 import { BiblicalFormationOriginalLanguagesLiteracySeeder } from './infrastructure/biblical-formation-original-languages-literacy.seeder.js';
+import { BiblicalFormationTextTransmissionSeeder } from './infrastructure/biblical-formation-text-transmission.seeder.js';
 import { MusicFormationSeeder } from './infrastructure/music-formation.seeder.js';
 import { MusicInstrumentsSeeder } from './infrastructure/music-instruments.seeder.js';
 import { MusicChristianSeeder } from './infrastructure/music-christian.seeder.js';
@@ -152,6 +153,7 @@ import { FamilyActivityController } from './presentation/family-activity.control
     BiblicalFormationSeeder,
     BiblicalFormationIntermediateSeeder,
     BiblicalFormationOriginalLanguagesLiteracySeeder,
+    BiblicalFormationTextTransmissionSeeder,
     MusicFormationSeeder,
     MusicInstrumentsSeeder,
     MusicChristianSeeder,
