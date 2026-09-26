@@ -43,7 +43,18 @@ async function refreshSessionOnce(): Promise<boolean> {
           method: 'POST',
           credentials: 'include',
         });
-        return response.ok;
+        if (response.ok) {
+          try {
+            const data = (await response.json()) as { accessToken?: string };
+            if (data?.accessToken) {
+              setApiAuthToken(data.accessToken);
+            }
+          } catch {
+            // Ignore response parsing errors if body is empty
+          }
+          return true;
+        }
+        return false;
       } catch {
         return false;
       } finally {

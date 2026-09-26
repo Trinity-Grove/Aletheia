@@ -90,6 +90,21 @@ export function AdminAuthProvider({
     }
   }, [initialStatus, refreshSession]);
 
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setApiAuthToken(null);
+      setUser(null);
+      setStatus('unauthenticated');
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('auth:unauthorized', handleUnauthorized);
+      return () => {
+        window.removeEventListener('auth:unauthorized', handleUnauthorized);
+      };
+    }
+  }, []);
+
   const value = useMemo<AdminAuthContextValue>(
     () => ({ user, status, login, logout, refreshSession }),
     [user, status, login, logout, refreshSession],

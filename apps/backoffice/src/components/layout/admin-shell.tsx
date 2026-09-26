@@ -65,32 +65,34 @@ export function AdminShell({ children }: AdminShellProps): React.ReactElement {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           {user && (
-            <div style={{ textAlign: 'right', fontSize: '0.875rem' }}>
-              <div style={{ fontWeight: 600, color: 'var(--text-primary, #0f172a)' }}>
-                {user.fullName}
+            <>
+              <div style={{ textAlign: 'right', fontSize: '0.875rem' }}>
+                <div style={{ fontWeight: 600, color: 'var(--text-primary, #0f172a)' }}>
+                  {user.fullName}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)' }}>
+                  {user.email}
+                </div>
               </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)' }}>
-                {user.email}
-              </div>
-            </div>
+              <button
+                type="button"
+                onClick={logout}
+                data-testid="admin-header-logout"
+                style={{
+                  padding: '0.4rem 0.85rem',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  borderRadius: '6px',
+                  border: '1px solid var(--line, #cbd5e1)',
+                  backgroundColor: '#f8fafc',
+                  color: 'var(--text-primary, #334155)',
+                  cursor: 'pointer',
+                }}
+              >
+                Sair / Logout
+              </button>
+            </>
           )}
-          <button
-            type="button"
-            onClick={logout}
-            data-testid="admin-header-logout"
-            style={{
-              padding: '0.4rem 0.85rem',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              borderRadius: '6px',
-              border: '1px solid var(--line, #cbd5e1)',
-              backgroundColor: '#f8fafc',
-              color: 'var(--text-primary, #334155)',
-              cursor: 'pointer',
-            }}
-          >
-            Sair / Logout
-          </button>
         </div>
       </header>
 

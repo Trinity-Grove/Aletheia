@@ -6,11 +6,17 @@ import { useAdminAuth } from '../../src/lib/auth/admin-auth-context';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const { login } = useAdminAuth();
+  const { login, status } = useAdminAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/operations');
+    }
+  }, [status, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
