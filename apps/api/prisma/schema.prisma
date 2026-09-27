@@ -15,6 +15,11 @@ model User {
   passwordHash                 String                   @map("password_hash")
   fullName                     String                   @map("full_name")
   emailVerifiedAt              DateTime?                @map("email_verified_at") @db.Timestamptz
+  // true only for accounts created after the blocking email-code
+  // verification feature shipped -- login() gates on this (not on
+  // emailVerifiedAt alone) so pre-existing unverified accounts are never
+  // retroactively locked out; they only see a "please verify" banner.
+  emailVerificationRequired    Boolean                  @default(false) @map("email_verification_required")
   mfaEnabled                   Boolean                  @default(false) @map("mfa_enabled")
   // Real platform-admin role (issue #101), replacing the temporary
   // "guardian of any family" proxy PR #100 used for
@@ -47,6 +52,7 @@ model User {
   mfaRecoveryCodes        MfaRecoveryCode[]
   mfaSetupChallenges      MfaSetupChallenge[]
   mfaLoginChallenges      MfaLoginChallenge[]
+  registrationVerificationChallenges RegistrationVerificationChallenge[]
   generatedReports        OfficialReport[]
   authoredEvidenceSubmissions  EvidenceSubmission[] @relation("EvidenceSubmissionAuthor")
   validatedEvidenceSubmissions EvidenceSubmission[] @relation("EvidenceSubmissionValidator")
@@ -81,6 +87,7 @@ enum AccountAuditEventType {
   MFA_ENABLED
   MFA_DISABLED
   MFA_CHALLENGE_FAILED
+  EMAIL_VERIFICATION_CODE_FAILED
 
   @@map("account_audit_event_types")
 }
@@ -234,6 +241,29 @@ model MfaLoginChallenge {
 
   @@index([userId])
   @@map("mfa_login_challenges")
+}
+
+// One pending "confirm your email with a 6-digit code" challenge per
+// registration/login attempt on an emailVerificationRequired account.
+// tokenHash is the opaque handle the client holds (never the code
+// itself); codeHash is the actual 6-digit code, hashed the same way.
+// plainCodeForDebugOnly exists ONLY to let non-production E2E tests
+// retrieve a real pending code through the debug-only
+// GET /auth/register/debug-code endpoint -- AuthService must never
+// populate it when environment.nodeEnv === 'production'.
+model RegistrationVerificationChallenge {
+  id                     String   @id @default(uuid()) @db.Uuid
+  userId                 String   @map("user_id") @db.Uuid
+  tokenHash              String   @unique @map("token_hash")
+  codeHash               String   @map("code_hash")
+  plainCodeForDebugOnly  String?  @map("plain_code_debug_only")
+  attemptCount           Int      @default(0) @map("attempt_count")
+  expiresAt              DateTime @map("expires_at") @db.Timestamptz
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("registration_verification_challenges")
 }
 
 model Family {

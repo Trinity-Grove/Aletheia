@@ -2,6 +2,7 @@ import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
 import { MAIL_SENDER, type MailMessage, type MailSender } from '../src/platform/mail/mail-sender.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 describe('Account security: change password & change email (real Postgres)', () => {
   let app: NestFastifyApplication;
@@ -27,10 +28,7 @@ describe('Account security: change password & change email (real Postgres)', () 
   it('changes the password, revokes existing sessions, and rejects the old password', async () => {
     const email = `change-pw-integration-${Date.now()}@example.com`;
 
-    const registerResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email, password: 'oldPassword123', fullName: 'Change Password Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const registerResponse = await registerAndConfirmGuardian(app, { email, password: 'oldPassword123', fullName: 'Change Password Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
     const accessCookie = [registerResponse.headers['set-cookie']]
       .flat()
@@ -64,10 +62,7 @@ describe('Account security: change password & change email (real Postgres)', () 
   it('rejects a password change with the wrong current password', async () => {
     const email = `change-pw-wrong-integration-${Date.now()}@example.com`;
 
-    const registerResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email, password: 'oldPassword123', fullName: 'Change Password Wrong Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const registerResponse = await registerAndConfirmGuardian(app, { email, password: 'oldPassword123', fullName: 'Change Password Wrong Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
     const accessCookie = [registerResponse.headers['set-cookie']]
       .flat()
@@ -84,10 +79,7 @@ describe('Account security: change password & change email (real Postgres)', () 
     const email = `change-email-integration-${Date.now()}@example.com`;
     const newEmail = `changed-integration-${Date.now()}@example.com`;
 
-    const registerResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email, password: 'password12345', fullName: 'Change Email Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const registerResponse = await registerAndConfirmGuardian(app, { email, password: 'password12345', fullName: 'Change Email Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
     const accessCookie = [registerResponse.headers['set-cookie']]
       .flat()
@@ -129,15 +121,9 @@ describe('Account security: change password & change email (real Postgres)', () 
     const emailA = `change-email-taken-a-${Date.now()}@example.com`;
     const emailB = `change-email-taken-b-${Date.now()}@example.com`;
 
-    await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: emailB, password: 'password12345', fullName: 'Existing User', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    await registerAndConfirmGuardian(app, { email: emailB, password: 'password12345', fullName: 'Existing User', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
-    const registerA = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: emailA, password: 'password12345', fullName: 'Requesting User', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const registerA = await registerAndConfirmGuardian(app, { email: emailA, password: 'password12345', fullName: 'Requesting User', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
     const accessCookieA = [registerA.headers['set-cookie']]
       .flat()

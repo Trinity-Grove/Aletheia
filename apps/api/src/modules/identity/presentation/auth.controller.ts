@@ -5,7 +5,9 @@ import {
   HttpCode,
   HttpStatus,
   Inject,
+  NotFoundException,
   Post,
+  Query,
   Req,
   Res,
   UnauthorizedException,
@@ -17,6 +19,7 @@ import type { FastifyReply } from 'fastify';
 import {
   changeEmailSchema,
   changePasswordSchema,
+  confirmRegistrationCodeSchema,
   forgotPasswordSchema,
   loginSchema,
   mfaConfirmSchema,
@@ -24,12 +27,14 @@ import {
   mfaSetupRequestSchema,
   mfaVerifySchema,
   registerGuardianSchema,
+  resendRegistrationCodeSchema,
   resetPasswordSchema,
   verifyEmailSchema,
   type AccountAuditLogEntryDto,
   type AuthResponseDto,
   type ChangeEmailDto,
   type ChangePasswordDto,
+  type ConfirmRegistrationCodeDto,
   type ForgotPasswordDto,
   type LoginDto,
   type LoginResultDto,
@@ -39,6 +44,8 @@ import {
   type MfaSetupResponseDto,
   type MfaVerifyDto,
   type RegisterGuardianDto,
+  type RegisterResultDto,
+  type ResendRegistrationCodeDto,
   type ResetPasswordDto,
   type UserSummaryDto,
   type VerifyEmailDto,
@@ -70,15 +77,61 @@ export class AuthController {
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
-  @ApiOperation({ summary: 'Register a new guardian account' })
-  @ApiResponse({ status: 201, description: 'Guardian successfully registered.' })
+  @ApiOperation({ summary: 'Register a new guardian account; a 6-digit email code must be confirmed before use' })
+  @ApiResponse({ status: 201, description: 'Guardian created; a confirmation code was emailed.' })
   @ApiResponse({ status: 400, description: 'Invalid input, weak password, or email unavailable.' })
   async register(
     @Body(new ZodValidationPipe(registerGuardianSchema)) body: RegisterGuardianDto,
+  ): Promise<RegisterResultDto> {
+    // No session/cookie here — the account is unusable until
+    // POST /auth/register/confirm succeeds.
+    return this.authService.register(body);
+  }
+
+  @Post('register/confirm')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Confirm registration with the 6-digit code emailed at signup' })
+  @ApiResponse({ status: 200, description: 'Email confirmed; a full session is issued.' })
+  @ApiResponse({ status: 400, description: 'Invalid code, or challenge exhausted.' })
+  @ApiResponse({ status: 404, description: 'Invalid or expired registration challenge.' })
+  async confirmRegistration(
+    @Body(new ZodValidationPipe(confirmRegistrationCodeSchema)) body: ConfirmRegistrationCodeDto,
     @Res({ passthrough: true }) reply: FastifyReply,
   ): Promise<AuthResponseDto> {
-    const session = await this.authService.register(body);
+    const session = await this.authService.confirmRegistrationCode(body);
     return this.commitSession(reply, session);
+  }
+
+  @Post('register/resend-code')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Resend the registration confirmation code, invalidating the previous one' })
+  @ApiResponse({ status: 200, description: 'A new code was emailed; use the new challengeToken from now on.' })
+  @ApiResponse({ status: 404, description: 'Invalid or expired registration challenge.' })
+  async resendRegistrationCode(
+    @Body(new ZodValidationPipe(resendRegistrationCodeSchema)) body: ResendRegistrationCodeDto,
+  ): Promise<RegisterResultDto> {
+    return this.authService.resendRegistrationCode(body.challengeToken);
+  }
+
+  @Get('register/debug-code')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Non-production only: read a pending registration code for E2E tests' })
+  @ApiResponse({ status: 200, description: 'The pending code, if the challenge is still valid.' })
+  @ApiResponse({ status: 404, description: 'Not available in production, or challenge not found.' })
+  async debugRegistrationCode(
+    @Query('challengeToken') challengeToken: string,
+  ): Promise<{ code: string }> {
+    if (this.environment.nodeEnv === 'production') {
+      throw new NotFoundException();
+    }
+
+    const code = await this.authService.findPendingRegistrationCodeForDebugOnly(challengeToken);
+    if (!code) {
+      throw new NotFoundException('No pending challenge for this token.');
+    }
+    return { code };
   }
 
   @Post('login')
@@ -92,11 +145,14 @@ export class AuthController {
   ): Promise<LoginResultDto> {
     const result = await this.authService.login(body);
 
-    // A user with MFA enabled gets a challenge, not a session — keep the
-    // response free of any cookie so nothing resembling a session exists
-    // until the second factor is verified in /auth/mfa/verify.
+    // A user with MFA enabled, or an account still pending email
+    // confirmation, gets a challenge instead of a session — keep the
+    // response free of any cookie until the second step succeeds.
     if ('mfaRequired' in result) {
       return { mfaRequired: true, challengeToken: result.challengeToken };
+    }
+    if ('emailConfirmationRequired' in result) {
+      return { emailConfirmationRequired: true, challengeToken: result.challengeToken };
     }
 
     return this.commitSession(reply, result);

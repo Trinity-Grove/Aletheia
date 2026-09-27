@@ -22,6 +22,18 @@ async function readAndAcceptDocument(
   await page.getByTestId(checkboxTestId).check();
 }
 
+// See golden-path.spec.ts for why this reads the code through the
+// non-production-only debug endpoint rather than a mock.
+async function confirmEmailRegistrationCode(page: Page, registerResponse: { challengeToken: string }): Promise<void> {
+  await expect(page.getByTestId('email-code-verify-form')).toBeVisible();
+  const debugRes = await page.request.get('/api/v1/auth/register/debug-code', {
+    params: { challengeToken: registerResponse.challengeToken },
+  });
+  const { code } = (await debugRes.json()) as { code: string };
+  await page.getByTestId('email-code-input').fill(code);
+  await page.getByTestId('email-code-verify-button').click();
+}
+
 // Real, no-mocks coverage of edit and delete across every domain — issue
 // #21's "Playwright cobre criar, editar, listar e remover onde aplicável"
 // criterion. golden-path.spec.ts already covers create+list end to end; this
@@ -79,7 +91,12 @@ test.describe('Real CRUD edit/delete coverage (#21)', () => {
         'reg-document-viewer-scroll-area',
         'reg-privacy-policy-checkbox',
       );
+      const registerResponsePromise = page.waitForResponse(
+        (res) => res.url().includes('/api/v1/auth/register') && res.request().method() === 'POST',
+      );
       await page.getByTestId('register-button').click();
+      const registerResponse = (await (await registerResponsePromise).json()) as { challengeToken: string };
+      await confirmEmailRegistrationCode(page, registerResponse);
       await expect(page).toHaveURL(/.*onboarding/, { timeout: 15_000 });
 
       await page.getByTestId('family-name-input').fill(familyName);

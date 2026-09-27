@@ -4,6 +4,7 @@ import supertest from 'supertest';
 import { learnerCompetencyAchievementResponseSchema } from '@aletheia/contracts';
 import { createApplication } from '../src/main.js';
 import { PrismaService } from '../src/platform/database/prisma.service.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 describe('Automatic competency achievements (real Postgres)', () => {
   let app: NestFastifyApplication;
@@ -16,8 +17,7 @@ describe('Automatic competency achievements (real Postgres)', () => {
   const adminBase = '/api/v1/admin/curriculum-definitions';
 
   async function register(email: string) {
-    const response = await supertest(app.getHttpServer()).post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Achievement Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true }).expect(201);
+    const response = await registerAndConfirmGuardian(app, { email, password: 'somePassword123', fullName: 'Achievement Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     return [response.headers['set-cookie']].flat().find((value) => value?.startsWith('aletheia_session='))!;
   }
 

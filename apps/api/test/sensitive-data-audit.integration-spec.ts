@@ -2,6 +2,7 @@ import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
 import { PrismaService } from '../src/platform/database/prisma.service.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 describe('Sensitive data access log: immutable audit trail for family/learner data operations (real Postgres)', () => {
   let app: NestFastifyApplication;
@@ -16,17 +17,11 @@ describe('Sensitive data access log: immutable audit trail for family/learner da
     userId: string;
     familyId: string;
   }> {
-    const registerRes = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({
-        email: uniqueEmail(prefix),
-        password: 'somePassword123',
-        fullName: `Guardian ${prefix}`,
-        countryCode: 'BRA',
-        acceptedTermsOfUse: true,
-        acceptedPrivacyPolicy: true,
-      })
-      .expect(201);
+    const registerRes = await registerAndConfirmGuardian(app, {
+      email: uniqueEmail(prefix),
+      password: 'somePassword123',
+      fullName: `Guardian ${prefix}`,
+    });
 
     const cookie = [registerRes.headers['set-cookie']]
       .flat()

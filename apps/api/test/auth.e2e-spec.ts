@@ -12,18 +12,23 @@ describe('Identity Auth E2E', () => {
 
     // Override AuthService for in-memory E2E execution without external DB container
     const authService = app.get(AuthService);
-    let tokenStore = '';
-    jest.spyOn(authService, 'register').mockImplementation(async (dto) => {
-      tokenStore = 'fake-jwt-token-12345';
+    jest.spyOn(authService, 'register').mockImplementation(async (_dto) => ({
+      emailConfirmationRequired: true,
+      challengeToken: 'fake-registration-challenge-token',
+    }));
+    jest.spyOn(authService, 'confirmRegistrationCode').mockImplementation(async (dto) => {
+      if (dto.challengeToken !== 'fake-registration-challenge-token' || dto.code !== '123456') {
+        throw new BadRequestException('Invalid code.');
+      }
       return {
-        accessToken: tokenStore,
+        accessToken: 'fake-jwt-token-12345',
         refreshToken: 'fake-refresh-token-12345',
         refreshTokenExpiresAt: new Date(Date.now() + 86400000),
         user: {
           id: '11111111-1111-1111-1111-111111111111',
-          email: dto.email,
-          fullName: dto.fullName,
-          emailVerified: false,
+          email: 'guardian@test.com',
+          fullName: 'Test Guardian',
+          emailVerified: true,
           mfaEnabled: false,
           isPlatformAdmin: false,
           createdAt: new Date().toISOString(),
@@ -129,7 +134,7 @@ describe('Identity Auth E2E', () => {
     await app.close();
   });
 
-  it('POST /api/v1/auth/register creates guardian and returns token', async () => {
+  it('POST /api/v1/auth/register returns a pending email confirmation challenge, no session', async () => {
     const response = await supertest(app.getHttpServer())
       .post('/api/v1/auth/register')
       .send({
@@ -138,6 +143,19 @@ describe('Identity Auth E2E', () => {
         fullName: 'Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
       .expect(201);
 
+    expect(response.body).toEqual({
+      emailConfirmationRequired: true,
+      challengeToken: 'fake-registration-challenge-token',
+    });
+    expect(response.headers['set-cookie']).toBeUndefined();
+  });
+
+  it('POST /api/v1/auth/register/confirm confirms the code and issues a session', async () => {
+    const response = await supertest(app.getHttpServer())
+      .post('/api/v1/auth/register/confirm')
+      .send({ challengeToken: 'fake-registration-challenge-token', code: '123456' })
+      .expect(200);
+
     expect(response.body.accessToken).toBe('fake-jwt-token-12345');
     expect(response.body.user.email).toBe('guardian@test.com');
     // The refresh token is cookie-only — it must never be exposed in the body.
@@ -145,6 +163,13 @@ describe('Identity Auth E2E', () => {
     const cookies = [response.headers['set-cookie']].flat().join(';');
     expect(cookies).toContain('aletheia_session=');
     expect(cookies).toContain('aletheia_refresh=');
+  });
+
+  it('POST /api/v1/auth/register/confirm rejects the wrong code', async () => {
+    await supertest(app.getHttpServer())
+      .post('/api/v1/auth/register/confirm')
+      .send({ challengeToken: 'fake-registration-challenge-token', code: '000000' })
+      .expect(400);
   });
 
   it('POST /api/v1/auth/login logs in guardian', async () => {

@@ -2,6 +2,7 @@ import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
 import { MAIL_SENDER, type MailMessage, type MailSender } from '../src/platform/mail/mail-sender.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 function extractResetToken(message: MailMessage): string {
   const match = message.text.match(/token=([a-f0-9]+)/);
@@ -35,10 +36,7 @@ describe('Password reset (real Postgres, captured mail sender)', () => {
   it('sends a real reset email, resets the password, and revokes existing sessions', async () => {
     const email = `reset-integration-${Date.now()}@example.com`;
 
-    const registerResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email, password: 'oldPassword123', fullName: 'Reset Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const registerResponse = await registerAndConfirmGuardian(app, { email, password: 'oldPassword123', fullName: 'Reset Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
     const refreshCookie = [registerResponse.headers['set-cookie']]
       .flat()

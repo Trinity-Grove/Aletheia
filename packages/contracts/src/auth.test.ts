@@ -4,18 +4,25 @@ import {
   authResponseSchema,
   changeEmailSchema,
   changePasswordSchema,
+  confirmRegistrationCodeSchema,
   forgotPasswordSchema,
+  loginResultSchema,
   loginSchema,
   registerGuardianSchema,
+  registrationChallengeIssuedSchema,
+  resendRegistrationCodeSchema,
   resetPasswordSchema,
   userSummarySchema,
   type AccountAuditLogEntryDto,
   type AuthResponseDto,
   type ChangeEmailDto,
   type ChangePasswordDto,
+  type ConfirmRegistrationCodeDto,
   type ForgotPasswordDto,
   type LoginDto,
   type RegisterGuardianDto,
+  type RegistrationChallengeIssuedDto,
+  type ResendRegistrationCodeDto,
   type ResetPasswordDto,
   type UserSummaryDto,
 } from './auth.js';
@@ -211,6 +218,70 @@ describe('auth contracts', () => {
       expect(
         changeEmailSchema.safeParse({ currentPassword: '', newEmail: 'new@example.com' }).success,
       ).toBe(false);
+    });
+  });
+
+  describe('registrationChallengeIssuedSchema', () => {
+    it('validates the shape register() now returns', () => {
+      const payload: RegistrationChallengeIssuedDto = {
+        emailConfirmationRequired: true,
+        challengeToken: 'abc123',
+      };
+      expect(registrationChallengeIssuedSchema.safeParse(payload).success).toBe(true);
+    });
+
+    it('rejects a false literal for emailConfirmationRequired', () => {
+      expect(
+        registrationChallengeIssuedSchema.safeParse({ emailConfirmationRequired: false, challengeToken: 'abc' })
+          .success,
+      ).toBe(false);
+    });
+  });
+
+  describe('confirmRegistrationCodeSchema', () => {
+    it('validates a 6-digit code', () => {
+      const payload: ConfirmRegistrationCodeDto = { challengeToken: 'abc123', code: '123456' };
+      expect(confirmRegistrationCodeSchema.safeParse(payload).success).toBe(true);
+    });
+
+    it('rejects a code that is not exactly 6 characters', () => {
+      expect(confirmRegistrationCodeSchema.safeParse({ challengeToken: 'abc123', code: '12345' }).success).toBe(
+        false,
+      );
+      expect(confirmRegistrationCodeSchema.safeParse({ challengeToken: 'abc123', code: '1234567' }).success).toBe(
+        false,
+      );
+    });
+  });
+
+  describe('resendRegistrationCodeSchema', () => {
+    it('validates a challenge token', () => {
+      const payload: ResendRegistrationCodeDto = { challengeToken: 'abc123' };
+      expect(resendRegistrationCodeSchema.safeParse(payload).success).toBe(true);
+    });
+
+    it('rejects an empty challenge token', () => {
+      expect(resendRegistrationCodeSchema.safeParse({ challengeToken: '' }).success).toBe(false);
+    });
+  });
+
+  describe('loginResultSchema', () => {
+    it('accepts a full auth response, an MFA challenge, or a registration challenge', () => {
+      const user: UserSummaryDto = {
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        email: 'guardian@example.com',
+        fullName: 'Jane Doe',
+        emailVerified: true,
+        mfaEnabled: false,
+        isPlatformAdmin: false,
+        createdAt: '2026-08-23T12:00:00.000Z',
+      };
+
+      expect(loginResultSchema.safeParse({ accessToken: 'jwt', user }).success).toBe(true);
+      expect(loginResultSchema.safeParse({ mfaRequired: true, challengeToken: 'abc' }).success).toBe(true);
+      expect(
+        loginResultSchema.safeParse({ emailConfirmationRequired: true, challengeToken: 'abc' }).success,
+      ).toBe(true);
     });
   });
 

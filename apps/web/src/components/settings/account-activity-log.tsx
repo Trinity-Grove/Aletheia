@@ -21,6 +21,7 @@ const EVENT_LABELS: Record<AccountAuditEventType, string> = {
    MFA_ENABLED: 'Autenticação de dois fatores ativada',
    MFA_DISABLED: 'Autenticação de dois fatores desativada',
    MFA_CHALLENGE_FAILED: 'Código de autenticação de dois fatores inválido',
+   EMAIL_VERIFICATION_CODE_FAILED: 'Código de confirmação de e-mail inválido',
  };
 
 function formatEntryDate(createdAt: string): string {

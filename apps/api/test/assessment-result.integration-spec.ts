@@ -1,6 +1,7 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 // Family-scoped AssessmentResult (issue #96 Fase 2, section 10's last
 // item: "resultado guarda qual versão foi usada") against real Postgres.
@@ -23,10 +24,7 @@ describe('Assessment Result (real Postgres)', () => {
     prefix: string,
   ): Promise<{ cookie: string; familyId: string; learnerId: string }> {
     const email = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
-    const registerResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Assessment Result Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const registerResponse = await registerAndConfirmGuardian(app, { email, password: 'somePassword123', fullName: 'Assessment Result Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     const cookie = [registerResponse.headers['set-cookie']]
       .flat()
       .find((c) => c?.startsWith('aletheia_session='))!;
@@ -68,10 +66,7 @@ describe('Assessment Result (real Postgres)', () => {
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
 
-    const adminResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Assessment Result Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const adminResponse = await registerAndConfirmGuardian(app, { email: adminEmail, password: 'somePassword123', fullName: 'Assessment Result Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     adminCookie = [adminResponse.headers['set-cookie']]
       .flat()
       .find((c) => c?.startsWith('aletheia_session='))!;

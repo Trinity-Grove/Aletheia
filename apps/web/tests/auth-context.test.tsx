@@ -62,7 +62,7 @@ describe('AuthContext and useAuth', () => {
     vi.restoreAllMocks();
   });
 
-  it.each([false, true])('preserves isPlatformAdmin=%s from me, login, registration and MFA, then clears it on logout', async (isPlatformAdmin) => {
+  it.each([false, true])('preserves isPlatformAdmin=%s from me, login, registration confirmation and MFA, then clears it on logout', async (isPlatformAdmin) => {
     const sessionUser = { ...mockUser, isPlatformAdmin };
     vi.spyOn(api, 'get').mockImplementation(async (path) => path === '/auth/me' ? sessionUser : []);
     vi.spyOn(api, 'post').mockResolvedValue({ accessToken: 'token', user: sessionUser });
@@ -72,7 +72,7 @@ describe('AuthContext and useAuth', () => {
     expect(result.current.user?.isPlatformAdmin).toBe(isPlatformAdmin);
     await act(async () => { await result.current.login({ email: mockUser.email, password: 'password123' }); });
     expect(result.current.user?.isPlatformAdmin).toBe(isPlatformAdmin);
-    await act(async () => { await result.current.register({ email: mockUser.email, password: 'password123', fullName: mockUser.fullName, countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true }); });
+    await act(async () => { await result.current.confirmRegistrationCode({ challengeToken: 'challenge', code: '123456' }); });
     expect(result.current.user?.isPlatformAdmin).toBe(isPlatformAdmin);
     await act(async () => { await result.current.verifyMfa({ challengeToken: 'challenge', code: '123456' }); });
     expect(result.current.user?.isPlatformAdmin).toBe(isPlatformAdmin);
@@ -313,7 +313,51 @@ describe('AuthContext and useAuth', () => {
     expect(getApiAuthToken()).toBe('verified-token-123');
   });
 
-  it('registers successfully and sets authenticated state with empty families', async () => {
+  it('register() returns a pending email confirmation challenge and does not authenticate yet', async () => {
+    const challenge = { emailConfirmationRequired: true as const, challengeToken: 'reg-challenge-token' };
+
+    vi.spyOn(api, 'get').mockRejectedValue(new ApiError(401, 'Unauthorized', 'No session'));
+    const postSpy = vi.spyOn(api, 'post').mockResolvedValue(challenge);
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AuthProvider>{children}</AuthProvider>
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.status).toBe('unauthenticated');
+    });
+
+    await act(async () => {
+      const registerResult = await result.current.register({
+        fullName: 'Guardian Silva',
+        email: 'guardian@example.com',
+        password: 'secretPassword123',
+        countryCode: 'BRA',
+        acceptedTermsOfUse: true,
+        acceptedPrivacyPolicy: true,
+      });
+      expect(registerResult).toEqual(challenge);
+    });
+
+    expect(postSpy).toHaveBeenCalledWith('/auth/register', {
+      fullName: 'Guardian Silva',
+      email: 'guardian@example.com',
+      password: 'secretPassword123',
+      countryCode: 'BRA',
+      acceptedTermsOfUse: true,
+      acceptedPrivacyPolicy: true,
+    });
+
+    // No session is created — the account stays pending until the emailed
+    // code is confirmed.
+    expect(result.current.status).toBe('unauthenticated');
+    expect(result.current.token).toBeNull();
+    expect(result.current.user).toBeNull();
+  });
+
+  it('confirmRegistrationCode completes registration and sets authenticated state with empty families', async () => {
     const authResponse: AuthResponseDto = {
       accessToken: 'register-token-789',
       user: mockUser,
@@ -333,23 +377,12 @@ describe('AuthContext and useAuth', () => {
     });
 
     await act(async () => {
-      await result.current.register({
-        fullName: 'Guardian Silva',
-        email: 'guardian@example.com',
-        password: 'secretPassword123',
-        countryCode: 'BRA',
-        acceptedTermsOfUse: true,
-        acceptedPrivacyPolicy: true,
-      });
+      await result.current.confirmRegistrationCode({ challengeToken: 'reg-challenge-token', code: '123456' });
     });
 
-    expect(postSpy).toHaveBeenCalledWith('/auth/register', {
-      fullName: 'Guardian Silva',
-      email: 'guardian@example.com',
-      password: 'secretPassword123',
-      countryCode: 'BRA',
-      acceptedTermsOfUse: true,
-      acceptedPrivacyPolicy: true,
+    expect(postSpy).toHaveBeenCalledWith('/auth/register/confirm', {
+      challengeToken: 'reg-challenge-token',
+      code: '123456',
     });
 
     expect(result.current.status).toBe('authenticated');

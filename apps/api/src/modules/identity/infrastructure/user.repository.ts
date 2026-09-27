@@ -1,6 +1,22 @@
 import { Injectable } from '@nestjs/common';
+import type { User } from '@prisma/client';
 import { PrismaService } from '../../../platform/database/prisma.service.js';
 import { UserEntity } from '../domain/user.entity.js';
+
+function toEntity(user: User): UserEntity {
+  return new UserEntity({
+    id: user.id,
+    email: user.email,
+    passwordHash: user.passwordHash,
+    fullName: user.fullName,
+    emailVerifiedAt: user.emailVerifiedAt,
+    emailVerificationRequired: user.emailVerificationRequired,
+    mfaEnabled: user.mfaEnabled,
+    isPlatformAdmin: user.isPlatformAdmin,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  });
+}
 
 @Injectable()
 export class UserRepository {
@@ -10,36 +26,14 @@ export class UserRepository {
     const user = await this.prisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },
     });
-    if (!user) return null;
-    return new UserEntity({
-      id: user.id,
-      email: user.email,
-      passwordHash: user.passwordHash,
-      fullName: user.fullName,
-      emailVerifiedAt: user.emailVerifiedAt,
-      mfaEnabled: user.mfaEnabled,
-      isPlatformAdmin: user.isPlatformAdmin,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    });
+    return user ? toEntity(user) : null;
   }
 
   async findById(id: string): Promise<UserEntity | null> {
     const user = await this.prisma.user.findUnique({
       where: { id },
     });
-    if (!user) return null;
-    return new UserEntity({
-      id: user.id,
-      email: user.email,
-      passwordHash: user.passwordHash,
-      fullName: user.fullName,
-      emailVerifiedAt: user.emailVerifiedAt,
-      mfaEnabled: user.mfaEnabled,
-      isPlatformAdmin: user.isPlatformAdmin,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    });
+    return user ? toEntity(user) : null;
   }
 
   async create(data: {
@@ -50,6 +44,10 @@ export class UserRepository {
     termsOfUseAcceptedAt: Date;
     privacyPolicyDefinitionId: string;
     privacyPolicyAcceptedAt: Date;
+    // New registrations always require code confirmation before login()
+    // issues a session; defaults to false so every other caller (there
+    // are none today, but future ones) keeps today's behavior.
+    emailVerificationRequired?: boolean;
   }): Promise<UserEntity> {
     const created = await this.prisma.user.create({
       data: {
@@ -60,25 +58,22 @@ export class UserRepository {
         termsOfUseAcceptedAt: data.termsOfUseAcceptedAt,
         privacyPolicyDefinitionId: data.privacyPolicyDefinitionId,
         privacyPolicyAcceptedAt: data.privacyPolicyAcceptedAt,
+        emailVerificationRequired: data.emailVerificationRequired ?? false,
       },
     });
-    return new UserEntity({
-      id: created.id,
-      email: created.email,
-      passwordHash: created.passwordHash,
-      fullName: created.fullName,
-      emailVerifiedAt: created.emailVerifiedAt,
-      mfaEnabled: created.mfaEnabled,
-      isPlatformAdmin: created.isPlatformAdmin,
-      createdAt: created.createdAt,
-      updatedAt: created.updatedAt,
-    });
+    return toEntity(created);
   }
 
+  // Also permanently clears emailVerificationRequired: its only job is to
+  // gate the FIRST successful verification (blocking login() until then).
+  // A later changeEmail() legitimately resets emailVerifiedAt to null
+  // again, and that must never re-trigger the hard block -- once an
+  // account has proven its email once, every future re-verification
+  // (link-based, via changeEmail) stays the original non-blocking flow.
   async markEmailVerified(id: string): Promise<void> {
     await this.prisma.user.update({
       where: { id },
-      data: { emailVerifiedAt: new Date() },
+      data: { emailVerifiedAt: new Date(), emailVerificationRequired: false },
     });
   }
 

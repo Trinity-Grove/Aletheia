@@ -41,6 +41,8 @@ function createAuthContextValue(
     activeRole: 'OWNER_GUARDIAN',
     login: vi.fn(),
     verifyMfa: vi.fn(),
+    confirmRegistrationCode: vi.fn(),
+    resendRegistrationCode: vi.fn(),
     register: vi.fn(),
     logout: vi.fn(),
     selectFamily: vi.fn(),

@@ -1,6 +1,7 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 describe('Family-created activities (issue #96 section 7, issue #245) (real Postgres)', () => {
   let app: NestFastifyApplication;
@@ -11,17 +12,14 @@ describe('Family-created activities (issue #96 section 7, issue #245) (real Post
 
   async function registerAndGetCookie(prefix: string): Promise<string> {
     const email = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
-    const response = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({
+    const response = await registerAndConfirmGuardian(app, {
         email,
         password: 'somePassword123',
         fullName: 'Family Activity Test',
         countryCode: 'BRA',
         acceptedTermsOfUse: true,
         acceptedPrivacyPolicy: true,
-      })
-      .expect(201);
+      });
     return [response.headers['set-cookie']]
       .flat()
       .find((cookie) => cookie?.startsWith('aletheia_session='))!;

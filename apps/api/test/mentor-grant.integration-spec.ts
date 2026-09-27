@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 function upperCode(): string {
   return randomUUID().replace(/-/g, '').toUpperCase();
@@ -24,10 +25,7 @@ describe('Mentor Grant (real Postgres)', () => {
 
   async function registerAndGetCookieAndUserId(prefix: string): Promise<{ cookie: string; userId: string }> {
     const email = `${prefix}-${randomUUID()}@example.com`;
-    const response = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Mentor Grant Test User', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const response = await registerAndConfirmGuardian(app, { email, password: 'somePassword123', fullName: 'Mentor Grant Test User', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     const cookie = [response.headers['set-cookie']].flat().find((c) => c?.startsWith('aletheia_session='))!;
 
     const me = await supertest(app.getHttpServer()).get('/api/v1/auth/me').set('Cookie', cookie).expect(200);
@@ -41,10 +39,7 @@ describe('Mentor Grant (real Postgres)', () => {
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
 
-    const adminResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Mentor Grant Test Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const adminResponse = await registerAndConfirmGuardian(app, { email: adminEmail, password: 'somePassword123', fullName: 'Mentor Grant Test Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     adminCookie = [adminResponse.headers['set-cookie']].flat().find((c) => c?.startsWith('aletheia_session='))!;
 
     const guardian = await registerAndGetCookieAndUserId('mentor-grant-guardian');

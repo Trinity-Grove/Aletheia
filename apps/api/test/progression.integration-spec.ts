@@ -6,6 +6,7 @@ import { progressionEvaluationResponseSchema } from '@aletheia/contracts';
 import { createApplication } from '../src/main.js';
 import { PrismaService } from '../src/platform/database/prisma.service.js';
 import { ProgressionRepository } from '../src/modules/curriculum/infrastructure/progression.repository.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 describe('Progression evaluation (real Postgres)', () => {
   let app: NestFastifyApplication;
@@ -26,8 +27,7 @@ describe('Progression evaluation (real Postgres)', () => {
     await app.getHttpAdapter().getInstance().ready();
     db = app.get(PrismaService);
     const email = `progression-${randomUUID()}@example.com`;
-    const registered = await supertest(app.getHttpServer()).post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Progression Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true }).expect(201);
+    const registered = await registerAndConfirmGuardian(app, { email, password: 'somePassword123', fullName: 'Progression Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     cookie = [registered.headers['set-cookie']].flat().find((value) => value?.startsWith('aletheia_session='))!;
     authorId = (await db.user.findUniqueOrThrow({ where: { email } })).id;
     const family = await supertest(app.getHttpServer()).post('/api/v1/families').set('Cookie', cookie)

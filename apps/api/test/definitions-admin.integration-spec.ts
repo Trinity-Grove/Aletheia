@@ -1,6 +1,7 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 // Admin CRUD surface for the data-driven curriculum foundation (issue #96
 // Fase 0, section 40's literal test: adding a new domain/competency/track
@@ -17,10 +18,7 @@ describe('Curriculum definitions admin API (real Postgres)', () => {
 
   async function registerAndGetCookie(emailPrefix: string): Promise<string> {
     const email = `${emailPrefix}-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
-    const response = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Definitions Admin Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const response = await registerAndConfirmGuardian(app, { email, password: 'somePassword123', fullName: 'Definitions Admin Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     return [response.headers['set-cookie']].flat().find((c) => c?.startsWith('aletheia_session='))!;
   }
 
@@ -35,10 +33,7 @@ describe('Curriculum definitions admin API (real Postgres)', () => {
 
     // Registering with an email on PLATFORM_ADMIN_EMAILS auto-promotes —
     // this is the real bootstrap path, not a test-only shortcut.
-    const adminResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Definitions Admin Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const adminResponse = await registerAndConfirmGuardian(app, { email: adminEmail, password: 'somePassword123', fullName: 'Definitions Admin Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     adminCookie = [adminResponse.headers['set-cookie']]
       .flat()
       .find((c) => c?.startsWith('aletheia_session='))!;

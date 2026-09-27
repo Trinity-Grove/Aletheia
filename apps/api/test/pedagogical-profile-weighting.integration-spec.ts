@@ -2,6 +2,7 @@ import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
 import { CurriculumTemplateEngine } from '../src/modules/curriculum/infrastructure/curriculum-template.engine.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 type FamilyFixture = { cookie: string; familyId: string; learnerId: string; academicYearId: string };
 
@@ -25,8 +26,7 @@ describe('PedagogicalProfile-weighted applyTemplate (real Postgres, issue #95)',
   const engine = new CurriculumTemplateEngine();
 
   async function register(email: string): Promise<string> {
-    const response = await supertest(app.getHttpServer()).post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Weighting Acceptance', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true }).expect(201);
+    const response = await registerAndConfirmGuardian(app, { email, password: 'somePassword123', fullName: 'Weighting Acceptance', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     const cookie = [response.headers['set-cookie']].flat()
       .find((value) => value?.startsWith('aletheia_session='));
     expect(cookie).toBeDefined();

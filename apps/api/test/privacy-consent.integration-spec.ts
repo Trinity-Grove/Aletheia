@@ -2,6 +2,7 @@ import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
 import { PrismaService } from '../src/platform/database/prisma.service.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 describe('Privacy & Versioned Consent Integration (real Postgres)', () => {
   let app: NestFastifyApplication;
@@ -61,25 +62,16 @@ describe('Privacy & Versioned Consent Integration (real Postgres)', () => {
     await cleanupConsentTestData();
 
     // 1. Register Platform Admin
-    const adminRes = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'StrongPassword123!', fullName: 'Platform Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const adminRes = await registerAndConfirmGuardian(app, { email: adminEmail, password: 'StrongPassword123!', fullName: 'Platform Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     adminCookie = extractCookie(adminRes, 'aletheia_session=');
 
     // 2. Register Guardian A (Family A)
-    const guardianARes = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: guardianAEmail, password: 'StrongPassword123!', fullName: 'Guardian Alpha', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const guardianARes = await registerAndConfirmGuardian(app, { email: guardianAEmail, password: 'StrongPassword123!', fullName: 'Guardian Alpha', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     guardianACookie = extractCookie(guardianARes, 'aletheia_session=');
     guardianAUserId = guardianARes.body.user.id;
 
     // 3. Register Guardian B (Family B)
-    const guardianBRes = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: guardianBEmail, password: 'StrongPassword123!', fullName: 'Guardian Beta', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const guardianBRes = await registerAndConfirmGuardian(app, { email: guardianBEmail, password: 'StrongPassword123!', fullName: 'Guardian Beta', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     guardianBCookie = extractCookie(guardianBRes, 'aletheia_session=');
 
     // 4. Create Family A & 2 Learners (Learner A1, Learner A2)

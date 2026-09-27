@@ -12,6 +12,7 @@ import { MfaSecretRepository } from './infrastructure/mfa-secret.repository.js';
 import { MfaRecoveryCodeRepository } from './infrastructure/mfa-recovery-code.repository.js';
 import { MfaSetupChallengeRepository } from './infrastructure/mfa-setup-challenge.repository.js';
 import { MfaLoginChallengeRepository } from './infrastructure/mfa-login-challenge.repository.js';
+import { RegistrationVerificationChallengeRepository } from './infrastructure/registration-verification-challenge.repository.js';
 import { AuthController } from './presentation/auth.controller.js';
 import { JwtAuthGuard } from '../../platform/auth/index.js';
 import { ENVIRONMENT, type Environment } from '../../platform/config/environment.js';
@@ -46,6 +47,7 @@ import { TotpSecretCipher } from '../../platform/security/totp-secret-cipher.js'
     MfaRecoveryCodeRepository,
     MfaSetupChallengeRepository,
     MfaLoginChallengeRepository,
+    RegistrationVerificationChallengeRepository,
     AuthService,
     JwtAuthGuard,
     {

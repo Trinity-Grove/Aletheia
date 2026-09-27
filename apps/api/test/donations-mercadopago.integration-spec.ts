@@ -2,6 +2,7 @@ import { createHmac, randomUUID } from 'node:crypto';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 // Real-Postgres coverage for the real Mercado Pago integration (Checkout
 // Transparente / Orders API for one-time donations, Subscriptions /
@@ -38,10 +39,7 @@ describe('Donations against the real Mercado Pago gateway (real Postgres, mocked
     prefix: string,
   ): Promise<{ cookie: string; familyId: string; email: string }> {
     const email = `${prefix}-${randomUUID()}@example.com`;
-    const registerResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Donations Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const registerResponse = await registerAndConfirmGuardian(app, { email, password: 'somePassword123', fullName: 'Donations Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     const cookie = [registerResponse.headers['set-cookie']].flat().find((c) => c?.startsWith('aletheia_session='))!;
 
     const familyResponse = await supertest(app.getHttpServer())
