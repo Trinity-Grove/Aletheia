@@ -2645,3 +2645,27 @@ model MentorGrant {
   @@index([email])
   @@map("mentor_grants")
 }
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model OperationalAlertEvent {
+  id              String        @id @default(uuid()) @db.Uuid
+  source          String        @default("RAILWAY")
+  eventType       String        @map("event_type")
+  severity        AlertSeverity @default(WARNING)
+  serviceName     String?       @map("service_name")
+  message         String
+  payload         Json          @default("{}")
+  receivedAt      DateTime      @default(now()) @map("received_at") @db.Timestamptz
+  acknowledgedAt  DateTime?     @map("acknowledged_at") @db.Timestamptz
+  acknowledgedBy  String?       @map("acknowledged_by") @db.Uuid
+
+  @@index([receivedAt(sort: Desc)])
+  @@index([severity])
+  @@index([eventType])
+  @@map("operational_alert_events")
+}

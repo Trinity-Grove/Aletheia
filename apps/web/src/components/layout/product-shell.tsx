@@ -43,7 +43,6 @@ export type NavItem = NavigationItem;
 // render time inside ProductShell (module-level constants can't call the
 // useLocale() hook).
 export const MAIN_NAV_ITEMS: NavigationItem[] = [
-  { id: 'admin-catalog', label: 'nav.adminCatalog', href: '/admin/catalog', icon: <AletheiaIcon name="library" size={18} /> },
   { id: 'home', label: 'nav.home', href: '/', icon: <AletheiaIcon name="home" size={18} /> },
   { id: 'learners', label: 'nav.learners', href: '/learners', icon: <AletheiaIcon name="users" size={18} /> },
   { id: 'devotional', label: 'nav.devotional', href: '/devotional', icon: <AletheiaIcon name="book-open" size={18} /> },
@@ -240,14 +239,12 @@ export function ProductShell({
   // with an accessible state that says nothing about what the page holds.
   const requiredPermission = PATH_PERMISSIONS[activePath];
   const accessDenied =
-    (activePath.startsWith('/admin') && !isPlatformAdmin) ||
-    (requiredPermission !== undefined &&
-      profileUser !== undefined &&
-      !permissions.can(requiredPermission));
+    requiredPermission !== undefined &&
+    profileUser !== undefined &&
+    !permissions.can(requiredPermission);
 
   const navigationItems = MAIN_NAV_ITEMS
     .filter((item) => {
-      if (item.id === 'admin-catalog') return isPlatformAdmin;
       const requiredPermission = NAV_ITEM_PERMISSIONS[item.id];
       return requiredPermission === undefined || permissions.can(requiredPermission);
     })

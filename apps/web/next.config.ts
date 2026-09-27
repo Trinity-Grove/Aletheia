@@ -20,6 +20,16 @@ const nextConfig: NextConfig = {
     const apiOrigin = (process.env.API_PROXY_TARGET || 'http://127.0.0.1:3001').replace(/\/+$/, '');
     return [{ source: '/api/:path*', destination: `${apiOrigin}/api/:path*` }];
   },
+  async redirects() {
+    const backofficeUrl = (process.env.NEXT_PUBLIC_BACKOFFICE_URL || 'http://localhost:3002').replace(/\/+$/, '');
+    return [
+      {
+        source: '/admin/:path*',
+        destination: `${backofficeUrl}/:path*`,
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
