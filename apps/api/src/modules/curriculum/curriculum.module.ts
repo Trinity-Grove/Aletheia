@@ -88,6 +88,10 @@ import { AchievementController } from './presentation/achievement.controller.js'
 import { ArtsFormationSeeder } from './infrastructure/arts-formation.seeder.js';
 import { ServiceCommunityFormationSeeder } from './infrastructure/service-community-formation.seeder.js';
 import { OfficialCurriculumPacksSeeder } from './infrastructure/official-curriculum-packs.seeder.js';
+import { SeminaryEvidenceTypesSeeder } from './infrastructure/seminary-evidence-types.seeder.js';
+import { SeminaryRubricsSeeder } from './infrastructure/seminary-rubrics.seeder.js';
+import { SeminaryCompetenciesSeeder } from './infrastructure/seminary-competencies.seeder.js';
+import { AdvancedSeminaryTheologyPackSeeder } from './infrastructure/advanced-seminary-theology-pack.seeder.js';
 import { FamilyCurriculumPackRepository } from './infrastructure/family-curriculum-pack.repository.js';
 import { FamilyCurriculumPackService } from './application/family-curriculum-pack.service.js';
 import { FamilyCurriculumPackController } from './presentation/family-curriculum-pack.controller.js';
@@ -194,6 +198,10 @@ import { FamilyActivityController } from './presentation/family-activity.control
     ArtsFormationSeeder,
     ServiceCommunityFormationSeeder,
     OfficialCurriculumPacksSeeder,
+    SeminaryEvidenceTypesSeeder,
+    SeminaryRubricsSeeder,
+    SeminaryCompetenciesSeeder,
+    AdvancedSeminaryTheologyPackSeeder,
     FamilyCurriculumPackRepository,
     FamilyCurriculumPackMediaRepository,
     FamilyActivityRepository,
@@ -242,6 +250,10 @@ import { FamilyActivityController } from './presentation/family-activity.control
     CurriculumPackReportRepository,
     CurriculumPackReportService,
     CurriculumPackModerationService,
+    SeminaryEvidenceTypesSeeder,
+    SeminaryRubricsSeeder,
+    SeminaryCompetenciesSeeder,
+    AdvancedSeminaryTheologyPackSeeder,
   ],
 })
 export class CurriculumModule {}
