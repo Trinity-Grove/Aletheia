@@ -33,5 +33,14 @@ import { HealthService } from './health.service';
       useExisting: ObjectStorageDependencyProbe,
     },
   ],
+  exports: [
+    POSTGRES_PROBE,
+    REDIS_PROBE,
+    OBJECT_STORAGE_PROBE,
+    PostgresDependencyProbe,
+    ObjectStorageDependencyProbe,
+    NotConfiguredDependencyProbe,
+    HealthService,
+  ],
 })
 export class HealthModule {}

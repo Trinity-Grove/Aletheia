@@ -68,8 +68,10 @@ export function AdminCatalog() {
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem 1.5rem', display: 'grid', gap: '1.5rem' }}>
       <div>
-        <h1>Catálogo administrativo</h1>
-        <p>Gerenciamento central de catálogos curriculares, termos legais e auditoria de versões.</p>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0 }}>Catálogo administrativo</h1>
+        <p style={{ color: 'var(--text-secondary, #64748b)', margin: '0.25rem 0 0 0' }}>
+          Gerenciamento central de catálogos curriculares, termos legais e auditoria de versões.
+        </p>
       </div>
 
       <div

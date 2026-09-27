@@ -22,6 +22,7 @@ import { PrivacyModule } from './modules/privacy/privacy.module.js';
 import { DonationsModule } from './modules/donations/donations.module.js';
 import { BackupModule } from './modules/backup/backup.module.js';
 import { MentorsModule } from './modules/mentors/mentors.module.js';
+import { OperationsModule } from './modules/operations/operations.module.js';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { MentorsModule } from './modules/mentors/mentors.module.js';
     DonationsModule,
     BackupModule,
     MentorsModule,
+    OperationsModule,
   ],
   providers: [
     {
