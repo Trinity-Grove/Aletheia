@@ -1,6 +1,7 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 function extractCookie(setCookieHeader: string | string[] | undefined, name: string): string {
   const lines = [setCookieHeader].flat().filter((value): value is string => Boolean(value));
@@ -27,10 +28,7 @@ describe('Refresh token rotation and revocation (real Postgres)', () => {
   it('rotates the refresh token on use and revokes the whole family on reuse', async () => {
     const email = `refresh-rotation-${Date.now()}@example.com`;
 
-    const registerResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email, password: 'password12345', fullName: 'Refresh Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const registerResponse = await registerAndConfirmGuardian(app, { email, password: 'password12345', fullName: 'Refresh Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
     const originalRefreshCookie = extractCookie(
       registerResponse.headers['set-cookie'],
@@ -64,10 +62,7 @@ describe('Refresh token rotation and revocation (real Postgres)', () => {
   it('logout revokes the refresh token so it can no longer be exchanged', async () => {
     const email = `refresh-logout-${Date.now()}@example.com`;
 
-    const registerResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email, password: 'password12345', fullName: 'Logout Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const registerResponse = await registerAndConfirmGuardian(app, { email, password: 'password12345', fullName: 'Logout Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
     const refreshCookie = extractCookie(registerResponse.headers['set-cookie'], 'aletheia_refresh');
 

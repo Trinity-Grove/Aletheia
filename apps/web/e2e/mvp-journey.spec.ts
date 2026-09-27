@@ -22,6 +22,17 @@ test.describe('Real Family MVP End-to-End Journey', () => {
     // Set up hermetic API route mocks
     await page.route('**/api/v1/auth/register', async (route) => {
       await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        json: {
+          emailConfirmationRequired: true,
+          challengeToken: 'mock-registration-challenge-token',
+        },
+      });
+    });
+
+    await page.route('**/api/v1/auth/register/confirm', async (route) => {
+      await route.fulfill({
         status: 200,
         contentType: 'application/json',
         json: {
@@ -229,6 +240,12 @@ test.describe('Real Family MVP End-to-End Journey', () => {
     await page.getByTestId('reg-privacy-policy-checkbox').check();
 
     await page.getByTestId('register-button').click();
+
+    // 1b. Confirm the emailed 6-digit code (mocked) -- registration is
+    // blocking, so no session/onboarding exists until this succeeds.
+    await expect(page.getByTestId('email-code-verify-form')).toBeVisible();
+    await page.getByTestId('email-code-input').fill('123456');
+    await page.getByTestId('email-code-verify-button').click();
 
     // 2. Onboarding Family Setup
     await expect(page).toHaveURL(/.*onboarding/);

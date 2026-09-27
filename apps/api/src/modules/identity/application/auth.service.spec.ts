@@ -25,6 +25,7 @@ import type { MfaSecretRepository } from '../infrastructure/mfa-secret.repositor
 import type { MfaRecoveryCodeRepository } from '../infrastructure/mfa-recovery-code.repository.js';
 import type { MfaSetupChallengeRepository } from '../infrastructure/mfa-setup-challenge.repository.js';
 import type { MfaLoginChallengeRepository } from '../infrastructure/mfa-login-challenge.repository.js';
+import type { RegistrationVerificationChallengeRepository } from '../infrastructure/registration-verification-challenge.repository.js';
 import { TotpSecretCipher } from '../../../platform/security/totp-secret-cipher.js';
 import { hashRecoveryCode } from '../../../platform/security/totp.js';
 import type { MailMessage, MailSender } from '../../../platform/mail/mail-sender.js';
@@ -107,6 +108,8 @@ describe('AuthService', () => {
   let mfaRecoveryCodeRepository: MfaRecoveryCodeRepository;
   let mfaSetupChallengeRepository: MfaSetupChallengeRepository;
   let mfaLoginChallengeRepository: MfaLoginChallengeRepository;
+  let registrationChallengeRepository: RegistrationVerificationChallengeRepository;
+  let fakeRegistrationChallenges: Map<string, { id: string; userId: string; codeHash: string; plainCode: string; attemptCount: number; expiresAt: Date }>;
   let totpSecretCipher: TotpSecretCipher;
   let capturedCreateCalls: Array<{
     termsOfUseDefinitionId: string;
@@ -133,9 +136,32 @@ describe('AuthService', () => {
     }
   }
 
+  // The fake repository stashes the plaintext code directly (unlike the
+  // real one, which only exposes it through the environment-gated debug
+  // endpoint) -- fine for a unit test that already fully controls this map.
+  function getPendingRegistrationCode(challengeToken: string): string {
+    const record = fakeRegistrationChallenges.get(challengeToken);
+    if (!record) {
+      throw new Error(`No pending registration challenge for token ${challengeToken}`);
+    }
+    return record.plainCode;
+  }
+
+  // Setup helper for every other describe block that just needs "a
+  // confirmed, logged-in guardian" and isn't itself testing the
+  // register()/confirmRegistrationCode() flow -- register() alone no
+  // longer returns a session (see the 'register' describe block below
+  // for tests of that flow directly).
+  type RegisterGuardianArgs = Parameters<AuthService['register']>[0];
+  async function registerAndConfirm(dto: RegisterGuardianArgs): Promise<AuthSession> {
+    const challenge = await authService.register(dto);
+    const code = getPendingRegistrationCode(challenge.challengeToken);
+    return authService.confirmRegistrationCode({ challengeToken: challenge.challengeToken, code });
+  }
+
   it.each([false, true])('exposes persisted platform admin=%s in registration, login, refresh and profile', async (isAdmin) => {
     environment.platformAdminEmails = isAdmin ? ['admin@example.com'] : [];
-    const registered = await authService.register({ email: 'admin@example.com', fullName: 'Admin', password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+    const registered = await registerAndConfirm({ email: 'admin@example.com', fullName: 'Admin', password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     expect(registered.user).toHaveProperty('isPlatformAdmin', isAdmin);
     const loggedIn = await authService.login({ email: 'admin@example.com', password: 'password12345' });
     expectAuthSession(loggedIn);
@@ -145,7 +171,7 @@ describe('AuthService', () => {
   });
 
   it('returns the newly granted platform admin flag on the first login after bootstrap changes', async () => {
-    await authService.register({ email: 'admin@example.com', fullName: 'Admin', password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+    await registerAndConfirm({ email: 'admin@example.com', fullName: 'Admin', password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     environment.platformAdminEmails = ['admin@example.com'];
     const result = await authService.login({ email: 'admin@example.com', password: 'password12345' });
     expectAuthSession(result);
@@ -172,6 +198,7 @@ describe('AuthService', () => {
         fullName: string;
         termsOfUseDefinitionId: string;
         privacyPolicyDefinitionId: string;
+        emailVerificationRequired?: boolean;
       }) => {
         capturedCreateCalls.push({
           termsOfUseDefinitionId: data.termsOfUseDefinitionId,
@@ -183,6 +210,7 @@ describe('AuthService', () => {
           passwordHash: data.passwordHash,
           fullName: data.fullName,
           emailVerifiedAt: null,
+          emailVerificationRequired: data.emailVerificationRequired ?? false,
           mfaEnabled: false,
           isPlatformAdmin: false,
           createdAt: new Date(),
@@ -202,6 +230,7 @@ describe('AuthService', () => {
                 passwordHash: user.passwordHash,
                 fullName: user.fullName,
                 emailVerifiedAt: new Date(),
+                emailVerificationRequired: false,
                 mfaEnabled: user.mfaEnabled,
                 isPlatformAdmin: user.isPlatformAdmin,
                 createdAt: user.createdAt,
@@ -222,6 +251,7 @@ describe('AuthService', () => {
                 passwordHash,
                 fullName: user.fullName,
                 emailVerifiedAt: user.emailVerifiedAt,
+                emailVerificationRequired: user.emailVerificationRequired,
                 mfaEnabled: user.mfaEnabled,
                 isPlatformAdmin: user.isPlatformAdmin,
                 createdAt: user.createdAt,
@@ -247,6 +277,7 @@ describe('AuthService', () => {
               passwordHash: user.passwordHash,
               fullName: user.fullName,
               emailVerifiedAt: null,
+              emailVerificationRequired: user.emailVerificationRequired,
               mfaEnabled: user.mfaEnabled,
               isPlatformAdmin: user.isPlatformAdmin,
               createdAt: user.createdAt,
@@ -266,6 +297,7 @@ describe('AuthService', () => {
                 passwordHash: user.passwordHash,
                 fullName: user.fullName,
                 emailVerifiedAt: user.emailVerifiedAt,
+                emailVerificationRequired: user.emailVerificationRequired,
                 mfaEnabled: user.mfaEnabled,
                 isPlatformAdmin: true,
                 createdAt: user.createdAt,
@@ -381,6 +413,7 @@ describe('AuthService', () => {
 
     environment = {
       webOrigin: 'http://localhost:3000',
+      nodeEnv: 'test' as string,
       platformAdminEmails: [] as string[],
       platformAdminDomains: [] as string[],
     } as unknown as Environment;
@@ -401,6 +434,7 @@ describe('AuthService', () => {
           passwordHash: user.passwordHash,
           fullName: user.fullName,
           emailVerifiedAt: user.emailVerifiedAt,
+          emailVerificationRequired: user.emailVerificationRequired,
           mfaEnabled,
           isPlatformAdmin: user.isPlatformAdmin,
           createdAt: user.createdAt,
@@ -492,6 +526,58 @@ describe('AuthService', () => {
       },
     } as unknown as MfaLoginChallengeRepository;
 
+    fakeRegistrationChallenges = new Map();
+    let registrationChallengeSequence = 0;
+    registrationChallengeRepository = {
+      issue: async (userId: string) => {
+        // Mirrors the real repository: reissuing replaces any prior
+        // pending challenge for the same user, invalidating its code.
+        for (const [token, record] of fakeRegistrationChallenges.entries()) {
+          if (record.userId === userId) {
+            fakeRegistrationChallenges.delete(token);
+          }
+        }
+        registrationChallengeSequence += 1;
+        const token = `registration-challenge-token-${registrationChallengeSequence}`;
+        const code = String(registrationChallengeSequence).padStart(6, '0');
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+        fakeRegistrationChallenges.set(token, {
+          id: `rc-${registrationChallengeSequence}`,
+          userId,
+          codeHash: `hash:${code}`,
+          plainCode: code,
+          attemptCount: 0,
+          expiresAt,
+        });
+        return { token, code, expiresAt };
+      },
+      findByToken: async (token: string) => {
+        const record = fakeRegistrationChallenges.get(token);
+        if (!record) return null;
+        return { id: record.id, userId: record.userId, codeHash: record.codeHash, expiresAt: record.expiresAt };
+      },
+      matchesCode: (record: { codeHash: string }, code: string) => `hash:${code}` === record.codeHash,
+      findPlainCodeForDebugOnly: async (token: string) => {
+        if (environment.nodeEnv === 'production') return null;
+        return fakeRegistrationChallenges.get(token)?.plainCode ?? null;
+      },
+      deleteByToken: async (token: string) => {
+        fakeRegistrationChallenges.delete(token);
+      },
+      recordFailedAttempt: async (token: string) => {
+        const record = fakeRegistrationChallenges.get(token);
+        if (!record) {
+          return { exhausted: true };
+        }
+        record.attemptCount += 1;
+        if (record.attemptCount >= 5) {
+          fakeRegistrationChallenges.delete(token);
+          return { exhausted: true };
+        }
+        return { exhausted: false };
+      },
+    } as unknown as RegistrationVerificationChallengeRepository;
+
     totpSecretCipher = new TotpSecretCipher(
       '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
     );
@@ -508,6 +594,7 @@ describe('AuthService', () => {
       mfaRecoveryCodeRepository,
       mfaSetupChallengeRepository,
       mfaLoginChallengeRepository,
+      registrationChallengeRepository,
       totpSecretCipher,
       fakePrivacyPublicApi,
       mailSender,
@@ -524,28 +611,125 @@ describe('AuthService', () => {
     ).rejects.toThrow(BadRequestException);
   });
 
-  it('registers a guardian and returns accessToken + refreshToken + user summary', async () => {
+  it('registers a guardian and returns an email confirmation challenge, not a session', async () => {
     const result = await authService.register({
       email: 'guardian@example.com',
       fullName: 'Faithful Guardian',
       password: 'strongPassword123!', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
-    expect(result.accessToken).toBeDefined();
-    expect(result.refreshToken).toBeDefined();
-    expect(result.user.email).toBe('guardian@example.com');
-    expect(result.user.fullName).toBe('Faithful Guardian');
-    expect(result.user.emailVerified).toBe(false);
+    expect(result).toStrictEqual({ emailConfirmationRequired: true, challengeToken: expect.any(String) });
+    expect(sentEmails).toHaveLength(1);
+    expect(sentEmails[0]!.to).toBe('guardian@example.com');
+
+    const createdUser = fakeUsers.get('guardian@example.com');
+    expect(createdUser?.emailVerifiedAt).toBeNull();
+    expect(createdUser?.emailVerificationRequired).toBe(true);
   });
 
-  it('sends a verification email on registration with a working link', async () => {
+  it('confirms registration with the emailed 6-digit code and issues a full session', async () => {
+    const challenge = await authService.register({
+      email: 'guardian@example.com',
+      fullName: 'Faithful Guardian',
+      password: 'strongPassword123!', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+
+    const code = getPendingRegistrationCode(challenge.challengeToken);
+    const session = await authService.confirmRegistrationCode({
+      challengeToken: challenge.challengeToken,
+      code,
+    });
+
+    expect(session.accessToken).toBeDefined();
+    expect(session.refreshToken).toBeDefined();
+    expect(session.user.email).toBe('guardian@example.com');
+    expect(session.user.emailVerified).toBe(true);
+  });
+
+  it('rejects the wrong 6-digit code and locks the challenge out after 5 attempts', async () => {
+    const challenge = await authService.register({
+      email: 'guardian@example.com',
+      fullName: 'Faithful Guardian',
+      password: 'strongPassword123!', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+    // Captured before exhausting attempts -- the challenge (and its
+    // record backing this helper) is deleted once the cap is hit.
+    const code = getPendingRegistrationCode(challenge.challengeToken);
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      await expect(
+        authService.confirmRegistrationCode({ challengeToken: challenge.challengeToken, code: '000000' }),
+      ).rejects.toThrow(BadRequestException);
+    }
+
+    // The challenge is now exhausted/deleted -- even the real code no longer works.
+    await expect(
+      authService.confirmRegistrationCode({ challengeToken: challenge.challengeToken, code }),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('rejects an expired registration challenge', async () => {
+    const challenge = await authService.register({
+      email: 'guardian@example.com',
+      fullName: 'Faithful Guardian',
+      password: 'strongPassword123!', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+
+    const record = fakeRegistrationChallenges.get(challenge.challengeToken);
+    record!.expiresAt = new Date(Date.now() - 1000);
+
+    const code = getPendingRegistrationCode(challenge.challengeToken);
+    await expect(
+      authService.confirmRegistrationCode({ challengeToken: challenge.challengeToken, code }),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('resend-code invalidates the previous code and issues a new challengeToken', async () => {
+    const challenge = await authService.register({
+      email: 'guardian@example.com',
+      fullName: 'Faithful Guardian',
+      password: 'strongPassword123!', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+
+    const oldCode = getPendingRegistrationCode(challenge.challengeToken);
+    const resent = await authService.resendRegistrationCode(challenge.challengeToken);
+
+    expect(resent.challengeToken).not.toBe(challenge.challengeToken);
+    await expect(
+      authService.confirmRegistrationCode({ challengeToken: challenge.challengeToken, code: oldCode }),
+    ).rejects.toThrow(NotFoundException);
+
+    const newCode = getPendingRegistrationCode(resent.challengeToken);
+    const session = await authService.confirmRegistrationCode({
+      challengeToken: resent.challengeToken,
+      code: newCode,
+    });
+    expect(session.accessToken).toBeDefined();
+  });
+
+  it('reissues a fresh challenge when logging in before confirming, instead of a session', async () => {
     await authService.register({
       email: 'guardian@example.com',
       fullName: 'Faithful Guardian',
       password: 'strongPassword123!', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
-    expect(sentEmails).toHaveLength(1);
-    expect(sentEmails[0]!.to).toBe('guardian@example.com');
-    expect(sentEmails[0]!.text).toContain('http://localhost:3000/verify-email?token=');
+    const loginResult = await authService.login({
+      email: 'guardian@example.com',
+      password: 'strongPassword123!',
+    });
+
+    expect('emailConfirmationRequired' in loginResult).toBe(true);
+    const { challengeToken } = loginResult as { challengeToken: string };
+    const code = getPendingRegistrationCode(challengeToken);
+    const session = await authService.confirmRegistrationCode({ challengeToken, code });
+    expect(session.accessToken).toBeDefined();
+  });
+
+  it('never exposes the pending code through findPendingRegistrationCodeForDebugOnly in production', async () => {
+    const challenge = await authService.register({
+      email: 'guardian@example.com',
+      fullName: 'Faithful Guardian',
+      password: 'strongPassword123!', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+
+    environment.nodeEnv = 'production';
+    await expect(
+      authService.findPendingRegistrationCodeForDebugOnly(challenge.challengeToken),
+    ).resolves.toBeNull();
   });
 
   it('does not fail registration when the mail sender throws', async () => {
@@ -558,11 +742,12 @@ describe('AuthService', () => {
         email: 'guardian@example.com',
         fullName: 'Faithful Guardian',
         password: 'strongPassword123!', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true }),
-    ).resolves.toMatchObject({ user: { email: 'guardian@example.com' } });
+    ).resolves.toMatchObject({ emailConfirmationRequired: true });
+    expect(fakeUsers.get('guardian@example.com')).toBeDefined();
   });
 
   it('rejects duplicate email registration with a generic, non-revealing message', async () => {
-    await authService.register({
+    await registerAndConfirm({
       email: 'duplicate@example.com',
       fullName: 'First',
       password: 'password123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -579,7 +764,7 @@ describe('AuthService', () => {
     // password already produces, not a distinct "already exists" signal.
     expect.assertions(4);
     try {
-      await authService.register({
+      await registerAndConfirm({
         email: 'duplicate@example.com',
         fullName: 'Second',
         password: 'password123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -592,7 +777,7 @@ describe('AuthService', () => {
   });
 
   it('authenticates valid credentials on login', async () => {
-    await authService.register({
+    await registerAndConfirm({
       email: 'login@example.com',
       fullName: 'User',
       password: 'securePassword888', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -608,7 +793,7 @@ describe('AuthService', () => {
   });
 
   it('issues a session token that verifyToken accepts', async () => {
-    await authService.register({
+    await registerAndConfirm({
       email: 'verify@example.com',
       fullName: 'User',
       password: 'securePassword888', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -634,7 +819,7 @@ describe('AuthService', () => {
   });
 
   it('rejects invalid password on login', async () => {
-    await authService.register({
+    await registerAndConfirm({
       email: 'wrongpass@example.com',
       fullName: 'User',
       password: 'correctPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -649,7 +834,7 @@ describe('AuthService', () => {
 
   describe('refresh', () => {
     it('exchanges a valid refresh token for a new access/refresh pair and rotates the old one', async () => {
-      const { refreshToken } = await authService.register({
+      const { refreshToken } = await registerAndConfirm({
         email: 'refresh@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -667,7 +852,7 @@ describe('AuthService', () => {
     });
 
     it('rejects an expired refresh token', async () => {
-      const { refreshToken } = await authService.register({
+      const { refreshToken } = await registerAndConfirm({
         email: 'expired@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -677,7 +862,7 @@ describe('AuthService', () => {
     });
 
     it('treats reuse of an already-rotated refresh token as compromised and revokes the whole session family', async () => {
-      const { refreshToken } = await authService.register({
+      const { refreshToken } = await registerAndConfirm({
         email: 'reuse@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -695,7 +880,7 @@ describe('AuthService', () => {
 
   describe('revokeRefreshToken', () => {
     it('invalidates the token so it can no longer be refreshed', async () => {
-      const { refreshToken } = await authService.register({
+      const { refreshToken } = await registerAndConfirm({
         email: 'logout@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -706,17 +891,24 @@ describe('AuthService', () => {
     });
   });
 
+  // register() no longer sends a link-based verification email at all —
+  // that mechanism now exists only for changeEmail() (a new address must
+  // be reproven, same as at signup, but through the pre-existing
+  // link/token flow rather than the new registration code). So these
+  // tests set up their EmailVerificationToken via changeEmail() on an
+  // already-confirmed account, not via register() directly.
   describe('verifyEmail', () => {
-    it('marks the account verified when the token is valid', async () => {
-      await authService.register({
+    it('marks the new email verified when the token is valid', async () => {
+      const session = await registerAndConfirm({
         email: 'verify@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+      await authService.changeEmail(session.user.id, 'password12345', 'verify-new@example.com');
       const [, token] = [...fakeVerificationTokens.entries()][0]!;
 
       await authService.verifyEmail(token.plainToken);
 
-      const profile = await authService.getProfile('user-uuid-1');
+      const profile = await authService.getProfile(session.user.id);
       expect(profile.emailVerified).toBe(true);
     });
 
@@ -725,10 +917,11 @@ describe('AuthService', () => {
     });
 
     it('rejects a token that was already used', async () => {
-      await authService.register({
+      const session = await registerAndConfirm({
         email: 'verify-twice@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+      await authService.changeEmail(session.user.id, 'password12345', 'verify-twice-new@example.com');
       const [, token] = [...fakeVerificationTokens.entries()][0]!;
 
       await authService.verifyEmail(token.plainToken);
@@ -737,10 +930,11 @@ describe('AuthService', () => {
     });
 
     it('rejects an expired token', async () => {
-      await authService.register({
+      const session = await registerAndConfirm({
         email: 'verify-expired@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+      await authService.changeEmail(session.user.id, 'password12345', 'verify-expired-new@example.com');
       const [, token] = [...fakeVerificationTokens.entries()][0]!;
       token.expiresAt = new Date(Date.now() - 1000);
 
@@ -749,29 +943,28 @@ describe('AuthService', () => {
   });
 
   describe('resendVerificationEmail', () => {
-    it('sends a new verification email for an unverified account', async () => {
-      await authService.register({
+    it('sends a new verification email for an unverified (post-email-change) account', async () => {
+      const session = await registerAndConfirm({
         email: 'resend@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+      await authService.changeEmail(session.user.id, 'password12345', 'resend-new@example.com');
       sentEmails.length = 0;
 
-      await authService.resendVerificationEmail('user-uuid-1');
+      await authService.resendVerificationEmail(session.user.id);
 
       expect(sentEmails).toHaveLength(1);
-      expect(sentEmails[0]!.to).toBe('resend@example.com');
+      expect(sentEmails[0]!.to).toBe('resend-new@example.com');
     });
 
     it('does nothing for an already-verified account', async () => {
-      await authService.register({
+      const session = await registerAndConfirm({
         email: 'already-verified@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
-      const [, token] = [...fakeVerificationTokens.entries()][0]!;
-      await authService.verifyEmail(token.plainToken);
       sentEmails.length = 0;
 
-      await authService.resendVerificationEmail('user-uuid-1');
+      await authService.resendVerificationEmail(session.user.id);
 
       expect(sentEmails).toHaveLength(0);
     });
@@ -779,7 +972,7 @@ describe('AuthService', () => {
 
   describe('forgotPassword', () => {
     it('sends a password reset email for an existing account', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'forgot@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -803,7 +996,7 @@ describe('AuthService', () => {
 
   describe('resetPassword', () => {
     it('updates the password, allows login with the new password, and rejects the old one', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'reset@example.com',
         fullName: 'User',
         password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -825,7 +1018,7 @@ describe('AuthService', () => {
     });
 
     it('revokes every existing refresh token for the user', async () => {
-      const { refreshToken } = await authService.register({
+      const { refreshToken } = await registerAndConfirm({
         email: 'reset-revoke@example.com',
         fullName: 'User',
         password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -838,7 +1031,7 @@ describe('AuthService', () => {
     });
 
     it('rejects a weak new password', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'reset-weak@example.com',
         fullName: 'User',
         password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -857,7 +1050,7 @@ describe('AuthService', () => {
     });
 
     it('rejects a token that was already used', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'reset-twice@example.com',
         fullName: 'User',
         password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -872,7 +1065,7 @@ describe('AuthService', () => {
     });
 
     it('rejects an expired token', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'reset-expired@example.com',
         fullName: 'User',
         password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -888,7 +1081,7 @@ describe('AuthService', () => {
 
   describe('changePassword', () => {
     it('updates the password when the current password is correct', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'change-pw@example.com',
         fullName: 'User',
         password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -907,7 +1100,7 @@ describe('AuthService', () => {
     });
 
     it('revokes every existing refresh token', async () => {
-      const { refreshToken } = await authService.register({
+      const { refreshToken } = await registerAndConfirm({
         email: 'change-pw-revoke@example.com',
         fullName: 'User',
         password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -918,7 +1111,7 @@ describe('AuthService', () => {
     });
 
     it('rejects an incorrect current password', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'change-pw-wrong@example.com',
         fullName: 'User',
         password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -929,7 +1122,7 @@ describe('AuthService', () => {
     });
 
     it('rejects a weak new password', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'change-pw-weak@example.com',
         fullName: 'User',
         password: 'oldPassword123', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -942,7 +1135,7 @@ describe('AuthService', () => {
 
   describe('changeEmail', () => {
     it('updates the email, resets verification, and sends a new verification email', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'change-email@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -958,7 +1151,7 @@ describe('AuthService', () => {
     });
 
     it('revokes every existing refresh token', async () => {
-      const { refreshToken } = await authService.register({
+      const { refreshToken } = await registerAndConfirm({
         email: 'change-email-revoke@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -969,7 +1162,7 @@ describe('AuthService', () => {
     });
 
     it('rejects an incorrect current password', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'change-email-wrong@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -980,7 +1173,7 @@ describe('AuthService', () => {
     });
 
     it('rejects changing to the same email', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'change-email-same@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -991,11 +1184,11 @@ describe('AuthService', () => {
     });
 
     it('rejects an email already used by another account', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'change-email-taken@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
-      await authService.register({
+      await registerAndConfirm({
         email: 'change-email-target@example.com',
         fullName: 'Other User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -1008,7 +1201,7 @@ describe('AuthService', () => {
 
   describe('audit log', () => {
     it('records LOGIN_SUCCEEDED and LOGIN_FAILED', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'audit-login@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -1024,7 +1217,7 @@ describe('AuthService', () => {
     });
 
     it('records LOGOUT with the correct userId', async () => {
-      const { refreshToken } = await authService.register({
+      const { refreshToken } = await registerAndConfirm({
         email: 'audit-logout@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -1037,7 +1230,7 @@ describe('AuthService', () => {
     });
 
     it('records REFRESH_TOKEN_REUSE_DETECTED on a replayed refresh token', async () => {
-      const { refreshToken } = await authService.register({
+      const { refreshToken } = await registerAndConfirm({
         email: 'audit-reuse@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -1049,23 +1242,27 @@ describe('AuthService', () => {
       expect(auditLog.map((entry) => entry.eventType)).toEqual(['REFRESH_TOKEN_REUSE_DETECTED']);
     });
 
-    it('records EMAIL_VERIFIED, PASSWORD_RESET_REQUESTED/COMPLETED, PASSWORD_CHANGED, and EMAIL_CHANGED', async () => {
-      await authService.register({
+    it('records EMAIL_VERIFIED, LOGIN_SUCCEEDED, PASSWORD_RESET_REQUESTED/COMPLETED, PASSWORD_CHANGED, and EMAIL_CHANGED', async () => {
+      const challenge = await authService.register({
         email: 'audit-full@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
-      const [, verifyToken] = [...fakeVerificationTokens.entries()][0]!;
-      auditLog.length = 0;
+      const code = getPendingRegistrationCode(challenge.challengeToken);
+      // Confirming the registration code is what now emits EMAIL_VERIFIED
+      // (and LOGIN_SUCCEEDED, from the session it issues) -- the old
+      // link-based verifyEmail() is no longer part of this flow.
+      await authService.confirmRegistrationCode({ challengeToken: challenge.challengeToken, code });
+      const userId = fakeUsers.get('audit-full@example.com')!.id;
 
-      await authService.verifyEmail(verifyToken.plainToken);
       await authService.forgotPassword('audit-full@example.com');
       const [, resetToken] = [...fakePasswordResetTokens.entries()][0]!;
       await authService.resetPassword(resetToken.plainToken, 'resetPassword456');
-      await authService.changePassword('user-uuid-1', 'resetPassword456', 'changedPassword789');
-      await authService.changeEmail('user-uuid-1', 'changedPassword789', 'audit-full-new@example.com');
+      await authService.changePassword(userId, 'resetPassword456', 'changedPassword789');
+      await authService.changeEmail(userId, 'changedPassword789', 'audit-full-new@example.com');
 
       expect(auditLog.map((entry) => entry.eventType)).toEqual([
         'EMAIL_VERIFIED',
+        'LOGIN_SUCCEEDED',
         'PASSWORD_RESET_REQUESTED',
         'PASSWORD_RESET_COMPLETED',
         'PASSWORD_CHANGED',
@@ -1074,7 +1271,7 @@ describe('AuthService', () => {
     });
 
     it('does not fail the underlying action when audit recording throws', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'audit-broken@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -1090,7 +1287,7 @@ describe('AuthService', () => {
 
   describe('getAuditLog', () => {
     it('returns the most recent entries for the user, most recent first', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'audit-list@example.com',
         fullName: 'User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -1109,7 +1306,7 @@ describe('AuthService', () => {
 
   describe('MFA (TOTP)', () => {
     async function makeMfaUser() {
-      await authService.register({
+      await registerAndConfirm({
         email: 'mfa@example.com',
         fullName: 'MFA User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -1308,7 +1505,7 @@ describe('AuthService', () => {
 
   describe('Terms of Use / Privacy Policy acceptance on registration', () => {
     it('records the LGPD-regime definitions when countryCode is BRA', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'guardian-lgpd@example.com',
         fullName: 'Guardian',
         password: 'strongPassword123!',
@@ -1323,7 +1520,7 @@ describe('AuthService', () => {
     });
 
     it('records the GDPR-regime definitions for an EU country', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'guardian-gdpr@example.com',
         fullName: 'Guardian',
         password: 'strongPassword123!',
@@ -1337,7 +1534,7 @@ describe('AuthService', () => {
     });
 
     it('records the GENERIC-regime definitions for a country outside every specific regime', async () => {
-      await authService.register({
+      await registerAndConfirm({
         email: 'guardian-generic@example.com',
         fullName: 'Guardian',
         password: 'strongPassword123!',
@@ -1374,7 +1571,7 @@ describe('AuthService', () => {
     it('promotes a matching email on register', async () => {
       environment.platformAdminEmails = ['admin@example.com'];
 
-      const result = await authService.register({
+      const result = await registerAndConfirm({
         email: 'admin@example.com',
         fullName: 'Admin User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -1386,7 +1583,7 @@ describe('AuthService', () => {
     it('does not promote an email that is not in the list', async () => {
       environment.platformAdminEmails = ['someone-else@example.com'];
 
-      const result = await authService.register({
+      const result = await registerAndConfirm({
         email: 'parent@example.com',
         fullName: 'Parent User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -1396,7 +1593,7 @@ describe('AuthService', () => {
     });
 
     it('promotes an existing user at login time once added to the list', async () => {
-      const registered = await authService.register({
+      const registered = await registerAndConfirm({
         email: 'later-admin@example.com',
         fullName: 'Later Admin',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -1411,7 +1608,7 @@ describe('AuthService', () => {
 
     it('never auto-demotes once promoted, even if removed from the list', async () => {
       environment.platformAdminEmails = ['sticky-admin@example.com'];
-      const result = await authService.register({
+      const result = await registerAndConfirm({
         email: 'sticky-admin@example.com',
         fullName: 'Sticky Admin',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
@@ -1427,43 +1624,38 @@ describe('AuthService', () => {
     it('does not promote a user registering with an admin domain until email is verified', async () => {
       environment.platformAdminDomains = ['trinitygrove.org'];
 
-      const result = await authService.register({
+      const challenge = await authService.register({
         email: 'leader@trinitygrove.org',
         fullName: 'Leader',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
-      expectAuthSession(result);
-      await expect(authService.isPlatformAdmin(result.user.id)).resolves.toBe(false);
+
+      const userId = fakeUsers.get('leader@trinitygrove.org')!.id;
+      await expect(authService.isPlatformAdmin(userId)).resolves.toBe(false);
+      expect(challenge.emailConfirmationRequired).toBe(true);
     });
 
     it('promotes a user with an admin domain when email verification succeeds', async () => {
       environment.platformAdminDomains = ['trinitygrove.org'];
 
-      const result = await authService.register({
+      const challenge = await authService.register({
         email: 'leader@trinitygrove.org',
         fullName: 'Leader',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
-      expectAuthSession(result);
-      await expect(authService.isPlatformAdmin(result.user.id)).resolves.toBe(false);
 
-      const tokenRecord = Array.from(fakeVerificationTokens.values()).find(
-        (t) => t.userId === result.user.id,
-      );
-      expect(tokenRecord).toBeDefined();
+      const userId = fakeUsers.get('leader@trinitygrove.org')!.id;
+      await expect(authService.isPlatformAdmin(userId)).resolves.toBe(false);
 
-      await authService.verifyEmail(tokenRecord!.plainToken);
+      const code = getPendingRegistrationCode(challenge.challengeToken);
+      await authService.confirmRegistrationCode({ challengeToken: challenge.challengeToken, code });
 
-      await expect(authService.isPlatformAdmin(result.user.id)).resolves.toBe(true);
+      await expect(authService.isPlatformAdmin(userId)).resolves.toBe(true);
     });
 
     it('promotes an already verified user with an admin domain at login time', async () => {
-      const registered = await authService.register({
+      const registered = await registerAndConfirm({
         email: 'staff@aletheiaphos.app',
         fullName: 'Staff',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
-      const tokenRecord = Array.from(fakeVerificationTokens.values()).find(
-        (t) => t.userId === registered.user.id,
-      );
-      await authService.verifyEmail(tokenRecord!.plainToken);
       await expect(authService.isPlatformAdmin(registered.user.id)).resolves.toBe(false);
 
       environment.platformAdminDomains = ['aletheiaphos.app'];
@@ -1475,14 +1667,10 @@ describe('AuthService', () => {
     it('does not promote a verified user whose domain does not match', async () => {
       environment.platformAdminDomains = ['trinitygrove.org'];
 
-      const registered = await authService.register({
+      const registered = await registerAndConfirm({
         email: 'someone@otherdomain.com',
         fullName: 'Other User',
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
-      const tokenRecord = Array.from(fakeVerificationTokens.values()).find(
-        (t) => t.userId === registered.user.id,
-      );
-      await authService.verifyEmail(tokenRecord!.plainToken);
 
       await expect(authService.isPlatformAdmin(registered.user.id)).resolves.toBe(false);
     });

@@ -3,6 +3,7 @@
 import React, { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { EmailCodeVerifyForm } from '../../../src/components/auth/email-code-verify-form';
 import { LoginForm } from '../../../src/components/auth/login-form';
 import { MfaVerifyForm } from '../../../src/components/auth/mfa-verify-form';
 import { useAuth } from '../../../src/lib/auth/auth-context';
@@ -23,8 +24,9 @@ function LoginFormWrapper() {
   const { t } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, verifyMfa } = useAuth();
+  const { login, verifyMfa, confirmRegistrationCode, resendRegistrationCode } = useAuth();
   const [challengeToken, setChallengeToken] = useState<string | null>(null);
+  const [pendingEmailConfirmation, setPendingEmailConfirmation] = useState(false);
 
   const redirectTo = () => {
     const redirectParam = sanitizeRedirectTarget(searchParams?.get('redirect'));
@@ -36,6 +38,15 @@ function LoginFormWrapper() {
     if ('mfaRequired' in result) {
       // Paused: no session exists yet. Show the second-factor screen.
       setChallengeToken(result.challengeToken);
+      setPendingEmailConfirmation(false);
+      return;
+    }
+    if ('emailConfirmationRequired' in result) {
+      // Account registered but never confirmed (e.g. the guardian closed
+      // the tab before entering the code) -- a fresh code was just
+      // emailed by login() itself.
+      setChallengeToken(result.challengeToken);
+      setPendingEmailConfirmation(true);
       return;
     }
     redirectTo();
@@ -45,9 +56,53 @@ function LoginFormWrapper() {
     if (!challengeToken) {
       throw new Error(t('auth.login.mfaExpired'));
     }
+    if (pendingEmailConfirmation) {
+      await confirmRegistrationCode({ challengeToken, code: data.code });
+      redirectTo();
+      return;
+    }
     await verifyMfa({ challengeToken, code: data.code });
     redirectTo();
   };
+
+  const handleResendEmailCode = async () => {
+    if (!challengeToken) {
+      throw new Error(t('auth.login.mfaExpired'));
+    }
+    const result = await resendRegistrationCode(challengeToken);
+    setChallengeToken(result.challengeToken);
+  };
+
+  if (challengeToken && pendingEmailConfirmation) {
+    return (
+      <>
+        <EmailCodeVerifyForm onSubmit={handleVerify} onResend={handleResendEmailCode} />
+        <button
+          type="button"
+          data-testid="mfa-back-button"
+          onClick={() => {
+            setChallengeToken(null);
+            setPendingEmailConfirmation(false);
+          }}
+          style={{
+            width: '100%',
+            marginTop: '0.75rem',
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 600,
+            fontSize: '0.9375rem',
+            padding: '0.75rem 1.5rem',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--forest)',
+            background: 'transparent',
+            color: 'var(--forest)',
+            cursor: 'pointer',
+          }}
+        >
+          {t('auth.mfa.backToLogin')}
+        </button>
+      </>
+    );
+  }
 
   if (challengeToken) {
     return (

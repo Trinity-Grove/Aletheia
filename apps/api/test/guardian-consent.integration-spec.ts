@@ -2,6 +2,7 @@ import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
 import { PrismaService } from '../src/platform/database/prisma.service.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 describe('Guardian consent: Terms of Use / Privacy Policy at registration, learner data consent at creation (real Postgres)', () => {
   let app: NestFastifyApplication;
@@ -38,17 +39,14 @@ describe('Guardian consent: Terms of Use / Privacy Policy at registration, learn
 
   it('records the LGPD-regime Terms of Use / Privacy Policy definitions when registering with countryCode BRA', async () => {
     const email = uniqueEmail('consent-lgpd');
-    const response = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({
+    const response = await registerAndConfirmGuardian(app, {
         email,
         password: 'somePassword123',
         fullName: 'Guardian LGPD',
         countryCode: 'BRA',
         acceptedTermsOfUse: true,
         acceptedPrivacyPolicy: true,
-      })
-      .expect(201);
+      });
 
     const userId = response.body.user.id;
     const user = await prisma.user.findUniqueOrThrow({
@@ -64,17 +62,14 @@ describe('Guardian consent: Terms of Use / Privacy Policy at registration, learn
 
   it('records the GDPR-regime definitions when registering with an EU countryCode', async () => {
     const email = uniqueEmail('consent-gdpr');
-    const response = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({
+    const response = await registerAndConfirmGuardian(app, {
         email,
         password: 'somePassword123',
         fullName: 'Guardian GDPR',
         countryCode: 'DEU',
         acceptedTermsOfUse: true,
         acceptedPrivacyPolicy: true,
-      })
-      .expect(201);
+      });
 
     const userId = response.body.user.id;
     const user = await prisma.user.findUniqueOrThrow({
@@ -88,17 +83,14 @@ describe('Guardian consent: Terms of Use / Privacy Policy at registration, learn
 
   it('rejects learner creation without guardian data-processing consent, and grants the family-country-appropriate consent record when accepted', async () => {
     const guardianEmail = uniqueEmail('consent-learner-guardian');
-    const registerRes = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({
+    const registerRes = await registerAndConfirmGuardian(app, {
         email: guardianEmail,
         password: 'somePassword123',
         fullName: 'Learner Consent Guardian',
         countryCode: 'BRA',
         acceptedTermsOfUse: true,
         acceptedPrivacyPolicy: true,
-      })
-      .expect(201);
+      });
 
     const guardianCookie = [registerRes.headers['set-cookie']]
       .flat()

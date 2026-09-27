@@ -1,6 +1,7 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 // Learner-scoped evidence submission + progress view (issue #34), against
 // real Postgres. This is the first slice added on top of the existing
@@ -35,10 +36,7 @@ describe('Learner Portal: evidence submission + progress (real Postgres)', () =>
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
 
-    const adminResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Learner Portal Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const adminResponse = await registerAndConfirmGuardian(app, { email: adminEmail, password: 'somePassword123', fullName: 'Learner Portal Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     adminCookie = extractCookie(adminResponse, 'aletheia_session=');
 
     const evidenceType = await supertest(app.getHttpServer())
@@ -86,10 +84,7 @@ describe('Learner Portal: evidence submission + progress (real Postgres)', () =>
 
     // One guardian, one family, two learner children (siblings).
     const guardianEmail = `learner-portal-guardian-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
-    const guardianResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: guardianEmail, password: 'somePassword123', fullName: 'Learner Portal Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const guardianResponse = await registerAndConfirmGuardian(app, { email: guardianEmail, password: 'somePassword123', fullName: 'Learner Portal Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     guardianCookie = extractCookie(guardianResponse, 'aletheia_session=');
 
     const familyResponse = await supertest(app.getHttpServer())

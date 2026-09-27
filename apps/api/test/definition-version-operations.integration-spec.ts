@@ -3,6 +3,7 @@ import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
 import { PrismaService } from '../src/platform/database/prisma.service.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 // Real-Postgres coverage for the two explicit Definition/Version
 // operations added in issue #96 section 24: controlled migration of
@@ -28,10 +29,7 @@ describe('Definition/Version operations: migration + rollback (real Postgres)', 
   const opsBase = `${adminBase}/version-operations`;
 
   async function register(email: string) {
-    const response = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Def Version Ops Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const response = await registerAndConfirmGuardian(app, { email, password: 'somePassword123', fullName: 'Def Version Ops Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     return [response.headers['set-cookie']].flat().find((value) => value?.startsWith('aletheia_session='))!;
   }
 

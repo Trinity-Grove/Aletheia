@@ -12,11 +12,13 @@ import type {
   AccountAuditEventType,
   AccountAuditLogEntryDto,
   AuthResponseDto,
+  ConfirmRegistrationCodeDto,
   LoginDto,
   MfaChallengeIssuedDto,
   MfaSetupResponseDto,
   MfaVerifyDto,
   RegisterGuardianDto,
+  RegistrationChallengeIssuedDto,
   UserSummaryDto,
 } from '@aletheia/contracts';
 import { PasswordPolicy } from '../domain/password-policy.js';
@@ -31,6 +33,7 @@ import { MfaSecretRepository } from '../infrastructure/mfa-secret.repository.js'
 import { MfaRecoveryCodeRepository } from '../infrastructure/mfa-recovery-code.repository.js';
 import { MfaSetupChallengeRepository } from '../infrastructure/mfa-setup-challenge.repository.js';
 import { MfaLoginChallengeRepository } from '../infrastructure/mfa-login-challenge.repository.js';
+import { RegistrationVerificationChallengeRepository } from '../infrastructure/registration-verification-challenge.repository.js';
 import { TotpSecretCipher } from '../../../platform/security/totp-secret-cipher.js';
 import {
   buildOtpauthUri,
@@ -50,7 +53,7 @@ const ACCESS_TOKEN_TTL = '1h';
 const SETUP_CHALLENGE_TTL_MS = 10 * 60 * 1000;
 const RECOVERY_CODES_COUNT = 10;
 
-export type LoginResult = AuthSession | MfaChallengeIssuedDto;
+export type LoginResult = AuthSession | MfaChallengeIssuedDto | RegistrationChallengeIssuedDto;
 
 export interface AuthSession extends AuthResponseDto {
   refreshToken: string;
@@ -73,13 +76,14 @@ export class AuthService implements IdentityPublicApi {
     private readonly mfaRecoveryCodeRepository: MfaRecoveryCodeRepository,
     private readonly mfaSetupChallengeRepository: MfaSetupChallengeRepository,
     private readonly mfaLoginChallengeRepository: MfaLoginChallengeRepository,
+    private readonly registrationChallengeRepository: RegistrationVerificationChallengeRepository,
     private readonly totpSecretCipher: TotpSecretCipher,
     @Inject(PRIVACY_PUBLIC_API) private readonly privacyPublicApi: PrivacyPublicApi,
     @Inject(MAIL_SENDER) private readonly mailSender: MailSender,
     @Inject(ENVIRONMENT) private readonly environment: Environment,
   ) {}
 
-  async register(dto: RegisterGuardianDto): Promise<AuthSession> {
+  async register(dto: RegisterGuardianDto): Promise<RegistrationChallengeIssuedDto> {
     const policyResult = PasswordPolicy.validate(dto.password);
     if (!policyResult.valid) {
       throw new BadRequestException(policyResult.reason);
@@ -125,12 +129,13 @@ export class AuthService implements IdentityPublicApi {
       termsOfUseAcceptedAt: now,
       privacyPolicyDefinitionId: privacyPolicyDefinition.id,
       privacyPolicyAcceptedAt: now,
+      emailVerificationRequired: true,
     });
 
-    await this.sendVerificationEmail(user.id, user.email, user.fullName);
-    const sessionUser = await this.syncPlatformAdminBootstrap(user);
-
-    return this.issueSession(user.id, user.email, sessionUser);
+    // No session is issued here -- the account only becomes usable once
+    // confirmRegistrationCode() succeeds. This is the "blocking" half of
+    // the feature: platform-admin bootstrap also waits until then.
+    return this.issueRegistrationChallenge(user.id, user.email, user.fullName);
   }
 
   async login(dto: LoginDto): Promise<LoginResult> {
@@ -145,6 +150,14 @@ export class AuthService implements IdentityPublicApi {
       throw new UnauthorizedException('Invalid email or password.');
     }
 
+    if (!user.emailVerifiedAt && user.emailVerificationRequired) {
+      // Same account created earlier, still unconfirmed -- most likely
+      // the guardian closed the tab before entering the code. Logging in
+      // again (proving they own the password) is enough to get a fresh
+      // one; no separate "resend by email" endpoint is needed for this.
+      return this.issueRegistrationChallenge(user.id, user.email, user.fullName);
+    }
+
     const sessionUser = await this.syncPlatformAdminBootstrap(user);
 
     if (user.mfaEnabled) {
@@ -154,6 +167,59 @@ export class AuthService implements IdentityPublicApi {
 
     await this.recordAuditEvent(user.id, 'LOGIN_SUCCEEDED');
     return this.issueSession(user.id, user.email, sessionUser);
+  }
+
+  async confirmRegistrationCode(dto: ConfirmRegistrationCodeDto): Promise<AuthSession> {
+    const challenge = await this.registrationChallengeRepository.findByToken(dto.challengeToken);
+    if (!challenge || challenge.expiresAt.getTime() < Date.now()) {
+      throw new NotFoundException('Invalid or expired registration challenge.');
+    }
+
+    if (!this.registrationChallengeRepository.matchesCode(challenge, dto.code)) {
+      await this.recordAuditEvent(challenge.userId, 'EMAIL_VERIFICATION_CODE_FAILED');
+      await this.registrationChallengeRepository.recordFailedAttempt(dto.challengeToken);
+      throw new BadRequestException('Invalid code.');
+    }
+
+    await this.registrationChallengeRepository.deleteByToken(dto.challengeToken);
+    const user = await this.userRepository.findById(challenge.userId);
+    if (!user) {
+      throw new NotFoundException('User no longer exists.');
+    }
+
+    await this.userRepository.markEmailVerified(user.id);
+    await this.recordAuditEvent(user.id, 'EMAIL_VERIFIED');
+
+    const verifiedUser = await this.userRepository.findById(user.id);
+    if (!verifiedUser) {
+      throw new NotFoundException('User no longer exists.');
+    }
+    const sessionUser = await this.syncPlatformAdminBootstrap(verifiedUser);
+
+    await this.recordAuditEvent(user.id, 'LOGIN_SUCCEEDED');
+    return this.issueSession(user.id, user.email, sessionUser);
+  }
+
+  // Reissuing always replaces the old challenge (see
+  // RegistrationVerificationChallengeRepository.issue), so the caller
+  // must switch to the new challengeToken returned here -- the one they
+  // had stops matching any stored row.
+  async resendRegistrationCode(challengeToken: string): Promise<RegistrationChallengeIssuedDto> {
+    const challenge = await this.registrationChallengeRepository.findByToken(challengeToken);
+    if (!challenge) {
+      // Same anti-enumeration shape as resendVerificationEmail: an
+      // expired/unknown challenge token looks identical to the caller,
+      // but there's nothing valid to hand back, so it errors here --
+      // the frontend already dropped this token in that case.
+      throw new NotFoundException('Invalid or expired registration challenge.');
+    }
+
+    const user = await this.userRepository.findById(challenge.userId);
+    if (!user) {
+      throw new NotFoundException('Invalid or expired registration challenge.');
+    }
+
+    return this.issueRegistrationChallenge(user.id, user.email, user.fullName);
   }
 
   async mfaSetup(userId: string, password: string): Promise<MfaSetupResponseDto> {
@@ -369,6 +435,14 @@ export class AuthService implements IdentityPublicApi {
     await this.sendVerificationEmail(user.id, user.email, user.fullName);
   }
 
+  // Non-production only (enforced by the repository itself, not just the
+  // caller) -- lets E2E suites that run against the real API with zero
+  // HTTP mocks retrieve a real pending code instead of reading it from
+  // an email that was never actually delivered anywhere reachable.
+  async findPendingRegistrationCodeForDebugOnly(challengeToken: string): Promise<string | null> {
+    return this.registrationChallengeRepository.findPlainCodeForDebugOnly(challengeToken);
+  }
+
   async forgotPassword(email: string): Promise<void> {
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
@@ -568,6 +642,34 @@ export class AuthService implements IdentityPublicApi {
       // never block the actual auth flow it's trying to record.
       this.logger.error(`Failed to record audit event ${eventType} for user ${userId}`, error as Error);
     }
+  }
+
+  private async issueRegistrationChallenge(
+    userId: string,
+    email: string,
+    fullName: string,
+  ): Promise<RegistrationChallengeIssuedDto> {
+    const { token, code } = await this.registrationChallengeRepository.issue(userId);
+
+    try {
+      await this.mailSender.send({
+        to: email,
+        subject: 'Confirme seu e-mail no Aletheia',
+        text: `Olá, ${fullName}! Seu código de confirmação é ${code}.\n\nEste código expira em 15 minutos.`,
+        html:
+          `<p>Olá, ${fullName}!</p>` +
+          `<p>Seu código de confirmação é:</p>` +
+          `<p style="font-size: 1.5rem; font-weight: bold; letter-spacing: 0.25rem;">${code}</p>` +
+          `<p>Este código expira em 15 minutos.</p>`,
+      });
+    } catch (error) {
+      // Same reasoning as sendVerificationEmail below: a failed send must
+      // never throw here -- the account stays pending, and the caller can
+      // always retry via resendRegistrationCode.
+      this.logger.error(`Failed to send registration verification code to ${email}`, error as Error);
+    }
+
+    return { emailConfirmationRequired: true, challengeToken: token };
   }
 
   private async sendVerificationEmail(userId: string, email: string, fullName: string): Promise<void> {

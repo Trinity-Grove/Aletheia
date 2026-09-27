@@ -28,6 +28,33 @@ export const registerGuardianSchema = z.object({
 
 export type RegisterGuardianDto = z.infer<typeof registerGuardianSchema>;
 
+// register() no longer issues a session directly -- every registration
+// now goes through a pending "confirm the 6-digit code we emailed you"
+// challenge first, mirroring mfaChallengeIssuedSchema below.
+export const registrationChallengeIssuedSchema = z.object({
+  emailConfirmationRequired: z.literal(true),
+  challengeToken: z.string().min(1),
+});
+
+export type RegistrationChallengeIssuedDto = z.infer<typeof registrationChallengeIssuedSchema>;
+
+export const registerResultSchema = registrationChallengeIssuedSchema;
+
+export type RegisterResultDto = z.infer<typeof registerResultSchema>;
+
+export const confirmRegistrationCodeSchema = z.object({
+  challengeToken: z.string().min(1),
+  code: z.string().length(6),
+});
+
+export type ConfirmRegistrationCodeDto = z.infer<typeof confirmRegistrationCodeSchema>;
+
+export const resendRegistrationCodeSchema = z.object({
+  challengeToken: z.string().min(1),
+});
+
+export type ResendRegistrationCodeDto = z.infer<typeof resendRegistrationCodeSchema>;
+
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
@@ -88,6 +115,7 @@ export const accountAuditEventTypeSchema = z.enum([
   'MFA_ENABLED',
   'MFA_DISABLED',
   'MFA_CHALLENGE_FAILED',
+  'EMAIL_VERIFICATION_CODE_FAILED',
 ]);
 
 export type AccountAuditEventType = z.infer<typeof accountAuditEventTypeSchema>;
@@ -133,6 +161,10 @@ export const mfaChallengeIssuedSchema = z.object({
 
 export type MfaChallengeIssuedDto = z.infer<typeof mfaChallengeIssuedSchema>;
 
-export const loginResultSchema = z.union([authResponseSchema, mfaChallengeIssuedSchema]);
+export const loginResultSchema = z.union([
+  authResponseSchema,
+  mfaChallengeIssuedSchema,
+  registrationChallengeIssuedSchema,
+]);
 
 export type LoginResultDto = z.infer<typeof loginResultSchema>;

@@ -2,6 +2,7 @@ import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
 import { PrismaService } from '../src/platform/database/prisma.service.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 // Family-scoped pedagogical/theological profile CRUD (issue #96 Fase 1,
 // sections 13/14) against real Postgres, with real family membership
@@ -21,10 +22,7 @@ describe('Pedagogical & Theological Profiles (real Postgres)', () => {
 
   async function registerWithFamily(prefix: string): Promise<{ cookie: string; familyId: string }> {
     const email = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
-    const registerResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Profiles Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const registerResponse = await registerAndConfirmGuardian(app, { email, password: 'somePassword123', fullName: 'Profiles Test Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     const cookie = [registerResponse.headers['set-cookie']]
       .flat()
       .find((c) => c?.startsWith('aletheia_session='))!;

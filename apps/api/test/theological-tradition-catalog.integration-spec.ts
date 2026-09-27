@@ -1,6 +1,7 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 // Family-facing theological tradition catalog (issue #126 item 1) --
 // analogous to the pedagogical model catalog from #96 section 35 (PR
@@ -20,19 +21,13 @@ describe('Theological tradition catalog (real Postgres)', () => {
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
 
-    const adminResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Tradition Catalog Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const adminResponse = await registerAndConfirmGuardian(app, { email: adminEmail, password: 'somePassword123', fullName: 'Tradition Catalog Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     adminCookie = [adminResponse.headers['set-cookie']]
       .flat()
       .find((c) => c?.startsWith('aletheia_session='))!;
 
     const familyEmail = `tradition-catalog-family-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
-    const familyRegisterResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: familyEmail, password: 'somePassword123', fullName: 'Tradition Catalog Family', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const familyRegisterResponse = await registerAndConfirmGuardian(app, { email: familyEmail, password: 'somePassword123', fullName: 'Tradition Catalog Family', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     familyCookie = [familyRegisterResponse.headers['set-cookie']]
       .flat()
       .find((c) => c?.startsWith('aletheia_session='))!;
@@ -98,10 +93,7 @@ describe('Theological tradition catalog (real Postgres)', () => {
 
   it('rejects a request from a family the caller does not belong to', async () => {
     const otherEmail = `tradition-catalog-other-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
-    const otherResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: otherEmail, password: 'somePassword123', fullName: 'Other Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const otherResponse = await registerAndConfirmGuardian(app, { email: otherEmail, password: 'somePassword123', fullName: 'Other Guardian', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     const otherCookie = [otherResponse.headers['set-cookie']]
       .flat()
       .find((c) => c?.startsWith('aletheia_session='))!;

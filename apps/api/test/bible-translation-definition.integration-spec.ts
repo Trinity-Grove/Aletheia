@@ -6,6 +6,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module.js';
 import { BibleTranslationDefinitionSeeder } from '../src/modules/curriculum/infrastructure/bible-translation-definition.seeder.js';
 import { POPULAR_BIBLE_VERSIONS } from '../src/modules/devotional/infrastructure/youversion.service.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 // Admin CRUD + strangler-fig equivalence proof for BibleTranslationDefinition
 // (issue #96 Fase 3, section 16) against real Postgres.
@@ -19,10 +20,7 @@ describe('Bible translation definition (real Postgres)', () => {
 
   async function registerAndGetCookie(emailPrefix: string): Promise<string> {
     const email = `${emailPrefix}-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
-    const response = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Bible Translation Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const response = await registerAndConfirmGuardian(app, { email, password: 'somePassword123', fullName: 'Bible Translation Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     return [response.headers['set-cookie']].flat().find((c) => c?.startsWith('aletheia_session='))!;
   }
 
@@ -33,10 +31,7 @@ describe('Bible translation definition (real Postgres)', () => {
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
 
-    const adminResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Bible Translation Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const adminResponse = await registerAndConfirmGuardian(app, { email: adminEmail, password: 'somePassword123', fullName: 'Bible Translation Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     adminCookie = [adminResponse.headers['set-cookie']]
       .flat()
       .find((c) => c?.startsWith('aletheia_session='))!;

@@ -1,6 +1,7 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 describe('Account audit log (real Postgres)', () => {
   let app: NestFastifyApplication;
@@ -18,10 +19,7 @@ describe('Account audit log (real Postgres)', () => {
   it('records login, password change, and logout, and lists them most-recent-first', async () => {
     const email = `audit-integration-${Date.now()}@example.com`;
 
-    const registerResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email, password: 'oldPassword123', fullName: 'Audit Log Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const registerResponse = await registerAndConfirmGuardian(app, { email, password: 'oldPassword123', fullName: 'Audit Log Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
     const accessCookie = [registerResponse.headers['set-cookie']]
       .flat()
@@ -62,10 +60,7 @@ describe('Account audit log (real Postgres)', () => {
   it('records a failed login attempt', async () => {
     const email = `audit-failed-login-${Date.now()}@example.com`;
 
-    const registerResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email, password: 'correctPassword123', fullName: 'Audit Failed Login Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const registerResponse = await registerAndConfirmGuardian(app, { email, password: 'correctPassword123', fullName: 'Audit Failed Login Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
     const accessCookie = [registerResponse.headers['set-cookie']]
       .flat()

@@ -23,6 +23,23 @@ async function readAndAcceptDocument(
   await page.getByTestId(checkboxTestId).check();
 }
 
+// Registration is blocking: no session exists until the emailed 6-digit
+// code is confirmed. Against the real backend there's nowhere else to
+// read that code from except the non-production-only debug endpoint
+// (GET /auth/register/debug-code) -- it exists specifically for this,
+// and is a 404 in production. The challengeToken itself only ever lives
+// in the register page's React state, so it's read here from the
+// captured POST /auth/register response instead of the DOM.
+async function confirmEmailRegistrationCode(page: Page, registerResponse: { challengeToken: string }): Promise<void> {
+  await expect(page.getByTestId('email-code-verify-form')).toBeVisible();
+  const debugRes = await page.request.get('/api/v1/auth/register/debug-code', {
+    params: { challengeToken: registerResponse.challengeToken },
+  });
+  const { code } = (await debugRes.json()) as { code: string };
+  await page.getByTestId('email-code-input').fill(code);
+  await page.getByTestId('email-code-verify-button').click();
+}
+
 // Real, no-mocks golden-path homologation journey (issue #23). Every request
 // this test triggers leaves the browser for real: /api/* is proxied by
 // next.config.ts to a real NestJS API backed by real Postgres and real
@@ -78,7 +95,12 @@ test.describe('Real golden-path homologation journey (#23)', () => {
         'reg-document-viewer-scroll-area',
         'reg-privacy-policy-checkbox',
       );
+      const registerResponsePromise = page.waitForResponse(
+        (res) => res.url().includes('/api/v1/auth/register') && res.request().method() === 'POST',
+      );
       await page.getByTestId('register-button').click();
+      const registerResponse = (await (await registerResponsePromise).json()) as { challengeToken: string };
+      await confirmEmailRegistrationCode(page, registerResponse);
       await expect(page).toHaveURL(/.*onboarding/, { timeout: 15_000 });
     });
 
@@ -310,7 +332,12 @@ test.describe('Real golden-path homologation journey (#23)', () => {
         'reg-document-viewer-scroll-area',
         'reg-privacy-policy-checkbox',
       );
+      const otherRegisterResponsePromise = otherPage.waitForResponse(
+        (res) => res.url().includes('/api/v1/auth/register') && res.request().method() === 'POST',
+      );
       await otherPage.getByTestId('register-button').click();
+      const otherRegisterResponse = (await (await otherRegisterResponsePromise).json()) as { challengeToken: string };
+      await confirmEmailRegistrationCode(otherPage, otherRegisterResponse);
       await expect(otherPage).toHaveURL(/.*onboarding/, { timeout: 15_000 });
 
       await otherPage.getByTestId('family-name-input').fill(`Família Isolada ${otherStamp}`);

@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 function sessionCookie(res: supertest.Response): string {
   const cookie = [res.headers['set-cookie']]
@@ -75,10 +76,7 @@ describe('MFA (TOTP) — real Postgres + real otplib', () => {
   });
 
   async function register(email: string) {
-    const res = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email, password: 'password12345', fullName: 'MFA Test User', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const res = await registerAndConfirmGuardian(app, { email, fullName: 'MFA Test User' });
     return { session: sessionCookie(res), refresh: refreshCookie(res) };
   }
 

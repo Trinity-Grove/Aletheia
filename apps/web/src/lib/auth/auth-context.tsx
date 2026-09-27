@@ -12,12 +12,14 @@ import type {
   AuthResponseDto,
   ChangeEmailDto,
   ChangePasswordDto,
+  ConfirmRegistrationCodeDto,
   FamilyResponseDto,
   FamilyRole,
   LoginDto,
   LoginResultDto,
   MfaVerifyDto,
   RegisterGuardianDto,
+  RegisterResultDto,
   UserSummaryDto,
 } from '@aletheia/contracts';
 import { api, ApiError, setApiAuthToken } from '../api';
@@ -34,7 +36,9 @@ export interface AuthContextValue {
   activeRole: FamilyRole | null;
   login: (_credentials: LoginDto) => Promise<LoginResultDto>;
   verifyMfa: (_data: MfaVerifyDto) => Promise<void>;
-  register: (_data: RegisterGuardianDto) => Promise<void>;
+  register: (_data: RegisterGuardianDto) => Promise<RegisterResultDto>;
+  confirmRegistrationCode: (_data: ConfirmRegistrationCodeDto) => Promise<void>;
+  resendRegistrationCode: (_challengeToken: string) => Promise<RegisterResultDto>;
   logout: () => void;
   selectFamily: (_familyId: string) => void;
   refreshSession: () => Promise<void>;
@@ -144,10 +148,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
     async (credentials: LoginDto): Promise<LoginResultDto> => {
       const res = await api.post<LoginResultDto>('/auth/login', credentials);
 
-      // MFA enabled: login is paused mid-way. No session state is created
-      // (the server issued no cookies/token); the caller must complete the
-      // second factor via verifyMfa with the returned challenge token.
-      if ('mfaRequired' in res) {
+      // MFA enabled, or the account still hasn't confirmed its email:
+      // login is paused mid-way either way. No session state is created
+      // (the server issued no cookies/token); the caller must complete
+      // the second step via verifyMfa/confirmRegistrationCode with the
+      // returned challenge token.
+      if ('mfaRequired' in res || 'emailConfirmationRequired' in res) {
         return res;
       }
 
@@ -191,8 +197,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
   }, []);
 
   const register = useCallback(
-    async (data: RegisterGuardianDto): Promise<void> => {
-      const res = await api.post<AuthResponseDto>('/auth/register', data);
+    async (data: RegisterGuardianDto): Promise<RegisterResultDto> => {
+      // register() never authenticates directly anymore -- the account is
+      // pending until confirmRegistrationCode succeeds with the code
+      // emailed here. No session state is touched.
+      return api.post<RegisterResultDto>('/auth/register', data);
+    },
+    [],
+  );
+
+  const confirmRegistrationCode = useCallback(
+    async (data: ConfirmRegistrationCodeDto): Promise<void> => {
+      const res = await api.post<AuthResponseDto>('/auth/register/confirm', data);
       setApiAuthToken(res.accessToken);
       setToken(res.accessToken);
       setUser(res.user);
@@ -201,6 +217,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       setStoredActiveFamilyId(null);
       setStatus('authenticated');
     },
+    [],
+  );
+
+  const resendRegistrationCode = useCallback(
+    async (challengeToken: string): Promise<RegisterResultDto> =>
+      api.post<RegisterResultDto>('/auth/register/resend-code', { challengeToken }),
     [],
   );
 
@@ -284,6 +306,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       login,
       verifyMfa,
       register,
+      confirmRegistrationCode,
+      resendRegistrationCode,
       logout,
       selectFamily,
       refreshSession,
@@ -302,6 +326,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       login,
       verifyMfa,
       register,
+      confirmRegistrationCode,
+      resendRegistrationCode,
       logout,
       selectFamily,
       refreshSession,

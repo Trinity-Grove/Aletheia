@@ -1,6 +1,7 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 // Admin CRUD for CurriculumPack + manifest + dependencies (issue #96
 // Fase 4, section 27) against real Postgres.
@@ -12,10 +13,7 @@ describe('Curriculum pack admin API (real Postgres)', () => {
 
   async function registerAndGetCookie(emailPrefix: string): Promise<string> {
     const email = `${emailPrefix}-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
-    const response = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email, password: 'somePassword123', fullName: 'Curriculum Pack Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const response = await registerAndConfirmGuardian(app, { email, password: 'somePassword123', fullName: 'Curriculum Pack Test', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     return [response.headers['set-cookie']].flat().find((c) => c?.startsWith('aletheia_session='))!;
   }
 
@@ -26,10 +24,7 @@ describe('Curriculum pack admin API (real Postgres)', () => {
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
 
-    const adminResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'somePassword123', fullName: 'Curriculum Pack Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const adminResponse = await registerAndConfirmGuardian(app, { email: adminEmail, password: 'somePassword123', fullName: 'Curriculum Pack Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     adminCookie = [adminResponse.headers['set-cookie']]
       .flat()
       .find((c) => c?.startsWith('aletheia_session='))!;

@@ -32,6 +32,7 @@ import { NotificationBell } from './notification-bell';
 import { useNotifications } from './use-notifications';
 import { LearnerFocusSwitcher } from './learner-focus-switcher';
 import { RoleBadge } from '../auth/role-badge';
+import { UnverifiedEmailBanner } from './unverified-email-banner';
 
 export { LearnerFocusSwitcher } from './learner-focus-switcher';
 export { NotificationBell } from './notification-bell';
@@ -322,6 +323,9 @@ export function ProductShell({
       topbarActions={topbarActions}
       {...(userProfile !== undefined ? { userProfile } : {})}
     >
+      {authContext?.status === 'authenticated' && authContext.user?.emailVerified === false && (
+        <UnverifiedEmailBanner />
+      )}
       {breadcrumbItems.length > 0 && (
         <Breadcrumbs items={breadcrumbItems} renderLink={renderNextNavigationLink} />
       )}

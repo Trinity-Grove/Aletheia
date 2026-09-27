@@ -11,6 +11,7 @@ import { ObjectStorageService } from '../src/platform/storage/object-storage.ser
 import { DatabaseBackupService, parseDatabaseUrl } from '../src/modules/backup/database-backup.service.js';
 import { DatabaseRestoreService } from '../src/modules/backup/database-restore.service.js';
 import { ENVIRONMENT, type Environment } from '../src/platform/config/environment.js';
+import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 function canRunPgDumpAgainstServer(databaseUrl: string): boolean {
   try {
@@ -69,17 +70,11 @@ describe('Disaster Recovery & Database Backup Integration (real Postgres + Objec
     restoreService = app.get(DatabaseRestoreService);
 
     // Register admin user
-    const adminRes = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: adminEmail, password: 'StrongPassword123!', fullName: 'DR Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const adminRes = await registerAndConfirmGuardian(app, { email: adminEmail, password: 'StrongPassword123!', fullName: 'DR Admin', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     adminCookie = extractCookie(adminRes, 'aletheia_session=');
 
     // Register regular user
-    const regRes = await supertest(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ email: regularUserEmail, password: 'RegularPassword123!', fullName: 'Regular User', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true })
-      .expect(201);
+    const regRes = await registerAndConfirmGuardian(app, { email: regularUserEmail, password: 'RegularPassword123!', fullName: 'Regular User', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
     regularUserCookie = extractCookie(regRes, 'aletheia_session=');
   });
 
