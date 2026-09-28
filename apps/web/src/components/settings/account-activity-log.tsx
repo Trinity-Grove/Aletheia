@@ -22,6 +22,10 @@ const EVENT_LABELS: Record<AccountAuditEventType, string> = {
    MFA_DISABLED: 'Autenticação de dois fatores desativada',
    MFA_CHALLENGE_FAILED: 'Código de autenticação de dois fatores inválido',
    EMAIL_VERIFICATION_CODE_FAILED: 'Código de confirmação de e-mail inválido',
+   ACCOUNT_DISABLED_BY_ADMIN: 'Conta desativada por um administrador',
+   ACCOUNT_REACTIVATED_BY_ADMIN: 'Conta reativada por um administrador',
+   PLATFORM_ADMIN_GRANTED_BY_ADMIN: 'Permissão de administrador concedida por um administrador',
+   PLATFORM_ADMIN_REVOKED_BY_ADMIN: 'Permissão de administrador revogada por um administrador',
  };
 
 function formatEntryDate(createdAt: string): string {
