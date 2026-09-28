@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { ConsentAction, ConsentDefinition, ConsentRecord } from '@prisma/client';
+import { resolvePrivacyRegime, type PrivacyRegime } from '@aletheia/contracts';
 import type {
   ConsentComplianceCheckDto,
   ConsentDefinitionResponseDto,
@@ -16,12 +17,43 @@ import type {
 import { FamilyConsentRepository } from '../infrastructure/family-consent.repository.js';
 import { ConsentDefinitionsRepository } from '../infrastructure/consent-definitions.repository.js';
 
+// The legal-consent seeder publishes one Terms of Use / Privacy Policy /
+// Learner Data Processing definition PER privacy regime (LGPD, GDPR,
+// COPPA, ...), all "PUBLISHED" at once -- see
+// legal-consent-definitions.seed-data.ts. Without this filter, every
+// family sees and is required to accept every other country's legal
+// documents too (e.g. a Brazilian family being shown COPPA's US privacy
+// policy). Only a definition whose code follows the `{DOC_TYPE}_{REGIME}`
+// convention is regime-scoped; anything else (a future consent type
+// that applies to everyone) is left untouched.
+const REGIME_SCOPED_CODE_PREFIXES = ['TERMS_OF_USE_', 'PRIVACY_POLICY_', 'LEARNER_DATA_PROCESSING_'];
+
+function isRegimeScopedCode(code: string): boolean {
+  return REGIME_SCOPED_CODE_PREFIXES.some((prefix) => code.startsWith(prefix));
+}
+
+function appliesToRegime(code: string, regime: PrivacyRegime): boolean {
+  return !isRegimeScopedCode(code) || code.endsWith(`_${regime}`);
+}
+
 @Injectable()
 export class FamilyConsentService {
   constructor(
     private readonly repository: FamilyConsentRepository,
     private readonly consentDefsRepo: ConsentDefinitionsRepository,
   ) {}
+
+  private async filterDefinitionsForFamily(
+    familyId: string,
+    definitions: ConsentDefinition[],
+  ): Promise<ConsentDefinition[]> {
+    const family = await this.repository.findFamilyById(familyId);
+    if (!family) {
+      throw new NotFoundException('Family not found.');
+    }
+    const regime = resolvePrivacyRegime(family.countryCode);
+    return definitions.filter((def) => appliesToRegime(def.code, regime));
+  }
 
   async grantConsent(
     familyId: string,
@@ -104,7 +136,8 @@ export class FamilyConsentService {
   }
 
   async getFamilyConsentOverview(familyId: string): Promise<FamilyConsentOverviewDto> {
-    const publishedDefs = await this.consentDefsRepo.findPublished();
+    const allPublishedDefs = await this.consentDefsRepo.findPublished();
+    const publishedDefs = await this.filterDefinitionsForFamily(familyId, allPublishedDefs);
     const learners = await this.repository.findFamilyLearners(familyId);
     const allRecords = await this.repository.findAllRecordsForFamily(familyId);
 
@@ -215,7 +248,8 @@ export class FamilyConsentService {
       }
     }
 
-    const publishedDefs = await this.consentDefsRepo.findPublished();
+    const allPublishedDefs = await this.consentDefsRepo.findPublished();
+    const publishedDefs = await this.filterDefinitionsForFamily(familyId, allPublishedDefs);
     const mandatoryDefs = publishedDefs.filter((d) => d.mandatory);
     const pendingMandatoryTerms: ConsentDefinitionResponseDto[] = [];
 

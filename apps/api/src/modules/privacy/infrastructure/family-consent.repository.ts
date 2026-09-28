@@ -52,6 +52,13 @@ export class FamilyConsentRepository {
     });
   }
 
+  findFamilyById(familyId: string): Promise<{ id: string; countryCode: string } | null> {
+    return this.prisma.family.findUnique({
+      where: { id: familyId },
+      select: { id: true, countryCode: true },
+    });
+  }
+
   findFamilyLearners(familyId: string): Promise<{ id: string; firstName: string; lastName: string | null }[]> {
     return this.prisma.learner.findMany({
       where: { familyId, archivedAt: null },
