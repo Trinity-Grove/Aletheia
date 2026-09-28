@@ -213,6 +213,7 @@ describe('AuthService', () => {
           emailVerificationRequired: data.emailVerificationRequired ?? false,
           mfaEnabled: false,
           isPlatformAdmin: false,
+          disabledAt: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -233,6 +234,7 @@ describe('AuthService', () => {
                 emailVerificationRequired: false,
                 mfaEnabled: user.mfaEnabled,
                 isPlatformAdmin: user.isPlatformAdmin,
+                disabledAt: user.disabledAt,
                 createdAt: user.createdAt,
                 updatedAt: user.updatedAt,
               }),
@@ -254,6 +256,7 @@ describe('AuthService', () => {
                 emailVerificationRequired: user.emailVerificationRequired,
                 mfaEnabled: user.mfaEnabled,
                 isPlatformAdmin: user.isPlatformAdmin,
+                disabledAt: user.disabledAt,
                 createdAt: user.createdAt,
                 updatedAt: user.updatedAt,
               }),
@@ -280,6 +283,7 @@ describe('AuthService', () => {
               emailVerificationRequired: user.emailVerificationRequired,
               mfaEnabled: user.mfaEnabled,
               isPlatformAdmin: user.isPlatformAdmin,
+              disabledAt: user.disabledAt,
               createdAt: user.createdAt,
               updatedAt: user.updatedAt,
             }),
@@ -300,12 +304,93 @@ describe('AuthService', () => {
                 emailVerificationRequired: user.emailVerificationRequired,
                 mfaEnabled: user.mfaEnabled,
                 isPlatformAdmin: true,
+                disabledAt: user.disabledAt,
                 createdAt: user.createdAt,
                 updatedAt: user.updatedAt,
               }),
             );
           }
         }
+      },
+      revokePlatformAdmin: async (id: string) => {
+        for (const [email, user] of fakeUsers.entries()) {
+          if (user.id === id) {
+            fakeUsers.set(
+              email,
+              new UserEntity({
+                id: user.id,
+                email: user.email,
+                passwordHash: user.passwordHash,
+                fullName: user.fullName,
+                emailVerifiedAt: user.emailVerifiedAt,
+                emailVerificationRequired: user.emailVerificationRequired,
+                mfaEnabled: user.mfaEnabled,
+                isPlatformAdmin: false,
+                disabledAt: user.disabledAt,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+              }),
+            );
+          }
+        }
+      },
+      updateFullName: async (id: string, fullName: string) => {
+        for (const [email, user] of fakeUsers.entries()) {
+          if (user.id === id) {
+            fakeUsers.set(
+              email,
+              new UserEntity({
+                id: user.id,
+                email: user.email,
+                passwordHash: user.passwordHash,
+                fullName,
+                emailVerifiedAt: user.emailVerifiedAt,
+                emailVerificationRequired: user.emailVerificationRequired,
+                mfaEnabled: user.mfaEnabled,
+                isPlatformAdmin: user.isPlatformAdmin,
+                disabledAt: user.disabledAt,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+              }),
+            );
+          }
+        }
+      },
+      setDisabled: async (id: string, disabledAt: Date | null) => {
+        for (const [email, user] of fakeUsers.entries()) {
+          if (user.id === id) {
+            fakeUsers.set(
+              email,
+              new UserEntity({
+                id: user.id,
+                email: user.email,
+                passwordHash: user.passwordHash,
+                fullName: user.fullName,
+                emailVerifiedAt: user.emailVerifiedAt,
+                emailVerificationRequired: user.emailVerificationRequired,
+                mfaEnabled: user.mfaEnabled,
+                isPlatformAdmin: user.isPlatformAdmin,
+                disabledAt,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+              }),
+            );
+          }
+        }
+      },
+      findAll: async (params: { skip: number; take: number; search?: string }) => {
+        let all = [...fakeUsers.values()];
+        if (params.search) {
+          const needle = params.search.toLowerCase();
+          all = all.filter(
+            (user) =>
+              user.email.toLowerCase().includes(needle) || user.fullName.toLowerCase().includes(needle),
+          );
+        }
+        all.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        const totalCount = all.length;
+        const users = all.slice(params.skip, params.skip + params.take);
+        return { users, totalCount };
       },
     } as unknown as UserRepository;
 
@@ -437,6 +522,7 @@ describe('AuthService', () => {
           emailVerificationRequired: user.emailVerificationRequired,
           mfaEnabled,
           isPlatformAdmin: user.isPlatformAdmin,
+          disabledAt: user.disabledAt,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         }),
@@ -1673,6 +1759,132 @@ describe('AuthService', () => {
         password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
 
       await expect(authService.isPlatformAdmin(registered.user.id)).resolves.toBe(false);
+    });
+  });
+
+  describe('admin user management (backoffice)', () => {
+    it('login rejects a disabled account even with the correct password', async () => {
+      const session = await registerAndConfirm({
+        email: 'disabled-login@example.com',
+        fullName: 'Disabled Login',
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+
+      await authService.disableUser(session.user.id);
+
+      await expect(
+        authService.login({ email: 'disabled-login@example.com', password: 'password12345' }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('listUsers paginates and filters by search', async () => {
+      await registerAndConfirm({
+        email: 'alice@example.com',
+        fullName: 'Alice Guardian',
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+      await registerAndConfirm({
+        email: 'bob@example.com',
+        fullName: 'Bob Guardian',
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+
+      const all = await authService.listUsers({ skip: 0, take: 20 });
+      expect(all.totalCount).toBe(2);
+      expect(all.users).toHaveLength(2);
+
+      const filtered = await authService.listUsers({ skip: 0, take: 20, search: 'alice' });
+      expect(filtered.totalCount).toBe(1);
+      expect(filtered.users[0]?.email).toBe('alice@example.com');
+
+      const firstPage = await authService.listUsers({ skip: 0, take: 1 });
+      expect(firstPage.users).toHaveLength(1);
+      expect(firstPage.totalCount).toBe(2);
+    });
+
+    it('updateUserFullName changes the target account name', async () => {
+      const session = await registerAndConfirm({
+        email: 'rename-me@example.com',
+        fullName: 'Old Name',
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+
+      const updated = await authService.updateUserFullName(session.user.id, 'New Name');
+
+      expect(updated.fullName).toBe('New Name');
+    });
+
+    it('updateUserFullName rejects an unknown user id', async () => {
+      await expect(authService.updateUserFullName('not-a-real-id', 'New Name')).rejects.toThrow(NotFoundException);
+    });
+
+    it('grantPlatformAdminByAdmin promotes and audits the action', async () => {
+      const session = await registerAndConfirm({
+        email: 'promote-me@example.com',
+        fullName: 'Promote Me',
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+      auditLog.length = 0;
+
+      const updated = await authService.grantPlatformAdminByAdmin(session.user.id);
+
+      expect(updated.isPlatformAdmin).toBe(true);
+      expect(auditLog.map((entry) => entry.eventType)).toEqual(['PLATFORM_ADMIN_GRANTED_BY_ADMIN']);
+    });
+
+    it('revokePlatformAdminByAdmin demotes and audits the action', async () => {
+      const session = await registerAndConfirm({
+        email: 'demote-me@example.com',
+        fullName: 'Demote Me',
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+      await authService.grantPlatformAdminByAdmin(session.user.id);
+      auditLog.length = 0;
+
+      const updated = await authService.revokePlatformAdminByAdmin(session.user.id);
+
+      expect(updated.isPlatformAdmin).toBe(false);
+      expect(auditLog.map((entry) => entry.eventType)).toEqual(['PLATFORM_ADMIN_REVOKED_BY_ADMIN']);
+    });
+
+    it('disableUser marks the account disabled, revokes sessions, and audits the action', async () => {
+      const session = await registerAndConfirm({
+        email: 'disable-me@example.com',
+        fullName: 'Disable Me',
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+      auditLog.length = 0;
+
+      const updated = await authService.disableUser(session.user.id);
+
+      expect(updated.disabled).toBe(true);
+      expect(auditLog.map((entry) => entry.eventType)).toEqual(['ACCOUNT_DISABLED_BY_ADMIN']);
+      const record = fakeRefreshTokens.get(session.refreshToken);
+      expect(record?.revokedAt).not.toBeNull();
+    });
+
+    it('reactivateUser clears disabled status and audits the action', async () => {
+      const session = await registerAndConfirm({
+        email: 'reactivate-me@example.com',
+        fullName: 'Reactivate Me',
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+      await authService.disableUser(session.user.id);
+      auditLog.length = 0;
+
+      const updated = await authService.reactivateUser(session.user.id);
+
+      expect(updated.disabled).toBe(false);
+      expect(auditLog.map((entry) => entry.eventType)).toEqual(['ACCOUNT_REACTIVATED_BY_ADMIN']);
+
+      await expect(
+        authService.login({ email: 'reactivate-me@example.com', password: 'password12345' }),
+      ).resolves.toBeDefined();
+    });
+
+    it('forcePasswordReset emails a reset link for the target account', async () => {
+      const session = await registerAndConfirm({
+        email: 'force-reset-me@example.com',
+        fullName: 'Force Reset Me',
+        password: 'password12345', countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true });
+      sentEmails.length = 0;
+
+      await authService.forcePasswordReset(session.user.id);
+
+      expect(sentEmails).toHaveLength(1);
+      expect(sentEmails[0]!.to).toBe('force-reset-me@example.com');
     });
   });
 });

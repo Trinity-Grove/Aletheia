@@ -1,5 +1,6 @@
 export * from './health.js';
 export * from './auth.js';
+export * from './admin-users.js';
 export * from './family.js';
 export * from './learner.js';
 export * from './educational-taxonomy.js';

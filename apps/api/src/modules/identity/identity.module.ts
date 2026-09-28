@@ -14,6 +14,7 @@ import { MfaSetupChallengeRepository } from './infrastructure/mfa-setup-challeng
 import { MfaLoginChallengeRepository } from './infrastructure/mfa-login-challenge.repository.js';
 import { RegistrationVerificationChallengeRepository } from './infrastructure/registration-verification-challenge.repository.js';
 import { AuthController } from './presentation/auth.controller.js';
+import { AdminUsersController } from './presentation/admin-users.controller.js';
 import { JwtAuthGuard } from '../../platform/auth/index.js';
 import { ENVIRONMENT, type Environment } from '../../platform/config/environment.js';
 import { DatabaseModule } from '../../platform/database/database.module.js';
@@ -35,7 +36,7 @@ import { TotpSecretCipher } from '../../platform/security/totp-secret-cipher.js'
       }),
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, AdminUsersController],
   providers: [
     PasswordHasher,
     UserRepository,
