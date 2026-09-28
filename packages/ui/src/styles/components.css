@@ -1134,10 +1134,12 @@
 }
 .ui-tab-bar-item {
   flex: 1;
+  min-width: 0;
   display: flex;
 }
 .ui-tab-bar-link {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1168,6 +1170,9 @@
   justify-content: center;
 }
 .ui-tab-bar-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 .ui-more-sheet-list {
