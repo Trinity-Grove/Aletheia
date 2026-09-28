@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { EmailCodeVerifyForm } from '../../../src/components/auth/email-code-verify-form';
@@ -24,7 +24,7 @@ function LoginFormWrapper() {
   const { t } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, verifyMfa, confirmRegistrationCode, resendRegistrationCode } = useAuth();
+  const { status, login, verifyMfa, confirmRegistrationCode, resendRegistrationCode } = useAuth();
   const [challengeToken, setChallengeToken] = useState<string | null>(null);
   const [pendingEmailConfirmation, setPendingEmailConfirmation] = useState(false);
 
@@ -32,6 +32,16 @@ function LoginFormWrapper() {
     const redirectParam = sanitizeRedirectTarget(searchParams?.get('redirect'));
     router.push(redirectParam);
   };
+
+  // AuthProvider always checks for an existing session cookie on mount
+  // (refreshSession -> GET /auth/me) -- if that already resolved to a
+  // logged-in user, sending them through the login form again would ask
+  // them to re-enter credentials for no reason.
+  useEffect(() => {
+    if (status === 'authenticated') {
+      redirectTo();
+    }
+  }, [status]);
 
   const handleLogin = async (data: { email: string; password: string }) => {
     const result = await login(data);
@@ -130,6 +140,12 @@ function LoginFormWrapper() {
         </button>
       </>
     );
+  }
+
+  if (status === 'authenticated') {
+    // redirectTo() was already triggered by the effect above -- this is
+    // just the brief instant before the router navigation lands.
+    return null;
   }
 
   return <LoginForm onSubmit={handleLogin} />;
