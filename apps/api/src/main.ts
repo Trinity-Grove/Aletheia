@@ -53,6 +53,10 @@ import { ResilienceWaterFireSeeder } from './modules/curriculum/infrastructure/r
 import { ResilienceRealEmergenciesSeeder } from './modules/curriculum/infrastructure/resilience-real-emergencies.seeder';
 import { FoundationalCurriculumSeeder } from './modules/curriculum/infrastructure/foundational-curriculum.seeder';
 import { OfficialCurriculumPacksSeeder } from './modules/curriculum/infrastructure/official-curriculum-packs.seeder';
+import { SeminaryEvidenceTypesSeeder } from './modules/curriculum/infrastructure/seminary-evidence-types.seeder';
+import { SeminaryRubricsSeeder } from './modules/curriculum/infrastructure/seminary-rubrics.seeder';
+import { SeminaryCompetenciesSeeder } from './modules/curriculum/infrastructure/seminary-competencies.seeder';
+import { AdvancedSeminaryTheologyPackSeeder } from './modules/curriculum/infrastructure/advanced-seminary-theology-pack.seeder';
 
 // Fields that must never appear in logs even if they end up in a logged
 // request/response — auth material, secrets, and PII passed through
@@ -203,6 +207,10 @@ async function runDataMigrationsOnBoot(app: NestFastifyApplication): Promise<voi
     toCatalogMigration('resilience-navigation-camping', () => app.get(ResilienceNavigationCampingSeeder).seed()),
     toCatalogMigration('resilience-water-fire', () => app.get(ResilienceWaterFireSeeder).seed()),
     toCatalogMigration('resilience-real-emergencies', () => app.get(ResilienceRealEmergenciesSeeder).seed()),
+    toCatalogMigration('seminary-evidence-types', () => app.get(SeminaryEvidenceTypesSeeder).seed()),
+    toCatalogMigration('seminary-rubrics', () => app.get(SeminaryRubricsSeeder).seed()),
+    toCatalogMigration('seminary-competencies', () => app.get(SeminaryCompetenciesSeeder).seed()),
+    toCatalogMigration('advanced-seminary-theology-pack', () => app.get(AdvancedSeminaryTheologyPackSeeder).seed()),
     // These two compose the seeders above, so they must run last.
     toCatalogMigration('foundational-curriculum', () => app.get(FoundationalCurriculumSeeder).seed()),
     toCatalogMigration('curriculum-packs', () => app.get(OfficialCurriculumPacksSeeder).seed()),

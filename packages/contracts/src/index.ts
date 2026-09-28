@@ -53,3 +53,4 @@ export * from './routine-generator.js';
 export * from './donation.js';
 export * from './countries.js';
 export * from './operations.js';
+export * from './seminary-theology.js';

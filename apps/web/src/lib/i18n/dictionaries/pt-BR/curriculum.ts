@@ -94,4 +94,102 @@ export const curriculum = {
     submitForReviewSuccessMsg: 'Pacote enviado para revisão da plataforma.',
     submitForReviewErrorMsg: 'Falha ao enviar para revisão. Tente novamente mais tarde.',
   },
+  seminary: {
+    backToCurriculum: 'Voltar ao Currículo',
+    title: 'Módulo Teológico Avançado (Nível Seminário)',
+    subtitle:
+      'Formação teológica profunda com 4 ciclos de concentração, 24 disciplinas curriculares e rigor confessional.',
+    cycleLabel: 'Ciclo {cycle}',
+    cycles: {
+      cycle1Title: 'Ciclo I: Fundamentos & Método',
+      cycle1Description:
+        'Fundamentos bibliológicos, hermenêuticos, exegéticos e teologia bíblica da redenção.',
+      cycle2Title: 'Ciclo II: Teologia Sistemática I',
+      cycle2Description:
+        'Teologia Própria, Trindade, Antropologia, Hamartiologia, Cristologia, Pneumatologia e Angelologia.',
+      cycle3Title: 'Ciclo III: Teologia Sistemática II',
+      cycle3Description:
+        'Soteriologia, Eclesiologia, Escatologia Comparada com as 4 escolas milenistas, Modelos Interpretativos do Apocalipse e Escatologia Individual e Geral.',
+      cycle4Title: 'Ciclo IV: Teologia Histórica, Pensamento & Prática',
+      cycle4Description:
+        'Patrística, Concílios Ecumênicos Históricos, Reforma Protestante, História Denominacional, Teologia Histórica, Apologética Cristã, Filosofia da Religião, Ética Cristã e Missiologia.',
+    },
+    disciplineCount: '{count} disciplinas',
+    competencyLabel: 'Competência',
+    topicsLabel: 'Ementa & Tópicos Temáticos',
+    readingsLabel: 'Bibliografia & Leituras Primárias',
+    suggestedEvidenceLabel: 'Formatos de Avaliação Sugeridos',
+    lensTitle: 'Lente Confessional Contextualizada',
+    lensDescription:
+      'Fontes primárias, confissões e credos adaptados à tradição confessional da família, mantendo a integridade acadêmica.',
+    traditionLabel: 'Tradição Confessional:',
+    sourcesLabel: 'Documentos e Fontes Primárias:',
+    submitPaperBtn: 'Submeter Trabalho Acadêmico',
+    eschatologySchoolsTitle: 'Escatologia Comparada: As 4 Escolas Milenistas',
+    eschatologySchoolsDescription:
+      'Análise exegética e histórica comparativa das principais interpretações de Apocalipse 20:',
+    millennialSchools: {
+      historicPremillennialism: 'Pré-Milenismo Histórico',
+      historicPremillennialismDesc:
+        'Parusia visível de Cristo antes do milênio terreno, ressurreição inaugural dos santos e cumprimento histórico das profecias.',
+      dispensationalPremillennialism: 'Pré-Milenismo Dispensacionalista',
+      dispensationalPremillennialismDesc:
+        'Distinção estrita entre Israel e a Igreja, arrebatamento pré-tribulacional, 70ª semana de Daniel e reino literal de mil anos.',
+      amillennialism: 'Amilenismo',
+      amillennialismDesc:
+        'O milênio como o reinado celestial atual de Cristo e a era da Igreja entre a primeira e a segunda vinda, culminando na ressurreição geral.',
+      postmillennialism: 'Pós-Milenismo',
+      postmillennialismDesc:
+        'Triunfo e expansão progressiva do Reino de Deus e do Evangelho na história humana antes do retorno consumador de Cristo.',
+    },
+    apocalypseModelsTitle: 'Modelos Interpretativos do Livro do Apocalipse',
+    apocalypseModelsDescription:
+      'As quatro grandes abordagens hermenêuticas históricas para o texto joanino:',
+    apocalypseModels: {
+      preterist: 'Preterista',
+      preteristDesc:
+        'Compreende que os eventos do Apocalipse se cumpriram predominantemente no primeiro século, culminando na queda do Templo de Jerusalém em 70 d.C.',
+      historicist: 'Historicista',
+      historicistDesc:
+        'Interpreta o Apocalipse como uma profecia contínua da história da Igreja ocidental, da era apostólica à consumação.',
+      idealist: 'Idealista',
+      idealistDesc:
+        'Enfatiza os princípios espirituais e a perene guerra cósmica entre o bem e o mal, sem fixar os símbolos em cronologias específicas.',
+      futurist: 'Futurista',
+      futuristDesc:
+        'Entende que a maioria das visões proféticas (especialmente a partir do capítulo 4) se cumprirá no período final que antecede a Parusia.',
+    },
+    lensTraditions: {
+      reformed: 'Tradição Reformada / Presbiteriana',
+      reformedSummary:
+        'Ênfase nas alianças da graça, soberania divina, confessionalismo histórico e primazia da autoridade bíblica.',
+      reformedSources:
+        'Confissão de Fé de Westminster, Catecismo Maior e Breve de Westminster, Catecismo de Heidelberg, Cânones de Dort, Segunda Confissão Helvética.',
+      baptist: 'Tradição Batista Confessional',
+      baptistSummary:
+        'Defesa do credobatismo, eclesiologia congregacional independente, sacerdócio universal dos crentes e liberdade religiosa.',
+      baptistSources:
+        'Confissão de Fé Batista de Londres de 1689 (Segunda Londres), Confissão de Fé de New Hampshire, Fé e Mensagem Batistas.',
+      lutheran: 'Tradição Luterana',
+      lutheranSummary:
+        'Distinção entre Lei e Evangelho, justificação forense somente pela fé, e doutrina sacramental da Presença Real na Ceia.',
+      lutheranSources:
+        'Confissão de Augsburgo (1530), Catecismo Menor e Maior de Martinho Lutero, Livro de Concórdia (1580).',
+      wesleyanArminian: 'Tradição Arminiano-Wesleyana / Metodista',
+      wesleyanArminianSummary:
+        'Graça preveniente universal, livre-arbítrio restaurado, chamado à santificação inteira e perfeição cristã no amor.',
+      wesleyanArminianSources:
+        '25 Artigos de Religião, Sermões Padrões de John Wesley, Notas Explicativas sobre o Novo Testamento de John Wesley.',
+      pentecostal: 'Tradição Pentecostal / Carismática',
+      pentecostalSummary:
+        'Batismo no Espírito Santo subsequente à regeneração com manifestação de dons espirituais contemporâneos para edificação e missão.',
+      pentecostalSources:
+        'Declaração de Verdades Fundamentais das Assembleias de Deus, Documentos Históricos de Azusa, Declaração do Movimento de Lausanne sobre o Espírito Santo.',
+      ecumenical: 'Lente Ecumênica Comparada (Perspectiva Histórica Geral)',
+      ecumenicalSummary:
+        'Abordagem panorâmica acadêmica das principais tradições cristãs históricas, preservando o rigor exegético e o princípio da caridade.',
+      ecumenicalSources:
+        'Credo dos Apóstolos, Credo Niceno-Constantinopolitano, Credo de Atanásio, Definição de Calcedônia e consenso da patrística ecumênica.',
+    },
+  },
 } as const;

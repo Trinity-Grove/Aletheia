@@ -5,6 +5,7 @@ import {
   createBibleTranslationDefinitionSchema,
   createCompetencyDefinitionSchema,
   createConsentDefinitionSchema,
+  createCurriculumPackSchema,
   createEvidenceTypeDefinitionSchema,
   createJurisdictionDefinitionSchema,
   createLearningDomainSchema,
@@ -14,6 +15,7 @@ import {
   type BibleTranslationDefinitionResponseDto,
   type CompetencyDefinitionResponseDto,
   type ConsentDefinitionResponseDto,
+  type CurriculumPackResponseDto,
   type EvidenceTypeDefinitionResponseDto,
   type JurisdictionDefinitionResponseDto,
   type LearningDomainResponseDto,
@@ -35,6 +37,7 @@ const resources = [
   { value: 'bible-translation-definitions', label: 'Traduções bíblicas' },
   { value: 'consent-definitions', label: 'Termos de consentimento / Privacidade' },
   { value: 'jurisdiction-definitions', label: 'Jurisdições legais' },
+  { value: 'curriculum-packs', label: 'Pacotes curriculares' },
 ] as const;
 
 type Resource = (typeof resources)[number]['value'];
@@ -47,11 +50,15 @@ type CatalogRow =
   | TheologicalTraditionDefinitionResponseDto
   | BibleTranslationDefinitionResponseDto
   | ConsentDefinitionResponseDto
-  | JurisdictionDefinitionResponseDto;
+  | JurisdictionDefinitionResponseDto
+  | CurriculumPackResponseDto;
 
 const basePath = '/admin/curriculum-definitions';
 
 function getResourcePath(resource: Resource): string {
+  if (resource === 'curriculum-packs') {
+    return '/admin/curriculum-packs';
+  }
   if (resource === 'consent-definitions') {
     return '/admin/consent-definitions';
   }
@@ -132,6 +139,7 @@ function CatalogResource({ resource }: { resource: Resource }) {
   const [attempt, setAttempt] = useState(0);
   const [busy, setBusy] = useState(false);
   const mutationPending = useRef(false);
+  const [filterQuery, setFilterQuery] = useState('');
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -151,7 +159,12 @@ function CatalogResource({ resource }: { resource: Resource }) {
   } else if (resource === 'bible-translation-definitions') {
     codeMaxLength = 50;
     codeHelper = 'Código da tradução. Exemplo: NVI ou ARC';
-  } else if (isCompetency || resource === 'rubric-definitions' || resource === 'theological-tradition-definitions') {
+  } else if (
+    isCompetency ||
+    resource === 'rubric-definitions' ||
+    resource === 'theological-tradition-definitions' ||
+    resource === 'curriculum-packs'
+  ) {
     codeMaxLength = 150;
   }
 
@@ -237,6 +250,12 @@ function CatalogResource({ resource }: { resource: Resource }) {
             : 'Termos de consentimento e conformidade da plataforma Aletheia.',
         purposes: ['AUDIT_COMPLIANCE'],
       });
+    } else if (resource === 'curriculum-packs') {
+      parsed = createCurriculumPackSchema.safeParse({
+        ...common,
+        name: name.trim(),
+        description: description.trim() || undefined,
+      });
     } else {
       parsed = createJurisdictionDefinitionSchema.safeParse({
         ...common,
@@ -285,6 +304,21 @@ function CatalogResource({ resource }: { resource: Resource }) {
       setBusy(false);
     }
   }
+
+  const normalizedQuery = filterQuery.trim().toLowerCase();
+  const filteredRows = normalizedQuery
+    ? rows.filter((row) => {
+        const code = row.code.toLowerCase();
+        const text = (
+          'title' in row && row.title
+            ? row.title
+            : 'name' in row && row.name
+              ? row.name
+              : ''
+        ).toLowerCase();
+        return code.includes(normalizedQuery) || text.includes(normalizedQuery);
+      })
+    : rows;
 
   return (
     <section style={{ display: 'grid', gap: '1.5rem' }}>
@@ -366,44 +400,67 @@ function CatalogResource({ resource }: { resource: Resource }) {
               </form>
             </CardContent>
           </Card>
-          {rows.length === 0 ? (
-            <EmptyState
-              title="Nenhuma definição cadastrada"
-              description="Use o formulário para criar o primeiro rascunho."
+          <div style={{ display: 'grid', gap: '1rem' }}>
+            <Input
+              data-testid="catalog-filter-input"
+              placeholder="Filtrar por código ou nome..."
+              value={filterQuery}
+              onChange={(event) => setFilterQuery(event.target.value)}
             />
-          ) : (
-            <div
-              style={{
-                display: 'grid',
-                gap: '1rem',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-              }}
-            >
-              {rows.map((row) => (
-                <Card key={row.id}>
-                  <CardHeader>
-                    <CardTitle as="h3">{'title' in row ? row.title : row.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent style={{ display: 'grid', gap: '0.75rem', overflowWrap: 'anywhere' }}>
-                    <code>{row.code}</code>
-                    <span>Versão {row.version}</span>
-                    <span>{row.status}</span>
-                    {'description' in row && row.description && <p>{row.description}</p>}
-                    {row.status === 'DRAFT' && (
-                      <Button
-                        variant="secondary"
-                        aria-label={`Publicar ${row.code}`}
-                        disabled={busy}
-                        onClick={() => publish(row.id)}
-                      >
-                        Publicar
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+            {rows.length === 0 ? (
+              <EmptyState
+                title="Nenhuma definição cadastrada"
+                description="Use o formulário para criar o primeiro rascunho."
+              />
+            ) : filteredRows.length === 0 ? (
+              <EmptyState
+                title="Nenhuma definição encontrada"
+                description="Tente ajustar os termos da busca."
+              />
+            ) : (
+              <div
+                style={{
+                  display: 'grid',
+                  gap: '1rem',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
+                }}
+              >
+                {filteredRows.map((row) => (
+                  <Card key={row.id}>
+                    <CardHeader>
+                      <CardTitle as="h3">{'title' in row ? row.title : row.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent style={{ display: 'grid', gap: '0.75rem', overflowWrap: 'anywhere' }}>
+                      <code>{row.code}</code>
+                      <span>Versão {row.version}</span>
+                      <span>{row.status}</span>
+                      {'description' in row && row.description && <p>{row.description}</p>}
+                      {'metadata' in row &&
+                        row.metadata &&
+                        typeof (row.metadata as Record<string, unknown>).summary === 'string' && (
+                          <p>{(row.metadata as Record<string, unknown>).summary as string}</p>
+                        )}
+                      {'summary' in row &&
+                        typeof (row as { summary?: unknown }).summary === 'string' &&
+                        Boolean((row as { summary?: string }).summary) && (
+                          <p>{(row as { summary: string }).summary}</p>
+                        )}
+                      {row.status === 'DRAFT' && (
+                        <Button
+                          variant="secondary"
+                          aria-label={`Publicar ${row.code}`}
+                          disabled={busy}
+                          onClick={() => publish(row.id)}
+                        >
+                          Publicar
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </>
       )}
     </section>
