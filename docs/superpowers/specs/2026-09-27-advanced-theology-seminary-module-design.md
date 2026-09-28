@@ -177,9 +177,9 @@ Nas disciplinas com divergências históricas consagradas (Ciclos II e III), o m
 
 ## 6. Critérios de Aceite e Verificação
 
-- [ ] Todas as 24 disciplinas da Issue #95/#176 mapeadas com ementas, objetivos e bibliografias clássicas no pacote `ADVANCED_SEMINARY_THEOLOGY`.
-- [ ] 5 novos tipos de evidência e rubrica analítica de rigor teológico publicados no catálogo via `DataMigrationRunner`.
-- [ ] Renderização condicional e não destrutiva da lente confessional baseada no `TheologicalProfile` da família.
-- [ ] Interface de envio de trabalhos de seminário com critérios de avaliação por rubrica.
-- [ ] Zero violações de fronteira de módulos (`pnpm check:boundaries`).
-- [ ] Zero trailers de IA (`Co-Authored-By`, `Generated-By`) em todos os commits e documentos.
+- [x] Todas as 24 disciplinas da Issue #95/#176 mapeadas com ementas, objetivos e bibliografias clássicas no pacote `ADVANCED_SEMINARY_THEOLOGY`.
+- [x] 5 novos tipos de evidência e rubrica analítica de rigor teológico publicados no catálogo via `DataMigrationRunner`.
+- [x] Renderização condicional e não destrutiva da lente confessional baseada no `TheologicalProfile` da família.
+- [x] Interface de envio de trabalhos de seminário com critérios de avaliação por rubrica.
+- [x] Zero violações de fronteira de módulos (`pnpm check:boundaries`).
+- [x] Zero trailers de IA (`Co-Authored-By`, `Generated-By`) em todos os commits e documentos.
