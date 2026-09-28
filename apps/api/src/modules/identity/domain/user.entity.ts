@@ -7,6 +7,7 @@ export interface UserProps {
   emailVerificationRequired: boolean;
   mfaEnabled: boolean;
   isPlatformAdmin: boolean;
+  disabledAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,6 +45,10 @@ export class UserEntity {
 
   get isPlatformAdmin(): boolean {
     return this.props.isPlatformAdmin;
+  }
+
+  get disabledAt(): Date | null {
+    return this.props.disabledAt;
   }
 
   get createdAt(): Date {

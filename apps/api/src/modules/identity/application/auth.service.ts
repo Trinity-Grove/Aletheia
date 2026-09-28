@@ -11,8 +11,10 @@ import { JwtService } from '@nestjs/jwt';
 import type {
   AccountAuditEventType,
   AccountAuditLogEntryDto,
+  AdminUserSummaryDto,
   AuthResponseDto,
   ConfirmRegistrationCodeDto,
+  ListUsersResponseDto,
   LoginDto,
   MfaChallengeIssuedDto,
   MfaSetupResponseDto,
@@ -148,6 +150,13 @@ export class AuthService implements IdentityPublicApi {
     if (!isValid) {
       await this.recordAuditEvent(user.id, 'LOGIN_FAILED');
       throw new UnauthorizedException('Invalid email or password.');
+    }
+
+    if (user.disabledAt) {
+      // Deliberately not "LOGIN_FAILED" -- a disabled account with the
+      // right password isn't a guessing attempt, and conflating the two
+      // would hide the real reason from anyone reading the audit log.
+      throw new UnauthorizedException('This account has been disabled.');
     }
 
     if (!user.emailVerifiedAt && user.emailVerificationRequired) {
@@ -578,6 +587,81 @@ export class AuthService implements IdentityPublicApi {
   async isPlatformAdmin(userId: string): Promise<boolean> {
     const user = await this.userRepository.findById(userId);
     return user?.isPlatformAdmin ?? false;
+  }
+
+  // --- Backoffice user management (issue: backoffice user-management
+  // screen) -- everything below operates on a target account different
+  // from the caller; there is no self-service equivalent for any of it.
+  // The "can't act on your own account" guard lives in the controller,
+  // which is the only layer that knows who the caller is.
+
+  async listUsers(query: { skip: number; take: number; search?: string | undefined }): Promise<ListUsersResponseDto> {
+    const { users, totalCount } = await this.userRepository.findAll(query);
+    return { users: users.map((user) => this.toAdminUserSummary(user)), totalCount };
+  }
+
+  async updateUserFullName(userId: string, fullName: string): Promise<AdminUserSummaryDto> {
+    await this.getUserOrThrow(userId);
+    await this.userRepository.updateFullName(userId, fullName);
+    return this.toAdminUserSummary(await this.getUserOrThrow(userId));
+  }
+
+  async grantPlatformAdminByAdmin(userId: string): Promise<AdminUserSummaryDto> {
+    await this.getUserOrThrow(userId);
+    await this.userRepository.grantPlatformAdmin(userId);
+    await this.recordAuditEvent(userId, 'PLATFORM_ADMIN_GRANTED_BY_ADMIN');
+    return this.toAdminUserSummary(await this.getUserOrThrow(userId));
+  }
+
+  async revokePlatformAdminByAdmin(userId: string): Promise<AdminUserSummaryDto> {
+    await this.getUserOrThrow(userId);
+    await this.userRepository.revokePlatformAdmin(userId);
+    await this.recordAuditEvent(userId, 'PLATFORM_ADMIN_REVOKED_BY_ADMIN');
+    return this.toAdminUserSummary(await this.getUserOrThrow(userId));
+  }
+
+  async disableUser(userId: string): Promise<AdminUserSummaryDto> {
+    await this.getUserOrThrow(userId);
+    await this.userRepository.setDisabled(userId, new Date());
+    // Same reasoning as resetPassword: a disabled account must not keep
+    // working through a session/refresh token it already had.
+    await this.refreshTokenRepository.revokeAllForUser(userId);
+    await this.recordAuditEvent(userId, 'ACCOUNT_DISABLED_BY_ADMIN');
+    return this.toAdminUserSummary(await this.getUserOrThrow(userId));
+  }
+
+  async reactivateUser(userId: string): Promise<AdminUserSummaryDto> {
+    await this.getUserOrThrow(userId);
+    await this.userRepository.setDisabled(userId, null);
+    await this.recordAuditEvent(userId, 'ACCOUNT_REACTIVATED_BY_ADMIN');
+    return this.toAdminUserSummary(await this.getUserOrThrow(userId));
+  }
+
+  async forcePasswordReset(userId: string): Promise<void> {
+    const user = await this.getUserOrThrow(userId);
+    await this.recordAuditEvent(userId, 'PASSWORD_RESET_REQUESTED');
+    await this.sendPasswordResetEmail(user.id, user.email, user.fullName);
+  }
+
+  private async getUserOrThrow(userId: string): Promise<UserEntity> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+    return user;
+  }
+
+  private toAdminUserSummary(user: UserEntity): AdminUserSummaryDto {
+    return {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      emailVerified: user.emailVerifiedAt !== null,
+      mfaEnabled: user.mfaEnabled,
+      isPlatformAdmin: user.isPlatformAdmin,
+      disabled: user.disabledAt !== null,
+      createdAt: user.createdAt.toISOString(),
+    };
   }
 
   private isPlatformAdminEligible(email: string, isEmailVerified: boolean): boolean {

@@ -13,6 +13,7 @@ function toEntity(user: User): UserEntity {
     emailVerificationRequired: user.emailVerificationRequired,
     mfaEnabled: user.mfaEnabled,
     isPlatformAdmin: user.isPlatformAdmin,
+    disabledAt: user.disabledAt,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   });
@@ -101,5 +102,58 @@ export class UserRepository {
       where: { id },
       data: { isPlatformAdmin: true },
     });
+  }
+
+  // Manual counterpart to grantPlatformAdmin -- unlike the automatic
+  // bootstrap above, this IS a real demote, only ever triggered by
+  // another admin through the backoffice user-management screen.
+  async revokePlatformAdmin(id: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: { isPlatformAdmin: false },
+    });
+  }
+
+  async updateFullName(id: string, fullName: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: { fullName: fullName.trim() },
+    });
+  }
+
+  // Mirrors LearnerService's archive/reactivate: null = active, a
+  // timestamp = disabled since. Only ever called from the admin
+  // user-management flow (AuthService.disableUser/reactivateUser).
+  async setDisabled(id: string, disabledAt: Date | null): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: { disabledAt },
+    });
+  }
+
+  async findAll(params: { skip: number; take: number; search?: string | undefined }): Promise<{
+    users: UserEntity[];
+    totalCount: number;
+  }> {
+    const where = params.search
+      ? {
+          OR: [
+            { email: { contains: params.search, mode: 'insensitive' as const } },
+            { fullName: { contains: params.search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {};
+
+    const [rows, totalCount] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        skip: params.skip,
+        take: params.take,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return { users: rows.map(toEntity), totalCount };
   }
 }

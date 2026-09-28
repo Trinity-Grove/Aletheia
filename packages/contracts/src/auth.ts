@@ -116,6 +116,10 @@ export const accountAuditEventTypeSchema = z.enum([
   'MFA_DISABLED',
   'MFA_CHALLENGE_FAILED',
   'EMAIL_VERIFICATION_CODE_FAILED',
+  'ACCOUNT_DISABLED_BY_ADMIN',
+  'ACCOUNT_REACTIVATED_BY_ADMIN',
+  'PLATFORM_ADMIN_GRANTED_BY_ADMIN',
+  'PLATFORM_ADMIN_REVOKED_BY_ADMIN',
 ]);
 
 export type AccountAuditEventType = z.infer<typeof accountAuditEventTypeSchema>;

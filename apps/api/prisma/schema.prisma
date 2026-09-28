@@ -15,6 +15,11 @@ model User {
   passwordHash                 String                   @map("password_hash")
   fullName                     String                   @map("full_name")
   emailVerifiedAt              DateTime?                @map("email_verified_at") @db.Timestamptz
+  // Set by an admin via the backoffice user-management screen -- a
+  // non-null value blocks login() immediately, same shape as Learner's
+  // archivedAt (null = active, timestamp = disabled since). Never set
+  // by the account's own owner; there is no self-service path to this.
+  disabledAt                   DateTime?                @map("disabled_at") @db.Timestamptz
   // true only for accounts created after the blocking email-code
   // verification feature shipped -- login() gates on this (not on
   // emailVerifiedAt alone) so pre-existing unverified accounts are never
@@ -88,6 +93,10 @@ enum AccountAuditEventType {
   MFA_DISABLED
   MFA_CHALLENGE_FAILED
   EMAIL_VERIFICATION_CODE_FAILED
+  ACCOUNT_DISABLED_BY_ADMIN
+  ACCOUNT_REACTIVATED_BY_ADMIN
+  PLATFORM_ADMIN_GRANTED_BY_ADMIN
+  PLATFORM_ADMIN_REVOKED_BY_ADMIN
 
   @@map("account_audit_event_types")
 }

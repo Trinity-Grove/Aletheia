@@ -24,6 +24,7 @@ export function AdminShell({ children }: AdminShellProps): React.ReactElement {
     { href: '/operations', label: 'Operações & Infraestrutura' },
     { href: '/catalog', label: 'Catálogo & Definições' },
     { href: '/moderation', label: 'Moderação Comunitária' },
+    { href: '/users', label: 'Usuários' },
   ];
 
   return (
