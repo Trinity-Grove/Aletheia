@@ -50,6 +50,7 @@ describe('FamilyConsentService', () => {
       createRecord: jest.fn(),
       findLatestRecord: jest.fn(),
       findAllRecordsForFamily: jest.fn(),
+      findFamilyById: jest.fn().mockResolvedValue({ id: 'fam-1', countryCode: 'BRA' }),
       findFamilyLearners: jest.fn(),
       findLearnerById: jest.fn(),
       ...familyRepoOverrides,
@@ -576,6 +577,69 @@ describe('FamilyConsentService', () => {
       const overview = await service.getFamilyConsentOverview('fam-1');
       expect(overview.terms[0]!.status).toBe('OUTDATED');
     });
+
+    it('only shows the legal definitions matching the family\'s own privacy regime', async () => {
+      const lgpdTerms = buildDefinition({ id: 'cd-lgpd-tou', code: 'TERMS_OF_USE_LGPD' });
+      const lgpdPolicy = buildDefinition({ id: 'cd-lgpd-pp', code: 'PRIVACY_POLICY_LGPD' });
+      const coppaTerms = buildDefinition({ id: 'cd-coppa-tou', code: 'TERMS_OF_USE_COPPA' });
+      const coppaPolicy = buildDefinition({ id: 'cd-coppa-pp', code: 'PRIVACY_POLICY_COPPA' });
+      const gdprPolicy = buildDefinition({ id: 'cd-gdpr-pp', code: 'PRIVACY_POLICY_GDPR' });
+
+      const { service } = buildService(
+        {
+          findFamilyById: jest.fn().mockResolvedValue({ id: 'fam-1', countryCode: 'BRA' }),
+          findAllRecordsForFamily: jest.fn().mockResolvedValue([]),
+          findFamilyLearners: jest.fn().mockResolvedValue([]),
+        },
+        {
+          findPublished: jest.fn().mockResolvedValue([lgpdTerms, lgpdPolicy, coppaTerms, coppaPolicy, gdprPolicy]),
+          findByCode: jest.fn().mockResolvedValue([]),
+        },
+      );
+
+      const overview = await service.getFamilyConsentOverview('fam-1');
+
+      expect(overview.terms).toHaveLength(2);
+      expect(overview.terms.map((t) => t.definition.code).sort()).toEqual([
+        'PRIVACY_POLICY_LGPD',
+        'TERMS_OF_USE_LGPD',
+      ]);
+    });
+
+    it('leaves a non regime-scoped definition visible to every family', async () => {
+      const lgpdTerms = buildDefinition({ id: 'cd-lgpd-tou', code: 'TERMS_OF_USE_LGPD' });
+      const photoConsent = buildDefinition({ id: 'cd-photo', code: 'PHOTO_SHARING_CONSENT', mandatory: false });
+
+      const { service } = buildService(
+        {
+          findFamilyById: jest.fn().mockResolvedValue({ id: 'fam-1', countryCode: 'BRA' }),
+          findAllRecordsForFamily: jest.fn().mockResolvedValue([]),
+          findFamilyLearners: jest.fn().mockResolvedValue([]),
+        },
+        {
+          findPublished: jest.fn().mockResolvedValue([lgpdTerms, photoConsent]),
+          findByCode: jest.fn().mockResolvedValue([]),
+        },
+      );
+
+      const overview = await service.getFamilyConsentOverview('fam-1');
+
+      expect(overview.terms.map((t) => t.definition.code).sort()).toEqual([
+        'PHOTO_SHARING_CONSENT',
+        'TERMS_OF_USE_LGPD',
+      ]);
+    });
+
+    it('throws NotFoundException when the family does not exist', async () => {
+      const { service } = buildService(
+        { findFamilyById: jest.fn().mockResolvedValue(null) },
+        { findPublished: jest.fn().mockResolvedValue([]) },
+      );
+
+      await expect(service.getFamilyConsentOverview('missing-fam')).rejects.toThrow(
+        new NotFoundException('Family not found.'),
+      );
+    });
   });
 
   describe('checkMandatoryCompliance', () => {
@@ -730,6 +794,26 @@ describe('FamilyConsentService', () => {
         service.checkMandatoryCompliance('fam-1', 'alien-learner'),
       ).rejects.toThrow(new BadRequestException('Learner does not belong to this family.'));
       expect(familyRepo.findLearnerById).toHaveBeenCalledWith('alien-learner');
+    });
+
+    it('does not require accepting another regime\'s mandatory terms', async () => {
+      const lgpdTerms = buildDefinition({ id: 'cd-lgpd-tou', code: 'TERMS_OF_USE_LGPD', mandatory: true });
+      const coppaTerms = buildDefinition({ id: 'cd-coppa-tou', code: 'TERMS_OF_USE_COPPA', mandatory: true });
+
+      const { service } = buildService(
+        {
+          findFamilyById: jest.fn().mockResolvedValue({ id: 'fam-1', countryCode: 'BRA' }),
+          findLatestRecord: jest.fn().mockImplementation(async (_famId: string, defId: string) =>
+            defId === 'cd-lgpd-tou' ? buildRecord({ consentDefinitionId: 'cd-lgpd-tou', action: 'GRANTED' }) : null,
+          ),
+        },
+        { findPublished: jest.fn().mockResolvedValue([lgpdTerms, coppaTerms]) },
+      );
+
+      const result = await service.checkMandatoryCompliance('fam-1');
+
+      expect(result.compliant).toBe(true);
+      expect(result.pendingMandatoryTerms).toHaveLength(0);
     });
   });
 

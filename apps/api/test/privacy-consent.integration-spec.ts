@@ -487,4 +487,69 @@ describe('Privacy & Versioned Consent Integration (real Postgres)', () => {
       ).toBe(false);
     });
   });
+
+  describe('7. Legal consent definitions are scoped to the family\'s own privacy regime', () => {
+    it('only shows LGPD (Brazil) legal definitions to a Brazilian family, never COPPA (USA) or GDPR (EU) ones', async () => {
+      const email = `privacy-regime-bra-${Date.now()}@example.com`;
+      const guardianRes = await registerAndConfirmGuardian(app, {
+        email,
+        countryCode: 'BRA',
+      });
+      const guardianCookie = extractCookie(guardianRes, 'aletheia_session=');
+
+      const familyRes = await supertest(app.getHttpServer())
+        .post('/api/v1/families')
+        .set('Cookie', guardianCookie)
+        .send({ name: 'Família Brasileira', countryCode: 'BRA' })
+        .expect(201);
+
+      const overviewRes = await supertest(app.getHttpServer())
+        .get(`/api/v1/families/${familyRes.body.id}/consents`)
+        .set('Cookie', guardianCookie)
+        .expect(200);
+
+      const codes = overviewRes.body.terms.map((t: any) => t.definition.code as string);
+      expect(codes).toEqual(
+        expect.arrayContaining(['TERMS_OF_USE_LGPD', 'PRIVACY_POLICY_LGPD', 'LEARNER_DATA_PROCESSING_LGPD']),
+      );
+      expect(codes.some((c: string) => c.endsWith('_COPPA'))).toBe(false);
+      expect(codes.some((c: string) => c.endsWith('_GDPR'))).toBe(false);
+      expect(codes.some((c: string) => c.endsWith('_GENERIC'))).toBe(false);
+
+      const complianceRes = await supertest(app.getHttpServer())
+        .get(`/api/v1/families/${familyRes.body.id}/consents/compliance`)
+        .set('Cookie', guardianCookie)
+        .expect(200);
+
+      const pendingCodes = complianceRes.body.pendingMandatoryTerms.map((t: any) => t.code as string);
+      expect(pendingCodes.some((c: string) => c.endsWith('_COPPA'))).toBe(false);
+      expect(pendingCodes.some((c: string) => c.endsWith('_GDPR'))).toBe(false);
+    });
+
+    it('shows COPPA (USA) legal definitions, not LGPD (Brazil), to a US family', async () => {
+      const email = `privacy-regime-usa-${Date.now()}@example.com`;
+      const guardianRes = await registerAndConfirmGuardian(app, {
+        email,
+        countryCode: 'USA',
+      });
+      const guardianCookie = extractCookie(guardianRes, 'aletheia_session=');
+
+      const familyRes = await supertest(app.getHttpServer())
+        .post('/api/v1/families')
+        .set('Cookie', guardianCookie)
+        .send({ name: 'US Family', countryCode: 'USA' })
+        .expect(201);
+
+      const overviewRes = await supertest(app.getHttpServer())
+        .get(`/api/v1/families/${familyRes.body.id}/consents`)
+        .set('Cookie', guardianCookie)
+        .expect(200);
+
+      const codes = overviewRes.body.terms.map((t: any) => t.definition.code as string);
+      expect(codes).toEqual(
+        expect.arrayContaining(['TERMS_OF_USE_COPPA', 'PRIVACY_POLICY_COPPA', 'LEARNER_DATA_PROCESSING_COPPA']),
+      );
+      expect(codes.some((c: string) => c.endsWith('_LGPD'))).toBe(false);
+    });
+  });
 });
