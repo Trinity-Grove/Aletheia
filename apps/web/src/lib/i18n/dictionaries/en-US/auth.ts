@@ -79,6 +79,14 @@ export const auth: Dictionary['auth'] = {
     errorMismatch: 'Passwords do not match.',
     errorFailed: 'Failed to reset password. The link may have expired.',
   },
+  verifyEmail: {
+    title: 'Confirm your email',
+    loading: 'Confirming your email...',
+    successMessage: 'Your email has been confirmed. You can now log in normally.',
+    invalidLinkError: 'This email confirmation link is invalid.',
+    errorFailed: 'We could not confirm your email. The link may have expired or already been used.',
+    backToLogin: 'Back to login',
+  },
   mfa: {
     instruction: 'Enter the 6-digit code from your authenticator app, or one of your recovery codes.',
     codeLabel: 'Code',

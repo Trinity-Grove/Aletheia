@@ -79,6 +79,14 @@ export const auth: Dictionary['auth'] = {
     errorMismatch: 'Las contraseñas no coinciden.',
     errorFailed: 'Error al restablecer la contraseña. El enlace puede haber expirado.',
   },
+  verifyEmail: {
+    title: 'Confirme su correo electrónico',
+    loading: 'Confirmando su correo electrónico...',
+    successMessage: 'Su correo electrónico ha sido confirmado. Ya puede iniciar sesión normalmente.',
+    invalidLinkError: 'Este enlace de confirmación de correo electrónico no es válido.',
+    errorFailed: 'No pudimos confirmar su correo electrónico. El enlace puede haber expirado o ya haber sido usado.',
+    backToLogin: 'Volver al inicio de sesión',
+  },
   mfa: {
     instruction: 'Ingrese el código de 6 dígitos de su aplicación de autenticación o uno de sus códigos de recuperación.',
     codeLabel: 'Código',

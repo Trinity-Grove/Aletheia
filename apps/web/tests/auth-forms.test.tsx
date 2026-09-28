@@ -6,6 +6,7 @@ import { MfaVerifyForm } from '../src/components/auth/mfa-verify-form';
 import { RegisterForm } from '../src/components/auth/register-form';
 import { ForgotPasswordForm } from '../src/components/auth/forgot-password-form';
 import { ResetPasswordForm } from '../src/components/auth/reset-password-form';
+import { VerifyEmailForm } from '../src/components/auth/verify-email-form';
 
 describe('Auth Forms Component Tests', () => {
   afterEach(() => {
@@ -422,6 +423,48 @@ describe('Auth Forms Component Tests', () => {
         expect(screen.getByTestId('error-message')).toHaveTextContent('Este link de redefinição expirou.');
       });
       expect(submitBtn).not.toBeDisabled();
+    });
+  });
+
+  describe('VerifyEmailForm', () => {
+    it('shows an invalid-link message when there is no token', () => {
+      render(<VerifyEmailForm token={null} />);
+
+      expect(screen.getByTestId('verify-email-invalid-link')).toBeInTheDocument();
+    });
+
+    it('automatically submits the token on mount and shows a success message', async () => {
+      const handleSubmit = vi.fn().mockResolvedValue(undefined);
+      render(<VerifyEmailForm token="a-valid-token" onSubmit={handleSubmit} />);
+
+      expect(screen.getByTestId('verify-email-loading')).toBeInTheDocument();
+      expect(handleSubmit).toHaveBeenCalledWith({ token: 'a-valid-token' });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('verify-email-success')).toBeInTheDocument();
+      });
+    });
+
+    it('shows an error message when the token is invalid or expired', async () => {
+      const handleSubmit = vi.fn().mockRejectedValue(new Error('Este link de confirmação já foi usado.'));
+      render(<VerifyEmailForm token="a-used-token" onSubmit={handleSubmit} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('verify-email-error')).toHaveTextContent('Este link de confirmação já foi usado.');
+      });
+    });
+
+    it('submits the token only once even if re-rendered', async () => {
+      const handleSubmit = vi.fn().mockResolvedValue(undefined);
+      const { rerender } = render(<VerifyEmailForm token="a-valid-token" onSubmit={handleSubmit} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('verify-email-success')).toBeInTheDocument();
+      });
+
+      rerender(<VerifyEmailForm token="a-valid-token" onSubmit={handleSubmit} />);
+
+      expect(handleSubmit).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -77,6 +77,14 @@ export const auth = {
     errorMismatch: 'As senhas não conferem.',
     errorFailed: 'Falha ao redefinir a senha. O link pode ter expirado.',
   },
+  verifyEmail: {
+    title: 'Confirme seu e-mail',
+    loading: 'Confirmando seu e-mail...',
+    successMessage: 'Seu e-mail foi confirmado com sucesso. Você já pode entrar normalmente.',
+    invalidLinkError: 'Este link de confirmação de e-mail é inválido.',
+    errorFailed: 'Não foi possível confirmar seu e-mail. O link pode ter expirado ou já ter sido usado.',
+    backToLogin: 'Voltar para o login',
+  },
   mfa: {
     instruction: 'Digite o código de 6 dígitos do seu aplicativo autenticador, ou um dos seus códigos de recuperação.',
     codeLabel: 'Código',
