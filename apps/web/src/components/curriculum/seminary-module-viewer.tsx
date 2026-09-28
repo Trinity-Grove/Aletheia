@@ -7,6 +7,10 @@ import {
   type SeminaryDiscipline,
 } from '@aletheia/contracts';
 import { TheologicalLensCard } from './theological-lens-card';
+import {
+  SeminaryPaperSubmissionModal,
+  type SeminaryPaperSubmissionData,
+} from './seminary-paper-submission-modal';
 import { useLocale } from '../../lib/i18n/locale-context';
 
 const DEFAULT_CYCLE = SEMINARY_CYCLES_METADATA[0]!;
@@ -15,13 +19,17 @@ const DEFAULT_DISCIPLINE = DEFAULT_CYCLE.disciplines[0]!;
 export interface SeminaryModuleViewerProps {
   preferredTraditionCode?: string | null | undefined;
   onSelectEvidenceSubmission?: ((discipline: SeminaryDiscipline) => void) | undefined;
+  onSubmitPaper?: ((data: SeminaryPaperSubmissionData) => Promise<void>) | undefined;
 }
 
 export function SeminaryModuleViewer({
   preferredTraditionCode,
   onSelectEvidenceSubmission,
+  onSubmitPaper,
 }: SeminaryModuleViewerProps) {
   const { t } = useLocale();
+
+  const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
 
   const [activeCycleNumber, setActiveCycleNumber] = useState<number>(1);
   const activeCycle =
@@ -320,6 +328,7 @@ export function SeminaryModuleViewer({
                 data-testid="submit-paper-btn"
                 variant="primary"
                 onClick={() => {
+                  setIsSubmissionModalOpen(true);
                   if (onSelectEvidenceSubmission) {
                     onSelectEvidenceSubmission(activeDiscipline);
                   }
@@ -695,6 +704,18 @@ export function SeminaryModuleViewer({
           />
         </div>
       </div>
+
+      {/* Seminary Paper Submission Modal */}
+      <SeminaryPaperSubmissionModal
+        isOpen={isSubmissionModalOpen}
+        onClose={() => setIsSubmissionModalOpen(false)}
+        discipline={activeDiscipline}
+        onSubmit={async (data) => {
+          if (onSubmitPaper) {
+            await onSubmitPaper(data);
+          }
+        }}
+      />
     </div>
   );
 }
