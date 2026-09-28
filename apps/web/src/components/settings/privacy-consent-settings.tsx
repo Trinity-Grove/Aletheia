@@ -8,6 +8,7 @@ import type {
   ConsentDefinitionResponseDto,
   ConsentComplianceCheckDto,
 } from '@aletheia/contracts';
+import { LegalDocumentContent } from '../shared/legal-document-content';
 
 export interface LearnerItem {
   id: string;
@@ -527,16 +528,14 @@ export function PrivacyConsentSettings({ familyId, learners = [] }: PrivacyConse
                   padding: '1.25rem',
                   borderRadius: 'var(--radius-md)',
                   border: '1px solid var(--border-light)',
-                  fontFamily: 'monospace',
-                  fontSize: '0.8125rem',
-                  whiteSpace: 'pre-wrap',
+                  fontSize: '0.875rem',
                   maxHeight: '16rem',
                   overflowY: 'auto',
                   lineHeight: '1.6',
                   color: 'var(--text-primary)',
                 }}
               >
-                {activeModal.definition.content}
+                <LegalDocumentContent content={activeModal.definition.content} />
               </div>
 
               {activeModal.mode === 'GRANT' && (

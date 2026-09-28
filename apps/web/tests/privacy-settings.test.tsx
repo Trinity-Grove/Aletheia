@@ -179,9 +179,11 @@ describe('PrivacyConsentSettings (Slice 2 of Issue #27)', () => {
     // Click grant button for Pedro
     fireEvent.click(screen.getByTestId('grant-consent-btn-def-2-l-2'));
 
-    // Modal should be visible
+    // Modal should be visible, with the leading "# " line dropped (the
+    // definition's title is already shown as the modal's own heading)
+    // and the rest of the content rendered, not as raw markdown.
     expect(screen.getByTestId('consent-modal')).toBeInTheDocument();
-    expect(screen.getByText(/Consentimento Art. 14 LGPD/i)).toBeInTheDocument();
+    expect(screen.getByText(/Autorização dos responsáveis\./i)).toBeInTheDocument();
 
     // Check consent statement and submit
     fireEvent.click(screen.getByTestId('confirm-grant-consent-btn'));
