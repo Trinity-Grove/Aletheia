@@ -1127,6 +1127,7 @@
 }
 .ui-tab-bar-list {
   display: flex;
+  flex: 1;
   align-items: stretch;
   list-style: none;
   margin: 0;
