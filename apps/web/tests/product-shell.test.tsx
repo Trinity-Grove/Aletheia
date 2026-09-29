@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import React, { useState } from 'react';
 import type { LearnerSummaryDto, NotificationItemResponseDto } from '@aletheia/contracts';
 import { ProductShell, LearnerFocusSwitcher } from '../src/components/product-shell';
@@ -55,6 +55,16 @@ const mockNotifications: NotificationItemResponseDto[] = [
   },
 ];
 
+// The number of primary tab-bar items is responsive to viewport width (see
+// PRODUCT_SHELL's useResponsiveTabBarItemCount) -- tests that don't care
+// about that behavior run at 390px, the bucket matching the old fixed
+// count of 4, via the beforeEach below. Tests exercising the responsive
+// behavior itself call this directly to pick a different bucket.
+function setViewportWidth(width: number): void {
+  Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: width });
+  window.dispatchEvent(new Event('resize'));
+}
+
 function AuthContextProbe() {
   const auth = useAuthRole();
 
@@ -66,6 +76,10 @@ function AuthContextProbe() {
 }
 
 describe('ProductShell adapter', () => {
+  beforeEach(() => {
+    setViewportWidth(390);
+  });
+
   afterEach(() => {
     cleanup();
     nextNavigation.pathname = '/';
@@ -143,6 +157,72 @@ describe('ProductShell adapter', () => {
     const moreSheet = screen.getByRole('dialog', { name: 'Mais opções' });
     expect(within(moreSheet).getByRole('link', { name: 'Currículo' })).toBeInTheDocument();
     expect(within(moreSheet).queryByRole('link', { name: 'Início' })).not.toBeInTheDocument();
+  });
+
+  it('shows fewer primary tab-bar items on a very narrow phone', () => {
+    setViewportWidth(340);
+
+    render(
+      <ProductShell>
+        <p>Conteúdo</p>
+      </ProductShell>,
+    );
+
+    expect(screen.getByTestId('appshell-tab-bar-home')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-tab-bar-devotional')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-tab-bar-schedule')).toBeInTheDocument();
+    expect(screen.queryByTestId('appshell-tab-bar-learners')).not.toBeInTheDocument();
+  });
+
+  it('shows more primary tab-bar items on a larger phone, still evenly split from the same priority list', () => {
+    setViewportWidth(420);
+
+    render(
+      <ProductShell>
+        <p>Conteúdo</p>
+      </ProductShell>,
+    );
+
+    expect(screen.getByTestId('appshell-tab-bar-home')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-tab-bar-devotional')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-tab-bar-schedule')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-tab-bar-learners')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-tab-bar-curriculum')).toBeInTheDocument();
+    expect(screen.queryByTestId('appshell-tab-bar-records')).not.toBeInTheDocument();
+  });
+
+  it('shows even more primary tab-bar items on a phablet-width phone', () => {
+    setViewportWidth(500);
+
+    render(
+      <ProductShell>
+        <p>Conteúdo</p>
+      </ProductShell>,
+    );
+
+    expect(screen.getByTestId('appshell-tab-bar-home')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-tab-bar-devotional')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-tab-bar-schedule')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-tab-bar-learners')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-tab-bar-curriculum')).toBeInTheDocument();
+    expect(screen.getByTestId('appshell-tab-bar-records')).toBeInTheDocument();
+    expect(screen.queryByTestId('appshell-tab-bar-portfolio')).not.toBeInTheDocument();
+  });
+
+  it('adjusts the primary tab-bar item count when the viewport is resized after mount', async () => {
+    render(
+      <ProductShell>
+        <p>Conteúdo</p>
+      </ProductShell>,
+    );
+
+    expect(screen.queryByTestId('appshell-tab-bar-curriculum')).not.toBeInTheDocument();
+
+    setViewportWidth(420);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('appshell-tab-bar-curriculum')).toBeInTheDocument();
+    });
   });
 
   it('filters guardian-only navigation items using the active role permissions', () => {
