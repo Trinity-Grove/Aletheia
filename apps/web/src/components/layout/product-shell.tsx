@@ -1,6 +1,6 @@
 'use client';
 
-import React, { type ReactNode, useEffect } from 'react';
+import React, { type ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -56,12 +56,56 @@ export const MAIN_NAV_ITEMS: NavigationItem[] = [
   { id: 'settings', label: 'nav.settings', href: '/settings', icon: <AletheiaIcon name="settings" size={18} /> },
 ];
 
-const PRIMARY_NAV_ITEM_IDS: ReadonlyArray<NavigationItem['id']> = [
+// Order in which nav items become primary tab-bar entries as more of them
+// fit the screen -- the first 4 are always what a narrow phone shows today;
+// wider phones progressively reveal more of this same ordered list before
+// falling back to the "Mais" overflow sheet for the remainder.
+const PRIORITY_NAV_ITEM_IDS: ReadonlyArray<NavigationItem['id']> = [
   'home',
   'devotional',
   'schedule',
   'learners',
+  'curriculum',
+  'records',
+  'portfolio',
+  'reports',
+  'attendance',
+  'support',
+  'settings',
 ];
+
+// How many primary tab-bar columns fit before the layout feels cramped,
+// keyed by viewport width. Ordered widest-first so the first matching
+// breakpoint wins. 360-413px covers most phones (the previous fixed count
+// of 4); wider phones/phablets get more real nav items instead of hiding
+// them behind "Mais".
+const TAB_BAR_ITEM_COUNT_BREAKPOINTS: ReadonlyArray<{ minWidth: number; count: number }> = [
+  { minWidth: 480, count: 6 },
+  { minWidth: 414, count: 5 },
+  { minWidth: 360, count: 4 },
+  { minWidth: 0, count: 3 },
+];
+
+function resolveTabBarItemCount(viewportWidth: number): number {
+  const breakpoint = TAB_BAR_ITEM_COUNT_BREAKPOINTS.find((bp) => viewportWidth >= bp.minWidth);
+  return breakpoint ? breakpoint.count : 3;
+}
+
+// SSR-safe: starts at the previous fixed count (4) so the first paint
+// matches what every viewport already rendered before this became
+// responsive, then adjusts once the real viewport width is known.
+function useResponsiveTabBarItemCount(): number {
+  const [count, setCount] = useState(4);
+
+  useEffect(() => {
+    const updateCount = () => setCount(resolveTabBarItemCount(window.innerWidth));
+    updateCount();
+    window.addEventListener('resize', updateCount);
+    return () => window.removeEventListener('resize', updateCount);
+  }, []);
+
+  return count;
+}
 
 const renderNextNavigationLink: NavigationLinkRenderer = (linkProps) => (
   <Link {...(linkProps as React.ComponentProps<typeof Link>)} href={linkProps.href} />
@@ -119,6 +163,7 @@ export function ProductShell({
   const router = useRouter();
   const authContext = useOptionalAuth();
   const existingRbac = useAuthRole();
+  const tabBarItemCount = useResponsiveTabBarItemCount();
   const { t } = useLocale();
   const activePath = currentPath ?? pathname;
 
@@ -254,9 +299,10 @@ export function ProductShell({
       active: activePath === item.href,
     }));
 
-  const primaryNavigationItems = PRIMARY_NAV_ITEM_IDS
+  const primaryNavigationItems = PRIORITY_NAV_ITEM_IDS
     .map((id) => navigationItems.find((item) => item.id === id))
-    .filter((item): item is NavigationItem => item !== undefined);
+    .filter((item): item is NavigationItem => item !== undefined)
+    .slice(0, tabBarItemCount);
 
   const activeNavItem = MAIN_NAV_ITEMS.find((item) => item.href === activePath);
   const breadcrumbItems: BreadcrumbItem[] =
