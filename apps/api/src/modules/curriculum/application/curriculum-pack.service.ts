@@ -14,6 +14,7 @@ import type {
 import { CurriculumPackRepository } from '../infrastructure/curriculum-pack.repository.js';
 import { computeStatusTransition } from './definition-status-transition.js';
 import { AuthorTrustService } from './author-trust.service.js';
+import { PromptInjectionScanner } from '../domain/prompt-injection-scanner.js';
 
 // Admin CRUD for CurriculumPack + manifest + dependencies (issue #96
 // Fase 4, section 27). Nothing here resolves or validates that manifest
@@ -38,6 +39,12 @@ export class CurriculumPackService {
     userId: string,
     dto: CreateCurriculumPackOutput,
   ): Promise<CurriculumPackResponseDto> {
+    const scanResult = PromptInjectionScanner.scan(dto);
+    if (!scanResult.safe) {
+      throw new BadRequestException(
+        `PROMPT_INJECTION_DETECTED: Conteúdo contém padrões de injeção de prompt não permitidos: ${scanResult.violations.map((v) => v.path).join(', ')}`,
+      );
+    }
     const row = await this.withWriteErrorMapping(() =>
       this.repository.createCommunityPack(userId, dto),
     );
@@ -60,6 +67,17 @@ export class CurriculumPackService {
       existing.moderationStatus === 'PENDING_REVIEW'
     ) {
       throw new BadRequestException('Only unapproved draft packs can be submitted for review.');
+    }
+
+    const scanResult = PromptInjectionScanner.scan({
+      name: existing.name,
+      description: existing.description,
+      metadata: existing.metadata,
+    });
+    if (!scanResult.safe) {
+      throw new BadRequestException(
+        `PROMPT_INJECTION_DETECTED: Conteúdo contém padrões de injeção de prompt não permitidos: ${scanResult.violations.map((v) => v.path).join(', ')}`,
+      );
     }
 
     const profile = await this.authorTrustService.getOrCreateProfile(userId);

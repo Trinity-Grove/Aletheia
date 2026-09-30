@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../../../platform/database/prisma.service.js';
 import { CurriculumPackRepository } from '../infrastructure/curriculum-pack.repository.js';
 import { exportDefinitionContent, findDefinitionByCodeVersion } from '../infrastructure/curriculum-pack-portability.js';
+import { calculatePackChecksum } from '../domain/pack-checksum.js';
 
 // Export a published CurriculumPack into a single portable JSON
 // document (issue #96 Fase 4, section 28, read half): the pack's own
@@ -55,7 +56,7 @@ export class CurriculumPackExportService {
       }),
     );
 
-    return {
+    const docWithoutChecksum: CurriculumPackExportDocument = {
       formatVersion: CURRICULUM_PACK_EXPORT_FORMAT_VERSION,
       exportedAt: new Date().toISOString(),
       pack: {
@@ -72,6 +73,13 @@ export class CurriculumPackExportService {
         dependsOnVersion: d.dependsOnVersion,
       })),
       items: exportedItems,
+    };
+
+    const checksumSha256 = calculatePackChecksum(docWithoutChecksum);
+
+    return {
+      ...docWithoutChecksum,
+      checksumSha256,
     };
   }
 }
