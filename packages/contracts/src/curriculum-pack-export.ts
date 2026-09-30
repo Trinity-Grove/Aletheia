@@ -1,5 +1,10 @@
 import { z } from 'zod';
 import { curriculumPackDefinitionTypeSchema } from './curriculum-pack.js';
+import {
+  packLicenseCodeSchema,
+  packPricingModelSchema,
+  packProvenanceSchema,
+} from './pack-licensing.js';
 
 // --- Curriculum pack export document (Aletheia issue #96, Fase 4,
 // section 28, read half) ---
@@ -49,6 +54,7 @@ export type ExportedPackDependency = z.infer<typeof exportedPackDependencySchema
 export const curriculumPackExportDocumentSchema = z.object({
   formatVersion: z.string().min(1),
   exportedAt: z.string(),
+  checksumSha256: z.string().regex(/^[a-f0-9]{64}$/i).optional(),
   pack: z.object({
     code: z.string().min(1),
     version: z.number().int().min(1),
@@ -57,6 +63,9 @@ export const curriculumPackExportDocumentSchema = z.object({
     name: z.string(),
     description: z.string().nullable().optional(),
     metadata: z.record(z.string(), z.unknown()),
+    license: packLicenseCodeSchema.optional(),
+    pricingModel: packPricingModelSchema.optional(),
+    provenance: packProvenanceSchema.optional(),
   }),
   dependencies: z.array(exportedPackDependencySchema),
   items: z.array(exportedDefinitionItemSchema),
