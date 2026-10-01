@@ -14,7 +14,7 @@ import {
   type RefResolver,
 } from '../infrastructure/curriculum-pack-portability.js';
 import { PromptInjectionScanner } from '../domain/prompt-injection-scanner.js';
-import { calculatePackChecksum } from '../domain/pack-checksum.js';
+import { verifyPackChecksum } from '../domain/pack-checksum.js';
 
 const refKey = (ref: PortableRef): string => `${ref.type}|${ref.code}|${ref.version}`;
 
@@ -60,11 +60,8 @@ export class CurriculumPackImportService {
       );
     }
 
-    if (document.checksumSha256) {
-      const calculatedChecksum = calculatePackChecksum(document);
-      if (document.checksumSha256.toLowerCase() !== calculatedChecksum.toLowerCase()) {
-        throw new BadRequestException('CHECKSUM_MISMATCH: Integridade do pacote corrompida ou adulterada.');
-      }
+    if (document.checksumSha256 && !verifyPackChecksum(document)) {
+      throw new BadRequestException('CHECKSUM_MISMATCH: Integridade do pacote corrompida ou adulterada.');
     }
 
     const conflicts: CurriculumPackImportReport['conflicts'] = [];

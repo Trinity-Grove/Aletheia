@@ -1,20 +1,23 @@
 import { createHash } from 'node:crypto';
 import type { CurriculumPackExportDocument } from '@aletheia/contracts';
 
-export function canonicalJsonStringify(obj: unknown): string {
+export function canonicalJsonStringify(obj: unknown, isRoot = true): string {
   if (obj === null || obj === undefined) {
     return 'null';
+  }
+  if (obj instanceof Date) {
+    return JSON.stringify(obj.toISOString());
   }
   if (typeof obj !== 'object') {
     return JSON.stringify(obj);
   }
   if (Array.isArray(obj)) {
-    return '[' + obj.map((item) => canonicalJsonStringify(item)).join(',') + ']';
+    return '[' + obj.map((item) => canonicalJsonStringify(item, false)).join(',') + ']';
   }
   const keys = Object.keys(obj as Record<string, unknown>).sort();
   const entries = keys
-    .filter((k) => k !== 'checksumSha256' && (obj as Record<string, unknown>)[k] !== undefined)
-    .map((k) => `${JSON.stringify(k)}:${canonicalJsonStringify((obj as Record<string, unknown>)[k])}`);
+    .filter((k) => (!isRoot || k !== 'checksumSha256') && (obj as Record<string, unknown>)[k] !== undefined)
+    .map((k) => `${JSON.stringify(k)}:${canonicalJsonStringify((obj as Record<string, unknown>)[k], false)}`);
   return '{' + entries.join(',') + '}';
 }
 

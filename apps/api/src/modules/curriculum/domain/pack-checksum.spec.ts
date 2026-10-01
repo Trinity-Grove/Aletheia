@@ -46,4 +46,32 @@ describe('PackChecksum', () => {
     const missing = { ...doc, checksumSha256: undefined };
     expect(verifyPackChecksum(missing as any)).toBe(false);
   });
+
+  it('correctly serializes Date instances to ISO strings consistently', () => {
+    const date = new Date('2026-09-30T12:00:00.000Z');
+    const docWithDate = {
+      createdAt: date,
+      name: 'Pack with Date',
+    };
+    const docWithString = {
+      createdAt: '2026-09-30T12:00:00.000Z',
+      name: 'Pack with Date',
+    };
+
+    expect(canonicalJsonStringify(docWithDate)).toBe(canonicalJsonStringify(docWithString));
+    expect(calculatePackChecksum(docWithDate)).toBe(calculatePackChecksum(docWithString));
+  });
+
+  it('only filters out checksumSha256 at the root level and retains nested checksumSha256', () => {
+    const doc = {
+      checksumSha256: 'root-hash-to-ignore',
+      nested: {
+        checksumSha256: 'nested-hash-to-keep',
+      },
+    };
+
+    const serialized = canonicalJsonStringify(doc);
+    expect(serialized).not.toContain('root-hash-to-ignore');
+    expect(serialized).toContain('nested-hash-to-keep');
+  });
 });
