@@ -79,6 +79,67 @@ export class FamilyCurriculumPackRepository {
     });
   }
 
+  async updateWithRevision(
+    id: string,
+    familyId: string,
+    params: {
+      sourcePackId: string;
+      sourcePackVersion: number;
+      document: CurriculumPackExportDocument;
+    },
+  ): Promise<{ updated: FamilyCurriculumPack; previousRevision: number; newRevision: number } | null> {
+    return this.prisma.$transaction(async (tx) => {
+      const current = await tx.familyCurriculumPack.findFirst({ where: { id, familyId } });
+      if (!current) return null;
+
+      const previousRevision = current.revision;
+      const newRevision = previousRevision + 1;
+
+      const existingPrev = await tx.familyCurriculumPackRevision.findUnique({
+        where: {
+          family_curriculum_pack_revisions_pack_revision_unique: {
+            familyCurriculumPackId: current.id,
+            revision: previousRevision,
+          },
+        },
+      });
+
+      if (!existingPrev) {
+        await tx.familyCurriculumPackRevision.create({
+          data: {
+            familyCurriculumPackId: current.id,
+            revision: previousRevision,
+            document: current.document as Prisma.InputJsonValue,
+          },
+        });
+      }
+
+      const updated = await tx.familyCurriculumPack.update({
+        where: { id: current.id },
+        data: {
+          sourcePackId: params.sourcePackId,
+          sourcePackVersion: params.sourcePackVersion,
+          revision: newRevision,
+          document: params.document as Prisma.InputJsonValue,
+        },
+      });
+
+      await tx.familyCurriculumPackRevision.create({
+        data: {
+          familyCurriculumPackId: current.id,
+          revision: newRevision,
+          document: params.document as Prisma.InputJsonValue,
+        },
+      });
+
+      return {
+        updated,
+        previousRevision,
+        newRevision,
+      };
+    });
+  }
+
   listRevisions(familyCurriculumPackId: string): Promise<FamilyCurriculumPackRevision[]> {
     return this.prisma.familyCurriculumPackRevision.findMany({
       where: { familyCurriculumPackId },

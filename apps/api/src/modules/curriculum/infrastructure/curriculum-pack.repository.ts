@@ -93,6 +93,17 @@ export class CurriculumPackRepository {
     return this.prisma.curriculumPack.findUnique({ where: { code_version: { code, version } } });
   }
 
+  findLatestPublishedByCode(code: string): Promise<CurriculumPack | null> {
+    return this.prisma.curriculumPack.findFirst({
+      where: {
+        code,
+        status: 'PUBLISHED',
+        OR: [{ moderationStatus: 'APPROVED' }, { authorUserId: null }],
+      },
+      orderBy: { version: 'desc' },
+    });
+  }
+
   updatePackStatus(
     id: string,
     update: DefinitionStatusUpdate & { moderationStatus?: CurriculumPackModerationStatus },

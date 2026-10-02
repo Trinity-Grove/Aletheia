@@ -1,13 +1,17 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
+  applyPackUpdateSchema,
   installFamilyCurriculumPackSchema,
   publishFamilyCurriculumPackToCommunitySchema,
   updateFamilyCurriculumPackSchema,
+  type ApplyPackUpdateDto,
+  type ApplyPackUpdateResponseDto,
   type CurriculumPackResponseDto,
   type FamilyCurriculumPackResponseDto,
   type FamilyCurriculumPackRevisionResponseDto,
   type InstallFamilyCurriculumPackDto,
+  type PackDiffReport,
   type PublishFamilyCurriculumPackToCommunityOutput,
   type UpdateFamilyCurriculumPackDto,
 } from '@aletheia/contracts';
@@ -70,6 +74,26 @@ export class FamilyCurriculumPackController {
     @Param('id') id: string,
   ): Promise<FamilyCurriculumPackRevisionResponseDto[]> {
     return this.service.revisions(familyId, id);
+  }
+
+  @Get(':id/check-updates')
+  @ApiOperation({ summary: 'Check for upstream updates and compute diff report against family customizations' })
+  async checkUpdates(
+    @Param('familyId') familyId: string,
+    @Param('id') id: string,
+  ): Promise<PackDiffReport> {
+    return this.service.checkUpdates(familyId, id);
+  }
+
+  @Post(':id/apply-update')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Apply upstream pack updates preserving family customizations via 3-way merge' })
+  async applyUpdate(
+    @Param('familyId') familyId: string,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(applyPackUpdateSchema)) dto: ApplyPackUpdateDto,
+  ): Promise<ApplyPackUpdateResponseDto> {
+    return this.service.applyUpdate(familyId, id, dto);
   }
 
   @Post(':id/publish-to-community')
