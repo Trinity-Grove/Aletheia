@@ -22,8 +22,10 @@ import {
   type PedagogicalModelDefinitionResponseDto,
   type RubricDefinitionResponseDto,
   type TheologicalTraditionDefinitionResponseDto,
+  type PackLicenseCode,
+  type PackProvenance,
 } from '@aletheia/contracts';
-import { Button, Card, CardContent, CardHeader, CardTitle, EmptyState, Input, Select, Textarea } from '@aletheia/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, Input, Select, Textarea } from '@aletheia/ui';
 import { api } from '../../lib/api';
 import { VersionOperationsPanel } from './version-operations-panel';
 
@@ -124,6 +126,126 @@ export function AdminCatalog() {
         </div>
       ) : (
         <VersionOperationsPanel />
+      )}
+    </div>
+  );
+}
+
+const LICENSE_LABELS: Record<string, string> = {
+  CC_BY_4_0: 'CC-BY 4.0',
+  CC_BY_NC_4_0: 'CC-BY-NC 4.0',
+  CC_BY_SA_4_0: 'CC-BY-SA 4.0',
+  PUBLIC_DOMAIN: 'Domínio Público',
+  ALETHEIA_OPEN_COMMUNITY: 'Comunidade Aberta',
+  ALETHEIA_EDITORIAL_STANDARD: 'Padrão Editorial',
+};
+
+function CurriculumPackAuditInfo({ pack }: { pack: CatalogRow }) {
+  const meta = (
+    'metadata' in pack && pack.metadata && typeof pack.metadata === 'object'
+      ? (pack.metadata as Record<string, unknown>)
+      : {}
+  );
+  const prov = (
+    meta.provenance && typeof meta.provenance === 'object'
+      ? (meta.provenance as Record<string, unknown>)
+      : 'provenance' in pack &&
+          (pack as Record<string, unknown>).provenance &&
+          typeof (pack as Record<string, unknown>).provenance === 'object'
+        ? ((pack as Record<string, unknown>).provenance as Record<string, unknown>)
+        : null
+  );
+
+  const license = (
+    (typeof meta.license === 'string' ? meta.license : undefined) ??
+    (prov && typeof prov.license === 'string' ? prov.license : undefined) ??
+    ('license' in pack && typeof (pack as Record<string, unknown>).license === 'string'
+      ? ((pack as Record<string, unknown>).license as string)
+      : undefined)
+  ) as PackLicenseCode | string | undefined;
+
+  const authorDisplayName = (
+    (typeof meta.authorDisplayName === 'string' ? meta.authorDisplayName : undefined) ??
+    (prov && typeof prov.authorDisplayName === 'string' ? prov.authorDisplayName : undefined) ??
+    ('authorDisplayName' in pack && typeof (pack as Record<string, unknown>).authorDisplayName === 'string'
+      ? ((pack as Record<string, unknown>).authorDisplayName as string)
+      : undefined)
+  );
+
+  const authorOrganization = (
+    (typeof meta.authorOrganization === 'string' ? meta.authorOrganization : undefined) ??
+    (typeof meta.organization === 'string' ? meta.organization : undefined) ??
+    (prov && typeof prov.authorOrganization === 'string' ? prov.authorOrganization : undefined) ??
+    (prov && typeof prov.organization === 'string' ? prov.organization : undefined) ??
+    ('authorOrganization' in pack && typeof (pack as Record<string, unknown>).authorOrganization === 'string'
+      ? ((pack as Record<string, unknown>).authorOrganization as string)
+      : undefined)
+  );
+
+  const checksumSha256 = (
+    (typeof meta.checksumSha256 === 'string' ? meta.checksumSha256 : undefined) ??
+    (prov && typeof prov.checksumSha256 === 'string' ? prov.checksumSha256 : undefined) ??
+    ('checksumSha256' in pack && typeof (pack as Record<string, unknown>).checksumSha256 === 'string'
+      ? ((pack as Record<string, unknown>).checksumSha256 as string)
+      : undefined)
+  );
+
+  if (!license && !authorDisplayName && !checksumSha256) {
+    return null;
+  }
+
+  const displayLicense = license ? (LICENSE_LABELS[license] ?? license) : null;
+  const truncatedHash = checksumSha256
+    ? checksumSha256.length > 12
+      ? `${checksumSha256.slice(0, 12)}...`
+      : checksumSha256
+    : null;
+
+  return (
+    <div
+      data-testid="pack-audit-info"
+      style={{
+        display: 'grid',
+        gap: '0.375rem',
+        padding: '0.5rem',
+        backgroundColor: '#f8fafc',
+        borderRadius: '0.375rem',
+        border: '1px solid #e2e8f0',
+        fontSize: '0.75rem',
+      }}
+    >
+      {displayLicense && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ fontWeight: 600, color: '#475569' }}>Licença:</span>
+          <Badge variant="indigo" size="sm" data-testid="pack-license-badge" data-license={license}>
+            {displayLicense}
+          </Badge>
+        </div>
+      )}
+      {(authorDisplayName || authorOrganization) && (
+        <div data-testid="pack-author-provenance" style={{ color: '#334155' }}>
+          <span style={{ fontWeight: 600, color: '#475569' }}>Autor: </span>
+          <span>{authorDisplayName ?? 'Desconhecido'}</span>
+          {authorOrganization && <span style={{ color: '#64748b' }}> ({authorOrganization})</span>}
+        </div>
+      )}
+      {truncatedHash && (
+        <div data-testid="pack-integrity-indicator" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+          <span style={{ fontWeight: 600, color: '#475569' }}>Integridade: </span>
+          <code
+            data-testid="pack-integrity-hash"
+            title={checksumSha256}
+            style={{
+              fontFamily: 'monospace',
+              fontSize: '0.6875rem',
+              backgroundColor: '#e2e8f0',
+              padding: '0.125rem 0.25rem',
+              borderRadius: '0.25rem',
+            }}
+          >
+            SHA-256: {truncatedHash}
+          </code>
+        </div>
       )}
     </div>
   );
@@ -445,6 +567,7 @@ function CatalogResource({ resource }: { resource: Resource }) {
                         Boolean((row as { summary?: string }).summary) && (
                           <p>{(row as { summary: string }).summary}</p>
                         )}
+                      {resource === 'curriculum-packs' && <CurriculumPackAuditInfo pack={row} />}
                       {row.status === 'DRAFT' && (
                         <Button
                           variant="secondary"
