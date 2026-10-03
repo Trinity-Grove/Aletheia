@@ -970,4 +970,155 @@ describe('CurriculumPacksGallery (Task 7 & 8: Plugins / Pacotes Curriculares)', 
       });
     });
   });
+
+  describe('Task 4: Licensing, Voluntary Support and Safe Updates', () => {
+    const mockPacksWithLicense = [
+      {
+        id: 'pack-license-1',
+        code: 'LOGIC_CLASSICAL',
+        name: 'Lógica Clássica e Apologética',
+        description: 'Curso completo de lógica clássica formal e informal.',
+        version: 2,
+        status: 'PUBLISHED',
+        schemaVersion: '1.0.0',
+        metadata: {
+          category: 'Metodologia Clássica',
+          license: 'CC_BY_4_0',
+          pricingModel: 'VOLUNTARY_SUPPORT',
+          authorDisplayName: 'Professor Alberto',
+          authorPixKey: 'alberto@curriculo.com',
+          provenance: {
+            authorDisplayName: 'Professor Alberto',
+            checksumSha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+            publishedAt: '2026-09-20T00:00:00.000Z',
+          },
+        },
+        createdAt: '2026-09-10T00:00:00.000Z',
+        updatedAt: '2026-09-10T00:00:00.000Z',
+      },
+    ];
+
+    const mockInstalledOutdated = [
+      {
+        id: 'inst-outdated-1',
+        familyId: 'fam-1',
+        sourcePackId: 'pack-license-1',
+        sourcePackCode: 'LOGIC_CLASSICAL',
+        sourcePackVersion: 1,
+        revision: 1,
+        document: {
+          pack: { code: 'LOGIC_CLASSICAL', name: 'Lógica Clássica e Apologética', version: 1 },
+          items: [],
+        },
+        createdAt: '2026-09-15T00:00:00.000Z',
+        updatedAt: '2026-09-15T00:00:00.000Z',
+      },
+    ];
+
+    it('renders license badge and voluntary support button, and opens support modal', async () => {
+      vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
+        const url = String(input);
+        if (url.includes('/available')) {
+          return { ok: true, json: async () => mockPacksWithLicense } as Response;
+        }
+        if (url.endsWith('/curriculum-packs')) {
+          return { ok: true, json: async () => [] } as Response;
+        }
+        return { ok: false, status: 404 } as Response;
+      });
+
+      render(<CurriculumPacksGallery familyId="fam-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Lógica Clássica e Apologética')).toBeInTheDocument();
+      });
+
+      expect(screen.getByTestId('pack-license-badge')).toBeInTheDocument();
+      expect(screen.getByTestId('support-author-btn-pack-license-1')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('support-author-btn-pack-license-1'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('pack-author-support-modal')).toBeInTheDocument();
+        expect(screen.getByText('Professor Alberto')).toBeInTheDocument();
+        expect(screen.getByText('alberto@curriculo.com')).toBeInTheDocument();
+      });
+    });
+
+    it('renders update available badge and applies safe update via diff modal', async () => {
+      const mockDiff = {
+        hasUpdate: true,
+        currentVersion: 1,
+        latestVersion: 2,
+        sourcePackCode: 'LOGIC_CLASSICAL',
+        items: [
+          {
+            definitionType: 'SkillDefinition',
+            code: 'LOGIC.SYLLOGISM',
+            name: 'Silogismos Categóricos',
+            action: 'ADDED_BY_AUTHOR',
+            description: 'Nova habilidade.',
+          },
+        ],
+        summary: {
+          addedCount: 1,
+          updatedCount: 0,
+          preservedFamilyEditsCount: 0,
+          conflictsCount: 0,
+        },
+      };
+
+      const updatedFamilyPack = {
+        ...mockInstalledOutdated[0],
+        sourcePackVersion: 2,
+        revision: 2,
+      };
+
+      vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
+        const url = String(input);
+        if (url.includes('/available')) {
+          return { ok: true, json: async () => mockPacksWithLicense } as Response;
+        }
+        if (url.endsWith('/curriculum-packs')) {
+          return { ok: true, json: async () => mockInstalledOutdated } as Response;
+        }
+        if (url.includes('/check-updates')) {
+          return { ok: true, json: async () => mockDiff } as Response;
+        }
+        if (url.includes('/apply-update')) {
+          return {
+            ok: true,
+            json: async () => ({
+              updatedFamilyPack,
+              diffReport: mockDiff,
+              previousRevision: 1,
+              newRevision: 2,
+            }),
+          } as Response;
+        }
+        return { ok: false, status: 404 } as Response;
+      });
+
+      render(<CurriculumPacksGallery familyId="fam-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('update-available-badge-pack-license-1')).toBeInTheDocument();
+        expect(screen.getByTestId('review-update-btn-pack-license-1')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('review-update-btn-pack-license-1'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('pack-update-diff-modal')).toBeInTheDocument();
+        expect(screen.getByText('Silogismos Categóricos')).toBeInTheDocument();
+      });
+
+      const applyBtn = screen.getByTestId('apply-diff-update-btn');
+      fireEvent.click(applyBtn);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Pacote atualizado com segurança!/i)).toBeInTheDocument();
+      });
+    });
+  });
 });

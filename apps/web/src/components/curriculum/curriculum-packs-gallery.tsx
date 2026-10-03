@@ -3,17 +3,24 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Card } from '@aletheia/ui';
 import type {
+  ApplyPackUpdateResponseDto,
   AuthorTrustTier,
   CurriculumPackResponseDto,
   FamilyCurriculumPackResponseDto,
+  PackDiffReport,
+  PackLicenseCode,
+  PackProvenance,
 } from '@aletheia/contracts';
 import { FamilyCurriculumPackModal } from './family-curriculum-pack-modal';
 import { CurriculumPackImportModal } from './curriculum-pack-import-modal';
 import { CurriculumPackDetailModal } from './curriculum-pack-detail-modal';
 import { AuthorTrustBadge } from './author-trust-badge';
+import { PackLicenseBadge } from './pack-license-badge';
 import { PackReportModal } from './pack-report-modal';
 import { PublishToCommunityModal } from './publish-to-community-modal';
 import { MyAuthoredPacksPanel } from './my-authored-packs-panel';
+import { PackUpdateDiffModal } from './pack-update-diff-modal';
+import { PackAuthorSupportModal } from './pack-author-support-modal';
 import { useLocale } from '../../lib/i18n/locale-context';
 
 interface CurriculumPacksGalleryProps {
@@ -40,6 +47,14 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [exportingPackId, setExportingPackId] = useState<string | null>(null);
+  const [diffModalData, setDiffModalData] = useState<{
+    pack: CurriculumPackResponseDto;
+    installed: FamilyCurriculumPackResponseDto;
+    diffReport: PackDiffReport;
+  } | null>(null);
+  const [checkingUpdatePackId, setCheckingUpdatePackId] = useState<string | null>(null);
+  const [isApplyingUpdate, setIsApplyingUpdate] = useState(false);
+  const [authorSupportModalPack, setAuthorSupportModalPack] = useState<CurriculumPackResponseDto | null>(null);
 
   const handleExportPack = async (pack: CurriculumPackResponseDto) => {
     try {
@@ -131,6 +146,56 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
       setError(err instanceof Error ? err.message : 'Erro ao instalar pacote.');
     } finally {
       setInstallingId(null);
+    }
+  };
+
+  const handleCheckUpdate = async (pack: CurriculumPackResponseDto, installed: FamilyCurriculumPackResponseDto) => {
+    try {
+      setCheckingUpdatePackId(pack.id);
+      setError(null);
+      const res = await fetch(`/api/v1/families/${familyId}/curriculum-packs/${installed.id}/check-updates`, {
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Falha ao verificar atualizações do pacote.');
+      }
+      const diffReport: PackDiffReport = await res.json();
+      setDiffModalData({ pack, installed, diffReport });
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erro ao verificar atualizações.');
+    } finally {
+      setCheckingUpdatePackId(null);
+    }
+  };
+
+  const handleApplyUpdate = async () => {
+    if (!diffModalData) return;
+    try {
+      setIsApplyingUpdate(true);
+      setError(null);
+      const res = await fetch(`/api/v1/families/${familyId}/curriculum-packs/${diffModalData.installed.id}/apply-update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || t('curriculum.marketplace.safeUpdate.error'));
+      }
+      const result: ApplyPackUpdateResponseDto = await res.json();
+      setInstalledPacks((prev) =>
+        prev.map((p) => (p.id === result.updatedFamilyPack.id ? result.updatedFamilyPack : p))
+      );
+      setSuccessMsg(t('curriculum.marketplace.safeUpdate.success'));
+      setDiffModalData(null);
+      setTimeout(() => setSuccessMsg(null), 5000);
+      void loadData();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t('curriculum.marketplace.safeUpdate.error'));
+    } finally {
+      setIsApplyingUpdate(false);
     }
   };
 
@@ -364,6 +429,10 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
             const isWorking = installingId === pack.id;
             const authorTier = ((meta.authorTrustTier || meta.authorTier || meta.tier) as AuthorTrustTier) || 'NOVICE';
             const authorTrustScore = (meta.authorTrustScore ?? meta.trustScore) as number | null | undefined;
+            const license = (meta.license ?? (pack as any).license) as PackLicenseCode | undefined;
+            const provenance = (meta.provenance ?? (pack as any).provenance) as PackProvenance | undefined;
+            const pricingModel = (meta.pricingModel ?? (pack as any).pricingModel) as string | undefined;
+            const hasUpdateAvailable = isInstalled && installedInstance && pack.version > (installedInstance.sourcePackVersion ?? 1);
 
             return (
               <Card
@@ -399,6 +468,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Currículo Geral</span>
                       )}
                       <AuthorTrustBadge tier={authorTier} trustScore={authorTrustScore} />
+                      {license && <PackLicenseBadge license={license} provenance={provenance} />}
                     </div>
                     <span
                       style={{
@@ -499,6 +569,40 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
                         </span>
                       </div>
 
+                      {hasUpdateAvailable && (
+                        <>
+                          <div
+                            data-testid={`update-available-badge-${pack.id}`}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '0.4rem 0.75rem',
+                              backgroundColor: '#FEF3C7',
+                              border: '1px solid #FCD34D',
+                              borderRadius: 'var(--radius-md)',
+                              color: '#92400E',
+                              fontSize: '0.8125rem',
+                              fontWeight: 700,
+                            }}
+                          >
+                            <span>🔄 {t('curriculum.marketplace.safeUpdate.badgeUpdateAvailable', { latest: pack.version })}</span>
+                          </div>
+
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            data-testid={`review-update-btn-${pack.id}`}
+                            isLoading={checkingUpdatePackId === pack.id}
+                            disabled={checkingUpdatePackId === pack.id}
+                            onClick={() => handleCheckUpdate(pack, installedInstance!)}
+                            style={{ width: '100%', fontSize: '0.8125rem', fontWeight: 600 }}
+                          >
+                            {t('curriculum.marketplace.safeUpdate.reviewUpdateBtn')}
+                          </Button>
+                        </>
+                      )}
+
                       <Button
                         variant="secondary"
                         size="sm"
@@ -528,6 +632,25 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
                       style={{ width: '100%', height: '2.5rem', fontSize: '0.875rem', fontWeight: 600 }}
                     >
                       Instalar no Currículo
+                    </Button>
+                  )}
+
+                  {pricingModel === 'VOLUNTARY_SUPPORT' && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      data-testid={`support-author-btn-${pack.id}`}
+                      onClick={() => setAuthorSupportModalPack(pack)}
+                      style={{
+                        width: '100%',
+                        fontSize: '0.8125rem',
+                        fontWeight: 600,
+                        color: '#B45309',
+                        backgroundColor: '#FEFCE8',
+                        borderColor: '#FEF08A',
+                      }}
+                    >
+                      {t('curriculum.marketplace.voluntarySupport.supportAuthorBtn')}
                     </Button>
                   )}
 
@@ -628,6 +751,38 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
             setSuccessMsg(t('curriculum.community.publishSuccessMsg'));
             setTimeout(() => setSuccessMsg(null), 5000);
           }}
+        />
+      )}
+
+      {/* Modal de Apoio Voluntário ao Autor */}
+      {authorSupportModalPack && (
+        <PackAuthorSupportModal
+          isOpen={Boolean(authorSupportModalPack)}
+          authorName={
+            ((authorSupportModalPack.metadata as Record<string, any>)?.provenance?.authorDisplayName) ||
+            ((authorSupportModalPack.metadata as Record<string, any>)?.authorDisplayName) ||
+            ((authorSupportModalPack.metadata as Record<string, any>)?.authorName) ||
+            'Autor Comunitário'
+          }
+          packName={authorSupportModalPack.name}
+          pixKey={
+            ((authorSupportModalPack.metadata as Record<string, any>)?.authorPixKey) ||
+            ((authorSupportModalPack.metadata as Record<string, any>)?.pixKey) ||
+            null
+          }
+          onClose={() => setAuthorSupportModalPack(null)}
+        />
+      )}
+
+      {/* Modal de Atualização Segura (Diff 3-way) */}
+      {diffModalData && (
+        <PackUpdateDiffModal
+          isOpen={Boolean(diffModalData)}
+          packName={diffModalData.pack.name}
+          diffReport={diffModalData.diffReport}
+          onClose={() => setDiffModalData(null)}
+          onApplyUpdate={handleApplyUpdate}
+          isApplying={isApplyingUpdate}
         />
       )}
     </div>
