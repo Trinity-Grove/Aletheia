@@ -22,10 +22,13 @@ export class CurriculumPackExportService {
     private readonly packRepository: CurriculumPackRepository,
   ) {}
 
-  async exportPack(packId: string): Promise<CurriculumPackExportDocument> {
+  async exportPack(
+    packId: string,
+    options?: { allowDraft?: boolean },
+  ): Promise<CurriculumPackExportDocument> {
     const pack = await this.packRepository.findPackById(packId);
     if (!pack) throw new NotFoundException('Curriculum pack not found.');
-    if (pack.status !== 'PUBLISHED') {
+    if (pack.status !== 'PUBLISHED' && !options?.allowDraft) {
       throw new BadRequestException('Only a PUBLISHED pack can be exported.');
     }
 

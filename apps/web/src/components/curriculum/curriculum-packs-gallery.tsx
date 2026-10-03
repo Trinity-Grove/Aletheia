@@ -158,12 +158,12 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao verificar atualizações do pacote.');
+        throw new Error(err.message || t('curriculum.marketplace.safeUpdate.error'));
       }
       const diffReport: PackDiffReport = await res.json();
       setDiffModalData({ pack, installed, diffReport });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erro ao verificar atualizações.');
+      setError(err instanceof Error ? err.message : t('curriculum.marketplace.safeUpdate.error'));
     } finally {
       setCheckingUpdatePackId(null);
     }

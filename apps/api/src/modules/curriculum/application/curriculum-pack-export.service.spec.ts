@@ -53,7 +53,7 @@ describe('CurriculumPackExportService', () => {
     await expect(service.exportPack('non-existent-id')).rejects.toThrow(NotFoundException);
   });
 
-  it('throws BadRequestException when pack is not PUBLISHED', async () => {
+  it('throws BadRequestException when pack is not PUBLISHED and allowDraft is false or omitted', async () => {
     const draftPack = {
       id: 'draft-id',
       code: 'DRAFT_PACK',
@@ -68,5 +68,29 @@ describe('CurriculumPackExportService', () => {
 
     await expect(service.exportPack('draft-id')).rejects.toThrow(BadRequestException);
     await expect(service.exportPack('draft-id')).rejects.toThrow('Only a PUBLISHED pack can be exported.');
+    await expect(service.exportPack('draft-id', { allowDraft: false })).rejects.toThrow(
+      'Only a PUBLISHED pack can be exported.',
+    );
+  });
+
+  it('allows exporting a DRAFT pack when allowDraft option is true', async () => {
+    const draftPack = {
+      id: 'draft-id',
+      code: 'DRAFT_PACK',
+      version: 1,
+      status: 'DRAFT',
+      schemaVersion: '1.0.0',
+      name: 'Draft Pack',
+      description: 'Draft description',
+      metadata: {},
+    };
+    mockPackRepo.findPackById.mockResolvedValue(draftPack);
+    mockPackRepo.listItems.mockResolvedValue([]);
+    mockPackRepo.listDependencies.mockResolvedValue([]);
+
+    const result = await service.exportPack('draft-id', { allowDraft: true });
+    expect(result.pack.code).toBe('DRAFT_PACK');
+    expect(result.pack.status).toBe('DRAFT');
+    expect(verifyPackChecksum(result)).toBe(true);
   });
 });

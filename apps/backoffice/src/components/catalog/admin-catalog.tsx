@@ -146,13 +146,13 @@ function CurriculumPackAuditInfo({ pack }: { pack: CatalogRow }) {
       ? (pack.metadata as Record<string, unknown>)
       : {}
   );
-  const prov = (
+  const prov: (PackProvenance & Record<string, unknown>) | null = (
     meta.provenance && typeof meta.provenance === 'object'
-      ? (meta.provenance as Record<string, unknown>)
+      ? (meta.provenance as (PackProvenance & Record<string, unknown>))
       : 'provenance' in pack &&
           (pack as Record<string, unknown>).provenance &&
           typeof (pack as Record<string, unknown>).provenance === 'object'
-        ? ((pack as Record<string, unknown>).provenance as Record<string, unknown>)
+        ? ((pack as Record<string, unknown>).provenance as (PackProvenance & Record<string, unknown>))
         : null
   );
 

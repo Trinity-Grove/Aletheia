@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button, Modal } from '@aletheia/ui';
 import { useLocale } from '../../lib/i18n/locale-context';
 
@@ -21,6 +21,15 @@ export function PackAuthorSupportModal({
 }: PackAuthorSupportModalProps) {
   const { t } = useLocale();
   const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (!isOpen) return null;
 
@@ -30,7 +39,13 @@ export function PackAuthorSupportModal({
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
         await navigator.clipboard.writeText(pixKey);
         setCopied(true);
-        setTimeout(() => setCopied(false), 3000);
+        if (copyTimeoutRef.current) {
+          clearTimeout(copyTimeoutRef.current);
+        }
+        copyTimeoutRef.current = setTimeout(() => {
+          setCopied(false);
+          copyTimeoutRef.current = null;
+        }, 3000);
       }
     } catch {
       // Fallback if clipboard API is restricted
