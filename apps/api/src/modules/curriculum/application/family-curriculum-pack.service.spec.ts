@@ -92,6 +92,7 @@ describe('FamilyCurriculumPackService.publishToCommunity', () => {
       false,
       USER_ID,
     );
+    expect(verifyPackChecksum(importPack.mock.calls[0][0])).toBe(true);
     expect(getPack).toHaveBeenCalledWith(NEW_PACK_ID);
     expect(result).toEqual({ id: NEW_PACK_ID, code: 'MY.PACK', moderationStatus: 'DRAFT' });
   });

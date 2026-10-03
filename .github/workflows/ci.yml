@@ -200,6 +200,8 @@ jobs:
         run: pnpm --filter @aletheia/api run seed:legal-consent-definitions
 
       - name: Probe real application readiness
+        env:
+          NODE_OPTIONS: "--max-old-space-size=6144"
         run: pnpm --filter @aletheia/api test:integration
 
       - name: Build and start the distributable API

@@ -209,6 +209,7 @@ export class FamilyCurriculumPackService {
         description: dto.description ?? sourceDocument.pack.description ?? null,
       },
     };
+    newDocument.checksumSha256 = calculatePackChecksum(newDocument);
 
     await this.importService.importPack(newDocument, false, userId);
 

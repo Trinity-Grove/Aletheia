@@ -2,6 +2,7 @@ import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
 import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
+import { calculatePackChecksum } from '../src/modules/curriculum/domain/pack-checksum.js';
 
 // Import a curriculum pack export document (issue #96 Fase 4, section
 // 28, write half) against real Postgres.
@@ -112,6 +113,7 @@ describe('Curriculum pack import (real Postgres)', () => {
     // Re-export into a fresh, never-before-seen pack code so the dry
     // run targets rows that genuinely don't exist yet.
     document.pack.code = `TEST.IMPORT.DRYRUN.PACK.${suffix}`;
+    document.checksumSha256 = calculatePackChecksum(document);
 
     const dryRunResponse = await supertest(app.getHttpServer())
       .post('/api/v1/admin/curriculum-packs/import')
@@ -172,6 +174,7 @@ describe('Curriculum pack import (real Postgres)', () => {
       code: domainItem.code,
       version: domainItem.version,
     };
+    document.checksumSha256 = calculatePackChecksum(document);
 
     const importResponse = await supertest(app.getHttpServer())
       .post('/api/v1/admin/curriculum-packs/import')
@@ -241,6 +244,7 @@ describe('Curriculum pack import (real Postgres)', () => {
     document.pack.code = `TEST.IMPORT.MISSINGDEP.PACK.${suffix}`;
     document.items = []; // isolate the test to just the dependency check
     document.dependencies = [{ dependsOnCode: 'TOTALLY_ABSENT_BASE_PACK', dependsOnVersion: 1 }];
+    document.checksumSha256 = calculatePackChecksum(document);
 
     const response = await supertest(app.getHttpServer())
       .post('/api/v1/admin/curriculum-packs/import')
@@ -261,6 +265,7 @@ describe('Curriculum pack import (real Postgres)', () => {
     document.pack.code = `TEST.IMPORT.DEPENDENT.PACK.${basePackSuffix}`;
     document.items = [];
     document.dependencies = [{ dependsOnCode: baseDoc.pack.code, dependsOnVersion: baseDoc.pack.version }];
+    document.checksumSha256 = calculatePackChecksum(document);
 
     const response = await supertest(app.getHttpServer())
       .post('/api/v1/admin/curriculum-packs/import')
@@ -289,6 +294,7 @@ describe('Curriculum pack import (real Postgres)', () => {
       version: 1,
     };
     document.items = [competencyItem];
+    document.checksumSha256 = calculatePackChecksum(document);
 
     const response = await supertest(app.getHttpServer())
       .post('/api/v1/admin/curriculum-packs/import')
@@ -299,5 +305,17 @@ describe('Curriculum pack import (real Postgres)', () => {
     expect(response.body.created).toEqual([]);
     expect(response.body.blocked).toHaveLength(1);
     expect(response.body.blocked[0].ref.code).toBe(competencyItem.code);
+  });
+
+  it('rejects an imported document whose checksum does not match its content', async () => {
+    const { document } = await buildAndExportSimplePack(`TAMPER.${Date.now()}`);
+    document.pack.name = 'Tampered Pack Name';
+    // Intentionally keep the original checksum without recalculating
+
+    await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-packs/import')
+      .set('Cookie', adminCookie)
+      .send({ document, dryRun: true })
+      .expect(400);
   });
 });
