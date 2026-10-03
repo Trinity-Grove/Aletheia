@@ -75,6 +75,7 @@ model User {
   mentorGrantsAsMentor    MentorGrant[] @relation("MentorGrantMentor")
   mentorGrantsInvited     MentorGrant[] @relation("MentorGrantInviter")
   sensitiveDataAccessLogs SensitiveDataAccessLog[]
+  aiSuggestionsCreated    AiSuggestion[]
 
   @@map("users")
 }
@@ -317,6 +318,8 @@ model Family {
   mentorGrants           MentorGrant[]
   activities             FamilyActivity[]
   sensitiveDataAccessLogs SensitiveDataAccessLog[]
+  aiSuggestions          AiSuggestion[]
+  aiFamilyUsages         AiFamilyUsage[]
 
   @@map("families")
 }
@@ -374,6 +377,7 @@ model Learner {
   consentRecords         ConsentRecord[]
   complianceManualOverrides ComplianceManualOverride[]
   mentorGrants           MentorGrant[]
+  aiSuggestions          AiSuggestion[]
 
   @@index([familyId])
   @@index([familyId, archivedAt])
@@ -2677,4 +2681,67 @@ model OperationalAlertEvent {
   @@index([severity])
   @@index([eventType])
   @@map("operational_alert_events")
+}
+
+enum AiSuggestionStatus {
+  PENDING_REVIEW
+  ACCEPTED
+  MODIFIED
+  REJECTED
+
+  @@map("ai_suggestion_statuses")
+}
+
+enum AiFeatureType {
+  LESSON_PLAN_DRAFT
+  ACTIVITY_ADAPTATION
+
+  @@map("ai_feature_types")
+}
+
+model AiSuggestion {
+  id                 String             @id @default(uuid()) @db.Uuid
+  familyId           String             @map("family_id") @db.Uuid
+  learnerId          String?            @map("learner_id") @db.Uuid
+  actorUserId        String             @map("actor_user_id") @db.Uuid
+  featureType        AiFeatureType      @map("feature_type")
+  status             AiSuggestionStatus @default(PENDING_REVIEW)
+  sanitizedPrompt    String             @map("sanitized_prompt") @db.Text
+  rawModelOutput     Json               @map("raw_model_output")
+  finalHumanOutput   Json?              @map("final_human_output")
+  createdEntityId    String?            @map("created_entity_id") @db.Uuid
+  provider           String             @db.VarChar(50)
+  model              String             @db.VarChar(100)
+  promptTokens       Int                @map("prompt_tokens")
+  completionTokens   Int                @map("completion_tokens")
+  costMicrosUsd      Int                @map("cost_micros_usd")
+  rejectionReason    String?            @map("rejection_reason") @db.VarChar(500)
+  reviewedAt         DateTime?          @map("reviewed_at") @db.Timestamptz
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz
+
+  family             Family             @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner            Learner?           @relation(fields: [learnerId], references: [id], onDelete: SetNull)
+  actor              User               @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([familyId, createdAt])
+  @@index([learnerId, createdAt])
+  @@index([status])
+  @@map("ai_suggestions")
+}
+
+model AiFamilyUsage {
+  id            String   @id @default(uuid()) @db.Uuid
+  familyId      String   @map("family_id") @db.Uuid
+  period        String   @db.VarChar(7)
+  tokensUsed    Int      @default(0) @map("tokens_used")
+  tokensLimit   Int      @default(100000) @map("tokens_limit")
+  requestsUsed  Int      @default(0) @map("requests_used")
+  requestsLimit Int      @default(200) @map("requests_limit")
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  family        Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  @@unique([familyId, period])
+  @@index([familyId])
+  @@map("ai_family_usages")
 }
