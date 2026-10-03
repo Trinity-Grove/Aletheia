@@ -2,15 +2,20 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { Prisma, type CurriculumPack, type FamilyCurriculumPack, type FamilyCurriculumPackRevision } from '@prisma/client';
 import {
   curriculumPackExportDocumentSchema,
+  type ApplyPackUpdateDto,
+  type ApplyPackUpdateResponseDto,
   type CurriculumPackExportDocument,
   type CurriculumPackResponseDto,
   type DefinitionStatus,
   type FamilyCurriculumPackResponseDto,
   type FamilyCurriculumPackRevisionResponseDto,
   type InstallFamilyCurriculumPackDto,
+  type PackDiffReport,
   type PublishFamilyCurriculumPackToCommunityOutput,
   type UpdateFamilyCurriculumPackDto,
 } from '@aletheia/contracts';
+import { calculatePackChecksum } from '../domain/pack-checksum.js';
+import { PackMergeEngine } from '../domain/pack-merge-engine.js';
 import { CurriculumPackExportService } from './curriculum-pack-export.service.js';
 import { CurriculumPackImportService } from './curriculum-pack-import.service.js';
 import { CurriculumPackService } from './curriculum-pack.service.js';
@@ -95,6 +100,80 @@ export class FamilyCurriculumPackService {
     return rows.map((row) => this.toRevisionDto(row));
   }
 
+  async checkUpdates(familyId: string, id: string): Promise<PackDiffReport> {
+    const familyPack = await this.requireInstance(familyId, id);
+    const latestPack = await this.curriculumPackRepository.findLatestPublishedByCode(
+      familyPack.sourcePackCode,
+    );
+
+    if (!latestPack) {
+      throw new NotFoundException(
+        `No published version found for curriculum pack code "${familyPack.sourcePackCode}".`,
+      );
+    }
+
+    const baseDoc = await this.exportService.exportPack(familyPack.sourcePackId);
+    const familyDoc = this.parseDocument(familyPack.document as CurriculumPackExportDocument);
+    const upstreamDoc =
+      latestPack.id === familyPack.sourcePackId
+        ? baseDoc
+        : await this.exportService.exportPack(latestPack.id);
+
+    return PackMergeEngine.computeDiff(baseDoc, familyDoc, upstreamDoc);
+  }
+
+  async applyUpdate(
+    familyId: string,
+    id: string,
+    dto: ApplyPackUpdateDto = {},
+  ): Promise<ApplyPackUpdateResponseDto> {
+    const familyPack = await this.requireInstance(familyId, id);
+    const latestPack = await this.curriculumPackRepository.findLatestPublishedByCode(
+      familyPack.sourcePackCode,
+    );
+
+    if (!latestPack) {
+      throw new NotFoundException(
+        `No published version found for curriculum pack code "${familyPack.sourcePackCode}".`,
+      );
+    }
+
+    if (latestPack.version <= familyPack.sourcePackVersion) {
+      throw new BadRequestException('Curriculum pack is already at the latest version.');
+    }
+
+    const baseDoc = await this.exportService.exportPack(familyPack.sourcePackId);
+    const familyDoc = this.parseDocument(familyPack.document as CurriculumPackExportDocument);
+    const upstreamDoc = await this.exportService.exportPack(latestPack.id);
+
+    const { mergedDocument, diffReport } = PackMergeEngine.merge(baseDoc, familyDoc, upstreamDoc);
+
+    if (dto.notes) {
+      mergedDocument.pack.metadata = {
+        ...(mergedDocument.pack.metadata || {}),
+        updateNotes: dto.notes,
+      };
+      mergedDocument.checksumSha256 = calculatePackChecksum(mergedDocument);
+    }
+
+    const result = await this.repository.updateWithRevision(id, familyId, {
+      sourcePackId: latestPack.id,
+      sourcePackVersion: latestPack.version,
+      document: mergedDocument,
+    });
+
+    if (!result) {
+      throw new NotFoundException('Family curriculum pack not found.');
+    }
+
+    return {
+      updatedFamilyPack: this.toDto(result.updated),
+      diffReport,
+      previousRevision: result.previousRevision,
+      newRevision: result.newRevision,
+    };
+  }
+
   // Publish the family's customized copy as a new, distinct community
   // submission (issue #244) -- a derivative work, not a mutation of the
   // pack it was installed from, so it always needs its own code/version.
@@ -130,6 +209,7 @@ export class FamilyCurriculumPackService {
         description: dto.description ?? sourceDocument.pack.description ?? null,
       },
     };
+    newDocument.checksumSha256 = calculatePackChecksum(newDocument);
 
     await this.importService.importPack(newDocument, false, userId);
 

@@ -13,6 +13,8 @@ import {
   UnresolvedRefError,
   type RefResolver,
 } from '../infrastructure/curriculum-pack-portability.js';
+import { PromptInjectionScanner } from '../domain/prompt-injection-scanner.js';
+import { verifyPackChecksum } from '../domain/pack-checksum.js';
 
 const refKey = (ref: PortableRef): string => `${ref.type}|${ref.code}|${ref.version}`;
 
@@ -49,6 +51,17 @@ export class CurriculumPackImportService {
         `Unsupported export format version "${document.formatVersion}" -- this importer supports ` +
           `"${CURRICULUM_PACK_EXPORT_FORMAT_VERSION}".`,
       );
+    }
+
+    const scanResult = PromptInjectionScanner.scan(document);
+    if (!scanResult.safe) {
+      throw new BadRequestException(
+        `PROMPT_INJECTION_DETECTED: Conteúdo contém padrões de injeção de prompt não permitidos: ${scanResult.violations.map((v) => v.path).join(', ')}`,
+      );
+    }
+
+    if (document.checksumSha256 && !verifyPackChecksum(document)) {
+      throw new BadRequestException('CHECKSUM_MISMATCH: Integridade do pacote corrompida ou adulterada.');
     }
 
     const conflicts: CurriculumPackImportReport['conflicts'] = [];

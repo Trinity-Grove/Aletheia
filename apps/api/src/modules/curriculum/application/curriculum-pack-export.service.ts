@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../../../platform/database/prisma.service.js';
 import { CurriculumPackRepository } from '../infrastructure/curriculum-pack.repository.js';
 import { exportDefinitionContent, findDefinitionByCodeVersion } from '../infrastructure/curriculum-pack-portability.js';
+import { calculatePackChecksum } from '../domain/pack-checksum.js';
 
 // Export a published CurriculumPack into a single portable JSON
 // document (issue #96 Fase 4, section 28, read half): the pack's own
@@ -21,10 +22,13 @@ export class CurriculumPackExportService {
     private readonly packRepository: CurriculumPackRepository,
   ) {}
 
-  async exportPack(packId: string): Promise<CurriculumPackExportDocument> {
+  async exportPack(
+    packId: string,
+    options?: { allowDraft?: boolean },
+  ): Promise<CurriculumPackExportDocument> {
     const pack = await this.packRepository.findPackById(packId);
     if (!pack) throw new NotFoundException('Curriculum pack not found.');
-    if (pack.status !== 'PUBLISHED') {
+    if (pack.status !== 'PUBLISHED' && !options?.allowDraft) {
       throw new BadRequestException('Only a PUBLISHED pack can be exported.');
     }
 
@@ -55,7 +59,7 @@ export class CurriculumPackExportService {
       }),
     );
 
-    return {
+    const docWithoutChecksum: CurriculumPackExportDocument = {
       formatVersion: CURRICULUM_PACK_EXPORT_FORMAT_VERSION,
       exportedAt: new Date().toISOString(),
       pack: {
@@ -72,6 +76,13 @@ export class CurriculumPackExportService {
         dependsOnVersion: d.dependsOnVersion,
       })),
       items: exportedItems,
+    };
+
+    const checksumSha256 = calculatePackChecksum(docWithoutChecksum);
+
+    return {
+      ...docWithoutChecksum,
+      checksumSha256,
     };
   }
 }

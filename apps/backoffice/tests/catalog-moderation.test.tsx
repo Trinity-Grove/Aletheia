@@ -146,6 +146,45 @@ describe('Catalog and Moderation Views in apps/backoffice', () => {
     resolvedByUserId: 'admin',
   };
 
+  const mockPackWithAudit: CurriculumPackResponseDto = {
+    id: 'pack-3333-3333',
+    code: 'LOGIC_CLASSICAL',
+    version: 1,
+    status: 'PUBLISHED',
+    schemaVersion: '1.0.0',
+    name: 'Lógica Clássica e Apologética',
+    description: 'Curso completo de lógica clássica formal e informal.',
+    metadata: {
+      license: 'CC_BY_4_0',
+      provenance: {
+        authorDisplayName: 'Professor Alberto',
+        authorOrganization: 'Instituto Ágora',
+        checksumSha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+        publishedAt: '2026-09-20T00:00:00.000Z',
+      },
+    },
+    moderationStatus: 'APPROVED',
+    createdAt: '2026-09-20T10:00:00Z',
+  };
+
+  const mockPackPublicDomain: CurriculumPackResponseDto = {
+    id: 'pack-4444-4444',
+    code: 'PUBLIC_DOMAIN_PACK',
+    version: 1,
+    status: 'DRAFT',
+    schemaVersion: '1.0.0',
+    name: 'Gramática em Domínio Público',
+    description: 'Fundamentos de gramática latina.',
+    metadata: {
+      license: 'PUBLIC_DOMAIN',
+      authorDisplayName: 'Comunidade Aberta',
+      authorOrganization: 'Fundação Domínio Livre',
+      checksumSha256: 'a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0',
+    },
+    moderationStatus: 'PENDING_REVIEW',
+    createdAt: '2026-09-21T10:00:00Z',
+  };
+
   beforeEach(() => {
     vi.restoreAllMocks();
     setApiAuthToken(null);
@@ -164,6 +203,7 @@ describe('Catalog and Moderation Views in apps/backoffice', () => {
         if (path === '/admin/curriculum-definitions/learning-domains') return [mockDomain];
         if (path === '/admin/curriculum-definitions/competency-definitions') return [mockCompetency];
         if (path === '/admin/curriculum-definitions/version-operations/logs') return [mockOperationLog];
+        if (path === '/admin/curriculum-packs') return [mockPackWithAudit, mockPackPublicDomain];
         return [];
       });
       vi.spyOn(api, 'post').mockImplementation(async (path, body) => {
@@ -316,6 +356,39 @@ describe('Catalog and Moderation Views in apps/backoffice', () => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
       expect(screen.getByRole('heading', { name: /Acesso Negado/i })).toBeInTheDocument();
       expect(screen.queryByRole('heading', { name: 'Catálogo administrativo' })).not.toBeInTheDocument();
+    });
+
+    it('displays pack license, author provenance, and integrity hash for curriculum packs', async () => {
+      render(
+        <AdminAuthProvider initialUser={mockAdminUser} initialStatus="authenticated">
+          <CatalogPage />
+        </AdminAuthProvider>,
+      );
+
+      await screen.findByText('Música');
+
+      // Switch to curriculum packs resource
+      fireEvent.change(screen.getByLabelText('Recurso'), { target: { value: 'curriculum-packs' } });
+
+      // Verify pack details rendered
+      expect(await screen.findByText('Lógica Clássica e Apologética')).toBeInTheDocument();
+      expect(screen.getByText('LOGIC_CLASSICAL')).toBeInTheDocument();
+      expect(screen.getByText('Gramática em Domínio Público')).toBeInTheDocument();
+      expect(screen.getByText('PUBLIC_DOMAIN_PACK')).toBeInTheDocument();
+
+      // Verify License badge
+      expect(screen.getByText('CC-BY 4.0')).toBeInTheDocument();
+      expect(screen.getByText('Domínio Público')).toBeInTheDocument();
+
+      // Verify Author provenance
+      expect(screen.getByText(/Professor Alberto/)).toBeInTheDocument();
+      expect(screen.getByText(/Instituto Ágora/)).toBeInTheDocument();
+      expect(screen.getByText(/Comunidade Aberta/)).toBeInTheDocument();
+      expect(screen.getByText(/Fundação Domínio Livre/)).toBeInTheDocument();
+
+      // Verify Integrity hash indicator
+      expect(screen.getByText(/SHA-256:\s*e3b0c44298fc.../)).toBeInTheDocument();
+      expect(screen.getByText(/SHA-256:\s*a1b2c3d4e5f6.../)).toBeInTheDocument();
     });
   });
 
