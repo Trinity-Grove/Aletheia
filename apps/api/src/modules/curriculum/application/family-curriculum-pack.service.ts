@@ -14,6 +14,7 @@ import {
   type PublishFamilyCurriculumPackToCommunityOutput,
   type UpdateFamilyCurriculumPackDto,
 } from '@aletheia/contracts';
+import { calculatePackChecksum } from '../domain/pack-checksum.js';
 import { PackMergeEngine } from '../domain/pack-merge-engine.js';
 import { CurriculumPackExportService } from './curriculum-pack-export.service.js';
 import { CurriculumPackImportService } from './curriculum-pack-import.service.js';
@@ -152,6 +153,7 @@ export class FamilyCurriculumPackService {
         ...(mergedDocument.pack.metadata || {}),
         updateNotes: dto.notes,
       };
+      mergedDocument.checksumSha256 = calculatePackChecksum(mergedDocument);
     }
 
     const result = await this.repository.updateWithRevision(id, familyId, {

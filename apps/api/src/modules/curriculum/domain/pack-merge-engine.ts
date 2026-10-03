@@ -59,7 +59,9 @@ export class PackMergeEngine {
       const family = familyMap.get(key);
       const upstream = upstreamMap.get(key);
 
-      const [type, code] = key.split(':') as [string, string];
+      const target = family ?? upstream ?? base;
+      const type = target!.definitionType;
+      const code = target!.code;
       const itemName =
         ((family?.content as Record<string, unknown> | undefined)?.title as string | undefined) ||
         ((family?.content as Record<string, unknown> | undefined)?.name as string | undefined) ||

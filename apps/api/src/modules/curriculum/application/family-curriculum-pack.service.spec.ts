@@ -1,4 +1,5 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { verifyPackChecksum } from '../domain/pack-checksum.js';
 import { FamilyCurriculumPackService } from './family-curriculum-pack.service.js';
 import type { FamilyCurriculumPackRepository } from '../infrastructure/family-curriculum-pack.repository.js';
 import type { CurriculumPackRepository } from '../infrastructure/curriculum-pack.repository.js';
@@ -400,6 +401,7 @@ describe('FamilyCurriculumPackService safe updates (checkUpdates and applyUpdate
       expect(response.newRevision).toBe(2);
       expect(response.diffReport.hasUpdate).toBe(true);
       expect(response.updatedFamilyPack.sourcePackVersion).toBe(2);
+      expect(verifyPackChecksum(response.updatedFamilyPack.document)).toBe(true);
     });
 
     it('rejects applyUpdate when already on the latest version', async () => {
