@@ -6,7 +6,7 @@
     "^otplib$": "<rootDir>/test/mocks/otplib.ts"
   },
   "rootDir": "..",
-  "testRegex": ".*\\.integration-spec\\.ts$",
+  "testRegex": ".*\\.integration[-.]spec\\.ts$",
   "transform": {
     "^.+\\.ts$": [
       "ts-jest",

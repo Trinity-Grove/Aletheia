@@ -267,6 +267,31 @@ describe('Lessons and Schedule Web Components', () => {
         '0 de 0 concluídos (0%)'
       );
     });
+
+    it('renders ai assistant button and triggers onOpenAiAssistant', () => {
+      const openAiAssistantMock = vi.fn();
+
+      render(
+        <AuthProvider initialRole="OWNER_GUARDIAN">
+          <DailyAgendaView
+            agenda={mockDailyAgenda}
+            selectedDate="2026-08-26"
+            learners={mockLearners}
+            onDateChange={vi.fn()}
+            onOpenCreateLesson={vi.fn()}
+            onOpenAiAssistant={openAiAssistantMock}
+            onOpenCreateSlot={vi.fn()}
+            onOpenCompleteLesson={vi.fn()}
+            onOpenRescheduleLesson={vi.fn()}
+          />
+        </AuthProvider>
+      );
+
+      const aiBtn = screen.getByTestId('ai-assistant-btn');
+      expect(aiBtn).toBeInTheDocument();
+      fireEvent.click(aiBtn);
+      expect(openAiAssistantMock).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('LessonFormModal', () => {
