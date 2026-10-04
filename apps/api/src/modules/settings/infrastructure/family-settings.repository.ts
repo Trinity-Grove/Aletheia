@@ -15,6 +15,8 @@ interface FamilySettingsDbRecord {
   attendanceReminderEnabled: boolean;
   emailNotificationsEnabled: boolean;
   inAppNotificationsEnabled: boolean;
+  supportWidgetLastSeenAt: Date | null;
+  supportWidgetSnoozedUntil: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -83,6 +85,19 @@ export class FamilySettingsRepository {
     const dailyScheduleReminderTime =
       dto.dailyScheduleReminderTime !== undefined ? (dto.dailyScheduleReminderTime?.trim() || null) : undefined;
 
+    const supportWidgetLastSeenAt =
+      dto.supportWidgetLastSeenAt !== undefined
+        ? dto.supportWidgetLastSeenAt
+          ? new Date(dto.supportWidgetLastSeenAt)
+          : null
+        : undefined;
+    const supportWidgetSnoozedUntil =
+      dto.supportWidgetSnoozedUntil !== undefined
+        ? dto.supportWidgetSnoozedUntil
+          ? new Date(dto.supportWidgetSnoozedUntil)
+          : null
+        : undefined;
+
     const record = await this.prisma.familySettings.upsert({
       where: { familyId },
       create: {
@@ -113,6 +128,8 @@ export class FamilySettingsRepository {
         ...(dto.inAppNotificationsEnabled !== undefined
           ? { inAppNotificationsEnabled: dto.inAppNotificationsEnabled }
           : {}),
+        ...(supportWidgetLastSeenAt !== undefined ? { supportWidgetLastSeenAt } : {}),
+        ...(supportWidgetSnoozedUntil !== undefined ? { supportWidgetSnoozedUntil } : {}),
       },
     });
 
@@ -132,6 +149,8 @@ export class FamilySettingsRepository {
       attendanceReminderEnabled: record.attendanceReminderEnabled,
       emailNotificationsEnabled: record.emailNotificationsEnabled,
       inAppNotificationsEnabled: record.inAppNotificationsEnabled,
+      supportWidgetLastSeenAt: record.supportWidgetLastSeenAt,
+      supportWidgetSnoozedUntil: record.supportWidgetSnoozedUntil,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     });
