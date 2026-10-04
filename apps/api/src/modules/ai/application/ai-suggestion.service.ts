@@ -205,7 +205,7 @@ export class AiSuggestionService implements AiPublicApi {
         ? dto.finalContent!
         : (suggestion.rawModelOutput as unknown as LessonPlanDraftContent);
 
-    const explicitSubjectId = (dto as { subjectId?: string }).subjectId;
+    const explicitSubjectId = dto.subjectId;
     let subject = explicitSubjectId
       ? await this.prisma.subject.findFirst({ where: { id: explicitSubjectId, familyId } })
       : await this.prisma.subject.findFirst({ where: { familyId } });

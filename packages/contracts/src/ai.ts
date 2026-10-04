@@ -69,6 +69,7 @@ export const reviewAiSuggestionRequestSchema = z
   .object({
     action: z.enum(['ACCEPT', 'MODIFY', 'REJECT']),
     scheduledDate: z.string().datetime().optional(),
+    subjectId: z.string().uuid().optional(),
     finalContent: lessonPlanDraftContentSchema.optional(),
     rejectionReason: z.string().max(500).optional(),
   })

@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 export interface PromptInjectionViolation {
   path: string;
   pattern: string;
@@ -65,6 +66,7 @@ const INJECTION_PATTERNS: PatternRule[] = [
   },
 ];
 
+@Injectable()
 export class PromptInjectionScanner {
   static scan(input: unknown, path = ''): PromptInjectionScanResult {
     const violations: PromptInjectionViolation[] = [];

@@ -297,10 +297,11 @@ describe('AI Contracts Zod Schemas', () => {
       expect(parsed.success).toBe(true);
     });
 
-    it('should validate ACCEPT action with scheduledDate', () => {
+    it('should validate ACCEPT action with scheduledDate and subjectId', () => {
       const parsed = reviewAiSuggestionRequestSchema.safeParse({
         action: 'ACCEPT',
         scheduledDate: '2026-10-15T09:00:00.000Z',
+        subjectId: validUuid,
       });
       expect(parsed.success).toBe(true);
     });
