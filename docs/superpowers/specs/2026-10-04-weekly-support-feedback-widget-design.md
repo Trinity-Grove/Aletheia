@@ -10,9 +10,9 @@
 
 ## 1. Visão Geral e Contexto
 
-O Aletheia já possui o fluxo de apoio voluntário (módulo `donations`, gateway do Mercado Pago, tela `/support` com `DonationFormCard` e histórico de recibos), construído sob o princípio de **zero paywalls**: o produto é e será gratuito e irrestrito, e quem querjez nível-lo é a这个人, não o produto.
+O Aletheia já possui o fluxo de apoio voluntário (módulo `donations`, gateway do Mercado Pago, tela `/support` com `DonationFormCard` e histórico de recibos), construído sob o princípio de **zero paywalls**: o produto é e será gratuito e irrestrito. Quem decide sustentá-lo financeiramente é a pessoa, não o produto.
 
-O que **não** existe hoje é o caminho de volta: nenhumafamília tem como *dizer algo* sobre o produto. Não há canal de feedback, não há triagem, e não existe integração alguma com o GitHub no repositório — o único lugar onde o roadmap é público.
+O que **não** existe hoje é o caminho de volta: nenhuma família tem como *dizer algo* sobre o produto. Não há canal de feedback, não há triagem, e não existe integração alguma com o GitHub no repositório — o único lugar onde o roadmap é público.
 
 Este documento define um **widget flutuante de apoio e feedback** que:
 
@@ -22,7 +22,7 @@ Este documento define um **widget flutuante de apoio e feedback** que:
 4. Ao ser **aprovado**, transforma o relato em **issue no GitHub** do repositório `Trinity-Grove/Aletheia`.
 5. **Some sozinho** por auto-dismiss, ou quando o usuário pede para não aparecer por um prazo definido — ajustável também nas Configurações.
 
-A Petsc é nacional: **anonimato por padrão, com opt-in explícito do usuário para se identificar.** Como o GitHub é público e o Aletheia lida com dados de menores, essa é a decisão de segurança central deste design.
+A decisão de privacidade é deliberada e assimétrica: **anonimato por padrão, com opt-in explícito do usuário para se identificar.** Como o GitHub é público e o Aletheia lida com dados de menores, essa é a decisão de segurança central deste design.
 
 ---
 
@@ -140,7 +140,7 @@ model FeedbackSubmission {
   category          FeedbackCategory
   message           String            @db.Text
 
-  // Contexto técnico anexado pelo cliente no momento do envio
+  **Contexto técnico anexado pelo cliente no momento do envio.** Todos os quatro campos são opcionais e independentes: o cliente envia o que consegue saber e **omite** o que não souber. Em particular, `appVersion` só é preenchido se o app expuser uma constante de versão; caso contrário fica `null`, e o plano **não** cria uma constante nova só para preencher esse campo.
   pagePath   String? @map("page_path")
   locale     String?
   appVersion String? @map("app_version")
@@ -266,7 +266,7 @@ supportWidgetLastSeenAt: z.string().datetime().nullable().optional(),
 supportWidgetSnoozedUntil: z.string().datetime().nullable().optional(),
 ```
 
-`FamilySettingsResponseDto` **não** expõe `supportWidgetLastSeenAt`/`supportWidgetSnoozedUntil` a papéis não responsáveis: o controller já filtra por permissão no service.
+Os dois campos novos são expostos no `FamilySettingsResponseDto` para qualquer papel do aggregate — são dois timestamps, não dado sensível. Quem **vê o widget** é filtrado por papel no frontend (decisão D5), não no DTO.
 
 ---
 
@@ -358,7 +358,7 @@ O corpo de toda issue criada por este fluxo começa com:
 <nota do admin, opcional>
 ```
 
-O texto do usuário vai **literal**, sem edição. O admin edita o **título** e acrescenta a própria nota, mas não reescreve a fala de quemelsonareportou.
+O texto do usuário vai **literal**, sem edição. O admin edita o **título** e acrescenta a própria nota, mas não reescreve a fala de quem relatou.
 
 O bloco de identificação é acrescentado **apenas** quando `identifySelf === true`:
 
@@ -435,7 +435,7 @@ Valores tirados do design system (`packages/ui/src/styles/components.css`):
 | `right` | `1.5rem` desktop / `0.75rem` mobile | — |
 | diâmetro | `44px` | Mínimo de alvo de toque. |
 
-Formato: **botão redondo discreto**, com um toque suave de cor. Escolhido no brainstorming sobre as alternativas de fita ancorada na borda — a fita de livro página horizontal disputava espaço com a sidebar no desktop e com a tab bar no mobile.
+Formato: **botão redondo discreto**, com um toque suave de cor. Escolhido no brainstorming contra as alternativas de fita ancorada na borda: uma fita vertical de marcador de livro disputava espaço com a sidebar no desktop e com a tab bar no mobile.
 
 ### 8.6 Os três estados do modal
 
@@ -576,7 +576,7 @@ Explícito, para não crescer durante a implementação:
 - `apps/api/src/modules/feedback/presentation/feedback-admin.controller.ts` + `.spec.ts` (novos)
 - `apps/api/src/app.module.ts` (registro do módulo)
 - `apps/api/src/modules/settings/domain/family-settings.entity.ts` (2 campos)
-- `apps/api/src/modules/settings/application/family-settings.service.ts` (2 campos + filtro por permissão)
+- `apps/api/src/modules/settings/application/family-settings.service.ts` (2 campos)
 - `apps/api/src/modules/settings/infrastructure/family-settings.repository.ts` (2 colunas)
 - `apps/api/src/modules/settings/application/notification.service.ts` (2 tipos)
 - `apps/api/test/feedback-github.integration-spec.ts` (novo)
