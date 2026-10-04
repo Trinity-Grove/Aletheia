@@ -76,6 +76,8 @@ model User {
   mentorGrantsInvited     MentorGrant[] @relation("MentorGrantInviter")
   sensitiveDataAccessLogs SensitiveDataAccessLog[]
   aiSuggestionsCreated    AiSuggestion[]
+  feedbackSubmissions     FeedbackSubmission[] @relation("FeedbackSubmitter")
+  feedbackReviews         FeedbackSubmission[] @relation("FeedbackReviewer")
 
   @@map("users")
 }
@@ -145,8 +147,26 @@ enum SensitiveDataResourceType {
   EVIDENCE_SUBMISSION
   OFFICIAL_REPORT
   DATA_EXPORT_PACKAGE
+  FEEDBACK_SUBMISSION
 
   @@map("sensitive_data_resource_types")
+}
+
+enum FeedbackCategory {
+  BUG
+  IDEA
+  QUESTION
+  PRAISE
+
+  @@map("feedback_categories")
+}
+
+enum FeedbackStatus {
+  PENDING
+  APPROVED
+  REJECTED
+
+  @@map("feedback_statuses")
 }
 
 model SensitiveDataAccessLog {
@@ -317,6 +337,7 @@ model Family {
   curriculumPackReports     CurriculumPackReport[]
   mentorGrants           MentorGrant[]
   activities             FamilyActivity[]
+  feedbackSubmissions    FeedbackSubmission[]
   sensitiveDataAccessLogs SensitiveDataAccessLog[]
   aiSuggestions          AiSuggestion[]
   aiFamilyUsages         AiFamilyUsage[]
@@ -1002,6 +1023,8 @@ enum NotificationType {
   ATTENDANCE_MISSING_REMINDER
   PRAYER_ANSWERED_ALERT
   SYSTEM_NOTICE
+  FEEDBACK_APPROVED
+  FEEDBACK_REJECTED
 
   @@map("notification_types")
 }
@@ -1027,6 +1050,8 @@ model FamilySettings {
   attendanceReminderEnabled Boolean      @default(true) @map("attendance_reminder_enabled")
   emailNotificationsEnabled Boolean      @default(true) @map("email_notifications_enabled")
   inAppNotificationsEnabled Boolean      @default(true) @map("in_app_notifications_enabled")
+  supportWidgetLastSeenAt   DateTime?    @map("support_widget_last_seen_at") @db.Timestamptz
+  supportWidgetSnoozedUntil DateTime?    @map("support_widget_snoozed_until") @db.Timestamptz
   createdAt                 DateTime     @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                 DateTime     @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -2727,6 +2752,42 @@ model AiSuggestion {
   @@index([learnerId, createdAt])
   @@index([status])
   @@map("ai_suggestions")
+}
+
+model FeedbackSubmission {
+  id                String            @id @default(uuid()) @db.Uuid
+  familyId          String            @map("family_id") @db.Uuid
+  submittedByUserId String            @map("submitted_by_user_id") @db.Uuid
+  category          FeedbackCategory
+  message           String            @db.Text
+
+  pagePath   String? @map("page_path")
+  locale     String?
+  appVersion String? @map("app_version")
+  userAgent  String? @map("user_agent")
+
+  identifySelf   Boolean @default(false) @map("identify_self")
+  submitterName  String? @map("submitter_name")
+  submitterEmail String? @map("submitter_email")
+
+  status            FeedbackStatus @default(PENDING)
+  adminNote         String?        @map("admin_note") @db.Text
+  lastIssueError    String?        @map("last_issue_error")
+  reviewedByUserId  String?        @map("reviewed_by_user_id") @db.Uuid
+  reviewedAt        DateTime?      @map("reviewed_at") @db.Timestamptz
+  githubIssueNumber Int?           @map("github_issue_number")
+  githubIssueUrl    String?        @map("github_issue_url")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  family      Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  submittedBy User   @relation("FeedbackSubmitter", fields: [submittedByUserId], references: [id], onDelete: Restrict)
+  reviewedBy  User?  @relation("FeedbackReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([familyId, createdAt])
+  @@map("feedback_submissions")
 }
 
 model AiFamilyUsage {
