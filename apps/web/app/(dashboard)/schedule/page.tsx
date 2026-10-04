@@ -19,6 +19,7 @@ import type {
 import { ProductShell } from '../../../src/components/product-shell';
 import { DailyAgendaView } from '../../../src/components/lessons/daily-agenda-view';
 import { LessonFormModal } from '../../../src/components/lessons/lesson-form-modal';
+import { AiLessonDraftModal } from '../../../src/components/lessons/ai-lesson-draft-modal';
 import { RescheduleLessonItem, RescheduleModal } from '../../../src/components/lessons/reschedule-modal';
 import { CompleteLessonItem, CompleteLessonModal } from '../../../src/components/lessons/complete-lesson-modal';
 import { WeeklyRoutineGrid } from '../../../src/components/lessons/weekly-routine-grid';
@@ -49,6 +50,7 @@ export default function SchedulePage() {
 
   // Modals state
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
   const [slotDayOfWeek, setSlotDayOfWeek] = useState<DayOfWeek>(1);
   const [slotToEdit, setSlotToEdit] = useState<ScheduleSlotResponseDto | null>(null);
@@ -402,6 +404,7 @@ export default function SchedulePage() {
             activeLearnerId={activeLearnerId}
             onDateChange={setSelectedDate}
             onOpenCreateLesson={() => setIsLessonModalOpen(true)}
+            onOpenAiAssistant={() => setIsAiModalOpen(true)}
             onOpenCreateSlot={() => handleOpenAddSlot(agenda.dayOfWeek)}
             onOpenCompleteLesson={handleOpenComplete}
             onOpenRescheduleLesson={handleOpenReschedule}
@@ -439,6 +442,19 @@ export default function SchedulePage() {
           subjects={subjects}
           objectives={objectives}
           initialDate={selectedDate}
+        />
+
+        <AiLessonDraftModal
+          isOpen={isAiModalOpen}
+          onClose={() => setIsAiModalOpen(false)}
+          familyId={familyId || ''}
+          learners={learners}
+          subjects={subjects}
+          initialLearnerId={activeLearnerId}
+          initialDate={selectedDate}
+          onLessonCreated={() => {
+            void fetchAgenda();
+          }}
         />
 
         <RoutineSlotModal
