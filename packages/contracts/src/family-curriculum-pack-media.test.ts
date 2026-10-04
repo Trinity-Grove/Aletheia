@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addFamilyCurriculumPackMediaSchema,
+  familyCurriculumPackMediaDownloadUrlResponseSchema,
   familyCurriculumPackMediaResponseSchema,
   requestFamilyCurriculumPackMediaUploadSchema,
 } from './family-curriculum-pack-media.js';
@@ -87,4 +88,14 @@ describe('family curriculum pack media contracts', () => {
       }),
     ).toThrow();
   });
+
+  it('validates the media download URL response shape', () => {
+    const parsed = familyCurriculumPackMediaDownloadUrlResponseSchema.parse({
+      downloadUrl: 'https://storage.example/download-presigned',
+      expiresAt: '2026-10-04T12:00:00.000Z',
+    });
+
+    expect(parsed.downloadUrl).toBe('https://storage.example/download-presigned');
+  });
 });
+

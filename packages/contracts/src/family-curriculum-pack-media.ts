@@ -92,3 +92,13 @@ export const familyCurriculumPackMediaResponseSchema = z.object({
 export type FamilyCurriculumPackMediaResponseDto = z.infer<
   typeof familyCurriculumPackMediaResponseSchema
 >;
+
+export const familyCurriculumPackMediaDownloadUrlResponseSchema = z.object({
+  downloadUrl: z.string().url(),
+  expiresAt: z.string(),
+});
+
+export type FamilyCurriculumPackMediaDownloadUrlResponseDto = z.infer<
+  typeof familyCurriculumPackMediaDownloadUrlResponseSchema
+>;
+

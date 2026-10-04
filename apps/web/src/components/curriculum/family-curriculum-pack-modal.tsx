@@ -2,11 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { Alert, Badge, Button, Input, Modal, Select, Textarea } from '@aletheia/ui';
-import type {
-  CurriculumPackResponseDto,
-  FamilyCurriculumPackMediaResponseDto,
-  FamilyCurriculumPackResponseDto,
-  FamilyCurriculumPackRevisionResponseDto,
+import {
+  ALLOWED_FAMILY_CURRICULUM_PACK_MEDIA_MIME_TYPES,
+  FAMILY_CURRICULUM_PACK_MEDIA_MAX_FILE_SIZE_BYTES,
+  type CurriculumPackResponseDto,
+  type FamilyCurriculumPackMediaResponseDto,
+  type FamilyCurriculumPackMediaUploadUrlResponseDto,
+  type FamilyCurriculumPackResponseDto,
+  type FamilyCurriculumPackRevisionResponseDto,
 } from '@aletheia/contracts';
 import { getApiAuthToken } from '../../lib/api';
 
@@ -17,6 +20,28 @@ export interface FamilyCurriculumPackModalProps {
   installedPack: FamilyCurriculumPackResponseDto | null;
   catalogPack?: CurriculumPackResponseDto | null | undefined;
   onPackUpdated?: (_updatedPack: FamilyCurriculumPackResponseDto) => void;
+}
+
+function extractYouTubeVideoId(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes('youtu.be')) {
+      const id = parsed.pathname.replace(/^\//, '');
+      return id || null;
+    }
+    if (parsed.hostname.includes('youtube.com')) {
+      const v = parsed.searchParams.get('v');
+      if (v) return v;
+      if (parsed.pathname.startsWith('/embed/')) {
+        return parsed.pathname.replace('/embed/', '') || null;
+      }
+    }
+  } catch {
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([a-zA-Z0-9_-]{11})/);
+    return match ? match[1] ?? null : null;
+  }
+  return null;
 }
 
 export function FamilyCurriculumPackModal({
@@ -36,10 +61,13 @@ export function FamilyCurriculumPackModal({
   const [mediaSuccess, setMediaSuccess] = useState<string | null>(null);
 
   // New media form state
+  const [mediaSourceType, setMediaSourceType] = useState<'EXTERNAL_URL' | 'UPLOAD'>('EXTERNAL_URL');
   const [mediaType, setMediaType] = useState<'IMAGE' | 'VIDEO' | 'DOCUMENT'>('DOCUMENT');
   const [mediaTitle, setMediaTitle] = useState('');
   const [mediaUrl, setMediaUrl] = useState('');
   const [mediaDescription, setMediaDescription] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [submittingMedia, setSubmittingMedia] = useState(false);
   const [deletingMediaId, setDeletingMediaId] = useState<string | null>(null);
 
@@ -197,6 +225,36 @@ export function FamilyCurriculumPackModal({
 
   if (!installedPack) return null;
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setFileError(null);
+    if (!file) {
+      setSelectedFile(null);
+      return;
+    }
+    if (file.size > FAMILY_CURRICULUM_PACK_MEDIA_MAX_FILE_SIZE_BYTES) {
+      setFileError('Arquivo muito grande (máximo 25MB).');
+      setSelectedFile(null);
+      return;
+    }
+    if (!(ALLOWED_FAMILY_CURRICULUM_PACK_MEDIA_MIME_TYPES as readonly string[]).includes(file.type)) {
+      setFileError('Formato de arquivo não suportado. Use imagens (PNG/JPEG/WebP), vídeos (MP4/WebM) ou PDF.');
+      setSelectedFile(null);
+      return;
+    }
+    setSelectedFile(file);
+    if (!mediaTitle.trim()) {
+      setMediaTitle(file.name.replace(/\.[^/.]+$/, ''));
+    }
+    if (file.type.startsWith('image/')) {
+      setMediaType('IMAGE');
+    } else if (file.type.startsWith('video/')) {
+      setMediaType('VIDEO');
+    } else if (file.type === 'application/pdf') {
+      setMediaType('DOCUMENT');
+    }
+  };
+
   const handleAddMedia = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!mediaTitle.trim()) {
@@ -204,46 +262,121 @@ export function FamilyCurriculumPackModal({
       return;
     }
 
-    if (!mediaUrl.trim() || !mediaUrl.startsWith('https://')) {
-      setMediaError('A URL deve ser válida e usar o protocolo seguro HTTPS (https://).');
-      return;
-    }
-
-    try {
-      setSubmittingMedia(true);
-      setMediaError(null);
-      const res = await fetch(
-        `/api/v1/families/${familyId}/curriculum-packs/${installedPack.id}/media`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            sourceType: 'EXTERNAL_URL',
-            mediaType,
-            title: mediaTitle.trim(),
-            url: mediaUrl.trim(),
-            description: mediaDescription.trim() || undefined,
-          }),
-        }
-      );
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao anexar mídia ao pacote.');
+    if (mediaSourceType === 'EXTERNAL_URL') {
+      if (!mediaUrl.trim() || !mediaUrl.startsWith('https://')) {
+        setMediaError('A URL deve ser válida e usar o protocolo seguro HTTPS (https://).');
+        return;
       }
 
-      const created: FamilyCurriculumPackMediaResponseDto = await res.json();
-      setMediaList((prev) => [created, ...prev]);
-      setMediaTitle('');
-      setMediaUrl('');
-      setMediaDescription('');
-      setMediaSuccess('Mídia complementar anexada com sucesso!');
-      setTimeout(() => setMediaSuccess(null), 4000);
-    } catch (err: unknown) {
-      setMediaError(err instanceof Error ? err.message : 'Falha ao anexar mídia.');
-    } finally {
-      setSubmittingMedia(false);
+      try {
+        setSubmittingMedia(true);
+        setMediaError(null);
+        const res = await fetch(
+          `/api/v1/families/${familyId}/curriculum-packs/${installedPack.id}/media`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              sourceType: 'EXTERNAL_URL',
+              mediaType,
+              title: mediaTitle.trim(),
+              url: mediaUrl.trim(),
+              description: mediaDescription.trim() || undefined,
+            }),
+          }
+        );
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || 'Falha ao anexar mídia ao pacote.');
+        }
+
+        const created: FamilyCurriculumPackMediaResponseDto = await res.json();
+        setMediaList((prev) => [created, ...prev]);
+        setMediaTitle('');
+        setMediaUrl('');
+        setMediaDescription('');
+        setMediaSuccess('Mídia complementar anexada com sucesso!');
+        setTimeout(() => setMediaSuccess(null), 4000);
+      } catch (err: unknown) {
+        setMediaError(err instanceof Error ? err.message : 'Falha ao anexar mídia.');
+      } finally {
+        setSubmittingMedia(false);
+      }
+    } else {
+      if (!selectedFile) {
+        setMediaError('Por favor selecione um arquivo para upload.');
+        return;
+      }
+      if (selectedFile.size > FAMILY_CURRICULUM_PACK_MEDIA_MAX_FILE_SIZE_BYTES) {
+        setMediaError('Arquivo muito grande (máximo 25MB).');
+        return;
+      }
+
+      try {
+        setSubmittingMedia(true);
+        setMediaError(null);
+
+        const uploadUrlRes = await fetch(
+          `/api/v1/families/${familyId}/curriculum-packs/${installedPack.id}/media/upload-url`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              mediaType,
+              title: mediaTitle.trim(),
+              description: mediaDescription.trim() || undefined,
+              fileName: selectedFile.name,
+              mimeType: selectedFile.type,
+              fileSizeBytes: selectedFile.size,
+            }),
+          }
+        );
+
+        if (!uploadUrlRes.ok) {
+          const err = await uploadUrlRes.json().catch(() => ({}));
+          throw new Error(err.message || 'Falha ao preparar upload.');
+        }
+
+        const { mediaId, uploadUrl }: FamilyCurriculumPackMediaUploadUrlResponseDto = await uploadUrlRes.json();
+
+        const putRes = await fetch(uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': selectedFile.type },
+          body: selectedFile,
+        });
+
+        if (!putRes.ok) {
+          throw new Error('Falha ao enviar arquivo para o armazenamento.');
+        }
+
+        const confirmRes = await fetch(
+          `/api/v1/families/${familyId}/curriculum-packs/${installedPack.id}/media/${mediaId}/confirm-upload`,
+          {
+            method: 'POST',
+            credentials: 'include',
+          }
+        );
+
+        if (!confirmRes.ok) {
+          const err = await confirmRes.json().catch(() => ({}));
+          throw new Error(err.message || 'Falha ao confirmar envio do arquivo.');
+        }
+
+        const created: FamilyCurriculumPackMediaResponseDto = await confirmRes.json();
+        setMediaList((prev) => [created, ...prev]);
+        setMediaTitle('');
+        setSelectedFile(null);
+        setMediaDescription('');
+        setMediaSuccess('Mídia complementar anexada com sucesso!');
+        setTimeout(() => setMediaSuccess(null), 4000);
+      } catch (err: unknown) {
+        setMediaError(err instanceof Error ? err.message : 'Falha ao anexar mídia.');
+      } finally {
+        setSubmittingMedia(false);
+      }
     }
   };
 
@@ -395,9 +528,57 @@ export function FamilyCurriculumPackModal({
                 borderRadius: 'var(--radius-lg)',
               }}
             >
-              <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--forest)' }}>
-                Anexar Novo Material ou Link Complementar
-              </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--forest)' }}>
+                  Anexar Novo Material ou Link Complementar
+                </span>
+
+                {/* Seletor de Modo: Link Externo vs Upload */}
+                <div style={{ display: 'flex', gap: '0.375rem' }}>
+                  <button
+                    type="button"
+                    data-testid="pack-media-source-external-btn"
+                    onClick={() => {
+                      setMediaSourceType('EXTERNAL_URL');
+                      setFileError(null);
+                    }}
+                    style={{
+                      padding: '0.3rem 0.625rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      borderRadius: 'var(--radius-full)',
+                      border: '1px solid',
+                      borderColor: mediaSourceType === 'EXTERNAL_URL' ? 'var(--forest)' : 'var(--border-light)',
+                      backgroundColor: mediaSourceType === 'EXTERNAL_URL' ? 'var(--forest)' : 'var(--bg-surface)',
+                      color: mediaSourceType === 'EXTERNAL_URL' ? '#fff' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    🌐 Link Externo / YouTube
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="pack-media-source-upload-btn"
+                    onClick={() => {
+                      setMediaSourceType('UPLOAD');
+                      setFileError(null);
+                    }}
+                    style={{
+                      padding: '0.3rem 0.625rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      borderRadius: 'var(--radius-full)',
+                      border: '1px solid',
+                      borderColor: mediaSourceType === 'UPLOAD' ? 'var(--forest)' : 'var(--border-light)',
+                      backgroundColor: mediaSourceType === 'UPLOAD' ? 'var(--forest)' : 'var(--bg-surface)',
+                      color: mediaSourceType === 'UPLOAD' ? '#fff' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    📤 Upload de Arquivo
+                  </button>
+                </div>
+              </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
                 <Select
@@ -419,15 +600,46 @@ export function FamilyCurriculumPackModal({
                 />
               </div>
 
-              <Input
-                type="url"
-                label="URL do Arquivo / Link (HTTPS) *"
-                data-testid="pack-media-url-input"
-                value={mediaUrl}
-                onChange={(e) => setMediaUrl(e.target.value)}
-                placeholder="https://meudrive.com/arquivo.pdf"
-                required
-              />
+              {mediaSourceType === 'EXTERNAL_URL' ? (
+                <Input
+                  type="url"
+                  label="URL do Arquivo / Link (HTTPS) *"
+                  data-testid="pack-media-url-input"
+                  value={mediaUrl}
+                  onChange={(e) => setMediaUrl(e.target.value)}
+                  placeholder="https://meudrive.com/arquivo.pdf ou https://youtube.com/watch?v=..."
+                  required
+                />
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                  <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    Arquivo para Upload (Máx. 25MB) *
+                  </label>
+                  <input
+                    type="file"
+                    data-testid="pack-media-file-input"
+                    accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm,application/pdf"
+                    onChange={handleFileChange}
+                    style={{
+                      fontSize: '0.8125rem',
+                      padding: '0.5rem',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--border-light)',
+                      backgroundColor: 'var(--bg-surface)',
+                    }}
+                  />
+                  {fileError && (
+                    <Alert variant="error">
+                      {fileError}
+                    </Alert>
+                  )}
+                  {selectedFile && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--forest)', fontWeight: 600 }}>
+                      Arquivo selecionado: {selectedFile.name} ({(selectedFile.size / (1024 * 1024)).toFixed(2)} MB)
+                    </div>
+                  )}
+                </div>
+              )}
 
               <Textarea
                 label="Descrição (opcional)"
@@ -476,60 +688,129 @@ export function FamilyCurriculumPackModal({
                   Nenhuma mídia complementar anexada a este pacote ainda.
                 </div>
               ) : (
-                <div data-testid="pack-media-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-                  {mediaList.map((media) => (
-                    <div
-                      key={media.id}
-                      data-testid={`pack-media-item-${media.id}`}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '1rem',
-                        padding: '0.75rem 1rem',
-                        backgroundColor: 'var(--bg-surface)',
-                        border: '1px solid var(--border-light)',
-                        borderRadius: 'var(--radius-md)',
-                      }}
-                    >
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                          <Badge variant="indigo" size="sm">
-                            {media.mediaType}
-                          </Badge>
-                          <a
-                            href={media.url || '#'}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              fontSize: '0.875rem',
-                              fontWeight: 600,
-                              color: 'var(--forest)',
-                              textDecoration: 'underline',
-                              wordBreak: 'break-all',
-                            }}
+                <div data-testid="pack-media-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {mediaList.map((media) => {
+                    const ytId = extractYouTubeVideoId(media.url);
+
+                    return (
+                      <div
+                        key={media.id}
+                        data-testid={`pack-media-item-${media.id}`}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.75rem',
+                          padding: '1rem',
+                          backgroundColor: 'var(--bg-surface)',
+                          border: '1px solid var(--border-light)',
+                          borderRadius: 'var(--radius-md)',
+                        }}
+                      >
+                        {/* Header: Badge, Title & Delete button */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <Badge variant="indigo" size="sm">
+                              {media.mediaType}
+                            </Badge>
+                            <Badge variant="slate" size="sm">
+                              {media.sourceType === 'UPLOAD' ? 'Arquivo' : 'Link Web'}
+                            </Badge>
+                            <span
+                              style={{
+                                fontSize: '0.875rem',
+                                fontWeight: 700,
+                                color: 'var(--forest)',
+                              }}
+                            >
+                              {media.title}
+                            </span>
+                          </div>
+
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            data-testid={`delete-pack-media-btn-${media.id}`}
+                            isLoading={deletingMediaId === media.id}
+                            onClick={() => handleDeleteMedia(media.id)}
                           >
-                            {media.title}
-                          </a>
+                            Excluir
+                          </Button>
                         </div>
+
                         {media.description && (
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
                             {media.description}
                           </div>
                         )}
-                      </div>
 
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        data-testid={`delete-pack-media-btn-${media.id}`}
-                        isLoading={deletingMediaId === media.id}
-                        onClick={() => handleDeleteMedia(media.id)}
-                      >
-                        Excluir
-                      </Button>
-                    </div>
-                  ))}
+                        {/* Embedded Media Previews & Players */}
+                        {media.mediaType === 'IMAGE' && media.url && (
+                          <div style={{ marginTop: '0.25rem', maxHeight: '240px', overflow: 'hidden', borderRadius: 'var(--radius-md)' }}>
+                            <img
+                              data-testid={`pack-media-image-preview-${media.id}`}
+                              src={media.url}
+                              alt={media.title}
+                              style={{ maxWidth: '100%', maxHeight: '240px', objectFit: 'contain', borderRadius: 'var(--radius-md)' }}
+                            />
+                          </div>
+                        )}
+
+                        {media.mediaType === 'VIDEO' && media.url && (
+                          <div style={{ marginTop: '0.25rem' }}>
+                            {ytId ? (
+                              <div style={{ width: '100%', maxWidth: '480px', aspectRatio: '16/9' }}>
+                                <iframe
+                                  data-testid={`pack-media-youtube-player-${media.id}`}
+                                  src={`https://www.youtube-nocookie.com/embed/${ytId}`}
+                                  title={media.title}
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                  style={{ width: '100%', height: '100%', border: 'none', borderRadius: 'var(--radius-md)' }}
+                                />
+                              </div>
+                            ) : (
+                              <div style={{ maxWidth: '480px' }}>
+                                <video
+                                  data-testid={`pack-media-video-player-${media.id}`}
+                                  src={media.url}
+                                  controls
+                                  preload="metadata"
+                                  style={{ width: '100%', maxHeight: '240px', borderRadius: 'var(--radius-md)', backgroundColor: '#000' }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {media.mediaType === 'DOCUMENT' && media.url && (
+                          <div style={{ marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <a
+                              href={media.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              data-testid={`pack-media-document-link-${media.id}`}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.375rem',
+                                fontSize: '0.8125rem',
+                                color: 'var(--forest)',
+                                fontWeight: 600,
+                                textDecoration: 'underline',
+                              }}
+                            >
+                              📄 Abrir Documento em Nova Aba ↗
+                            </a>
+                            {media.sizeBytes && (
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                ({Math.round(media.sizeBytes / 1024)} KB)
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
