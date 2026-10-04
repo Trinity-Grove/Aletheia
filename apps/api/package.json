@@ -54,7 +54,7 @@
     "prisma": "prisma",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
     "pretest": "pnpm --filter @aletheia/contracts build && pnpm run prisma:generate",
-    "test": "jest --runInBand",
+    "test": "node scripts/run-test.cjs",
     "pretest:e2e": "pnpm --filter @aletheia/contracts build && pnpm run prisma:generate",
     "test:e2e": "jest --config ./test/jest-e2e.json --runInBand",
     "pretest:integration": "pnpm --filter @aletheia/contracts build && pnpm run prisma:generate",

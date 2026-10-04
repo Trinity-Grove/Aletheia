@@ -12,12 +12,45 @@ export interface LearnerTrackedCompetency
   achievedAt?: string | null;
   evidenceCount?: number;
   competencyDefinitionId?: string;
+  characterHabits?: string[];
+  trackTitle?: string;
   competency?: {
     code: string;
     title: string;
-    domainId?: string;
-    domainTitle?: string;
+    domainId?: string | undefined;
+    domainTitle?: string | undefined;
+    characterHabits?: string[] | undefined;
+    trackTitle?: string | undefined;
   };
+}
+
+export interface LessonReflectionData {
+  notes?: string | undefined;
+  isOralNarration?: boolean | undefined;
+  characterHabit?: string | undefined;
+  actualDurationMinutes?: number | undefined;
+}
+
+export interface LearnerAgendaItem {
+  id: string;
+  lessonPlanId?: string | undefined;
+  title: string;
+  subjectName?: string | null | undefined;
+  subjectColor?: string | null | undefined;
+  startTime?: string | null | undefined;
+  endTime?: string | null | undefined;
+  durationMinutes?: number | null | undefined;
+  isCompleted?: boolean | undefined;
+  status?: string | null | undefined;
+  description?: string | null | undefined;
+  characterHabits?: string[] | undefined;
+  reflectionNotes?: string | null | undefined;
+  hadOralNarration?: boolean | undefined;
+}
+
+export interface LearnerAgendaData {
+  date: string;
+  items: LearnerAgendaItem[];
 }
 
 export type EvidenceTypeCode = 'PHOTO' | 'WORK_SAMPLE' | 'DOCUMENT' | 'AUDIO' | 'TEXT';

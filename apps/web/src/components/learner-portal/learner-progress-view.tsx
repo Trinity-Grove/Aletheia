@@ -20,9 +20,20 @@ export function LearnerProgressView({
   onOpenEvidenceModal,
 }: LearnerProgressViewProps) {
   const { t } = useLocale();
+  const [filter, setFilter] = React.useState<'ALL' | 'IN_PROGRESS' | 'ACHIEVED'>('ALL');
+
   const activeTrackings = trackings.filter((t) => t.status !== 'RETIRED');
-  const achievedCount = trackings.filter((t) => Boolean(t.achievedAt)).length;
-  const inProgressCount = activeTrackings.filter((t) => !t.achievedAt).length;
+  const achievedTrackings = trackings.filter((t) => Boolean(t.achievedAt));
+  const inProgressTrackings = activeTrackings.filter((t) => !t.achievedAt);
+
+  const achievedCount = achievedTrackings.length;
+  const inProgressCount = inProgressTrackings.length;
+
+  const displayedTrackings = React.useMemo(() => {
+    if (filter === 'ACHIEVED') return achievedTrackings;
+    if (filter === 'IN_PROGRESS') return inProgressTrackings;
+    return trackings;
+  }, [filter, trackings, achievedTrackings, inProgressTrackings]);
 
   return (
     <section data-testid="learner-progress-view" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -131,6 +142,83 @@ export function LearnerProgressView({
         </Alert>
       )}
 
+      {/* Filter Selector */}
+      {trackings.length > 0 && (
+        <div
+          role="tablist"
+          aria-label="Filtro de competências"
+          style={{
+            display: 'flex',
+            gap: '0.5rem',
+            borderBottom: '1px solid var(--border-light)',
+            paddingBottom: '0.5rem',
+          }}
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filter === 'ALL'}
+            data-testid="filter-all-btn"
+            onClick={() => setFilter('ALL')}
+            style={{
+              padding: '0.4rem 0.85rem',
+              borderRadius: 'var(--radius-full)',
+              border: 'none',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              backgroundColor: filter === 'ALL' ? 'var(--forest)' : 'var(--bg-surface)',
+              color: filter === 'ALL' ? '#ffffff' : 'var(--text-secondary)',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            {t('learnerPortal.progress.filterAll', { count: trackings.length })}
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filter === 'IN_PROGRESS'}
+            data-testid="filter-in-progress-btn"
+            onClick={() => setFilter('IN_PROGRESS')}
+            style={{
+              padding: '0.4rem 0.85rem',
+              borderRadius: 'var(--radius-full)',
+              border: 'none',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              backgroundColor: filter === 'IN_PROGRESS' ? 'var(--forest)' : 'var(--bg-surface)',
+              color: filter === 'IN_PROGRESS' ? '#ffffff' : 'var(--text-secondary)',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            {t('learnerPortal.progress.filterInProgress', { count: inProgressCount })}
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filter === 'ACHIEVED'}
+            data-testid="filter-achieved-btn"
+            onClick={() => setFilter('ACHIEVED')}
+            style={{
+              padding: '0.4rem 0.85rem',
+              borderRadius: 'var(--radius-full)',
+              border: 'none',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              backgroundColor: filter === 'ACHIEVED' ? 'var(--forest)' : 'var(--bg-surface)',
+              color: filter === 'ACHIEVED' ? '#ffffff' : 'var(--text-secondary)',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            {t('learnerPortal.progress.filterAchieved', { count: achievedCount })}
+          </button>
+        </div>
+      )}
+
       {/* Competencies List */}
       <div>
         {loading ? (
@@ -159,12 +247,29 @@ export function LearnerProgressView({
               {t('learnerPortal.progress.emptySubtitle')}
             </p>
           </div>
+        ) : displayedTrackings.length === 0 ? (
+          <div
+            data-testid="progress-filter-empty"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px dashed var(--border-light)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '2rem',
+              textAlign: 'center',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            <p style={{ margin: 0, fontSize: '0.9375rem' }}>
+              {t('learnerPortal.progress.noFilteredResults')}
+            </p>
+          </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {trackings.map((tracking) => {
+            {displayedTrackings.map((tracking) => {
               const code = tracking.competency?.code || tracking.competencyCode || '';
               const title = tracking.competency?.title || tracking.competencyCode || tracking.id;
-              const domain = tracking.competency?.domainTitle;
+              const domain = tracking.competency?.domainTitle || tracking.trackTitle || tracking.competency?.trackTitle;
+              const habits = tracking.characterHabits || tracking.competency?.characterHabits || [];
               const isAchieved = Boolean(tracking.achievedAt);
 
               return (
@@ -244,6 +349,35 @@ export function LearnerProgressView({
                     >
                       {title}
                     </h3>
+
+                    {/* Character Habits */}
+                    {habits.length > 0 && (
+                      <div
+                        data-testid={`competency-habits-${tracking.id}`}
+                        style={{
+                          display: 'flex',
+                          gap: '0.375rem',
+                          flexWrap: 'wrap',
+                          marginTop: '0.375rem',
+                        }}
+                      >
+                        {habits.map((habit) => (
+                          <span
+                            key={habit}
+                            style={{
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'var(--forest)',
+                              backgroundColor: 'rgba(40, 80, 50, 0.08)',
+                              padding: '0.15rem 0.5rem',
+                              borderRadius: 'var(--radius-full)',
+                            }}
+                          >
+                            🌱 {habit}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                     {tracking.evidenceCount !== undefined && tracking.evidenceCount > 0 && (
                       <div
