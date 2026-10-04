@@ -14,7 +14,12 @@ import { RecordFormModal } from '../src/components/records/record-form-modal';
 import { RecordsJournalView } from '../src/components/records/records-journal-view';
 import { PortfolioGalleryView } from '../src/components/records/portfolio-gallery-view';
 import { PortfolioItemModal } from '../src/components/records/portfolio-item-modal';
+import { EvidenceSubmissionModal } from '../src/components/records/evidence-submission-modal';
 import { AuthProvider } from '../src/lib/auth/rbac-context';
+import type {
+  EvidenceTypeCatalogEntryDto,
+  LearnerCompetencyTrackingResponseDto,
+} from '@aletheia/contracts';
 
 const mockLearners: LearnerSummaryDto[] = [
   {
@@ -698,5 +703,179 @@ describe('Learning Journal, Mastery & Portfolio Web Components', () => {
       await waitFor(() => expect(onUploadFile).toHaveBeenCalledWith('new-item-id', file));
     });
   });
+
+  describe('EvidenceSubmissionModal direct file upload', () => {
+    const mockEvidenceTypeCatalog: EvidenceTypeCatalogEntryDto[] = [
+      {
+        id: '44444444-4444-4444-4444-444444444441',
+        code: 'WORK_SAMPLE',
+        name: 'Amostra de Trabalho',
+        description: 'Produção prática do educando',
+      },
+      {
+        id: '44444444-4444-4444-4444-444444444442',
+        code: 'LINK',
+        name: 'Link Externo',
+        description: 'URL de recurso externo',
+      },
+    ];
+
+    const mockTrackedCompetencies: LearnerCompetencyTrackingResponseDto[] = [
+      {
+        id: '99999999-9999-4999-a999-999999999991',
+        familyId: '11111111-1111-4111-a111-111111111111',
+        learnerId: '00000000-0000-4000-a000-000000000001',
+        competencyDefinitionId: '88888888-8888-4888-a888-888888888881',
+        competencyVersion: 1,
+        status: 'ACTIVE',
+        activatedAt: '2026-08-01T00:00:00.000Z',
+        createdAt: '2026-08-01T00:00:00.000Z',
+        competency: {
+          code: 'LAT-01',
+          title: 'Declinação Latina',
+          domainId: '77777777-7777-4777-a777-777777777771',
+          domainTitle: 'Línguas Clássicas',
+        },
+      },
+    ];
+
+    it('renders direct file upload input by default, and switches to external URL input when toggled', () => {
+      render(
+        <EvidenceSubmissionModal
+          isOpen
+          onClose={vi.fn()}
+          onSave={vi.fn()}
+          evidenceTypeCatalog={mockEvidenceTypeCatalog}
+          trackedCompetencies={mockTrackedCompetencies}
+        />,
+      );
+
+      expect(screen.getByTestId('evidence-file-input')).toBeInTheDocument();
+      expect(screen.queryByTestId('evidence-file-url-input')).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('evidence-source-url-btn'));
+
+      expect(screen.getByTestId('evidence-file-url-input')).toBeInTheDocument();
+      expect(screen.queryByTestId('evidence-file-input')).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('evidence-source-upload-btn'));
+
+      expect(screen.getByTestId('evidence-file-input')).toBeInTheDocument();
+      expect(screen.queryByTestId('evidence-file-url-input')).not.toBeInTheDocument();
+    });
+
+    it('rejects an oversized file client-side (> 25MB) without submitting', () => {
+      const onSave = vi.fn();
+      render(
+        <EvidenceSubmissionModal
+          isOpen
+          onClose={vi.fn()}
+          onSave={onSave}
+          evidenceTypeCatalog={mockEvidenceTypeCatalog}
+          trackedCompetencies={mockTrackedCompetencies}
+        />,
+      );
+
+      fireEvent.click(screen.getByTestId('evidence-competency-checkbox-88888888-8888-4888-a888-888888888881'));
+
+      const oversized = new File([new Uint8Array(26 * 1024 * 1024)], 'huge-recording.mp4', { type: 'video/mp4' });
+      fireEvent.change(screen.getByTestId('evidence-file-input'), { target: { files: [oversized] } });
+
+      expect(screen.getByTestId('evidence-file-error')).toHaveTextContent(/muito grande/i);
+
+      fireEvent.click(screen.getByTestId('save-evidence-submission-btn'));
+      expect(onSave).not.toHaveBeenCalled();
+    });
+
+    it('rejects unsupported mime types client-side', () => {
+      const onSave = vi.fn();
+      render(
+        <EvidenceSubmissionModal
+          isOpen
+          onClose={vi.fn()}
+          onSave={onSave}
+          evidenceTypeCatalog={mockEvidenceTypeCatalog}
+          trackedCompetencies={mockTrackedCompetencies}
+        />,
+      );
+
+      const invalidFile = new File(['content'], 'malicious.exe', { type: 'application/x-msdownload' });
+      fireEvent.change(screen.getByTestId('evidence-file-input'), { target: { files: [invalidFile] } });
+
+      expect(screen.getByTestId('evidence-file-error')).toHaveTextContent(/não suportado/i);
+    });
+
+    it('submits successfully with a local file and passes file to onSave', async () => {
+      const onSave = vi.fn().mockResolvedValue(undefined);
+      render(
+        <EvidenceSubmissionModal
+          isOpen
+          onClose={vi.fn()}
+          onSave={onSave}
+          evidenceTypeCatalog={mockEvidenceTypeCatalog}
+          trackedCompetencies={mockTrackedCompetencies}
+        />,
+      );
+
+      fireEvent.click(screen.getByTestId('evidence-competency-checkbox-88888888-8888-4888-a888-888888888881'));
+      const file = new File(['binary content'], 'foto-caderno.jpg', { type: 'image/jpeg' });
+      fireEvent.change(screen.getByTestId('evidence-file-input'), { target: { files: [file] } });
+      fireEvent.click(screen.getByTestId('save-evidence-submission-btn'));
+
+      await waitFor(() =>
+        expect(onSave).toHaveBeenCalledWith(
+          expect.objectContaining({
+            evidenceTypeId: '44444444-4444-4444-4444-444444444441',
+            competencies: [{ competencyDefinitionId: '88888888-8888-4888-a888-888888888881' }],
+            mimeType: 'image/jpeg',
+            fileSizeBytes: 14,
+          }),
+          file,
+        ),
+      );
+    });
+
+    it('calls onUploadFile when provided to obtain storageKey and fileUrl before onSave', async () => {
+      const onSave = vi.fn().mockResolvedValue(undefined);
+      const onUploadFile = vi.fn().mockResolvedValue({
+        fileUrl: 'https://storage.aletheia.local/evidences/test.jpg',
+        storageKey: 'evidences/test.jpg',
+        mimeType: 'image/jpeg',
+        fileSizeBytes: 14,
+      });
+
+      render(
+        <EvidenceSubmissionModal
+          isOpen
+          onClose={vi.fn()}
+          onSave={onSave}
+          onUploadFile={onUploadFile}
+          evidenceTypeCatalog={mockEvidenceTypeCatalog}
+          trackedCompetencies={mockTrackedCompetencies}
+        />,
+      );
+
+      fireEvent.click(screen.getByTestId('evidence-competency-checkbox-88888888-8888-4888-a888-888888888881'));
+      const file = new File(['binary content'], 'foto-caderno.jpg', { type: 'image/jpeg' });
+      fireEvent.change(screen.getByTestId('evidence-file-input'), { target: { files: [file] } });
+      fireEvent.click(screen.getByTestId('save-evidence-submission-btn'));
+
+      await waitFor(() => expect(onUploadFile).toHaveBeenCalledWith(file));
+      await waitFor(() =>
+        expect(onSave).toHaveBeenCalledWith(
+          expect.objectContaining({
+            evidenceTypeId: '44444444-4444-4444-4444-444444444441',
+            competencies: [{ competencyDefinitionId: '88888888-8888-4888-a888-888888888881' }],
+            fileUrl: 'https://storage.aletheia.local/evidences/test.jpg',
+            storageKey: 'evidences/test.jpg',
+            mimeType: 'image/jpeg',
+            fileSizeBytes: 14,
+          }),
+          file,
+        ),
+      );
+    });
+  });
 });
+
 
