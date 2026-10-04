@@ -4,6 +4,7 @@ import {
   addFamilyCurriculumPackMediaSchema,
   requestFamilyCurriculumPackMediaUploadSchema,
   type AddFamilyCurriculumPackMediaDto,
+  type FamilyCurriculumPackMediaDownloadUrlResponseDto,
   type FamilyCurriculumPackMediaResponseDto,
   type FamilyCurriculumPackMediaUploadUrlResponseDto,
   type RequestFamilyCurriculumPackMediaUploadDto,
@@ -49,6 +50,16 @@ export class FamilyCurriculumPackMediaController {
     @Param('id') id: string,
   ): Promise<FamilyCurriculumPackMediaResponseDto> {
     return this.service.confirmUpload(familyId, packId, id);
+  }
+
+  @Get(':id/download-url')
+  @ApiOperation({ summary: 'Get a presigned download URL for an uploaded media file' })
+  async getDownloadUrl(
+    @Param('familyId') familyId: string,
+    @Param('packId') packId: string,
+    @Param('id') id: string,
+  ): Promise<FamilyCurriculumPackMediaDownloadUrlResponseDto> {
+    return this.service.getDownloadUrl(familyId, packId, id);
   }
 
   @Get()

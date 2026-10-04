@@ -261,6 +261,157 @@ describe('CurriculumPacksGallery (Task 7 & 8: Plugins / Pacotes Curriculares)', 
     });
   });
 
+  it('allows direct file upload via presigned URL and renders embedded players/previews for media', async () => {
+    let uploadUrlRequested = false;
+    let putStorageCalled = false;
+    let confirmUploadCalled = false;
+
+    vi.spyOn(global, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.includes('/available')) {
+        return { ok: true, json: async () => mockPublishedPacks } as Response;
+      }
+      if (url.endsWith('/curriculum-packs')) {
+        return { ok: true, json: async () => mockInstalledPacks } as Response;
+      }
+      if (url.includes('/upload-url') && init?.method === 'POST') {
+        uploadUrlRequested = true;
+        return {
+          ok: true,
+          status: 201,
+          json: async () => ({
+            mediaId: 'media-up-1',
+            uploadUrl: 'https://storage.example/put-upload',
+            storageKey: 'families/fam-1/trabalho.png',
+            expiresAt: '2026-10-04T12:00:00.000Z',
+          }),
+        } as Response;
+      }
+      if (url === 'https://storage.example/put-upload' && init?.method === 'PUT') {
+        putStorageCalled = true;
+        return { ok: true } as Response;
+      }
+      if (url.includes('/confirm-upload') && init?.method === 'POST') {
+        confirmUploadCalled = true;
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            id: 'media-up-1',
+            familyCurriculumPackId: 'inst-1',
+            mediaType: 'IMAGE',
+            sourceType: 'UPLOAD',
+            title: 'Novo Trabalho',
+            url: 'https://storage.example/trabalho.png',
+            description: 'Foto do caderno',
+            createdAt: '2026-10-04T12:00:00.000Z',
+            updatedAt: '2026-10-04T12:00:00.000Z',
+          }),
+        } as Response;
+      }
+      if (url.includes('/media') && !init?.method) {
+        return {
+          ok: true,
+          json: async () => [
+            {
+              id: 'media-img-1',
+              familyCurriculumPackId: 'inst-1',
+              mediaType: 'IMAGE',
+              sourceType: 'UPLOAD',
+              title: 'Foto da Natureza',
+              url: 'https://storage.example/img.png',
+              description: 'Caderno de campo',
+              createdAt: '2026-09-16T10:00:00.000Z',
+              updatedAt: '2026-09-16T10:00:00.000Z',
+            },
+            {
+              id: 'media-yt-1',
+              familyCurriculumPackId: 'inst-1',
+              mediaType: 'VIDEO',
+              sourceType: 'EXTERNAL_URL',
+              provider: 'YOUTUBE',
+              title: 'Vídeo da Aula',
+              url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+              description: 'Aula introdutória',
+              createdAt: '2026-09-16T10:00:00.000Z',
+              updatedAt: '2026-09-16T10:00:00.000Z',
+            },
+            {
+              id: 'media-vid-1',
+              familyCurriculumPackId: 'inst-1',
+              mediaType: 'VIDEO',
+              sourceType: 'UPLOAD',
+              title: 'Gravação da Apresentação',
+              url: 'https://storage.example/video.mp4',
+              description: 'Apresentação oral',
+              createdAt: '2026-09-16T10:00:00.000Z',
+              updatedAt: '2026-09-16T10:00:00.000Z',
+            },
+          ],
+        } as Response;
+      }
+      return { ok: false, status: 404 } as Response;
+    });
+
+    render(<CurriculumPacksGallery familyId="fam-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('manage-pack-btn-pack-1')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('manage-pack-btn-pack-1'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Foto da Natureza')).toBeInTheDocument();
+      expect(screen.getByText('Vídeo da Aula')).toBeInTheDocument();
+      expect(screen.getByText('Gravação da Apresentação')).toBeInTheDocument();
+    });
+
+    // Check embedded previews and players
+    expect(screen.getByTestId('pack-media-image-preview-media-img-1')).toHaveAttribute(
+      'src',
+      'https://storage.example/img.png'
+    );
+    expect(screen.getByTestId('pack-media-youtube-player-media-yt-1')).toHaveAttribute(
+      'src',
+      expect.stringContaining('youtube-nocookie.com/embed/dQw4w9WgXcQ')
+    );
+    expect(screen.getByTestId('pack-media-video-player-media-vid-1')).toHaveAttribute(
+      'src',
+      'https://storage.example/video.mp4'
+    );
+
+    // Switch to Upload de Arquivo mode
+    fireEvent.click(screen.getByTestId('pack-media-source-upload-btn'));
+
+    // Form inputs for upload mode
+    expect(screen.getByTestId('pack-media-file-input')).toBeInTheDocument();
+
+    const file = new File(['image-bytes'], 'trabalho.png', { type: 'image/png' });
+    fireEvent.change(screen.getByTestId('pack-media-file-input'), {
+      target: { files: [file] },
+    });
+
+    fireEvent.change(screen.getByTestId('pack-media-type-select'), {
+      target: { value: 'IMAGE' },
+    });
+    fireEvent.change(screen.getByTestId('pack-media-title-input'), {
+      target: { value: 'Novo Trabalho' },
+    });
+    fireEvent.change(screen.getByTestId('pack-media-description-input'), {
+      target: { value: 'Foto do caderno' },
+    });
+
+    fireEvent.click(screen.getByTestId('add-pack-media-btn'));
+
+    await waitFor(() => {
+      expect(uploadUrlRequested).toBe(true);
+      expect(putStorageCalled).toBe(true);
+      expect(confirmUploadCalled).toBe(true);
+      expect(screen.getByText('Novo Trabalho')).toBeInTheDocument();
+    });
+  });
+
   it('switches to revisions tab and displays pack revision history', async () => {
     vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
       const url = String(input);

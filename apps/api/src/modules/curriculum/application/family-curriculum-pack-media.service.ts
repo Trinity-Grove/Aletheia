@@ -4,10 +4,12 @@ import {
   ALLOWED_FAMILY_CURRICULUM_PACK_MEDIA_MIME_TYPES,
   FAMILY_CURRICULUM_PACK_MEDIA_MAX_FILE_SIZE_BYTES,
   addFamilyCurriculumPackMediaSchema,
+  familyCurriculumPackMediaDownloadUrlResponseSchema,
   familyCurriculumPackMediaResponseSchema,
   familyCurriculumPackMediaUploadUrlResponseSchema,
   requestFamilyCurriculumPackMediaUploadSchema,
   type AddFamilyCurriculumPackMediaDto,
+  type FamilyCurriculumPackMediaDownloadUrlResponseDto,
   type FamilyCurriculumPackMediaResponseDto,
   type FamilyCurriculumPackMediaUploadUrlResponseDto,
   type RequestFamilyCurriculumPackMediaUploadDto,
@@ -53,7 +55,25 @@ export class FamilyCurriculumPackMediaService {
   ): Promise<FamilyCurriculumPackMediaResponseDto[]> {
     const rows = await this.repository.list(familyId, familyCurriculumPackId);
     if (!rows) throw new NotFoundException('Family curriculum pack not found.');
-    return rows.map((row) => this.toDto(row));
+    return Promise.all(rows.map((row) => this.toDtoWithPresignedUrl(row)));
+  }
+
+  async getDownloadUrl(
+    familyId: string,
+    familyCurriculumPackId: string,
+    id: string,
+  ): Promise<FamilyCurriculumPackMediaDownloadUrlResponseDto> {
+    const row = await this.repository.findById(familyId, familyCurriculumPackId, id);
+    if (!row) throw new NotFoundException('Family curriculum pack media not found.');
+    if (row.sourceType !== 'UPLOAD' || !row.storageKey || row.sizeBytes === null) {
+      throw new BadRequestException('Media item does not have a confirmed uploaded file.');
+    }
+
+    const { downloadUrl, expiresAt } = await this.objectStorage.getPresignedDownloadUrl(row.storageKey);
+    return familyCurriculumPackMediaDownloadUrlResponseSchema.parse({
+      downloadUrl,
+      expiresAt: expiresAt.toISOString(),
+    });
   }
 
   async requestUpload(
@@ -129,7 +149,7 @@ export class FamilyCurriculumPackMediaService {
       sizeBytes: metadata.contentLength,
     });
     if (!updated) throw new NotFoundException('Family curriculum pack media not found.');
-    return this.toDto(updated);
+    return this.toDtoWithPresignedUrl(updated);
   }
 
   async remove(familyId: string, familyCurriculumPackId: string, id: string): Promise<void> {
@@ -163,6 +183,36 @@ export class FamilyCurriculumPackMediaService {
       (mediaType === 'VIDEO' && mimeType.startsWith('video/')) ||
       (mediaType === 'DOCUMENT' && mimeType === 'application/pdf');
     if (!matches) throw new BadRequestException('MIME type does not match the media type.');
+  }
+
+  private async toDtoWithPresignedUrl(
+    row: FamilyCurriculumPackMedia,
+  ): Promise<FamilyCurriculumPackMediaResponseDto> {
+    let resolvedUrl = row.url;
+    if (row.sourceType === 'UPLOAD' && row.storageKey && row.sizeBytes !== null) {
+      try {
+        const presigned = await this.objectStorage.getPresignedDownloadUrl(row.storageKey);
+        resolvedUrl = presigned.downloadUrl;
+      } catch {
+        // Fallback to row.url if presigned generation fails
+      }
+    }
+
+    return familyCurriculumPackMediaResponseSchema.parse({
+      id: row.id,
+      familyCurriculumPackId: row.familyCurriculumPackId,
+      mediaType: row.mediaType,
+      sourceType: row.sourceType,
+      provider: row.provider,
+      title: row.title,
+      description: row.description,
+      url: resolvedUrl,
+      storageKey: row.storageKey,
+      mimeType: row.mimeType,
+      sizeBytes: row.sizeBytes,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    });
   }
 
   private toDto(row: FamilyCurriculumPackMedia): FamilyCurriculumPackMediaResponseDto {

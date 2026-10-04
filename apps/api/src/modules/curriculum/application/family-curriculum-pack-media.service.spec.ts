@@ -58,4 +58,94 @@ describe('FamilyCurriculumPackMediaService upload flow', () => {
       service.confirmUpload('family', mediaRow.familyCurriculumPackId, mediaRow.id),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
+
+  it('confirms upload and returns DTO with presigned download URL for uploaded media', async () => {
+    const confirmedRow = {
+      ...mediaRow,
+      sizeBytes: 4096,
+      mimeType: 'image/png',
+    };
+    const repository = {
+      findById: jest.fn().mockResolvedValue(mediaRow),
+      confirmUpload: jest.fn().mockResolvedValue(confirmedRow),
+    };
+    const objectStorage = {
+      headObject: jest.fn().mockResolvedValue({ contentType: 'image/png', contentLength: 4096 }),
+      getPresignedDownloadUrl: jest.fn().mockResolvedValue({
+        downloadUrl: 'https://storage.example/download-drawing',
+        expiresAt: new Date('2026-09-15T12:30:00Z'),
+      }),
+    };
+    const service = new FamilyCurriculumPackMediaService(repository as never, objectStorage as never);
+
+    const result = await service.confirmUpload('family', mediaRow.familyCurriculumPackId, mediaRow.id);
+
+    expect(result.sizeBytes).toBe(4096);
+    expect(result.url).toBe('https://storage.example/download-drawing');
+    expect(objectStorage.getPresignedDownloadUrl).toHaveBeenCalledWith(mediaRow.storageKey);
+  });
+
+  it('lists media items resolving presigned download URLs for uploaded items', async () => {
+    const uploadedRow = {
+      ...mediaRow,
+      sizeBytes: 4096,
+      mimeType: 'image/png',
+    };
+    const externalRow = {
+      id: '00000000-0000-4000-8000-000000000009',
+      familyCurriculumPackId: mediaRow.familyCurriculumPackId,
+      mediaType: 'VIDEO' as const,
+      sourceType: 'EXTERNAL_URL' as const,
+      provider: 'YOUTUBE',
+      title: 'Video',
+      description: null,
+      url: 'https://www.youtube.com/watch?v=123',
+      storageKey: null,
+      mimeType: null,
+      sizeBytes: null,
+      createdAt: new Date('2026-09-15T12:00:00Z'),
+      updatedAt: new Date('2026-09-15T12:00:00Z'),
+    };
+    const repository = {
+      list: jest.fn().mockResolvedValue([uploadedRow, externalRow]),
+    };
+    const objectStorage = {
+      getPresignedDownloadUrl: jest.fn().mockResolvedValue({
+        downloadUrl: 'https://storage.example/presigned-image.png',
+        expiresAt: new Date('2026-09-15T13:00:00Z'),
+      }),
+    };
+    const service = new FamilyCurriculumPackMediaService(repository as never, objectStorage as never);
+
+    const list = await service.list('family', mediaRow.familyCurriculumPackId);
+
+    expect(list).toHaveLength(2);
+    expect(list[0]?.url).toBe('https://storage.example/presigned-image.png');
+    expect(list[1]?.url).toBe('https://www.youtube.com/watch?v=123');
+    expect(objectStorage.getPresignedDownloadUrl).toHaveBeenCalledWith(mediaRow.storageKey);
+  });
+
+  it('generates a presigned download URL on demand for uploaded media', async () => {
+    const confirmedRow = {
+      ...mediaRow,
+      sizeBytes: 4096,
+      mimeType: 'image/png',
+    };
+    const repository = {
+      findById: jest.fn().mockResolvedValue(confirmedRow),
+    };
+    const objectStorage = {
+      getPresignedDownloadUrl: jest.fn().mockResolvedValue({
+        downloadUrl: 'https://storage.example/on-demand-download',
+        expiresAt: new Date('2026-09-15T13:30:00Z'),
+      }),
+    };
+    const service = new FamilyCurriculumPackMediaService(repository as never, objectStorage as never);
+
+    const res = await service.getDownloadUrl('family', mediaRow.familyCurriculumPackId, mediaRow.id);
+
+    expect(res.downloadUrl).toBe('https://storage.example/on-demand-download');
+    expect(objectStorage.getPresignedDownloadUrl).toHaveBeenCalledWith(mediaRow.storageKey);
+  });
 });
+
