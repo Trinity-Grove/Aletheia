@@ -170,6 +170,7 @@ export function LearnerEvidenceModal({
           style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
         >
           <Select
+            id="evidence-competency-select"
             label={`${t('learnerPortal.evidenceModal.selectCompetencyLabel')} *`}
             data-testid="evidence-competency-select"
             value={trackingId}
@@ -179,6 +180,7 @@ export function LearnerEvidenceModal({
           />
 
           <Select
+            id="evidence-type-select"
             label={`${t('learnerPortal.evidenceModal.evidenceTypeLabel')} *`}
             data-testid="evidence-type-select"
             value={evidenceTypeCode}
@@ -188,6 +190,7 @@ export function LearnerEvidenceModal({
           />
 
           <Input
+            id="evidence-title-input"
             label={`${t('learnerPortal.evidenceModal.titleLabel')} *`}
             data-testid="evidence-title-input"
             value={title}
@@ -197,6 +200,7 @@ export function LearnerEvidenceModal({
           />
 
           <Textarea
+            id="evidence-description-input"
             label={t('learnerPortal.evidenceModal.descriptionLabel')}
             data-testid="evidence-description-input"
             value={description}
@@ -206,6 +210,7 @@ export function LearnerEvidenceModal({
           />
 
           <Input
+            id="evidence-url-input"
             type="url"
             label={t('learnerPortal.evidenceModal.urlLabel')}
             data-testid="evidence-url-input"
@@ -215,6 +220,7 @@ export function LearnerEvidenceModal({
           />
 
           <Textarea
+            id="evidence-notes-input"
             label={t('learnerPortal.evidenceModal.notesLabel')}
             data-testid="evidence-notes-input"
             value={notes}
