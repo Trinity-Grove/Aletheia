@@ -38,6 +38,8 @@ const mockSettings: FamilySettingsResponseDto = {
   attendanceReminderEnabled: true,
   emailNotificationsEnabled: true,
   inAppNotificationsEnabled: true,
+  supportWidgetLastSeenAt: null,
+  supportWidgetSnoozedUntil: null,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };

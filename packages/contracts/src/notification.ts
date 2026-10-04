@@ -6,6 +6,8 @@ export const notificationTypeSchema = z.enum([
   'ATTENDANCE_MISSING_REMINDER',
   'PRAYER_ANSWERED_ALERT',
   'SYSTEM_NOTICE',
+  'FEEDBACK_APPROVED',
+  'FEEDBACK_REJECTED',
 ]);
 
 export type NotificationType = z.infer<typeof notificationTypeSchema>;
