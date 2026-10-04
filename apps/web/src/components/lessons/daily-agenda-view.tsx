@@ -13,6 +13,7 @@ export interface DailyAgendaViewProps {
   activeLearnerId?: string | null;
   onDateChange: (date: string) => void;
   onOpenCreateLesson: () => void;
+  onOpenAiAssistant?: () => void;
   onOpenCreateSlot: () => void;
   onOpenCompleteLesson: (item: DailyAgendaItemDto) => void;
   onOpenRescheduleLesson: (item: DailyAgendaItemDto) => void;
@@ -36,6 +37,7 @@ export function DailyAgendaView({
   activeLearnerId: _activeLearnerId,
   onDateChange,
   onOpenCreateLesson,
+  onOpenAiAssistant,
   onOpenCreateSlot,
   onOpenCompleteLesson,
   onOpenRescheduleLesson,
@@ -124,6 +126,16 @@ export function DailyAgendaView({
           <Can action="manage_lessons">
             <Button size="sm" data-testid="create-lesson-btn" onClick={onOpenCreateLesson}>
               + Nova Lição
+            </Button>
+          </Can>
+          <Can action="manage_lessons">
+            <Button
+              variant="secondary"
+              size="sm"
+              data-testid="ai-assistant-btn"
+              onClick={onOpenAiAssistant}
+            >
+              {t('lessons.aiAssistant.openButton')}
             </Button>
           </Can>
           <Can action="manage_lessons">
