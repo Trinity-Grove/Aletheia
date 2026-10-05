@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AletheiaIcon } from '@aletheia/ui';
 import type {
@@ -60,7 +60,7 @@ function getTabButtonStyle(isActive: boolean): React.CSSProperties {
   };
 }
 
-export default function SettingsPage() {
+function SettingsPageContent() {
   const { t } = useLocale();
   const searchParams = useSearchParams();
   const initialTab = searchParams.get('tab') as ActiveTab | null;
@@ -640,5 +640,21 @@ export default function SettingsPage() {
         )}
       </div>
     </ProductShell>
+  );
+}
+
+export default function SettingsPage() {
+  const { t } = useLocale();
+
+  return (
+    <Suspense
+      fallback={
+        <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+          {t('settings.loading')}
+        </div>
+      }
+    >
+      <SettingsPageContent />
+    </Suspense>
   );
 }
