@@ -15,7 +15,7 @@ export const attendance = {
   },
   tracking: {
     logAttendance: 'Registrar Asistencia',
-    bulkLog: 'Registro Coletivo',
+    bulkLog: 'Registro Colectivo',
     schoolDays: 'Días Lectivos',
     hoursLogged: 'Horas Registradas',
     complianceGoal: 'Meta de Conformidad',

@@ -83,7 +83,7 @@ export const RECORD_TYPE_LABELS: Record<LearningRecordType, { label: string; ico
 };
 
 export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLesson }: RecordCardProps) {
-  const { t } = useLocale();
+  const { t, formatDate } = useLocale();
   const masteryConfig = MASTERY_CONFIG[record.masteryLevel] || MASTERY_CONFIG.DEVELOPING;
   const masteryKey = MASTERY_KEY_MAP[record.masteryLevel];
   const masteryLabel = masteryKey ? t(`records.mastery.${masteryKey}` as any) : masteryConfig.label;
@@ -210,7 +210,7 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLe
         }}
       >
         <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} data-testid={`record-date-${record.id}`}>
-          <AletheiaIcon name="calendar" size={12} /> {record.date}
+          <AletheiaIcon name="calendar" size={12} /> {formatDate(record.date)}
         </span>
         {record.durationMinutes && (
           <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} data-testid={`record-duration-${record.id}`}>
