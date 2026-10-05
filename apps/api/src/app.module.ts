@@ -24,6 +24,7 @@ import { BackupModule } from './modules/backup/backup.module.js';
 import { MentorsModule } from './modules/mentors/mentors.module.js';
 import { OperationsModule } from './modules/operations/operations.module.js';
 import { AiModule } from './modules/ai/ai.module.js';
+import { GamificationModule } from './modules/gamification/gamification.module.js';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { AiModule } from './modules/ai/ai.module.js';
     MentorsModule,
     OperationsModule,
     AiModule,
+    GamificationModule,
   ],
   providers: [
     {

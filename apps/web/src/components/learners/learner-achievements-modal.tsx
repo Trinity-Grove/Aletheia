@@ -2,7 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { Alert, Button } from '@aletheia/ui';
-import type { LearnerCompetencyAchievementResponseDto } from '@aletheia/contracts';
+import type {
+  LearnerCompetencyAchievementResponseDto,
+  LearnerGamificationSummaryDto,
+} from '@aletheia/contracts';
+import { LearnerPortalBadgesSection } from './learner-portal-badges-section';
 
 interface LearnerAchievementsModalProps {
   isOpen: boolean;
@@ -22,6 +26,7 @@ export function LearnerAchievementsModal({
   const [achievements, setAchievements] = useState<LearnerCompetencyAchievementResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [badgeSummary, setBadgeSummary] = useState<LearnerGamificationSummaryDto | null>(null);
 
   useEffect(() => {
     if (!isOpen || !familyId || !learnerId) return;
@@ -43,6 +48,22 @@ export function LearnerAchievementsModal({
         setError(err instanceof Error ? err.message : 'Erro ao carregar conquistas.');
       } finally {
         setLoading(false);
+      }
+      await loadBadges();
+    }
+
+    // Portal badges are a secondary panel: a failure here is silent and
+    // never hides the competency achievements above.
+    async function loadBadges() {
+      try {
+        const res = await fetch(`/api/v1/families/${familyId}/learners/${learnerId}/badges`, {
+          credentials: 'include',
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as LearnerGamificationSummaryDto;
+        setBadgeSummary(Array.isArray(data?.badges) ? data : null);
+      } catch {
+        setBadgeSummary(null);
       }
     }
 
@@ -123,6 +144,10 @@ export function LearnerAchievementsModal({
 
         {/* Content */}
         <div style={{ padding: '1.5rem', flex: 1, overflowY: 'auto' }}>
+          {badgeSummary && (
+            <LearnerPortalBadgesSection summary={badgeSummary} learnerName={learnerName} />
+          )}
+
           {error && (
             <div style={{ marginBottom: '1rem' }}>
               <Alert variant="error">{error}</Alert>

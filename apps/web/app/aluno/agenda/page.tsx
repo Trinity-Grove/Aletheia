@@ -3,8 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, Button } from '@aletheia/ui';
+import type { LearnerBadgeDto, LearnerGamificationSummaryDto } from '@aletheia/contracts';
 import {
   LearnerProgressView,
+  LearnerBadgesView,
+  LearnerBadgeUnlockModal,
   LearnerEvidenceModal,
   LearnerReflectionModal,
   type LearnerTrackedCompetency,
@@ -66,7 +69,7 @@ export default function LearnerAgendaPage() {
 
   const [learnerId, setLearnerId] = useState<string>('');
   const [displayName, setDisplayName] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'agenda' | 'progress'>('agenda');
+  const [activeTab, setActiveTab] = useState<'agenda' | 'progress' | 'badges'>('agenda');
 
   // Date Navigation State
   const todayStr = getTodayIsoString();
@@ -90,6 +93,12 @@ export default function LearnerAgendaPage() {
   // Evidence Modal State
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
   const [selectedTrackingIdForEvidence, setSelectedTrackingIdForEvidence] = useState<string | null>(null);
+
+  // Badges / Gamification State
+  const [badgeSummary, setBadgeSummary] = useState<LearnerGamificationSummaryDto | null>(null);
+  const [loadingBadges, setLoadingBadges] = useState(false);
+  const [badgesError, setBadgesError] = useState<string | null>(null);
+  const [unlockedBadges, setUnlockedBadges] = useState<LearnerBadgeDto[]>([]);
 
   // Global Celebration / Notification
   const [celebrationMsg, setCelebrationMsg] = useState<string | null>(null);
@@ -171,10 +180,74 @@ export default function LearnerAgendaPage() {
     }
   };
 
-  const handleTabChange = (tab: 'agenda' | 'progress') => {
+  // Reading the summary is what grants newly reached badges server-side, so
+  // this is also called after every learner action that can unlock one.
+  // `silent` checks never surface an error: a failed badge check must not
+  // spoil the success of the action that triggered it.
+  const loadBadges = async (id: string, silent = false) => {
+    try {
+      if (!silent) {
+        setLoadingBadges(true);
+        setBadgesError(null);
+      }
+      const res = await fetch(`/api/v1/learner-access/learners/${id}/badges`, {
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        throw new Error(t('learnerBadges.errorLoad'));
+      }
+      const data = (await res.json()) as LearnerGamificationSummaryDto;
+      if (!Array.isArray(data?.badges)) {
+        throw new Error(t('learnerBadges.errorLoad'));
+      }
+      setBadgeSummary(data);
+      const fresh = data.badges.filter((badge) => badge.isNew);
+      if (fresh.length > 0) {
+        setUnlockedBadges(fresh);
+      }
+    } catch (err: unknown) {
+      if (!silent) {
+        setBadgesError(err instanceof Error ? err.message : t('learnerBadges.errorLoad'));
+      }
+    } finally {
+      if (!silent) {
+        setLoadingBadges(false);
+      }
+    }
+  };
+
+  const handleCloseUnlock = () => {
+    const codes = unlockedBadges.map((badge) => badge.code);
+    setUnlockedBadges([]);
+    setBadgeSummary((prev) =>
+      prev
+        ? {
+            ...prev,
+            badges: prev.badges.map((badge) =>
+              codes.includes(badge.code) ? { ...badge, isNew: false } : badge
+            ),
+          }
+        : prev
+    );
+    if (learnerId && codes.length > 0) {
+      void fetch(`/api/v1/learner-access/learners/${learnerId}/badges/acknowledge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ badgeCodes: codes }),
+        credentials: 'include',
+      }).catch(() => {
+        // Not acknowledged: the celebration simply shows again next time.
+      });
+    }
+  };
+
+  const handleTabChange = (tab: 'agenda' | 'progress' | 'badges') => {
     setActiveTab(tab);
     if (tab === 'progress' && learnerId) {
       void loadProgress(learnerId);
+    }
+    if (tab === 'badges' && learnerId) {
+      void loadBadges(learnerId);
     }
   };
 
@@ -217,6 +290,7 @@ export default function LearnerAgendaPage() {
     setCelebrationMsg(message);
     if (learnerId) {
       void loadProgress(learnerId);
+      void loadBadges(learnerId, true);
     }
     setTimeout(() => {
       setCelebrationMsg((current) => (current === message ? null : current));
@@ -306,6 +380,7 @@ export default function LearnerAgendaPage() {
       setTimeout(() => {
         setCelebrationMsg((current) => (current === successMsg ? null : current));
       }, 5000);
+      void loadBadges(learnerId, true);
     } catch (err: unknown) {
       setAgendaError(err instanceof Error ? err.message : t('learnerPortal.agenda.errorComplete'));
     } finally {
@@ -490,6 +565,31 @@ export default function LearnerAgendaPage() {
             }}
           >
             <span>🌱</span> {t('learnerPortal.tabs.progress')}
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'badges'}
+            data-testid="tab-badges"
+            onClick={() => handleTabChange('badges')}
+            style={{
+              padding: '0.75rem 1.25rem',
+              fontWeight: 700,
+              fontSize: '0.9375rem',
+              cursor: 'pointer',
+              border: 'none',
+              borderBottom: activeTab === 'badges' ? '3px solid var(--forest)' : '3px solid transparent',
+              color: activeTab === 'badges' ? 'var(--forest)' : 'var(--text-secondary)',
+              backgroundColor: 'transparent',
+              transition: 'all 0.15s ease',
+              marginBottom: '-2px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            <span>🏅</span> {t('learnerBadges.tab')}
           </button>
         </div>
 
@@ -989,6 +1089,13 @@ export default function LearnerAgendaPage() {
             />
           </div>
         )}
+
+        {/* Tab 3: Conquistas */}
+        {activeTab === 'badges' && (
+          <div data-testid="tab-panel-badges">
+            <LearnerBadgesView summary={badgeSummary} loading={loadingBadges} error={badgesError} />
+          </div>
+        )}
       </main>
 
       {/* Lesson Reflection & Narration Modal */}
@@ -1016,6 +1123,13 @@ export default function LearnerAgendaPage() {
         trackings={trackings}
         initialTrackingId={selectedTrackingIdForEvidence}
         onSuccess={handleEvidenceSuccess}
+      />
+
+      {/* New Badge Celebration */}
+      <LearnerBadgeUnlockModal
+        badges={unlockedBadges}
+        learnerName={displayName}
+        onClose={handleCloseUnlock}
       />
     </div>
   );

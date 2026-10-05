@@ -320,6 +320,7 @@ model Family {
   sensitiveDataAccessLogs SensitiveDataAccessLog[]
   aiSuggestions          AiSuggestion[]
   aiFamilyUsages         AiFamilyUsage[]
+  badgeAwards            LearnerBadgeAward[]
 
   @@map("families")
 }
@@ -378,6 +379,7 @@ model Learner {
   complianceManualOverrides ComplianceManualOverride[]
   mentorGrants           MentorGrant[]
   aiSuggestions          AiSuggestion[]
+  badgeAwards            LearnerBadgeAward[]
 
   @@index([familyId])
   @@index([familyId, archivedAt])
@@ -2109,6 +2111,27 @@ model LearnerCompetencyAchievementReview {
   @@unique([achievementId, evidenceSubmissionId])
   @@index([familyId, learnerId])
   @@map("learner_competency_achievement_reviews")
+}
+
+// Gamification badge awards. Append-only per (learner, badge): once earned a
+// badge is never revoked, even if the metric that unlocked it later drops.
+// badgeCode refers to the in-code catalog (gamification/application/
+// badge-catalog.ts). acknowledgedAt is set when the learner has seen the
+// unlock celebration in the portal.
+model LearnerBadgeAward {
+  id             String    @id @default(uuid()) @db.Uuid
+  familyId       String    @map("family_id") @db.Uuid
+  learnerId      String    @map("learner_id") @db.Uuid
+  badgeCode      String    @map("badge_code") @db.VarChar(64)
+  awardedAt      DateTime  @default(now()) @map("awarded_at") @db.Timestamptz
+  acknowledgedAt DateTime? @map("acknowledged_at") @db.Timestamptz
+
+  family  Family  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  @@unique([learnerId, badgeCode])
+  @@index([familyId, learnerId])
+  @@map("learner_badge_awards")
 }
 
 enum LearnerCompetencyTrackingStatus {

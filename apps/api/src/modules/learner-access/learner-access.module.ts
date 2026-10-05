@@ -7,6 +7,7 @@ import { LessonsModule } from '../lessons/lessons.module.js';
 import { CurriculumModule } from '../curriculum/curriculum.module.js';
 import { ReportsModule } from '../reports/reports.module.js';
 import { RecordsModule } from '../records/records.module.js';
+import { GamificationModule } from '../gamification/gamification.module.js';
 import { LearnerAccessGrantRepository } from './infrastructure/learner-access-grant.repository.js';
 import { LearnerAccessAttemptRepository } from './infrastructure/learner-access-attempt.repository.js';
 import { CodeHasher } from './application/code-hasher.js';
@@ -27,6 +28,7 @@ import { LearnerAccessGuard, LearnerSelfGuard } from '../../platform/auth/index.
     CurriculumModule,
     ReportsModule,
     RecordsModule,
+    GamificationModule,
     // A second, independently-configured JwtModule instance -- NOT the
     // same registration IdentityModule uses. Because it's imported only
     // here (not re-exported globally), the JwtService it provides is
