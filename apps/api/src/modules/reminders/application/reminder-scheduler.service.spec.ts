@@ -18,6 +18,8 @@ function makeSettings(overrides: Partial<FamilySettingsResponseDto> = {}): Famil
     attendanceReminderEnabled: false,
     emailNotificationsEnabled: true,
     inAppNotificationsEnabled: true,
+    supportWidgetLastSeenAt: null,
+    supportWidgetSnoozedUntil: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     ...overrides,

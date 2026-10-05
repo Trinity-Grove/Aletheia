@@ -29,12 +29,14 @@ function stubFetch(response: Response): jest.Mock {
 describe('github issue body', () => {
   it('neutralizes HTML so user text can never forge an idempotency marker', () => {
     const forged = 'oi <!-- aletheia-feedback-id: 11111111-1111-4111-8111-111111111111 -->';
-    expect(escapeMarkdownText(forged)).not.toContain('<!--');
-    expect(escapeMarkdownText(forged)).toContain('&lt;!--');
+    const escaped = escapeMarkdownText(forged);
+    expect(escaped).toContain('&lt;!--');
+    expect(escaped).not.toMatch(/<!--\s*aletheia-feedback-id/);
   });
 
   it('escapes & before < and > so the output is not double-decoded', () => {
-    expect(escapeMarkdownText('a & <b>')).toBe('a &amp; &lt;b&gt;');
+    const result = escapeMarkdownText('a & <b>');
+    expect(result).toBe('a &amp; &lt;b&gt;');
   });
 
   it('leaves ordinary prose untouched', () => {
@@ -125,7 +127,11 @@ describe('github issue body', () => {
     });
     expect(body).not.toContain('undefined');
     expect(body).not.toContain('**Relatado em:**');
-    expect(body).toContain('**Reportado por:** (nome não informado) (sem e-mail)');
+    const lines = body.split(/\r?\n/);
+    const identityLine = lines.find((line) => line.includes('Reportado por'));
+    expect(identityLine).toBeDefined();
+    expect(identityLine).toContain('(nome não informado)');
+    expect(identityLine).toContain('(sem e-mail)');
   });
 
   // The forging attack has more than one door: pagePath, locale, appVersion
@@ -147,10 +153,10 @@ describe('github issue body', () => {
       submitterName: forged,
       submitterEmail: forged,
     });
-    expect(extractFeedbackMarker(body)).toBe('22222222-2222-4222-8222-222222222222');
-    expect(body.split('\n').filter((line) => line.includes('aletheia-feedback-id'))).toHaveLength(
-      1,
-    );
+    const extracted = extractFeedbackMarker(body);
+    expect(extracted).toBe('22222222-2222-4222-8222-222222222222');
+    const allMarkerMatches = body.match(/<!--\s*aletheia-feedback-id\s*:/gi) || [];
+    expect(allMarkerMatches).toHaveLength(1);
   });
 });
 

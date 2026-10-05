@@ -77,6 +77,8 @@ describe('Family Settings, Notifications & Export E2E & Multi-Tenant Isolation',
         attendanceReminderEnabled: true,
         emailNotificationsEnabled: true,
         inAppNotificationsEnabled: true,
+        supportWidgetLastSeenAt: null,
+        supportWidgetSnoozedUntil: null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -97,6 +99,8 @@ describe('Family Settings, Notifications & Export E2E & Multi-Tenant Isolation',
         attendanceReminderEnabled: dto.attendanceReminderEnabled !== undefined ? dto.attendanceReminderEnabled : current.attendanceReminderEnabled,
         emailNotificationsEnabled: dto.emailNotificationsEnabled !== undefined ? dto.emailNotificationsEnabled : current.emailNotificationsEnabled,
         inAppNotificationsEnabled: dto.inAppNotificationsEnabled !== undefined ? dto.inAppNotificationsEnabled : current.inAppNotificationsEnabled,
+        supportWidgetLastSeenAt: dto.supportWidgetLastSeenAt !== undefined ? dto.supportWidgetLastSeenAt : current.supportWidgetLastSeenAt,
+        supportWidgetSnoozedUntil: dto.supportWidgetSnoozedUntil !== undefined ? dto.supportWidgetSnoozedUntil : current.supportWidgetSnoozedUntil,
         updatedAt: new Date().toISOString(),
       };
       settingsStore.set(familyId, updated);

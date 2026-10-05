@@ -96,9 +96,9 @@ export function buildIssueBody(params: BuildIssueBodyParams): string {
   }
 
   if (params.identifySelf) {
-    const name = escapeMarkdownText(params.submitterName ?? '(nome não informado)');
-    const email = escapeMarkdownText(params.submitterEmail ?? '(sem e-mail)');
-    lines.push('', '---', `**Reportado por:** ${name} (${email})`);
+    const namePart = params.submitterName ? escapeMarkdownText(params.submitterName) : '(nome não informado)';
+    const emailDisplay = params.submitterEmail ? `(${escapeMarkdownText(params.submitterEmail)})` : '(sem e-mail)';
+    lines.push('', '---', `**Reportado por:** ${namePart} ${emailDisplay}`);
   }
 
   return lines.join('\n');
