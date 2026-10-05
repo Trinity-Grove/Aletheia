@@ -57,4 +57,8 @@ export class FamilyService implements FamilyPublicApi {
     const family = await this.familyRepository.findById(familyId);
     return family ? family.members.map((member) => member.userId) : [];
   }
+
+  async getFamilyMemberRole(userId: string, familyId: string): Promise<import('@aletheia/contracts').FamilyRole | null> {
+    return this.familyRepository.findMemberRole(familyId, userId);
+  }
 }

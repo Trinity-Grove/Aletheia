@@ -49,6 +49,7 @@ describe('FamilyService', () => {
         const userFamilies = fakeMemberships.get(userId);
         return userFamilies ? userFamilies.has(familyId) : false;
       },
+      findMemberRole: async () => null,
     } as unknown as FamilyRepository;
 
     familyService = new FamilyService(mockRepo);
@@ -87,5 +88,15 @@ describe('FamilyService', () => {
     await expect(
       familyService.getFamilyById('intruder-user', 'family-uuid-1'),
     ).rejects.toThrow(ForbiddenException);
+  });
+
+  it('reports the member role so callers can enforce guardian-only rules', async () => {
+    (familyService as any).familyRepository.findMemberRole = async () => 'CO_GUARDIAN';
+    expect(await familyService.getFamilyMemberRole('user-1', 'fam-1')).toBe('CO_GUARDIAN');
+  });
+
+  it('returns null when the user is not a member of that family', async () => {
+    (familyService as any).familyRepository.findMemberRole = async () => null;
+    expect(await familyService.getFamilyMemberRole('user-9', 'fam-1')).toBeNull();
   });
 });
