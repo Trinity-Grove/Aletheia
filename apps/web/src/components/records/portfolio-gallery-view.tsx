@@ -9,15 +9,16 @@ import type {
 } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 import { EVIDENCE_TYPE_CONFIG } from './portfolio-item-modal';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface PortfolioGalleryViewProps {
   items: PortfolioItemResponseDto[];
   learners: LearnerSummaryDto[];
   subjects: SubjectResponseDto[];
   activeLearnerId: string | null;
-  onOpenAddItem: () => void;
-  onEditItem: (item: PortfolioItemResponseDto) => void;
-  onDeleteItem: (itemId: string) => void;
+  onOpenAddItem(): void;
+  onEditItem(item: PortfolioItemResponseDto): void;
+  onDeleteItem(itemId: string): void;
 }
 
 export function PortfolioGalleryView({
@@ -29,6 +30,7 @@ export function PortfolioGalleryView({
   onEditItem,
   onDeleteItem,
 }: PortfolioGalleryViewProps) {
+  const { t, formatDate } = useLocale();
   const [filterType, setFilterType] = useState<string>('');
   const [filterSubject, setFilterSubject] = useState<string>('');
   const [filterOnlyHighlights, setFilterOnlyHighlights] = useState<boolean>(false);
@@ -82,27 +84,27 @@ export function PortfolioGalleryView({
       >
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 0.25rem 0' }}>
-            Galeria de Evidências & Portfólio Vivo
+            {t('records.portfolio.title')}
           </h2>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
-            Guarde produções autorais, cadernos, desenhos da natureza, áudios de narração e conquistas.
+            {t('records.portfolio.subtitle')}
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div data-testid="portfolio-count-stats" style={{ textAlign: 'right' }}>
             <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {filteredItems.length} obra(s)
+              {t('records.portfolio.worksCount', { count: filteredItems.length })}
             </span>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-amber-700)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
               <AletheiaIcon name="sparkles" size={12} style={{ color: 'var(--color-amber-600)' }} />
-              <span>{items.filter((i) => i.isHighlight).length} destaque(s)</span>
+              <span>{t('records.portfolio.highlightsCount', { count: items.filter((i) => i.isHighlight).length })}</span>
             </div>
           </div>
 
           <Can action="upload_portfolio_items">
             <Button data-testid="open-add-portfolio-btn" onClick={onOpenAddItem}>
-              + Adicionar Evidência
+              {t('records.portfolio.addEvidenceBtn')}
             </Button>
           </Can>
         </div>
@@ -120,7 +122,7 @@ export function PortfolioGalleryView({
           <Input
             type="text"
             data-testid="search-portfolio-input"
-            placeholder="Buscar no portfólio..."
+            placeholder={t('records.portfolio.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{ minWidth: '180px' }}
@@ -131,8 +133,11 @@ export function PortfolioGalleryView({
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
             options={[
-              { value: '', label: 'Todos os tipos de evidência' },
-              ...Object.entries(EVIDENCE_TYPE_CONFIG).map(([k, item]) => ({ value: k, label: item.label })),
+              { value: '', label: t('records.portfolio.allTypes') },
+              ...Object.entries(EVIDENCE_TYPE_CONFIG).map(([k, item]) => ({
+                value: k,
+                label: t(`records.evidenceTypes.${k.toLowerCase()}` as any) || item.label,
+              })),
             ]}
           />
 
@@ -141,7 +146,7 @@ export function PortfolioGalleryView({
             value={filterSubject}
             onChange={(e) => setFilterSubject(e.target.value)}
             options={[
-              { value: '', label: 'Todas as disciplinas' },
+              { value: '', label: t('records.portfolio.allSubjects') },
               ...subjects.map((s) => ({ value: s.id, label: s.name })),
             ]}
           />
@@ -153,14 +158,14 @@ export function PortfolioGalleryView({
             onClick={() => setFilterOnlyHighlights((prev) => !prev)}
             leftIcon={<AletheiaIcon name="sparkles" size={14} />}
           >
-            Apenas Destaques
+            {t('records.portfolio.onlyHighlights')}
           </Button>
         </div>
 
         {/* Tag chips */}
         {allTags.length > 0 && (
           <div data-testid="portfolio-tag-cloud" style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Tags:</span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{t('records.portfolio.tagsLabel')}</span>
             <button
               type="button"
               data-testid="tag-filter-all"
@@ -176,7 +181,7 @@ export function PortfolioGalleryView({
                 cursor: 'pointer',
               }}
             >
-              Todas
+              {t('records.portfolio.allTags')}
             </button>
             {allTags.map((tag) => (
               <button
@@ -207,12 +212,12 @@ export function PortfolioGalleryView({
         <EmptyState
           data-testid="portfolio-empty-state"
           icon={<AletheiaIcon name="palette" size={40} style={{ color: 'var(--color-amber-600)' }} />}
-          title="Nenhuma evidência no portfólio"
-          description="Fotografe cadernos, desenhos da natureza, adicione áudios de narração e celebre a jornada educativa!"
+          title={t('records.portfolio.emptyTitle')}
+          description={t('records.portfolio.emptyDesc')}
           action={
             <Can action="upload_portfolio_items">
               <Button data-testid="empty-add-portfolio-btn" onClick={onOpenAddItem}>
-                Adicionar Primeira Obra
+                {t('records.portfolio.addFirstWork')}
               </Button>
             </Can>
           }
@@ -288,7 +293,7 @@ export function PortfolioGalleryView({
                     <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
                       <span style={{ fontSize: '2.5rem' }}>{typeConfig.icon}</span>
                       <div style={{ fontSize: '0.75rem', marginTop: '0.25rem', fontWeight: 600 }}>
-                        {typeConfig.label}
+                        {t(`records.evidenceTypes.${item.type.toLowerCase()}` as any) || typeConfig.label}
                       </div>
                     </div>
                   )}
@@ -302,7 +307,7 @@ export function PortfolioGalleryView({
                       style={{ position: 'absolute', top: '0.5rem', right: '0.5rem' }}
                     >
                       <AletheiaIcon name="sparkles" size={11} style={{ color: 'var(--color-amber-600)' }} />
-                      <span>Destaque</span>
+                      <span>{t('records.portfolio.highlightBadge')}</span>
                     </Badge>
                   )}
                 </div>
@@ -365,7 +370,7 @@ export function PortfolioGalleryView({
                   {item.capturedAt && (
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
                       <AletheiaIcon name="calendar" size={10} />
-                      <span>{item.capturedAt}</span>
+                      <span>{formatDate(new Date(item.capturedAt))}</span>
                     </span>
                   )}
 
@@ -414,7 +419,7 @@ export function PortfolioGalleryView({
                           fontWeight: 600,
                         }}
                       >
-                        Abrir Mídia ↗
+                        {t('records.portfolio.openMedia')}
                       </a>
                     ) : (
                       <div />
@@ -428,7 +433,7 @@ export function PortfolioGalleryView({
                           data-testid={`edit-portfolio-btn-${item.id}`}
                           onClick={() => onEditItem(item)}
                         >
-                          Editar
+                          {t('records.portfolio.editBtn')}
                         </Button>
                       </Can>
                       <Can action="delete_learners">
@@ -437,13 +442,13 @@ export function PortfolioGalleryView({
                           size="sm"
                           data-testid={`delete-portfolio-btn-${item.id}`}
                           onClick={() => {
-                            if (window.confirm('Excluir esta evidência do portfólio? Esta ação não pode ser desfeita.')) {
+                            if (window.confirm(t('records.portfolio.confirmDelete'))) {
                               onDeleteItem(item.id);
                             }
                           }}
                           style={{ color: 'var(--color-rose-600)' }}
                         >
-                          Excluir
+                          {t('records.portfolio.deleteBtn')}
                         </Button>
                       </Can>
                     </div>

@@ -2,15 +2,23 @@
 
 import React, { useMemo, useState } from 'react';
 import { AletheiaIcon, Button, EmptyState, Input, Select } from '@aletheia/ui';
+import { useLocale } from '../../lib/i18n/locale-context';
 import type {
   LearningRecordResponseDto,
   LearnerProgressSummaryDto,
   LearnerSummaryDto,
   SubjectResponseDto,
   MasteryLevel,
+  LearningRecordType,
 } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
-import { RecordCard, MASTERY_CONFIG, RECORD_TYPE_LABELS } from './record-card';
+import {
+  RecordCard,
+  MASTERY_CONFIG,
+  MASTERY_KEY_MAP,
+  RECORD_TYPE_LABELS,
+  RECORD_TYPE_KEY_MAP,
+} from './record-card';
 
 export interface RecordsJournalViewProps {
   records: LearningRecordResponseDto[];
@@ -18,11 +26,11 @@ export interface RecordsJournalViewProps {
   learners: LearnerSummaryDto[];
   subjects: SubjectResponseDto[];
   activeLearnerId: string | null;
-  onOpenCreateRecord: () => void;
-  onEditRecord: (record: LearningRecordResponseDto) => void;
-  onDeleteRecord: (recordId: string) => void;
-  onAddEvidence: (record: LearningRecordResponseDto) => void;
-  onReopenLesson?: ((record: LearningRecordResponseDto) => void) | undefined;
+  onOpenCreateRecord(): void;
+  onEditRecord(record: LearningRecordResponseDto): void;
+  onDeleteRecord(recordId: string): void;
+  onAddEvidence(record: LearningRecordResponseDto): void;
+  onReopenLesson?(record: LearningRecordResponseDto): void;
 }
 
 export function RecordsJournalView({
@@ -37,6 +45,7 @@ export function RecordsJournalView({
   onAddEvidence,
   onReopenLesson,
 }: RecordsJournalViewProps) {
+  const { t } = useLocale();
   const [filterType, setFilterType] = useState<string>('');
   const [filterSubject, setFilterSubject] = useState<string>('');
   const [filterMastery, setFilterMastery] = useState<string>('');
@@ -111,41 +120,41 @@ export function RecordsJournalView({
       >
         <div data-testid="metric-total-records">
           <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-            Total de Registros
+            {t('records.journal.totalRecords')}
           </span>
           <p style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0.25rem 0 0 0' }}>
             {summaryStats.totalRecords}
           </p>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            {activeLearner ? `Registros de ${activeLearner.preferredName || activeLearner.firstName}` : 'Toda a família'}
+            {activeLearner ? t('records.journal.learnerRecords', { name: activeLearner.preferredName || activeLearner.firstName }) : t('records.journal.wholeFamily')}
           </span>
         </div>
 
         <div data-testid="metric-total-hours">
           <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-            Tempo de Aprendizado
+            {t('records.journal.learningTime')}
           </span>
           <p style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--forest)', margin: '0.25rem 0 0 0' }}>
             {Math.round(summaryStats.totalMinutes / 60)}h{' '}
-            <span style={{ fontSize: '1rem', fontWeight: 600 }}>({summaryStats.totalMinutes} min)</span>
+            <span style={{ fontSize: '1rem', fontWeight: 600 }}>({t('records.card.durationMinutes', { minutes: summaryStats.totalMinutes })})</span>
           </p>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Em lições e vivências</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('records.journal.inLessonsAndExperiences')}</span>
         </div>
 
         <div data-testid="metric-mastered-autonomous">
           <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-            Domínio & Autonomia
+            {t('records.journal.masteryAndAutonomy')}
           </span>
           <p style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-emerald-600)', margin: '0.25rem 0 0 0' }}>
             {(summaryStats.masteryCount['MASTERED'] || 0) + (summaryStats.masteryCount['AUTONOMOUS'] || 0)}
           </p>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Lições autônomas / dominadas</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('records.journal.autonomousMasteredSubtitle')}</span>
         </div>
 
         {/* Mini Mastery Distribution Pill */}
         <div data-testid="metric-mastery-distribution" style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
           <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-            Distribuição de Domínio
+            {t('records.journal.masteryDistribution')}
           </span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginTop: '0.25rem' }}>
             {Object.entries(MASTERY_CONFIG).map(([level, conf]) => {
@@ -185,7 +194,7 @@ export function RecordsJournalView({
           <Input
             type="text"
             data-testid="search-records-input"
-            placeholder="Buscar registros..."
+            placeholder={t('records.journal.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{ minWidth: '180px' }}
@@ -196,8 +205,11 @@ export function RecordsJournalView({
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
             options={[
-              { value: '', label: 'Todos os tipos' },
-              ...Object.entries(RECORD_TYPE_LABELS).map(([k, item]) => ({ value: k, label: item.label })),
+              { value: '', label: t('records.journal.allTypes') },
+              ...Object.entries(RECORD_TYPE_LABELS).map(([k, item]) => {
+                const transKey = RECORD_TYPE_KEY_MAP[k as LearningRecordType];
+                return { value: k, label: transKey ? t(`records.recordTypes.${transKey}` as any) : item.label };
+              }),
             ]}
           />
 
@@ -206,7 +218,7 @@ export function RecordsJournalView({
             value={filterSubject}
             onChange={(e) => setFilterSubject(e.target.value)}
             options={[
-              { value: '', label: 'Todas as disciplinas' },
+              { value: '', label: t('records.journal.allSubjects') },
               ...subjects.map((s) => ({ value: s.id, label: s.name })),
             ]}
           />
@@ -216,8 +228,11 @@ export function RecordsJournalView({
             value={filterMastery}
             onChange={(e) => setFilterMastery(e.target.value)}
             options={[
-              { value: '', label: 'Todos os níveis de domínio' },
-              ...Object.entries(MASTERY_CONFIG).map(([k, item]) => ({ value: k, label: item.label })),
+              { value: '', label: t('records.journal.allMasteryLevels') },
+              ...Object.entries(MASTERY_CONFIG).map(([k, item]) => {
+                const transKey = MASTERY_KEY_MAP[k as MasteryLevel];
+                return { value: k, label: transKey ? t(`records.mastery.${transKey}` as any) : item.label };
+              }),
             ]}
           />
         </div>
@@ -225,7 +240,7 @@ export function RecordsJournalView({
         {/* New Record Button */}
         <Can action="log_learning">
           <Button data-testid="open-create-record-btn" onClick={onOpenCreateRecord}>
-            + Novo Registro
+            {t('records.journal.newRecordBtn')}
           </Button>
         </Can>
       </div>
@@ -235,12 +250,12 @@ export function RecordsJournalView({
         <EmptyState
           data-testid="records-empty-state"
           icon={<AletheiaIcon name="book-open" size={40} style={{ color: 'var(--sage)' }} />}
-          title="Nenhum registro de aprendizagem encontrado"
-          description="Registre as lições concluídas, narrações orais, vivências espontâneas e o crescimento dos hábitos dos seus filhos."
+          title={t('records.journal.emptyTitle')}
+          description={t('records.journal.emptyDesc')}
           action={
             <Can action="log_learning">
               <Button data-testid="empty-create-record-btn" onClick={onOpenCreateRecord}>
-                Criar Primeiro Registro
+                {t('records.journal.createFirstRecord')}
               </Button>
             </Can>
           }

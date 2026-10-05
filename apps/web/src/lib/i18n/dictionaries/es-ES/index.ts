@@ -11,6 +11,8 @@ import { lessons } from './lessons';
 import { curriculum } from './curriculum';
 import { support } from './support';
 import { settings } from './settings';
+import { attendance } from './attendance';
+import { records } from './records';
 
 export const esES: Dictionary = {
   common,
@@ -25,5 +27,7 @@ export const esES: Dictionary = {
   curriculum,
   support,
   settings,
+  attendance,
+  records,
 };
 
