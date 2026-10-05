@@ -1,14 +1,22 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
+  acknowledgeLearnerBadgesSchema,
   learnerSubmitEvidenceSchema,
+  type AcknowledgeLearnerBadgesOutput,
+  type AcknowledgeLearnerBadgesResponseDto,
   type EvidenceSubmissionResponseDto,
+  type LearnerGamificationSummaryDto,
   type LearnerCompetencyTrackingResponseDto,
   type LearnerSubmitEvidenceOutput,
 } from '@aletheia/contracts';
 import { LearnerAccessGuard, LearnerSelfGuard } from '../../../platform/auth/index.js';
 import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { LearnerProgressService } from '../application/learner-progress.service.js';
+import {
+  GAMIFICATION_PUBLIC_API,
+  type GamificationPublicApi,
+} from '../../gamification/application/public-api.js';
 
 interface RequestWithLearner {
   learner: { learnerId: string; familyId: string };
@@ -22,7 +30,11 @@ interface RequestWithLearner {
 @UseGuards(LearnerAccessGuard, LearnerSelfGuard)
 @Controller({ path: 'learner-access/learners/:learnerId', version: '1' })
 export class LearnerProgressController {
-  constructor(private readonly learnerProgressService: LearnerProgressService) {}
+  constructor(
+    private readonly learnerProgressService: LearnerProgressService,
+    @Inject(GAMIFICATION_PUBLIC_API)
+    private readonly gamificationApi: GamificationPublicApi,
+  ) {}
 
   @Post('evidence-submissions')
   @HttpCode(HttpStatus.CREATED)
@@ -45,5 +57,32 @@ export class LearnerProgressController {
     @Query('status') status?: 'ACTIVE' | 'RETIRED',
   ): Promise<LearnerCompetencyTrackingResponseDto[]> {
     return this.learnerProgressService.getProgress(request.learner.familyId, learnerId, status);
+  }
+
+  @Get('badges')
+  @ApiOperation({ summary: "Get the learner's own badges, growth level and streak" })
+  @ApiResponse({ status: 200, description: 'Self-referential gamification summary; never compares learners.' })
+  async getBadges(
+    @Param('learnerId') learnerId: string,
+    @Req() request: RequestWithLearner,
+  ): Promise<LearnerGamificationSummaryDto> {
+    return this.gamificationApi.getSummary(request.learner.familyId, learnerId);
+  }
+
+  @Post('badges/acknowledge')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Mark newly earned badges as seen by the learner' })
+  @ApiResponse({ status: 200, description: 'Number of badges acknowledged.' })
+  async acknowledgeBadges(
+    @Param('learnerId') learnerId: string,
+    @Req() request: RequestWithLearner,
+    @Body(new ZodValidationPipe(acknowledgeLearnerBadgesSchema)) dto: AcknowledgeLearnerBadgesOutput,
+  ): Promise<AcknowledgeLearnerBadgesResponseDto> {
+    const acknowledged = await this.gamificationApi.acknowledgeBadges(
+      request.learner.familyId,
+      learnerId,
+      dto.badgeCodes,
+    );
+    return { acknowledged };
   }
 }
