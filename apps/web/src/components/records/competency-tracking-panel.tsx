@@ -13,6 +13,7 @@ import type {
   ProgressionPolicyCatalogEntryDto,
   RubricCatalogEntryDto,
 } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 import { EvidenceSubmissionModal, type EvidenceSubmissionFormValues } from './evidence-submission-modal';
 
 export interface CompetencyTrackingPanelProps {
@@ -20,12 +21,12 @@ export interface CompetencyTrackingPanelProps {
   learnerId: string | null;
 }
 
-const progressionStateLabels = {
-  NOT_STARTED: 'Não iniciada',
-  IN_PROGRESS: 'Em andamento',
-  BLOCKED: 'Bloqueada',
-  MASTERED: 'Dominada',
-} as const;
+const progressionStateKeys: Record<string, string> = {
+  NOT_STARTED: 'records.competencies.states.notStarted',
+  IN_PROGRESS: 'records.competencies.states.inProgress',
+  BLOCKED: 'records.competencies.states.blocked',
+  MASTERED: 'records.competencies.states.mastered',
+};
 
 const progressionStateVariants = {
   NOT_STARTED: 'slate',
@@ -47,6 +48,7 @@ const progressionStateVariants = {
 // human's explicit instruction is that hiding/retiring that old flow is a
 // separate, human-reviewed step, not bundled into this PR.
 export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrackingPanelProps) {
+  const { t, formatDate } = useLocale();
   const [curriculumCatalog, setCurriculumCatalog] = useState<CurriculumDefinitionCatalogEntryDto[]>([]);
   const [evidenceTypeCatalog, setEvidenceTypeCatalog] = useState<EvidenceTypeCatalogEntryDto[]>([]);
   const [progressionPolicyCatalog, setProgressionPolicyCatalog] = useState<ProgressionPolicyCatalogEntryDto[]>([]);
@@ -175,17 +177,17 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao ativar currículo.');
+        throw new Error(err.message || t('records.competencies.errorActivate'));
       }
       const result = await res.json();
       setActivationSuccess(
         result.createdCount > 0
-          ? `${result.createdCount} competência(s) ativada(s) para acompanhamento.`
-          : 'Este currículo já estava totalmente ativo para este educando.',
+          ? t('records.competencies.activatedCount', { count: result.createdCount })
+          : t('records.competencies.alreadyActive'),
       );
       await loadLearnerData();
     } catch (err) {
-      setActivationError(err instanceof Error ? err.message : 'Falha ao ativar currículo.');
+      setActivationError(err instanceof Error ? err.message : t('records.competencies.errorActivate'));
     } finally {
       setActivating(false);
     }
@@ -199,7 +201,7 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
       );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao retirar competência.');
+        throw new Error(err.message || t('records.competencies.errorRetire'));
       }
       await loadLearnerData();
     } catch {
@@ -214,7 +216,7 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
   };
 
   const handleSaveEvidence = async (dto: EvidenceSubmissionFormValues) => {
-    if (!learnerId) throw new Error('Selecione um educando primeiro.');
+    if (!learnerId) throw new Error(t('records.competencies.selectLearnerFirst'));
     const res = await fetch(`/api/v1/families/${familyId}/curriculum/evidence-submissions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -223,7 +225,7 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Falha ao enviar evidência.');
+      throw new Error(err.message || t('records.competencies.errorSendEvidence'));
     }
     await loadLearnerData();
   };
@@ -271,12 +273,12 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
       });
       if (!res.ok) {
         const error = await res.json().catch(() => ({}));
-        throw new Error(error.message || 'Falha ao registrar avaliação.');
+        throw new Error(error.message || t('records.competencies.errorSaveAssessment'));
       }
       await loadLearnerData();
       setIsAssessmentModalOpen(false);
     } catch (error) {
-      setAssessmentError(error instanceof Error ? error.message : 'Falha ao registrar avaliação.');
+      setAssessmentError(error instanceof Error ? error.message : t('records.competencies.errorSaveAssessment'));
     } finally {
       setAssessmentSubmitting(false);
     }
@@ -297,11 +299,11 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
       );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao atualizar a validação da evidência.');
+        throw new Error(err.message || t('records.competencies.errorUpdateValidation'));
       }
       await loadLearnerData();
     } catch (err) {
-      setValidationError(err instanceof Error ? err.message : 'Falha ao atualizar a validação da evidência.');
+      setValidationError(err instanceof Error ? err.message : t('records.competencies.errorUpdateValidation'));
     } finally {
       setValidatingEvidenceId(null);
     }
@@ -311,8 +313,8 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
     return (
       <Card style={{ padding: '1.75rem' }}>
         <EmptyState
-          title="Selecione um educando"
-          description="Escolha um educando para ativar currículos e acompanhar competências."
+          title={t('records.competencies.emptyLearnerTitle')}
+          description={t('records.competencies.emptyLearnerDesc')}
         />
       </Card>
     );
@@ -321,7 +323,7 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
   if (loading) {
     return (
       <Card data-testid="competency-tracking-loading" style={{ padding: '1.75rem' }}>
-        <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Carregando competências...</div>
+        <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{t('records.competencies.loading')}</div>
       </Card>
     );
   }
@@ -334,11 +336,10 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
       <Card data-testid="activate-curriculum-card" style={{ padding: '1.75rem' }}>
         <div style={{ marginBottom: '1.25rem' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-            Ativar Currículo
+            {t('records.competencies.activateCardTitle')}
           </h2>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-            Ativar um currículo publicado cria o conjunto de competências que este educando vai acompanhar. Pode ser
-            repetido sem duplicar -- competências já ativas simplesmente permanecem como estão.
+            {t('records.competencies.activateCardDesc')}
           </p>
         </div>
 
@@ -356,29 +357,29 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 260px' }}>
             <Select
-              label="Currículo Publicado"
+              label={t('records.competencies.curriculumSelectLabel')}
               data-testid="curriculum-catalog-select"
               value={selectedCurriculumId}
               onChange={(e) => setSelectedCurriculumId(e.target.value)}
               disabled={activating || curriculumCatalog.length === 0}
               options={[
-                { value: '', label: curriculumCatalog.length === 0 ? 'Nenhum currículo publicado' : 'Selecione...' },
+                { value: '', label: curriculumCatalog.length === 0 ? t('records.competencies.noCurricula') : t('records.competencies.selectPlaceholder') },
                 ...curriculumCatalog.map((c) => ({ value: c.id, label: c.name })),
               ]}
             />
           </div>
           <div style={{ flex: '1 1 260px' }}>
             <Select
-              label="Política de progressão"
+              label={t('records.competencies.policySelectLabel')}
               data-testid="progression-policy-select"
               value={selectedProgressionPolicyId}
               onChange={(e) => setSelectedProgressionPolicyId(e.target.value)}
               disabled={activating || progressionPolicyCatalog.length === 0}
               options={[
-                { value: '', label: progressionPolicyCatalog.length === 0 ? 'Sem política publicada' : 'Selecione...' },
+                { value: '', label: progressionPolicyCatalog.length === 0 ? t('records.competencies.noPolicy') : t('records.competencies.selectPlaceholder') },
                 ...progressionPolicyCatalog.map((policy) => ({
                   value: policy.id,
-                  label: `${policy.name} (${policy.minimumEvidenceCount} evidência${policy.minimumEvidenceCount === 1 ? '' : 's'})`,
+                  label: `${policy.name} (${t('records.card.evidenceCount', { count: policy.minimumEvidenceCount })})`,
                 })),
               ]}
             />
@@ -390,7 +391,7 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
             isLoading={activating}
             disabled={!selectedCurriculumId}
           >
-            Ativar
+            {t('records.competencies.activateButton')}
           </Button>
         </div>
       </Card>
@@ -399,10 +400,10 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-              Competências Acompanhadas
+              {t('records.competencies.trackedTitle')}
             </h2>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-              O conjunto de trabalho deste educando, vindo dos currículos ativados.
+              {t('records.competencies.trackedDesc')}
             </p>
           </div>
           <Button
@@ -412,14 +413,14 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
             onClick={() => handleOpenEvidenceModal()}
             disabled={activeTrackings.length === 0}
           >
-            Enviar Evidência
+            {t('records.competencies.sendEvidenceBtn')}
           </Button>
         </div>
 
         {activeTrackings.length === 0 ? (
           <EmptyState
-            title="Nenhuma competência ativa"
-            description="Ative um currículo publicado acima para começar a acompanhar competências para este educando."
+            title={t('records.competencies.emptyActiveTitle')}
+            description={t('records.competencies.emptyActiveDesc')}
           />
         ) : (
           <div style={{ display: 'grid', gap: '0.625rem' }} data-testid="active-competency-list">
@@ -453,17 +454,17 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
                           variant={progressionStateVariants[evaluation.state]}
                           data-testid={`progression-state-${tracking.competencyDefinitionId}`}
                         >
-                          {progressionStateLabels[evaluation.state]}
+                          {t(progressionStateKeys[evaluation.state] || 'records.competencies.states.inProgress')}
                         </Badge>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                          {evaluation.validatedEvidenceCount}/{evaluation.minimumEvidenceCount} evidência{evaluation.minimumEvidenceCount === 1 ? '' : 's'} validada{evaluation.minimumEvidenceCount === 1 ? '' : 's'}
+                          {t('records.competencies.progressEvidenceCount', { validated: evaluation.validatedEvidenceCount, minimum: evaluation.minimumEvidenceCount })}
                         </span>
                       </div>
                   )}
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <Badge variant="emerald" data-testid={`tracked-competency-status-${tracking.competencyDefinitionId}`}>
-                    Ativa
+                    {t('records.competencies.statusActive')}
                   </Badge>
                   <Button
                     type="button"
@@ -472,7 +473,7 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
                     data-testid={`evidence-for-competency-${tracking.competencyDefinitionId}`}
                     onClick={() => handleOpenEvidenceModal(tracking.competencyDefinitionId)}
                   >
-                    Enviar Evidência
+                    {t('records.competencies.sendEvidenceBtn')}
                   </Button>
                   <Button
                     type="button"
@@ -481,7 +482,7 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
                     data-testid={`retire-competency-${tracking.competencyDefinitionId}`}
                     onClick={() => handleRetire(tracking.id)}
                   >
-                    Retirar
+                    {t('records.competencies.retireBtn')}
                   </Button>
                 </div>
                 </div>
@@ -493,7 +494,7 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
         {retiredTrackings.length > 0 && (
           <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.25rem' }}>
             <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-              Competências Retiradas
+              {t('records.competencies.retiredTitle')}
             </div>
             <div style={{ display: 'grid', gap: '0.375rem' }} data-testid="retired-competency-list">
               {retiredTrackings.map((tracking) => (
@@ -508,15 +509,15 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
 
       <Card data-testid="achievement-history-card" style={{ padding: '1.75rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.35rem 0' }}>
-          Conquistas de Competências
+          {t('records.competencies.achievementsTitle')}
         </h2>
         <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0 0 1.25rem 0' }}>
-          Registros históricos criados automaticamente quando uma política de progressão é satisfeita.
+          {t('records.competencies.achievementsDesc')}
         </p>
         {achievements.length === 0 ? (
           <EmptyState
-            title="Nenhuma conquista registrada"
-            description="As conquistas aparecerão aqui depois que evidências validadas satisfizerem uma política de progressão."
+            title={t('records.competencies.emptyAchievementsTitle')}
+            description={t('records.competencies.emptyAchievementsDesc')}
           />
         ) : (
           <div style={{ display: 'grid', gap: '0.625rem' }} data-testid="achievement-history-list">
@@ -539,21 +540,19 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
                       data-testid={`achievement-competency-${achievement.id}`}
                       style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)' }}
                     >
-                      {tracked?.competency.title ?? `Competência ${achievement.competencyDefinitionId}`}
+                      {tracked?.competency.title ?? t('records.competencies.defaultCompetencyTitle', { id: achievement.competencyDefinitionId })}
                     </span>
-                    <Badge variant="emerald">Dominada</Badge>
+                    <Badge variant="emerald">{t('records.competencies.states.mastered')}</Badge>
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
-                    Competência v{achievement.competencyVersion}
-                    {achievement.curriculumVersion ? ` · currículo v${achievement.curriculumVersion}` : ''}
-                    {' · '}{achievement.validatedEvidenceCount}/{achievement.minimumEvidenceCount} evidência
-                    {achievement.minimumEvidenceCount === 1 ? '' : 's'} validada
-                    {achievement.minimumEvidenceCount === 1 ? '' : 's'}
-                    {' · '}{new Date(achievement.achievedAt).toLocaleDateString('pt-BR')}
+                    {t('records.competencies.competencyVersion', { version: achievement.competencyVersion })}
+                    {achievement.curriculumVersion ? ` · ${t('records.competencies.curriculumVersion', { version: achievement.curriculumVersion })}` : ''}
+                    {' · '}{t('records.competencies.progressEvidenceCount', { validated: achievement.validatedEvidenceCount, minimum: achievement.minimumEvidenceCount })}
+                    {' · '}{formatDate(new Date(achievement.achievedAt))}
                   </div>
                   {achievement.reviews && achievement.reviews.length > 0 && (
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
-                      {achievement.reviews.length} revisão(ões) registrada(s)
+                      {t('records.competencies.reviewsCount', { count: achievement.reviews.length })}
                     </div>
                   )}
                 </div>
@@ -565,7 +564,7 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
 
       <Card data-testid="evidence-submissions-card" style={{ padding: '1.75rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 1.25rem 0' }}>
-          Evidências Enviadas
+          {t('records.competencies.evidenceSubmissionsTitle')}
         </h2>
         {validationError && (
           <Alert variant="error" data-testid="evidence-validation-error" style={{ marginBottom: '1.25rem' }}>
@@ -574,13 +573,13 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
         )}
         {evidenceSubmissions.length === 0 ? (
           <EmptyState
-            title="Nenhuma evidência enviada"
-            description="Evidências enviadas para as competências acompanhadas aparecerão aqui."
+            title={t('records.competencies.emptyEvidenceTitle')}
+            description={t('records.competencies.emptyEvidenceDesc')}
           />
         ) : (
           <div style={{ display: 'grid', gap: '0.625rem' }} data-testid="evidence-submission-list">
             {evidenceSubmissions.map((submission) => (
-              <div
+               <div
                 key={submission.id}
                 data-testid={`evidence-submission-${submission.id}`}
                 style={{
@@ -591,7 +590,7 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>
-                    {submission.textContent || submission.fileUrl || 'Evidência sem descrição'}
+                    {submission.textContent || submission.fileUrl || t('records.competencies.evidenceNoDesc')}
                   </span>
                   <Badge
                     variant={
@@ -603,15 +602,15 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
                     }
                   >
                     {submission.validationStatus === 'VALIDATED'
-                      ? 'Validada'
+                      ? t('records.competencies.validationValidated')
                       : submission.validationStatus === 'REJECTED'
-                        ? 'Rejeitada'
-                        : 'Aguardando validação'}
+                        ? t('records.competencies.validationRejected')
+                        : t('records.competencies.validationPending')}
                   </Badge>
                 </div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                  {submission.competencies.length} competência(s) vinculada(s) --{' '}
-                  {new Date(submission.createdAt).toLocaleDateString('pt-BR')}
+                  {t('records.competencies.linkedCompetenciesCount', { count: submission.competencies.length })} --{' '}
+                  {formatDate(new Date(submission.createdAt))}
                 </div>
                 {submission.validationStatus === 'UNVALIDATED' && (
                   <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
@@ -624,7 +623,7 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
                       disabled={validatingEvidenceId !== null}
                       isLoading={validatingEvidenceId === submission.id}
                     >
-                      Validar evidência
+                      {t('records.competencies.validateEvidenceBtn')}
                     </Button>
                     <Button
                       type="button"
@@ -634,7 +633,7 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
                       onClick={() => handleValidateEvidence(submission.id, 'REJECTED')}
                       disabled={validatingEvidenceId !== null}
                     >
-                      Rejeitar
+                      {t('records.competencies.rejectEvidenceBtn')}
                     </Button>
                   </div>
                 )}
@@ -648,10 +647,10 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-              Avaliações
+              {t('records.competencies.assessmentsTitle')}
             </h2>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0' }}>
-              Registre uma avaliação por critérios para este educando.
+              {t('records.competencies.assessmentsDesc')}
             </p>
           </div>
           <Button
@@ -661,13 +660,13 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
             onClick={handleOpenAssessmentModal}
             disabled={rubricCatalog.length === 0}
           >
-            Registrar avaliação
+            {t('records.competencies.registerAssessmentBtn')}
           </Button>
         </div>
         {assessmentResults.length === 0 ? (
           <EmptyState
-            title="Nenhuma avaliação registrada"
-            description="As avaliações por rubrica deste educando aparecerão aqui."
+            title={t('records.competencies.emptyAssessmentsTitle')}
+            description={t('records.competencies.emptyAssessmentsDesc')}
           />
         ) : (
           <div style={{ display: 'grid', gap: '0.625rem' }} data-testid="assessment-result-list">
@@ -687,10 +686,10 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
                   }}
                 >
                   <div style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>
-                    Avaliação ({result.assessorType}) {average !== null ? `-- média ${average.toFixed(1)}` : ''}
+                    {t('records.competencies.assessmentItemHeader', { type: result.assessorType })} {average !== null ? t('records.competencies.assessmentAverage', { average: average.toFixed(1) }) : ''}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                    {new Date(result.createdAt).toLocaleDateString('pt-BR')}
+                    {formatDate(new Date(result.createdAt))}
                     {result.notes ? ` -- ${result.notes}` : ''}
                   </div>
                 </div>
@@ -703,13 +702,13 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
       <Modal
         isOpen={isAssessmentModalOpen}
         onClose={() => setIsAssessmentModalOpen(false)}
-        title="Registrar avaliação"
-        description="Atribua uma pontuação a cada critério da rubrica selecionada."
+        title={t('records.competencies.assessmentModalTitle')}
+        description={t('records.competencies.assessmentModalDesc')}
         maxWidth="lg"
         footer={
           <>
             <Button variant="secondary" onClick={() => setIsAssessmentModalOpen(false)} disabled={assessmentSubmitting}>
-              Cancelar
+              {t('records.competencies.cancelAssessmentBtn')}
             </Button>
             <Button
               type="submit"
@@ -718,7 +717,7 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
               isLoading={assessmentSubmitting}
               disabled={!selectedRubricId}
             >
-              Salvar avaliação
+              {t('records.competencies.saveAssessmentBtn')}
             </Button>
           </>
         }
@@ -726,12 +725,12 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
         <form id="assessment-result-form" onSubmit={handleSaveAssessment} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {assessmentError && <Alert variant="error" data-testid="assessment-result-error">{assessmentError}</Alert>}
           <Select
-            label="Rubrica *"
+            label={t('records.competencies.rubricSelectLabel')}
             data-testid="assessment-rubric-select"
             value={selectedRubricId}
             onChange={(event) => handleRubricChange(event.target.value)}
             options={[
-              { value: '', label: 'Selecione uma rubrica...' },
+              { value: '', label: t('records.competencies.selectRubricPlaceholder') },
               ...rubricCatalog.map((rubric) => ({ value: rubric.id, label: rubric.name })),
             ]}
           />
@@ -749,7 +748,7 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
             />
           ))}
           <Textarea
-            label="Observações (opcional)"
+            label={t('records.competencies.assessmentNotesLabel')}
             data-testid="assessment-notes-input"
             value={assessmentNotes}
             onChange={(event) => setAssessmentNotes(event.target.value)}

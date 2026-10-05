@@ -9,17 +9,18 @@ import {
   type EvidenceTypeCatalogEntryDto,
   type LearnerCompetencyTrackingResponseDto,
 } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export type EvidenceSubmissionFormValues = Omit<CreateEvidenceSubmissionDto, 'learnerId'>;
 
 export interface EvidenceSubmissionModalProps {
   isOpen: boolean;
-  onClose: () => void;
-  onSave: (dto: EvidenceSubmissionFormValues, file?: File | null) => Promise<void>;
+  onClose(): void;
+  onSave(dto: EvidenceSubmissionFormValues, file?: File | null): Promise<void>;
   evidenceTypeCatalog: EvidenceTypeCatalogEntryDto[];
   trackedCompetencies: LearnerCompetencyTrackingResponseDto[];
   initialCompetencyDefinitionId?: string | null | undefined;
-  onUploadFile?: ((file: File) => Promise<{ fileUrl: string; storageKey?: string; mimeType?: string; fileSizeBytes?: number }>) | undefined;
+  onUploadFile?(file: File): Promise<{ fileUrl: string; storageKey?: string; mimeType?: string; fileSizeBytes?: number }>;
 }
 
 // Submits evidence against one or more tracked competencies (issue #126
@@ -39,6 +40,7 @@ export function EvidenceSubmissionModal({
   initialCompetencyDefinitionId,
   onUploadFile,
 }: EvidenceSubmissionModalProps) {
+  const { t } = useLocale();
   const [evidenceTypeId, setEvidenceTypeId] = useState('');
   const [selectedCompetencyIds, setSelectedCompetencyIds] = useState<string[]>([]);
   const [textContent, setTextContent] = useState('');
@@ -74,12 +76,12 @@ export function EvidenceSubmissionModal({
       return;
     }
     if (!(ALLOWED_PORTFOLIO_MIME_TYPES as readonly string[]).includes(file.type)) {
-      setFileError('Tipo de arquivo não suportado. Use imagens (PNG/JPEG/WebP/GIF), áudios (MP3/WAV/MP4), vídeos (MP4/WebM) ou PDF.');
+      setFileError(t('records.evidenceSubmission.unsupportedFileType'));
       setSelectedFile(null);
       return;
     }
     if (file.size > PORTFOLIO_MAX_FILE_SIZE_BYTES) {
-      setFileError(`Arquivo muito grande (máximo ${Math.floor(PORTFOLIO_MAX_FILE_SIZE_BYTES / (1024 * 1024))}MB).`);
+      setFileError(t('records.evidenceSubmission.fileTooLarge', { maxMb: Math.floor(PORTFOLIO_MAX_FILE_SIZE_BYTES / (1024 * 1024)) }));
       setSelectedFile(null);
       return;
     }
@@ -95,7 +97,7 @@ export function EvidenceSubmissionModal({
     const hasFile = sourceType === 'UPLOAD' && Boolean(selectedFile);
 
     if (!hasText && !hasUrl && !hasFile) {
-      setError('Informe um texto, link ou selecione um arquivo como evidência.');
+      setError(t('records.evidenceSubmission.missingContentError'));
       return;
     }
 
@@ -129,7 +131,7 @@ export function EvidenceSubmissionModal({
       );
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao enviar evidência.');
+      setError(err instanceof Error ? err.message : t('records.evidenceSubmission.submitError'));
     } finally {
       setSubmitting(false);
     }
@@ -141,13 +143,13 @@ export function EvidenceSubmissionModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Enviar Evidência"
-      description="Registre uma evidência de aprendizagem e vincule às competências acompanhadas correspondentes."
+      title={t('records.evidenceSubmission.modalTitle')}
+      description={t('records.evidenceSubmission.modalDesc')}
       maxWidth="lg"
       footer={
         <>
           <Button variant="secondary" data-testid="cancel-evidence-submission-btn" onClick={onClose} disabled={submitting}>
-            Cancelar
+            {t('records.evidenceSubmission.cancelBtn')}
           </Button>
           <Button
             type="submit"
@@ -156,7 +158,7 @@ export function EvidenceSubmissionModal({
             isLoading={submitting}
             disabled={!evidenceTypeId || selectedCompetencyIds.length === 0}
           >
-            Enviar Evidência
+            {t('records.evidenceSubmission.submitBtn')}
           </Button>
         </>
       }
@@ -173,23 +175,23 @@ export function EvidenceSubmissionModal({
         )}
 
         <Select
-          label="Tipo de Evidência *"
+          label={t('records.evidenceSubmission.evidenceTypeLabel')}
           data-testid="evidence-type-select"
           value={evidenceTypeId}
           onChange={(e) => setEvidenceTypeId(e.target.value)}
           options={[
-            { value: '', label: 'Selecione um tipo...' },
+            { value: '', label: t('records.evidenceSubmission.selectTypePlaceholder') },
             ...evidenceTypeCatalog.map((t) => ({ value: t.id, label: t.name })),
           ]}
         />
 
         <div>
           <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-            Competências relacionadas *
+            {t('records.evidenceSubmission.relatedCompetenciesLabel')}
           </div>
           {activeCompetencies.length === 0 ? (
             <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-              Nenhuma competência ativa acompanhada ainda -- ative um currículo primeiro.
+              {t('records.evidenceSubmission.noActiveCompetencies')}
             </div>
           ) : (
             <div
@@ -218,17 +220,17 @@ export function EvidenceSubmissionModal({
         </div>
 
         <Textarea
-          label="Descrição / Narração"
+          label={t('records.evidenceSubmission.descriptionLabel')}
           data-testid="evidence-text-content-input"
           value={textContent}
           onChange={(e) => setTextContent(e.target.value)}
           rows={4}
-          placeholder="Ex: Narrou de volta o capítulo lido, com detalhes sobre..."
+          placeholder={t('records.evidenceSubmission.descriptionPlaceholder')}
         />
 
         <div>
           <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.375rem' }}>
-            Arquivo da Evidência
+            {t('records.evidenceSubmission.fileHeading')}
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
             <button
@@ -251,7 +253,7 @@ export function EvidenceSubmissionModal({
                 transition: 'all 0.15s ease',
               }}
             >
-              📤 Upload Direto
+              {t('records.evidenceSubmission.tabUpload')}
             </button>
             <button
               type="button"
@@ -273,7 +275,7 @@ export function EvidenceSubmissionModal({
                 transition: 'all 0.15s ease',
               }}
             >
-              🌐 Link Externo (HTTPS)
+              {t('records.evidenceSubmission.tabLink')}
             </button>
           </div>
 
@@ -296,7 +298,7 @@ export function EvidenceSubmissionModal({
                 }}
               />
               <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem', display: 'block' }}>
-                Formatos aceitos: Imagens (PNG/JPG/WebP/GIF), Áudios (MP3/WAV), Vídeos (MP4/WebM) e PDF (máx. 25MB)
+                {t('records.evidenceSubmission.fileFormatsHint')}
               </span>
               {fileError && (
                 <div
@@ -334,18 +336,18 @@ export function EvidenceSubmissionModal({
                       fontSize: '0.75rem',
                     }}
                   >
-                    Remover
+                    {t('records.evidenceSubmission.removeFileBtn')}
                   </button>
                 </div>
               )}
             </div>
           ) : (
             <Input
-              label="Link do arquivo / URL"
+              label={t('records.evidenceSubmission.fileUrlLabel')}
               data-testid="evidence-file-url-input"
               value={fileUrl}
               onChange={(e) => setFileUrl(e.target.value)}
-              placeholder="https://..."
+              placeholder={t('records.evidenceSubmission.fileUrlPlaceholder')}
             />
           )}
         </div>

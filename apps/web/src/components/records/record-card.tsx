@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { AletheiaIcon, Badge, Button, IconButton } from '@aletheia/ui';
+import { useLocale } from '../../lib/i18n/locale-context';
 import type {
   LearningRecordResponseDto,
   MasteryLevel,
@@ -17,6 +18,36 @@ export interface RecordCardProps {
   onAddEvidence?: ((record: LearningRecordResponseDto) => void) | undefined;
   onReopenLesson?: ((record: LearningRecordResponseDto) => void) | undefined;
 }
+
+export const MASTERY_KEY_MAP: Record<MasteryLevel, string> = {
+  NOT_STARTED: 'notStarted',
+  EXPOSURE: 'exposure',
+  DEVELOPING: 'developing',
+  WITH_ASSISTANCE: 'withAssistance',
+  AUTONOMOUS: 'autonomous',
+  MASTERED: 'mastered',
+};
+
+export const ASSESSMENT_KEY_MAP: Record<AssessmentMethod, string> = {
+  OBSERVATION: 'observation',
+  NARRATION: 'narration',
+  EXERCISE: 'exercise',
+  WRITING: 'writing',
+  PROJECT: 'project',
+  EXPERIMENT: 'experiment',
+  PRESENTATION: 'presentation',
+  TEST: 'test',
+  SELF_ASSESSMENT: 'selfAssessment',
+  PRACTICAL_DEMONSTRATION: 'practicalDemonstration',
+};
+
+export const RECORD_TYPE_KEY_MAP: Record<LearningRecordType, string> = {
+  PLANNED_LESSON: 'plannedLesson',
+  SPONTANEOUS_EXPERIENCE: 'spontaneousExperience',
+  PROJECT_WORK: 'projectWork',
+  READING_LOG: 'readingLog',
+  HABIT_PRACTICE: 'habitPractice',
+};
 
 export const MASTERY_CONFIG: Record<
   MasteryLevel,
@@ -52,9 +83,19 @@ export const RECORD_TYPE_LABELS: Record<LearningRecordType, { label: string; ico
 };
 
 export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLesson }: RecordCardProps) {
-  const mastery = MASTERY_CONFIG[record.masteryLevel] || MASTERY_CONFIG.DEVELOPING;
-  const assessmentLabel = ASSESSMENT_LABELS[record.assessmentMethod] || record.assessmentMethod;
-  const recordType = RECORD_TYPE_LABELS[record.type] || { label: record.type, icon: <AletheiaIcon name="file-text" size={14} /> };
+  const { t } = useLocale();
+  const masteryConfig = MASTERY_CONFIG[record.masteryLevel] || MASTERY_CONFIG.DEVELOPING;
+  const masteryKey = MASTERY_KEY_MAP[record.masteryLevel];
+  const masteryLabel = masteryKey ? t(`records.mastery.${masteryKey}` as any) : masteryConfig.label;
+
+  const assessmentKey = ASSESSMENT_KEY_MAP[record.assessmentMethod];
+  const assessmentLabel = assessmentKey
+    ? t(`records.assessmentMethods.${assessmentKey}` as any)
+    : (ASSESSMENT_LABELS[record.assessmentMethod] || record.assessmentMethod);
+
+  const recordTypeConfig = RECORD_TYPE_LABELS[record.type] || { label: record.type, icon: <AletheiaIcon name="file-text" size={14} /> };
+  const recordTypeKey = RECORD_TYPE_KEY_MAP[record.type];
+  const recordTypeLabel = recordTypeKey ? t(`records.recordTypes.${recordTypeKey}` as any) : recordTypeConfig.label;
 
   return (
     <article
@@ -83,7 +124,7 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLe
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <Badge data-testid={`record-type-badge-${record.id}`} variant="slate" size="sm">
-            {recordType.icon} {recordType.label}
+            {recordTypeConfig.icon} {recordTypeLabel}
           </Badge>
 
           {record.subjectName && (
@@ -117,15 +158,15 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLe
           {record.lessonPlanId && (
             <Badge data-testid={`record-lesson-badge-${record.id}`} variant="indigo" size="sm">
               <AletheiaIcon name="check-circle" size={12} />
-              <span>Concluído na Agenda</span>
+              <span>{t('records.card.completedInAgenda')}</span>
             </Badge>
           )}
         </div>
 
         {/* Mastery Badge */}
-        <Badge data-testid={`mastery-badge-${record.id}`} variant={mastery.badgeVariant}>
-          {mastery.icon}
-          {mastery.label}
+        <Badge data-testid={`mastery-badge-${record.id}`} variant={masteryConfig.badgeVariant}>
+          {masteryConfig.icon}
+          {masteryLabel}
         </Badge>
       </div>
 
@@ -173,12 +214,12 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLe
         </span>
         {record.durationMinutes && (
           <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} data-testid={`record-duration-${record.id}`}>
-            <AletheiaIcon name="clock" size={12} /> {record.durationMinutes} min
+            <AletheiaIcon name="clock" size={12} /> {t('records.card.durationMinutes', { minutes: record.durationMinutes })}
           </span>
         )}
         <Badge data-testid={`assessment-method-badge-${record.id}`} variant="slate" size="sm">
           <AletheiaIcon name="search" size={12} />
-          <span>Avaliação: {assessmentLabel}</span>
+          <span>{t('records.card.assessmentLabel', { method: assessmentLabel })}</span>
         </Badge>
       </div>
 
@@ -199,7 +240,7 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLe
             <div data-testid={`record-strengths-${record.id}`}>
               <strong style={{ color: 'var(--color-emerald-700)', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.25rem' }}>
                 <AletheiaIcon name="sparkles" size={14} />
-                <span>Pontos Fortes:</span>
+                <span>{t('records.card.strengths')}</span>
               </strong>
               <span style={{ color: 'var(--text-secondary)' }}>{record.strengths}</span>
             </div>
@@ -208,7 +249,7 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLe
             <div data-testid={`record-growth-${record.id}`}>
               <strong style={{ color: 'var(--color-amber-700)', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.25rem' }}>
                 <AletheiaIcon name="sprout" size={14} />
-                <span>Áreas para Crescimento:</span>
+                <span>{t('records.card.growth')}</span>
               </strong>
               <span style={{ color: 'var(--text-secondary)' }}>{record.areasForGrowth}</span>
             </div>
@@ -231,7 +272,7 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLe
         >
           <strong style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.2rem' }}>
             <AletheiaIcon name="heart" size={14} />
-            <span>Crescimento em Caráter & Hábitos:</span>
+            <span>{t('records.card.habitGrowth')}</span>
           </strong>
           <span>{record.characterHabitGrowth}</span>
         </div>
@@ -255,7 +296,7 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLe
         >
           <AletheiaIcon name="file-text" size={14} style={{ marginTop: '0.125rem', flexShrink: 0 }} />
           <div>
-            <strong>Observações:</strong> {record.notes}
+            <strong>{t('records.card.notes')}</strong> {record.notes}
           </div>
         </div>
       )}
@@ -265,12 +306,12 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLe
         <div data-testid={`record-objectives-container-${record.id}`} style={{ marginTop: '0.25rem' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.375rem' }}>
             <AletheiaIcon name="sparkles" size={14} />
-            <span>Objetivos Vinculados:</span>
+            <span>{t('records.card.objectives')}</span>
           </span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
             {record.objectives.map((obj) => (
               <Badge key={obj.id} data-testid={`attached-objective-${obj.id}`} variant="indigo" size="sm">
-                {obj.objectiveTitle || 'Objetivo de Aprendizagem'}
+                {obj.objectiveTitle || t('records.card.defaultObjective')}
               </Badge>
             ))}
           </div>
@@ -292,7 +333,7 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLe
           {record.portfolioItemIds && record.portfolioItemIds.length > 0 && (
             <Badge data-testid={`record-evidence-count-${record.id}`} variant="slate" size="sm">
               <AletheiaIcon name="paperclip" size={12} />
-              <span>{record.portfolioItemIds.length} evidência(s)</span>
+              <span>{t('records.card.evidenceCount', { count: record.portfolioItemIds.length })}</span>
             </Badge>
           )}
           {onAddEvidence && (
@@ -304,7 +345,7 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLe
                 onClick={() => onAddEvidence(record)}
                 leftIcon={<AletheiaIcon name="plus" size={12} />}
               >
-                Evidência
+                {t('records.card.evidenceBtn')}
               </Button>
             </Can>
           )}
@@ -320,7 +361,7 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLe
                 onClick={() => {
                   if (
                     window.confirm(
-                      'Deseja reabrir esta atividade? Ela voltará para a agenda do educando como pendente e este registro será estornado do diário.',
+                      t('records.card.confirmReopen'),
                     )
                   ) {
                     onReopenLesson(record);
@@ -328,7 +369,7 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLe
                 }}
                 leftIcon={<AletheiaIcon name="rotate-ccw" size={12} />}
               >
-                Reabrir Atividade
+                {t('records.card.reopenBtn')}
               </Button>
             </Can>
           )}
@@ -341,7 +382,7 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLe
                 onClick={() => onEdit(record)}
                 leftIcon={<AletheiaIcon name="pencil" size={12} />}
               >
-                Editar
+                {t('records.card.editBtn')}
               </Button>
             </Can>
           )}
@@ -351,11 +392,11 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLe
                 size="sm"
                 data-testid={`delete-record-btn-${record.id}`}
                 onClick={() => {
-                  if (window.confirm('Excluir este registro de aprendizagem? Esta ação não pode ser desfeita.')) {
+                  if (window.confirm(t('records.card.confirmDelete'))) {
                     onDelete(record.id);
                   }
                 }}
-                aria-label="Excluir registro"
+                aria-label={t('records.card.deleteAria')}
               >
                 <AletheiaIcon name="trash" size={12} />
               </IconButton>

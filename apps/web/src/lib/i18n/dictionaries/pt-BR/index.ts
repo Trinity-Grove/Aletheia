@@ -10,6 +10,8 @@ import { lessons } from './lessons';
 import { curriculum } from './curriculum';
 import { support } from './support';
 import { settings } from './settings';
+import { attendance } from './attendance';
+import { records } from './records';
 
 export const ptBR = {
   common,
@@ -24,5 +26,7 @@ export const ptBR = {
   curriculum,
   support,
   settings,
+  attendance,
+  records,
 } as const;
 
