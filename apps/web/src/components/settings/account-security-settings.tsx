@@ -90,7 +90,7 @@ export function AccountSecuritySettings({
   };
 
   return (
-    <div style={{ display: 'grid', gap: '1.5rem' }}>
+    <div data-testid="account-security-settings" style={{ display: 'grid', gap: '1.5rem' }}>
       <Card data-testid="change-password-card" style={{ padding: '1.75rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>

@@ -8,6 +8,7 @@ import { learnerPortal } from './learner-portal';
 import { lessons } from './lessons';
 import { curriculum } from './curriculum';
 import { support } from './support';
+import { settings } from './settings';
 
 export const ptBR = {
   common,
@@ -20,4 +21,6 @@ export const ptBR = {
   lessons,
   curriculum,
   support,
+  settings,
 } as const;
+
