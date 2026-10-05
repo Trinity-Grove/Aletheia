@@ -128,7 +128,7 @@ export const records = {
     emptyActiveDesc: 'Active un currículo publicado arriba para comenzar a dar seguimiento a competencias para este educando.',
     statusActive: 'Activa',
     retireBtn: 'Retirar',
-    progressEvidenceCount: '{validated}/{minimum} evidencia(s) validada(s)',
+    progressEvidenceCount: '{validated}/{minimum} evidencia validada',
     retiredTitle: 'Competencias Retiradas',
     achievementsTitle: 'Conquistas de Competencias',
     achievementsDesc: 'Registros históricos creados automáticamente cuando se satisface una política de progresión.',
