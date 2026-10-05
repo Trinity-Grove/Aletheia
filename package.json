@@ -6,6 +6,7 @@
     "node": ">=24.18.1 <25"
   },
   "scripts": {
+    "audit:i18n": "node scripts/audit-i18n-coverage.mjs",
     "build": "pnpm -r --if-present build",
     "check:boundaries": "node --test scripts/check-module-boundaries.test.mjs && node scripts/check-module-boundaries.mjs",
     "check:no-sibling-comparison": "node --test scripts/check-no-sibling-comparison.test.mjs",
