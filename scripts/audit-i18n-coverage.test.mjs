@@ -156,8 +156,25 @@ describe('audit-i18n-coverage', () => {
     assert.ok(md.includes('apps/web/app/home/page.tsx'));
     assert.ok(md.includes('✅ Traduzido'));
     assert.ok(md.includes('❌ Pendente'));
+    assert.ok(md.includes('Resumo por Domínio e Ondas de Migração'));
+    assert.ok(md.includes('Onda 1'));
 
     const summary = formatSummaryReport(mockResults);
     assert.ok(summary.includes('i18n Coverage Summary'));
   });
+
+  it('classifica arquivos corretamente nas 5 ondas de migração', async () => {
+    const { getMigrationWave } = await import('./audit-i18n-coverage.mjs');
+    assert.equal(getMigrationWave('apps/web/app/(dashboard)/attendance/page.tsx').id, 'Onda 1');
+    assert.equal(getMigrationWave('apps/web/src/components/records/record-card.tsx').id, 'Onda 1');
+    assert.equal(getMigrationWave('apps/web/app/(dashboard)/devotional/page.tsx').id, 'Onda 2');
+    assert.equal(getMigrationWave('apps/web/src/components/devotional/prayer-journal.tsx').id, 'Onda 2');
+    assert.equal(getMigrationWave('apps/web/app/(dashboard)/curriculum/page.tsx').id, 'Onda 3');
+    assert.equal(getMigrationWave('apps/web/src/components/lessons/daily-agenda-view.tsx').id, 'Onda 3');
+    assert.equal(getMigrationWave('apps/web/app/(dashboard)/reports/page.tsx').id, 'Onda 4');
+    assert.equal(getMigrationWave('apps/web/src/components/reports/printable-transcript.tsx').id, 'Onda 4');
+    assert.equal(getMigrationWave('apps/web/app/convite/token/page.tsx').id, 'Onda 5');
+    assert.equal(getMigrationWave('apps/web/src/components/layout/notification-bell.tsx').id, 'Onda 5');
+  });
 });
+

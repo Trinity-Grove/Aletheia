@@ -117,6 +117,43 @@ export async function scanDirectory(baseDir) {
   return results;
 }
 
+export function getMigrationWave(filePath) {
+  const p = filePath.toLowerCase().replace(/\\/g, '/');
+  if (p.includes('/attendance/') || p.includes('/records/')) {
+    return {
+      id: 'Onda 1',
+      title: 'Frequência e Registros de Aprendizagem',
+      domains: 'attendance, records',
+    };
+  }
+  if (p.includes('/devotional/')) {
+    return {
+      id: 'Onda 2',
+      title: 'Devocional Familiar e Comparador Bíblico',
+      domains: 'devotional, comparador',
+    };
+  }
+  if (p.includes('/curriculum/') || p.includes('/lessons/')) {
+    return {
+      id: 'Onda 3',
+      title: 'Currículo, Atividades Pedagógicas e Galeria de Pacotes',
+      domains: 'curriculum, lessons, activities',
+    };
+  }
+  if (p.includes('/reports/') || p.includes('/portfolio/') || p.includes('/compliance/')) {
+    return {
+      id: 'Onda 4',
+      title: 'Relatórios, Dossiês de Conformidade e Portfólio',
+      domains: 'reports, portfolio, compliance',
+    };
+  }
+  return {
+    id: 'Onda 5',
+    title: 'Convites, Verificações e Fechamento de Cobertura Global',
+    domains: 'invitations, verify, auth, settings, learners, layout, shared',
+  };
+}
+
 export function formatMarkdownReport(results) {
   const pages = results.filter((r) => r.filePath.includes('/app/') || r.filePath.startsWith('apps/web/app/'));
   const components = results.filter((r) => r.filePath.includes('/components/') || r.filePath.startsWith('apps/web/src/components/'));
@@ -135,12 +172,70 @@ export function formatMarkdownReport(results) {
   const totalTranslated = results.filter((r) => r.isFullyLocalized).length;
   const totalPct = totalFiles > 0 ? ((totalTranslated / totalFiles) * 100).toFixed(1) : '100.0';
 
+  // Wave aggregation for pending files
+  const waveOrder = ['Onda 1', 'Onda 2', 'Onda 3', 'Onda 4', 'Onda 5'];
+  const waveMap = new Map();
+  for (const wId of waveOrder) {
+    waveMap.set(wId, { id: wId, title: '', domains: '', pendingPages: [], pendingComponents: [] });
+  }
+
+  for (const item of results) {
+    if (!item.isFullyLocalized) {
+      const waveInfo = getMigrationWave(item.filePath);
+      const entry = waveMap.get(waveInfo.id);
+      if (entry) {
+        entry.title = waveInfo.title;
+        entry.domains = waveInfo.domains;
+        const isPage = item.filePath.includes('/app/') || item.filePath.startsWith('apps/web/app/');
+        if (isPage) {
+          entry.pendingPages.push(item);
+        } else {
+          entry.pendingComponents.push(item);
+        }
+      }
+    }
+  }
+
+  const waveSummaryRows = waveOrder.map((wId) => {
+    const entry = waveMap.get(wId);
+    const totalPendingWave = entry.pendingPages.length + entry.pendingComponents.length;
+    return `| **${entry.id}: ${entry.title}** | \`${entry.domains}\` | ${totalPendingWave} | ${entry.pendingPages.length} | ${entry.pendingComponents.length} |`;
+  });
+
+  const waveDetailSections = waveOrder.map((wId) => {
+    const entry = waveMap.get(wId);
+    const totalPendingWave = entry.pendingPages.length + entry.pendingComponents.length;
+    const lines = [
+      `### ${entry.id}: ${entry.title} (\`${entry.domains}\`) — ${totalPendingWave} arquivos pendentes`,
+      '',
+    ];
+
+    if (entry.pendingPages.length > 0) {
+      lines.push(`**Páginas (${entry.pendingPages.length}):**`);
+      for (const p of entry.pendingPages) {
+        lines.push(`- \`${p.filePath}\` (${p.hardcodedStrings.length} strings detectadas)`);
+      }
+      lines.push('');
+    }
+
+    if (entry.pendingComponents.length > 0) {
+      lines.push(`**Componentes (${entry.pendingComponents.length}):**`);
+      for (const c of entry.pendingComponents) {
+        lines.push(`- \`${c.filePath}\` (${c.hardcodedStrings.length} strings detectadas)`);
+      }
+      lines.push('');
+    }
+
+    return lines.join('\n');
+  });
+
   const rows = results.map((item) => {
     const isPage = item.filePath.includes('/app/') || item.filePath.startsWith('apps/web/app/');
     const typeStr = isPage ? 'Página' : 'Componente';
     const statusStr = item.isFullyLocalized ? '✅ Traduzido' : '❌ Pendente';
     const literalsStr = `${item.hardcodedStrings.length} strings`;
-    return `| ${typeStr} | \`${item.filePath}\` | ${statusStr} | ${literalsStr} |`;
+    const wave = getMigrationWave(item.filePath);
+    return `| ${typeStr} | \`${item.filePath}\` | ${statusStr} | ${literalsStr} | ${wave.id} |`;
   });
 
   return [
@@ -150,8 +245,19 @@ export function formatMarkdownReport(results) {
     `- **Total de Componentes:** ${compTotal} (${compTranslated} traduzidos, ${compPending} pendentes - ${compPct}%)`,
     `- **Cobertura Total de Frontend:** ${totalTranslated} / ${totalFiles} arquivos (${totalPct}%)`,
     '',
-    '| Tipo | Caminho | Status i18n | Literais Detectados |',
-    '| :--- | :--- | :--- | :--- |',
+    '## Resumo por Domínio e Ondas de Migração',
+    '',
+    '| Onda de Migração | Domínios Principais | Arquivos Pendentes | Páginas Pendentes | Componentes Pendentes |',
+    '| :--- | :--- | :--- | :--- | :--- |',
+    ...waveSummaryRows,
+    '',
+    '## Detalhamento dos Arquivos Pendentes por Onda',
+    '',
+    ...waveDetailSections,
+    '## Matriz Completa de Arquivos',
+    '',
+    '| Tipo | Caminho | Status i18n | Literais Detectados | Onda Planejada |',
+    '| :--- | :--- | :--- | :--- | :--- |',
     ...rows,
   ].join('\n');
 }
