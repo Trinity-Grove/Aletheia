@@ -267,6 +267,7 @@ export const curriculum: Dictionary['curriculum'] = {
       title: 'Curriculum Packs Catalog',
       subtitle: 'Discover, install, and customize curricula shared by the community and the editorial team.',
       loading: 'Loading curriculum packs...',
+      noFamily: 'Select or register a family to explore packs.',
     },
     seminary: {
       breadcrumb: 'Structural Navigation',

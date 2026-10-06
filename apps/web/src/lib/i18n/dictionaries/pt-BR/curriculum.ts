@@ -265,6 +265,7 @@ export const curriculum = {
       title: 'Catálogo de Pacotes Curriculares',
       subtitle: 'Descubra, instale e personalize currículos compartilhados pela comunidade e pela equipe editorial.',
       loading: 'Carregando pacotes curriculares...',
+      noFamily: 'Selecione ou cadastre uma família para explorar pacotes.',
     },
     seminary: {
       breadcrumb: 'Navegação Estrutural',

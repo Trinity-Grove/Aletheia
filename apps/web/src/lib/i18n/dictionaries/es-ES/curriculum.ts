@@ -267,6 +267,7 @@ export const curriculum: Dictionary['curriculum'] = {
       title: 'Catálogo de Paquetes Curriculares',
       subtitle: 'Descubra, instale y personalice planes de estudio compartidos por la comunidad y el equipo editorial.',
       loading: 'Cargando paquetes curriculares...',
+      noFamily: 'Seleccione o registre una familia para explorar paquetes.',
     },
     seminary: {
       breadcrumb: 'Navegación Estructural',
