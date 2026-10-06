@@ -4,18 +4,14 @@ import React, { useState } from 'react';
 import { AletheiaIcon, Alert, Badge, Button, EmptyState, Input, Modal, Select, Textarea } from '@aletheia/ui';
 import type { CreatePrayerDto, PrayerResponseDto, PrayerType } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface PrayerJournalProps {
   prayers: PrayerResponseDto[];
-  onCreatePrayer: (_data: CreatePrayerDto) => Promise<void> | void;
-  onAnswerPrayer: (_id: string, _answeredNote?: string) => Promise<void> | void;
-  onArchivePrayer: (_id: string) => Promise<void> | void;
+  onCreatePrayer(_data: CreatePrayerDto): Promise<void> | void;
+  onAnswerPrayer(_id: string, _answeredNote?: string): Promise<void> | void;
+  onArchivePrayer(_id: string): Promise<void> | void;
 }
-
-const PRAYER_TYPE_OPTIONS = [
-  { value: 'PETITION', label: 'Pedido de Oração (Petição / Intercessão)' },
-  { value: 'GRATITUDE', label: 'Gratidão / Louvor (Ação de Graças)' },
-];
 
 export function PrayerJournal({
   prayers,
@@ -23,6 +19,7 @@ export function PrayerJournal({
   onAnswerPrayer,
   onArchivePrayer,
 }: PrayerJournalProps) {
+  const { t } = useLocale();
   const [activeTab, setActiveTab] = useState<PrayerType>('PETITION');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [answeringPrayerId, setAnsweringPrayerId] = useState<string | null>(null);
@@ -34,6 +31,11 @@ export function PrayerJournal({
   const [newDescription, setNewDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const prayerTypeOptions = [
+    { value: 'PETITION', label: t('devotional.prayer.modalCreate.petitionOption') },
+    { value: 'GRATITUDE', label: t('devotional.prayer.modalCreate.gratitudeOption') },
+  ];
 
   const activePrayers = prayers.filter(
     (p) => !p.archivedAt && p.type === activeTab
@@ -56,7 +58,7 @@ export function PrayerJournal({
     setError(null);
 
     if (!newTitle.trim()) {
-      setError('O título do pedido/louvor é obrigatório.');
+      setError(t('devotional.prayer.errors.titleRequired'));
       return;
     }
 
@@ -69,7 +71,7 @@ export function PrayerJournal({
       });
       setIsModalOpen(false);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Falha ao salvar oração.';
+      const msg = err instanceof Error ? err.message : t('devotional.prayer.errors.saveFailed');
       setError(msg);
     } finally {
       setLoading(false);
@@ -114,23 +116,23 @@ export function PrayerJournal({
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              Diário de Oração da Família
+              {t('devotional.prayer.header.title')}
             </h2>
             {answeredCount > 0 && (
               <Badge data-testid="answered-prayers-counter" variant="emerald">
                 <AletheiaIcon name="sparkles" size={12} />
-                <span>{answeredCount} respondida(s)</span>
+                <span>{t('devotional.prayer.header.answeredCount', { count: answeredCount })}</span>
               </Badge>
             )}
           </div>
           <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-            Intercessões, súplicas ativas e testemunhos de orações respondidas pelo Senhor.
+            {t('devotional.prayer.header.subtitle')}
           </p>
         </div>
 
         <Can action="manage_devotional">
           <Button size="sm" data-testid="new-prayer-btn" onClick={() => handleOpenCreateModal(activeTab)}>
-            + Novo Registro
+            {t('devotional.prayer.actions.new')}
           </Button>
         </Can>
       </div>
@@ -154,10 +156,10 @@ export function PrayerJournal({
           </span>
           <div style={{ flex: 1 }}>
             <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-emerald-700)', display: 'block' }}>
-              Celebração de Resposta de Oração!
+              {t('devotional.prayer.celebration.title')}
             </span>
             <span style={{ fontSize: '0.8125rem', color: 'var(--color-emerald-700)' }}>
-              Deus tem sido fiel em ouvir as orações da sua família. Compartilhe o testemunho!
+              {t('devotional.prayer.celebration.subtitle')}
             </span>
           </div>
         </div>
@@ -192,7 +194,7 @@ export function PrayerJournal({
           }}
         >
           <AletheiaIcon name="heart" size={14} />
-          <span>Pedidos de Oração</span>
+          <span>{t('devotional.prayer.tabs.petitions')}</span>
           <span
             style={{
               backgroundColor: activeTab === 'PETITION' ? 'var(--color-indigo-50)' : 'var(--sage-soft)',
@@ -228,7 +230,7 @@ export function PrayerJournal({
           }}
         >
           <AletheiaIcon name="sparkles" size={14} />
-          <span>Gratidões & Louvores</span>
+          <span>{t('devotional.prayer.tabs.gratitudes')}</span>
           <span
             style={{
               backgroundColor: activeTab === 'GRATITUDE' ? 'var(--color-emerald-50)' : 'var(--sage-soft)',
@@ -251,10 +253,10 @@ export function PrayerJournal({
           icon={<AletheiaIcon name="sparkles" size={32} style={{ color: 'var(--text-muted)' }} />}
           title={
             activeTab === 'PETITION'
-              ? 'Nenhum pedido de oração ativo no momento.'
-              : 'Nenhuma gratidão registrada ainda.'
+              ? t('devotional.prayer.empty.petitionsTitle')
+              : t('devotional.prayer.empty.gratitudesTitle')
           }
-          description="Adicione um novo registro para que todos possam orar juntos."
+          description={t('devotional.prayer.empty.description')}
         />
       ) : (
         <div
@@ -295,11 +297,11 @@ export function PrayerJournal({
                   {prayer.isAnswered ? (
                     <Badge data-testid={`prayer-answered-badge-${prayer.id}`} variant="emerald">
                       <AletheiaIcon name="sparkles" size={12} />
-                      <span>Respondida!</span>
+                      <span>{t('devotional.prayer.card.answeredBadge')}</span>
                     </Badge>
                   ) : (
                     <Badge variant={prayer.type === 'PETITION' ? 'indigo' : 'emerald'} size="sm">
-                      {prayer.type === 'PETITION' ? 'Em Oração' : 'Gratidão'}
+                      {prayer.type === 'PETITION' ? t('devotional.prayer.card.inPrayerBadge') : t('devotional.prayer.card.gratitudeBadge')}
                     </Badge>
                   )}
                 </div>
@@ -333,7 +335,7 @@ export function PrayerJournal({
                   >
                     <strong style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.125rem' }}>
                       <AletheiaIcon name="sparkles" size={14} style={{ color: 'var(--color-emerald-600)' }} />
-                      <span>Testemunho / Resposta:</span>
+                      <span>{t('devotional.prayer.card.testimonyLabel')}</span>
                     </strong>
                     {prayer.answeredNote}
                   </div>
@@ -353,7 +355,7 @@ export function PrayerJournal({
                       }}
                       leftIcon={<AletheiaIcon name="check" size={12} />}
                     >
-                      Marcar como Respondida
+                      {t('devotional.prayer.actions.markAnswered')}
                     </Button>
                   </Can>
                 )}
@@ -368,12 +370,12 @@ export function PrayerJournal({
                         try {
                           await onArchivePrayer(prayer.id);
                         } catch (err: unknown) {
-                          setError(err instanceof Error ? err.message : 'Falha ao arquivar oração.');
+                          setError(err instanceof Error ? err.message : t('devotional.prayer.errors.archiveFailed'));
                         }
                       })();
                     }}
                   >
-                    Arquivar
+                    {t('devotional.prayer.actions.archive')}
                   </Button>
                 </Can>
               </div>
@@ -388,26 +390,26 @@ export function PrayerJournal({
           <Modal
             isOpen={true}
             onClose={() => setAnsweringPrayerId(null)}
-            title="Marcar Oração como Respondida"
-            description="Deseja registrar um testemunho ou nota de como Deus respondeu a esta oração na vida da família?"
+            title={t('devotional.prayer.modalAnswer.title')}
+            description={t('devotional.prayer.modalAnswer.description')}
             footer={
               <>
                 <Button variant="secondary" onClick={() => setAnsweringPrayerId(null)}>
-                  Cancelar
+                  {t('devotional.prayer.modalAnswer.cancel')}
                 </Button>
                 <Button data-testid="confirm-answer-btn" onClick={handleConfirmAnswer}>
-                  Confirmar Resposta
+                  {t('devotional.prayer.modalAnswer.confirm')}
                 </Button>
               </>
             }
           >
             <Textarea
-              label="Nota de Agradecimento / Testemunho"
+              label={t('devotional.prayer.modalAnswer.label')}
               rows={3}
               data-testid="answered-note-input"
               value={answeredNote}
               onChange={(e) => setAnsweredNote(e.target.value)}
-              placeholder="Ex: Deus supriu a nossa necessidade através de..."
+              placeholder={t('devotional.prayer.modalAnswer.placeholder')}
             />
           </Modal>
         </div>
@@ -419,14 +421,14 @@ export function PrayerJournal({
           <Modal
             isOpen={true}
             onClose={() => setIsModalOpen(false)}
-            title={newType === 'PETITION' ? 'Novo Pedido de Oração' : 'Nova Gratidão / Louvor'}
+            title={newType === 'PETITION' ? t('devotional.prayer.modalCreate.petitionTitle') : t('devotional.prayer.modalCreate.gratitudeTitle')}
             footer={
               <>
                 <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={loading}>
-                  Cancelar
+                  {t('devotional.prayer.modalCreate.cancel')}
                 </Button>
                 <Button type="submit" form="prayer-form" data-testid="prayer-submit-btn" isLoading={loading}>
-                  Salvar
+                  {t('devotional.prayer.modalCreate.save')}
                 </Button>
               </>
             }
@@ -439,27 +441,27 @@ export function PrayerJournal({
 
             <form id="prayer-form" onSubmit={handleCreateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <Select
-                label="Tipo"
+                label={t('devotional.prayer.modalCreate.typeLabel')}
                 value={newType}
                 onChange={(e) => setNewType(e.target.value as PrayerType)}
-                options={PRAYER_TYPE_OPTIONS}
+                options={prayerTypeOptions}
               />
 
               <Input
-                label="Título *"
+                label={t('devotional.prayer.modalCreate.titleLabel')}
                 data-testid="prayer-title-input"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                placeholder={newType === 'PETITION' ? 'Ex: Saúde da vovó' : 'Ex: Bênção no trabalho'}
+                placeholder={newType === 'PETITION' ? t('devotional.prayer.modalCreate.petitionTitlePlaceholder') : t('devotional.prayer.modalCreate.gratitudeTitlePlaceholder')}
               />
 
               <Textarea
-                label="Detalhes / Motivos"
+                label={t('devotional.prayer.modalCreate.detailsLabel')}
                 rows={3}
                 data-testid="prayer-description-input"
                 value={newDescription}
                 onChange={(e) => setNewDescription(e.target.value)}
-                placeholder="Descreva detalhes para oração em família..."
+                placeholder={t('devotional.prayer.modalCreate.detailsPlaceholder')}
               />
             </form>
           </Modal>

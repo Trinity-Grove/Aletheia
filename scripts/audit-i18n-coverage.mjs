@@ -117,41 +117,49 @@ export async function scanDirectory(baseDir) {
   return results;
 }
 
-export function getMigrationWave(filePath) {
-  const p = filePath.toLowerCase().replace(/\\/g, '/');
-  if (p.includes('/attendance/') || p.includes('/records/')) {
-    return {
-      id: 'Onda 1',
-      title: 'Frequência e Registros de Aprendizagem',
-      domains: 'attendance, records',
-    };
-  }
-  if (p.includes('/devotional/')) {
-    return {
-      id: 'Onda 2',
-      title: 'Devocional Familiar e Comparador Bíblico',
-      domains: 'devotional, comparador',
-    };
-  }
-  if (p.includes('/curriculum/') || p.includes('/lessons/')) {
-    return {
-      id: 'Onda 3',
-      title: 'Currículo, Atividades Pedagógicas e Galeria de Pacotes',
-      domains: 'curriculum, lessons, activities',
-    };
-  }
-  if (p.includes('/reports/') || p.includes('/portfolio/') || p.includes('/compliance/')) {
-    return {
-      id: 'Onda 4',
-      title: 'Relatórios, Dossiês de Conformidade e Portfólio',
-      domains: 'reports, portfolio, compliance',
-    };
-  }
-  return {
+export const WAVE_METADATA = {
+  'Onda 1': {
+    id: 'Onda 1',
+    title: 'Frequência e Registros de Aprendizagem',
+    domains: 'attendance, records',
+  },
+  'Onda 2': {
+    id: 'Onda 2',
+    title: 'Devocional Familiar e Comparador Bíblico',
+    domains: 'devotional, comparador',
+  },
+  'Onda 3': {
+    id: 'Onda 3',
+    title: 'Currículo, Atividades Pedagógicas e Galeria de Pacotes',
+    domains: 'curriculum, lessons, activities',
+  },
+  'Onda 4': {
+    id: 'Onda 4',
+    title: 'Relatórios, Dossiês de Conformidade e Portfólio',
+    domains: 'reports, portfolio, compliance',
+  },
+  'Onda 5': {
     id: 'Onda 5',
     title: 'Convites, Verificações e Fechamento de Cobertura Global',
     domains: 'invitations, verify, auth, settings, learners, layout, shared',
-  };
+  },
+};
+
+export function getMigrationWave(filePath) {
+  const p = filePath.toLowerCase().replace(/\\/g, '/');
+  if (p.includes('/attendance/') || p.includes('/records/')) {
+    return WAVE_METADATA['Onda 1'];
+  }
+  if (p.includes('/devotional/')) {
+    return WAVE_METADATA['Onda 2'];
+  }
+  if (p.includes('/curriculum/') || p.includes('/lessons/')) {
+    return WAVE_METADATA['Onda 3'];
+  }
+  if (p.includes('/reports/') || p.includes('/portfolio/') || p.includes('/compliance/')) {
+    return WAVE_METADATA['Onda 4'];
+  }
+  return WAVE_METADATA['Onda 5'];
 }
 
 export function formatMarkdownReport(results) {
@@ -176,7 +184,8 @@ export function formatMarkdownReport(results) {
   const waveOrder = ['Onda 1', 'Onda 2', 'Onda 3', 'Onda 4', 'Onda 5'];
   const waveMap = new Map();
   for (const wId of waveOrder) {
-    waveMap.set(wId, { id: wId, title: '', domains: '', pendingPages: [], pendingComponents: [] });
+    const meta = WAVE_METADATA[wId];
+    waveMap.set(wId, { id: wId, title: meta.title, domains: meta.domains, pendingPages: [], pendingComponents: [] });
   }
 
   for (const item of results) {
@@ -184,8 +193,6 @@ export function formatMarkdownReport(results) {
       const waveInfo = getMigrationWave(item.filePath);
       const entry = waveMap.get(waveInfo.id);
       if (entry) {
-        entry.title = waveInfo.title;
-        entry.domains = waveInfo.domains;
         const isPage = item.filePath.includes('/app/') || item.filePath.startsWith('apps/web/app/');
         if (isPage) {
           entry.pendingPages.push(item);

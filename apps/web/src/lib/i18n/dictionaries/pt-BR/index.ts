@@ -12,6 +12,7 @@ import { support } from './support';
 import { settings } from './settings';
 import { attendance } from './attendance';
 import { records } from './records';
+import { devotional } from './devotional';
 
 export const ptBR = {
   common,
@@ -28,5 +29,6 @@ export const ptBR = {
   settings,
   attendance,
   records,
+  devotional,
 } as const;
 

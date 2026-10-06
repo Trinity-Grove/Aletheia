@@ -1,47 +1,24 @@
 # Relatório de Cobertura de Internacionalização (i18n)
 
-- **Total de Páginas:** 31 (9 traduzidas, 22 pendentes - 29.0%)
-- **Total de Componentes:** 92 (15 traduzidos, 77 pendentes - 16.3%)
-- **Cobertura Total de Frontend:** 24 / 123 arquivos (19.5%)
+- **Total de Páginas:** 31 (13 traduzidas, 18 pendentes - 41.9%)
+- **Total de Componentes:** 95 (29 traduzidos, 66 pendentes - 30.5%)
+- **Cobertura Total de Frontend:** 42 / 126 arquivos (33.3%)
 
 ## Resumo por Domínio e Ondas de Migração
 
 | Onda de Migração | Domínios Principais | Arquivos Pendentes | Páginas Pendentes | Componentes Pendentes |
 | :--- | :--- | :--- | :--- | :--- |
-| **Onda 1: Frequência e Registros de Aprendizagem** | `attendance, records` | 9 | 2 | 7 |
-| **Onda 2: Devocional Familiar e Comparador Bíblico** | `devotional, comparador` | 6 | 2 | 4 |
+| **Onda 1: Frequência e Registros de Aprendizagem** | `attendance, records` | 0 | 0 | 0 |
+| **Onda 2: Devocional Familiar e Comparador Bíblico** | `devotional, comparador` | 0 | 0 | 0 |
 | **Onda 3: Currículo, Atividades Pedagógicas e Galeria de Pacotes** | `curriculum, lessons, activities` | 28 | 4 | 24 |
 | **Onda 4: Relatórios, Dossiês de Conformidade e Portfólio** | `reports, portfolio, compliance` | 10 | 2 | 8 |
 | **Onda 5: Convites, Verificações e Fechamento de Cobertura Global** | `invitations, verify, auth, settings, learners, layout, shared` | 46 | 12 | 34 |
 
 ## Detalhamento dos Arquivos Pendentes por Onda
 
-### Onda 1: Frequência e Registros de Aprendizagem (`attendance, records`) — 9 arquivos pendentes
+### Onda 1: Frequência e Registros de Aprendizagem (`attendance, records`) — 0 arquivos pendentes
 
-**Páginas (2):**
-- `apps/web/app/(dashboard)/attendance/page.tsx` (0 strings detectadas)
-- `apps/web/app/(dashboard)/records/page.tsx` (0 strings detectadas)
-
-**Componentes (7):**
-- `apps/web/src/components/records/competency-tracking-panel.tsx` (18 strings detectadas)
-- `apps/web/src/components/records/evidence-submission-modal.tsx` (8 strings detectadas)
-- `apps/web/src/components/records/portfolio-gallery-view.tsx` (5 strings detectadas)
-- `apps/web/src/components/records/portfolio-item-modal.tsx` (17 strings detectadas)
-- `apps/web/src/components/records/record-card.tsx` (7 strings detectadas)
-- `apps/web/src/components/records/record-form-modal.tsx` (21 strings detectadas)
-- `apps/web/src/components/records/records-journal-view.tsx` (5 strings detectadas)
-
-### Onda 2: Devocional Familiar e Comparador Bíblico (`devotional, comparador`) — 6 arquivos pendentes
-
-**Páginas (2):**
-- `apps/web/app/(dashboard)/devotional/comparador/page.tsx` (0 strings detectadas)
-- `apps/web/app/(dashboard)/devotional/page.tsx` (0 strings detectadas)
-
-**Componentes (4):**
-- `apps/web/src/components/devotional/bible-translation-compare-view.tsx` (3 strings detectadas)
-- `apps/web/src/components/devotional/devotional-form-modal.tsx` (15 strings detectadas)
-- `apps/web/src/components/devotional/devotional-view.tsx` (8 strings detectadas)
-- `apps/web/src/components/devotional/prayer-journal.tsx` (16 strings detectadas)
+### Onda 2: Devocional Familiar e Comparador Bíblico (`devotional, comparador`) — 0 arquivos pendentes
 
 ### Onda 3: Currículo, Atividades Pedagógicas e Galeria de Pacotes (`curriculum, lessons, activities`) — 28 arquivos pendentes
 
@@ -154,18 +131,18 @@
 | Página | `apps/web/app/(auth)/register/page.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
 | Página | `apps/web/app/(auth)/reset-password/page.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
 | Página | `apps/web/app/(auth)/verify-email/page.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
-| Página | `apps/web/app/(dashboard)/attendance/page.tsx` | ❌ Pendente | 0 strings | Onda 1 |
+| Página | `apps/web/app/(dashboard)/attendance/page.tsx` | ✅ Traduzido | 0 strings | Onda 1 |
 | Página | `apps/web/app/(dashboard)/curriculum/activities/page.tsx` | ❌ Pendente | 0 strings | Onda 3 |
 | Página | `apps/web/app/(dashboard)/curriculum/packs/page.tsx` | ❌ Pendente | 0 strings | Onda 3 |
 | Página | `apps/web/app/(dashboard)/curriculum/page.tsx` | ❌ Pendente | 1 strings | Onda 3 |
 | Página | `apps/web/app/(dashboard)/curriculum/seminary/page.tsx` | ❌ Pendente | 1 strings | Onda 3 |
 | Página | `apps/web/app/(dashboard)/design-system/page.tsx` | ❌ Pendente | 0 strings | Onda 5 |
-| Página | `apps/web/app/(dashboard)/devotional/comparador/page.tsx` | ❌ Pendente | 0 strings | Onda 2 |
-| Página | `apps/web/app/(dashboard)/devotional/page.tsx` | ❌ Pendente | 0 strings | Onda 2 |
+| Página | `apps/web/app/(dashboard)/devotional/comparador/page.tsx` | ✅ Traduzido | 0 strings | Onda 2 |
+| Página | `apps/web/app/(dashboard)/devotional/page.tsx` | ✅ Traduzido | 0 strings | Onda 2 |
 | Página | `apps/web/app/(dashboard)/learners/page.tsx` | ❌ Pendente | 0 strings | Onda 5 |
 | Página | `apps/web/app/(dashboard)/onboarding/page.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
 | Página | `apps/web/app/(dashboard)/portfolio/page.tsx` | ❌ Pendente | 0 strings | Onda 4 |
-| Página | `apps/web/app/(dashboard)/records/page.tsx` | ❌ Pendente | 0 strings | Onda 1 |
+| Página | `apps/web/app/(dashboard)/records/page.tsx` | ✅ Traduzido | 0 strings | Onda 1 |
 | Página | `apps/web/app/(dashboard)/reports/page.tsx` | ❌ Pendente | 0 strings | Onda 4 |
 | Página | `apps/web/app/(dashboard)/schedule/page.tsx` | ❌ Pendente | 2 strings | Onda 5 |
 | Página | `apps/web/app/(dashboard)/settings/page.tsx` | ❌ Pendente | 1 strings | Onda 5 |
@@ -216,15 +193,17 @@
 | Componente | `apps/web/src/components/curriculum/theology-rubric-evaluator.tsx` | ❌ Pendente | 2 strings | Onda 3 |
 | Componente | `apps/web/src/components/dashboard/learner-focus-header.tsx` | ❌ Pendente | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/design-system/design-system-showcase.tsx` | ❌ Pendente | 79 strings | Onda 5 |
-| Componente | `apps/web/src/components/devotional/bible-translation-compare-view.tsx` | ❌ Pendente | 3 strings | Onda 2 |
-| Componente | `apps/web/src/components/devotional/devotional-form-modal.tsx` | ❌ Pendente | 15 strings | Onda 2 |
-| Componente | `apps/web/src/components/devotional/devotional-view.tsx` | ❌ Pendente | 8 strings | Onda 2 |
-| Componente | `apps/web/src/components/devotional/prayer-journal.tsx` | ❌ Pendente | 16 strings | Onda 2 |
+| Componente | `apps/web/src/components/devotional/bible-translation-compare-view.tsx` | ✅ Traduzido | 0 strings | Onda 2 |
+| Componente | `apps/web/src/components/devotional/devotional-form-modal.tsx` | ✅ Traduzido | 0 strings | Onda 2 |
+| Componente | `apps/web/src/components/devotional/devotional-view.tsx` | ✅ Traduzido | 0 strings | Onda 2 |
+| Componente | `apps/web/src/components/devotional/prayer-journal.tsx` | ✅ Traduzido | 0 strings | Onda 2 |
 | Componente | `apps/web/src/components/invitations/invitation-accept-view.tsx` | ❌ Pendente | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/layout/learner-focus-switcher.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/layout/notification-bell.tsx` | ❌ Pendente | 2 strings | Onda 5 |
 | Componente | `apps/web/src/components/layout/product-shell.tsx` | ❌ Pendente | 2 strings | Onda 5 |
 | Componente | `apps/web/src/components/layout/unverified-email-banner.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
+| Componente | `apps/web/src/components/learner-portal/learner-badge-unlock-modal.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
+| Componente | `apps/web/src/components/learner-portal/learner-badges-view.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/learner-portal/learner-evidence-modal.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/learner-portal/learner-progress-view.tsx` | ❌ Pendente | 1 strings | Onda 5 |
 | Componente | `apps/web/src/components/learner-portal/learner-reflection-modal.tsx` | ❌ Pendente | 1 strings | Onda 5 |
@@ -232,6 +211,7 @@
 | Componente | `apps/web/src/components/learners/learner-achievements-modal.tsx` | ❌ Pendente | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/learners/learner-card.tsx` | ❌ Pendente | 2 strings | Onda 5 |
 | Componente | `apps/web/src/components/learners/learner-form-modal.tsx` | ❌ Pendente | 17 strings | Onda 5 |
+| Componente | `apps/web/src/components/learners/learner-portal-badges-section.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/learners/learners-list.tsx` | ❌ Pendente | 2 strings | Onda 5 |
 | Componente | `apps/web/src/components/lessons/ai-consent-notice-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
 | Componente | `apps/web/src/components/lessons/ai-lesson-draft-modal.tsx` | ❌ Pendente | 2 strings | Onda 3 |
@@ -242,13 +222,13 @@
 | Componente | `apps/web/src/components/lessons/routine-slot-modal.tsx` | ❌ Pendente | 12 strings | Onda 3 |
 | Componente | `apps/web/src/components/lessons/weekly-routine-grid.tsx` | ❌ Pendente | 5 strings | Onda 3 |
 | Componente | `apps/web/src/components/product-shell.tsx` | ❌ Pendente | 0 strings | Onda 5 |
-| Componente | `apps/web/src/components/records/competency-tracking-panel.tsx` | ❌ Pendente | 18 strings | Onda 1 |
-| Componente | `apps/web/src/components/records/evidence-submission-modal.tsx` | ❌ Pendente | 8 strings | Onda 1 |
-| Componente | `apps/web/src/components/records/portfolio-gallery-view.tsx` | ❌ Pendente | 5 strings | Onda 1 |
-| Componente | `apps/web/src/components/records/portfolio-item-modal.tsx` | ❌ Pendente | 17 strings | Onda 1 |
-| Componente | `apps/web/src/components/records/record-card.tsx` | ❌ Pendente | 7 strings | Onda 1 |
-| Componente | `apps/web/src/components/records/record-form-modal.tsx` | ❌ Pendente | 21 strings | Onda 1 |
-| Componente | `apps/web/src/components/records/records-journal-view.tsx` | ❌ Pendente | 5 strings | Onda 1 |
+| Componente | `apps/web/src/components/records/competency-tracking-panel.tsx` | ✅ Traduzido | 0 strings | Onda 1 |
+| Componente | `apps/web/src/components/records/evidence-submission-modal.tsx` | ✅ Traduzido | 0 strings | Onda 1 |
+| Componente | `apps/web/src/components/records/portfolio-gallery-view.tsx` | ✅ Traduzido | 0 strings | Onda 1 |
+| Componente | `apps/web/src/components/records/portfolio-item-modal.tsx` | ✅ Traduzido | 0 strings | Onda 1 |
+| Componente | `apps/web/src/components/records/record-card.tsx` | ✅ Traduzido | 0 strings | Onda 1 |
+| Componente | `apps/web/src/components/records/record-form-modal.tsx` | ✅ Traduzido | 0 strings | Onda 1 |
+| Componente | `apps/web/src/components/records/records-journal-view.tsx` | ✅ Traduzido | 0 strings | Onda 1 |
 | Componente | `apps/web/src/components/reports/attendance-tracker-view.tsx` | ❌ Pendente | 17 strings | Onda 4 |
 | Componente | `apps/web/src/components/reports/compliance-gauge.tsx` | ❌ Pendente | 3 strings | Onda 4 |
 | Componente | `apps/web/src/components/reports/document-verification-view.tsx` | ❌ Pendente | 4 strings | Onda 4 |
