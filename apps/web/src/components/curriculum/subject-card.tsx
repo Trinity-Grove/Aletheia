@@ -4,16 +4,17 @@ import React from 'react';
 import { AletheiaIcon, Badge, Button, Card, IconButton } from '@aletheia/ui';
 import type { ObjectiveResponseDto, ObjectiveStatus, SubjectResponseDto } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface SubjectCardProps {
   subject: SubjectResponseDto;
   objectives: ObjectiveResponseDto[];
-  onAddObjective: (subjectId: string) => void;
-  onEditSubject: (subject: SubjectResponseDto) => void;
-  onArchiveSubject: (subjectId: string) => void;
-  onToggleStatus: (objectiveId: string, nextStatus: ObjectiveStatus) => void;
-  onEditObjective: (objective: ObjectiveResponseDto) => void;
-  onDeleteObjective: (objectiveId: string) => void;
+  onAddObjective(subjectId: string): void;
+  onEditSubject(subject: SubjectResponseDto): void;
+  onArchiveSubject(subjectId: string): void;
+  onToggleStatus(objectiveId: string, nextStatus: ObjectiveStatus): void;
+  onEditObjective(objective: ObjectiveResponseDto): void;
+  onDeleteObjective(objectiveId: string): void;
 }
 
 export function SubjectCard({
@@ -26,6 +27,7 @@ export function SubjectCard({
   onEditObjective,
   onDeleteObjective,
 }: SubjectCardProps) {
+  const { t } = useLocale();
   const total = objectives.length;
   const achieved = objectives.filter((o) => o.status === 'ACHIEVED').length;
   const percent = total > 0 ? Math.round((achieved / total) * 100) : 0;
@@ -40,12 +42,12 @@ export function SubjectCard({
   const getStatusBadge = (status: ObjectiveStatus): { label: string; variant: 'emerald' | 'amber' | 'slate'; icon: React.ReactNode } => {
     switch (status) {
       case 'ACHIEVED':
-        return { label: 'Concluído', variant: 'emerald', icon: <AletheiaIcon name="check-circle-2" size={12} /> };
+        return { label: t('curriculum.objective.statusAchieved'), variant: 'emerald', icon: <AletheiaIcon name="check-circle-2" size={12} /> };
       case 'IN_PROGRESS':
-        return { label: 'Em Andamento', variant: 'amber', icon: <AletheiaIcon name="clock" size={12} /> };
+        return { label: t('curriculum.objective.statusInProgress'), variant: 'amber', icon: <AletheiaIcon name="clock" size={12} /> };
       case 'NOT_STARTED':
       default:
-        return { label: 'Não Iniciado', variant: 'slate', icon: <AletheiaIcon name="circle" size={12} /> };
+        return { label: t('curriculum.objective.statusNotStarted'), variant: 'slate', icon: <AletheiaIcon name="circle" size={12} /> };
     }
   };
 
@@ -101,7 +103,7 @@ export function SubjectCard({
                 size="sm"
                 data-testid={`edit-subject-btn-${subject.id}`}
                 onClick={() => onEditSubject(subject)}
-                aria-label="Editar disciplina"
+                aria-label={t('curriculum.subject.editAria')}
               >
                 <AletheiaIcon name="pencil" size={14} />
               </IconButton>
@@ -109,11 +111,11 @@ export function SubjectCard({
                 size="sm"
                 data-testid={`archive-subject-btn-${subject.id}`}
                 onClick={() => {
-                  if (window.confirm(`Arquivar a disciplina "${subject.name}"? Ela deixará de aparecer no currículo ativo.`)) {
+                  if (window.confirm(t('curriculum.subject.confirmArchive', { name: subject.name }))) {
                     onArchiveSubject(subject.id);
                   }
                 }}
-                aria-label="Arquivar disciplina"
+                aria-label={t('curriculum.subject.archiveAria')}
               >
                 <AletheiaIcon name="folder" size={14} />
               </IconButton>
@@ -165,7 +167,7 @@ export function SubjectCard({
               border: '1px dashed var(--border-light)',
             }}
           >
-            Nenhum objetivo cadastrado nesta disciplina.
+            {t('curriculum.objective.emptyObjectives')}
           </div>
         ) : (
           objectives.map((obj) => {
@@ -230,7 +232,7 @@ export function SubjectCard({
                       size="sm"
                       data-testid={`edit-objective-btn-${obj.id}`}
                       onClick={() => onEditObjective(obj)}
-                      aria-label="Editar objetivo"
+                      aria-label={t('curriculum.objective.editAria')}
                     >
                       <AletheiaIcon name="pencil" size={14} />
                     </IconButton>
@@ -238,11 +240,11 @@ export function SubjectCard({
                       size="sm"
                       data-testid={`delete-objective-btn-${obj.id}`}
                       onClick={() => {
-                        if (window.confirm(`Excluir o objetivo "${obj.title}"? Esta ação não pode ser desfeita.`)) {
+                        if (window.confirm(t('curriculum.objective.confirmDelete', { title: obj.title }))) {
                           onDeleteObjective(obj.id);
                         }
                       }}
-                      aria-label="Excluir objetivo"
+                      aria-label={t('curriculum.objective.deleteAria')}
                     >
                       <AletheiaIcon name="x" size={14} />
                     </IconButton>
@@ -263,7 +265,7 @@ export function SubjectCard({
           onClick={() => onAddObjective(subject.id)}
           style={{ width: '100%', marginTop: 'auto' }}
         >
-          + Adicionar Objetivo
+          {t('curriculum.objective.addObjective')}
         </Button>
       </Can>
     </Card>

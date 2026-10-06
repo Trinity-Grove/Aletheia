@@ -7,14 +7,15 @@ import type {
   SuggestedRoutineResponseDto,
   SuggestRoutineInputDto,
 } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface CurriculumPlanningWizardModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose(): void;
   familyId: string;
   learnerId?: string | null | undefined;
   academicYearId?: string | null | undefined;
-  onSuccess?: (() => void) | undefined;
+  onSuccess?(): void;
 }
 
 type WizardStep = 1 | 2 | 3;
@@ -75,6 +76,7 @@ export function CurriculumPlanningWizardModal({
   academicYearId,
   onSuccess,
 }: CurriculumPlanningWizardModalProps) {
+  const { t } = useLocale();
   const [step, setStep] = useState<WizardStep>(1);
   const [selectedModel, setSelectedModel] = useState<string>('CHARLOTTE_MASON');
   const [isQuizOpen, setIsQuizOpen] = useState(false);
@@ -346,7 +348,7 @@ export function CurriculumPlanningWizardModal({
                         color: 'var(--text-primary)',
                       }}
                     >
-                      🌿 <strong>Ritmo Suave & Vivo:</strong> Lições curtas e variadas, muito tempo livre na natureza e leitura de livros vivos em voz alta.
+                      {`🌿 `}<strong>{t('curriculum.wizard.gentleRhythm')}</strong> Lições curtas e variadas, muito tempo livre na natureza e leitura de livros vivos em voz alta.
                     </button>
 
                     <button
@@ -367,7 +369,7 @@ export function CurriculumPlanningWizardModal({
                         color: 'var(--text-primary)',
                       }}
                     >
-                      🏛️ <strong>Estrutura Metódica:</strong> Foco em memorização rigorosa de fatos e gramática, debates ordenados e cânone clássico.
+                      {`🏛️ `}<strong>{t('curriculum.wizard.methodicStructure')}</strong> Foco em memorização rigorosa de fatos e gramática, debates ordenados e cânone clássico.
                     </button>
 
                     <button
@@ -388,7 +390,7 @@ export function CurriculumPlanningWizardModal({
                         color: 'var(--text-primary)',
                       }}
                     >
-                      🧩 <strong>Autonomia Prática:</strong> Projetos manuais com materiais concretos, liberdade de escolha e imersão temática prolongada.
+                      {`🧩 `}<strong>{t('curriculum.wizard.practicalAutonomy')}</strong> Projetos manuais com materiais concretos, liberdade de escolha e imersão temática prolongada.
                     </button>
                   </div>
                 </div>
@@ -480,7 +482,9 @@ export function CurriculumPlanningWizardModal({
                 lineHeight: '1.5',
               }}
             >
-              💡 <strong>Como a progressão funciona:</strong> Os objetivos do ano não são entregues em uma lista caótica. Eles são organizados em <strong>blocos temporais sequenciais</strong>. Cada bloco contém seu próprio <strong>cartão metodológico</strong> para orientar você, pai ou mãe, na aplicação diária.
+              💡 <strong>{t('curriculum.wizard.howProgressionWorks')}</strong> {t('curriculum.wizard.progressionExplanation1')}{' '}
+              <strong>{t('curriculum.wizard.progressionExplanation2')}</strong>{t('curriculum.wizard.progressionExplanation3')}{' '}
+              <strong>{t('curriculum.wizard.progressionExplanation4')}</strong> para orientar você, pai ou mãe, na aplicação diária.
             </div>
 
             {/* Block 1 */}
@@ -510,7 +514,7 @@ export function CurriculumPlanningWizardModal({
                     Semanas 1 a 10 • Estabelecimento da rotina e foco cognitivo
                   </span>
                 </div>
-                <Badge variant="indigo">Semanas 1–10</Badge>
+                <Badge variant="indigo">{t('curriculum.wizard.weeks1To10')}</Badge>
               </div>
 
               <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -531,19 +535,19 @@ export function CurriculumPlanningWizardModal({
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(14rem, 1fr))', gap: '0.75rem', fontSize: '0.8125rem' }}>
                     <div>
-                      <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem' }}>Método Principal:</span>
+                      <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem' }}>{t('curriculum.wizard.mainMethod')}</span>
                       <strong style={{ color: 'var(--forest)' }}>
                         {selectedModel === 'CLASSICAL' ? 'Recitação Mnemônica & Gramática Oral' : selectedModel === 'MONTESSORI' ? 'Trabalho Autônomo com Material Concreto' : 'Narração Oral Charlotte Mason'}
                       </strong>
                     </div>
                     <div>
-                      <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem' }}>Ritmo Recomendado:</span>
+                      <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem' }}>{t('curriculum.wizard.recommendedRhythm')}</span>
                       <strong style={{ color: 'var(--text-primary)' }}>
                         {selectedModel === 'CLASSICAL' ? 'Lições diárias de 40 a 45 min' : 'Lições curtas de 15 a 20 min'}
                       </strong>
                     </div>
                     <div style={{ gridColumn: '1 / -1' }}>
-                      <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem' }}>Orientação aos Pais:</span>
+                      <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem' }}>{t('curriculum.wizard.parentsGuidance')}</span>
                       <span style={{ color: 'var(--text-primary)', lineHeight: '1.4' }}>
                         Peça à criança para recontar a lição imediatamente após a leitura em voz alta, sem interrupções. Valorize o esforço de atenção total e registre as palavras originais no diário.
                       </span>
@@ -557,9 +561,9 @@ export function CurriculumPlanningWizardModal({
                     Metas Inclusas no Bloco:
                   </strong>
                   <ul style={{ margin: '0.5rem 0 0 1.25rem', padding: 0, fontSize: '0.8125rem', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <li>Desenvolver capacidade de atenção sustentada de 15 minutos em leituras vivas.</li>
-                    <li>Narrar oralmente um episódio histórico ou conto moral com início, meio e fim.</li>
-                    <li>Registrar observação da natureza com desenho representativo semanal.</li>
+                    <li>{t('curriculum.wizard.guidanceGoal1')}</li>
+                    <li>{t('curriculum.wizard.guidanceGoal2')}</li>
+                    <li>{t('curriculum.wizard.guidanceGoal3')}</li>
                   </ul>
                 </div>
               </div>
@@ -584,7 +588,7 @@ export function CurriculumPlanningWizardModal({
                     Semanas 11 a 24 • Ampliação vocabular, cópia elegante e exploração científica
                   </span>
                 </div>
-                <Badge variant="slate">Semanas 11–24</Badge>
+                <Badge variant="slate">{t('curriculum.wizard.weeks11To24')}</Badge>
               </div>
             </div>
 
@@ -607,7 +611,7 @@ export function CurriculumPlanningWizardModal({
                     Semanas 25 a 36 • Apresentações orais, projetos práticos de ofício e celebração
                   </span>
                 </div>
-                <Badge variant="slate">Semanas 25–36</Badge>
+                <Badge variant="slate">{t('curriculum.wizard.weeks25To36')}</Badge>
               </div>
             </div>
           </div>
@@ -665,10 +669,10 @@ export function CurriculumPlanningWizardModal({
                     color: 'var(--text-primary)',
                   }}
                 >
-                  <option value={20}>20 minutos (Charlotte Mason inicial)</option>
-                  <option value={25}>25 minutos (Padrão balanceado)</option>
-                  <option value={40}>40 minutos (Clássico / Fundamental)</option>
-                  <option value={50}>50 minutos (Ciclo Montessori / Imersão)</option>
+                  <option value={20}>{t('curriculum.wizard.duration20')}</option>
+                  <option value={25}>{t('curriculum.wizard.duration25')}</option>
+                  <option value={40}>{t('curriculum.wizard.duration40')}</option>
+                  <option value={50}>{t('curriculum.wizard.duration50')}</option>
                 </select>
               </div>
 
@@ -679,7 +683,7 @@ export function CurriculumPlanningWizardModal({
                     checked={includeDevotional}
                     onChange={(e) => setIncludeDevotional(e.target.checked)}
                   />
-                  <span>Devocional Matinal (15 min)</span>
+                  <span>{t('curriculum.wizard.morningDevotional')}</span>
                 </label>
 
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', cursor: 'pointer' }}>
@@ -688,7 +692,7 @@ export function CurriculumPlanningWizardModal({
                     checked={fridaysForProjects}
                     onChange={(e) => setFridaysForProjects(e.target.checked)}
                   />
-                  <span>Sextas de Campo & Ofícios</span>
+                  <span>{t('curriculum.wizard.fieldFridays')}</span>
                 </label>
               </div>
             </div>
