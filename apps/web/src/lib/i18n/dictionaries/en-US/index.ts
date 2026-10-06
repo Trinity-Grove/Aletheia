@@ -13,6 +13,7 @@ import { support } from './support';
 import { settings } from './settings';
 import { attendance } from './attendance';
 import { records } from './records';
+import { devotional } from './devotional';
 
 export const enUS: Dictionary = {
   common,
@@ -29,5 +30,6 @@ export const enUS: Dictionary = {
   settings,
   attendance,
   records,
+  devotional,
 };
 

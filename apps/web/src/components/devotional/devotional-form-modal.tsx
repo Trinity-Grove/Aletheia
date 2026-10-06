@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Input, Modal, Select, Textarea } from '@aletheia/ui';
 import type { DailyDevotionalResponseDto, UpsertDailyDevotionalDto } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface DevotionalFormModalProps {
   isOpen: boolean;
@@ -10,7 +11,7 @@ export interface DevotionalFormModalProps {
   initialData?: DailyDevotionalResponseDto | null;
   familyId: string | null;
   onClose: () => void;
-  onSubmit: (_data: UpsertDailyDevotionalDto) => Promise<void> | void;
+  onSubmit(_data: UpsertDailyDevotionalDto): Promise<void> | void;
 }
 
 // Kept in sync with YouVersionService's POPULAR_BIBLE_VERSIONS
@@ -33,6 +34,7 @@ export function DevotionalFormModal({
   onClose,
   onSubmit,
 }: DevotionalFormModalProps) {
+  const { t } = useLocale();
   const [date, setDate] = useState(currentDate);
   const [bibleReference, setBibleReference] = useState('');
   const [bibleVersionId, setBibleVersionId] = useState('nvi');
@@ -73,11 +75,11 @@ export function DevotionalFormModal({
 
   const handleLookupScripture = async () => {
     if (!bibleReference.trim()) {
-      setError('Informe uma referência bíblica para buscar (ex: João 3:16 ou Salmos 23).');
+      setError(t('devotional.form.errors.referenceRequired'));
       return;
     }
     if (!familyId) {
-      setError('Família não autenticada.');
+      setError(t('devotional.form.errors.familyUnauthenticated'));
       return;
     }
 
@@ -87,7 +89,7 @@ export function DevotionalFormModal({
       const url = `/api/v1/families/${encodeURIComponent(familyId)}/devotionals/scripture/lookup?reference=${encodeURIComponent(bibleReference.trim())}&versionId=${encodeURIComponent(bibleVersionId)}`;
       const res = await fetch(url, { credentials: 'include' });
       if (!res.ok) {
-        throw new Error('Não foi possível obter o texto bíblico. Digite o texto manualmente.');
+        throw new Error(t('devotional.form.errors.lookupFailed'));
       }
       const data = await res.json();
       if (data && data.content) {
@@ -96,10 +98,10 @@ export function DevotionalFormModal({
         // The lookup endpoint responds 200 with an empty passage when the
         // upstream provider has no text for this reference/version (#214)
         // -- surface that instead of leaving the field silently blank.
-        setError('Não foi encontrado texto para essa referência nessa versão. Tente outra versão ou digite o texto manualmente.');
+        setError(t('devotional.form.errors.lookupNotFound'));
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Erro ao buscar texto bíblico.';
+      const msg = err instanceof Error ? err.message : t('devotional.form.errors.lookupGeneric');
       setError(msg);
     } finally {
       setLookupLoading(false);
@@ -111,7 +113,7 @@ export function DevotionalFormModal({
     setError(null);
 
     if (!bibleReference.trim() || !date) {
-      setError('Data e Referência Bíblica são obrigatórias.');
+      setError(t('devotional.form.errors.requiredFields'));
       return;
     }
 
@@ -130,7 +132,7 @@ export function DevotionalFormModal({
       });
       onClose();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Falha ao salvar devocional.';
+      const msg = err instanceof Error ? err.message : t('devotional.form.errors.saveFailed');
       setError(msg);
     } finally {
       setLoading(false);
@@ -144,15 +146,15 @@ export function DevotionalFormModal({
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        title={initialData ? 'Editar Devocional' : 'Novo Devocional Diário'}
+        title={initialData ? t('devotional.form.titles.edit') : t('devotional.form.titles.new')}
         maxWidth="lg"
         footer={
           <>
             <Button variant="secondary" onClick={onClose} disabled={loading}>
-              Cancelar
+              {t('devotional.form.actions.cancel')}
             </Button>
             <Button type="submit" form="devotional-form" data-testid="devotional-submit-btn" isLoading={loading}>
-              {initialData ? 'Salvar Alterações' : 'Criar Devocional'}
+              {initialData ? t('devotional.form.actions.save') : t('devotional.form.actions.create')}
             </Button>
           </>
         }
@@ -166,14 +168,14 @@ export function DevotionalFormModal({
         <form id="devotional-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <Input
-              label="Data *"
+              label={t('devotional.form.labels.date')}
               type="date"
               data-testid="devotional-date-input"
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />
             <Select
-              label="Versão Bíblica"
+              label={t('devotional.form.labels.bibleVersion')}
               data-testid="devotional-version-select"
               value={bibleVersionId}
               onChange={(e) => setBibleVersionId(e.target.value)}
@@ -183,7 +185,7 @@ export function DevotionalFormModal({
 
           <div className="ui-form-group">
             <label htmlFor="devotional-reference" className="ui-form-label">
-              Referência Bíblica *
+              {t('devotional.form.labels.bibleReference')}
             </label>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <Input
@@ -191,7 +193,7 @@ export function DevotionalFormModal({
                 data-testid="devotional-reference-input"
                 value={bibleReference}
                 onChange={(e) => setBibleReference(e.target.value)}
-                placeholder="Ex: Salmos 23:1-6, João 3:16..."
+                placeholder={t('devotional.form.placeholders.bibleReference')}
                 style={{ flex: 1 }}
               />
               <Button
@@ -202,62 +204,62 @@ export function DevotionalFormModal({
                 isLoading={lookupLoading}
                 style={{ whiteSpace: 'nowrap' }}
               >
-                Buscar Texto YouVersion
+                {t('devotional.form.actions.lookupScripture')}
               </Button>
             </div>
           </div>
 
           <Textarea
-            label="Texto da Passagem"
+            label={t('devotional.form.labels.passageText')}
             rows={4}
             data-testid="devotional-passage-input"
             value={passageText}
             onChange={(e) => setPassageText(e.target.value)}
-            placeholder="Cole ou busque o texto bíblico da leitura..."
+            placeholder={t('devotional.form.placeholders.passageText')}
           />
 
           <Textarea
-            label="Reflexão / Comentário Familiar"
+            label={t('devotional.form.labels.reflection')}
             rows={3}
             data-testid="devotional-reflection-input"
             value={reflection}
             onChange={(e) => setReflection(e.target.value)}
-            placeholder="Reflexão principal, contexto e lições para a família..."
+            placeholder={t('devotional.form.placeholders.reflection')}
           />
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <Input
-              label="Versículo para Memorização"
+              label={t('devotional.form.labels.memoryVerse')}
               data-testid="devotional-memory-input"
               value={memoryVerse}
               onChange={(e) => setMemoryVerse(e.target.value)}
-              placeholder="Ex: Guardei no coração a tua palavra..."
+              placeholder={t('devotional.form.placeholders.memoryVerse')}
             />
             <Input
-              label="Hino / Cântico"
+              label={t('devotional.form.labels.hymn')}
               data-testid="devotional-hymn-input"
               value={hymnOrSong}
               onChange={(e) => setHymnOrSong(e.target.value)}
-              placeholder="Ex: Castelo Forte, Maravilhosa Graça..."
+              placeholder={t('devotional.form.placeholders.hymn')}
             />
           </div>
 
           <Textarea
-            label="Perguntas para Diálogo / Catequese"
+            label={t('devotional.form.labels.discussionQuestions')}
             rows={2}
             data-testid="devotional-questions-input"
             value={discussionQuestions}
             onChange={(e) => setDiscussionQuestions(e.target.value)}
-            placeholder={'1. O que este texto nos ensina sobre Deus?\n2. Como podemos praticar isso hoje?'}
+            placeholder={t('devotional.form.placeholders.discussionQuestions')}
           />
 
           <Textarea
-            label="Aplicação Prática"
+            label={t('devotional.form.labels.practicalApplication')}
             rows={2}
             data-testid="devotional-application-input"
             value={practicalApplication}
             onChange={(e) => setPracticalApplication(e.target.value)}
-            placeholder="Ações concretas, atitudes de amor e serviço para hoje..."
+            placeholder={t('devotional.form.placeholders.practicalApplication')}
           />
         </form>
       </Modal>
