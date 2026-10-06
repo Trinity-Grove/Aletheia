@@ -10,12 +10,13 @@ import type {
   SubjectResponseDto,
   UpdateScheduleSlotDto,
 } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface RoutineSlotModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (dto: CreateScheduleSlotDto) => Promise<void>;
-  onUpdate?: ((slotId: string, dto: UpdateScheduleSlotDto) => Promise<void>) | undefined;
+  onSave(dto: CreateScheduleSlotDto): Promise<void>;
+  onUpdate?(slotId: string, dto: UpdateScheduleSlotDto): Promise<void>;
   learners: LearnerSummaryDto[];
   subjects: SubjectResponseDto[];
   initialDayOfWeek?: DayOfWeek;
@@ -33,6 +34,16 @@ export const DAYS_OF_WEEK: Array<{ value: DayOfWeek; label: string }> = [
   { value: 7, label: 'Domingo' },
 ];
 
+export const DAY_OF_WEEK_KEYS: Record<DayOfWeek, string> = {
+  1: 'lessons.routineModal.days.monday',
+  2: 'lessons.routineModal.days.tuesday',
+  3: 'lessons.routineModal.days.wednesday',
+  4: 'lessons.routineModal.days.thursday',
+  5: 'lessons.routineModal.days.friday',
+  6: 'lessons.routineModal.days.saturday',
+  7: 'lessons.routineModal.days.sunday',
+};
+
 export function RoutineSlotModal({
   isOpen,
   onClose,
@@ -44,6 +55,7 @@ export function RoutineSlotModal({
   academicYearId,
   slotToEdit,
 }: RoutineSlotModalProps) {
+  const { t } = useLocale();
   const [title, setTitle] = useState('');
   const [dayOfWeek, setDayOfWeek] = useState<DayOfWeek>(initialDayOfWeek);
   const [startTime, setStartTime] = useState('08:00');
@@ -86,11 +98,11 @@ export function RoutineSlotModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      setError('Por favor, informe o título do bloco de rotina.');
+      setError(t('lessons.routineModal.titleRequiredError'));
       return;
     }
     if (!startTime || !endTime) {
-      setError('Por favor, informe os horários de início e término.');
+      setError(t('lessons.routineModal.timeRequiredError'));
       return;
     }
 
@@ -124,7 +136,7 @@ export function RoutineSlotModal({
       setError(
         err instanceof Error
           ? err.message
-          : `Erro ao ${slotToEdit ? 'atualizar' : 'criar'} bloco de rotina`,
+          : (slotToEdit ? t('lessons.routineModal.updateError') : t('lessons.routineModal.saveError')),
       );
     } finally {
       setLoading(false);
@@ -135,15 +147,15 @@ export function RoutineSlotModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={slotToEdit ? 'Editar Bloco de Rotina Semanal' : 'Novo Bloco de Rotina Semanal'}
+      title={slotToEdit ? t('lessons.routineModal.titleEdit') : t('lessons.routineModal.titleNew')}
       maxWidth="lg"
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={loading}>
-            Cancelar
+            {t('lessons.routineModal.cancel')}
           </Button>
           <Button type="submit" form="routine-slot-form" data-testid="save-slot-btn" isLoading={loading}>
-            {slotToEdit ? 'Salvar Alterações' : 'Salvar Bloco'}
+            {slotToEdit ? t('lessons.routineModal.saveChanges') : t('lessons.routineModal.save')}
           </Button>
         </>
       }
@@ -156,25 +168,28 @@ export function RoutineSlotModal({
 
       <form id="routine-slot-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <Input
-          label="Título da Atividade / Bloco *"
+          label={t('lessons.routineModal.activityTitleLabel')}
           data-testid="slot-title-input"
           required
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Ex: Devocional Matinal, Leitura Clássica, Matemática"
+          placeholder={t('lessons.routineModal.activityTitlePlaceholder')}
         />
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <Select
-            label="Dia da Semana *"
+            label={t('lessons.routineModal.weekdayLabel')}
             data-testid="slot-day-select"
             value={dayOfWeek}
             onChange={(e) => setDayOfWeek(Number(e.target.value) as DayOfWeek)}
-            options={DAYS_OF_WEEK.map((d) => ({ value: String(d.value), label: d.label }))}
+            options={DAYS_OF_WEEK.map((d) => ({
+              value: String(d.value),
+              label: t(DAY_OF_WEEK_KEYS[d.value] || '') || d.label,
+            }))}
           />
 
           <Input
-            label="Cor de Destaque"
+            label={t('lessons.routineModal.accentColorLabel')}
             type="color"
             data-testid="slot-color-input"
             value={color}
@@ -184,7 +199,7 @@ export function RoutineSlotModal({
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <Input
-            label="Horário Início *"
+            label={t('lessons.routineModal.startTimeLabel')}
             type="time"
             data-testid="slot-start-time-input"
             required
@@ -192,7 +207,7 @@ export function RoutineSlotModal({
             onChange={(e) => setStartTime(e.target.value)}
           />
           <Input
-            label="Horário Término *"
+            label={t('lessons.routineModal.endTimeLabel')}
             type="time"
             data-testid="slot-end-time-input"
             required
@@ -203,34 +218,34 @@ export function RoutineSlotModal({
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <Select
-            label="Disciplina (Opcional)"
+            label={t('lessons.routineModal.subjectLabel')}
             data-testid="slot-subject-select"
             value={subjectId}
             onChange={(e) => setSubjectId(e.target.value)}
             options={[
-              { value: '', label: 'Nenhuma / Geral' },
+              { value: '', label: t('lessons.routineModal.noneGeneral') },
               ...subjects.map((sub) => ({ value: sub.id, label: sub.name })),
             ]}
           />
 
           <Select
-            label="Educando (Opcional)"
+            label={t('lessons.routineModal.learnerLabel')}
             data-testid="slot-learner-select"
             value={learnerId}
             onChange={(e) => setLearnerId(e.target.value)}
             options={[
-              { value: '', label: 'Toda a Família' },
+              { value: '', label: t('lessons.routineModal.wholeFamily') },
               ...learners.map((l) => ({ value: l.id, label: l.preferredName || l.firstName })),
             ]}
           />
         </div>
 
         <Input
-          label="Local / Espaço (Opcional)"
+          label={t('lessons.routineModal.locationLabel')}
           data-testid="slot-location-input"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
-          placeholder="Ex: Sala de Leitura, Mesa de Estudos, Ar Livre"
+          placeholder={t('lessons.routineModal.locationPlaceholder')}
         />
       </form>
     </Modal>

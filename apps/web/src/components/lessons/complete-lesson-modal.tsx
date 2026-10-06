@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Input, Modal, Textarea } from '@aletheia/ui';
 import type { CompleteLessonDto } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface CompleteLessonItem {
   id: string;
@@ -15,7 +16,7 @@ export interface CompleteLessonModalProps {
   isOpen: boolean;
   lesson: CompleteLessonItem | null;
   onClose: () => void;
-  onComplete: (lessonId: string, dto: CompleteLessonDto, learnerId?: string) => Promise<void>;
+  onComplete(lessonId: string, dto: CompleteLessonDto, learnerId?: string): Promise<void>;
 }
 
 export function CompleteLessonModal({
@@ -24,6 +25,7 @@ export function CompleteLessonModal({
   onClose,
   onComplete,
 }: CompleteLessonModalProps) {
+  const { t } = useLocale();
   const [actualDurationMinutes, setActualDurationMinutes] = useState<number>(45);
   const [notes, setNotes] = useState('');
   const [learnerNotes, setLearnerNotes] = useState<Record<string, string>>({});
@@ -58,7 +60,7 @@ export function CompleteLessonModal({
       });
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erro ao concluir lição');
+      setError(err instanceof Error ? err.message : t('lessons.completeModal.errorFallback'));
     } finally {
       setLoading(false);
     }
@@ -68,19 +70,19 @@ export function CompleteLessonModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Concluir Lição"
+      title={t('lessons.completeModal.title')}
       description={
         <>
-          Lição: <strong>{lesson.title}</strong>
+          {t('lessons.completeModal.lessonPrefix')} <strong>{lesson.title}</strong>
         </>
       }
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={loading}>
-            Cancelar
+            {t('lessons.completeModal.cancel')}
           </Button>
           <Button type="submit" form="complete-lesson-form" data-testid="confirm-complete-btn" isLoading={loading}>
-            Concluir Lição
+            {t('lessons.completeModal.confirm')}
           </Button>
         </>
       }
@@ -93,7 +95,7 @@ export function CompleteLessonModal({
 
       <form id="complete-lesson-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <Input
-          label="Tempo Real de Execução (minutos)"
+          label={t('lessons.completeModal.executionTimeLabel')}
           type="number"
           data-testid="actual-duration-input"
           min={1}
@@ -103,28 +105,28 @@ export function CompleteLessonModal({
         />
 
         <Textarea
-          label="Notas de Avaliação e Desempenho Geral"
+          label={t('lessons.completeModal.evaluationNotesLabel')}
           rows={3}
           data-testid="complete-notes-input"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Como foi a compreensão do tema, engajamento e retenção..."
+          placeholder={t('lessons.completeModal.evaluationNotesPlaceholder')}
         />
 
         {lesson.learners && lesson.learners.length > 1 && (
           <div>
             <span style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-              Observações Individuais por Educando (Opcional)
+              {t('lessons.completeModal.individualNotesTitle')}
             </span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {lesson.learners.map((l) => (
                 <Input
                   key={l.learnerId}
-                  label={l.learnerName || 'Educando'}
+                  label={l.learnerName || t('lessons.completeModal.learnerFallback')}
                   data-testid={`learner-note-input-${l.learnerId}`}
                   value={learnerNotes[l.learnerId] || ''}
                   onChange={(e) => handleLearnerNoteChange(l.learnerId, e.target.value)}
-                  placeholder="Feedback específico..."
+                  placeholder={t('lessons.completeModal.specificFeedbackPlaceholder')}
                 />
               ))}
             </div>

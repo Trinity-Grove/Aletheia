@@ -17,9 +17,9 @@ export interface DailyAgendaViewProps {
   onOpenCreateSlot: () => void;
   onOpenCompleteLesson: (item: DailyAgendaItemDto) => void;
   onOpenRescheduleLesson: (item: DailyAgendaItemDto) => void;
-  onQuickToggleComplete?: (item: DailyAgendaItemDto) => Promise<void>;
-  onDeleteLesson?: (lessonId: string) => Promise<void>;
-  onDeleteSlot?: (slotId: string) => Promise<void>;
+  onQuickToggleComplete?(item: DailyAgendaItemDto): Promise<void>;
+  onDeleteLesson?(lessonId: string): Promise<void>;
+  onDeleteSlot?(slotId: string): Promise<void>;
 }
 
 const LESSON_STATUS_KEYS: Record<string, string> = {
@@ -106,13 +106,13 @@ export function DailyAgendaView({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Button variant="secondary" size="sm" onClick={() => handleShiftDate(-1)}>
-            &larr; Ontem
+            &larr; {t('lessons.agenda.yesterday')}
           </Button>
           <Button variant="secondary" size="sm" onClick={handleToday}>
-            Hoje
+            {t('lessons.agenda.today')}
           </Button>
           <Button variant="secondary" size="sm" onClick={() => handleShiftDate(1)}>
-            Amanhã &rarr;
+            {t('lessons.agenda.tomorrow')} &rarr;
           </Button>
         </div>
 
@@ -125,7 +125,7 @@ export function DailyAgendaView({
           />
           <Can action="manage_lessons">
             <Button size="sm" data-testid="create-lesson-btn" onClick={onOpenCreateLesson}>
-              + Nova Lição
+              + {t('lessons.agenda.planLesson')}
             </Button>
           </Can>
           <Can action="manage_lessons">
@@ -140,7 +140,7 @@ export function DailyAgendaView({
           </Can>
           <Can action="manage_lessons">
             <Button variant="secondary" size="sm" data-testid="create-slot-btn" onClick={onOpenCreateSlot}>
-              + Bloco de Rotina
+              + {t('lessons.agenda.createRoutineSlot')}
             </Button>
           </Can>
         </div>
@@ -158,13 +158,17 @@ export function DailyAgendaView({
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
           <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-            Progresso do Dia
+            {t('lessons.agenda.dailyProgress')}
           </span>
           <span
             data-testid="completed-totals-text"
             style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-indigo-700)' }}
           >
-            {completedItems} de {totalItems} concluídos ({progressPercent}%)
+            {t('lessons.agenda.completedProgress', {
+              completed: completedItems,
+              total: totalItems,
+              percent: progressPercent,
+            })}
           </span>
         </div>
         <div
@@ -223,19 +227,19 @@ export function DailyAgendaView({
           </div>
           <div>
             <p style={{ fontSize: '1.125rem', color: 'var(--text-primary)', marginBottom: '0.375rem', fontWeight: 700 }}>
-              Nenhuma atividade ou lição planejada para esta data ({selectedDate}).
+              {t('lessons.agenda.emptyTitle', { date: selectedDate })}
             </p>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '28rem', margin: '0 auto' }}>
-              Planeje lições do currículo ou adicione blocos de rotina semanal para organizar o aprendizado da família.
+              {t('lessons.agenda.emptyDescription')}
             </p>
           </div>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
             <Can action="manage_lessons">
-              <Button onClick={onOpenCreateLesson}>Planejar Lição</Button>
+              <Button onClick={onOpenCreateLesson}>{t('lessons.agenda.planLesson')}</Button>
             </Can>
             <Can action="manage_lessons">
               <Button variant="secondary" onClick={onOpenCreateSlot}>
-                Criar Bloco de Rotina
+                {t('lessons.agenda.createRoutineBlock')}
               </Button>
             </Can>
           </div>
@@ -282,7 +286,7 @@ export function DailyAgendaView({
                     disabled={isRoutine && !onQuickToggleComplete}
                     title={
                       isRoutine && !onQuickToggleComplete
-                        ? 'Blocos de rotina não têm conclusão diária registrada — use Frequência ou o Diário de Aprendizagem.'
+                        ? t('lessons.agenda.routineNoCompletionTooltip')
                         : undefined
                     }
                     onChange={() => {
@@ -298,7 +302,7 @@ export function DailyAgendaView({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                       {/* Type Badge */}
                       <Badge data-testid={`item-type-badge-${item.id}`} variant="indigo">
-                        {isRoutine ? 'Rotina' : 'Lição'}
+                        {isRoutine ? t('lessons.agenda.routineBadge') : t('lessons.agenda.lessonBadge')}
                       </Badge>
 
                       {/* Subject Badge */}
@@ -343,7 +347,7 @@ export function DailyAgendaView({
                         {item.learnerIds.map((lId) => (
                           <Badge key={lId} data-testid={`learner-badge-${lId}`} variant="slate">
                             <AletheiaIcon name="graduation-cap" size={10} />
-                            <span>{learnerMap.get(lId) || 'Educando'}</span>
+                            <span>{learnerMap.get(lId) || t('lessons.agenda.learnerFallback')}</span>
                           </Badge>
                         ))}
                       </div>
@@ -361,10 +365,10 @@ export function DailyAgendaView({
                           variant={isCompleted ? 'secondary' : 'primary'}
                           data-testid={`complete-lesson-btn-${item.id}`}
                           onClick={() => onOpenCompleteLesson(item)}
-                          title="Concluir lição com notas e avaliação"
+                          title={t('lessons.agenda.completeTooltip')}
                           leftIcon={isCompleted ? <AletheiaIcon name="check" size={12} /> : undefined}
                         >
-                          {isCompleted ? 'Concluída' : 'Concluir'}
+                          {isCompleted ? t('lessons.agenda.completedBtn') : t('lessons.agenda.completeBtn')}
                         </Button>
                       </Can>
 
@@ -374,9 +378,9 @@ export function DailyAgendaView({
                           variant="secondary"
                           data-testid={`reschedule-btn-${item.id}`}
                           onClick={() => onOpenRescheduleLesson(item)}
-                          title="Reagendar lição"
+                          title={t('lessons.agenda.rescheduleTooltip')}
                         >
-                          Reagendar
+                          {t('lessons.agenda.rescheduleBtn')}
                         </Button>
                       </Can>
 
@@ -387,13 +391,13 @@ export function DailyAgendaView({
                             variant="danger"
                             data-testid={`delete-lesson-btn-${item.id}`}
                             onClick={() => {
-                              if (window.confirm('Excluir esta lição? Esta ação não pode ser desfeita.')) {
+                              if (window.confirm(t('lessons.agenda.confirmDeleteLesson'))) {
                                 onDeleteLesson(item.id);
                               }
                             }}
-                            title="Excluir lição"
+                            title={t('lessons.agenda.deleteTooltip')}
                           >
-                            Excluir
+                            {t('lessons.agenda.deleteBtn')}
                           </Button>
                         </Can>
                       )}
@@ -407,13 +411,13 @@ export function DailyAgendaView({
                         variant="danger"
                         data-testid={`delete-slot-btn-${item.id}`}
                         onClick={() => {
-                          if (window.confirm('Excluir este bloco de rotina? Esta ação não pode ser desfeita.')) {
+                          if (window.confirm(t('lessons.agenda.confirmDeleteRoutine'))) {
                             onDeleteSlot(item.id);
                           }
                         }}
-                        title="Excluir bloco de rotina"
+                        title={t('lessons.agenda.deleteRoutineTooltip')}
                       >
-                        Excluir
+                        {t('lessons.agenda.deleteBtn')}
                       </Button>
                     </Can>
                   )}
