@@ -14,6 +14,8 @@ import { settings } from './settings';
 import { attendance } from './attendance';
 import { records } from './records';
 import { devotional } from './devotional';
+import { reports } from './reports';
+import { compliance } from './compliance';
 
 export const enUS: Dictionary = {
   common,
@@ -31,5 +33,7 @@ export const enUS: Dictionary = {
   attendance,
   records,
   devotional,
+  reports,
+  compliance,
 };
 
