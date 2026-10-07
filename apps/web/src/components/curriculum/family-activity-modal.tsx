@@ -3,13 +3,14 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Card } from '@aletheia/ui';
 import type { FamilyActivityResponseDto } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 interface FamilyActivityModalProps {
   isOpen: boolean;
   familyId: string;
   activity: FamilyActivityResponseDto | null;
-  onClose: () => void;
-  onSaved: (activity: FamilyActivityResponseDto) => void;
+  onClose(): void;
+  onSaved(activity: FamilyActivityResponseDto): void;
 }
 
 export function FamilyActivityModal({
@@ -19,6 +20,7 @@ export function FamilyActivityModal({
   onClose,
   onSaved,
 }: FamilyActivityModalProps) {
+  const { t } = useLocale();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<'PRIVATE' | 'PUBLIC'>('PRIVATE');
@@ -39,7 +41,7 @@ export function FamilyActivityModal({
 
   const handleSave = async () => {
     if (!name.trim()) {
-      setError('Dê um nome para a atividade.');
+      setError(t('curriculum.familyActivities.nameRequired'));
       return;
     }
 
@@ -66,14 +68,14 @@ export function FamilyActivityModal({
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao salvar a atividade.');
+        throw new Error(err.message || t('curriculum.familyActivities.saveError'));
       }
 
       const saved: FamilyActivityResponseDto = await res.json();
       onSaved(saved);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao salvar a atividade.');
+      setError(err instanceof Error ? err.message : t('curriculum.familyActivities.saveError'));
     } finally {
       setSaving(false);
     }
@@ -96,14 +98,14 @@ export function FamilyActivityModal({
     >
       <Card style={{ maxWidth: '32rem', width: '100%', padding: '1.75rem' }}>
         <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.25rem', fontWeight: 700, color: 'var(--forest)' }}>
-          {activity ? 'Editar Atividade' : 'Criar Atividade da Família'}
+          {activity ? t('curriculum.familyActivities.editTitle') : t('curriculum.familyActivities.createTitle')}
         </h2>
 
         {error && <Alert variant="error" style={{ marginBottom: '1rem' }}>{error}</Alert>}
 
         <div style={{ display: 'grid', gap: '1rem' }}>
           <label style={{ display: 'grid', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 600 }}>
-            Nome
+            {t('curriculum.familyActivities.nameLabel')}
             <input
               type="text"
               data-testid="family-activity-name-input"
@@ -118,7 +120,7 @@ export function FamilyActivityModal({
           </label>
 
           <label style={{ display: 'grid', gap: '0.375rem', fontSize: '0.875rem', fontWeight: 600 }}>
-            Descrição
+            {t('curriculum.familyActivities.descriptionLabel')}
             <textarea
               data-testid="family-activity-description-input"
               value={description}
@@ -140,15 +142,15 @@ export function FamilyActivityModal({
               checked={supervisionRequired}
               onChange={(e) => setSupervisionRequired(e.target.checked)}
             />
-            Requer supervisão de um adulto
+            {t('curriculum.familyActivities.supervisionRequired')}
           </label>
 
           <div>
             <span style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.375rem' }}>
-              Visibilidade
+              {t('curriculum.familyActivities.visibilityLabel')}
             </span>
             <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              Você decide se esta atividade fica só com a sua família ou visível para a comunidade.
+              {t('curriculum.familyActivities.visibilityHelp')}
             </p>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
@@ -167,7 +169,7 @@ export function FamilyActivityModal({
                   cursor: 'pointer',
                 }}
               >
-                🔒 Privada
+                {t('curriculum.familyActivities.privateBadge')}
               </button>
               <button
                 type="button"
@@ -185,7 +187,7 @@ export function FamilyActivityModal({
                   cursor: 'pointer',
                 }}
               >
-                🌐 Pública
+                {t('curriculum.familyActivities.publicBadge')}
               </button>
             </div>
           </div>
@@ -193,7 +195,7 @@ export function FamilyActivityModal({
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
           <Button variant="secondary" onClick={onClose} disabled={saving}>
-            Cancelar
+            {t('curriculum.familyActivities.cancel')}
           </Button>
           <Button
             variant="primary"
@@ -201,7 +203,7 @@ export function FamilyActivityModal({
             onClick={handleSave}
             isLoading={saving}
           >
-            Salvar
+            {t('curriculum.familyActivities.save')}
           </Button>
         </div>
       </Card>

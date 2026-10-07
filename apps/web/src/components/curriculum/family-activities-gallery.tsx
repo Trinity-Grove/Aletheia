@@ -4,12 +4,14 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Button, Card } from '@aletheia/ui';
 import type { FamilyActivityResponseDto } from '@aletheia/contracts';
 import { FamilyActivityModal } from './family-activity-modal';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 interface FamilyActivitiesGalleryProps {
   familyId: string;
 }
 
 export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryProps) {
+  const { t } = useLocale();
   const [activities, setActivities] = useState<FamilyActivityResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +31,7 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
         setActivities(Array.isArray(data) ? data : []);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao carregar atividades da família.');
+      setError(err instanceof Error ? err.message : t('curriculum.familyActivities.loadError'));
     } finally {
       setLoading(false);
     }
@@ -44,7 +46,7 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
       const exists = prev.some((a) => a.id === saved.id);
       return exists ? prev.map((a) => (a.id === saved.id ? saved : a)) : [saved, ...prev];
     });
-    setSuccessMsg(`Atividade "${saved.name}" salva com sucesso!`);
+    setSuccessMsg(t('curriculum.familyActivities.savedSuccess', { name: saved.name }));
     setTimeout(() => setSuccessMsg(null), 4000);
   };
 
@@ -58,11 +60,11 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
       });
       if (!res.ok && res.status !== 204) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao remover a atividade.');
+        throw new Error(err.message || t('curriculum.familyActivities.deleteError'));
       }
       setActivities((prev) => prev.filter((a) => a.id !== activity.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao remover a atividade.');
+      setError(err instanceof Error ? err.message : t('curriculum.familyActivities.deleteError'));
     } finally {
       setDeletingId(null);
     }
@@ -84,14 +86,13 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
                 color: 'var(--forest)',
               }}
             >
-              Criado pela Família
+              {t('curriculum.familyActivities.tag')}
             </span>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--forest)', margin: '0.5rem 0 0 0' }}>
-              Minhas Atividades
+              {t('curriculum.familyActivities.title')}
             </h2>
             <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9375rem', color: 'var(--text-secondary)', maxWidth: '44rem' }}>
-              Crie suas próprias atividades, além das que já vêm no catálogo oficial. Você escolhe se cada
-              uma fica só com a sua família (privada) ou visível para a comunidade (pública).
+              {t('curriculum.familyActivities.description')}
             </p>
           </div>
 
@@ -106,7 +107,7 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
               }}
               style={{ fontWeight: 600 }}
             >
-              + Nova Atividade
+              {t('curriculum.familyActivities.newActivity')}
             </Button>
             <a
               href="/curriculum"
@@ -120,7 +121,7 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
                 textDecoration: 'underline',
               }}
             >
-              ← Voltar ao Currículo
+              {t('curriculum.familyActivities.backToCurriculum')}
             </a>
           </div>
         </div>
@@ -131,7 +132,7 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-          Carregando atividades...
+          {t('curriculum.familyActivities.loading')}
         </div>
       ) : activities.length === 0 ? (
         <div
@@ -145,10 +146,10 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
         >
           <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🧩</div>
           <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--forest)', fontSize: '1.125rem' }}>
-            Nenhuma atividade própria ainda
+            {t('curriculum.familyActivities.emptyTitle')}
           </h3>
           <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-            Crie a primeira atividade da sua família.
+            {t('curriculum.familyActivities.emptyDescription')}
           </p>
         </div>
       ) : (
@@ -186,7 +187,9 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
                       color: activity.visibility === 'PUBLIC' ? 'var(--forest)' : 'var(--text-secondary)',
                     }}
                   >
-                    {activity.visibility === 'PUBLIC' ? '🌐 Pública' : '🔒 Privada'}
+                    {activity.visibility === 'PUBLIC'
+                      ? t('curriculum.familyActivities.publicBadge')
+                      : t('curriculum.familyActivities.privateBadge')}
                   </span>
                 </div>
 
@@ -195,7 +198,7 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
                 </h3>
 
                 <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                  {activity.description || 'Sem descrição.'}
+                  {activity.description || t('curriculum.familyActivities.noDescription')}
                 </p>
               </div>
 
@@ -210,7 +213,7 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
                   }}
                   style={{ flex: 1, fontSize: '0.8125rem', fontWeight: 600 }}
                 >
-                  Editar
+                  {t('curriculum.familyActivities.edit')}
                 </Button>
                 <Button
                   variant="secondary"
@@ -220,7 +223,7 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
                   isLoading={deletingId === activity.id}
                   style={{ flex: 1, fontSize: '0.8125rem', fontWeight: 600 }}
                 >
-                  Remover
+                  {t('curriculum.familyActivities.remove')}
                 </Button>
               </div>
             </Card>
