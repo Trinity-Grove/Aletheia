@@ -207,7 +207,10 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
   const categories = Array.from(
     new Set(
       catalogPacks
-        .map((p) => (p.metadata as Record<string, any>)?.category as string)
+        .map((p) => {
+          const m = p.metadata as Record<string, unknown> | null;
+          return m?.category as string;
+        })
         .filter(Boolean)
     )
   );
@@ -375,7 +378,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
         <div style={{ minWidth: '16rem' }}>
           <input
             type="search"
-            placeholder="Buscar pacotes..."
+            placeholder={t('curriculum.packs.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -465,7 +468,9 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
                           {meta.category}
                         </span>
                       ) : (
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Currículo Geral</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          {t('curriculum.packs.generalCurriculum')}
+                        </span>
                       )}
                       <AuthorTrustBadge tier={authorTier} trustScore={authorTrustScore} />
                       {license && <PackLicenseBadge license={license} provenance={provenance} />}
@@ -563,7 +568,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
                           fontWeight: 700,
                         }}
                       >
-                        <span>✓ Instalado no Currículo</span>
+                        <span>{t('curriculum.packs.installedBadge')}</span>
                         <span style={{ fontSize: '0.75rem', opacity: 0.85, fontWeight: 500 }}>
                           Rev. {installedInstance?.revision ?? 1}
                         </span>

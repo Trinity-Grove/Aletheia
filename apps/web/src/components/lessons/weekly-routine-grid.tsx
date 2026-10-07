@@ -8,15 +8,16 @@ import type {
   ScheduleSlotResponseDto,
   SubjectResponseDto,
 } from '@aletheia/contracts';
-import { DAYS_OF_WEEK } from './routine-slot-modal';
+import { DAYS_OF_WEEK, DAY_OF_WEEK_KEYS } from './routine-slot-modal';
 import { Can } from '../auth/role-guard';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface WeeklyRoutineGridProps {
   slots: ScheduleSlotResponseDto[];
   learners: LearnerSummaryDto[];
   subjects: SubjectResponseDto[];
   onAddSlot: (dayOfWeek?: DayOfWeek) => void;
-  onDeleteSlot: (slotId: string) => Promise<void>;
+  onDeleteSlot(slotId: string): Promise<void>;
   onEditSlot?: (slot: ScheduleSlotResponseDto) => void;
   onSuggestRoutine?: () => void;
 }
@@ -30,6 +31,7 @@ export function WeeklyRoutineGrid({
   onEditSlot,
   onSuggestRoutine,
 }: WeeklyRoutineGridProps) {
+  const { t } = useLocale();
   const learnerMap = new Map<string, string>();
   learners.forEach((l) => {
     learnerMap.set(l.id, l.preferredName || l.firstName);
@@ -79,10 +81,10 @@ export function WeeklyRoutineGrid({
       >
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.01em' }}>
-            Estrutura da Rotina Semanal
+            {t('lessons.routineGrid.title')}
           </h2>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-            Defina os blocos fixos, matérias recorrentes e horários de estudo para cada dia da semana.
+            {t('lessons.routineGrid.description')}
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -93,12 +95,12 @@ export function WeeklyRoutineGrid({
               data-testid="smart-routine-header-btn"
               onClick={onSuggestRoutine}
             >
-              ⚡ Gerador de Rotina
+              {t('lessons.routineGrid.routineGeneratorBtn')}
             </Button>
           )}
           <Can action="manage_lessons">
             <Button size="sm" data-testid="add-routine-slot-btn" onClick={() => onAddSlot(1)}>
-              + Adicionar Bloco de Rotina
+              {t('lessons.routineGrid.addSlotBtn')}
             </Button>
           </Can>
         </div>
@@ -124,11 +126,11 @@ export function WeeklyRoutineGrid({
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
               <span style={{ fontSize: '1.25rem' }}>⚡</span>
               <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--color-indigo-900)' }}>
-                Grade Semanal Vazia: Economize tempo criando uma rotina sugerida
+                {t('lessons.routineGrid.emptyBannerTitle')}
               </h3>
             </div>
             <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-indigo-700)', lineHeight: '1.5' }}>
-              Em vez de cadastrar manualmente horário por horário, nosso gerador inteligente distribui disciplinas matinais, pausas ao ar livre e devocionais de acordo com o ritmo da sua família.
+              {t('lessons.routineGrid.emptyBannerDesc')}
             </p>
           </div>
           {onSuggestRoutine && (
@@ -138,7 +140,7 @@ export function WeeklyRoutineGrid({
               onClick={onSuggestRoutine}
               style={{ fontWeight: 600 }}
             >
-              ⚡ Gerar Grade Semanal Sugerida
+              {t('lessons.routineGrid.generateSuggestedBtn')}
             </Button>
           )}
         </div>
@@ -183,7 +185,7 @@ export function WeeklyRoutineGrid({
                 }}
               >
                 <span style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text-primary)' }}>
-                  {day.label}
+                  {t(DAY_OF_WEEK_KEYS[day.value as DayOfWeek] || '') || day.label}
                 </span>
                 <Badge variant={daySlots.length > 0 ? 'indigo' : 'slate'}>{daySlots.length}</Badge>
               </div>
@@ -216,7 +218,7 @@ export function WeeklyRoutineGrid({
                       margin: '0.25rem 0',
                     }}
                   >
-                    Sem blocos programados
+                    {t('lessons.routineGrid.noSlotsPlanned')}
                   </div>
                 ) : (
                   daySlots.map((slot) => {
@@ -251,8 +253,8 @@ export function WeeklyRoutineGrid({
                                 size="sm"
                                 data-testid={`edit-slot-btn-${slot.id}`}
                                 onClick={() => onEditSlot?.(slot)}
-                                aria-label="Editar bloco de rotina"
-                                title="Editar bloco de rotina"
+                                aria-label={t('lessons.routineGrid.editTooltip')}
+                                title={t('lessons.routineGrid.editTooltip')}
                               >
                                 <AletheiaIcon name="pencil" size={12} />
                               </IconButton>
@@ -260,12 +262,12 @@ export function WeeklyRoutineGrid({
                                 size="sm"
                                 data-testid={`delete-slot-btn-${slot.id}`}
                                 onClick={() => {
-                                  if (window.confirm('Excluir este bloco de rotina? Esta ação não pode ser desfeita.')) {
+                                  if (window.confirm(t('lessons.routineGrid.confirmDelete'))) {
                                     onDeleteSlot(slot.id);
                                   }
                                 }}
-                                aria-label="Excluir bloco de rotina"
-                                title="Excluir bloco de rotina"
+                                aria-label={t('lessons.routineGrid.deleteTooltip')}
+                                title={t('lessons.routineGrid.deleteTooltip')}
                               >
                                 <AletheiaIcon name="x" size={12} />
                               </IconButton>
@@ -318,7 +320,7 @@ export function WeeklyRoutineGrid({
                     onClick={() => onAddSlot(day.value)}
                     style={{ marginTop: 'auto', width: '100%' }}
                   >
-                    + Adicionar Bloco
+                    {t('lessons.routineGrid.addBlockDayBtn')}
                   </Button>
                 </Can>
               </div>

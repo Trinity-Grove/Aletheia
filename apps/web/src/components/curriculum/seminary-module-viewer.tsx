@@ -18,8 +18,8 @@ const DEFAULT_DISCIPLINE = DEFAULT_CYCLE.disciplines[0]!;
 
 export interface SeminaryModuleViewerProps {
   preferredTraditionCode?: string | null | undefined;
-  onSelectEvidenceSubmission?: ((discipline: SeminaryDiscipline) => void) | undefined;
-  onSubmitPaper?: ((data: SeminaryPaperSubmissionData) => Promise<void>) | undefined;
+  onSelectEvidenceSubmission?(discipline: SeminaryDiscipline): void;
+  onSubmitPaper?(data: SeminaryPaperSubmissionData): Promise<void>;
 }
 
 export function SeminaryModuleViewer({

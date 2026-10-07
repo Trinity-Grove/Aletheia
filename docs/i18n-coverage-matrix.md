@@ -1,8 +1,8 @@
 # Relatório de Cobertura de Internacionalização (i18n)
 
-- **Total de Páginas:** 31 (13 traduzidas, 18 pendentes - 41.9%)
-- **Total de Componentes:** 95 (29 traduzidos, 66 pendentes - 30.5%)
-- **Cobertura Total de Frontend:** 42 / 126 arquivos (33.3%)
+- **Total de Páginas:** 31 (17 traduzidas, 14 pendentes - 54.8%)
+- **Total de Componentes:** 95 (53 traduzidos, 42 pendentes - 55.8%)
+- **Cobertura Total de Frontend:** 70 / 126 arquivos (55.6%)
 
 ## Resumo por Domínio e Ondas de Migração
 
@@ -10,7 +10,7 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **Onda 1: Frequência e Registros de Aprendizagem** | `attendance, records` | 0 | 0 | 0 |
 | **Onda 2: Devocional Familiar e Comparador Bíblico** | `devotional, comparador` | 0 | 0 | 0 |
-| **Onda 3: Currículo, Atividades Pedagógicas e Galeria de Pacotes** | `curriculum, lessons, activities` | 28 | 4 | 24 |
+| **Onda 3: Currículo, Atividades Pedagógicas e Galeria de Pacotes** | `curriculum, lessons, activities` | 0 | 0 | 0 |
 | **Onda 4: Relatórios, Dossiês de Conformidade e Portfólio** | `reports, portfolio, compliance` | 10 | 2 | 8 |
 | **Onda 5: Convites, Verificações e Fechamento de Cobertura Global** | `invitations, verify, auth, settings, learners, layout, shared` | 46 | 12 | 34 |
 
@@ -20,39 +20,7 @@
 
 ### Onda 2: Devocional Familiar e Comparador Bíblico (`devotional, comparador`) — 0 arquivos pendentes
 
-### Onda 3: Currículo, Atividades Pedagógicas e Galeria de Pacotes (`curriculum, lessons, activities`) — 28 arquivos pendentes
-
-**Páginas (4):**
-- `apps/web/app/(dashboard)/curriculum/activities/page.tsx` (0 strings detectadas)
-- `apps/web/app/(dashboard)/curriculum/packs/page.tsx` (0 strings detectadas)
-- `apps/web/app/(dashboard)/curriculum/page.tsx` (1 strings detectadas)
-- `apps/web/app/(dashboard)/curriculum/seminary/page.tsx` (1 strings detectadas)
-
-**Componentes (24):**
-- `apps/web/src/components/curriculum/academic-year-switcher.tsx` (0 strings detectadas)
-- `apps/web/src/components/curriculum/curriculum-pack-detail-modal.tsx` (0 strings detectadas)
-- `apps/web/src/components/curriculum/curriculum-pack-import-modal.tsx` (6 strings detectadas)
-- `apps/web/src/components/curriculum/curriculum-packs-gallery.tsx` (4 strings detectadas)
-- `apps/web/src/components/curriculum/curriculum-planning-wizard-modal.tsx` (23 strings detectadas)
-- `apps/web/src/components/curriculum/curriculum-view.tsx` (10 strings detectadas)
-- `apps/web/src/components/curriculum/family-activities-gallery.tsx` (0 strings detectadas)
-- `apps/web/src/components/curriculum/family-activity-modal.tsx` (0 strings detectadas)
-- `apps/web/src/components/curriculum/family-curriculum-pack-modal.tsx` (11 strings detectadas)
-- `apps/web/src/components/curriculum/objective-modal.tsx` (7 strings detectadas)
-- `apps/web/src/components/curriculum/pack-update-diff-modal.tsx` (1 strings detectadas)
-- `apps/web/src/components/curriculum/seminary-module-viewer.tsx` (1 strings detectadas)
-- `apps/web/src/components/curriculum/seminary-paper-submission-modal.tsx` (4 strings detectadas)
-- `apps/web/src/components/curriculum/subject-card.tsx` (4 strings detectadas)
-- `apps/web/src/components/curriculum/subject-modal.tsx` (7 strings detectadas)
-- `apps/web/src/components/curriculum/template-modal.tsx` (3 strings detectadas)
-- `apps/web/src/components/curriculum/theology-rubric-evaluator.tsx` (2 strings detectadas)
-- `apps/web/src/components/lessons/ai-lesson-draft-modal.tsx` (2 strings detectadas)
-- `apps/web/src/components/lessons/complete-lesson-modal.tsx` (6 strings detectadas)
-- `apps/web/src/components/lessons/daily-agenda-view.tsx` (8 strings detectadas)
-- `apps/web/src/components/lessons/lesson-form-modal.tsx` (17 strings detectadas)
-- `apps/web/src/components/lessons/reschedule-modal.tsx` (7 strings detectadas)
-- `apps/web/src/components/lessons/routine-slot-modal.tsx` (12 strings detectadas)
-- `apps/web/src/components/lessons/weekly-routine-grid.tsx` (5 strings detectadas)
+### Onda 3: Currículo, Atividades Pedagógicas e Galeria de Pacotes (`curriculum, lessons, activities`) — 0 arquivos pendentes
 
 ### Onda 4: Relatórios, Dossiês de Conformidade e Portfólio (`reports, portfolio, compliance`) — 10 arquivos pendentes
 
@@ -132,10 +100,10 @@
 | Página | `apps/web/app/(auth)/reset-password/page.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
 | Página | `apps/web/app/(auth)/verify-email/page.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
 | Página | `apps/web/app/(dashboard)/attendance/page.tsx` | ✅ Traduzido | 0 strings | Onda 1 |
-| Página | `apps/web/app/(dashboard)/curriculum/activities/page.tsx` | ❌ Pendente | 0 strings | Onda 3 |
-| Página | `apps/web/app/(dashboard)/curriculum/packs/page.tsx` | ❌ Pendente | 0 strings | Onda 3 |
-| Página | `apps/web/app/(dashboard)/curriculum/page.tsx` | ❌ Pendente | 1 strings | Onda 3 |
-| Página | `apps/web/app/(dashboard)/curriculum/seminary/page.tsx` | ❌ Pendente | 1 strings | Onda 3 |
+| Página | `apps/web/app/(dashboard)/curriculum/activities/page.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Página | `apps/web/app/(dashboard)/curriculum/packs/page.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Página | `apps/web/app/(dashboard)/curriculum/page.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Página | `apps/web/app/(dashboard)/curriculum/seminary/page.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
 | Página | `apps/web/app/(dashboard)/design-system/page.tsx` | ❌ Pendente | 0 strings | Onda 5 |
 | Página | `apps/web/app/(dashboard)/devotional/comparador/page.tsx` | ✅ Traduzido | 0 strings | Onda 2 |
 | Página | `apps/web/app/(dashboard)/devotional/page.tsx` | ✅ Traduzido | 0 strings | Onda 2 |
@@ -167,30 +135,30 @@
 | Componente | `apps/web/src/components/auth/role-guard.tsx` | ❌ Pendente | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/auth/verify-email-form.tsx` | ❌ Pendente | 1 strings | Onda 5 |
 | Componente | `apps/web/src/components/compliance/compliance-evaluation-panel.tsx` | ❌ Pendente | 12 strings | Onda 4 |
-| Componente | `apps/web/src/components/curriculum/academic-year-switcher.tsx` | ❌ Pendente | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/curriculum/academic-year-switcher.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
 | Componente | `apps/web/src/components/curriculum/author-trust-badge.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
-| Componente | `apps/web/src/components/curriculum/curriculum-pack-detail-modal.tsx` | ❌ Pendente | 0 strings | Onda 3 |
-| Componente | `apps/web/src/components/curriculum/curriculum-pack-import-modal.tsx` | ❌ Pendente | 6 strings | Onda 3 |
-| Componente | `apps/web/src/components/curriculum/curriculum-packs-gallery.tsx` | ❌ Pendente | 4 strings | Onda 3 |
-| Componente | `apps/web/src/components/curriculum/curriculum-planning-wizard-modal.tsx` | ❌ Pendente | 23 strings | Onda 3 |
-| Componente | `apps/web/src/components/curriculum/curriculum-view.tsx` | ❌ Pendente | 10 strings | Onda 3 |
-| Componente | `apps/web/src/components/curriculum/family-activities-gallery.tsx` | ❌ Pendente | 0 strings | Onda 3 |
-| Componente | `apps/web/src/components/curriculum/family-activity-modal.tsx` | ❌ Pendente | 0 strings | Onda 3 |
-| Componente | `apps/web/src/components/curriculum/family-curriculum-pack-modal.tsx` | ❌ Pendente | 11 strings | Onda 3 |
+| Componente | `apps/web/src/components/curriculum/curriculum-pack-detail-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/curriculum/curriculum-pack-import-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/curriculum/curriculum-packs-gallery.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/curriculum/curriculum-planning-wizard-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/curriculum/curriculum-view.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/curriculum/family-activities-gallery.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/curriculum/family-activity-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/curriculum/family-curriculum-pack-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
 | Componente | `apps/web/src/components/curriculum/my-authored-packs-panel.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
-| Componente | `apps/web/src/components/curriculum/objective-modal.tsx` | ❌ Pendente | 7 strings | Onda 3 |
+| Componente | `apps/web/src/components/curriculum/objective-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
 | Componente | `apps/web/src/components/curriculum/pack-author-support-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
 | Componente | `apps/web/src/components/curriculum/pack-license-badge.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
 | Componente | `apps/web/src/components/curriculum/pack-report-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
-| Componente | `apps/web/src/components/curriculum/pack-update-diff-modal.tsx` | ❌ Pendente | 1 strings | Onda 3 |
+| Componente | `apps/web/src/components/curriculum/pack-update-diff-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
 | Componente | `apps/web/src/components/curriculum/publish-to-community-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
-| Componente | `apps/web/src/components/curriculum/seminary-module-viewer.tsx` | ❌ Pendente | 1 strings | Onda 3 |
-| Componente | `apps/web/src/components/curriculum/seminary-paper-submission-modal.tsx` | ❌ Pendente | 4 strings | Onda 3 |
-| Componente | `apps/web/src/components/curriculum/subject-card.tsx` | ❌ Pendente | 4 strings | Onda 3 |
-| Componente | `apps/web/src/components/curriculum/subject-modal.tsx` | ❌ Pendente | 7 strings | Onda 3 |
-| Componente | `apps/web/src/components/curriculum/template-modal.tsx` | ❌ Pendente | 3 strings | Onda 3 |
+| Componente | `apps/web/src/components/curriculum/seminary-module-viewer.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/curriculum/seminary-paper-submission-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/curriculum/subject-card.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/curriculum/subject-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/curriculum/template-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
 | Componente | `apps/web/src/components/curriculum/theological-lens-card.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
-| Componente | `apps/web/src/components/curriculum/theology-rubric-evaluator.tsx` | ❌ Pendente | 2 strings | Onda 3 |
+| Componente | `apps/web/src/components/curriculum/theology-rubric-evaluator.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
 | Componente | `apps/web/src/components/dashboard/learner-focus-header.tsx` | ❌ Pendente | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/design-system/design-system-showcase.tsx` | ❌ Pendente | 79 strings | Onda 5 |
 | Componente | `apps/web/src/components/devotional/bible-translation-compare-view.tsx` | ✅ Traduzido | 0 strings | Onda 2 |
@@ -214,13 +182,13 @@
 | Componente | `apps/web/src/components/learners/learner-portal-badges-section.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/learners/learners-list.tsx` | ❌ Pendente | 2 strings | Onda 5 |
 | Componente | `apps/web/src/components/lessons/ai-consent-notice-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
-| Componente | `apps/web/src/components/lessons/ai-lesson-draft-modal.tsx` | ❌ Pendente | 2 strings | Onda 3 |
-| Componente | `apps/web/src/components/lessons/complete-lesson-modal.tsx` | ❌ Pendente | 6 strings | Onda 3 |
-| Componente | `apps/web/src/components/lessons/daily-agenda-view.tsx` | ❌ Pendente | 8 strings | Onda 3 |
-| Componente | `apps/web/src/components/lessons/lesson-form-modal.tsx` | ❌ Pendente | 17 strings | Onda 3 |
-| Componente | `apps/web/src/components/lessons/reschedule-modal.tsx` | ❌ Pendente | 7 strings | Onda 3 |
-| Componente | `apps/web/src/components/lessons/routine-slot-modal.tsx` | ❌ Pendente | 12 strings | Onda 3 |
-| Componente | `apps/web/src/components/lessons/weekly-routine-grid.tsx` | ❌ Pendente | 5 strings | Onda 3 |
+| Componente | `apps/web/src/components/lessons/ai-lesson-draft-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/lessons/complete-lesson-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/lessons/daily-agenda-view.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/lessons/lesson-form-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/lessons/reschedule-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/lessons/routine-slot-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
+| Componente | `apps/web/src/components/lessons/weekly-routine-grid.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
 | Componente | `apps/web/src/components/product-shell.tsx` | ❌ Pendente | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/records/competency-tracking-panel.tsx` | ✅ Traduzido | 0 strings | Onda 1 |
 | Componente | `apps/web/src/components/records/evidence-submission-modal.tsx` | ✅ Traduzido | 0 strings | Onda 1 |

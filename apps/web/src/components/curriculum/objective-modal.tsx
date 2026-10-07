@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Input, Modal, Textarea } from '@aletheia/ui';
 import type { CreateObjectiveDto, ObjectiveResponseDto, UpdateObjectiveDto } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface ObjectiveModalProps {
   isOpen: boolean;
@@ -9,9 +10,9 @@ export interface ObjectiveModalProps {
   learnerId: string;
   academicYearId: string;
   objectiveToEdit?: ObjectiveResponseDto | null | undefined;
-  onClose: () => void;
-  onSave: (dto: CreateObjectiveDto) => Promise<void>;
-  onUpdate?: ((objectiveId: string, dto: UpdateObjectiveDto) => Promise<void>) | undefined;
+  onClose(): void;
+  onSave(dto: CreateObjectiveDto): Promise<void>;
+  onUpdate?(objectiveId: string, dto: UpdateObjectiveDto): Promise<void>;
 }
 
 export function ObjectiveModal({
@@ -25,6 +26,7 @@ export function ObjectiveModal({
   onSave,
   onUpdate,
 }: ObjectiveModalProps) {
+  const { t } = useLocale();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [targetDate, setTargetDate] = useState('');
@@ -68,7 +70,7 @@ export function ObjectiveModal({
       }
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Falha ao salvar objetivo.');
+      setError(err instanceof Error ? err.message : t('curriculum.objective.saveError'));
     } finally {
       setLoading(false);
     }
@@ -78,19 +80,19 @@ export function ObjectiveModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={objectiveToEdit ? 'Editar Objetivo de Aprendizagem' : 'Novo Objetivo de Aprendizagem'}
+      title={objectiveToEdit ? t('curriculum.objective.modalTitleEdit') : t('curriculum.objective.modalTitleNew')}
       description={
         <>
-          Disciplina: <strong>{subjectName}</strong>
+          {t('curriculum.objective.subjectLabel')}: <strong>{subjectName}</strong>
         </>
       }
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={loading}>
-            Cancelar
+            {t('curriculum.objective.cancel')}
           </Button>
           <Button type="submit" form="objective-form" data-testid="save-objective-btn" isLoading={loading}>
-            {objectiveToEdit ? 'Salvar Alterações' : 'Salvar Objetivo'}
+            {objectiveToEdit ? t('curriculum.objective.saveChanges') : t('curriculum.objective.save')}
           </Button>
         </>
       }
@@ -103,24 +105,24 @@ export function ObjectiveModal({
 
       <form id="objective-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <Input
-          label="Meta / Objetivo *"
+          label={t('curriculum.objective.goalLabel')}
           data-testid="objective-title-input"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Ex: Dominar declinações latinas da 1ª e 2ª classe"
+          placeholder={t('curriculum.objective.goalPlaceholder')}
         />
 
         <Textarea
-          label="Critérios de Conclusão / Detalhes"
+          label={t('curriculum.objective.criteriaLabel')}
           rows={2}
           data-testid="objective-desc-input"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Evidências esperadas de domínio..."
+          placeholder={t('curriculum.objective.criteriaPlaceholder')}
         />
 
         <Input
-          label="Data Alvo (Opcional)"
+          label={t('curriculum.objective.targetDateLabel')}
           type="date"
           data-testid="objective-date-input"
           value={targetDate}

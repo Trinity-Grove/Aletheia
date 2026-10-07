@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Input, Modal, Textarea } from '@aletheia/ui';
 import type { RescheduleLessonDto } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface RescheduleLessonItem {
   id: string;
@@ -17,7 +18,7 @@ export interface RescheduleModalProps {
   isOpen: boolean;
   lesson: RescheduleLessonItem | null;
   onClose: () => void;
-  onReschedule: (lessonId: string, dto: RescheduleLessonDto) => Promise<void>;
+  onReschedule(lessonId: string, dto: RescheduleLessonDto): Promise<void>;
 }
 
 export function RescheduleModal({
@@ -26,6 +27,7 @@ export function RescheduleModal({
   onClose,
   onReschedule,
 }: RescheduleModalProps) {
+  const { t } = useLocale();
   const [newDate, setNewDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -48,7 +50,7 @@ export function RescheduleModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDate) {
-      setError('Por favor, informe a nova data.');
+      setError(t('lessons.rescheduleModal.newDateRequiredError'));
       return;
     }
 
@@ -63,7 +65,7 @@ export function RescheduleModal({
       });
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erro ao reagendar lição');
+      setError(err instanceof Error ? err.message : t('lessons.rescheduleModal.rescheduleError'));
     } finally {
       setLoading(false);
     }
@@ -73,19 +75,19 @@ export function RescheduleModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Reagendar Lição"
+      title={t('lessons.rescheduleModal.title')}
       description={
         <>
-          Lição: <strong>{lesson.title}</strong>
+          {t('lessons.rescheduleModal.lessonPrefix')} <strong>{lesson.title}</strong>
         </>
       }
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={loading}>
-            Cancelar
+            {t('lessons.rescheduleModal.cancel')}
           </Button>
           <Button type="submit" form="reschedule-form" data-testid="save-reschedule-btn" isLoading={loading}>
-            Confirmar Reagendamento
+            {t('lessons.rescheduleModal.confirm')}
           </Button>
         </>
       }
@@ -98,7 +100,7 @@ export function RescheduleModal({
 
       <form id="reschedule-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <Input
-          label="Nova Data *"
+          label={t('lessons.rescheduleModal.newDateLabel')}
           type="date"
           data-testid="reschedule-date-input"
           required
@@ -108,14 +110,14 @@ export function RescheduleModal({
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <Input
-            label="Início"
+            label={t('lessons.rescheduleModal.startTimeLabel')}
             type="time"
             data-testid="reschedule-start-time-input"
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
           />
           <Input
-            label="Término"
+            label={t('lessons.rescheduleModal.endTimeLabel')}
             type="time"
             data-testid="reschedule-end-time-input"
             value={endTime}
@@ -124,12 +126,12 @@ export function RescheduleModal({
         </div>
 
         <Textarea
-          label="Motivo / Observação"
+          label={t('lessons.rescheduleModal.reasonLabel')}
           rows={2}
           data-testid="reschedule-reason-input"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Ex: Passeio ao museu, reagendado para o período da tarde..."
+          placeholder={t('lessons.rescheduleModal.reasonPlaceholder')}
         />
       </form>
     </Modal>

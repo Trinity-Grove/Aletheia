@@ -12,14 +12,15 @@ import {
   type FamilyCurriculumPackRevisionResponseDto,
 } from '@aletheia/contracts';
 import { getApiAuthToken } from '../../lib/api';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface FamilyCurriculumPackModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose(): void;
   familyId: string;
   installedPack: FamilyCurriculumPackResponseDto | null;
   catalogPack?: CurriculumPackResponseDto | null | undefined;
-  onPackUpdated?: (_updatedPack: FamilyCurriculumPackResponseDto) => void;
+  onPackUpdated?(_updatedPack: FamilyCurriculumPackResponseDto): void;
 }
 
 function extractYouTubeVideoId(url: string | null | undefined): string | null {
@@ -52,6 +53,7 @@ export function FamilyCurriculumPackModal({
   catalogPack,
   onPackUpdated,
 }: FamilyCurriculumPackModalProps) {
+  const { t } = useLocale();
   const [activeTab, setActiveTab] = useState<'media' | 'revisions' | 'editor'>('media');
 
   // Media state
@@ -418,7 +420,7 @@ export function FamilyCurriculumPackModal({
       isOpen={isOpen}
       onClose={onClose}
       title={`Gerenciar Pacote — ${packName}`}
-      description="Gerencie as mídias complementares da família e acompanhe o histórico de revisões."
+      description={t('curriculum.packs.manageMediaDescription')}
       maxWidth="lg"
       footer={
         <Button variant="secondary" onClick={onClose}>
@@ -582,7 +584,7 @@ export function FamilyCurriculumPackModal({
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
                 <Select
-                  label="Tipo de Mídia *"
+                  label={t('curriculum.packs.mediaTypeLabel')}
                   data-testid="pack-media-type-select"
                   value={mediaType}
                   onChange={(e) => setMediaType(e.target.value as 'IMAGE' | 'VIDEO' | 'DOCUMENT')}
@@ -591,11 +593,11 @@ export function FamilyCurriculumPackModal({
                 />
 
                 <Input
-                  label="Título do Material *"
+                  label={t('curriculum.packs.materialTitleLabel')}
                   data-testid="pack-media-title-input"
                   value={mediaTitle}
                   onChange={(e) => setMediaTitle(e.target.value)}
-                  placeholder="Ex: Guia de Leitura Complementar em PDF"
+                  placeholder={t('curriculum.packs.materialTitlePlaceholder')}
                   required
                 />
               </div>
@@ -603,7 +605,7 @@ export function FamilyCurriculumPackModal({
               {mediaSourceType === 'EXTERNAL_URL' ? (
                 <Input
                   type="url"
-                  label="URL do Arquivo / Link (HTTPS) *"
+                  label={t('curriculum.packs.mediaUrlLabel')}
                   data-testid="pack-media-url-input"
                   value={mediaUrl}
                   onChange={(e) => setMediaUrl(e.target.value)}
@@ -642,12 +644,12 @@ export function FamilyCurriculumPackModal({
               )}
 
               <Textarea
-                label="Descrição (opcional)"
+                label={t('curriculum.packs.mediaDescriptionLabel')}
                 data-testid="pack-media-description-input"
                 value={mediaDescription}
                 onChange={(e) => setMediaDescription(e.target.value)}
                 rows={2}
-                placeholder="Breve nota sobre o conteúdo deste material..."
+                placeholder={t('curriculum.packs.mediaDescriptionPlaceholder')}
               />
 
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -894,7 +896,7 @@ export function FamilyCurriculumPackModal({
                 lineHeight: 1.5,
               }}
             >
-              <strong style={{ color: 'var(--forest)' }}>Adaptação Pedagógica Familiar:</strong> Personalize o título, orientações práticas e notas de estudo desta cópia do pacote. Cada alteração gera uma nova revisão imutável no histórico da sua família.
+              <strong style={{ color: 'var(--forest)' }}>{t('curriculum.packs.familyCustomizationTitle')}</strong> Personalize o título, orientações práticas e notas de estudo desta cópia do pacote. Cada alteração gera uma nova revisão imutável no histórico da sua família.
             </div>
 
             {editError && (
@@ -911,7 +913,7 @@ export function FamilyCurriculumPackModal({
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <Input
-                label="Nome do Pacote (Personalizado) *"
+                label={t('curriculum.packs.customNameLabel')}
                 data-testid="pack-edit-name-input"
                 value={editName}
                 onChange={(e) => {
@@ -940,7 +942,7 @@ export function FamilyCurriculumPackModal({
                   rows={3}
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
-                  placeholder="Descreva como este pacote será aplicado no plano da sua família..."
+                  placeholder={t('curriculum.packs.customDescriptionPlaceholder')}
                 />
               </div>
 
@@ -963,7 +965,7 @@ export function FamilyCurriculumPackModal({
                   rows={4}
                   value={editFamilyNotes}
                   onChange={(e) => setEditFamilyNotes(e.target.value)}
-                  placeholder="Ex: Focar nas lições práticas às terças-feiras; utilizar tradução ARA nas leituras..."
+                  placeholder={t('curriculum.packs.customNotesPlaceholder')}
                 />
               </div>
 

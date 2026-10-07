@@ -7,11 +7,12 @@ import type {
   CurriculumPackImportReport,
 } from '@aletheia/contracts';
 import { getApiAuthToken } from '../../lib/api';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface CurriculumPackImportModalProps {
   isOpen: boolean;
-  onClose: () => void;
-  onImportSuccess?: () => void;
+  onClose(): void;
+  onImportSuccess?(): void;
 }
 
 export function CurriculumPackImportModal({
@@ -19,6 +20,7 @@ export function CurriculumPackImportModal({
   onClose,
   onImportSuccess,
 }: CurriculumPackImportModalProps) {
+  const { t } = useLocale();
   const [jsonText, setJsonText] = useState('');
   const [fileName, setFileName] = useState<string | null>(null);
   const [isValidating, setIsValidating] = useState(false);
@@ -184,7 +186,7 @@ export function CurriculumPackImportModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Importar Pacote Curricular (Admin)"
+      title={t('curriculum.packs.importTitle')}
       maxWidth="lg"
     >
       <div
@@ -269,7 +271,7 @@ export function CurriculumPackImportModal({
               setJsonText(e.target.value);
               if (error) setError(null);
             }}
-            placeholder='{\n  "formatVersion": "1.0.0",\n  "exportedAt": "...",\n  "pack": { "code": "MATH.CLASSICAL.1", ... }\n}'
+            placeholder={t('curriculum.packs.jsonPlaceholder')}
             style={{
               fontFamily: 'monospace',
               fontSize: '0.8125rem',
@@ -304,17 +306,17 @@ export function CurriculumPackImportModal({
 
             <div style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.5rem' }}>
               <div>
-                <strong>Código do Pacote:</strong> {importReport.pack.code} (v{importReport.pack.version})
+                <strong>{t('curriculum.packs.packCodeLabel')}</strong> {importReport.pack.code} (v{importReport.pack.version})
               </div>
               <div>
-                <strong>Itens Criados/A Criar:</strong>{' '}
+                <strong>{t('curriculum.packs.itemsCreatedLabel')}</strong>{' '}
                 {importReport.dryRun ? importReport.wouldCreate.length : importReport.created.length}
               </div>
               <div>
-                <strong>Conflitos Existentes:</strong> {importReport.conflicts.length}
+                <strong>{t('curriculum.packs.conflictsLabel')}</strong> {importReport.conflicts.length}
               </div>
               <div>
-                <strong>Dependências Ausentes:</strong> {importReport.missingDependencies.length}
+                <strong>{t('curriculum.packs.missingDepsLabel')}</strong> {importReport.missingDependencies.length}
               </div>
             </div>
 

@@ -5,8 +5,10 @@ import type { LearnerSummaryDto } from '@aletheia/contracts';
 import { ProductShell } from '../../../../src/components/layout/product-shell';
 import { CurriculumPacksGallery } from '../../../../src/components/curriculum/curriculum-packs-gallery';
 import { useAuth } from '../../../../src/lib/auth/auth-context';
+import { useLocale } from '../../../../src/lib/i18n/locale-context';
 
 export default function CurriculumPacksPage() {
+  const { t } = useLocale();
   const { activeFamilyId, status } = useAuth();
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
@@ -52,13 +54,13 @@ export default function CurriculumPacksPage() {
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-            Carregando pacotes curriculares...
+            {t('curriculum.pages.packs.loading')}
           </div>
         ) : familyId ? (
           <CurriculumPacksGallery familyId={familyId} />
         ) : (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-            Nenhuma família ativa encontrada.
+            {t('curriculum.pages.packs.noFamily')}
           </div>
         )}
       </div>

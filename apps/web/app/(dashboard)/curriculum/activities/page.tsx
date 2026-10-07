@@ -5,8 +5,10 @@ import type { LearnerSummaryDto } from '@aletheia/contracts';
 import { ProductShell } from '../../../../src/components/layout/product-shell';
 import { FamilyActivitiesGallery } from '../../../../src/components/curriculum/family-activities-gallery';
 import { useAuth } from '../../../../src/lib/auth/auth-context';
+import { useLocale } from '../../../../src/lib/i18n/locale-context';
 
 export default function FamilyActivitiesPage() {
+  const { t } = useLocale();
   const { activeFamilyId, status } = useAuth();
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
@@ -52,13 +54,13 @@ export default function FamilyActivitiesPage() {
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-            Carregando atividades...
+            {t('curriculum.pages.activities.loading')}
           </div>
         ) : familyId ? (
           <FamilyActivitiesGallery familyId={familyId} />
         ) : (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-            Nenhuma família ativa encontrada.
+            {t('curriculum.pages.activities.noFamily')}
           </div>
         )}
       </div>

@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { AletheiaIcon, Button, Modal } from '@aletheia/ui';
 import type { PedagogicalModelCatalogEntryDto } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface TemplateModalProps {
   isOpen: boolean;
   familyId: string;
-  onClose: () => void;
-  onApply: (template: string) => Promise<void>;
+  onClose(): void;
+  onApply(template: string): Promise<void>;
 }
 
 // Catalog entries have no per-model icon field (issue #96 Fase 0 didn't
@@ -17,6 +18,7 @@ export interface TemplateModalProps {
 const CATALOG_ICON = 'graduation-cap';
 
 export function TemplateModal({ isOpen, familyId, onClose, onApply }: TemplateModalProps) {
+  const { t } = useLocale();
   const [templates, setTemplates] = useState<PedagogicalModelCatalogEntryDto[]>([]);
   const [loadingCatalog, setLoadingCatalog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
@@ -77,13 +79,13 @@ export function TemplateModal({ isOpen, familyId, onClose, onApply }: TemplateMo
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Aplicar Modelo Pedagógico"
-      description="Escolha uma abordagem para gerar disciplinas sugeridas e objetivos de aprendizagem iniciais."
+      title={t('curriculum.templateModal.title')}
+      description={t('curriculum.templateModal.description')}
       maxWidth="lg"
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={loading}>
-            Cancelar
+            {t('curriculum.templateModal.cancel')}
           </Button>
           <Button
             type="submit"
@@ -92,7 +94,7 @@ export function TemplateModal({ isOpen, familyId, onClose, onApply }: TemplateMo
             isLoading={loading}
             disabled={!selectedTemplate}
           >
-            Aplicar Modelo
+            {t('curriculum.templateModal.apply')}
           </Button>
         </>
       }
@@ -100,39 +102,39 @@ export function TemplateModal({ isOpen, familyId, onClose, onApply }: TemplateMo
       <form id="template-form" onSubmit={handleSubmit}>
         {loadingCatalog ? (
           <div style={{ padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-            Carregando modelos disponíveis...
+            {t('curriculum.templateModal.loadingCatalog')}
           </div>
         ) : templates.length === 0 ? (
           <div style={{ padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-            Nenhum modelo pedagógico publicado está disponível no momento.
+            {t('curriculum.templateModal.emptyCatalog')}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {templates.map((t) => {
-              const hasSubjects = Boolean(t.subjects && t.subjects.length > 0);
-              const isExpanded = expandedCodes.has(t.code);
+            {templates.map((tpl) => {
+              const hasSubjects = Boolean(tpl.subjects && tpl.subjects.length > 0);
+              const isExpanded = expandedCodes.has(tpl.code);
 
               return (
                 <label
-                  key={t.code}
-                  data-testid={`template-option-${t.code}`}
+                  key={tpl.code}
+                  data-testid={`template-option-${tpl.code}`}
                   style={{
                     display: 'flex',
                     alignItems: 'flex-start',
                     gap: '0.75rem',
                     padding: '1rem',
                     borderRadius: 'var(--radius-md)',
-                    border: `2px solid ${selectedTemplate === t.code ? 'var(--forest)' : 'var(--border-light)'}`,
-                    backgroundColor: selectedTemplate === t.code ? 'var(--color-indigo-50)' : 'var(--bg-surface)',
+                    border: `2px solid ${selectedTemplate === tpl.code ? 'var(--forest)' : 'var(--border-light)'}`,
+                    backgroundColor: selectedTemplate === tpl.code ? 'var(--color-indigo-50)' : 'var(--bg-surface)',
                     cursor: 'pointer',
                   }}
                 >
                   <input
                     type="radio"
                     name="pedagogical-template"
-                    value={t.code}
-                    checked={selectedTemplate === t.code}
-                    onChange={() => setSelectedTemplate(t.code)}
+                    value={tpl.code}
+                    checked={selectedTemplate === tpl.code}
+                    onChange={() => setSelectedTemplate(tpl.code)}
                     style={{ marginTop: '0.25rem' }}
                   />
                   <div style={{ flex: 1 }}>
@@ -148,11 +150,11 @@ export function TemplateModal({ isOpen, familyId, onClose, onApply }: TemplateMo
                       <span>
                         <AletheiaIcon name={CATALOG_ICON} size={18} style={{ color: 'var(--color-indigo-700)' }} />
                       </span>
-                      <span>{t.name}</span>
+                      <span>{tpl.name}</span>
                     </div>
-                    {t.description ? (
+                    {tpl.description ? (
                       <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                        {t.description}
+                        {tpl.description}
                       </div>
                     ) : null}
 
@@ -160,8 +162,8 @@ export function TemplateModal({ isOpen, familyId, onClose, onApply }: TemplateMo
                       <div>
                         <button
                           type="button"
-                          data-testid={`toggle-subjects-preview-${t.code}`}
-                          onClick={(e) => toggleExpand(t.code, e)}
+                          data-testid={`toggle-subjects-preview-${tpl.code}`}
+                          onClick={(e) => toggleExpand(tpl.code, e)}
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -179,14 +181,14 @@ export function TemplateModal({ isOpen, familyId, onClose, onApply }: TemplateMo
                         >
                           <span>
                             {isExpanded
-                              ? '▲ Ocultar disciplinas sugeridas'
-                              : `▼ Conhecer ${t.subjects?.length} disciplinas sugeridas`}
+                              ? t('curriculum.templateModal.hideSubjects')
+                              : t('curriculum.templateModal.showSubjects', { count: tpl.subjects?.length ?? 0 })}
                           </span>
                         </button>
 
                         {isExpanded && (
                           <div
-                            data-testid={`subjects-preview-panel-${t.code}`}
+                            data-testid={`subjects-preview-panel-${tpl.code}`}
                             style={{
                               marginTop: '0.75rem',
                               padding: '0.75rem 1rem',
@@ -198,7 +200,7 @@ export function TemplateModal({ isOpen, familyId, onClose, onApply }: TemplateMo
                               gap: '0.75rem',
                             }}
                           >
-                            {t.subjects?.map((s, sIdx) => (
+                            {tpl.subjects?.map((s, sIdx) => (
                               <div key={sIdx} style={{ fontSize: '0.8125rem' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
                                   <span
