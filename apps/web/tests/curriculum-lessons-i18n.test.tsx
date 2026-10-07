@@ -1,5 +1,5 @@
 import React from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import { LocaleProvider, useLocale } from '../src/lib/i18n/locale-context';
 import { ptBR } from '../src/lib/i18n/dictionaries/pt-BR';
