@@ -3,10 +3,12 @@ export const reports = {
     portfolio: {
       title: 'Portfólio Vivo de Evidências',
       description: 'Exposição viva das obras de arte, narrações gravadas, cadernos de natureza e relatórios de projetos.',
+      loading: 'Carregando portfólio...',
     },
     reports: {
       title: 'Gerador de Documentos & Históricos Oficiais',
       description: 'Emita históricos escolares com conversão flexível de notas, sumários de presença e relatórios de conformidade.',
+      loading: 'Carregando relatórios oficiais...',
     },
   },
   tracker: {

@@ -3,10 +3,12 @@ export const reports = {
     portfolio: {
       title: 'Living Portfolio of Evidence',
       description: 'Living exhibition of artwork, recorded narrations, nature journals, and project reports.',
+      loading: 'Loading portfolio...',
     },
     reports: {
       title: 'Official Document & Transcript Generator',
       description: 'Issue official academic transcripts with flexible grading conversion, attendance summaries, and compliance reports.',
+      loading: 'Loading official reports...',
     },
   },
   tracker: {
