@@ -7,12 +7,12 @@ import type { LessonReflectionData } from './types';
 
 export interface LearnerReflectionModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose(): void;
   lessonTitle: string;
   lessonId: string;
   learnerName: string;
   initialHabits?: string[] | undefined;
-  onConfirm: (reflection: LessonReflectionData) => Promise<void>;
+  onConfirm(reflection: LessonReflectionData): Promise<void>;
   isSubmitting?: boolean | undefined;
 }
 
@@ -40,7 +40,7 @@ export function LearnerReflectionModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onConfirm({
+    await onConfirm?.({
       notes: writtenNotes.trim() || undefined,
       isOralNarration,
       characterHabit: selectedHabit || undefined,
@@ -98,7 +98,7 @@ export function LearnerReflectionModal({
           }}
         >
           <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--forest)', textTransform: 'uppercase' }}>
-            Lição
+            {t('learnerPortal.agenda.lessonLabel')}
           </span>
           <p style={{ margin: '0.25rem 0 0 0', fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>
             {lessonTitle}

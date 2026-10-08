@@ -59,6 +59,7 @@ export const learnerPortal: Dictionary['learnerPortal'] = {
     durationMinutes: '{minutes} min',
     reflectionModalTitle: 'Narración y Reflexión de la Lección',
     reflectionModalSubtitle: 'Registra lo que aprendiste con esta actividad antes de completar.',
+    lessonLabel: 'Lección',
     oralNarrationOption: 'Realicé narración oral a mis padres/tutor',
     writtenNarrationLabel: '¿Qué aprendiste? (Narración escrita o reflexión)',
     writtenNarrationPlaceholder: 'Cuenta con tus propias palabras la historia, concepto o lo que más te llamó la atención...',

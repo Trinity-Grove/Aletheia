@@ -62,6 +62,7 @@ export const learners = {
     customGradeLabel: 'Grado / Curso Personalizado',
     customGradePlaceholder: 'Ej: 3º Primaria',
     avatarColorLabel: 'Color del Avatar',
+    avatarColorPlaceholder: '#3B82F6',
     specialNeedsLabel: 'Necesidades Especiales / Adaptaciones',
     specialNeedsPlaceholder: 'Ej: Dislexia leve, necesidad de tiempo adicional...',
     notesLabel: 'Notas Pedagógicas',

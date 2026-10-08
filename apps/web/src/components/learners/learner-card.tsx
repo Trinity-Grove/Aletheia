@@ -1,26 +1,22 @@
 import React, { useState } from 'react';
 import { AletheiaIcon, Badge, Button, Card } from '@aletheia/ui';
 import type { EducationalStage, LearnerResponseDto } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 import { Can } from '../auth/role-guard';
 import { LearnerAchievementsModal } from './learner-achievements-modal';
 
 export interface LearnerCardProps {
   learner: LearnerResponseDto;
-  onEdit?: ((learner: LearnerResponseDto) => void) | undefined;
-  onToggleArchive?: ((learner: LearnerResponseDto) => void) | undefined;
-  onManageAccess?: ((learner: LearnerResponseDto) => void) | undefined;
+  onEdit?(learner: LearnerResponseDto): void;
+  onToggleArchive?(learner: LearnerResponseDto): void;
+  onManageAccess?(learner: LearnerResponseDto): void;
   familyId?: string | undefined;
 }
 
-const stageLabels: Record<EducationalStage, string> = {
-  EARLY_YEARS: 'Educação Infantil (Early Years)',
-  PRIMARY: 'Ensino Fundamental inicial (Primary)',
-  LOWER_SECONDARY: 'Ensino Fundamental final (Lower Secondary)',
-  UPPER_SECONDARY: 'Ensino Médio (Upper Secondary)',
-  OTHER: 'Outro',
-};
-
-function calculateAge(birthDateStr?: string | null): string | null {
+function calculateAge(
+  birthDateStr: string | null | undefined,
+  t: (key: string, params?: Record<string, any>) => string
+): string | null {
   if (!birthDateStr) return null;
   const birth = new Date(birthDateStr);
   if (isNaN(birth.getTime())) return null;
@@ -30,16 +26,17 @@ function calculateAge(birthDateStr?: string | null): string | null {
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
     age--;
   }
-  return age > 0 ? `${age} anos` : 'Menos de 1 ano';
+  return age > 0 ? t('learners.card.age', { age }) : t('learners.card.lessThanOneYear');
 }
 
 export function LearnerCard({ learner, onEdit, onToggleArchive, onManageAccess, familyId }: LearnerCardProps) {
+  const { t } = useLocale();
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const isArchived = Boolean(learner.archivedAt);
   const displayName = learner.preferredName || learner.firstName;
   const initial = (displayName.charAt(0) || '?').toUpperCase();
   const avatarBg = learner.avatarColor || 'var(--color-indigo-600)';
-  const age = calculateAge(learner.birthDate);
+  const age = calculateAge(learner.birthDate, t);
 
   return (
     <>
@@ -114,7 +111,7 @@ export function LearnerCard({ learner, onEdit, onToggleArchive, onManageAccess, 
 
         {isArchived && (
           <Badge variant="slate" size="sm" data-testid="learner-archived-chip">
-            Arquivado
+            {t('learners.card.archivedBadge')}
           </Badge>
         )}
       </div>
@@ -123,7 +120,7 @@ export function LearnerCard({ learner, onEdit, onToggleArchive, onManageAccess, 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
         <Badge variant="indigo" size="sm" data-testid="learner-stage-chip">
           <AletheiaIcon name="sprout" size={12} />
-          <span>{stageLabels[learner.stage] || learner.stage}</span>
+          <span>{t(`learners.stages.${learner.stage}`)}</span>
         </Badge>
 
         {learner.customGrade && (
@@ -136,7 +133,7 @@ export function LearnerCard({ learner, onEdit, onToggleArchive, onManageAccess, 
         {learner.birthDate && (
           <Badge variant="slate" size="sm" data-testid="learner-age-pill">
             <AletheiaIcon name="calendar" size={12} />
-            <span>{age ? `${age} • ` : ''}Nascimento: {learner.birthDate}</span>
+            <span>{age ? `${age} • ` : ''}{t('learners.card.birthDate', { date: learner.birthDate })}</span>
           </Badge>
         )}
       </div>
@@ -159,7 +156,7 @@ export function LearnerCard({ learner, onEdit, onToggleArchive, onManageAccess, 
         >
           <AletheiaIcon name="lightbulb" size={16} style={{ color: 'var(--color-amber-600)', flexShrink: 0, marginTop: '0.125rem' }} />
           <div>
-            <strong>Necessidades / Adaptações:</strong> {learner.specialNeeds}
+            <strong>{t('learners.card.specialNeeds')}</strong> {learner.specialNeeds}
           </div>
         </div>
       )}
@@ -180,7 +177,7 @@ export function LearnerCard({ learner, onEdit, onToggleArchive, onManageAccess, 
         >
           <span style={{ fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.125rem' }}>
             <AletheiaIcon name="file-text" size={14} />
-            <span>Observações:</span>
+            <span>{t('learners.card.notes')}</span>
           </span>
           {learner.notes}
         </div>
@@ -204,7 +201,7 @@ export function LearnerCard({ learner, onEdit, onToggleArchive, onManageAccess, 
             data-testid={`achievements-btn-${learner.id}`}
             onClick={() => setIsAchievementsOpen(true)}
           >
-            Medalhas 🏅
+            {t('learners.card.medalsBtn')}
           </Button>
           <Button
             variant="secondary"
@@ -212,7 +209,7 @@ export function LearnerCard({ learner, onEdit, onToggleArchive, onManageAccess, 
             data-testid={`manage-access-btn-${learner.id}`}
             onClick={() => onManageAccess?.(learner)}
           >
-            Acesso Aluno (PIN)
+            {t('learners.card.accessBtn')}
           </Button>
           <Button
             variant="secondary"
@@ -220,7 +217,7 @@ export function LearnerCard({ learner, onEdit, onToggleArchive, onManageAccess, 
             data-testid={`edit-learner-btn-${learner.id}`}
             onClick={() => onEdit?.(learner)}
           >
-            Editar
+            {t('learners.card.editBtn')}
           </Button>
         </Can>
 
@@ -233,14 +230,14 @@ export function LearnerCard({ learner, onEdit, onToggleArchive, onManageAccess, 
               if (
                 isArchived ||
                 window.confirm(
-                  `Arquivar "${learner.preferredName || learner.firstName}"? O educando deixará de aparecer nas listas ativas.`,
+                  t('learners.card.confirmArchive', { name: displayName }),
                 )
               ) {
                 onToggleArchive?.(learner);
               }
             }}
           >
-            {isArchived ? 'Reativar' : 'Arquivar'}
+            {isArchived ? t('learners.card.reactivateBtn') : t('learners.card.archiveBtn')}
           </Button>
         </Can>
       </div>

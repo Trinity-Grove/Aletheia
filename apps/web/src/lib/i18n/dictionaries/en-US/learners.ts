@@ -62,6 +62,7 @@ export const learners = {
     customGradeLabel: 'Custom Grade / Year',
     customGradePlaceholder: 'e.g., 3rd Grade',
     avatarColorLabel: 'Avatar Color',
+    avatarColorPlaceholder: '#3B82F6',
     specialNeedsLabel: 'Special Needs / Accommodations',
     specialNeedsPlaceholder: 'e.g., Mild dyslexia, extra time needed...',
     notesLabel: 'Pedagogical Notes',

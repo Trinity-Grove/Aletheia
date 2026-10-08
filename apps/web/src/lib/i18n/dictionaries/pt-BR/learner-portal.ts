@@ -57,6 +57,7 @@ export const learnerPortal = {
     durationMinutes: '{minutes} min',
     reflectionModalTitle: 'Narração & Reflexão da Lição',
     reflectionModalSubtitle: 'Registre o que você aprendeu com esta atividade antes de concluir.',
+    lessonLabel: 'Lição',
     oralNarrationOption: 'Realizei narração oral para meus pais/guardião',
     writtenNarrationLabel: 'O que você aprendeu? (Narração escrita ou reflexão)',
     writtenNarrationPlaceholder: 'Conte com suas próprias palavras a história, conceito ou o que mais chamou sua atenção...',

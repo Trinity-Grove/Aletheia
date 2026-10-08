@@ -3,15 +3,16 @@
 import React, { useState } from 'react';
 import { AletheiaIcon, Button, EmptyState } from '@aletheia/ui';
 import type { LearnerResponseDto } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 import { LearnerCard } from './learner-card';
 import { Can } from '../auth/role-guard';
 
 export interface LearnersListProps {
   learners: LearnerResponseDto[];
-  onEdit?: ((learner: LearnerResponseDto) => void) | undefined;
-  onToggleArchive?: ((learner: LearnerResponseDto) => void) | undefined;
-  onManageAccess?: ((learner: LearnerResponseDto) => void) | undefined;
-  onAddLearner?: (() => void) | undefined;
+  onEdit?(learner: LearnerResponseDto): void;
+  onToggleArchive?(learner: LearnerResponseDto): void;
+  onManageAccess?(learner: LearnerResponseDto): void;
+  onAddLearner?(): void;
 }
 
 export function LearnersList({
@@ -21,6 +22,7 @@ export function LearnersList({
   onManageAccess,
   onAddLearner,
 }: LearnersListProps) {
+  const { t } = useLocale();
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
 
   const activeLearners = learners.filter((l) => !l.archivedAt);
@@ -67,7 +69,7 @@ export function LearnersList({
               transition: 'all 0.15s ease',
             }}
           >
-            <span>Educandos Ativos</span>
+            <span>{t('learners.list.activeTab')}</span>
             <span
               data-testid="active-learners-count-badge"
               style={{
@@ -102,7 +104,7 @@ export function LearnersList({
               transition: 'all 0.15s ease',
             }}
           >
-            <span>Arquivados</span>
+            <span>{t('learners.list.archivedTab')}</span>
             <span
               data-testid="archived-learners-count-badge"
               style={{
@@ -123,7 +125,7 @@ export function LearnersList({
         {onAddLearner && (
           <Can action="create_learner">
             <Button data-testid="add-learner-btn-list" onClick={onAddLearner}>
-              + Adicionar Educando
+              {t('learners.addLearner')}
             </Button>
           </Can>
         )}
@@ -136,19 +138,19 @@ export function LearnersList({
           icon={<AletheiaIcon name="graduation-cap" size={32} />}
           title={
             activeTab === 'active'
-              ? 'Nenhum educando ativo cadastrado'
-              : 'Nenhum educando arquivado'
+              ? t('learners.list.emptyActiveTitle')
+              : t('learners.list.emptyArchivedTitle')
           }
           description={
             activeTab === 'active'
-              ? 'Cadastre os seus filhos para começar a personalizar planos de estudos, acompanhar registros e devocionais.'
-              : 'Educandos arquivados serão listados aqui caso deseje reativá-los no futuro.'
+              ? t('learners.list.emptyActiveDescription')
+              : t('learners.list.emptyArchivedDescription')
           }
           action={
             activeTab === 'active' && onAddLearner ? (
               <Can action="create_learner">
                 <Button data-testid="add-learner-empty-btn" onClick={onAddLearner}>
-                  + Adicionar Educando
+                  {t('learners.addLearner')}
                 </Button>
               </Can>
             ) : undefined
@@ -167,9 +169,9 @@ export function LearnersList({
             <LearnerCard
               key={learner.id}
               learner={learner}
-              onEdit={onEdit}
-              onToggleArchive={onToggleArchive}
-              onManageAccess={onManageAccess}
+              {...(onEdit ? { onEdit } : {})}
+              {...(onToggleArchive ? { onToggleArchive } : {})}
+              {...(onManageAccess ? { onManageAccess } : {})}
             />
           ))}
         </div>
