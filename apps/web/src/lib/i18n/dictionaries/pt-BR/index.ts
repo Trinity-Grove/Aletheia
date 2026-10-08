@@ -15,6 +15,11 @@ import { records } from './records';
 import { devotional } from './devotional';
 import { reports } from './reports';
 import { compliance } from './compliance';
+import { learners } from './learners';
+import { invitations } from './invitations';
+import { landing } from './landing';
+import { shared } from './shared';
+import { showcase } from './showcase';
 
 export const ptBR = {
   common,
@@ -34,5 +39,9 @@ export const ptBR = {
   devotional,
   reports,
   compliance,
+  learners,
+  invitations,
+  landing,
+  shared,
+  showcase,
 } as const;
-

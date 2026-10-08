@@ -122,4 +122,12 @@ export const auth = {
     coGuardian: 'Co-guardião',
     educator: 'Educador',
   },
+  verify: {
+    pageTitle: 'Verificação de Documentos',
+    loading: 'Carregando verificação...',
+  },
+  roleGuard: {
+    unauthorizedTitle: 'Acesso Restrito',
+    unauthorizedMessage: 'Você não possui permissão para acessar este recurso.',
+  },
 } as const;
