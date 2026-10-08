@@ -7,12 +7,13 @@ import type {
   ComplianceEvaluationStatus,
   CreateManualComplianceOverrideDto,
 } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface ComplianceEvaluationPanelProps {
   familyId: string;
   learnerId: string | null;
   academicYearId?: string | null;
-  onOverrideRecorded?: () => void;
+  onOverrideRecorded?(): void;
 }
 
 const statusBadgeConfig: Record<
@@ -67,6 +68,7 @@ export function ComplianceEvaluationPanel({
   academicYearId,
   onOverrideRecorded,
 }: ComplianceEvaluationPanelProps) {
+  const { t } = useLocale();
   const [evaluation, setEvaluation] = useState<ComplianceEvaluationResponseDto | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -167,7 +169,7 @@ export function ComplianceEvaluationPanel({
     return (
       <Card data-testid="compliance-panel-no-learner" className="p-6 text-center text-slate-500">
         <AletheiaIcon name="book-open" size={32} className="mx-auto mb-2 text-slate-400" />
-        <p className="text-sm font-medium">Selecione um educando para avaliar a conformidade legal e curricular.</p>
+        <p className="text-sm font-medium">{t('compliance.panel.selectLearner')}</p>
       </Card>
     );
   }
@@ -175,14 +177,14 @@ export function ComplianceEvaluationPanel({
   if (loading && !evaluation) {
     return (
       <Card className="p-6 text-center text-slate-500">
-        <p className="text-sm animate-pulse">Avaliando conformidade e diretrizes normativas...</p>
+        <p className="text-sm animate-pulse">{t('compliance.panel.evaluating')}</p>
       </Card>
     );
   }
 
   if (error) {
     return (
-      <Alert variant="error" title="Erro de Avaliação">
+      <Alert variant="error" title={t('compliance.panel.evaluationErrorTitle')}>
         <p className="text-sm">{error}</p>
         <Button size="sm" variant="secondary" onClick={fetchEvaluation} className="mt-2">
           Tentar novamente
@@ -222,7 +224,7 @@ export function ComplianceEvaluationPanel({
             <p className="text-xs text-slate-500">
               Educando: <span className="font-medium text-slate-700 dark:text-slate-300">{evaluation.learnerName}</span>
               {evaluation.academicYearTitle && (
-                <> | Período: <span className="font-medium text-slate-700 dark:text-slate-300">{evaluation.academicYearTitle}</span></>
+                <> | {t('compliance.panel.periodLabel')} <span className="font-medium text-slate-700 dark:text-slate-300">{evaluation.academicYearTitle}</span></>
               )}
             </p>
           </div>
@@ -245,7 +247,7 @@ export function ComplianceEvaluationPanel({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
             <div className="flex items-center justify-between gap-1 mb-1">
-              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Jurisdição Aplicável</span>
+              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">{t('compliance.panel.jurisdictionLabel')}</span>
               <Badge variant={confBadge.variant} size="sm">
                 {confBadge.label}
               </Badge>
@@ -261,7 +263,7 @@ export function ComplianceEvaluationPanel({
           </div>
 
           <div className="md:col-span-2 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 flex flex-col justify-center">
-            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Diagnóstico do Motor</span>
+            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('compliance.panel.engineDiagnosis')}</span>
             <p className="text-sm text-slate-800 dark:text-slate-200">
               {evaluation.statusSummary}
             </p>
@@ -334,10 +336,10 @@ export function ComplianceEvaluationPanel({
                     {(criterion.currentValue !== undefined || criterion.targetValue !== undefined) && (
                       <div className="text-xs text-slate-500 mb-2 font-mono">
                         {criterion.currentValue !== null && (
-                          <span>Registrado: <strong>{criterion.currentValue}</strong></span>
+                          <span>{t('compliance.panel.recordedLabel')} <strong>{criterion.currentValue}</strong></span>
                         )}
                         {criterion.targetValue !== null && (
-                          <span className="ml-2">| Mínimo: <strong>{criterion.targetValue}</strong></span>
+                          <span className="ml-2">| {t('compliance.panel.minimumLabel')} <strong>{criterion.targetValue}</strong></span>
                         )}
                       </div>
                     )}
@@ -368,7 +370,7 @@ export function ComplianceEvaluationPanel({
           <AletheiaIcon name="shield" size={18} />
         </div>
         <div className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-          <strong className="text-slate-800 dark:text-slate-200 block mb-0.5">Aviso Legal Obrigatório:</strong>
+          <strong className="text-slate-800 dark:text-slate-200 block mb-0.5">{t('compliance.panel.legalDisclaimerTitle')}</strong>
           {evaluation.legalDisclaimer}
         </div>
       </div>
@@ -377,8 +379,8 @@ export function ComplianceEvaluationPanel({
       <Modal
         isOpen={isOverrideModalOpen}
         onClose={() => setIsOverrideModalOpen(false)}
-        title="Registrar Sobreposição Manual de Conformidade"
-        description="Permite que os responsáveis ajustem o status de conformidade indicando justificativa auditada para auto-organização familiar."
+        title={t('compliance.panel.manualOverrideTitle')}
+        description={t('compliance.panel.manualOverrideDescription')}
       >
         <form onSubmit={handleSubmitOverride} data-testid="override-modal" className="space-y-4">
           {overrideError && (
@@ -411,7 +413,7 @@ export function ComplianceEvaluationPanel({
             <Textarea
               data-testid="override-reason-input"
               rows={3}
-              placeholder="Ex.: Comprovantes complementares arquivados fisicamente; validação em processo junto ao conselho..."
+              placeholder={t('compliance.panel.manualOverridePlaceholder')}
               value={overrideReason}
               onChange={(e) => setOverrideReason(e.target.value)}
               required
