@@ -1,6 +1,7 @@
 'use client';
 
 import React, { use } from 'react';
+import { useLocale } from '../../../src/lib/i18n/locale-context';
 import { InvitationAcceptView } from '../../../src/components/invitations/invitation-accept-view';
 
 export interface InvitePageProps {
@@ -8,6 +9,7 @@ export interface InvitePageProps {
 }
 
 export default function InvitePage({ params }: InvitePageProps = {}) {
+  const { t: _t } = useLocale();
   const resolvedParams =
     params && typeof (params as Promise<{ token: string }>).then === 'function'
       ? use(params as Promise<{ token: string }>)

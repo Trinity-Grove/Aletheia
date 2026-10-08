@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface LoginFormProps {
-  onSubmit?: (_data: { email: string; password: string }) => Promise<void> | void;
+  onSubmit?(_data: { email: string; password: string }): Promise<void> | void;
 }
 
 export function LoginForm({ onSubmit }: LoginFormProps) {

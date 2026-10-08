@@ -2,6 +2,7 @@
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useLocale } from '../../src/lib/i18n/locale-context';
 import { DocumentVerificationView } from '../../src/components/reports/document-verification-view';
 
 function VerificarContent() {
@@ -16,11 +17,13 @@ function VerificarContent() {
 }
 
 export default function VerificarPage() {
+  const { t } = useLocale();
+
   return (
     <Suspense
       fallback={
         <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-          Carregando verificação...
+          {t('auth.verify.loading')}
         </div>
       }
     >

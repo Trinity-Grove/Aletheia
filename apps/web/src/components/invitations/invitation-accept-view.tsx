@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Alert, Button, Card } from '@aletheia/ui';
 import { getApiAuthToken } from '../../lib/api';
 import { useAuth } from '../../lib/auth/auth-context';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface InvitationAcceptViewProps {
   token?: string | undefined;
@@ -13,6 +14,7 @@ export interface InvitationAcceptViewProps {
 }
 
 export function InvitationAcceptView({ token: initialToken, params }: InvitationAcceptViewProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const routeParams = useParams();
 
@@ -34,7 +36,7 @@ export function InvitationAcceptView({ token: initialToken, params }: Invitation
 
   const handleAcceptInvitation = async () => {
     if (!resolvedToken) {
-      setError('Token de convite não fornecido.');
+      setError(t('invitations.tokenMissing'));
       return;
     }
 
@@ -58,7 +60,7 @@ export function InvitationAcceptView({ token: initialToken, params }: Invitation
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || 'Convite inválido, expirado ou já utilizado.');
+        throw new Error(errData.message || t('invitations.invalidOrExpired'));
       }
 
       const data: { success: boolean; familyId: string } = await res.json();
@@ -82,7 +84,7 @@ export function InvitationAcceptView({ token: initialToken, params }: Invitation
         router.push('/');
       }, 1500);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erro ao aceitar convite.');
+      setError(err instanceof Error ? err.message : t('invitations.errorAccepting'));
     } finally {
       setIsAccepting(false);
     }
@@ -147,7 +149,7 @@ export function InvitationAcceptView({ token: initialToken, params }: Invitation
               color: 'var(--gold-dark)',
             }}
           >
-            Aletheia • Trinity Grove
+            {t('invitations.brand')}
           </span>
           <h1
             style={{
@@ -158,10 +160,10 @@ export function InvitationAcceptView({ token: initialToken, params }: Invitation
               color: 'var(--forest)',
             }}
           >
-            Convite para Família
+            {t('invitations.title')}
           </h1>
           <p style={{ margin: 0, fontSize: '0.9375rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            Você foi convidado(a) para fazer parte de uma comunidade de aprendizado familiar.
+            {t('invitations.subtitle')}
           </p>
         </div>
 
@@ -173,14 +175,14 @@ export function InvitationAcceptView({ token: initialToken, params }: Invitation
 
         {success && (
           <Alert variant="success" data-testid="invitation-success-message">
-            Convite aceito com sucesso! Bem-vindo(a) à família!
+            {t('invitations.success')}
           </Alert>
         )}
 
         {/* Loading status */}
         {status === 'loading' && (
           <div data-testid="invitation-loading" style={{ color: 'var(--text-secondary)', padding: '1rem 0' }}>
-            Verificando sua sessão...
+            {t('invitations.checkingSession')}
           </div>
         )}
 
@@ -198,7 +200,7 @@ export function InvitationAcceptView({ token: initialToken, params }: Invitation
                 lineHeight: 1.5,
               }}
             >
-              Para aceitar este convite com segurança e acessar os planos de estudo, entre com sua conta existente ou crie um novo cadastro.
+              {t('invitations.unauthenticatedNotice')}
             </div>
 
             <Link
@@ -219,17 +221,17 @@ export function InvitationAcceptView({ token: initialToken, params }: Invitation
                 transition: 'all 0.15s ease',
               }}
             >
-              Fazer Login para Aceitar
+              {t('invitations.loginToAccept')}
             </Link>
 
             <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-              Ainda não tem conta?{' '}
+              {t('invitations.noAccountText')}{' '}
               <Link
                 href={registerUrl}
                 data-testid="register-to-accept-link"
                 style={{ color: 'var(--forest)', fontWeight: 600, textDecoration: 'underline' }}
               >
-                Cadastre-se aqui
+                {t('invitations.registerHere')}
               </Link>
             </div>
           </div>
@@ -251,7 +253,7 @@ export function InvitationAcceptView({ token: initialToken, params }: Invitation
               }}
             >
               <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                Conectado como:
+                {t('invitations.connectedAs')}
               </div>
               <div style={{ fontWeight: 700, color: 'var(--forest)' }}>
                 {user.fullName || user.email}
@@ -269,7 +271,7 @@ export function InvitationAcceptView({ token: initialToken, params }: Invitation
                 onClick={handleAcceptInvitation}
                 style={{ height: '2.75rem', fontSize: '0.9375rem', fontWeight: 600 }}
               >
-                Aceitar Convite e Entrar na Família
+                {t('invitations.acceptButton')}
               </Button>
 
               <Button
@@ -279,7 +281,7 @@ export function InvitationAcceptView({ token: initialToken, params }: Invitation
                 disabled={isAccepting}
                 style={{ height: '2.5rem', fontSize: '0.875rem' }}
               >
-                Ir para o Início
+                {t('invitations.goToHome')}
               </Button>
             </div>
           </div>

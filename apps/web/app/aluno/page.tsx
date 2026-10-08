@@ -2,8 +2,10 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale } from '../../src/lib/i18n/locale-context';
 
 export default function LearnerIndexPage() {
+  const { t: _t } = useLocale();
   const router = useRouter();
 
   useEffect(() => {

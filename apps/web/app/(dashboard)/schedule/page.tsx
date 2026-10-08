@@ -25,8 +25,10 @@ import { CompleteLessonItem, CompleteLessonModal } from '../../../src/components
 import { WeeklyRoutineGrid } from '../../../src/components/lessons/weekly-routine-grid';
 import { RoutineSlotModal } from '../../../src/components/lessons/routine-slot-modal';
 import { CurriculumPlanningWizardModal } from '../../../src/components/curriculum/curriculum-planning-wizard-modal';
+import { useLocale } from '../../../src/lib/i18n/locale-context';
 
 export default function SchedulePage() {
+  const { t } = useLocale();
   const { toast } = useToast();
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
@@ -164,7 +166,7 @@ export default function SchedulePage() {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Falha ao criar plano de lição');
+      throw new Error(err.message || t('shared.schedule.errorCreateLesson'));
     }
     await fetchAgenda();
   };
@@ -179,7 +181,7 @@ export default function SchedulePage() {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Falha ao reagendar lição');
+      throw new Error(err.message || t('shared.schedule.errorReschedule'));
     }
     await fetchAgenda();
   };
@@ -202,7 +204,7 @@ export default function SchedulePage() {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Falha ao concluir lição');
+      throw new Error(err.message || t('shared.schedule.errorComplete'));
     }
     await fetchAgenda();
   };
@@ -216,12 +218,12 @@ export default function SchedulePage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao excluir lição.');
+        throw new Error(err.message || t('shared.schedule.toastLessonDeleteError'));
       }
       await fetchAgenda();
-      toast({ variant: 'success', title: 'Lição excluída.' });
+      toast({ variant: 'success', title: t('shared.schedule.toastLessonDeleted') });
     } catch (err: unknown) {
-      toast({ variant: 'error', title: err instanceof Error ? err.message : 'Falha ao excluir lição.' });
+      toast({ variant: 'error', title: err instanceof Error ? err.message : t('shared.schedule.toastLessonDeleteError') });
     }
   };
 
@@ -235,7 +237,7 @@ export default function SchedulePage() {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Falha ao criar bloco de rotina');
+      throw new Error(err.message || t('shared.schedule.errorCreateSlot'));
     }
     await fetchSlots();
     await fetchAgenda();
@@ -251,7 +253,7 @@ export default function SchedulePage() {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Falha ao atualizar bloco de rotina');
+      throw new Error(err.message || t('shared.schedule.errorUpdateSlot'));
     }
     await fetchSlots();
     await fetchAgenda();
@@ -271,13 +273,13 @@ export default function SchedulePage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao excluir bloco de rotina.');
+        throw new Error(err.message || t('shared.schedule.toastSlotDeleteError'));
       }
       await fetchSlots();
       await fetchAgenda();
-      toast({ variant: 'success', title: 'Bloco de rotina excluído.' });
+      toast({ variant: 'success', title: t('shared.schedule.toastSlotDeleted') });
     } catch (err: unknown) {
-      toast({ variant: 'error', title: err instanceof Error ? err.message : 'Falha ao excluir bloco de rotina.' });
+      toast({ variant: 'error', title: err instanceof Error ? err.message : t('shared.schedule.toastSlotDeleteError') });
     }
   };
 
@@ -328,10 +330,10 @@ export default function SchedulePage() {
         >
           <div>
             <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-              Agenda & Rotina de Aprendizagem
+              {t('shared.schedule.title')}
             </h1>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-              Acompanhe o cronograma diário, marque lições concluídas e planeje a rotina semanal da família.
+              {t('shared.schedule.subtitle')}
             </p>
           </div>
 
@@ -365,7 +367,7 @@ export default function SchedulePage() {
               }}
             >
               <AletheiaIcon name="calendar" size="sm" />
-              <span>Agenda Diária (Checklist)</span>
+              <span>{t('shared.schedule.dailyAgenda') === 'shared.schedule.dailyAgenda' ? t('shared.schedule.tabAgenda') : t('shared.schedule.dailyAgenda')}</span>
             </button>
             <button
               type="button"
@@ -387,14 +389,14 @@ export default function SchedulePage() {
               }}
             >
               <AletheiaIcon name="calendar-range" size="sm" />
-              <span>Rotina Semanal</span>
+              <span>{t('shared.schedule.weeklyRoutine') === 'shared.schedule.weeklyRoutine' ? t('shared.schedule.tabRoutine') : t('shared.schedule.weeklyRoutine')}</span>
             </button>
           </div>
         </div>
 
         {loading ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-            Carregando agenda e rotina...
+            {t('shared.schedule.loading')}
           </div>
         ) : activeTab === 'agenda' ? (
           <DailyAgendaView
