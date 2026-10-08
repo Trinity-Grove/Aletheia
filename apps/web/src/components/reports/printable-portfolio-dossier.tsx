@@ -11,10 +11,10 @@ import { useLocale } from '../../lib/i18n/locale-context';
 export interface PrintablePortfolioDossierProps {
   report: OfficialReportResponseDto;
   dossier?: LearningPortfolioDossierDto | null | undefined;
-  onExportCsv?: ((reportId: string) => unknown) | undefined;
-  onExportPdf?: ((reportId: string) => unknown) | undefined;
-  onPrint?: (() => unknown) | undefined;
-  onClose?: (() => unknown) | undefined;
+  onExportCsv?(reportId: string): unknown;
+  onExportPdf?(reportId: string): unknown;
+  onPrint?(): unknown;
+  onClose?(): unknown;
 }
 
 export const LEGAL_DISCLAIMER_TEXT =

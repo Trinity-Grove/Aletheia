@@ -20,10 +20,10 @@ export const GRADING_SCALE_LABELS: Record<GradingScale, string> = {
 export interface PrintableTranscriptProps {
   report: OfficialReportResponseDto;
   transcript?: AcademicTranscriptDto | null | undefined;
-  onExportCsv?: ((reportId: string) => unknown) | undefined;
-  onExportPdf?: ((reportId: string) => unknown) | undefined;
-  onPrint?: (() => unknown) | undefined;
-  onClose?: (() => unknown) | undefined;
+  onExportCsv?(reportId: string): unknown;
+  onExportPdf?(reportId: string): unknown;
+  onPrint?(): unknown;
+  onClose?(): unknown;
 }
 
 export function PrintableTranscript({

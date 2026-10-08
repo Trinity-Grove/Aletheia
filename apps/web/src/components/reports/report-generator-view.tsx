@@ -597,21 +597,21 @@ export function ReportGeneratorView({
               <PrintablePortfolioDossier
                 report={selectedReportForView}
                 onExportCsv={onExportCsv}
-                onExportPdf={onExportPdf}
+                {...(onExportPdf ? { onExportPdf } : {})}
                 onClose={() => setSelectedReportForView(null)}
               />
             ) : selectedReportForView.type === 'ANNUAL_COMPLIANCE_REPORT' ? (
               <PrintableComplianceReport
                 report={selectedReportForView}
                 onExportCsv={onExportCsv}
-                onExportPdf={onExportPdf}
+                {...(onExportPdf ? { onExportPdf } : {})}
                 onClose={() => setSelectedReportForView(null)}
               />
             ) : (
               <PrintableTranscript
                 report={selectedReportForView}
                 onExportCsv={onExportCsv}
-                onExportPdf={onExportPdf}
+                {...(onExportPdf ? { onExportPdf } : {})}
                 onClose={() => setSelectedReportForView(null)}
               />
             )}
