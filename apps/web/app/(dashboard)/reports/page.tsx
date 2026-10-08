@@ -10,8 +10,10 @@ import type {
 } from '@aletheia/contracts';
 import { ProductShell } from '../../../src/components/product-shell';
 import { ReportGeneratorView } from '../../../src/components/reports/report-generator-view';
+import { useLocale } from '../../../src/lib/i18n/locale-context';
 
 export default function ReportsPage() {
+  const { t } = useLocale();
   const { toast } = useToast();
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
@@ -182,16 +184,16 @@ export default function ReportsPage() {
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.5rem 1rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-            Gerador de Documentos & Históricos Oficiais
+            {t('reports.pages.reports.title')}
           </h1>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-            Emita históricos escolares com conversão flexível de notas, sumários de presença e relatórios de conformidade.
+            {t('reports.pages.reports.description')}
           </p>
         </div>
 
         {loading ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-            Carregando relatórios oficiais...
+            {t('reports.pages.reports.loading')}
           </div>
         ) : (
           <ReportGeneratorView

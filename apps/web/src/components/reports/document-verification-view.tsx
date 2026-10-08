@@ -4,16 +4,18 @@ import React, { useEffect, useState } from 'react';
 import { AletheiaIcon, Alert, Button, Input } from '@aletheia/ui';
 import type { ReportVerificationResponseDto } from '@aletheia/contracts';
 import { REPORT_TYPE_CONFIG } from './report-generator-view';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface DocumentVerificationViewProps {
   initialIdentifier?: string | null | undefined;
-  onVerify?: ((identifier: string) => Promise<ReportVerificationResponseDto>) | undefined;
+  onVerify?(identifier: string): Promise<ReportVerificationResponseDto>;
 }
 
 export function DocumentVerificationView({
   initialIdentifier,
   onVerify,
 }: DocumentVerificationViewProps) {
+  const { t } = useLocale();
   const [identifier, setIdentifier] = useState(initialIdentifier ?? '');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<ReportVerificationResponseDto | null>(null);
@@ -116,11 +118,11 @@ export function DocumentVerificationView({
         }}
       >
         <Input
-          label="Identificador do Documento ou Hash Criptográfico SHA-256"
+          label={t('reports.verification.docIdLabel')}
           data-testid="verification-input"
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
-          placeholder="Ex.: 4ab4391b... (64 caracteres hexadecimais) ou UUID do relatório"
+          placeholder={t('reports.verification.docIdPlaceholder')}
         />
 
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -283,7 +285,7 @@ export function DocumentVerificationView({
                   lineHeight: 1.5,
                 }}
               >
-                <strong>Ressalva Jurídica:</strong> {result.legalDisclaimer}
+                <strong>{t('reports.verification.legalDisclaimer')}</strong> {result.legalDisclaimer}
               </div>
             </div>
           )}
