@@ -1,8 +1,8 @@
 # Relatório de Cobertura de Internacionalização (i18n)
 
-- **Total de Páginas:** 31 (17 traduzidas, 14 pendentes - 54.8%)
-- **Total de Componentes:** 95 (53 traduzidos, 42 pendentes - 55.8%)
-- **Cobertura Total de Frontend:** 70 / 126 arquivos (55.6%)
+- **Total de Páginas:** 31 (19 traduzidas, 12 pendentes - 61.3%)
+- **Total de Componentes:** 95 (61 traduzidos, 34 pendentes - 64.2%)
+- **Cobertura Total de Frontend:** 80 / 126 arquivos (63.5%)
 
 ## Resumo por Domínio e Ondas de Migração
 
@@ -11,7 +11,7 @@
 | **Onda 1: Frequência e Registros de Aprendizagem** | `attendance, records` | 0 | 0 | 0 |
 | **Onda 2: Devocional Familiar e Comparador Bíblico** | `devotional, comparador` | 0 | 0 | 0 |
 | **Onda 3: Currículo, Atividades Pedagógicas e Galeria de Pacotes** | `curriculum, lessons, activities` | 0 | 0 | 0 |
-| **Onda 4: Relatórios, Dossiês de Conformidade e Portfólio** | `reports, portfolio, compliance` | 10 | 2 | 8 |
+| **Onda 4: Relatórios, Dossiês de Conformidade e Portfólio** | `reports, portfolio, compliance` | 0 | 0 | 0 |
 | **Onda 5: Convites, Verificações e Fechamento de Cobertura Global** | `invitations, verify, auth, settings, learners, layout, shared` | 46 | 12 | 34 |
 
 ## Detalhamento dos Arquivos Pendentes por Onda
@@ -22,21 +22,7 @@
 
 ### Onda 3: Currículo, Atividades Pedagógicas e Galeria de Pacotes (`curriculum, lessons, activities`) — 0 arquivos pendentes
 
-### Onda 4: Relatórios, Dossiês de Conformidade e Portfólio (`reports, portfolio, compliance`) — 10 arquivos pendentes
-
-**Páginas (2):**
-- `apps/web/app/(dashboard)/portfolio/page.tsx` (0 strings detectadas)
-- `apps/web/app/(dashboard)/reports/page.tsx` (0 strings detectadas)
-
-**Componentes (8):**
-- `apps/web/src/components/compliance/compliance-evaluation-panel.tsx` (12 strings detectadas)
-- `apps/web/src/components/reports/attendance-tracker-view.tsx` (17 strings detectadas)
-- `apps/web/src/components/reports/compliance-gauge.tsx` (3 strings detectadas)
-- `apps/web/src/components/reports/document-verification-view.tsx` (4 strings detectadas)
-- `apps/web/src/components/reports/printable-compliance-report.tsx` (10 strings detectadas)
-- `apps/web/src/components/reports/printable-portfolio-dossier.tsx` (6 strings detectadas)
-- `apps/web/src/components/reports/printable-transcript.tsx` (12 strings detectadas)
-- `apps/web/src/components/reports/report-generator-view.tsx` (23 strings detectadas)
+### Onda 4: Relatórios, Dossiês de Conformidade e Portfólio (`reports, portfolio, compliance`) — 0 arquivos pendentes
 
 ### Onda 5: Convites, Verificações e Fechamento de Cobertura Global (`invitations, verify, auth, settings, learners, layout, shared`) — 46 arquivos pendentes
 
@@ -109,9 +95,9 @@
 | Página | `apps/web/app/(dashboard)/devotional/page.tsx` | ✅ Traduzido | 0 strings | Onda 2 |
 | Página | `apps/web/app/(dashboard)/learners/page.tsx` | ❌ Pendente | 0 strings | Onda 5 |
 | Página | `apps/web/app/(dashboard)/onboarding/page.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
-| Página | `apps/web/app/(dashboard)/portfolio/page.tsx` | ❌ Pendente | 0 strings | Onda 4 |
+| Página | `apps/web/app/(dashboard)/portfolio/page.tsx` | ✅ Traduzido | 0 strings | Onda 4 |
 | Página | `apps/web/app/(dashboard)/records/page.tsx` | ✅ Traduzido | 0 strings | Onda 1 |
-| Página | `apps/web/app/(dashboard)/reports/page.tsx` | ❌ Pendente | 0 strings | Onda 4 |
+| Página | `apps/web/app/(dashboard)/reports/page.tsx` | ✅ Traduzido | 0 strings | Onda 4 |
 | Página | `apps/web/app/(dashboard)/schedule/page.tsx` | ❌ Pendente | 2 strings | Onda 5 |
 | Página | `apps/web/app/(dashboard)/settings/page.tsx` | ❌ Pendente | 1 strings | Onda 5 |
 | Página | `apps/web/app/(dashboard)/settings/privacy/page.tsx` | ❌ Pendente | 0 strings | Onda 5 |
@@ -134,7 +120,7 @@
 | Componente | `apps/web/src/components/auth/role-badge.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/auth/role-guard.tsx` | ❌ Pendente | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/auth/verify-email-form.tsx` | ❌ Pendente | 1 strings | Onda 5 |
-| Componente | `apps/web/src/components/compliance/compliance-evaluation-panel.tsx` | ❌ Pendente | 12 strings | Onda 4 |
+| Componente | `apps/web/src/components/compliance/compliance-evaluation-panel.tsx` | ✅ Traduzido | 0 strings | Onda 4 |
 | Componente | `apps/web/src/components/curriculum/academic-year-switcher.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
 | Componente | `apps/web/src/components/curriculum/author-trust-badge.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
 | Componente | `apps/web/src/components/curriculum/curriculum-pack-detail-modal.tsx` | ✅ Traduzido | 0 strings | Onda 3 |
@@ -197,13 +183,13 @@
 | Componente | `apps/web/src/components/records/record-card.tsx` | ✅ Traduzido | 0 strings | Onda 1 |
 | Componente | `apps/web/src/components/records/record-form-modal.tsx` | ✅ Traduzido | 0 strings | Onda 1 |
 | Componente | `apps/web/src/components/records/records-journal-view.tsx` | ✅ Traduzido | 0 strings | Onda 1 |
-| Componente | `apps/web/src/components/reports/attendance-tracker-view.tsx` | ❌ Pendente | 17 strings | Onda 4 |
-| Componente | `apps/web/src/components/reports/compliance-gauge.tsx` | ❌ Pendente | 3 strings | Onda 4 |
-| Componente | `apps/web/src/components/reports/document-verification-view.tsx` | ❌ Pendente | 4 strings | Onda 4 |
-| Componente | `apps/web/src/components/reports/printable-compliance-report.tsx` | ❌ Pendente | 10 strings | Onda 4 |
-| Componente | `apps/web/src/components/reports/printable-portfolio-dossier.tsx` | ❌ Pendente | 6 strings | Onda 4 |
-| Componente | `apps/web/src/components/reports/printable-transcript.tsx` | ❌ Pendente | 12 strings | Onda 4 |
-| Componente | `apps/web/src/components/reports/report-generator-view.tsx` | ❌ Pendente | 23 strings | Onda 4 |
+| Componente | `apps/web/src/components/reports/attendance-tracker-view.tsx` | ✅ Traduzido | 0 strings | Onda 4 |
+| Componente | `apps/web/src/components/reports/compliance-gauge.tsx` | ✅ Traduzido | 0 strings | Onda 4 |
+| Componente | `apps/web/src/components/reports/document-verification-view.tsx` | ✅ Traduzido | 0 strings | Onda 4 |
+| Componente | `apps/web/src/components/reports/printable-compliance-report.tsx` | ✅ Traduzido | 0 strings | Onda 4 |
+| Componente | `apps/web/src/components/reports/printable-portfolio-dossier.tsx` | ✅ Traduzido | 0 strings | Onda 4 |
+| Componente | `apps/web/src/components/reports/printable-transcript.tsx` | ✅ Traduzido | 0 strings | Onda 4 |
+| Componente | `apps/web/src/components/reports/report-generator-view.tsx` | ✅ Traduzido | 0 strings | Onda 4 |
 | Componente | `apps/web/src/components/settings/account-activity-log.tsx` | ❌ Pendente | 3 strings | Onda 5 |
 | Componente | `apps/web/src/components/settings/account-security-settings.tsx` | ❌ Pendente | 8 strings | Onda 5 |
 | Componente | `apps/web/src/components/settings/data-backup-card.tsx` | ❌ Pendente | 13 strings | Onda 5 |
