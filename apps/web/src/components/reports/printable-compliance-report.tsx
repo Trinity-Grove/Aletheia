@@ -6,14 +6,15 @@ import type {
   AnnualComplianceReportDto,
   OfficialReportResponseDto,
 } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface PrintableComplianceReportProps {
   report: OfficialReportResponseDto;
   compliance?: AnnualComplianceReportDto | null | undefined;
-  onExportCsv?: ((reportId: string) => void) | undefined;
-  onExportPdf?: ((reportId: string) => void) | undefined;
-  onPrint?: (() => void) | undefined;
-  onClose?: (() => void) | undefined;
+  onExportCsv?: ((reportId: string) => unknown) | undefined;
+  onExportPdf?: ((reportId: string) => unknown) | undefined;
+  onPrint?: (() => unknown) | undefined;
+  onClose?: (() => unknown) | undefined;
 }
 
 export const LEGAL_DISCLAIMER_TEXT =
@@ -27,6 +28,7 @@ export function PrintableComplianceReport({
   onPrint,
   onClose,
 }: PrintableComplianceReportProps) {
+  const { t } = useLocale();
   const content = (initialCompliance ?? report.content) as Partial<AnnualComplianceReportDto>;
 
   const familyOrgName =
@@ -40,7 +42,7 @@ export function PrintableComplianceReport({
   const attendance = content.attendanceCompliance;
   const curriculumProgress = content.curriculumProgress || [];
   const generalNotes = content.generalNotes || report.content?.notes;
-  const legalDisclaimer = content.legalDisclaimer || LEGAL_DISCLAIMER_TEXT;
+  const legalDisclaimer = content.legalDisclaimer || t('reports.printable.legalDisclaimer');
   const documentHash = report.documentHash || report.id;
 
   const handlePrint = () => {
@@ -125,7 +127,7 @@ export function PrintableComplianceReport({
             Imprimir / Salvar PDF
           </Button>
           {onClose && (
-            <IconButton data-testid="close-compliance-btn" onClick={onClose} aria-label="Fechar">
+            <IconButton data-testid="close-compliance-btn" onClick={onClose} aria-label={t('reports.printable.closeAria')}>
               <AletheiaIcon name="x" size={16} />
             </IconButton>
           )}
@@ -376,10 +378,10 @@ export function PrintableComplianceReport({
             >
               <thead>
                 <tr style={{ borderBottom: '2px solid var(--text-primary)' }}>
-                  <th style={{ padding: '0.5rem 0.25rem' }}>Disciplina</th>
-                  <th style={{ padding: '0.5rem 0.25rem', textAlign: 'center' }}>Avaliações</th>
-                  <th style={{ padding: '0.5rem 0.25rem', textAlign: 'center' }}>Nível de Domínio</th>
-                  <th style={{ padding: '0.5rem 0.25rem', textAlign: 'right' }}>Conceito / Nota</th>
+                  <th style={{ padding: '0.5rem 0.25rem' }}>{t('reports.printable.subjectCol')}</th>
+                  <th style={{ padding: '0.5rem 0.25rem', textAlign: 'center' }}>{t('reports.printable.evaluationsCol')}</th>
+                  <th style={{ padding: '0.5rem 0.25rem', textAlign: 'center' }}>{t('reports.printable.masteryCol')}</th>
+                  <th style={{ padding: '0.5rem 0.25rem', textAlign: 'right' }}>{t('reports.printable.gradeCol')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -450,7 +452,7 @@ export function PrintableComplianceReport({
             lineHeight: 1.4,
           }}
         >
-          <strong>Ressalva Jurídica:</strong> {legalDisclaimer}
+          <strong>{t('reports.verification.legalDisclaimer')}</strong> {legalDisclaimer}
         </section>
 
         {/* Signatures */}
@@ -468,13 +470,13 @@ export function PrintableComplianceReport({
         >
           <div>
             <div style={{ borderBottom: '1px solid var(--border-medium)', marginBottom: '0.5rem', height: '2rem' }} />
-            <span style={{ fontWeight: 700 }}>Responsável Legal / Educador Titular</span>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Assinatura</div>
+            <span style={{ fontWeight: 700 }}>{t('reports.printable.guardianSignature')}</span>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{t('reports.printable.signatureLabel')}</div>
           </div>
           <div>
             <div style={{ borderBottom: '1px solid var(--border-medium)', marginBottom: '0.5rem', height: '2rem' }} />
-            <span style={{ fontWeight: 700 }}>Coordenador Pedagógico / Responsável</span>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Data: ____/____/________</div>
+            <span style={{ fontWeight: 700 }}>{t('reports.printable.coordinatorSignature')}</span>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{t('reports.printable.dateField')}</div>
           </div>
         </section>
       </div>

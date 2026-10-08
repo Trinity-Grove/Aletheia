@@ -6,14 +6,15 @@ import type {
   LearningPortfolioDossierDto,
   OfficialReportResponseDto,
 } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface PrintablePortfolioDossierProps {
   report: OfficialReportResponseDto;
   dossier?: LearningPortfolioDossierDto | null | undefined;
-  onExportCsv?: ((reportId: string) => void) | undefined;
-  onExportPdf?: ((reportId: string) => void) | undefined;
-  onPrint?: (() => void) | undefined;
-  onClose?: (() => void) | undefined;
+  onExportCsv?: ((reportId: string) => unknown) | undefined;
+  onExportPdf?: ((reportId: string) => unknown) | undefined;
+  onPrint?: (() => unknown) | undefined;
+  onClose?: (() => unknown) | undefined;
 }
 
 export const LEGAL_DISCLAIMER_TEXT =
@@ -27,6 +28,7 @@ export function PrintablePortfolioDossier({
   onPrint,
   onClose,
 }: PrintablePortfolioDossierProps) {
+  const { t } = useLocale();
   const content = (initialDossier ?? report.content) as Partial<LearningPortfolioDossierDto>;
 
   const familyOrgName =
@@ -123,7 +125,7 @@ export function PrintablePortfolioDossier({
             Imprimir / Salvar PDF
           </Button>
           {onClose && (
-            <IconButton data-testid="close-dossier-btn" onClick={onClose} aria-label="Fechar">
+            <IconButton data-testid="close-dossier-btn" onClick={onClose} aria-label={t('reports.printable.closeAria')}>
               <AletheiaIcon name="x" size={16} />
             </IconButton>
           )}
@@ -402,7 +404,7 @@ export function PrintablePortfolioDossier({
             lineHeight: 1.4,
           }}
         >
-          <strong>Ressalva Jurídica:</strong> {LEGAL_DISCLAIMER_TEXT}
+          <strong>{t('reports.verification.legalDisclaimer')}</strong> {LEGAL_DISCLAIMER_TEXT}
         </section>
 
         {/* Signatures */}
@@ -420,13 +422,13 @@ export function PrintablePortfolioDossier({
         >
           <div>
             <div style={{ borderBottom: '1px solid var(--border-medium)', marginBottom: '0.5rem', height: '2rem' }} />
-            <span style={{ fontWeight: 700 }}>Responsável Legal / Educador Titular</span>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Assinatura</div>
+            <span style={{ fontWeight: 700 }}>{t('reports.printable.guardianSignature')}</span>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{t('reports.printable.signatureLabel')}</div>
           </div>
           <div>
             <div style={{ borderBottom: '1px solid var(--border-medium)', marginBottom: '0.5rem', height: '2rem' }} />
-            <span style={{ fontWeight: 700 }}>Coordenador Pedagógico / Responsável</span>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Data: ____/____/________</div>
+            <span style={{ fontWeight: 700 }}>{t('reports.printable.coordinatorSignature')}</span>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{t('reports.printable.dateField')}</div>
           </div>
         </section>
       </div>

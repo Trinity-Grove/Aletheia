@@ -7,6 +7,7 @@ import type {
   GradingScale,
   OfficialReportResponseDto,
 } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export const GRADING_SCALE_LABELS: Record<GradingScale, string> = {
   MASTERY_QUALITATIVE: 'Escala Qualitativa de Domínio (Exposição → Autonomia → Domínio)',
@@ -19,10 +20,10 @@ export const GRADING_SCALE_LABELS: Record<GradingScale, string> = {
 export interface PrintableTranscriptProps {
   report: OfficialReportResponseDto;
   transcript?: AcademicTranscriptDto | null | undefined;
-  onExportCsv?: ((reportId: string) => void) | undefined;
-  onExportPdf?: ((reportId: string) => void) | undefined;
-  onPrint?: (() => void) | undefined;
-  onClose?: (() => void) | undefined;
+  onExportCsv?: ((reportId: string) => unknown) | undefined;
+  onExportPdf?: ((reportId: string) => unknown) | undefined;
+  onPrint?: (() => unknown) | undefined;
+  onClose?: (() => unknown) | undefined;
 }
 
 export function PrintableTranscript({
@@ -33,6 +34,7 @@ export function PrintableTranscript({
   onPrint,
   onClose,
 }: PrintableTranscriptProps) {
+  const { t } = useLocale();
   const content = (initialTranscript ?? report.content) as Partial<AcademicTranscriptDto>;
 
   const familyOrgName =
@@ -126,7 +128,7 @@ export function PrintableTranscript({
             Imprimir / Salvar PDF
           </Button>
           {onClose && (
-            <IconButton data-testid="close-transcript-btn" onClick={onClose} aria-label="Fechar">
+            <IconButton data-testid="close-transcript-btn" onClick={onClose} aria-label={t('reports.printable.closeAria')}>
               <AletheiaIcon name="x" size={16} />
             </IconButton>
           )}
@@ -215,31 +217,31 @@ export function PrintableTranscript({
           }}
         >
           <div>
-            <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Educando: </span>
+            <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>{t('reports.printable.learnerLabel')} </span>
             <span data-testid="transcript-learner-name" style={{ fontWeight: 800, color: 'var(--text-primary)' }}>
               {learnerName}
             </span>
           </div>
           {content.learnerBirthDate && (
             <div>
-              <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Data de Nascimento: </span>
+              <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>{t('reports.printable.birthDateLabel')} </span>
               <span data-testid="transcript-learner-birth">{content.learnerBirthDate}</span>
             </div>
           )}
           <div>
-            <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Ciclo / Série: </span>
+            <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>{t('reports.printable.gradeCycleLabel')} </span>
             <span data-testid="transcript-grade-level" style={{ fontWeight: 600 }}>
               {content.gradeLevel || 'Ensino Fundamental'}
             </span>
           </div>
           <div>
-            <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Ano Acadêmico: </span>
+            <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>{t('reports.printable.academicYearLabel')} </span>
             <span data-testid="transcript-academic-year" style={{ fontWeight: 600 }}>
               {academicYearTitle}
             </span>
           </div>
           <div>
-            <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Data de Emissão: </span>
+            <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>{t('reports.printable.issueDateLabel')} </span>
             <span data-testid="transcript-issue-date">{generatedDate}</span>
           </div>
         </section>
@@ -257,7 +259,7 @@ export function PrintableTranscript({
             borderLeft: '4px solid var(--color-indigo-600)',
           }}
         >
-          <strong>Critério de Avaliação Adotado: </strong>
+          <strong>{t('reports.printable.evaluationCriteriaLabel')} </strong>
           {GRADING_SCALE_LABELS[gradingScale] || gradingScale}
         </div>
 
@@ -449,7 +451,7 @@ export function PrintableTranscript({
             lineHeight: 1.4,
           }}
         >
-          <strong>Ressalva Jurídica:</strong> Atestamos a fidelidade dos registros pedagógicos acima descritos em conformidade com as diretrizes do plano educacional familiar. Este documento comprova o histórico de atividades e avaliações realizadas no âmbito familiar através da plataforma Aletheia; não constitui salvo-conduto estatal ou atestado de não abandono intelectual emitido por autoridade pública.
+          <strong>{t('reports.verification.legalDisclaimer')}</strong> Atestamos a fidelidade dos registros pedagógicos acima descritos em conformidade com as diretrizes do plano educacional familiar. Este documento comprova o histórico de atividades e avaliações realizadas no âmbito familiar através da plataforma Aletheia; não constitui salvo-conduto estatal ou atestado de não abandono intelectual emitido por autoridade pública.
         </section>
 
         {/* Official Signatures */}
@@ -467,13 +469,13 @@ export function PrintableTranscript({
         >
           <div>
             <div style={{ borderBottom: '1px solid var(--border-medium)', marginBottom: '0.5rem', height: '2rem' }} />
-            <span style={{ fontWeight: 700 }}>Responsável Legal / Educador Titular</span>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Assinatura</div>
+            <span style={{ fontWeight: 700 }}>{t('reports.printable.guardianSignature')}</span>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{t('reports.printable.signatureLabel')}</div>
           </div>
           <div>
             <div style={{ borderBottom: '1px solid var(--border-medium)', marginBottom: '0.5rem', height: '2rem' }} />
-            <span style={{ fontWeight: 700 }}>Coordenador Pedagógico / Responsável</span>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Data: ____/____/________</div>
+            <span style={{ fontWeight: 700 }}>{t('reports.printable.coordinatorSignature')}</span>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{t('reports.printable.dateField')}</div>
           </div>
         </section>
       </div>
