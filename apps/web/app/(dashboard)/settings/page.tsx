@@ -69,10 +69,9 @@ function SettingsPageContent() {
   });
 
   const { user, changePassword, changeEmail, refreshSession } = useAuth();
-  const fetchAuditLog = useCallback(
-    () => api.get<AccountAuditLogEntryDto[]>('/auth/audit-log'),
-    [],
-  );
+  const fetchAuditLog = useCallback(async () => {
+    return api.get<AccountAuditLogEntryDto[]>('/auth/audit-log');
+  }, []);
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
   const [activeLearnerId, setActiveLearnerId] = useState<string | null>(null);

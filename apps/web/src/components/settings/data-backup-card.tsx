@@ -6,19 +6,23 @@ import type {
   DataExportJobResponseDto,
   FamilyDataExportPackageDto,
 } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 import { Can } from '../auth/role-guard';
 
 export interface DataBackupCardProps {
   exportJobs?: DataExportJobResponseDto[];
-  onExportPackage: () => Promise<FamilyDataExportPackageDto>;
+  onExportPackage(): Promise<FamilyDataExportPackageDto>;
+  onDownload?(jobId: string): Promise<void>;
   isLoading?: boolean;
 }
 
 export function DataBackupCard({
   exportJobs = [],
   onExportPackage,
+  onDownload,
   isLoading = false,
 }: DataBackupCardProps) {
+  const { t } = useLocale();
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccessMessage, setExportSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -103,16 +107,16 @@ export function DataBackupCard({
             gap: '0.5rem',
           }}
         >
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="users" size={14} style={{ color: 'var(--color-indigo-600)' }} /> Dados da Família & Configurações</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="graduation-cap" size={14} style={{ color: 'var(--color-indigo-600)' }} /> Perfis Pedagógicos dos Educandos</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="book-open" size={14} style={{ color: 'var(--color-amber-600)' }} /> Leituras & Diário Devocional</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="heart" size={14} style={{ color: 'var(--color-rose-600)' }} /> Pedidos & Diário de Orações</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="library" size={14} style={{ color: 'var(--color-indigo-700)' }} /> Anos Letivos, Disciplinas & Currículos</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="calendar" size={14} style={{ color: 'var(--color-emerald-600)' }} /> Cronogramas & Rotinas Semanais</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="file-text" size={14} style={{ color: 'var(--color-indigo-600)' }} /> Registros de Aprendizagem & Domínio</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="palette" size={14} style={{ color: 'var(--color-amber-600)' }} /> Itens de Portfólio & Evidências</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="clipboard-check" size={14} style={{ color: 'var(--color-emerald-600)' }} /> Registros Diários de Frequência</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="compass" size={14} style={{ color: 'var(--color-indigo-700)' }} /> Metas de Conformidade & Históricos</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="users" size={14} style={{ color: 'var(--color-indigo-600)' }} /> {t('settings.backup.familyData')}</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="graduation-cap" size={14} style={{ color: 'var(--color-indigo-600)' }} /> {t('settings.backup.learnerProfiles')}</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="book-open" size={14} style={{ color: 'var(--color-amber-600)' }} /> {t('settings.backup.devotionalReadings')}</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="heart" size={14} style={{ color: 'var(--color-rose-600)' }} /> {t('settings.backup.prayerRequests')}</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="library" size={14} style={{ color: 'var(--color-indigo-700)' }} /> {t('settings.backup.academicYears')}</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="calendar" size={14} style={{ color: 'var(--color-emerald-600)' }} /> {t('settings.backup.schedules')}</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="file-text" size={14} style={{ color: 'var(--color-indigo-600)' }} /> {t('settings.backup.learningRecords')}</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="palette" size={14} style={{ color: 'var(--color-amber-600)' }} /> {t('settings.backup.portfolioItems')}</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="clipboard-check" size={14} style={{ color: 'var(--color-emerald-600)' }} /> {t('settings.backup.attendanceRecords')}</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AletheiaIcon name="compass" size={14} style={{ color: 'var(--color-indigo-700)' }} /> {t('settings.backup.complianceGoals')}</li>
         </ul>
       </div>
 
@@ -127,7 +131,7 @@ export function DataBackupCard({
         }}
       >
         <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-          Formato: <strong>JSON (UTF-8)</strong> • Sem compressão proprietária • Totalmente portável
+          Formato: <strong>{t('settings.backup.formatJson')}</strong> • Sem compressão proprietária • Totalmente portável
         </div>
 
         <Can
@@ -135,7 +139,9 @@ export function DataBackupCard({
           fallback={
             <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
               <AletheiaIcon name="lock" size={14} />
-              <span>Apenas responsáveis podem exportar o pacote integral de dados da família.</span>
+              <span>
+                Apenas responsáveis podem exportar o pacote integral de dados da família.
+              </span>
             </div>
           }
         >

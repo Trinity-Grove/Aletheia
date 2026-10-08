@@ -10,17 +10,23 @@ import type {
   MfaSetupResponseDto,
 } from '@aletheia/contracts';
 import { api } from '../../lib/api';
+import { useLocale } from '../../lib/i18n/locale-context';
 import { SuccessAlert, ErrorAlert } from './settings-form-kit';
 
 export interface MfaSettingsCardProps {
   mfaEnabled?: boolean;
-  onMfaStateChanged?: () => Promise<void>;
+  onMfaStateChanged?(): Promise<void>;
+  onEnable?(): Promise<void>;
+  onDisable?(): Promise<void>;
 }
 
 export function MfaSettingsCard({
   mfaEnabled = false,
   onMfaStateChanged = async () => undefined,
+  onEnable,
+  onDisable,
 }: MfaSettingsCardProps) {
+  const { t } = useLocale();
   const [mfaSetupOpen, setMfaSetupOpen] = useState(false);
   const [setupPassword, setSetupPassword] = useState('');
   const [setupPasswordSaving, setSetupPasswordSaving] = useState(false);
@@ -90,6 +96,7 @@ export function MfaSettingsCard({
       const body: MfaConfirmDto = { code: confirmCode };
       await api.post('/auth/mfa/confirm', body);
       await onMfaStateChanged();
+      await onEnable?.();
       setMfaSuccess('Autenticação de dois fatores ativada com sucesso.');
       setSetupData(null);
       setQrDataUrl(null);
@@ -117,6 +124,7 @@ export function MfaSettingsCard({
       const body: MfaDisableDto = { password: disablePassword };
       await api.post('/auth/mfa/disable', body);
       await onMfaStateChanged();
+      await onDisable?.();
       setMfaSuccess('Autenticação de dois fatores desativada.');
       setDisablePassword('');
     } catch (err) {
@@ -151,7 +159,7 @@ export function MfaSettingsCard({
         >
           <div>
             <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>
-              Estado: <span data-testid="mfa-status">Desativado</span>
+              Estado: <span data-testid="mfa-status">{t('settings.mfaCard.disabled')}</span>
             </div>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
               Recomendamos ativar para proteger seu acesso.
@@ -168,7 +176,7 @@ export function MfaSettingsCard({
           {setupPasswordError && <ErrorAlert testId="mfa-setup-password-error" message={setupPasswordError} />}
           <div style={{ display: 'grid', gap: '1.25rem' }}>
             <Input
-              label="Confirme sua senha atual"
+              label={t('settings.mfaCard.confirmPasswordToEnable')}
               type="password"
               data-testid="mfa-setup-password-input"
               value={setupPassword}
@@ -209,7 +217,7 @@ export function MfaSettingsCard({
             {qrDataUrl ? (
               <img
                 src={qrDataUrl}
-                alt="Código QR do autenticador"
+                alt={t('settings.mfaCard.qrAlt')}
                 data-testid="mfa-qr-image"
                 width={200}
                 height={200}
@@ -219,7 +227,7 @@ export function MfaSettingsCard({
                 data-testid="mfa-qr-placeholder"
                 style={{ width: 200, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Gerando QR...</span>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{t('settings.mfaCard.generatingQr')}</span>
               </div>
             )}
             <div style={{ maxWidth: '340px' }}>
@@ -234,7 +242,7 @@ export function MfaSettingsCard({
           </div>
 
           <div>
-            <p style={{ fontWeight: 600, margin: '0 0 0.5rem 0' }}>2. Códigos de recuperação</p>
+            <p style={{ fontWeight: 600, margin: '0 0 0.5rem 0' }}>{t('settings.mfaCard.stepRecoveryCodes')}</p>
             <div
               style={{
                 backgroundColor: 'var(--color-amber-50)',
@@ -271,7 +279,7 @@ export function MfaSettingsCard({
             {confirmError && <ErrorAlert testId="mfa-confirm-error" message={confirmError} />}
             <div style={{ display: 'grid', gap: '1.25rem' }}>
               <Input
-                label="3. Digite o código de 6 dígitos exibido pelo aplicativo"
+                label={t('settings.mfaCard.stepEnterCode')}
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
@@ -318,7 +326,7 @@ export function MfaSettingsCard({
             >
               <div>
                 <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>
-                  Estado: <span data-testid="mfa-status">Ativo</span>
+                  Estado: <span data-testid="mfa-status">{t('settings.mfaCard.active')}</span>
                 </div>
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
                   Sua conta exige um código de autenticação a cada novo login.
@@ -326,7 +334,7 @@ export function MfaSettingsCard({
               </div>
             </div>
             <Input
-              label="Confirme sua senha atual para desativar"
+              label={t('settings.mfaCard.confirmPasswordToDisable')}
               type="password"
               data-testid="mfa-disable-password-input"
               value={disablePassword}

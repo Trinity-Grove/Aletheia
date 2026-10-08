@@ -4,8 +4,10 @@ import React, { useEffect, useState } from 'react';
 import type { LearnerSummaryDto } from '@aletheia/contracts';
 import { ProductShell } from '../../../../src/components/layout/product-shell';
 import { PrivacyConsentSettings } from '../../../../src/components/settings/privacy-consent-settings';
+import { useLocale } from '../../../../src/lib/i18n/locale-context';
 
 export default function PrivacySettingsPage() {
+  const { t } = useLocale();
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
   const [loading, setLoading] = useState(true);

@@ -13,7 +13,7 @@ import { useLocale, type Locale } from '../../lib/i18n/locale-context';
 
 export interface FamilyGeneralSettingsProps {
   settings: FamilySettingsResponseDto | null;
-  onSave: (dto: UpdateFamilySettingsDto) => Promise<void>;
+  onSave?(dto: UpdateFamilySettingsDto): Promise<void>;
   isLoading?: boolean;
 }
 
@@ -62,7 +62,7 @@ export function FamilyGeneralSettings({
   onSave,
   isLoading = false,
 }: FamilyGeneralSettingsProps) {
-  const { setLocale } = useLocale();
+  const { t, setLocale } = useLocale();
   const [homeschoolName, setHomeschoolName] = useState('');
   const [timezone, setTimezone] = useState('America/Sao_Paulo');
   const [defaultGradingScale, setDefaultGradingScale] = useState<GradingScale>('MASTERY_QUALITATIVE');
@@ -87,7 +87,7 @@ export function FamilyGeneralSettings({
     setErrorMessage(null);
 
     try {
-      await onSave({
+      await onSave?.({
         homeschoolName: homeschoolName.trim() ? homeschoolName.trim() : null,
         timezone,
         defaultGradingScale,
@@ -127,7 +127,7 @@ export function FamilyGeneralSettings({
 
       {isEducator && (
         <Alert variant="info" data-testid="educator-settings-notice" style={{ marginBottom: '1.25rem' }}>
-          <strong>Modo Somente Leitura:</strong> Como Educador, você pode visualizar as configurações da família, mas apenas os Responsáveis podem alterá-las.
+          <strong>{t('settings.general.readOnlyMode')}</strong> Como Educador, você pode visualizar as configurações da família, mas apenas os Responsáveis podem alterá-las.
         </Alert>
       )}
 
@@ -146,18 +146,18 @@ export function FamilyGeneralSettings({
       <form data-testid="family-settings-form" onSubmit={handleSubmit}>
         <div style={{ display: 'grid', gap: '1.25rem' }}>
           <Input
-            label="Nome da Academia Familiar / Homeschool"
+            label={t('settings.general.familyNameLabel')}
             data-testid="homeschool-name-input"
             value={homeschoolName}
             onChange={(e) => setHomeschoolName(e.target.value)}
-            placeholder="Ex: Academia Familiar Silva"
+            placeholder={t('settings.general.familyNamePlaceholder')}
             disabled={isLoading || isSaving || isReadOnly}
-            helperText="Este nome será exibido nos cabeçalhos de históricos e relatórios acadêmicos oficiais."
+            helperText={t('settings.general.familyNameHelper')}
           />
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
             <Select
-              label="Fuso Horário"
+              label={t('settings.general.timezoneLabel')}
               data-testid="timezone-select"
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
@@ -166,7 +166,7 @@ export function FamilyGeneralSettings({
             />
 
             <Select
-              label="Idioma do Sistema"
+              label={t('settings.general.languageLabel')}
               data-testid="language-select"
               value={language}
               onChange={(e) => {
@@ -185,7 +185,7 @@ export function FamilyGeneralSettings({
 
           <div>
             <Select
-              label="Estrutura Pedagógica & Escala de Avaliação Padrão"
+              label={t('settings.general.pedagogicalFrameworkLabel')}
               data-testid="default-grading-scale-select"
               value={defaultGradingScale}
               onChange={(e) => setDefaultGradingScale(e.target.value as GradingScale)}

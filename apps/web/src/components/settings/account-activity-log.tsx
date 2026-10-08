@@ -3,9 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Card, EmptyState } from '@aletheia/ui';
 import type { AccountAuditEventType, AccountAuditLogEntryDto } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface AccountActivityLogProps {
-  fetchAuditLog: () => Promise<AccountAuditLogEntryDto[]>;
+  fetchAuditLog(): Promise<AccountAuditLogEntryDto[]>;
+  onRefresh?(): Promise<void>;
 }
 
 const EVENT_LABELS: Record<AccountAuditEventType, string> = {
@@ -33,6 +35,7 @@ function formatEntryDate(createdAt: string): string {
 }
 
 export function AccountActivityLog({ fetchAuditLog }: AccountActivityLogProps) {
+  const { t } = useLocale();
   const [entries, setEntries] = useState<AccountAuditLogEntryDto[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,8 +82,8 @@ export function AccountActivityLog({ fetchAuditLog }: AccountActivityLogProps) {
 
       {!error && entries !== null && entries.length === 0 && (
         <EmptyState
-          title="Nenhuma atividade registrada"
-          description="Eventos como login, alteração de senha e de e-mail aparecerão aqui."
+          title={t('settings.activity.emptyTitle')}
+          description={t('settings.activity.emptyDesc')}
         />
       )}
 

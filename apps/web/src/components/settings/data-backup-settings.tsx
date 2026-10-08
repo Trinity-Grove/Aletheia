@@ -5,19 +5,25 @@ import { AletheiaIcon, Alert, Button, Card } from '@aletheia/ui';
 import type { FamilyDataExportPackageDto } from '@aletheia/contracts';
 import { getApiAuthToken } from '../../lib/api';
 import { useAuth } from '../../lib/auth/auth-context';
+import { useLocale } from '../../lib/i18n/locale-context';
 import { Can } from '../auth/role-guard';
 
 export interface DataBackupSettingsProps {
   familyId?: string;
   familyName?: string;
-  onExportPackage?: () => Promise<FamilyDataExportPackageDto>;
+  onExportPackage?(): Promise<FamilyDataExportPackageDto>;
+  onRequestExport?(type?: string): Promise<void>;
+  onDownload?(jobId: string): Promise<void>;
 }
 
 export function DataBackupSettings({
   familyId: propFamilyId,
   familyName,
   onExportPackage,
+  onRequestExport,
+  onDownload,
 }: DataBackupSettingsProps) {
+  const { t } = useLocale();
   const auth = useAuth();
   const effectiveFamilyId =
     propFamilyId ||
@@ -144,7 +150,7 @@ export function DataBackupSettings({
           fallback={
             <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
               <AletheiaIcon name="lock" size={14} />
-              <span>Apenas responsáveis têm permissão para baixar o backup integral da família.</span>
+              <span>{t('settings.backup.guardiansOnlyNotice')}</span>
             </div>
           }
         >
