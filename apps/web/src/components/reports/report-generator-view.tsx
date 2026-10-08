@@ -14,6 +14,7 @@ import { Can } from '../auth/role-guard';
 import { PrintableTranscript, GRADING_SCALE_LABELS } from './printable-transcript';
 import { PrintablePortfolioDossier } from './printable-portfolio-dossier';
 import { PrintableComplianceReport } from './printable-compliance-report';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export const REPORT_TYPE_CONFIG: Record<
   ReportType,
@@ -49,11 +50,11 @@ export interface ReportGeneratorViewProps {
   reports: OfficialReportResponseDto[];
   learners: LearnerSummaryDto[];
   activeLearnerId: string | null;
-  onGenerateReport: (dto: GenerateReportDto) => Promise<OfficialReportResponseDto | void>;
-  onDeleteReport: (reportId: string) => Promise<void>;
-  onExportCsv: (reportId: string) => Promise<void>;
-  onExportPdf?: ((reportId: string) => Promise<void>) | undefined;
-  onPreviewReport?: ((dto: GenerateReportDto) => Promise<ReportPreviewDto>) | undefined;
+  onGenerateReport(dto: GenerateReportDto): Promise<OfficialReportResponseDto | void>;
+  onDeleteReport(reportId: string): Promise<void>;
+  onExportCsv(reportId: string): Promise<void>;
+  onExportPdf?(reportId: string): Promise<void>;
+  onPreviewReport?(dto: GenerateReportDto): Promise<ReportPreviewDto>;
   defaultGradingScale?: GradingScale | undefined;
 }
 
@@ -68,6 +69,8 @@ export function ReportGeneratorView({
   onPreviewReport,
   defaultGradingScale,
 }: ReportGeneratorViewProps) {
+  const { t } = useLocale();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedReportForView, setSelectedReportForView] =
     useState<OfficialReportResponseDto | null>(null);
@@ -230,8 +233,8 @@ export function ReportGeneratorView({
         <EmptyState
           data-testid="reports-empty-state"
           icon={<AletheiaIcon name="file-text" size={40} style={{ color: 'var(--sage)' }} />}
-          title="Nenhum relatório oficial gerado ainda"
-          description="Emita históricos escolares oficiais, sumários de presença para conformidade legal e dossiês do portfólio dos educandos."
+          title={t('reports.generator.emptyTitle')}
+          description={t('reports.generator.emptyDescription')}
           action={
             <Can action="generate_transcripts">
               <Button data-testid="empty-generate-report-btn" onClick={handleOpenModal}>
@@ -343,7 +346,7 @@ export function ReportGeneratorView({
                       size="sm"
                       data-testid={`export-csv-btn-${report.id}`}
                       onClick={() => onExportCsv(report.id)}
-                      title="Exportar CSV"
+                      title={t('reports.generator.exportCsv')}
                       leftIcon={<AletheiaIcon name="download" size={14} />}
                     >
                       CSV
@@ -355,7 +358,7 @@ export function ReportGeneratorView({
                         size="sm"
                         data-testid={`export-pdf-btn-${report.id}`}
                         onClick={() => onExportPdf(report.id)}
-                        title="Baixar PDF"
+                        title={t('reports.generator.downloadPdf')}
                         leftIcon={<AletheiaIcon name="file-text" size={14} />}
                       >
                         PDF
@@ -371,8 +374,8 @@ export function ReportGeneratorView({
                             onDeleteReport(report.id);
                           }
                         }}
-                        title="Excluir Relatório"
-                        aria-label="Excluir Relatório"
+                        title={t('reports.generator.deleteReport')}
+                        aria-label={t('reports.generator.deleteReport')}
                       >
                         <AletheiaIcon name="trash-2" size={14} />
                       </IconButton>
@@ -391,7 +394,7 @@ export function ReportGeneratorView({
           <Modal
             isOpen={true}
             onClose={() => setIsModalOpen(false)}
-            title="Gerar Relatório / Histórico Oficial"
+            title={t('reports.generator.generateModalTitle')}
             footer={
               <>
                 <Button variant="secondary" data-testid="cancel-report-btn" onClick={() => setIsModalOpen(false)}>
@@ -419,7 +422,7 @@ export function ReportGeneratorView({
                 </Alert>
               )}
               <Select
-                label="Educando *"
+                label={t('reports.generator.learnerLabel')}
                 data-testid="report-learner-select"
                 value={selectedLearnerId}
                 onChange={(e) => handleLearnerChange(e.target.value)}
@@ -427,7 +430,7 @@ export function ReportGeneratorView({
               />
 
               <Select
-                label="Tipo de Relatório *"
+                label={t('reports.generator.reportTypeLabel')}
                 data-testid="report-type-select"
                 value={reportType}
                 onChange={(e) => setReportType(e.target.value as ReportType)}
@@ -435,15 +438,15 @@ export function ReportGeneratorView({
               />
 
               <Input
-                label="Título do Documento *"
+                label={t('reports.generator.docTitleLabel')}
                 data-testid="report-title-input"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex.: Histórico Escolar Oficial - Ano Letivo 2026"
+                placeholder={t('reports.generator.docTitlePlaceholder')}
               />
 
               <Select
-                label="Critério de Escala de Notas / Domínio *"
+                label={t('reports.generator.gradingScaleLabel')}
                 data-testid="report-grading-scale-select"
                 value={gradingScale}
                 onChange={(e) => setGradingScale(e.target.value as GradingScale)}
@@ -455,24 +458,24 @@ export function ReportGeneratorView({
                   data-testid="report-include-attendance-checkbox"
                   checked={includeAttendance}
                   onChange={(e) => setIncludeAttendance(e.target.checked)}
-                  label="Incluir Sumário de Frequência e Carga Horária Cumprida"
+                  label={t('reports.generator.includeAttendanceLabel')}
                 />
 
                 <Checkbox
                   data-testid="report-include-portfolio-checkbox"
                   checked={includePortfolioHighlights}
                   onChange={(e) => setIncludePortfolioHighlights(e.target.checked)}
-                  label="Incluir Destaques e Evidências do Portfólio"
+                  label={t('reports.generator.includePortfolioLabel')}
                 />
               </div>
 
               <Textarea
-                label="Observações Gerais Pedagógicas / Notações"
+                label={t('reports.generator.generalNotesLabel')}
                 data-testid="report-notes-input"
                 rows={3}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Ex.: O educando demonstrou excelente avanço em hábitos de concentração e reverência nas narrações bíblicas."
+                placeholder={t('reports.generator.generalNotesPlaceholder')}
               />
             </form>
           </Modal>
@@ -485,7 +488,7 @@ export function ReportGeneratorView({
           <Modal
             isOpen={true}
             onClose={() => setPreviewDraft(null)}
-            title="Pré-visualização do Documento (Rascunho)"
+            title={t('reports.generator.previewTitle')}
             maxWidth="2xl"
             footer={
               <>
@@ -517,7 +520,7 @@ export function ReportGeneratorView({
                   color: 'var(--color-amber-900, #78350f)',
                 }}
               >
-                <strong>Modo Pré-visualização:</strong> Este rascunho de conferência ainda não foi registrado oficialmente no banco de dados e não possui valor comprobatório legal.
+                <strong>{t('reports.generator.previewMode')}</strong> Este rascunho de conferência ainda não foi registrado oficialmente no banco de dados e não possui valor comprobatório legal.
               </div>
 
               {previewDraft.type === 'LEARNING_PORTFOLIO_DOSSIER' ? (

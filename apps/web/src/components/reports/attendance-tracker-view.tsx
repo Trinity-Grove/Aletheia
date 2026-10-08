@@ -13,6 +13,7 @@ import type {
 } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 import { ComplianceGauge } from './compliance-gauge';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export const ATTENDANCE_STATUS_CONFIG: Record<
   AttendanceStatus,
@@ -74,8 +75,8 @@ export interface AttendanceTrackerViewProps {
   complianceRequirement?: ComplianceRequirementResponseDto | null | undefined;
   learners: LearnerSummaryDto[];
   activeLearnerId: string | null;
-  onLogAttendance: (dto: LogAttendanceDto) => Promise<void>;
-  onBulkLogAttendance: (dto: BulkLogAttendanceDto) => Promise<void>;
+  onLogAttendance(dto: LogAttendanceDto): Promise<void>;
+  onBulkLogAttendance(dto: BulkLogAttendanceDto): Promise<void>;
 }
 
 export function AttendanceTrackerView({
@@ -87,6 +88,8 @@ export function AttendanceTrackerView({
   onLogAttendance,
   onBulkLogAttendance,
 }: AttendanceTrackerViewProps) {
+  const { t } = useLocale();
+
   // Modal states
   const [isSingleModalOpen, setIsSingleModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
@@ -276,8 +279,8 @@ export function AttendanceTrackerView({
         <EmptyState
           data-testid="attendance-empty-state"
           icon={<AletheiaIcon name="calendar" size={40} style={{ color: 'var(--sage)' }} />}
-          title="Nenhum registro de presença encontrado"
-          description="Mantenha o registro de dias letivos e horas cumpridas para garantir a conformidade legal e o histórico anual."
+          title={t('reports.tracker.emptyTitle')}
+          description={t('reports.tracker.emptyDescription')}
           action={
             <Can action="log_attendance">
               <Button data-testid="empty-log-attendance-btn" onClick={handleOpenSingleModal}>
@@ -385,7 +388,7 @@ export function AttendanceTrackerView({
           <Modal
             isOpen={true}
             onClose={() => setIsSingleModalOpen(false)}
-            title="Registrar Frequência Individual"
+            title={t('reports.tracker.singleTitle')}
             footer={
               <>
                 <Button variant="secondary" data-testid="cancel-attendance-btn" onClick={() => setIsSingleModalOpen(false)} disabled={isSubmitting}>
@@ -404,7 +407,7 @@ export function AttendanceTrackerView({
                 </Alert>
               )}
               <Select
-                label="Educando *"
+                label={t('reports.tracker.learnerLabel')}
                 data-testid="attendance-learner-select"
                 value={singleLearnerId}
                 onChange={(e) => setSingleLearnerId(e.target.value)}
@@ -413,14 +416,14 @@ export function AttendanceTrackerView({
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <Input
-                  label="Data *"
+                  label={t('reports.tracker.dateLabel')}
                   type="date"
                   data-testid="attendance-date-input"
                   value={singleDate}
                   onChange={(e) => setSingleDate(e.target.value)}
                 />
                 <Input
-                  label="Carga Horária (h)"
+                  label={t('reports.tracker.hoursLabel')}
                   type="number"
                   step="0.5"
                   min="0"
@@ -432,7 +435,7 @@ export function AttendanceTrackerView({
               </div>
 
               <Select
-                label="Status de Presença *"
+                label={t('reports.tracker.statusLabel')}
                 data-testid="attendance-status-select"
                 value={singleStatus}
                 onChange={(e) => setSingleStatus(e.target.value as AttendanceStatus)}
@@ -440,12 +443,12 @@ export function AttendanceTrackerView({
               />
 
               <Textarea
-                label="Observações / Justificativas"
+                label={t('reports.tracker.notesLabel')}
                 data-testid="attendance-notes-input"
                 rows={3}
                 value={singleNotes}
                 onChange={(e) => setSingleNotes(e.target.value)}
-                placeholder="Ex.: Visita ao jardim botânico e narração sobre botânica."
+                placeholder={t('reports.tracker.singleNotesPlaceholder')}
               />
             </form>
           </Modal>
@@ -458,7 +461,7 @@ export function AttendanceTrackerView({
           <Modal
             isOpen={true}
             onClose={() => setIsBulkModalOpen(false)}
-            title="Registrar Frequência Coletiva"
+            title={t('reports.tracker.batchTitle')}
             footer={
               <>
                 <Button variant="secondary" data-testid="cancel-bulk-attendance-btn" onClick={() => setIsBulkModalOpen(false)} disabled={isSubmitting}>
@@ -513,14 +516,14 @@ export function AttendanceTrackerView({
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <Input
-                  label="Data *"
+                  label={t('reports.tracker.dateLabel')}
                   type="date"
                   data-testid="bulk-attendance-date-input"
                   value={bulkDate}
                   onChange={(e) => setBulkDate(e.target.value)}
                 />
                 <Input
-                  label="Carga Horária (h)"
+                  label={t('reports.tracker.hoursLabel')}
                   type="number"
                   step="0.5"
                   min="0"
@@ -532,7 +535,7 @@ export function AttendanceTrackerView({
               </div>
 
               <Select
-                label="Status de Presença *"
+                label={t('reports.tracker.statusLabel')}
                 data-testid="bulk-attendance-status-select"
                 value={bulkStatus}
                 onChange={(e) => setBulkStatus(e.target.value as AttendanceStatus)}
@@ -540,12 +543,12 @@ export function AttendanceTrackerView({
               />
 
               <Textarea
-                label="Observações Gerais"
+                label={t('reports.tracker.generalNotesLabel')}
                 data-testid="bulk-attendance-notes-input"
                 rows={2}
                 value={bulkNotes}
                 onChange={(e) => setBulkNotes(e.target.value)}
-                placeholder="Ex.: Aula interdisciplinar em família."
+                placeholder={t('reports.tracker.batchNotesPlaceholder')}
               />
             </form>
           </Modal>
