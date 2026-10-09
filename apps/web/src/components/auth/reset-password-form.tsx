@@ -5,7 +5,7 @@ import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface ResetPasswordFormProps {
   token: string | null;
-  onSubmit?: (_data: { token: string; newPassword: string }) => Promise<void> | void;
+  onSubmit?(_data: { token: string; newPassword: string }): Promise<void> | void;
 }
 
 export function ResetPasswordForm({ token, onSubmit }: ResetPasswordFormProps) {

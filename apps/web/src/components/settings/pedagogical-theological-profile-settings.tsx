@@ -9,9 +9,11 @@ import type {
   TheologicalProfileResponseDto,
   SecondaryPedagogicalModel,
 } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface PedagogicalTheologicalProfileSettingsProps {
   familyId: string;
+  onSave?(dto: unknown): Promise<void>;
 }
 
 // Family-facing UI for PedagogicalProfile/TheologicalProfile (issue #96
@@ -22,7 +24,11 @@ export interface PedagogicalTheologicalProfileSettingsProps {
 // Both profiles are append-only on the backend -- "saving" here always
 // creates a new version; nothing is ever destroyed, which is why a
 // read-only version history list is shown for each.
-export function PedagogicalTheologicalProfileSettings({ familyId }: PedagogicalTheologicalProfileSettingsProps) {
+export function PedagogicalTheologicalProfileSettings({
+  familyId,
+  onSave,
+}: PedagogicalTheologicalProfileSettingsProps) {
+  const { t } = useLocale();
   const [pedagogicalCatalog, setPedagogicalCatalog] = useState<PedagogicalModelCatalogEntryDto[]>([]);
   const [theologicalCatalog, setTheologicalCatalog] = useState<TheologicalTraditionCatalogEntryDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,6 +146,7 @@ export function PedagogicalTheologicalProfileSettings({ familyId }: PedagogicalT
       const updated: PedagogicalProfileResponseDto = await res.json();
       setPedagogicalHistory((prev) => [updated, ...prev]);
       setPedagogicalSuccess('Perfil pedagógico atualizado -- uma nova versão foi criada, sem apagar o histórico.');
+      await onSave?.(updated);
     } catch (err) {
       setPedagogicalError(err instanceof Error ? err.message : 'Erro ao salvar o perfil pedagógico.');
     } finally {
@@ -166,6 +173,7 @@ export function PedagogicalTheologicalProfileSettings({ familyId }: PedagogicalT
       const updated: TheologicalProfileResponseDto = await res.json();
       setTheologicalHistory((prev) => [updated, ...prev]);
       setTheologicalSuccess('Perfil teológico atualizado -- uma nova versão foi criada, sem apagar o histórico.');
+      await onSave?.(updated);
     } catch (err) {
       setTheologicalError(err instanceof Error ? err.message : 'Erro ao salvar o perfil teológico.');
     } finally {
@@ -183,7 +191,7 @@ export function PedagogicalTheologicalProfileSettings({ familyId }: PedagogicalT
   if (loading) {
     return (
       <Card data-testid="profile-settings-loading" style={{ padding: '1.75rem' }}>
-        <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Carregando perfis...</div>
+        <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{t('settings.profile.loading')}</div>
       </Card>
     );
   }
@@ -214,7 +222,7 @@ export function PedagogicalTheologicalProfileSettings({ familyId }: PedagogicalT
         <form data-testid="pedagogical-profile-form" onSubmit={handleSavePedagogicalProfile}>
           <div style={{ display: 'grid', gap: '1.25rem' }}>
             <Select
-              label="Modelo Pedagógico Principal"
+              label={t('settings.profile.primaryModelLabel')}
               data-testid="primary-model-select"
               value={primaryModelCode}
               onChange={(e) => handlePrimaryModelChange(e.target.value)}
@@ -266,7 +274,7 @@ export function PedagogicalTheologicalProfileSettings({ familyId }: PedagogicalT
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
                 <div style={{ flex: '1 1 200px' }}>
                   <Select
-                    label="Adicionar modelo secundário"
+                    label={t('settings.profile.secondaryModelLabel')}
                     data-testid="new-secondary-model-select"
                     value={newSecondaryCode}
                     onChange={(e) => setNewSecondaryCode(e.target.value)}
@@ -279,7 +287,7 @@ export function PedagogicalTheologicalProfileSettings({ familyId }: PedagogicalT
                 </div>
                 <div style={{ width: '110px' }}>
                   <Input
-                    label="Peso (0-1)"
+                    label={t('settings.profile.weightLabel')}
                     type="number"
                     min={0}
                     max={1}
@@ -388,7 +396,7 @@ export function PedagogicalTheologicalProfileSettings({ familyId }: PedagogicalT
               </div>
             )}
             <Select
-              label="Tradição Teológica Preferencial"
+              label={t('settings.profile.theologyLabel')}
               data-testid="preferred-tradition-select"
               value={preferredTraditionCode}
               onChange={(e) => setPreferredTraditionCode(e.target.value)}

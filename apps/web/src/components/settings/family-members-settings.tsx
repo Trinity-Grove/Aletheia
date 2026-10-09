@@ -10,13 +10,16 @@ import type {
 } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
 import { RoleBadge, ROLE_LABELS } from '../auth/role-badge';
+import { useLocale } from '../../lib/i18n/locale-context';
 import { SuccessAlert, ErrorAlert } from './settings-form-kit';
 
 export interface FamilyMembersSettingsProps {
   members: FamilyMemberDto[];
   invitations: FamilyInvitationDto[];
-  onInvite: (dto: InviteGuardianDto) => Promise<void>;
-  onCancelInvitation: (id: string) => Promise<void>;
+  onInvite?(dto: InviteGuardianDto): Promise<void>;
+  onCancelInvitation?(id: string): Promise<void>;
+  onRevoke?(id: string): Promise<void>;
+  onRemove?(id: string): Promise<void>;
 }
 
 const INVITABLE_ROLES: FamilyRole[] = ['GUARDIAN', 'CO_GUARDIAN', 'EDUCATOR'];
@@ -26,7 +29,10 @@ export function FamilyMembersSettings({
   invitations,
   onInvite,
   onCancelInvitation,
+  onRevoke,
+  onRemove: _onRemove,
 }: FamilyMembersSettingsProps) {
+  const { t } = useLocale();
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<FamilyRole>('GUARDIAN');
   const [inviteSaving, setInviteSaving] = useState(false);
@@ -46,7 +52,7 @@ export function FamilyMembersSettings({
 
     try {
       setInviteSaving(true);
-      await onInvite({ email: inviteEmail.trim(), role: inviteRole });
+      await onInvite?.({ email: inviteEmail.trim(), role: inviteRole });
       setInviteSuccess(`Convite enviado para ${inviteEmail.trim()}.`);
       setInviteEmail('');
       setInviteRole('GUARDIAN');
@@ -60,7 +66,11 @@ export function FamilyMembersSettings({
   const handleCancel = async (id: string) => {
     setCancellingId(id);
     try {
-      await onCancelInvitation(id);
+      if (onCancelInvitation) {
+        await onCancelInvitation(id);
+      } else if (onRevoke) {
+        await onRevoke(id);
+      }
     } finally {
       setCancellingId(null);
     }
@@ -175,7 +185,7 @@ export function FamilyMembersSettings({
           <form data-testid="invite-guardian-form" onSubmit={handleInvite}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
               <Input
-                label="E-mail"
+                label={t('settings.members.emailLabel')}
                 type="email"
                 data-testid="invite-guardian-email-input"
                 value={inviteEmail}
@@ -183,7 +193,7 @@ export function FamilyMembersSettings({
                 disabled={inviteSaving}
               />
               <Select
-                label="Papel na família"
+                label={t('settings.members.roleLabel')}
                 data-testid="invite-guardian-role-select"
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as FamilyRole)}

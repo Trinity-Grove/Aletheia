@@ -10,7 +10,7 @@ export interface LearnerProgressViewProps {
   trackings: LearnerTrackedCompetency[];
   loading: boolean;
   error: string | null;
-  onOpenEvidenceModal: (trackingId?: string) => void;
+  onOpenEvidenceModal?(trackingId?: string): void;
 }
 
 export function LearnerProgressView({
@@ -86,7 +86,7 @@ export function LearnerProgressView({
           type="button"
           variant="primary"
           data-testid="open-evidence-modal-btn"
-          onClick={() => onOpenEvidenceModal()}
+          onClick={() => onOpenEvidenceModal?.()}
           style={{
             backgroundColor: 'var(--gold)',
             color: '#1b3b22',
@@ -146,7 +146,7 @@ export function LearnerProgressView({
       {trackings.length > 0 && (
         <div
           role="tablist"
-          aria-label="Filtro de competências"
+          aria-label={t('learnerPortal.progress.title')}
           style={{
             display: 'flex',
             gap: '0.5rem',
@@ -403,7 +403,7 @@ export function LearnerProgressView({
                       type="button"
                       variant="secondary"
                       data-testid={`submit-evidence-btn-${tracking.id}`}
-                      onClick={() => onOpenEvidenceModal(tracking.id)}
+                      onClick={() => onOpenEvidenceModal?.(tracking.id)}
                       style={{
                         fontSize: '0.875rem',
                         whiteSpace: 'nowrap',

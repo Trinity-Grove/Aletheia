@@ -9,6 +9,7 @@ import type {
   ConsentComplianceCheckDto,
 } from '@aletheia/contracts';
 import { LegalDocumentContent } from '../shared/legal-document-content';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface LearnerItem {
   id: string;
@@ -31,6 +32,7 @@ interface ModalTarget {
 }
 
 export function PrivacyConsentSettings({ familyId, learners = [] }: PrivacyConsentSettingsProps) {
+  const { t } = useLocale();
   const [overview, setOverview] = useState<FamilyConsentOverviewDto | null>(null);
   const [compliance, setCompliance] = useState<ConsentComplianceCheckDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -551,7 +553,7 @@ export function PrivacyConsentSettings({ familyId, learners = [] }: PrivacyConse
                     lineHeight: '1.5',
                   }}
                 >
-                  <strong>Declaração de Consentimento Legal:</strong>
+                  <strong>{t('settings.privacy.consentDeclaration')}</strong>
                   <br />
                   Na qualidade de pai, mãe ou responsável legal devidamente investido do pátrio poder / poder familiar (Art. 14 da LGPD), declaro que li, compreendi e manifesto meu consentimento específico e em destaque para o tratamento dos dados pessoais conforme descrito neste termo.
                 </div>
@@ -570,7 +572,7 @@ export function PrivacyConsentSettings({ familyId, learners = [] }: PrivacyConse
                     lineHeight: '1.5',
                   }}
                 >
-                  <strong>Atenção:</strong>
+                  <strong>{t('settings.privacy.attention')}</strong>
                   <br />
                   A revogação do consentimento interrompe o tratamento de dados autorizado por este termo a partir deste momento. Dados anteriormente tratados sob amparo legal continuarão resguardados para cumprimento de obrigação legal ou regulatória.
                 </div>

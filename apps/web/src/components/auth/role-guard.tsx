@@ -7,6 +7,16 @@ import {
   hasPermission,
   type PermissionAction,
 } from '../../lib/auth/use-permissions';
+import { useLocale } from '../../lib/i18n/locale-context';
+
+export function UnauthorizedFallback() {
+  const { t } = useLocale();
+  return (
+    <div data-testid="unauthorized-message" role="alert" className="alert alert-error">
+      <strong>{t('auth.roleGuard.unauthorizedTitle')}</strong>: {t('auth.roleGuard.unauthorizedMessage')}
+    </div>
+  );
+}
 
 export interface RequireRoleProps {
   roles: FamilyRole | FamilyRole[];

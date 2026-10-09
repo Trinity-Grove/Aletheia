@@ -3,7 +3,7 @@ import { Plus_Jakarta_Sans, Lora } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { ToastProvider } from '@aletheia/ui';
 import { AuthProvider } from '../src/lib/auth/auth-context';
-import { LocaleProvider } from '../src/lib/i18n/locale-context';
+import { LocaleProvider } from '../src/lib/i18n/locale-context'; // Root layout provides LocaleProvider for useLocale across all views
 import '@aletheia/ui/css';
 import './globals.css';
 

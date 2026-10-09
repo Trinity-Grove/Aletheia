@@ -2,8 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { Alert } from '@aletheia/ui';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export function PrivacyComplianceBanner() {
+  const { t } = useLocale();
   const [compliant, setCompliant] = useState<boolean>(true);
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export function PrivacyComplianceBanner() {
       <Alert variant="warning">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', width: '100%' }}>
           <div>
-            <strong>Atualização de Termos (LGPD):</strong> Existem termos de privacidade ou autorizações de menores pendentes de assinatura do responsável.
+            <strong>{t('settings.privacy.bannerTitle')}</strong> Existem termos de privacidade ou autorizações de menores pendentes de assinatura do responsável.
           </div>
           <a
             href="/settings/privacy"

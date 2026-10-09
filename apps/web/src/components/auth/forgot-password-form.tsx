@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface ForgotPasswordFormProps {
-  onSubmit?: (_data: { email: string }) => Promise<void> | void;
+  onSubmit?(_data: { email: string }): Promise<void> | void;
 }
 
 export function ForgotPasswordForm({ onSubmit }: ForgotPasswordFormProps) {

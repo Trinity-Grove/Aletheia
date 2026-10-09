@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface MfaVerifyFormProps {
-  onSubmit?: (_data: { code: string }) => Promise<void> | void;
+  onSubmit?(_data: { code: string }): Promise<void> | void;
 }
 
 export function MfaVerifyForm({ onSubmit }: MfaVerifyFormProps) {

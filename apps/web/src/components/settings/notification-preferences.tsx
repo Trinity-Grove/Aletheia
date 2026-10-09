@@ -6,11 +6,12 @@ import type {
   FamilySettingsResponseDto,
   UpdateFamilySettingsDto,
 } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 import { Can } from '../auth/role-guard';
 
 export interface NotificationPreferencesProps {
   settings: FamilySettingsResponseDto | null;
-  onSave: (dto: UpdateFamilySettingsDto) => Promise<void>;
+  onSave?(dto: UpdateFamilySettingsDto): Promise<void>;
   isLoading?: boolean;
 }
 
@@ -19,6 +20,7 @@ export function NotificationPreferences({
   onSave,
   isLoading = false,
 }: NotificationPreferencesProps) {
+  const { t } = useLocale();
   const [devotionalReminderTime, setDevotionalReminderTime] = useState('07:30');
   const [dailyScheduleReminderTime, setDailyScheduleReminderTime] = useState('08:00');
   const [attendanceReminderEnabled, setAttendanceReminderEnabled] = useState(true);
@@ -46,7 +48,7 @@ export function NotificationPreferences({
     setErrorMessage(null);
 
     try {
-      await onSave({
+      await onSave?.({
         devotionalReminderTime: devotionalReminderTime.trim() ? devotionalReminderTime.trim() : null,
         dailyScheduleReminderTime: dailyScheduleReminderTime.trim() ? dailyScheduleReminderTime.trim() : null,
         attendanceReminderEnabled,
@@ -101,7 +103,7 @@ export function NotificationPreferences({
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
               <Input
-                label="Lembrete do Devocional Familiar"
+                label={t('settings.notificationsCard.devotionalLabel')}
                 type="time"
                 data-testid="devotional-reminder-time-input"
                 value={devotionalReminderTime}
@@ -110,7 +112,7 @@ export function NotificationPreferences({
               />
 
               <Input
-                label="Lembrete do Cronograma de Aulas"
+                label={t('settings.notificationsCard.scheduleLabel')}
                 type="time"
                 data-testid="daily-schedule-reminder-time-input"
                 value={dailyScheduleReminderTime}
@@ -141,8 +143,8 @@ export function NotificationPreferences({
                 checked={attendanceReminderEnabled}
                 onChange={(e) => setAttendanceReminderEnabled(e.target.checked)}
                 disabled={isLoading || isSaving}
-                label="Lembrete de Frequência Pendente"
-                description="Avisar ao final do dia se houver educandos sem registro de presença efetuado."
+                label={t('settings.notificationsCard.attendanceLabel')}
+                description={t('settings.notificationsCard.attendanceDesc')}
               />
             </div>
 
@@ -161,8 +163,8 @@ export function NotificationPreferences({
                 checked={inAppNotificationsEnabled}
                 onChange={(e) => setInAppNotificationsEnabled(e.target.checked)}
                 disabled={isLoading || isSaving}
-                label="Notificações no Navegador / In-App"
-                description="Exibir balão e contador de avisos no sino da barra superior da plataforma."
+                label={t('settings.notificationsCard.inAppLabel')}
+                description={t('settings.notificationsCard.inAppDesc')}
               />
             </div>
 
@@ -181,8 +183,8 @@ export function NotificationPreferences({
                 checked={emailNotificationsEnabled}
                 onChange={(e) => setEmailNotificationsEnabled(e.target.checked)}
                 disabled={isLoading || isSaving}
-                label="Resumo e Notificações por E-mail"
-                description="Receber avisos importantes e orações respondidas no e-mail dos pais."
+                label={t('settings.notificationsCard.emailLabel')}
+                description={t('settings.notificationsCard.emailDesc')}
               />
             </div>
           </div>

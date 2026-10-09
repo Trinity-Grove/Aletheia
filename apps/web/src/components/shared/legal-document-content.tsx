@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface LegalDocumentContentProps {
   content: string;
@@ -53,6 +54,7 @@ function parseLegalMarkdown(content: string): Block[] {
 }
 
 export function LegalDocumentContent({ content }: LegalDocumentContentProps) {
+  const { locale: _locale } = useLocale();
   const parsed = parseLegalMarkdown(content);
   // Every caller already renders its own heading above this component
   // (the definition's `title`) -- a leading "# " line in the content

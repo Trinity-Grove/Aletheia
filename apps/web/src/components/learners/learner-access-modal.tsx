@@ -8,10 +8,11 @@ import type {
   LearnerAccessGrantDto,
   LearnerResponseDto,
 } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface LearnerAccessModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose(): void;
   learner: LearnerResponseDto | null;
   familyId: string;
 }
@@ -22,6 +23,7 @@ export function LearnerAccessModal({
   learner,
   familyId,
 }: LearnerAccessModalProps) {
+  const { t } = useLocale();
   const [grant, setGrant] = useState<LearnerAccessGrantDto | null>(null);
   const [issuedCode, setIssuedCode] = useState<string | null>(null);
   const [issuedUrl, setIssuedUrl] = useState<string | null>(null);
@@ -84,10 +86,10 @@ export function LearnerAccessModal({
           if (isMounted) setGrant(null);
         } else if (res) {
           const err = await res.json().catch(() => ({}));
-          if (isMounted) setError(err.message || 'Falha ao buscar status do acesso.');
+          if (isMounted) setError(err.message || t('learners.accessModal.errorFetch'));
         }
       } catch {
-        if (isMounted) setError('Erro de conexão ao buscar status de acesso.');
+        if (isMounted) setError(t('learners.accessModal.errorConnection'));
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -99,7 +101,7 @@ export function LearnerAccessModal({
     return () => {
       isMounted = false;
     };
-  }, [isOpen, learner, familyId]);
+  }, [isOpen, learner, familyId, t]);
 
   if (!learner) return null;
 
@@ -116,7 +118,7 @@ export function LearnerAccessModal({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao habilitar acesso.');
+        throw new Error(err.message || t('learners.accessModal.errorEnable'));
       }
       const data: LearnerAccessCodeDto = await res.json();
       setGrant(data.grant);
@@ -128,7 +130,7 @@ export function LearnerAccessModal({
         setIssuedUrl(fullUrl);
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Falha ao habilitar acesso.');
+      setError(err instanceof Error ? err.message : t('learners.accessModal.errorEnable'));
     } finally {
       setLoading(false);
     }
@@ -144,7 +146,7 @@ export function LearnerAccessModal({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao regenerar código de acesso.');
+        throw new Error(err.message || t('learners.accessModal.errorRegenerate'));
       }
       const data: LearnerAccessCodeDto = await res.json();
       setGrant(data.grant);
@@ -156,7 +158,7 @@ export function LearnerAccessModal({
         setIssuedUrl(fullUrl);
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Falha ao regenerar código de acesso.');
+      setError(err instanceof Error ? err.message : t('learners.accessModal.errorRegenerate'));
     } finally {
       setLoading(false);
     }
@@ -173,12 +175,12 @@ export function LearnerAccessModal({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Falha ao ${enable ? 'reativar' : 'desativar'} acesso.`);
+        throw new Error(err.message || t('learners.accessModal.errorToggle'));
       }
       const updated: LearnerAccessGrantDto = await res.json();
       setGrant(updated);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Falha ao alterar status de acesso.');
+      setError(err instanceof Error ? err.message : t('learners.accessModal.errorToggle'));
     } finally {
       setLoading(false);
     }
@@ -199,13 +201,13 @@ export function LearnerAccessModal({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao conceder consentimento.');
+        throw new Error(err.message || t('learners.accessModal.errorConsent'));
       }
-      setConsentSuccess('Consentimento concedido com sucesso!');
+      setConsentSuccess(t('learners.accessModal.consentSuccess'));
       await fetchCompliance(learner.id);
       setTimeout(() => setConsentSuccess(null), 4000);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Falha ao conceder consentimento.');
+      setError(err instanceof Error ? err.message : t('learners.accessModal.errorConsent'));
     } finally {
       setGrantingConsentId(null);
     }
@@ -229,11 +231,11 @@ export function LearnerAccessModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Acesso do Educando — ${displayName}`}
+      title={t('learners.accessModal.title', { name: displayName })}
       maxWidth="md"
       footer={
         <Button variant="secondary" onClick={onClose}>
-          Fechar
+          {t('learners.accessModal.close')}
         </Button>
       }
     >
@@ -246,14 +248,14 @@ export function LearnerAccessModal({
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-            Status da Credencial:
+            {t('learners.accessModal.credentialStatus')}
           </span>
           {hasGrant && grant?.enabled ? (
-            <Badge variant="emerald" size="sm">Acesso Ativo</Badge>
+            <Badge variant="emerald" size="sm">{t('learners.accessModal.statusActive')}</Badge>
           ) : hasGrant && !grant?.enabled ? (
-            <Badge variant="rose" size="sm">Acesso Desativado</Badge>
+            <Badge variant="rose" size="sm">{t('learners.accessModal.statusDisabled')}</Badge>
           ) : (
-            <Badge variant="slate" size="sm">Não Configurado</Badge>
+            <Badge variant="slate" size="sm">{t('learners.accessModal.statusNotConfigured')}</Badge>
           )}
         </div>
 
@@ -272,15 +274,15 @@ export function LearnerAccessModal({
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--forest)' }}>
-              Privacidade & Consentimento do Menor (LGPD)
+              {t('learners.accessModal.lgpdSectionTitle')}
             </span>
             {compliance?.compliant ? (
               <Badge variant="emerald" size="sm" data-testid="consent-compliant-badge">
-                ✓ Termos Aceitos
+                {t('learners.accessModal.termsAccepted')}
               </Badge>
             ) : (
               <Badge variant="amber" size="sm" data-testid="consent-pending-badge">
-                Consentimento Pendente
+                {t('learners.accessModal.consentPending')}
               </Badge>
             )}
           </div>
@@ -294,7 +296,7 @@ export function LearnerAccessModal({
           {compliance && !compliance.compliant && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <Alert variant="warning" data-testid="consent-pending-alert">
-                Para conformidade com a LGPD e proteção de dados de menores, o consentimento para acesso do educando precisa ser concedido pelo responsável.
+                {t('learners.accessModal.consentWarning')}
               </Alert>
 
               {compliance.pendingMandatoryTerms && compliance.pendingMandatoryTerms.length > 0 ? (
@@ -322,7 +324,7 @@ export function LearnerAccessModal({
                         isLoading={grantingConsentId === term.id}
                         onClick={() => handleGrantConsent(term.id)}
                       >
-                        Conceder Consentimento
+                        {t('learners.accessModal.grantConsent')}
                       </Button>
                     </div>
                   ))}
@@ -335,20 +337,20 @@ export function LearnerAccessModal({
                   isLoading={grantingConsentId === 'default'}
                   onClick={() => handleGrantConsent('00000000-0000-0000-0000-000000000001')}
                 >
-                  Conceder Consentimento
+                  {t('learners.accessModal.grantConsent')}
                 </Button>
               )}
             </div>
           )}
 
           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            Gerencie todos os termos da família na{' '}
+            {t('learners.accessModal.privacyCenterHint')}{' '}
             <a
               href="/settings/privacy"
               data-testid="privacy-settings-link"
               style={{ color: 'var(--forest)', fontWeight: 600, textDecoration: 'underline' }}
             >
-              Central de Privacidade
+              {t('learners.accessModal.privacyCenterLink')}
             </a>.
           </div>
         </div>
@@ -364,7 +366,7 @@ export function LearnerAccessModal({
             }}
           >
             <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--forest)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Novo Código PIN de Acesso
+              {t('learners.accessModal.pinTitle')}
             </span>
             <div
               data-testid="access-code-display"
@@ -380,10 +382,10 @@ export function LearnerAccessModal({
               {issuedCode}
             </div>
             <p style={{ margin: '0 0 1rem 0', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-              Guarde este código. Por motivos de segurança, ele é exibido apenas uma vez.
+              {t('learners.accessModal.pinNotice')}
             </p>
             <Button variant="secondary" size="sm" data-testid="copy-access-code-btn" onClick={handleCopy}>
-              {copied ? 'Código Copiado!' : 'Copiar Código'}
+              {copied ? t('learners.accessModal.copied') : t('learners.accessModal.copyCode')}
             </Button>
           </div>
         )}
@@ -410,7 +412,7 @@ export function LearnerAccessModal({
                 marginBottom: '0.375rem',
               }}
             >
-              Link de Acesso Direto (Sem necessidade do login dos pais)
+              {t('learners.accessModal.directLinkTitle')}
             </span>
             <div
               data-testid="access-url-display"
@@ -434,17 +436,13 @@ export function LearnerAccessModal({
               data-testid="copy-access-url-btn"
               onClick={handleCopyUrl}
             >
-              {copiedUrl ? 'Link Copiado!' : 'Copiar Link de Acesso'}
+              {copiedUrl ? t('learners.accessModal.urlCopied') : t('learners.accessModal.copyUrl')}
             </Button>
           </div>
         )}
 
         <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-          O acesso do educando permite que ele entre no <strong>Modo Aluno</strong> pelo endereço{' '}
-          <a href="/aluno" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--forest)', textDecoration: 'underline' }}>
-            /aluno
-          </a>{' '}
-          para visualizar a agenda diária e registrar a conclusão das suas tarefas de estudo de forma autônoma.
+          {t('learners.accessModal.studentModeExplanation')}
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.5rem' }}>
@@ -455,7 +453,7 @@ export function LearnerAccessModal({
               onClick={handleGrant}
               isLoading={loading}
             >
-              Habilitar Acesso do Educando
+              {t('learners.accessModal.enableAccess')}
             </Button>
           ) : (
             <>
@@ -465,7 +463,7 @@ export function LearnerAccessModal({
                 onClick={handleRegenerate}
                 isLoading={loading}
               >
-                Regenerar Novo Código
+                {t('learners.accessModal.regenerateCode')}
               </Button>
 
               {grant?.enabled ? (
@@ -475,7 +473,7 @@ export function LearnerAccessModal({
                   onClick={() => handleToggleEnable(false)}
                   isLoading={loading}
                 >
-                  Desativar Acesso
+                  {t('learners.accessModal.disableAccess')}
                 </Button>
               ) : (
                 <Button
@@ -484,7 +482,7 @@ export function LearnerAccessModal({
                   onClick={() => handleToggleEnable(true)}
                   isLoading={loading}
                 >
-                  Reativar Acesso
+                  {t('learners.accessModal.reactivateAccess')}
                 </Button>
               )}
             </>

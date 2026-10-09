@@ -124,4 +124,12 @@ export const auth: Dictionary['auth'] = {
     coGuardian: 'Co-tutor',
     educator: 'Educador',
   },
+  verify: {
+    pageTitle: 'Verificación de Documentos',
+    loading: 'Cargando verificación...',
+  },
+  roleGuard: {
+    unauthorizedTitle: 'Acceso Restringido',
+    unauthorizedMessage: 'No tiene permiso para acceder a este recurso.',
+  },
 };

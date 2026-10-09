@@ -5,7 +5,7 @@ import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface VerifyEmailFormProps {
   token: string | null;
-  onSubmit?: (_data: { token: string }) => Promise<void> | void;
+  onSubmit?(_data: { token: string }): Promise<void> | void;
 }
 
 type VerificationStatus = 'verifying' | 'success' | 'error';
