@@ -1,8 +1,8 @@
 # Relatório de Cobertura de Internacionalização (i18n)
 
 - **Total de Páginas:** 31 (31 traduzidas, 0 pendentes - 100.0%)
-- **Total de Componentes:** 95 (95 traduzidos, 0 pendentes - 100.0%)
-- **Cobertura Total de Frontend:** 126 / 126 arquivos (100.0%)
+- **Total de Componentes:** 100 (100 traduzidos, 0 pendentes - 100.0%)
+- **Cobertura Total de Frontend:** 131 / 131 arquivos (100.0%)
 
 ## Resumo por Domínio e Ondas de Migração
 
@@ -152,7 +152,12 @@
 | Componente | `apps/web/src/components/settings/privacy-compliance-banner.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/settings/privacy-consent-settings.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/settings/settings-form-kit.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
+| Componente | `apps/web/src/components/settings/support-widget-preferences-card.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/settings/supporter-settings-card.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/shared/legal-document-content.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/support/donation-form-card.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
 | Componente | `apps/web/src/components/support/donation-receipts-table.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
+| Componente | `apps/web/src/components/support/family-support-widget.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
+| Componente | `apps/web/src/components/support/feedback-form.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
+| Componente | `apps/web/src/components/support/support-widget-modal.tsx` | ✅ Traduzido | 0 strings | Onda 5 |
+| Componente | `apps/web/src/components/support/weekly-support-widget.tsx` | ✅ Traduzido | 0 strings | Onda 5 |

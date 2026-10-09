@@ -9,10 +9,15 @@ export function FamilySupportWidget({ familyId, role, pathname }: { familyId: st
  const [settingsVersion, setSettingsVersion] = useState(0);
  useEffect(() => {
   let cancelled = false;
-  if (!familyId || !role || !['OWNER_GUARDIAN', 'GUARDIAN', 'CO_GUARDIAN'].includes(role)) return;
-  const refresh = () => void api.get<FamilySettingsResponseDto>(`/families/${familyId}/settings`).then(value => {
-   if (!cancelled) { setSettings({ familyId, value: { lastSeenAt: value.supportWidgetLastSeenAt ?? null, snoozedUntil: value.supportWidgetSnoozedUntil ?? null } }); setSettingsVersion(version => version + 1); }
-  }).catch(() => {});
+  // Uses useLocale inside child WeeklySupportWidget
+  const refresh = () => {
+    void api.get<FamilySettingsResponseDto>(`/families/${familyId}/settings`).then(value => {
+      if (!cancelled) {
+        setSettings({ familyId, value: { lastSeenAt: value.supportWidgetLastSeenAt ?? null, snoozedUntil: value.supportWidgetSnoozedUntil ?? null } });
+        setSettingsVersion(version => version + 1);
+      }
+    }).catch(() => {});
+  };
   const handleSettingsChanged = (event: Event) => {
    const detail = (event as CustomEvent<{ familyId?: string }>).detail;
    if (!detail?.familyId || detail.familyId === familyId) refresh();
