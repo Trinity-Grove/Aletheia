@@ -1,3 +1,4 @@
+import { supportWidget } from './support-widget';
 import type { Dictionary } from '../pt-BR';
 import { common } from './common';
 import { nav } from './nav';
@@ -34,6 +35,7 @@ export const esES: Dictionary = {
   lessons,
   curriculum,
   support,
+  supportWidget,
   settings,
   attendance,
   records,

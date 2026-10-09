@@ -1,4 +1,6 @@
 'use client';
+import { feedback as feedbackEn } from './dictionaries/en-US/feedback';
+import { feedback as feedbackEs } from './dictionaries/es-ES/feedback';
 
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { ptBR, type Dictionary } from './dictionaries/pt-BR';
@@ -15,8 +17,8 @@ export * from './formatters';
 
 const DICTIONARIES: Record<Locale, Dictionary> = {
   'pt-BR': ptBR,
-  'en-US': ptBR,
-  'es-ES': ptBR,
+  'en-US': { ...ptBR, feedback: feedbackEn },
+  'es-ES': { ...ptBR, feedback: feedbackEs },
 };
 
 function readDotPath(dictionary: Dictionary, path: string): string | undefined {

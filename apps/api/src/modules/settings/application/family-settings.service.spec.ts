@@ -12,14 +12,16 @@ describe('FamilySettingsService', () => {
   let mockMailSender: jest.Mocked<MailSender>;
   let mockIdentityApi: jest.Mocked<IdentityPublicApi>;
 
+  let settingsRepository: jest.Mocked<FamilySettingsRepository>;
+
   beforeEach(() => {
     mockSettings = new Map();
 
     const mockRepo = {
-      findByFamilyId: async (familyId: string) => {
+      findByFamilyId: jest.fn(async (familyId: string) => {
         return mockSettings.get(familyId) ?? null;
-      },
-      getOrCreateDefault: async (familyId: string) => {
+      }),
+      getOrCreateDefault: jest.fn(async (familyId: string) => {
         const existing = mockSettings.get(familyId);
         if (existing) return existing;
 
@@ -40,8 +42,8 @@ describe('FamilySettingsService', () => {
         });
         mockSettings.set(familyId, defaultEntity);
         return defaultEntity;
-      },
-      upsert: async (familyId: string, dto: UpdateFamilySettingsDto) => {
+      }),
+      upsert: jest.fn(async (familyId: string, dto: UpdateFamilySettingsDto) => {
         const existing = mockSettings.get(familyId);
         const entity = new FamilySettingsEntity({
           id: existing ? existing.id : `settings-${mockSettings.size + 1}`,
@@ -79,8 +81,8 @@ describe('FamilySettingsService', () => {
         });
         mockSettings.set(familyId, entity);
         return entity;
-      },
-    } as unknown as FamilySettingsRepository;
+      }),
+    } as unknown as jest.Mocked<FamilySettingsRepository>;
 
     mockNotificationService = {
       createNotification: jest.fn().mockResolvedValue({} as never),
@@ -104,8 +106,10 @@ describe('FamilySettingsService', () => {
       isPlatformAdmin: jest.fn().mockResolvedValue(false),
     };
 
+    settingsRepository = mockRepo as any;
+
     service = new FamilySettingsService(
-      mockRepo,
+      settingsRepository as unknown as FamilySettingsRepository,
       mockNotificationService as unknown as import('./notification.service.js').NotificationService,
       mockMailSender,
       mockIdentityApi,
@@ -157,6 +161,59 @@ describe('FamilySettingsService', () => {
       expect(updated.attendanceReminderEnabled).toBe(false);
       expect(updated.emailNotificationsEnabled).toBe(false);
       expect(updated.inAppNotificationsEnabled).toBe(true);
+    });
+
+    it('persists the widget cadence timestamps and reads them back, including the "sempre" sentinel', async () => {
+      const now = new Date();
+      const forever = new Date('9999-12-31T23:59:59.999Z');
+
+      const existingSettings = await service.getSettings('fam-1');
+      (settingsRepository.upsert as any).mockImplementation(async (_familyId: string, dto: any) => {
+        const base = await service.getSettings('fam-1');
+        const entity = new FamilySettingsEntity({
+          id: existingSettings.id,
+          familyId: _familyId,
+          homeschoolName: base.homeschoolName,
+          defaultGradingScale: base.defaultGradingScale,
+          timezone: base.timezone,
+          language: base.language,
+          devotionalReminderTime: base.devotionalReminderTime,
+          dailyScheduleReminderTime: base.dailyScheduleReminderTime,
+          attendanceReminderEnabled: base.attendanceReminderEnabled,
+          emailNotificationsEnabled: base.emailNotificationsEnabled,
+          inAppNotificationsEnabled: base.inAppNotificationsEnabled,
+          supportWidgetLastSeenAt:
+            dto.supportWidgetLastSeenAt === undefined
+              ? null
+              : dto.supportWidgetLastSeenAt
+                ? new Date(dto.supportWidgetLastSeenAt)
+                : null,
+          supportWidgetSnoozedUntil:
+            dto.supportWidgetSnoozedUntil === undefined
+              ? null
+              : dto.supportWidgetSnoozedUntil
+                ? new Date(dto.supportWidgetSnoozedUntil)
+                : null,
+          createdAt: new Date(existingSettings.createdAt),
+          updatedAt: new Date(),
+        });
+        return entity;
+      });
+
+      await service.updateSettings('fam-1', {
+        supportWidgetLastSeenAt: now.toISOString(),
+        supportWidgetSnoozedUntil: forever.toISOString(),
+      });
+      expect(settingsRepository.upsert).toHaveBeenCalledWith('fam-1', {
+        supportWidgetLastSeenAt: now.toISOString(),
+        supportWidgetSnoozedUntil: '9999-12-31T23:59:59.999Z',
+      });
+
+      // Clearing the snooze is the same single PATCH with null -- no special
+      // case in the middle. lastSeenAt is untouched by that PATCH, so the
+      // 7-day clock keeps running.
+      await service.updateSettings('fam-1', { supportWidgetSnoozedUntil: null });
+      expect(settingsRepository.upsert).toHaveBeenLastCalledWith('fam-1', { supportWidgetSnoozedUntil: null });
     });
   });
 

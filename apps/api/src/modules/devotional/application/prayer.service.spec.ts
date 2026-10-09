@@ -87,6 +87,7 @@ describe('PrayerService', () => {
     } as unknown as PrayerRepository;
 
     familyApi = {
+      getFamilyMemberRole: jest.fn(),
       isGuardianInFamily: jest.fn().mockResolvedValue(true),
       getFamilyForUser: jest.fn().mockResolvedValue(null),
       getFamilyMemberUserIds: jest.fn().mockResolvedValue(['user-1', 'user-2']),    };

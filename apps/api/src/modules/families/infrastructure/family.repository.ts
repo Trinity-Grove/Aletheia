@@ -83,6 +83,14 @@ export class FamilyRepository {
     return !!member;
   }
 
+  async findMemberRole(familyId: string, userId: string): Promise<FamilyRole | null> {
+    const member = await this.prisma.familyMember.findUnique({
+      where: { family_members_family_user_unique: { familyId, userId } },
+      select: { role: true },
+    });
+    return (member?.role as FamilyRole) ?? null;
+  }
+
   private mapToEntity(raw: {
     id: string;
     name: string;

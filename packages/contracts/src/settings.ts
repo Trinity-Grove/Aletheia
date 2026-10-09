@@ -17,6 +17,8 @@ export const updateFamilySettingsSchema = z.object({
   attendanceReminderEnabled: z.boolean().optional(),
   emailNotificationsEnabled: z.boolean().optional(),
   inAppNotificationsEnabled: z.boolean().optional(),
+  supportWidgetLastSeenAt: z.string().datetime().nullable().optional(),
+  supportWidgetSnoozedUntil: z.string().datetime().nullable().optional(),
 });
 
 export type UpdateFamilySettingsDto = z.infer<typeof updateFamilySettingsSchema>;
@@ -33,6 +35,8 @@ export const familySettingsResponseSchema = z.object({
   attendanceReminderEnabled: z.boolean(),
   emailNotificationsEnabled: z.boolean(),
   inAppNotificationsEnabled: z.boolean(),
+  supportWidgetLastSeenAt: z.string().nullable(),
+  supportWidgetSnoozedUntil: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

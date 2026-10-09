@@ -75,6 +75,8 @@ describe('Family Settings Contracts', () => {
         attendanceReminderEnabled: true,
         emailNotificationsEnabled: true,
         inAppNotificationsEnabled: true,
+        supportWidgetLastSeenAt: null,
+        supportWidgetSnoozedUntil: null,
         createdAt: '2026-08-26T10:00:00.000Z',
         updatedAt: '2026-08-26T10:00:00.000Z',
       };

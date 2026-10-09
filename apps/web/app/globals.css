@@ -935,3 +935,8 @@ p.page-subtitle {
   font-size: 1rem;
 }
 
+
+:root { --support-widget-bottom: 1.5rem; --support-widget-right: 1.5rem; }
+@media (max-width: 768px) {
+ :root { --support-widget-bottom: calc(var(--ui-tab-bar-height) + env(safe-area-inset-bottom, 0px) + 0.75rem); --support-widget-right: 0.75rem; }
+}

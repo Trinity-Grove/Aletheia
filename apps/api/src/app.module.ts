@@ -20,6 +20,7 @@ import { LearnerAccessModule } from './modules/learner-access/learner-access.mod
 import { JurisdictionsModule } from './modules/jurisdictions/jurisdictions.module.js';
 import { PrivacyModule } from './modules/privacy/privacy.module.js';
 import { DonationsModule } from './modules/donations/donations.module.js';
+import { FeedbackModule } from './modules/feedback/feedback.module.js';
 import { BackupModule } from './modules/backup/backup.module.js';
 import { MentorsModule } from './modules/mentors/mentors.module.js';
 import { OperationsModule } from './modules/operations/operations.module.js';
@@ -59,6 +60,7 @@ import { GamificationModule } from './modules/gamification/gamification.module.j
     JurisdictionsModule,
     PrivacyModule,
     DonationsModule,
+    FeedbackModule,
     BackupModule,
     MentorsModule,
     OperationsModule,

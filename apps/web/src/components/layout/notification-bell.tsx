@@ -18,6 +18,8 @@ const TYPE_ICONS: Record<NotificationType, React.ReactNode> = {
   ATTENDANCE_MISSING_REMINDER: <AletheiaIcon name="clipboard-check" size={16} style={{ color: 'var(--color-emerald-600)' }} />,
   PRAYER_ANSWERED_ALERT: <AletheiaIcon name="heart" size={16} style={{ color: 'var(--color-rose-600)' }} />,
   SYSTEM_NOTICE: <AletheiaIcon name="bell" size={16} style={{ color: 'var(--color-indigo-600)' }} />,
+  FEEDBACK_APPROVED: <AletheiaIcon name="check-circle" size={16} style={{ color: 'var(--color-emerald-600)' }} />,
+  FEEDBACK_REJECTED: <AletheiaIcon name="x-circle" size={16} style={{ color: 'var(--color-rose-600)' }} />,
 };
 
 const TYPE_LABEL_KEYS: Record<NotificationType, string> = {
@@ -26,6 +28,8 @@ const TYPE_LABEL_KEYS: Record<NotificationType, string> = {
   ATTENDANCE_MISSING_REMINDER: 'notifications.typeAttendanceMissingReminder',
   PRAYER_ANSWERED_ALERT: 'notifications.typePrayerAnsweredAlert',
   SYSTEM_NOTICE: 'notifications.typeSystemNotice',
+  FEEDBACK_APPROVED: 'notifications.typeFeedbackApproved',
+  FEEDBACK_REJECTED: 'notifications.typeFeedbackRejected',
 };
 
 function formatTimestamp(dateStr: string | Date | undefined, t: LocaleContextValue['t']): string {
@@ -302,6 +306,17 @@ export function NotificationBell({
                       >
                         {item.message}
                       </p>
+                      {item.linkUrl && (
+                        <a
+                          href={item.linkUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          data-testid={`notification-link-${item.id}`}
+                          style={{ display: 'inline-block', marginTop: '0.5rem', color: 'var(--color-indigo-600)', fontSize: '0.75rem', fontWeight: 600 }}
+                        >
+                          {t('notifications.openLink')}
+                        </a>
+                      )}
 
                       <div
                         style={{

@@ -1,4 +1,5 @@
 'use client';
+import { SupportWidgetPreferencesCard } from '../../../src/components/settings/support-widget-preferences-card';
 
 import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -632,7 +633,10 @@ function SettingsPageContent() {
               )}
 
               {activeTab === 'support' && (
-                <SupporterSettingsCard familyId={familyId} />
+                <>
+                  <SupporterSettingsCard familyId={familyId} />
+                  <SupportWidgetPreferencesCard familyId={familyId} />
+                </>
               )}
             </main>
           </div>

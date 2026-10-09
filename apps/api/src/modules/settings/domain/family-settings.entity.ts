@@ -12,6 +12,8 @@ export interface FamilySettingsProps {
   attendanceReminderEnabled: boolean;
   emailNotificationsEnabled: boolean;
   inAppNotificationsEnabled: boolean;
+  supportWidgetLastSeenAt?: Date | null | undefined;
+  supportWidgetSnoozedUntil?: Date | null | undefined;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -63,6 +65,14 @@ export class FamilySettingsEntity {
     return this.props.inAppNotificationsEnabled;
   }
 
+  get supportWidgetLastSeenAt(): Date | null | undefined {
+    return this.props.supportWidgetLastSeenAt;
+  }
+
+  get supportWidgetSnoozedUntil(): Date | null | undefined {
+    return this.props.supportWidgetSnoozedUntil;
+  }
+
   get createdAt(): Date {
     return this.props.createdAt;
   }
@@ -84,6 +94,8 @@ export class FamilySettingsEntity {
       attendanceReminderEnabled: this.attendanceReminderEnabled,
       emailNotificationsEnabled: this.emailNotificationsEnabled,
       inAppNotificationsEnabled: this.inAppNotificationsEnabled,
+      supportWidgetLastSeenAt: this.supportWidgetLastSeenAt?.toISOString() ?? null,
+      supportWidgetSnoozedUntil: this.supportWidgetSnoozedUntil?.toISOString() ?? null,
       createdAt: this.createdAt.toISOString(),
       updatedAt: this.updatedAt.toISOString(),
     };

@@ -101,6 +101,7 @@ describe('DashboardService', () => {
 
   beforeEach(() => {
     familyApi = {
+      getFamilyMemberRole: jest.fn(),
       isGuardianInFamily: jest.fn().mockResolvedValue(true),
       getFamilyForUser: jest.fn().mockResolvedValue(family),
       getFamilyMemberUserIds: jest.fn().mockResolvedValue([]),    };

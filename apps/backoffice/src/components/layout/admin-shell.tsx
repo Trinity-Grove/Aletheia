@@ -3,14 +3,15 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useLocale } from '../../lib/i18n/locale-context';
 import { Badge } from '@aletheia/ui';
 import { AdminGuard, useAdminAuth } from '../../lib/auth/admin-auth-context';
 
 export interface AdminShellProps {
   children?: React.ReactNode;
 }
-
 export function AdminShell({ children }: AdminShellProps): React.ReactElement {
+  const { t } = useLocale();
   const { user, logout } = useAdminAuth();
 
   let pathname = '';
@@ -24,6 +25,7 @@ export function AdminShell({ children }: AdminShellProps): React.ReactElement {
     { href: '/operations', label: 'Operações & Infraestrutura' },
     { href: '/catalog', label: 'Catálogo & Definições' },
     { href: '/moderation', label: 'Moderação Comunitária' },
+    { href: '/feedback', label: t('feedback.nav') },
     { href: '/users', label: 'Usuários' },
   ];
 
