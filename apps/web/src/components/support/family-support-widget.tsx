@@ -9,6 +9,7 @@ export function FamilySupportWidget({ familyId, role, pathname }: { familyId: st
  const [settingsVersion, setSettingsVersion] = useState(0);
  useEffect(() => {
   let cancelled = false;
+  if (!familyId || !role || !['OWNER_GUARDIAN', 'GUARDIAN', 'CO_GUARDIAN'].includes(role)) return;
   // Uses useLocale inside child WeeklySupportWidget
   const refresh = () => {
     void api.get<FamilySettingsResponseDto>(`/families/${familyId}/settings`).then(value => {
