@@ -17,36 +17,11 @@ import { LearnerFocusHeader } from '../src/components/dashboard/learner-focus-he
 import { useDashboard } from '../src/components/dashboard/use-dashboard';
 import { useDailyScripture } from '../src/components/dashboard/use-daily-scripture';
 import { PrivacyComplianceBanner } from '../src/components/settings/privacy-compliance-banner';
+import { useLocale } from '../src/lib/i18n/locale-context';
 import type { LearnerSummaryDto } from '@aletheia/contracts';
 
-const MODULE_ACTIONS = [
-  {
-    href: '/curriculum',
-    iconName: 'library',
-    title: 'Currículo & Objetivos',
-    description: 'Planejamento por disciplinas, frameworks e árvore de objetivos.',
-  },
-  {
-    href: '/records',
-    iconName: 'pen-line',
-    title: 'Diário de Aprendizagem',
-    description: 'Registro reflexivo, avaliação de domínio e formação de virtudes.',
-  },
-  {
-    href: '/portfolio',
-    iconName: 'folder-heart',
-    title: 'Portfólio de Evidências',
-    description: 'Acervo fotográfico e documentos comprobatórios de trabalhos.',
-  },
-  {
-    href: '/reports',
-    iconName: 'bar-chart-3',
-    title: 'Relatórios de Apoio',
-    description: 'Históricos acadêmicos e transcrições estruturadas para famílias.',
-  },
-];
-
 export default function HomePage() {
+  const { t } = useLocale();
   const {
     data,
     status,
@@ -87,10 +62,37 @@ export default function HomePage() {
         await completeActivity(activity);
         setCompletionError(null);
       } catch {
-        setCompletionError('Não foi possível concluir a lição.');
+        setCompletionError(t('landing.completionError'));
       }
     }
   };
+
+  const moduleActions = [
+    {
+      href: '/curriculum',
+      iconName: 'library' as const,
+      title: t('landing.modules.curriculumTitle'),
+      description: t('landing.modules.curriculumDesc'),
+    },
+    {
+      href: '/records',
+      iconName: 'pen-line' as const,
+      title: t('landing.modules.recordsTitle'),
+      description: t('landing.modules.recordsDesc'),
+    },
+    {
+      href: '/portfolio',
+      iconName: 'folder-heart' as const,
+      title: t('landing.modules.portfolioTitle'),
+      description: t('landing.modules.portfolioDesc'),
+    },
+    {
+      href: '/reports',
+      iconName: 'bar-chart-3' as const,
+      title: t('landing.modules.reportsTitle'),
+      description: t('landing.modules.reportsDesc'),
+    },
+  ];
 
   return (
     <ProductShell
@@ -102,18 +104,18 @@ export default function HomePage() {
       <div className="dashboard-page">
         <PrivacyComplianceBanner />
         <PageHeader
-          eyebrow="Trinity Grove • Aletheia"
-          title="Faithful learning, thoughtfully guided."
-          description="Registros acadêmicos estruturados e relatórios de apoio pedagógico para conformidade familiar."
+          eyebrow={t('landing.eyebrow')}
+          title={t('landing.title')}
+          description={t('landing.description')}
           action={
             <div className="dashboard-page-actions">
               <a href="/schedule" className="ui-button ui-button--primary ui-button--md dashboard-page-action-button">
                 <AletheiaIcon name="calendar" size="sm" />
-                <span>Agenda & Checklist</span>
+                <span>{t('landing.actions.schedule')}</span>
               </a>
               <a href="/devotional" className="ui-button ui-button--secondary ui-button--md dashboard-page-action-button">
                 <AletheiaIcon name="book-open" size="sm" />
-                <span>Devocional</span>
+                <span>{t('landing.actions.devotional')}</span>
               </a>
             </div>
           }
@@ -121,11 +123,11 @@ export default function HomePage() {
 
         {status === 'idle' && (
           <EmptyState
-            title="Vincule sua família para começar"
-            description="Para acompanhar a jornada diária, configure primeiro sua família no Aletheia."
+            title={t('landing.emptyFamily.title')}
+            description={t('landing.emptyFamily.description')}
             action={
               <a href="/onboarding" className="ui-button ui-button--primary ui-button--md">
-                Configurar Família
+                {t('landing.emptyFamily.setupButton')}
               </a>
             }
           />
@@ -133,17 +135,17 @@ export default function HomePage() {
 
         {!data && status === 'loading' && (
           <div className="dashboard-page-loading" data-testid="dashboard-loading" aria-busy="true">
-            <p>Carregando o painel...</p>
+            <p>{t('landing.loading')}</p>
           </div>
         )}
 
         {!data && status === 'error' && (
           <EmptyState
-            title="Não conseguimos carregar o painel"
+            title={t('landing.errorTitle')}
             description={errorMessage ?? undefined}
             action={
               <Button onClick={retry} variant="primary" size="md">
-                Tentar novamente
+                {t('landing.retryButton')}
               </Button>
             }
           />
@@ -153,11 +155,11 @@ export default function HomePage() {
           <>
             {data.learners.length === 0 ? (
               <EmptyState
-                title="Cadastre seus educandos"
-                description="Adicione pelo menos um educando para acompanhar a jornada diária da família."
+                title={t('landing.emptyLearners.title')}
+                description={t('landing.emptyLearners.description')}
                 action={
                   <a href="/learners" className="ui-button ui-button--primary ui-button--md">
-                    Cadastrar Educandos
+                    {t('landing.emptyLearners.registerButton')}
                   </a>
                 }
               />
@@ -181,7 +183,7 @@ export default function HomePage() {
                   {dailyScripture.isFromFamilyDevotional ? (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.375rem', padding: '0 0.25rem' }}>
                       <span style={{ fontSize: '0.75rem', color: 'var(--sage-dark)', fontWeight: 600 }}>
-                        ✦ Devocional da Família de Hoje
+                        {t('landing.scripture.familyDevotionalToday')}
                       </span>
                       <a
                         href="/devotional"
@@ -192,13 +194,13 @@ export default function HomePage() {
                           fontWeight: 600,
                         }}
                       >
-                        Ver devocional completo →
+                        {t('landing.scripture.viewFullDevotional')}
                       </a>
                     </div>
                   ) : (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.375rem', padding: '0 0.25rem' }}>
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        Versículo do Dia
+                        {t('landing.scripture.verseOfTheDay')}
                       </span>
                       <a
                         href="/devotional"
@@ -209,7 +211,7 @@ export default function HomePage() {
                           fontWeight: 600,
                         }}
                       >
-                        Registrar devocional de hoje →
+                        {t('landing.scripture.recordDevotionalToday')}
                       </a>
                     </div>
                   )}
@@ -242,7 +244,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="dashboard-page-module-grid">
-                  {MODULE_ACTIONS.map((module) => (
+                  {moduleActions.map((module) => (
                     <a key={module.href} href={module.href} className="dashboard-page-module-link">
                       <Card variant="bordered" shadow="sm" className="dashboard-page-module-card">
                         <div className="dashboard-page-module-icon">

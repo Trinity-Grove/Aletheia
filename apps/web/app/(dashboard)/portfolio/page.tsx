@@ -12,8 +12,10 @@ import type {
 import { ProductShell } from '../../../src/components/product-shell';
 import { PortfolioGalleryView } from '../../../src/components/records/portfolio-gallery-view';
 import { PortfolioItemModal } from '../../../src/components/records/portfolio-item-modal';
+import { useLocale } from '../../../src/lib/i18n/locale-context';
 
 export default function PortfolioPage() {
+  const { t } = useLocale();
   const { toast } = useToast();
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
@@ -218,16 +220,16 @@ export default function PortfolioPage() {
         {/* Header */}
         <div style={{ marginBottom: '1.5rem' }}>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-            Portfólio Vivo de Evidências
+            {t('reports.pages.portfolio.title')}
           </h1>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-            Exposição viva das obras de arte, narrações gravadas, cadernos de natureza e relatórios de projetos.
+            {t('reports.pages.portfolio.description')}
           </p>
         </div>
 
         {loading ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-            Carregando portfólio...
+            {t('reports.pages.portfolio.loading')}
           </div>
         ) : (
           <PortfolioGalleryView

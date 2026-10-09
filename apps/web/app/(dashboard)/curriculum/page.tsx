@@ -17,8 +17,10 @@ import type {
 } from "@aletheia/contracts";
 import { ProductShell } from "../../../src/components/product-shell";
 import { CurriculumView } from "../../../src/components/curriculum/curriculum-view";
+import { useLocale } from "../../../src/lib/i18n/locale-context";
 
 export default function CurriculumPage() {
+  const { t } = useLocale();
   const { toast } = useToast();
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
@@ -309,7 +311,7 @@ export default function CurriculumPage() {
         </Alert>
       )}
       {loading ? (
-        <div style={{ padding: "2rem", textAlign: "center" }}>Carregando plano curricular...</div>
+        <div style={{ padding: "2rem", textAlign: "center" }}>{t('curriculum.pages.curriculum.loading')}</div>
       ) : (
         <CurriculumView
           familyId={familyId ?? ''}

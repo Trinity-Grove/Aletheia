@@ -35,6 +35,7 @@ export * from './family-curriculum-pack-media.js';
 export * from './curriculum-pack-moderation.js';
 export * from './learner-competency-tracking.js';
 export * from './learner-competency-achievement.js';
+export * from './learner-badges.js';
 export * from './lesson.js';
 export * from './schedule.js';
 export * from './record.js';

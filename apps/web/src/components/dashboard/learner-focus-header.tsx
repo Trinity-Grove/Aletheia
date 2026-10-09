@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface LearnerFocusHeaderProps {
   learners: Array<{ id: string; displayName: string }>;
   activeLearnerId: string | null;
-  onSelectLearner: (learnerId: string | null) => void;
+  onSelectLearner?(learnerId: string | null): void;
 }
 
 export function LearnerFocusHeader({
@@ -13,6 +14,7 @@ export function LearnerFocusHeader({
   activeLearnerId,
   onSelectLearner,
 }: LearnerFocusHeaderProps) {
+  const { t } = useLocale();
   const activeLearner =
     learners.find((l) => l.id === activeLearnerId) ?? null;
 
@@ -60,11 +62,11 @@ export function LearnerFocusHeader({
                 fontWeight: 400,
               }}
             >
-              {activeLearner ? activeLearner.displayName : 'Todos os Educandos'}
+              {activeLearner ? activeLearner.displayName : t('learners.focusHeader.allLearners')}
             </h2>
           </div>
           <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-            Foco pedagógico e jornada diária personalizada
+            {t('learners.focusHeader.subtitle')}
           </p>
         </div>
       </div>
@@ -72,7 +74,7 @@ export function LearnerFocusHeader({
       {learners.length > 1 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-            Alternar foco:
+            {t('learners.focusHeader.switchFocus')}
           </span>
           {learners.map((l) => {
             const isSelected = l.id === activeLearner?.id;
@@ -81,7 +83,7 @@ export function LearnerFocusHeader({
                 key={l.id}
                 type="button"
                 data-testid={`learner-pill-${l.id}`}
-                onClick={() => onSelectLearner(l.id)}
+                onClick={() => onSelectLearner?.(l.id)}
                 style={{
                   padding: '0.375rem 0.875rem',
                   borderRadius: 'var(--radius-full)',

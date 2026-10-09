@@ -8,11 +8,12 @@ import type {
   ObjectiveResponseDto,
   SubjectResponseDto,
 } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface LessonFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (dto: CreateLessonPlanDto) => Promise<void>;
+  onSave(dto: CreateLessonPlanDto): Promise<void>;
   learners: LearnerSummaryDto[];
   subjects: SubjectResponseDto[];
   objectives?: ObjectiveResponseDto[];
@@ -30,6 +31,7 @@ export function LessonFormModal({
   initialDate,
   initialAcademicYearId,
 }: LessonFormModalProps) {
+  const { t } = useLocale();
   const [title, setTitle] = useState('');
   const [subjectId, setSubjectId] = useState(subjects[0]?.id || '');
   const [date, setDate] = useState(
@@ -87,15 +89,15 @@ export function LessonFormModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      setError('Por favor, informe o título da lição.');
+      setError(t('lessons.formModal.titleRequiredError'));
       return;
     }
     if (!subjectId) {
-      setError('Por favor, selecione uma disciplina.');
+      setError(t('lessons.formModal.subjectRequiredError'));
       return;
     }
     if (selectedLearnerIds.length === 0) {
-      setError('Selecione pelo menos um educando.');
+      setError(t('lessons.formModal.learnerRequiredError'));
       return;
     }
 
@@ -127,7 +129,7 @@ export function LessonFormModal({
       setSelectedObjectiveIds([]);
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erro ao salvar lição');
+      setError(err instanceof Error ? err.message : t('lessons.formModal.saveError'));
     } finally {
       setLoading(false);
     }
@@ -142,15 +144,15 @@ export function LessonFormModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Planejar Nova Lição"
+      title={t('lessons.formModal.newTitle')}
       maxWidth="lg"
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={loading}>
-            Cancelar
+            {t('lessons.formModal.cancel')}
           </Button>
           <Button type="submit" form="lesson-form" data-testid="save-lesson-btn" isLoading={loading}>
-            Salvar Lição
+            {t('lessons.formModal.save')}
           </Button>
         </>
       }
@@ -165,16 +167,16 @@ export function LessonFormModal({
         {/* Title & Subject */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <Input
-            label="Título da Lição *"
+            label={t('lessons.formModal.titleLabel')}
             data-testid="lesson-title-input"
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Ex: Leitura Narrativa e Vocabulário"
+            placeholder={t('lessons.formModal.titlePlaceholder')}
           />
 
           <Select
-            label="Disciplina *"
+            label={t('lessons.formModal.subjectLabel')}
             data-testid="lesson-subject-select"
             required
             value={subjectId}
@@ -186,7 +188,7 @@ export function LessonFormModal({
         {/* Date, Start Time, End Time, Duration */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem' }}>
           <Input
-            label="Data *"
+            label={t('lessons.formModal.dateLabel')}
             type="date"
             data-testid="lesson-date-input"
             required
@@ -195,7 +197,7 @@ export function LessonFormModal({
           />
 
           <Input
-            label="Início"
+            label={t('lessons.formModal.startTimeLabel')}
             type="time"
             data-testid="lesson-start-time-input"
             value={startTime}
@@ -203,7 +205,7 @@ export function LessonFormModal({
           />
 
           <Input
-            label="Término"
+            label={t('lessons.formModal.endTimeLabel')}
             type="time"
             data-testid="lesson-end-time-input"
             value={endTime}
@@ -211,7 +213,7 @@ export function LessonFormModal({
           />
 
           <Input
-            label="Duração (min)"
+            label={t('lessons.formModal.durationLabel')}
             type="number"
             data-testid="lesson-duration-input"
             min={1}
@@ -224,7 +226,7 @@ export function LessonFormModal({
         {/* Multi-Learner Selection */}
         <div>
           <span style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-            Educandos Participantes *
+            {t('lessons.formModal.learnersLabel')}
           </span>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
             {learners.map((learner) => (
@@ -243,7 +245,7 @@ export function LessonFormModal({
         {availableObjectives.length > 0 && (
           <div>
             <span style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-              Vincular Objetivos de Aprendizagem
+              {t('lessons.formModal.linkObjectivesLabel')}
             </span>
             <div
               style={{
@@ -271,39 +273,39 @@ export function LessonFormModal({
         )}
 
         <Textarea
-          label="Descrição & Plano da Aula"
+          label={t('lessons.formModal.descriptionLabel')}
           rows={2}
           data-testid="lesson-desc-input"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="O que será ensinado e praticado hoje..."
+          placeholder={t('lessons.formModal.descriptionPlaceholder')}
         />
 
         {/* Materials & Homework */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <Input
-            label="Materiais / Livros"
+            label={t('lessons.formModal.materialsLabel')}
             data-testid="lesson-materials-input"
             value={materials}
             onChange={(e) => setMaterials(e.target.value)}
-            placeholder="Ex: Livro Cap. 4, Caderno, Lápis"
+            placeholder={t('lessons.formModal.materialsPlaceholder')}
           />
           <Input
-            label="Tarefa / Prática"
+            label={t('lessons.formModal.assignmentLabel')}
             data-testid="lesson-homework-input"
             value={homework}
             onChange={(e) => setHomework(e.target.value)}
-            placeholder="Ex: Exercícios 1 ao 5 na pág 42"
+            placeholder={t('lessons.formModal.assignmentPlaceholder')}
           />
         </div>
 
         <Textarea
-          label="Observações Pedagógicas (Opcional)"
+          label={t('lessons.formModal.pedagogicalNotesLabel')}
           rows={2}
           data-testid="lesson-notes-input"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Adaptações, dicas para o educador..."
+          placeholder={t('lessons.formModal.pedagogicalNotesPlaceholder')}
         />
       </form>
     </Modal>

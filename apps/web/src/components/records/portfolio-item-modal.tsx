@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { AletheiaIcon, Alert, Button, Checkbox, Input, Modal, Select, Textarea } from '@aletheia/ui';
+import { useLocale } from '../../lib/i18n/locale-context';
 import {
   ALLOWED_PORTFOLIO_MIME_TYPES,
   PORTFOLIO_MAX_FILE_SIZE_BYTES,
@@ -17,9 +18,9 @@ const FILE_EVIDENCE_TYPES = new Set<EvidenceType>(['IMAGE', 'AUDIO', 'VIDEO', 'D
 
 export interface PortfolioItemModalProps {
   isOpen: boolean;
-  onClose: () => void;
-  onSave: (dto: CreatePortfolioItemDto) => Promise<PortfolioItemResponseDto>;
-  onUploadFile?: ((itemId: string, file: File) => Promise<void>) | undefined;
+  onClose(): void;
+  onSave(dto: CreatePortfolioItemDto): Promise<PortfolioItemResponseDto>;
+  onUploadFile?(itemId: string, file: File): Promise<void>;
   learners: LearnerSummaryDto[];
   subjects: SubjectResponseDto[];
   records?: LearningRecordResponseDto[];
@@ -53,6 +54,7 @@ export function PortfolioItemModal({
   initialRecordId,
   defaultLearnerId,
 }: PortfolioItemModalProps) {
+  const { t } = useLocale();
   const [learnerId, setLearnerId] = useState('');
   const [subjectId, setSubjectId] = useState('');
   const [learningRecordId, setLearningRecordId] = useState('');
@@ -109,12 +111,12 @@ export function PortfolioItemModal({
       return;
     }
     if (!(ALLOWED_PORTFOLIO_MIME_TYPES as readonly string[]).includes(file.type)) {
-      setFileError('Tipo de arquivo não suportado.');
+      setFileError(t('records.portfolioModal.unsupportedFileType'));
       setSelectedFile(null);
       return;
     }
     if (file.size > PORTFOLIO_MAX_FILE_SIZE_BYTES) {
-      setFileError(`Arquivo muito grande (máx. ${Math.floor(PORTFOLIO_MAX_FILE_SIZE_BYTES / (1024 * 1024))}MB).`);
+      setFileError(t('records.portfolioModal.fileTooLarge', { maxMb: Math.floor(PORTFOLIO_MAX_FILE_SIZE_BYTES / (1024 * 1024)) }));
       setSelectedFile(null);
       return;
     }
@@ -124,11 +126,11 @@ export function PortfolioItemModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!learnerId) {
-      setError('Selecione um educando.');
+      setError(t('records.portfolioModal.selectLearnerError'));
       return;
     }
     if (!title.trim()) {
-      setError('Informe o título do item de evidência.');
+      setError(t('records.portfolioModal.enterTitleError'));
       return;
     }
 
@@ -161,7 +163,7 @@ export function PortfolioItemModal({
       }
       onClose();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Falha ao salvar evidência';
+      const message = err instanceof Error ? err.message : t('records.portfolioModal.saveError');
       setError(message);
     } finally {
       setSubmitting(false);
@@ -172,15 +174,15 @@ export function PortfolioItemModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={itemToEdit ? 'Editar Evidência de Portfólio' : 'Adicionar Evidência ao Portfólio'}
+      title={itemToEdit ? t('records.portfolioModal.editTitle') : t('records.portfolioModal.addTitle')}
       maxWidth="lg"
       footer={
         <>
           <Button variant="secondary" data-testid="cancel-portfolio-btn" onClick={onClose} disabled={submitting}>
-            Cancelar
+            {t('records.portfolioModal.cancelBtn')}
           </Button>
           <Button type="submit" form="portfolio-form" data-testid="save-portfolio-btn" isLoading={submitting}>
-            {itemToEdit ? 'Salvar Alterações' : 'Salvar no Portfólio'}
+            {itemToEdit ? t('records.portfolioModal.saveChangesBtn') : t('records.portfolioModal.saveBtn')}
           </Button>
         </>
       }
@@ -195,53 +197,56 @@ export function PortfolioItemModal({
         {/* Learner & Evidence Type */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <Select
-            label="Educando *"
+            label={t('records.portfolioModal.learnerLabel')}
             data-testid="portfolio-learner-select"
             value={learnerId}
             onChange={(e) => setLearnerId(e.target.value)}
             options={[
-              { value: '', label: 'Selecione o educando' },
+              { value: '', label: t('records.portfolioModal.learnerPlaceholder') },
               ...learners.map((l) => ({ value: l.id, label: l.preferredName || l.firstName })),
             ]}
           />
 
           <Select
-            label="Tipo de Evidência *"
+            label={t('records.portfolioModal.typeLabel')}
             data-testid="portfolio-type-select"
             value={type}
             onChange={(e) => setType(e.target.value as EvidenceType)}
-            options={Object.entries(EVIDENCE_TYPE_CONFIG).map(([k, item]) => ({ value: k, label: item.label }))}
+            options={Object.entries(EVIDENCE_TYPE_CONFIG).map(([k, item]) => ({
+              value: k,
+              label: t(`records.evidenceTypes.${k.toLowerCase()}` as any) || item.label,
+            }))}
           />
         </div>
 
         <Input
-          label="Título da Obra / Evidência *"
+          label={t('records.portfolioModal.titleLabel')}
           data-testid="portfolio-title-input"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Ex: Desenho botânico da folha de Carvalho"
+          placeholder={t('records.portfolioModal.titlePlaceholder')}
         />
 
         {/* Subject & Linked Record */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <Select
-            label="Disciplina Relacionada"
+            label={t('records.portfolioModal.subjectLabel')}
             data-testid="portfolio-subject-select"
             value={subjectId}
             onChange={(e) => setSubjectId(e.target.value)}
             options={[
-              { value: '', label: 'Sem disciplina vinculada' },
+              { value: '', label: t('records.portfolioModal.subjectPlaceholder') },
               ...subjects.map((s) => ({ value: s.id, label: s.name })),
             ]}
           />
 
           <Select
-            label="Registro de Aprendizagem"
+            label={t('records.portfolioModal.recordLabel')}
             data-testid="portfolio-record-select"
             value={learningRecordId}
             onChange={(e) => setLearningRecordId(e.target.value)}
             options={[
-              { value: '', label: 'Nenhum registro vinculado' },
+              { value: '', label: t('records.portfolioModal.recordPlaceholder') },
               ...records.map((r) => ({ value: r.id, label: `${r.title} (${r.date})` })),
             ]}
           />
@@ -250,17 +255,17 @@ export function PortfolioItemModal({
         {/* Media: file upload or external URL, depending on type */}
         {type === 'LINK' ? (
           <Input
-            label="URL Externa"
+            label={t('records.portfolioModal.urlLabel')}
             type="url"
             data-testid="portfolio-file-url-input"
             value={fileUrl}
             onChange={(e) => setFileUrl(e.target.value)}
-            placeholder="https://exemplo.com/fotos/desenho.jpg"
+            placeholder={t('records.portfolioModal.urlPlaceholder')}
           />
         ) : FILE_EVIDENCE_TYPES.has(type) ? (
           <div>
             <Input
-              label={`Arquivo ${itemToEdit?.mimeType ? '(substituir arquivo existente)' : ''}`}
+              label={itemToEdit?.mimeType ? t('records.portfolioModal.replaceFileLabel') : t('records.portfolioModal.fileLabel')}
               type="file"
               data-testid="portfolio-file-input"
               accept={ALLOWED_PORTFOLIO_MIME_TYPES.join(',')}
@@ -273,34 +278,34 @@ export function PortfolioItemModal({
             )}
             {itemToEdit?.mimeType && !selectedFile && (
               <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.25rem', display: 'block' }}>
-                Arquivo atual: {itemToEdit.mimeType}
+                {t('records.portfolioModal.currentFile', { mimeType: itemToEdit.mimeType })}
               </span>
             )}
           </div>
         ) : null}
 
         <Textarea
-          label="Conteúdo em Texto / Transcrição da Narração"
+          label={t('records.portfolioModal.textContentLabel')}
           data-testid="portfolio-text-content-input"
           value={textContent}
           onChange={(e) => setTextContent(e.target.value)}
           rows={3}
-          placeholder="Texto digitado pelo educando, poema memorizado ou transcrição oral..."
+          placeholder={t('records.portfolioModal.textContentPlaceholder')}
         />
 
         <Textarea
-          label="Comentários / Contexto da Produção"
+          label={t('records.portfolioModal.descriptionLabel')}
           data-testid="portfolio-description-input"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={2}
-          placeholder="Notas adicionais sobre a obra..."
+          placeholder={t('records.portfolioModal.descriptionPlaceholder')}
         />
 
         {/* Date & Tags */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '1rem' }}>
           <Input
-            label="Data da Produção"
+            label={t('records.portfolioModal.dateLabel')}
             type="date"
             data-testid="portfolio-captured-date-input"
             value={capturedAt}
@@ -308,11 +313,11 @@ export function PortfolioItemModal({
           />
 
           <Input
-            label="Tags (separadas por vírgula)"
+            label={t('records.portfolioModal.tagsLabel')}
             data-testid="portfolio-tags-input"
             value={tagsInput}
             onChange={(e) => setTagsInput(e.target.value)}
-            placeholder="Ex: botânica, aquarela, destaque"
+            placeholder={t('records.portfolioModal.tagsPlaceholder')}
           />
         </div>
 
@@ -328,7 +333,7 @@ export function PortfolioItemModal({
             data-testid="portfolio-highlight-checkbox"
             checked={isHighlight}
             onChange={(e) => setIsHighlight(e.target.checked)}
-            label="Marcar como Destaque do Portfólio (Showcase)"
+            label={t('records.portfolioModal.highlightLabel')}
           />
         </div>
       </form>

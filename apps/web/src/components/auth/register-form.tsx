@@ -6,7 +6,7 @@ import { useLocale } from '../../lib/i18n/locale-context';
 import { LegalDocumentContent } from '../shared/legal-document-content';
 
 export interface RegisterFormProps {
-  onSubmit?: (_data: RegisterGuardianDto) => Promise<void> | void;
+  onSubmit?(_data: RegisterGuardianDto): Promise<void> | void;
 }
 
 interface PublicConsentDefinition {

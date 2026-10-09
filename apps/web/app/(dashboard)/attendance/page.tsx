@@ -12,8 +12,10 @@ import type {
 import { ProductShell } from '../../../src/components/product-shell';
 import { AttendanceTrackerView } from '../../../src/components/reports/attendance-tracker-view';
 import { ComplianceEvaluationPanel } from '../../../src/components/compliance/compliance-evaluation-panel';
+import { useLocale } from '../../../src/lib/i18n/locale-context';
 
 export default function AttendancePage() {
+  const { t } = useLocale();
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
   const [activeLearnerId, setActiveLearnerId] = useState<string | null>(null);
@@ -121,7 +123,7 @@ export default function AttendancePage() {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Falha ao registrar frequência');
+      throw new Error(err.message || t('attendance.page.errorLog'));
     }
     await fetchAttendance();
     await fetchComplianceSummary();
@@ -137,7 +139,7 @@ export default function AttendancePage() {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Falha ao registrar frequência coletiva');
+      throw new Error(err.message || t('attendance.page.errorBulkLog'));
     }
     await fetchAttendance();
     await fetchComplianceSummary();
@@ -152,16 +154,16 @@ export default function AttendancePage() {
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.5rem 1rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-            Controle de Frequência & Conformidade Legal
+            {t('attendance.page.title')}
           </h1>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-            Acompanhe os dias letivos e carga horária anual dos educandos sem comparações entre irmãos.
+            {t('attendance.page.subtitle')}
           </p>
         </div>
 
         {loading ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-            Carregando controle de frequência...
+            {t('attendance.page.loading')}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>

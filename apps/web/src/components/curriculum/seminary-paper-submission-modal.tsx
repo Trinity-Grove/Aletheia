@@ -19,9 +19,9 @@ export interface SeminaryPaperSubmissionData {
 
 export interface SeminaryPaperSubmissionModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose(): void;
   discipline: SeminaryDiscipline | null;
-  onSubmit: (data: SeminaryPaperSubmissionData) => Promise<void>;
+  onSubmit(data: SeminaryPaperSubmissionData): Promise<void>;
 }
 
 const EVIDENCE_TYPE_LABELS: Record<SeminaryEvidenceTypeCode, string> = {
@@ -130,7 +130,7 @@ export function SeminaryPaperSubmissionModal({
       >
         {error && (
           <div data-testid="paper-submission-error">
-            <Alert variant="error" title="Erro na Submissão">
+            <Alert variant="error" title={t('curriculum.seminaryPaperModal.submissionErrorTitle')}>
               {error}
             </Alert>
           </div>
@@ -186,7 +186,7 @@ export function SeminaryPaperSubmissionModal({
             id="paper-title-input"
             data-testid="paper-title-input"
             type="text"
-            placeholder="Ex: Análise Exegética de Romanos 8:28-30 no Contexto Paulino"
+            placeholder={t('curriculum.seminaryPaperModal.titlePlaceholder')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             disabled={isSubmitting}
@@ -216,7 +216,7 @@ export function SeminaryPaperSubmissionModal({
           <textarea
             id="paper-content-textarea"
             data-testid="paper-content-textarea"
-            placeholder="Insira o texto completo, introdução, desenvolvimento ou argumentação teológica..."
+            placeholder={t('curriculum.seminaryPaperModal.textPlaceholder')}
             rows={8}
             value={textContent}
             onChange={(e) => setTextContent(e.target.value)}

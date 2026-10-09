@@ -45,7 +45,7 @@ export default function SeminaryPage() {
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem' }}>
-      <nav aria-label="Breadcrumb" style={{ marginBottom: '1.5rem' }}>
+      <nav aria-label={t('curriculum.pages.seminary.breadcrumb')} style={{ marginBottom: '1.5rem' }}>
         <Link
           href="/curriculum"
           data-testid="seminary-back-link"

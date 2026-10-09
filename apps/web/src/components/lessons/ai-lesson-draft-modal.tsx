@@ -340,7 +340,7 @@ export function AiLessonDraftModal({
                   border: '1px solid var(--border-light)',
                 }}
               >
-                <Badge variant="emerald">COPPA / LGPD</Badge>
+                <Badge variant="emerald">{t('lessons.aiAssistant.coppaBadgeText')}</Badge>
                 <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
                   {t('lessons.aiAssistant.coppaBadge')}
                 </span>
@@ -451,7 +451,7 @@ export function AiLessonDraftModal({
             /* REVIEW FORM */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {/* Human Review Required Reassurance */}
-              <Alert variant="info" title="Revisão Humana Obrigatória">
+              <Alert variant="info" title={t('lessons.aiAssistant.humanReviewRequired')}>
                 {t('lessons.aiAssistant.reviewNotice')}
               </Alert>
 

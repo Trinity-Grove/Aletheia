@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Button, Input, Modal, Select, Textarea, useToast } from '@aletheia/ui';
 import { resolvePrivacyRegime, type CreateLearnerDto, type EducationalStage, type LearnerResponseDto } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 import { LegalDocumentContent } from '../shared/legal-document-content';
 
 // acceptedDataConsent is only ever included on creation, never on edit
@@ -21,17 +22,17 @@ const SCROLL_END_THRESHOLD_PX = 4;
 export interface LearnerFormModalProps {
   isOpen: boolean;
   familyId: string;
-  initialData?: LearnerResponseDto | null;
-  onClose: () => void;
-  onSubmit: (_data: LearnerFormSubmitDto) => Promise<void> | void;
+  initialData?: LearnerResponseDto | null | undefined;
+  onClose(): void;
+  onSubmit?(data: LearnerFormSubmitDto): Promise<void> | void;
 }
 
-const STAGE_OPTIONS: { value: EducationalStage; label: string }[] = [
-  { value: 'EARLY_YEARS', label: 'Educação Infantil (Early Years)' },
-  { value: 'PRIMARY', label: 'Ensino Fundamental inicial (Primary)' },
-  { value: 'LOWER_SECONDARY', label: 'Ensino Fundamental final (Lower Secondary)' },
-  { value: 'UPPER_SECONDARY', label: 'Ensino Médio (Upper Secondary)' },
-  { value: 'OTHER', label: 'Outro' },
+const EDUCATIONAL_STAGES: EducationalStage[] = [
+  'EARLY_YEARS',
+  'PRIMARY',
+  'LOWER_SECONDARY',
+  'UPPER_SECONDARY',
+  'OTHER',
 ];
 
 export function LearnerFormModal({
@@ -41,6 +42,7 @@ export function LearnerFormModal({
   onClose,
   onSubmit,
 }: LearnerFormModalProps) {
+  const { t } = useLocale();
   const { toast } = useToast();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -146,6 +148,15 @@ export function LearnerFormModal({
     }
   }, [showFullConsentText, consentText]);
 
+  const stageOptions = React.useMemo(
+    () =>
+      EDUCATIONAL_STAGES.map((s) => ({
+        value: s,
+        label: t(`learners.stages.${s}`),
+      })),
+    [t]
+  );
+
   const handleConsentScroll = (el: HTMLDivElement) => {
     const reachedEnd = el.scrollHeight - el.scrollTop - el.clientHeight <= SCROLL_END_THRESHOLD_PX;
     if (reachedEnd) setHasReadConsentText(true);
@@ -155,11 +166,11 @@ export function LearnerFormModal({
     e.preventDefault();
     setSubmitError(null);
 
-    const nextFirstNameError = firstName.trim() ? null : 'Nome é obrigatório.';
-    const nextBirthDateError = birthDate ? null : 'Data de nascimento é obrigatória.';
+    const nextFirstNameError = firstName.trim() ? null : t('learners.form.requiredFirstName');
+    const nextBirthDateError = birthDate ? null : t('learners.form.requiredBirthDate');
     const nextConsentError =
       !initialData && !acceptedDataConsent
-        ? 'É necessário consentir com o tratamento de dados do educando.'
+        ? t('learners.form.requiredConsent')
         : null;
     setFirstNameError(nextFirstNameError);
     setBirthDateError(nextBirthDateError);
@@ -171,7 +182,7 @@ export function LearnerFormModal({
 
     try {
       setLoading(true);
-      await onSubmit({
+      await onSubmit?.({
         firstName: firstName.trim(),
         lastName: lastName.trim() || undefined,
         preferredName: preferredName.trim() || undefined,
@@ -185,11 +196,11 @@ export function LearnerFormModal({
       });
       toast({
         variant: 'success',
-        title: initialData ? 'Educando atualizado com sucesso.' : 'Educando criado com sucesso.',
+        title: initialData ? t('learners.toast.updated') : t('learners.toast.created'),
       });
-      onClose();
+      onClose?.();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Falha ao salvar educando.';
+      const msg = err instanceof Error ? err.message : t('learners.toast.saveError');
       setSubmitError(msg);
     } finally {
       setLoading(false);
@@ -200,12 +211,12 @@ export function LearnerFormModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={initialData ? 'Editar Educando' : 'Novo Educando'}
+      title={initialData ? t('learners.form.editTitle') : t('learners.form.newTitle')}
       maxWidth="lg"
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={loading}>
-            Cancelar
+            {t('learners.form.cancel')}
           </Button>
           <Button
             type="submit"
@@ -213,7 +224,7 @@ export function LearnerFormModal({
             data-testid="learner-submit-btn"
             isLoading={loading}
           >
-            {initialData ? 'Salvar Alterações' : 'Criar Educando'}
+            {initialData ? t('learners.form.saveChanges') : t('learners.form.createLearner')}
           </Button>
         </>
       }
@@ -230,32 +241,32 @@ export function LearnerFormModal({
         style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
       >
         <Input
-          label="Primeiro Nome *"
+          label={t('learners.form.firstNameLabel')}
           data-testid="learner-first-name-input"
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
-          placeholder="Ex: Clara"
+          placeholder={t('learners.form.firstNamePlaceholder')}
           error={firstNameError ?? undefined}
         />
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <Input
-            label="Sobrenome"
+            label={t('learners.form.lastNameLabel')}
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            placeholder="Ex: Silva"
+            placeholder={t('learners.form.lastNamePlaceholder')}
           />
           <Input
-            label="Nome Preferido / Apelido"
+            label={t('learners.form.preferredNameLabel')}
             value={preferredName}
             onChange={(e) => setPreferredName(e.target.value)}
-            placeholder="Ex: Clarinha"
+            placeholder={t('learners.form.preferredNamePlaceholder')}
           />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <Input
-            label="Data de Nascimento *"
+            label={t('learners.form.birthDateLabel')}
             type="date"
             data-testid="learner-birth-date-input"
             value={birthDate}
@@ -263,23 +274,23 @@ export function LearnerFormModal({
             error={birthDateError ?? undefined}
           />
           <Select
-            label="Etapa Educacional"
+            label={t('learners.form.stageLabel')}
             value={stage}
             onChange={(e) => setStage(e.target.value as EducationalStage)}
-            options={STAGE_OPTIONS}
+            options={stageOptions}
           />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <Input
-            label="Série / Grau Customizado"
+            label={t('learners.form.customGradeLabel')}
             value={customGrade}
             onChange={(e) => setCustomGrade(e.target.value)}
-            placeholder="Ex: 3º Ano"
+            placeholder={t('learners.form.customGradePlaceholder')}
           />
           <div className="ui-form-group">
             <label htmlFor="avatar-color" className="ui-form-label">
-              Cor do Avatar
+              {t('learners.form.avatarColorLabel')}
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <input
@@ -292,7 +303,7 @@ export function LearnerFormModal({
               <Input
                 value={avatarColor}
                 onChange={(e) => setAvatarColor(e.target.value)}
-                placeholder="#3B82F6"
+                placeholder={t('learners.form.avatarColorPlaceholder')}
                 style={{ flex: 1 }}
               />
             </div>
@@ -300,19 +311,19 @@ export function LearnerFormModal({
         </div>
 
         <Textarea
-          label="Necessidades Especiais / Adaptações"
+          label={t('learners.form.specialNeedsLabel')}
           rows={2}
           value={specialNeeds}
           onChange={(e) => setSpecialNeeds(e.target.value)}
-          placeholder="Ex: Dislexia leve, necessidade de tempo adicional..."
+          placeholder={t('learners.form.specialNeedsPlaceholder')}
         />
 
         <Textarea
-          label="Anotações Pedagógicas"
+          label={t('learners.form.notesLabel')}
           rows={3}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Interesses, pontos fortes, ritmo de aprendizado..."
+          placeholder={t('learners.form.notesPlaceholder')}
         />
 
         {!initialData && (
@@ -327,9 +338,7 @@ export function LearnerFormModal({
                 style={{ marginTop: '0.2rem' }}
               />
               <span>
-                Declaro ser o pai, a mãe ou o responsável legal por este estudante, ou ter autorização
-                expressa de quem seja, e consinto com o tratamento dos dados dele para organizar e registrar
-                suas atividades educacionais na plataforma, conforme a{' '}
+                {t('learners.form.consentCheckboxText')}{' '}
                 <button
                   type="button"
                   data-testid="learner-view-consent-text"
@@ -345,12 +354,12 @@ export function LearnerFormModal({
                     font: 'inherit',
                   }}
                 >
-                  Política de Privacidade
+                  {t('learners.form.consentPrivacyPolicy')}
                 </button>
                 .{' '}
                 {!hasReadConsentText && !consentLoading && (
                   <span data-testid="learner-consent-hint" style={{ fontSize: '0.8125rem', opacity: 0.75 }}>
-                    (Abra e leia o documento até o final para habilitar o aceite.)
+                    {t('learners.form.consentHint')}
                   </span>
                 )}
               </span>
@@ -368,11 +377,11 @@ export function LearnerFormModal({
         <Modal
           isOpen
           onClose={() => setShowFullConsentText(false)}
-          title="Consentimento para tratamento de dados do educando"
+          title={t('learners.form.consentModalTitle')}
           maxWidth="md"
           footer={
             <Button variant="secondary" onClick={() => setShowFullConsentText(false)}>
-              Fechar
+              {t('learners.form.close')}
             </Button>
           }
         >
@@ -387,7 +396,7 @@ export function LearnerFormModal({
             </div>
           ) : (
             <p data-testid="learner-consent-unavailable">
-              Documento não disponível no momento. Tente novamente mais tarde.
+              {t('learners.form.consentUnavailable')}
             </p>
           )}
         </Modal>

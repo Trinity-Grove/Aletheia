@@ -608,6 +608,20 @@ p.page-subtitle {
   }
 }
 
+.settings-page-grid {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 2rem;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .settings-page-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+
 .dashboard-page-module-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

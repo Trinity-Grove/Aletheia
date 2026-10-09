@@ -2,11 +2,16 @@
 
 import React, { useEffect, useState } from 'react';
 import { Alert, Button } from '@aletheia/ui';
-import type { LearnerCompetencyAchievementResponseDto } from '@aletheia/contracts';
+import type {
+  LearnerCompetencyAchievementResponseDto,
+  LearnerGamificationSummaryDto,
+} from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
+import { LearnerPortalBadgesSection } from './learner-portal-badges-section';
 
-interface LearnerAchievementsModalProps {
+export interface LearnerAchievementsModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose?(): void;
   familyId: string;
   learnerId: string;
   learnerName: string;
@@ -19,9 +24,11 @@ export function LearnerAchievementsModal({
   learnerId,
   learnerName,
 }: LearnerAchievementsModalProps) {
+  const { t, locale } = useLocale();
   const [achievements, setAchievements] = useState<LearnerCompetencyAchievementResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [badgeSummary, setBadgeSummary] = useState<LearnerGamificationSummaryDto | null>(null);
 
   useEffect(() => {
     if (!isOpen || !familyId || !learnerId) return;
@@ -35,19 +42,35 @@ export function LearnerAchievementsModal({
           { credentials: 'include' }
         );
         if (!res.ok) {
-          throw new Error('Falha ao carregar as conquistas do educando.');
+          throw new Error(t('learners.achievementsModal.loadError'));
         }
         const data = await res.json();
         setAchievements(Array.isArray(data) ? data : []);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Erro ao carregar conquistas.');
+        setError(err instanceof Error ? err.message : t('learners.achievementsModal.loadError'));
       } finally {
         setLoading(false);
+      }
+      await loadBadges();
+    }
+
+    // Portal badges are a secondary panel: a failure here is silent and
+    // never hides the competency achievements above.
+    async function loadBadges() {
+      try {
+        const res = await fetch(`/api/v1/families/${familyId}/learners/${learnerId}/badges`, {
+          credentials: 'include',
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as LearnerGamificationSummaryDto;
+        setBadgeSummary(Array.isArray(data?.badges) ? data : null);
+      } catch {
+        setBadgeSummary(null);
       }
     }
 
     void loadAchievements();
-  }, [isOpen, familyId, learnerId]);
+  }, [isOpen, familyId, learnerId, t]);
 
   if (!isOpen) return null;
 
@@ -98,16 +121,17 @@ export function LearnerAchievementsModal({
                 letterSpacing: '0.05em',
               }}
             >
-              Mural de Conquistas & Medalhas
+              {t('learners.achievementsModal.headerSubtitle')}
             </span>
             <h2 style={{ margin: '0.25rem 0 0 0', fontSize: '1.25rem', fontWeight: 700, color: 'var(--forest)' }}>
-              Conquistas de {learnerName}
+              {t('learners.achievementsModal.headerTitle', { name: learnerName })}
             </h2>
           </div>
 
           <button
             type="button"
             onClick={onClose}
+            aria-label={t('learners.achievementsModal.close')}
             style={{
               background: 'none',
               border: 'none',
@@ -123,6 +147,10 @@ export function LearnerAchievementsModal({
 
         {/* Content */}
         <div style={{ padding: '1.5rem', flex: 1, overflowY: 'auto' }}>
+          {badgeSummary && (
+            <LearnerPortalBadgesSection summary={badgeSummary} learnerName={learnerName} />
+          )}
+
           {error && (
             <div style={{ marginBottom: '1rem' }}>
               <Alert variant="error">{error}</Alert>
@@ -131,7 +159,7 @@ export function LearnerAchievementsModal({
 
           {loading ? (
             <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-              Carregando conquistas e medalhas...
+              {t('learners.achievementsModal.loading')}
             </div>
           ) : achievements.length === 0 ? (
             <div
@@ -146,10 +174,10 @@ export function LearnerAchievementsModal({
             >
               <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🏅</div>
               <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--forest)', fontSize: '1.125rem' }}>
-                Nenhuma conquista ou medalha desbloqueada ainda
+                {t('learners.achievementsModal.emptyTitle')}
               </h3>
               <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: '1.5', maxWidth: '28rem', marginInline: 'auto' }}>
-                Conforme as evidências de aprendizagem do educando forem registradas e aprovadas pelos responsáveis, novas medalhas de competência surgirão aqui automaticamente!
+                {t('learners.achievementsModal.emptyDescription')}
               </p>
             </div>
           ) : (
@@ -209,7 +237,9 @@ export function LearnerAchievementsModal({
                         </span>
                         {evidenceCount && (
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                            • Comprovado por {evidenceCount} {evidenceCount === 1 ? 'evidência' : 'evidências'}
+                            {evidenceCount === 1
+                              ? t('learners.achievementsModal.evidencesSingle')
+                              : t('learners.achievementsModal.evidencesMultiple', { count: evidenceCount })}
                           </span>
                         )}
                       </div>
@@ -219,7 +249,13 @@ export function LearnerAchievementsModal({
                       </h4>
 
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        Conquistado em {new Date(ach.achievedAt).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        {t('learners.achievementsModal.achievedOn', {
+                          date: new Date(ach.achievedAt).toLocaleDateString(locale, {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          }),
+                        })}
                       </div>
                     </div>
                   </div>
@@ -239,7 +275,7 @@ export function LearnerAchievementsModal({
           }}
         >
           <Button variant="secondary" onClick={onClose}>
-            Fechar
+            {t('learners.achievementsModal.close')}
           </Button>
         </div>
       </div>

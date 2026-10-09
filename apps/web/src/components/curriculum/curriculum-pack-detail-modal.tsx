@@ -3,13 +3,14 @@
 import React from 'react';
 import { Button, Modal } from '@aletheia/ui';
 import type { CurriculumPackResponseDto } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface CurriculumPackDetailModalProps {
   isOpen: boolean;
   pack: CurriculumPackResponseDto | null;
   isInstalled: boolean;
-  onClose: () => void;
-  onInstall?: (pack: CurriculumPackResponseDto) => void;
+  onClose(): void;
+  onInstall?(pack: CurriculumPackResponseDto): void;
 }
 
 export function CurriculumPackDetailModal({
@@ -19,6 +20,7 @@ export function CurriculumPackDetailModal({
   onClose,
   onInstall,
 }: CurriculumPackDetailModalProps) {
+  const { t } = useLocale();
   if (!pack) return null;
 
   const meta = (pack.metadata as Record<string, any>) || {};
@@ -32,20 +34,24 @@ export function CurriculumPackDetailModal({
       isOpen={isOpen}
       onClose={onClose}
       title={pack.name}
-      description={meta.category ? `Categoria: ${meta.category} • Versão ${pack.version}.0` : `Versão ${pack.version}.0`}
+      description={
+        meta.category
+          ? t('curriculum.packs.categoryLabel', { category: meta.category, version: pack.version })
+          : t('curriculum.packs.versionLabel', { version: pack.version })
+      }
       maxWidth="lg"
       footer={
         <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             {isInstalled ? (
               <span style={{ color: 'var(--forest)', fontWeight: 600, fontSize: '0.875rem' }}>
-                ✓ Pacote já instalado nesta família
+                {t('curriculum.packs.alreadyInstalled')}
               </span>
             ) : null}
           </div>
           <div style={{ display: 'flex', gap: '0.75rem' }}>
             <Button variant="secondary" onClick={onClose}>
-              Fechar
+              {t('curriculum.packs.close')}
             </Button>
             {!isInstalled && onInstall ? (
               <Button
@@ -53,7 +59,7 @@ export function CurriculumPackDetailModal({
                 data-testid="detail-install-pack-btn"
                 onClick={() => onInstall(pack)}
               >
-                Instalar no Currículo
+                {t('curriculum.packs.installInCurriculum')}
               </Button>
             ) : null}
           </div>
@@ -90,7 +96,7 @@ export function CurriculumPackDetailModal({
                 border: '1px solid var(--border-light)',
               }}
             >
-              ⏱️ {meta.estimatedLessons} lições estimadas
+              {t('curriculum.packs.estimatedLessons', { count: meta.estimatedLessons })}
             </span>
           )}
           {targetStages.map((stage: string) => (
@@ -113,7 +119,7 @@ export function CurriculumPackDetailModal({
         {/* Full description */}
         <div>
           <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', fontWeight: 700, color: 'var(--forest)' }}>
-            Visão Geral & Filosofia
+            {t('curriculum.packs.overviewPhilosophy')}
           </h4>
           <p
             style={{
@@ -124,7 +130,7 @@ export function CurriculumPackDetailModal({
               whiteSpace: 'pre-line',
             }}
           >
-            {pack.description || 'Nenhuma descrição detalhada informada.'}
+            {pack.description || t('curriculum.packs.noDescription')}
           </p>
         </div>
 
@@ -149,7 +155,7 @@ export function CurriculumPackDetailModal({
                 gap: '0.5rem',
               }}
             >
-              <span>🧭</span> Pilares Metodológicos
+              <span>🧭</span> {t('curriculum.packs.methodologicalPillars')}
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(14rem, 1fr))', gap: '0.625rem' }}>
               {pillars.map((pillar: string, idx: number) => (
@@ -193,7 +199,7 @@ export function CurriculumPackDetailModal({
                 gap: '0.5rem',
               }}
             >
-              <span>📚</span> Disciplinas & Conteúdos Inclusos
+              <span>📚</span> {t('curriculum.packs.includedSubjects')}
             </h4>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               {manifestSubjects.map((subj: string, idx: number) => (

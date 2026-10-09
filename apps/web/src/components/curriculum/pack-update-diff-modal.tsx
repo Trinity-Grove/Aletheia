@@ -9,8 +9,8 @@ export interface PackUpdateDiffModalProps {
   isOpen: boolean;
   packName: string;
   diffReport: PackDiffReport;
-  onClose: () => void;
-  onApplyUpdate: () => void | Promise<void>;
+  onClose(): void;
+  onApplyUpdate(): void | Promise<void>;
   isApplying?: boolean;
 }
 

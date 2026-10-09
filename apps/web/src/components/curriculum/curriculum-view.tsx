@@ -22,12 +22,13 @@ import { SubjectModal } from './subject-modal';
 import { ObjectiveModal } from './objective-modal';
 import { SubjectCard } from './subject-card';
 import { Can } from '../auth/role-guard';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface CurriculumViewProps {
   familyId: string;
   years: AcademicYearResponseDto[];
   activeYearId: string;
-  onSelectYear: (yearId: string) => void;
+  onSelectYear(yearId: string): void;
   subjects: SubjectResponseDto[];
   objectives: ObjectiveResponseDto[];
   activeLearner: LearnerSummaryDto | null;
@@ -41,14 +42,14 @@ export interface CurriculumViewProps {
   // PedagogicalFramework enum (issue #96 section 35) -- see
   // TemplateModal, which fetches the live catalog instead of a hardcoded
   // list.
-  onApplyTemplate: (template: string) => Promise<void>;
-  onCreateSubject: (dto: CreateSubjectDto) => Promise<void>;
-  onUpdateSubject: (subjectId: string, dto: UpdateSubjectDto) => Promise<void>;
-  onArchiveSubject: (subjectId: string) => void;
-  onCreateObjective: (dto: CreateObjectiveDto) => Promise<void>;
-  onUpdateObjective: (objectiveId: string, dto: UpdateObjectiveDto) => Promise<void>;
-  onToggleObjectiveStatus: (objectiveId: string, nextStatus: ObjectiveStatus) => Promise<void>;
-  onDeleteObjective: (objectiveId: string) => void;
+  onApplyTemplate(template: string): Promise<void>;
+  onCreateSubject(dto: CreateSubjectDto): Promise<void>;
+  onUpdateSubject(subjectId: string, dto: UpdateSubjectDto): Promise<void>;
+  onArchiveSubject(subjectId: string): void;
+  onCreateObjective(dto: CreateObjectiveDto): Promise<void>;
+  onUpdateObjective(objectiveId: string, dto: UpdateObjectiveDto): Promise<void>;
+  onToggleObjectiveStatus(objectiveId: string, nextStatus: ObjectiveStatus): Promise<void>;
+  onDeleteObjective(objectiveId: string): void;
 }
 
 export function CurriculumView({
@@ -70,6 +71,7 @@ export function CurriculumView({
   onToggleObjectiveStatus,
   onDeleteObjective,
 }: CurriculumViewProps) {
+  const { t } = useLocale();
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isPlanningWizardOpen, setIsPlanningWizardOpen] = useState(false);
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
@@ -84,7 +86,7 @@ export function CurriculumView({
   // "Personalizado" here, silently mislabeling a real, deliberate choice
   // as if no framework had been chosen at all.
   const getFrameworkLabel = (framework?: string) => {
-    if (!framework || framework === 'CUSTOM') return 'Personalizado';
+    if (!framework || framework === 'CUSTOM') return t('curriculum.view.custom');
     const catalogEntry = templateCatalog.find((entry) => entry.code === framework);
     return catalogEntry?.name ?? framework;
   };
@@ -123,7 +125,9 @@ export function CurriculumView({
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
-              {activeLearner ? `Currículo de ${activeLearner.preferredName || activeLearner.firstName}` : 'Currículo & Plano de Estudos'}
+              {activeLearner
+                ? t('curriculum.view.learnerCurriculum', { name: activeLearner.preferredName || activeLearner.firstName })
+                : t('curriculum.view.defaultTitle')}
             </h1>
             {learnerPlan && (
               <span
@@ -143,12 +147,11 @@ export function CurriculumView({
             )}
           </div>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem', marginBottom: 0 }}>
-            Planejamento pedagógico, matriz de disciplinas, ementas e objetivos de aprendizagem.
+            {t('curriculum.view.headerSubtitle')}
           </p>
           {activeLearner && (
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', marginBottom: 0 }}>
-              Disciplinas são compartilhadas por toda a família; os objetivos abaixo são específicos de{' '}
-              {activeLearner.preferredName || activeLearner.firstName}.
+              {t('curriculum.view.familySharedNotice', { name: activeLearner.preferredName || activeLearner.firstName })}
             </p>
           )}
         </div>
@@ -171,7 +174,7 @@ export function CurriculumView({
             }}
           >
             <AletheiaIcon name="package" size="sm" />
-            <span>Pacotes & Plugins</span>
+            <span>{t('curriculum.view.packsAndPlugins')}</span>
           </a>
           <a
             href="/curriculum/activities"
@@ -185,7 +188,7 @@ export function CurriculumView({
             }}
           >
             <AletheiaIcon name="sparkles" size="sm" />
-            <span>Minhas Atividades</span>
+            <span>{t('curriculum.view.myActivities')}</span>
           </a>
           {activeLearner && (
             <Can action="manage_curriculum">
@@ -196,7 +199,7 @@ export function CurriculumView({
                 onClick={() => setIsPlanningWizardOpen(true)}
                 leftIcon={<AletheiaIcon name="sparkles" size={14} />}
               >
-                ✨ Planejamento Guiado
+                {t('curriculum.view.guidedPlanning')}
               </Button>
               <Button
                 variant="secondary"
@@ -205,7 +208,7 @@ export function CurriculumView({
                 onClick={() => setIsTemplateModalOpen(true)}
                 leftIcon={<AletheiaIcon name="sparkles" size={14} />}
               >
-                Modelos Pedagógicos
+                {t('curriculum.view.pedagogicalModels')}
               </Button>
             </Can>
           )}
@@ -215,7 +218,7 @@ export function CurriculumView({
               data-testid="open-subject-modal-btn"
               onClick={() => setIsSubjectModalOpen(true)}
             >
-              + Nova Disciplina
+              {`+ ${t('curriculum.view.newSubject')}`}
             </Button>
           </Can>
         </div>
@@ -238,13 +241,17 @@ export function CurriculumView({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-            Progresso Geral do Ano:
+            {t('curriculum.view.yearProgress')}
           </span>
           <span
             data-testid="overall-progress-text"
             style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-indigo-700)' }}
           >
-            {achievedObjectives} de {totalObjectives} objetivos concluídos ({overallPercent}%)
+            {t('curriculum.view.completedProgress', {
+              achieved: achievedObjectives,
+              total: totalObjectives,
+              percent: overallPercent,
+            })}
           </span>
         </div>
         <div
@@ -275,8 +282,8 @@ export function CurriculumView({
         <EmptyState
           data-testid="curriculum-empty-state"
           icon={<AletheiaIcon name="book-open" size={32} />}
-          title="Nenhuma disciplina cadastrada para este ano letivo"
-          description="Comece aplicando um modelo pedagógico clássico ou Charlotte Mason, ou crie suas próprias disciplinas personalizadas."
+          title={t('curriculum.view.emptyTitle')}
+          description={t('curriculum.view.emptyDescription')}
           action={
             <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
               {activeLearner && (
@@ -285,13 +292,13 @@ export function CurriculumView({
                     onClick={() => setIsTemplateModalOpen(true)}
                     leftIcon={<AletheiaIcon name="sparkles" size={16} />}
                   >
-                    Usar Modelo Pedagógico
+                    {t('curriculum.view.usePedagogicalModel')}
                   </Button>
                 </Can>
               )}
               <Can action="manage_curriculum">
                 <Button variant="secondary" onClick={() => setIsSubjectModalOpen(true)}>
-                  + Criar Disciplina Manualmente
+                  {t('curriculum.view.createSubjectManually')}
                 </Button>
               </Can>
             </div>

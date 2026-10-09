@@ -5,6 +5,7 @@ import { Alert, Badge, Button, Card, EmptyState } from '@aletheia/ui';
 import type { ComparePassageResponseDto, ComparePassageResultDto } from '@aletheia/contracts';
 import { getApiAuthToken } from '../../lib/api';
 import { useAuth } from '../../lib/auth/auth-context';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface TranslationOption {
   code: string;
@@ -59,6 +60,7 @@ export function BibleTranslationCompareView({
   initialReference = '',
   initialTranslations = ['ARC', 'ARA'],
 }: BibleTranslationCompareViewProps) {
+  const { t } = useLocale();
   const auth = useAuth();
   const effectiveFamilyId =
     propFamilyId ||
@@ -89,17 +91,17 @@ export function BibleTranslationCompareView({
 
     const trimmedRef = reference.trim();
     if (!trimmedRef) {
-      setError('Por favor, informe uma referência bíblica (ex: João 3:16).');
+      setError(t('devotional.comparatorView.errors.emptyReference'));
       return;
     }
 
     if (selectedCodes.length === 0) {
-      setError('Selecione pelo menos uma tradução bíblica para comparar.');
+      setError(t('devotional.comparatorView.errors.noTranslations'));
       return;
     }
 
     if (!effectiveFamilyId) {
-      setError('Família ativa não encontrada. Selecione uma família antes de comparar.');
+      setError(t('devotional.comparatorView.errors.noFamily'));
       return;
     }
 
@@ -130,14 +132,14 @@ export function BibleTranslationCompareView({
         const errData = await res.json().catch(() => ({}));
         throw new Error(
           errData.message ||
-            'Não foi possível carregar a comparação para a referência informada.'
+            t('devotional.comparatorView.errors.loadFailed')
         );
       }
 
       const data: ComparePassageResponseDto = await res.json();
       setComparisonData(data);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erro ao comparar traduções bíblicas.');
+      setError(err instanceof Error ? err.message : t('devotional.comparatorView.errors.generic'));
     } finally {
       setIsLoading(false);
     }
@@ -174,7 +176,7 @@ export function BibleTranslationCompareView({
                 marginBottom: '0.5rem',
               }}
             >
-              Referência Bíblica
+              {t('devotional.comparatorView.labels.bibleReference')}
             </label>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               <input
@@ -186,7 +188,7 @@ export function BibleTranslationCompareView({
                   setReference(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="Ex: João 1:1, Salmos 23:1, Romanos 8:28..."
+                placeholder={t('devotional.comparatorView.placeholders.bibleReference')}
                 style={{
                   flex: '1 1 260px',
                   padding: '0.625rem 1rem',
@@ -210,7 +212,7 @@ export function BibleTranslationCompareView({
                   fontSize: '0.9375rem',
                 }}
               >
-                Comparar Traduções
+                {t('devotional.comparatorView.actions.compare')}
               </Button>
             </div>
 
@@ -225,7 +227,7 @@ export function BibleTranslationCompareView({
               }}
             >
               <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                Sugestões rápidas:
+                {t('devotional.comparatorView.quickSuggestions')}
               </span>
               {QUICK_REFERENCES.map((quickRef) => (
                 <button
@@ -262,7 +264,7 @@ export function BibleTranslationCompareView({
                 marginBottom: '0.5rem',
               }}
             >
-              Traduções para Comparação:
+              {t('devotional.comparatorView.translationsLabel')}
             </span>
             <div
               style={{
@@ -368,10 +370,10 @@ export function BibleTranslationCompareView({
           </div>
           <div>
             <div style={{ fontWeight: 600, color: 'var(--forest)', fontSize: '1.0625rem' }}>
-              Consultando traduções bíblicas...
+              {t('devotional.comparatorView.loading.title')}
             </div>
             <div style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>
-              Buscando passagens e alinhando versões lado a lado.
+              {t('devotional.comparatorView.loading.description')}
             </div>
           </div>
         </div>
@@ -394,8 +396,8 @@ export function BibleTranslationCompareView({
                 📜
               </div>
             }
-            title="Escolha uma passagem para comparar"
-            description="Digite a referência desejada ou use uma das sugestões rápidas acima para visualizar e comparar as diferentes traduções lado a lado com toda a família."
+            title={t('devotional.comparatorView.empty.title')}
+            description={t('devotional.comparatorView.empty.description')}
           />
         </div>
       )}
@@ -422,10 +424,12 @@ export function BibleTranslationCompareView({
                 color: 'var(--forest)',
               }}
             >
-              Comparação: {comparisonData.reference}
+              {t('devotional.comparatorView.results.comparisonTitle', { reference: comparisonData.reference })}
             </h2>
             <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-              {comparisonData.results.length} traduç{comparisonData.results.length === 1 ? 'ão' : 'ões'} exibida{comparisonData.results.length === 1 ? '' : 's'}
+              {comparisonData.results.length === 1
+                ? t('devotional.comparatorView.results.displayedCount', { count: comparisonData.results.length })
+                : t('devotional.comparatorView.results.displayedCountPlural', { count: comparisonData.results.length })}
             </span>
           </div>
 
@@ -526,7 +530,7 @@ export function BibleTranslationCompareView({
                     item.content
                   ) : (
                     <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.9375rem' }}>
-                      Texto não disponível para esta referência.
+                      {t('devotional.comparatorView.results.textUnavailable')}
                     </span>
                   )}
                 </div>

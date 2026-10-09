@@ -7,6 +7,7 @@ import {
   type SeminaryRubricCriterion,
 } from '@aletheia/contracts';
 import { Button, Card } from '@aletheia/ui';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface SeminaryCriterionEvaluation {
   criterionCode: string;
@@ -23,7 +24,7 @@ export interface SeminaryEvaluationResult {
 
 export interface TheologyRubricEvaluatorProps {
   rubric?: SeminaryTheologyRubric;
-  onSaveEvaluation: (result: SeminaryEvaluationResult) => Promise<void> | void;
+  onSaveEvaluation(result: SeminaryEvaluationResult): Promise<void> | void;
   readOnly?: boolean;
 }
 
@@ -50,6 +51,7 @@ export function TheologyRubricEvaluator({
   onSaveEvaluation,
   readOnly = false,
 }: TheologyRubricEvaluatorProps) {
+  const { t } = useLocale();
   const criteria = rubric.criteria;
 
   // Initial score default: 3 (Proficiente) for each criterion
@@ -375,7 +377,7 @@ export function TheologyRubricEvaluator({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             disabled={readOnly}
-            placeholder="Aponte considerações sobre a metodologia exegética, consistência dogmática e uso de fontes primárias..."
+            placeholder={t('curriculum.theologyRubric.feedbackPlaceholder')}
             style={{
               padding: '0.625rem 0.75rem',
               borderRadius: 'var(--radius-md)',

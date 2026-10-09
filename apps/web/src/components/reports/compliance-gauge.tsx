@@ -6,6 +6,7 @@ import type {
   AttendanceComplianceSummaryDto,
   ComplianceRequirementResponseDto,
 } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface ComplianceGaugeProps {
   summary: AttendanceComplianceSummaryDto | null;
@@ -18,12 +19,14 @@ export function ComplianceGauge({
   requirement,
   learnerName,
 }: ComplianceGaugeProps) {
+  const { t } = useLocale();
+
   if (!summary) {
     return (
       <EmptyState
         data-testid="compliance-gauge-empty"
         icon={<AletheiaIcon name="bar-chart-2" size={24} />}
-        title="Nenhum dado de conformidade registrado para este educando."
+        title={t('reports.gauge.noDataTitle')}
       />
     );
   }
@@ -141,7 +144,7 @@ export function ComplianceGauge({
               }}
             >
               <AletheiaIcon name="calendar" size={14} />
-              <span>Dias Letivos Cumpridos</span>
+              <span>{t('reports.gauge.daysCompleted')}</span>
             </span>
             <span
               data-testid="compliance-percentage"
@@ -231,7 +234,7 @@ export function ComplianceGauge({
               }}
             >
               <AletheiaIcon name="clock" size={14} />
-              <span>Horas de Instrução</span>
+              <span>{t('reports.gauge.hoursCompleted')}</span>
             </span>
             <span
               data-testid="hours-compliance-percentage"

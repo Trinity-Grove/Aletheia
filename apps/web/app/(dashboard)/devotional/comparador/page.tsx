@@ -4,8 +4,11 @@ import React from 'react';
 import Link from 'next/link';
 import { ProductShell } from '../../../../src/components/product-shell';
 import { BibleTranslationCompareView } from '../../../../src/components/devotional/bible-translation-compare-view';
+import { useLocale } from '../../../../src/lib/i18n/locale-context';
 
 export default function BibleTranslationComparePage() {
+  const { t } = useLocale();
+
   return (
     <ProductShell currentPath="/devotional">
       <div
@@ -31,7 +34,7 @@ export default function BibleTranslationComparePage() {
               textDecoration: 'none',
             }}
           >
-            &larr; Voltar ao Culto Doméstico & Devocional
+            {t('devotional.comparator.backLink')}
           </Link>
         </div>
 
@@ -46,7 +49,7 @@ export default function BibleTranslationComparePage() {
               color: 'var(--gold-dark)',
             }}
           >
-            Escrituras Sagradas • Trinity Grove
+            {t('devotional.comparator.kicker')}
           </span>
           <h1
             style={{
@@ -57,7 +60,7 @@ export default function BibleTranslationComparePage() {
               color: 'var(--forest)',
             }}
           >
-            Comparador de Traduções Bíblicas
+            {t('devotional.comparator.title')}
           </h1>
           <p
             style={{
@@ -67,7 +70,7 @@ export default function BibleTranslationComparePage() {
               lineHeight: 1.5,
             }}
           >
-            Examine e compare a Palavra de Deus lado a lado em diversas traduções clássicas e contemporâneas para enriquecer o estudo e o culto familiar.
+            {t('devotional.comparator.subtitle')}
           </p>
         </div>
 

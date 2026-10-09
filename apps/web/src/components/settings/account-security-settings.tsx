@@ -3,15 +3,17 @@
 import React, { useState } from 'react';
 import { Button, Card, Input } from '@aletheia/ui';
 import type { ChangeEmailDto, ChangePasswordDto } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 import { MfaSettingsCard } from './mfa-settings-card';
 import { SuccessAlert, ErrorAlert } from './settings-form-kit';
 
 export interface AccountSecuritySettingsProps {
   currentEmail?: string | undefined;
   mfaEnabled?: boolean;
-  onChangePassword: (data: ChangePasswordDto) => Promise<void>;
-  onChangeEmail: (data: ChangeEmailDto) => Promise<void>;
-  onMfaStateChanged?: () => Promise<void>;
+  onChangePassword?(data: ChangePasswordDto): Promise<void>;
+  onChangeEmail?(data: ChangeEmailDto): Promise<void>;
+  onMfaStateChanged?(): Promise<void>;
+  onMfaUpdated?(): Promise<void> | void;
 }
 
 export function AccountSecuritySettings({
@@ -20,7 +22,9 @@ export function AccountSecuritySettings({
   onChangePassword,
   onChangeEmail,
   onMfaStateChanged = async () => undefined,
+  onMfaUpdated,
 }: AccountSecuritySettingsProps) {
+  const { t } = useLocale();
   const [currentPasswordForPw, setCurrentPasswordForPw] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -54,7 +58,7 @@ export function AccountSecuritySettings({
 
     try {
       setPwSaving(true);
-      await onChangePassword({ currentPassword: currentPasswordForPw, newPassword });
+      await onChangePassword?.({ currentPassword: currentPasswordForPw, newPassword });
       setPwSuccess('Senha alterada com sucesso. Outras sessões abertas foram encerradas.');
       setCurrentPasswordForPw('');
       setNewPassword('');
@@ -78,7 +82,7 @@ export function AccountSecuritySettings({
 
     try {
       setEmailSaving(true);
-      await onChangeEmail({ currentPassword: currentPasswordForEmail, newEmail });
+      await onChangeEmail?.({ currentPassword: currentPasswordForEmail, newEmail });
       setEmailSuccess('E-mail alterado com sucesso. Enviamos um novo link de verificação para o novo endereço.');
       setCurrentPasswordForEmail('');
       setNewEmail('');
@@ -90,7 +94,7 @@ export function AccountSecuritySettings({
   };
 
   return (
-    <div style={{ display: 'grid', gap: '1.5rem' }}>
+    <div data-testid="account-security-settings" style={{ display: 'grid', gap: '1.5rem' }}>
       <Card data-testid="change-password-card" style={{ padding: '1.75rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
@@ -107,7 +111,7 @@ export function AccountSecuritySettings({
         <form data-testid="change-password-form" onSubmit={handleChangePassword}>
           <div style={{ display: 'grid', gap: '1.25rem' }}>
             <Input
-              label="Senha atual"
+              label={t('settings.security.currentPasswordLabel')}
               type="password"
               data-testid="current-password-for-pw-input"
               value={currentPasswordForPw}
@@ -117,7 +121,7 @@ export function AccountSecuritySettings({
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
               <Input
-                label="Nova senha (mínimo 8 caracteres)"
+                label={t('settings.security.newPasswordLabel')}
                 type="password"
                 data-testid="new-password-input"
                 value={newPassword}
@@ -125,7 +129,7 @@ export function AccountSecuritySettings({
                 disabled={pwSaving}
               />
               <Input
-                label="Confirmar nova senha"
+                label={t('settings.security.confirmPasswordLabel')}
                 type="password"
                 data-testid="confirm-new-password-input"
                 value={confirmNewPassword}
@@ -160,7 +164,7 @@ export function AccountSecuritySettings({
         <form data-testid="change-email-form" onSubmit={handleChangeEmail}>
           <div style={{ display: 'grid', gap: '1.25rem' }}>
             <Input
-              label="Senha atual"
+              label={t('settings.security.currentPasswordLabel')}
               type="password"
               data-testid="current-password-for-email-input"
               value={currentPasswordForEmail}
@@ -169,7 +173,7 @@ export function AccountSecuritySettings({
             />
 
             <Input
-              label="Novo e-mail"
+              label={t('settings.security.newEmailLabel')}
               type="email"
               data-testid="new-email-input"
               value={newEmail}
@@ -186,7 +190,13 @@ export function AccountSecuritySettings({
         </form>
       </Card>
 
-      <MfaSettingsCard mfaEnabled={mfaEnabled} onMfaStateChanged={onMfaStateChanged} />
+      <MfaSettingsCard
+        mfaEnabled={mfaEnabled}
+        onMfaStateChanged={async () => {
+          await onMfaStateChanged();
+          await onMfaUpdated?.();
+        }}
+      />
     </div>
   );
 }

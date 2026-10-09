@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Input, Modal, Textarea } from '@aletheia/ui';
 import type { CreateSubjectDto, SubjectResponseDto, UpdateSubjectDto } from '@aletheia/contracts';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface SubjectModalProps {
   isOpen: boolean;
   subjectToEdit?: SubjectResponseDto | null | undefined;
-  onClose: () => void;
-  onSave: (dto: CreateSubjectDto) => Promise<void>;
-  onUpdate?: ((subjectId: string, dto: UpdateSubjectDto) => Promise<void>) | undefined;
+  onClose(): void;
+  onSave(dto: CreateSubjectDto): Promise<void>;
+  onUpdate?(subjectId: string, dto: UpdateSubjectDto): Promise<void>;
 }
 
 const PRESET_COLORS = ['#2563EB', '#7C3AED', '#059669', '#D97706', '#0D9488', '#DB2777', '#DC2626'];
 
 export function SubjectModal({ isOpen, subjectToEdit, onClose, onSave, onUpdate }: SubjectModalProps) {
+  const { t } = useLocale();
   const [name, setName] = useState('');
   const [color, setColor] = useState('#2563EB');
   const [description, setDescription] = useState('');
@@ -53,7 +55,7 @@ export function SubjectModal({ isOpen, subjectToEdit, onClose, onSave, onUpdate 
       }
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Falha ao salvar disciplina.');
+      setError(err instanceof Error ? err.message : t('curriculum.subject.saveError'));
     } finally {
       setLoading(false);
     }
@@ -63,14 +65,14 @@ export function SubjectModal({ isOpen, subjectToEdit, onClose, onSave, onUpdate 
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={subjectToEdit ? 'Editar Disciplina' : 'Nova Disciplina'}
+      title={subjectToEdit ? t('curriculum.subject.modalTitleEdit') : t('curriculum.subject.modalTitleNew')}
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={loading}>
-            Cancelar
+            {t('curriculum.subject.cancel')}
           </Button>
           <Button type="submit" form="subject-form" data-testid="save-subject-btn" isLoading={loading}>
-            {subjectToEdit ? 'Salvar Alterações' : 'Salvar Disciplina'}
+            {subjectToEdit ? t('curriculum.subject.saveChanges') : t('curriculum.subject.save')}
           </Button>
         </>
       }
@@ -83,22 +85,22 @@ export function SubjectModal({ isOpen, subjectToEdit, onClose, onSave, onUpdate 
 
       <form id="subject-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <Input
-          label="Nome da Disciplina *"
+          label={t('curriculum.subject.nameLabel')}
           data-testid="subject-name-input"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Ex: Latim, História Medieval, Astronomia"
+          placeholder={t('curriculum.subject.namePlaceholder')}
         />
 
         <div className="ui-form-group">
-          <label className="ui-form-label">Cor de Destaque</label>
+          <label className="ui-form-label">{t('curriculum.subject.colorLabel')}</label>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             {PRESET_COLORS.map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => setColor(c)}
-                aria-label={`Selecionar cor ${c}`}
+                aria-label={t('curriculum.subject.selectColor', { color: c })}
                 aria-pressed={color === c}
                 style={{
                   width: '1.75rem',
@@ -114,12 +116,12 @@ export function SubjectModal({ isOpen, subjectToEdit, onClose, onSave, onUpdate 
         </div>
 
         <Textarea
-          label="Descrição e Escopo"
+          label={t('curriculum.subject.descriptionLabel')}
           rows={3}
           data-testid="subject-desc-input"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Objetivos gerais, livros-base e metodologia adotada..."
+          placeholder={t('curriculum.subject.descriptionPlaceholder')}
         />
       </form>
     </Modal>

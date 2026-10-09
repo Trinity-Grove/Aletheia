@@ -8,12 +8,14 @@ import { LearnersList } from '../../../src/components/learners/learners-list';
 import { LearnerFormModal, type LearnerFormSubmitDto } from '../../../src/components/learners/learner-form-modal';
 import { LearnerAccessModal } from '../../../src/components/learners/learner-access-modal';
 import { Can } from '../../../src/components/auth/role-guard';
+import { useLocale } from '../../../src/lib/i18n/locale-context';
 
 export interface LearnersPageProps {
   initialLearners?: LearnerResponseDto[];
 }
 
 export default function LearnersPage({ initialLearners = [] }: LearnersPageProps) {
+  const { t } = useLocale();
   const { toast } = useToast();
   const [learners, setLearners] = useState<LearnerResponseDto[]>(initialLearners);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,14 +37,14 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
         if (res.ok) {
           setLearners(await res.json());
         } else {
-          setLoadError('Não foi possível carregar os educandos.');
+          setLoadError(t('learners.loadError'));
         }
       } catch {
-        setLoadError('Não foi possível carregar os educandos. Verifique sua conexão.');
+        setLoadError(t('learners.loadErrorConnection'));
       }
     }
     loadLearners();
-  }, [initialLearners.length]);
+  }, [initialLearners.length, t]);
 
   const handleOpenCreate = () => {
     setEditingLearner(null);
@@ -68,18 +70,18 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
         });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(err.message || `Falha ao ${isArchived ? 'reativar' : 'arquivar'} educando.`);
+          throw new Error(err.message || t('learners.toast.updateError'));
         }
         const updated = await res.json();
         setLearners((prev) => prev.map((item) => (item.id === learner.id ? updated : item)));
         toast({
           variant: 'success',
-          title: isArchived ? 'Educando reativado.' : 'Educando arquivado.',
+          title: isArchived ? t('learners.toast.reactivated') : t('learners.toast.archived'),
         });
       } catch (err: unknown) {
         toast({
           variant: 'error',
-          title: err instanceof Error ? err.message : 'Falha ao atualizar educando.',
+          title: err instanceof Error ? err.message : t('learners.toast.updateError'),
         });
       }
     })();
@@ -88,7 +90,7 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
   const handleSubmitForm = async (data: LearnerFormSubmitDto) => {
     const familyId = localStorage.getItem('familyId');
     if (!familyId) {
-      throw new Error('Sessão inválida. Faça login novamente.');
+      throw new Error(t('learners.sessionInvalid'));
     }
 
     const isEditing = Boolean(editingLearner);
@@ -105,7 +107,7 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Falha ao salvar educando.');
+      throw new Error(err.message || t('learners.toast.saveError'));
     }
 
     const saved: LearnerResponseDto = await res.json();
@@ -138,16 +140,16 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
         >
           <div>
             <h1 className="page-title" style={{ margin: 0, fontSize: '1.75rem', fontWeight: 700 }}>
-              Gestão de Educandos
+              {t('learners.title')}
             </h1>
             <p className="page-subtitle" style={{ margin: '0.25rem 0 0 0', color: 'var(--text-secondary)' }}>
-              Gerencie os perfis pedagógicos e etapas de desenvolvimento dos seus filhos.
+              {t('learners.subtitle')}
             </p>
           </div>
 
           <Can action="create_learner">
             <Button data-testid="add-learner-btn" onClick={handleOpenCreate}>
-              + Adicionar Educando
+              {t('learners.addLearner')}
             </Button>
           </Can>
         </div>

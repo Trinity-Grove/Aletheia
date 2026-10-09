@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { AletheiaIcon, Button, EmptyState } from '@aletheia/ui';
 import type { DailyDevotionalResponseDto } from '@aletheia/contracts';
 import { Can } from '../auth/role-guard';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface DevotionalViewProps {
   currentDate: string; // YYYY-MM-DD
@@ -19,6 +20,8 @@ export function DevotionalView({
   onEdit,
   onDateChange,
 }: DevotionalViewProps) {
+  const { t } = useLocale();
+
   const handleShiftDate = (days: number) => {
     const parts = currentDate.split('-');
     const year = Number(parts[0]) || 2026;
@@ -66,13 +69,13 @@ export function DevotionalView({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Button variant="secondary" size="sm" onClick={() => handleShiftDate(-1)}>
-            &larr; Ontem
+            {t('devotional.view.nav.yesterday')}
           </Button>
           <Button variant="secondary" size="sm" onClick={handleToday}>
-            Hoje
+            {t('devotional.view.nav.today')}
           </Button>
           <Button variant="secondary" size="sm" onClick={() => handleShiftDate(1)}>
-            Amanhã &rarr;
+            {t('devotional.view.nav.tomorrow')}
           </Button>
         </div>
 
@@ -95,7 +98,7 @@ export function DevotionalView({
               transition: 'all 0.15s ease',
             }}
           >
-            Comparar Traduções 📖
+            {t('devotional.view.nav.compareTranslations')}
           </Link>
           <input
             type="date"
@@ -113,7 +116,7 @@ export function DevotionalView({
           />
           <Can action="manage_devotional">
             <Button size="sm" data-testid="edit-devotional-btn" onClick={onEdit}>
-              {devotional ? 'Editar Devocional' : 'Criar Devocional'}
+              {devotional ? t('devotional.view.actions.edit') : t('devotional.view.actions.create')}
             </Button>
           </Can>
         </div>
@@ -123,11 +126,11 @@ export function DevotionalView({
         <EmptyState
           data-testid="devotional-empty-state"
           icon={<AletheiaIcon name="book-open" size={32} style={{ color: 'var(--color-amber-600)' }} />}
-          title={`Nenhum devocional registrado para esta data (${currentDate})`}
-          description="Reúna a família ao redor da Palavra de Deus. Registre as passagens lidas, reflexões e orações de hoje."
+          title={t('devotional.view.empty.title', { date: currentDate })}
+          description={t('devotional.view.empty.description')}
           action={
             <Can action="manage_devotional">
-              <Button onClick={onEdit}>Criar Devocional do Dia</Button>
+              <Button onClick={onEdit}>{t('devotional.view.empty.action')}</Button>
             </Can>
           }
         />
@@ -188,7 +191,7 @@ export function DevotionalView({
                 }}
               >
                 <AletheiaIcon name="sparkles" size={14} />
-                <span>Leitura Bíblica & Aliança</span>
+                <span>{t('devotional.view.badges.covenantReading')}</span>
               </div>
 
               {devotional.bibleVersionId && (
@@ -209,7 +212,7 @@ export function DevotionalView({
                   }}
                 >
                   <AletheiaIcon name="book-open" size={12} />
-                  <span>Versão: {devotional.bibleVersionId}</span>
+                  <span>{t('devotional.view.badges.version', { version: devotional.bibleVersionId })}</span>
                 </span>
               )}
             </div>
@@ -280,7 +283,7 @@ export function DevotionalView({
                   }}
                 >
                   <AletheiaIcon name="sprout" size={12} />
-                  <span>Reflexão & Conversa em Família</span>
+                  <span>{t('devotional.view.reflection.header')}</span>
                 </span>
               </div>
 
@@ -320,7 +323,7 @@ export function DevotionalView({
                     }}
                   >
                     <AletheiaIcon name="file-text" size={14} />
-                    <span>Perguntas para Diálogo Familiar:</span>
+                    <span>{t('devotional.view.reflection.questionsTitle')}</span>
                   </strong>
                   <div
                     style={{
@@ -364,7 +367,7 @@ export function DevotionalView({
                 }}
               >
                 <AletheiaIcon name="lightbulb" size={14} />
-                <span>Versículo para Memorização</span>
+                <span>{t('devotional.view.memoryVerse.badge')}</span>
               </span>
               <p
                 style={{
@@ -415,7 +418,7 @@ export function DevotionalView({
                     }}
                   >
                     <AletheiaIcon name="heart" size={14} />
-                    <span>Hino / Louvor do Dia</span>
+                    <span>{t('devotional.view.hymn.badge')}</span>
                   </span>
                   <p style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--color-indigo-700)', margin: 0 }}>
                     {devotional.hymnOrSong}
@@ -449,7 +452,7 @@ export function DevotionalView({
                     }}
                   >
                     <AletheiaIcon name="sprout" size={14} />
-                    <span>Aplicação Prática</span>
+                    <span>{t('devotional.view.practicalApplication.badge')}</span>
                   </span>
                   <p style={{ fontSize: '0.9375rem', color: 'var(--color-amber-700)', margin: 0, lineHeight: '1.5' }}>
                     {devotional.practicalApplication}

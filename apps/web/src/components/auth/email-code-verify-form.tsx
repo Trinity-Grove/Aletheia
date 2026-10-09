@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface EmailCodeVerifyFormProps {
-  onSubmit?: (_data: { code: string }) => Promise<void> | void;
-  onResend?: () => Promise<void> | void;
+  onSubmit?(_data: { code: string }): Promise<void> | void;
+  onResend?(): Promise<void> | void;
 }
 
 export function EmailCodeVerifyForm({ onSubmit, onResend }: EmailCodeVerifyFormProps) {

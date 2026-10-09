@@ -137,11 +137,11 @@ export interface ProductShellProps {
   children: ReactNode;
   learners?: LearnerSummaryDto[] | undefined;
   activeLearnerId?: string | null | undefined;
-  onSelectLearner?: ((learnerId: string | null) => void) | undefined;
+  onSelectLearner?(learnerId: string | null): void;
   notifications?: NotificationItemResponseDto[] | undefined;
   unreadCount?: number | undefined;
-  onMarkNotificationAsRead?: ((id: string) => Promise<void>) | undefined;
-  onMarkAllNotificationsAsRead?: (() => Promise<void>) | undefined;
+  onMarkNotificationAsRead?(id: string): Promise<void>;
+  onMarkAllNotificationsAsRead?(): Promise<void>;
   user?: UserProfileSummary | undefined;
   familyId?: string | null | undefined;
   currentPath?: string | undefined;

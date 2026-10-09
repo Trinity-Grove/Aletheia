@@ -17,10 +17,12 @@ import { RecordsJournalView } from '../../../src/components/records/records-jour
 import { RecordFormModal } from '../../../src/components/records/record-form-modal';
 import { PortfolioItemModal } from '../../../src/components/records/portfolio-item-modal';
 import { CompetencyTrackingPanel } from '../../../src/components/records/competency-tracking-panel';
+import { useLocale } from '../../../src/lib/i18n/locale-context';
 
 type RecordsTab = 'diario' | 'competencias';
 
 export default function RecordsPage() {
+  const { t } = useLocale();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<RecordsTab>('diario');
   const [familyId, setFamilyId] = useState<string | null>(null);
@@ -145,7 +147,7 @@ export default function RecordsPage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao atualizar registro de aprendizagem');
+        throw new Error(err.message || t('records.toasts.recordUpdateError'));
       }
     } else {
       const res = await fetch(`/api/v1/families/${familyId}/records`, {
@@ -156,7 +158,7 @@ export default function RecordsPage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao criar registro de aprendizagem');
+        throw new Error(err.message || t('records.toasts.recordCreateError'));
       }
     }
     await fetchRecords();
@@ -172,15 +174,15 @@ export default function RecordsPage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao excluir registro de aprendizagem.');
+        throw new Error(err.message || t('records.toasts.recordDeleteError'));
       }
       await fetchRecords();
       await fetchProgressSummary();
-      toast({ variant: 'success', title: 'Registro excluído.' });
+      toast({ variant: 'success', title: t('records.toasts.recordDeleted') });
     } catch (err: unknown) {
       toast({
         variant: 'error',
-        title: err instanceof Error ? err.message : 'Falha ao excluir registro de aprendizagem.',
+        title: err instanceof Error ? err.message : t('records.toasts.recordDeleteError'),
       });
     }
   };
@@ -197,11 +199,11 @@ export default function RecordsPage() {
       );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Erro ao reabrir atividade');
+        throw new Error(err.message || t('records.toasts.lessonReopenErrorTitle'));
       }
       toast({
-        title: 'Atividade reaberta',
-        description: 'A atividade voltou para a agenda do educando e o registro foi estornado.',
+        title: t('records.toasts.lessonReopenedTitle'),
+        description: t('records.toasts.lessonReopenedDesc'),
         variant: 'success',
       });
       setRecords((prev) => prev.filter((r) => r.id !== record.id));
@@ -210,15 +212,15 @@ export default function RecordsPage() {
       }
     } catch (error: any) {
       toast({
-        title: 'Falha ao reabrir',
-        description: error.message || 'Não foi possível reabrir a atividade.',
+        title: t('records.toasts.lessonReopenErrorTitle'),
+        description: error.message || t('records.toasts.lessonReopenErrorDesc'),
         variant: 'error',
       });
     }
   };
 
   const handleSaveEvidence = async (dto: CreatePortfolioItemDto): Promise<PortfolioItemResponseDto> => {
-    if (!familyId) throw new Error('Família não autenticada');
+    if (!familyId) throw new Error(t('records.toasts.unauthenticatedFamily'));
     const res = await fetch(`/api/v1/families/${familyId}/portfolio`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -227,7 +229,7 @@ export default function RecordsPage() {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Falha ao anexar evidência');
+      throw new Error(err.message || t('records.toasts.evidenceSaveError'));
     }
     const saved: PortfolioItemResponseDto = await res.json();
     await fetchRecords();
@@ -245,13 +247,13 @@ export default function RecordsPage() {
     });
     if (!uploadUrlRes.ok) {
       const err = await uploadUrlRes.json().catch(() => ({}));
-      throw new Error(err.message || 'Falha ao preparar o envio do arquivo');
+      throw new Error(err.message || t('records.toasts.evidenceUploadUrlError'));
     }
     const { uploadUrl } = await uploadUrlRes.json();
 
     const putRes = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
     if (!putRes.ok) {
-      throw new Error('Falha ao enviar o arquivo para o armazenamento.');
+      throw new Error(t('records.toasts.evidenceUploadPutError'));
     }
 
     const confirmRes = await fetch(`/api/v1/families/${familyId}/portfolio/${itemId}/confirm-upload`, {
@@ -260,7 +262,7 @@ export default function RecordsPage() {
     });
     if (!confirmRes.ok) {
       const err = await confirmRes.json().catch(() => ({}));
-      throw new Error(err.message || 'Falha ao confirmar o envio do arquivo');
+      throw new Error(err.message || t('records.toasts.evidenceConfirmUploadError'));
     }
     await fetchRecords();
   };
@@ -290,10 +292,10 @@ export default function RecordsPage() {
         {/* Header */}
         <div style={{ marginBottom: '1.5rem' }}>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-            Diário de Aprendizagem & Domínio
+            {t('records.page.title')}
           </h1>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-            Acompanhe a evolução individual, registre narrações, vivências espontâneas e o florescimento do caráter.
+            {t('records.page.subtitle')}
           </p>
         </div>
 
@@ -326,7 +328,7 @@ export default function RecordsPage() {
               color: activeTab === 'diario' ? 'var(--forest)' : 'var(--text-secondary)',
             }}
           >
-            Diário
+            {t('records.tabs.journal')}
           </button>
           <button
             type="button"
@@ -343,13 +345,13 @@ export default function RecordsPage() {
               color: activeTab === 'competencias' ? 'var(--forest)' : 'var(--text-secondary)',
             }}
           >
-            Competências
+            {t('records.tabs.competencies')}
           </button>
         </div>
 
         {loading ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-            Carregando diário de aprendizagem...
+            {t('records.page.loading')}
           </div>
         ) : activeTab === 'diario' ? (
           <RecordsJournalView
