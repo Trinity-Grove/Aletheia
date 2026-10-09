@@ -5,6 +5,7 @@ export const notifications = {
   newCount: '{count} novas',
   markAllRead: 'Marcar lidas',
   markAsRead: 'Marcar como lida',
+  openLink: 'Abrir link',
   empty: 'Nenhuma notificação no momento.',
   timeJustNow: 'Agora',
   timeMinutesAgo: '{count}m atrás',
@@ -15,4 +16,6 @@ export const notifications = {
   typePrayerAnsweredAlert: 'Oração Respondida',
   typeSystemNotice: 'Aviso do Sistema',
   typeFallback: 'Notificação',
+  typeFeedbackApproved: 'Feedback aprovado',
+  typeFeedbackRejected: 'Feedback rejeitado',
 } as const;

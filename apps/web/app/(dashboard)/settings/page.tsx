@@ -1,4 +1,5 @@
 'use client';
+import { SupportWidgetPreferencesCard } from '../../../src/components/settings/support-widget-preferences-card';
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { AletheiaIcon } from '@aletheia/ui';
@@ -513,7 +514,8 @@ export default function SettingsPage() {
             )}
 
             {activeTab === 'support' && (
-              <SupporterSettingsCard familyId={familyId} />
+              <><SupporterSettingsCard familyId={familyId} />
+              <SupportWidgetPreferencesCard familyId={familyId} /></>
             )}
           </div>
         )}

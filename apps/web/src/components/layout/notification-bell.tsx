@@ -306,6 +306,17 @@ export function NotificationBell({
                       >
                         {item.message}
                       </p>
+                      {item.linkUrl && (
+                        <a
+                          href={item.linkUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          data-testid={`notification-link-${item.id}`}
+                          style={{ display: 'inline-block', marginTop: '0.5rem', color: 'var(--color-indigo-600)', fontSize: '0.75rem', fontWeight: 600 }}
+                        >
+                          {t('notifications.openLink')}
+                        </a>
+                      )}
 
                       <div
                         style={{

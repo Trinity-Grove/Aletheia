@@ -33,6 +33,7 @@ import { useNotifications } from './use-notifications';
 import { LearnerFocusSwitcher } from './learner-focus-switcher';
 import { RoleBadge } from '../auth/role-badge';
 import { UnverifiedEmailBanner } from './unverified-email-banner';
+import { FamilySupportWidget } from '../support/family-support-widget';
 
 export { LearnerFocusSwitcher } from './learner-focus-switcher';
 export { NotificationBell } from './notification-bell';
@@ -372,6 +373,7 @@ export function ProductShell({
       {authContext?.status === 'authenticated' && authContext.user?.emailVerified === false && (
         <UnverifiedEmailBanner />
       )}
+      <FamilySupportWidget familyId={activeFamilyId} role={activeRole} pathname={activePath} />
       {breadcrumbItems.length > 0 && (
         <Breadcrumbs items={breadcrumbItems} renderLink={renderNextNavigationLink} />
       )}

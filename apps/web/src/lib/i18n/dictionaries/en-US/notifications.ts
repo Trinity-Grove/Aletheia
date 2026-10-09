@@ -7,6 +7,7 @@ export const notifications: Dictionary['notifications'] = {
   newCount: '{count} new',
   markAllRead: 'Mark all read',
   markAsRead: 'Mark as read',
+  openLink: 'Open link',
   empty: 'No notifications right now.',
   timeJustNow: 'Just now',
   timeMinutesAgo: '{count}m ago',
@@ -17,4 +18,6 @@ export const notifications: Dictionary['notifications'] = {
   typePrayerAnsweredAlert: 'Prayer Answered',
   typeSystemNotice: 'System Notice',
   typeFallback: 'Notification',
+  typeFeedbackApproved: 'Feedback approved',
+  typeFeedbackRejected: 'Feedback rejected',
 };
