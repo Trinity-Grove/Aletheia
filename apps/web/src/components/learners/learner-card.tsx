@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AletheiaIcon, Badge, Button, Card } from '@aletheia/ui';
-import type { EducationalStage, LearnerResponseDto } from '@aletheia/contracts';
+import type { LearnerResponseDto } from '@aletheia/contracts';
 import { useLocale } from '../../lib/i18n/locale-context';
 import { Can } from '../auth/role-guard';
 import { LearnerAchievementsModal } from './learner-achievements-modal';

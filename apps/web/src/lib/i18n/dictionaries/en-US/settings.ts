@@ -97,6 +97,11 @@ export const settings = {
     theologyLabel: 'Preferred Theological Tradition',
   },
   privacy: {
+    title: 'Privacy Center & LGPD Terms',
+    description:
+      'Manage legal consents for your family and specific authorizations for data processing of minor learners.',
+    loading: 'Loading privacy center...',
+    noFamily: 'No family selected.',
     bannerTitle: 'Terms Update (LGPD):',
     consentDeclaration: 'Legal Consent Declaration:',
     attention: 'Attention:',

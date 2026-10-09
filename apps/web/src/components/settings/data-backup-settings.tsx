@@ -20,8 +20,8 @@ export function DataBackupSettings({
   familyId: propFamilyId,
   familyName,
   onExportPackage,
-  onRequestExport,
-  onDownload,
+  onRequestExport: _onRequestExport,
+  onDownload: _onDownload,
 }: DataBackupSettingsProps) {
   const { t } = useLocale();
   const auth = useAuth();

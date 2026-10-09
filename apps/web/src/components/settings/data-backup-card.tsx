@@ -19,7 +19,7 @@ export interface DataBackupCardProps {
 export function DataBackupCard({
   exportJobs = [],
   onExportPackage,
-  onDownload,
+  onDownload: _onDownload,
   isLoading = false,
 }: DataBackupCardProps) {
   const { t } = useLocale();

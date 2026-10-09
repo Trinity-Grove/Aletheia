@@ -43,22 +43,22 @@ export default function PrivacySettingsPage() {
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem 1.5rem' }}>
         <div style={{ marginBottom: '2rem' }}>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-            Central de Privacidade & Termos LGPD
+            {t('settings.privacy.title')}
           </h1>
           <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', margin: '0.375rem 0 0 0' }}>
-            Gerencie os consentimentos legais da sua família e autorizações específicas para tratamento de dados dos educandos menores.
+            {t('settings.privacy.description')}
           </p>
         </div>
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-            Carregando central de privacidade...
+            {t('settings.privacy.loading')}
           </div>
         ) : familyId ? (
           <PrivacyConsentSettings familyId={familyId} learners={learners} />
         ) : (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-            Nenhuma família selecionada.
+            {t('settings.privacy.noFamily')}
           </div>
         )}
       </div>

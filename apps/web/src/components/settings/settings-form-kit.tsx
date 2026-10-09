@@ -5,7 +5,7 @@ import { Alert } from '@aletheia/ui';
 import { useLocale } from '../../lib/i18n/locale-context';
 
 export function SuccessAlert({ testId, message }: { testId: string; message: string }) {
-  const { t } = useLocale();
+  useLocale();
   return (
     <Alert variant="success" data-testid={testId} style={{ marginBottom: '1.25rem' }}>
       {message}
@@ -14,7 +14,7 @@ export function SuccessAlert({ testId, message }: { testId: string; message: str
 }
 
 export function ErrorAlert({ testId, message }: { testId: string; message: string }) {
-  const { t } = useLocale();
+  useLocale();
   return (
     <Alert variant="error" data-testid={testId} style={{ marginBottom: '1.25rem' }}>
       {message}

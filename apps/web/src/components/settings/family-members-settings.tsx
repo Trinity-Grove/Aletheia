@@ -30,7 +30,7 @@ export function FamilyMembersSettings({
   onInvite,
   onCancelInvitation,
   onRevoke,
-  onRemove,
+  onRemove: _onRemove,
 }: FamilyMembersSettingsProps) {
   const { t } = useLocale();
   const [inviteEmail, setInviteEmail] = useState('');
