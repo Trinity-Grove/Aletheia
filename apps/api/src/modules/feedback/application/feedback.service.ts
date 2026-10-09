@@ -22,7 +22,6 @@ import {
   type GithubIssueGateway,
 } from '../infrastructure/github-issue.gateway.interface.js';
 import {
-  buildFeedbackMarker,
   buildIssueBody,
   FEEDBACK_CATEGORY_LABELS,
 } from '../infrastructure/github-issue-body.js';
@@ -44,6 +43,7 @@ import {
 } from '../../privacy/application/public-api.js';
 
 export const GUARDIAN_ROLES = ['OWNER_GUARDIAN', 'GUARDIAN', 'CO_GUARDIAN'] as const;
+const reviewLocks = new Map<string, Promise<void>>();
 
 @Injectable()
 export class FeedbackService {
@@ -120,14 +120,15 @@ export class FeedbackService {
       skip: query.skip ?? 0,
     });
 
-    await this.privacyApi.recordSensitiveDataAccess({
-      actorUserId,
-      familyId: result.items.length > 0 ? result.items[0]!.familyId : '00000000-0000-0000-0000-000000000000',
-      action: 'READ',
-      resourceType: 'FEEDBACK_SUBMISSION',
-      resourceId: null,
-      metadata: { count: result.items.length },
-    } as any);
+    for (const item of result.items) {
+      await this.privacyApi.recordSensitiveDataAccess({
+        actorUserId,
+        familyId: item.familyId,
+        action: 'READ',
+        resourceType: 'FEEDBACK_SUBMISSION',
+        resourceId: item.id,
+      });
+    }
 
     return {
       items: result.items.map((item) => this.toAdminDto(item)),
@@ -157,12 +158,15 @@ export class FeedbackService {
     actorUserId: string,
     dto: ApproveFeedbackOutput,
   ): Promise<AdminFeedbackResponseDto> {
-    const submission = await this.requirePending(id);
+    return this.withReviewLock(id, async () => {
+      const submission = await this.requirePending(id);
 
-    const marker = buildFeedbackMarker(submission.id);
+    const marker = submission.id;
     let issue: { number: number; url: string };
     try {
-      const existing = await this.githubGateway.findIssueByMarker(marker);
+      const existing = submission.githubIssueNumber !== null && submission.githubIssueUrl
+        ? { number: submission.githubIssueNumber, url: submission.githubIssueUrl }
+        : await this.githubGateway.findIssueByMarker(marker);
       if (existing) {
         issue = existing;
       } else {
@@ -208,15 +212,21 @@ export class FeedbackService {
       githubIssueUrl: issue.url,
     });
 
-    await this.notifyFamily(
-      submission.familyId,
-      'FEEDBACK_APPROVED',
-      'Seu feedback virou uma issue no GitHub',
-      `O relato #${approved.githubIssueNumber} foi aberto.`,
-      issue.url,
-    );
+    try {
+      await this.notifyFamily(
+        submission.familyId,
+        'FEEDBACK_APPROVED',
+        'Seu feedback virou uma issue no GitHub',
+        `O relato #${approved.githubIssueNumber} foi aberto.`,
+        issue.url,
+      );
+    } catch (error) {
+      await this.feedbackRepository.restorePending(id);
+      throw error;
+    }
 
-    return this.toAdminDto(approved);
+      return this.toAdminDto(approved);
+    });
   }
 
   async reject(
@@ -224,22 +234,41 @@ export class FeedbackService {
     actorUserId: string,
     dto: RejectFeedbackDto,
   ): Promise<AdminFeedbackResponseDto> {
-    const submission = await this.requirePending(id);
+    return this.withReviewLock(id, async () => {
+      const submission = await this.requirePending(id);
 
     const rejected = await this.feedbackRepository.markRejected(id, {
       adminNote: dto.reason,
       reviewedByUserId: actorUserId,
     });
 
-    await this.notifyFamily(
-      submission.familyId,
-      'FEEDBACK_REJECTED',
-      'Seu feedback não foi aceito',
-      `O relato foi rejeitado pelo motivo: ${dto.reason}`,
-      null,
-    );
+    try {
+      await this.notifyFamily(
+        submission.familyId,
+        'FEEDBACK_REJECTED',
+        'Seu feedback não foi aceito',
+        `O relato foi rejeitado pelo motivo: ${dto.reason}`,
+        null,
+      );
+    } catch (error) {
+      await this.feedbackRepository.restorePending(id);
+      throw error;
+    }
 
-    return this.toAdminDto(rejected);
+      return this.toAdminDto(rejected);
+    });
+  }
+
+  private async withReviewLock<T>(id: string, action: () => Promise<T>): Promise<T> {
+    const previous = reviewLocks.get(id) ?? Promise.resolve();
+    let release!: () => void;
+    const current = new Promise<void>((resolve) => { release = resolve; });
+    reviewLocks.set(id, current);
+    await previous;
+    try { return await action(); } finally {
+      release();
+      if (reviewLocks.get(id) === current) reviewLocks.delete(id);
+    }
   }
 
   private async requirePending(id: string): Promise<FeedbackSubmission> {
@@ -268,7 +297,7 @@ export class FeedbackService {
         title,
         message,
         linkUrl,
-      } as any);
+      });
     }
   }
 

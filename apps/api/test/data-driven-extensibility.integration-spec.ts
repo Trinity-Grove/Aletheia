@@ -3,7 +3,6 @@ import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import type {
   CurriculumPackExportDocument,
-  ExportedDefinitionItem,
 } from '@aletheia/contracts';
 import { createApplication } from '../src/main.js';
 import { PrismaService } from '../src/platform/database/prisma.service.js';

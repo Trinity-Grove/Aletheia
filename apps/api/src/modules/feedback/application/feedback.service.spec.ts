@@ -5,26 +5,18 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
-  FeedbackService,
-  GUARDIAN_ROLES,
+  FeedbackService
 } from './feedback.service.js';
 import type { FeedbackRepository } from '../infrastructure/feedback.repository.js';
 import type {
   GithubIssueGateway,
-  GITHUB_ISSUE_GATEWAY,
 } from '../infrastructure/github-issue.gateway.interface.js';
-import {
-  FEEDBACK_CATEGORY_LABELS,
-  buildFeedbackMarker,
-} from '../infrastructure/github-issue-body.js';
-import { SETTINGS_PUBLIC_API, type SettingsPublicApi } from '../../settings/application/public-api.js';
-import { FAMILY_PUBLIC_API, type FamilyPublicApi } from '../../families/application/public-api.js';
-import { IDENTITY_PUBLIC_API, type IdentityPublicApi } from '../../identity/application/public-api.js';
-import { PRIVACY_PUBLIC_API, type PrivacyPublicApi } from '../../privacy/application/public-api.js';
+import { type SettingsPublicApi } from '../../settings/application/public-api.js';
+import { type FamilyPublicApi } from '../../families/application/public-api.js';
+import { type IdentityPublicApi } from '../../identity/application/public-api.js';
+import { type PrivacyPublicApi } from '../../privacy/application/public-api.js';
 import type { UserSummaryDto } from '@aletheia/contracts';
 import type {
-  FeedbackCategory,
-  FeedbackStatus,
   FeedbackSubmission,
 } from '@prisma/client';
 
@@ -370,5 +362,33 @@ describe('FeedbackService', () => {
         resourceId: FEEDBACK_ID,
       }),
     );
+  });
+
+  it('audits each returned report against its own family', async () => {
+    const otherId = '55555555-5555-4555-8555-555555555555';
+    const otherFamily = '66666666-6666-4666-8666-666666666666';
+    repository.list.mockResolvedValue({ items: [pendingRow, { ...pendingRow, id: otherId, familyId: otherFamily }], total: 2 });
+    await service.list({ take: 50, skip: 0 }, ADMIN_ID);
+    expect(privacyApi.recordSensitiveDataAccess).toHaveBeenCalledTimes(2);
+    expect(privacyApi.recordSensitiveDataAccess).toHaveBeenCalledWith(expect.objectContaining({
+      familyId: otherFamily, resourceId: otherId, resourceType: 'FEEDBACK_SUBMISSION',
+    }));
+  });
+
+  it('does not write an audit entry for an empty page', async () => {
+    repository.list.mockResolvedValue({ items: [], total: 0 });
+    expect(await service.list({ take: 50, skip: 0 }, ADMIN_ID)).toEqual({ items: [], total: 0 });
+    expect(privacyApi.recordSensitiveDataAccess).not.toHaveBeenCalled();
+  });
+
+  it('reuses a recorded issue even if GitHub search is unavailable', async () => {
+    repository.findById.mockResolvedValue({
+      ...pendingRow, githubIssueNumber: 321, githubIssueUrl: 'https://github.com/Trinity-Grove/Aletheia/issues/321',
+    });
+    githubGateway.findIssueByMarker.mockRejectedValue(new Error('Search unavailable'));
+    const response = await service.approve(FEEDBACK_ID, ADMIN_ID, { title: 'Retry recorded issue', labels: [] });
+    expect(response.status).toBe('APPROVED');
+    expect(githubGateway.createIssue).not.toHaveBeenCalled();
+    expect(githubGateway.findIssueByMarker).not.toHaveBeenCalled();
   });
 });

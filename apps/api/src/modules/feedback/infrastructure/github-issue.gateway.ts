@@ -1,5 +1,6 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from './config.service.js';
+import { buildFeedbackMarker } from './github-issue-body.js';
 import type { GithubIssueGateway as GithubIssueGatewayContract } from './github-issue.gateway.interface.js';
 
 const GITHUB_API_BASE = 'https://api.github.com';
@@ -94,20 +95,16 @@ export class GithubIssueGateway implements GithubIssueGatewayContract {
   }
 
   async findIssueByMarker(marker: string): Promise<{ number: number; url: string } | null> {
-    // GitHub's search API matches on the indexable body text, and the
-    // marker survives that (it is an HTML comment in the body, kept
-    // verbatim by the API). Quoting the term keeps the search from
-    // reading the colon/dashes as query operators. The prefix below must
-    // stay identical to MARKER_PREFIX in github-issue-body.ts -- that is
-    // the string the body builder writes and extractFeedbackMarker reads.
+    // Search narrows the candidates; only the exact first-line marker
+    // identifies this submission. A mention in prose is never sufficient.
     const query = `"aletheia-feedback-id: ${marker}" in:body repo:${this.repo()} is:issue`;
     const url = `${GITHUB_API_BASE}/search/issues?q=${encodeURIComponent(query)}&per_page=5`;
 
     const data = await this.request<{
-      items?: Array<{ number: number; html_url: string }>;
+      items?: Array<{ number: number; html_url: string; body?: string | null }>;
     }>(url, { method: 'GET', headers: this.headers() });
 
-    const first = data.items?.[0];
+    const first = data.items?.find((item) => item.body?.split(/\r?\n/, 1)[0] === buildFeedbackMarker(marker));
     return first ? { number: first.number, url: first.html_url } : null;
   }
 }

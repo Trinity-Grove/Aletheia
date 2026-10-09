@@ -223,7 +223,8 @@ describe('GithubIssueGateway', () => {
   it('searches by marker and returns the issue when one matches', async () => {
     const fetchMock = stubFetch(
       jsonResponse({
-        items: [{ number: 321, html_url: 'https://github.com/Trinity-Grove/Aletheia/issues/321' }],
+        items: [{ number: 321, html_url: 'https://github.com/Trinity-Grove/Aletheia/issues/321',
+          body: '<!-- aletheia-feedback-id: 22222222-2222-4222-8222-222222222222 -->\nReport' }],
       }),
     );
     const gateway = new GithubIssueGateway(new ConfigService());
@@ -238,6 +239,19 @@ describe('GithubIssueGateway', () => {
     expect(decodeURIComponent(fetchMock.mock.calls[0]![0] as string)).toContain(
       '"aletheia-feedback-id: 22222222-2222-4222-8222-222222222222" in:body repo:Trinity-Grove/Aletheia is:issue',
     );
+  });
+
+
+  it('checks the exact first-line marker instead of trusting broad search matches', async () => {
+    const marker = '22222222-2222-4222-8222-222222222222';
+    stubFetch(jsonResponse({ items: [
+      { number: 9, html_url: 'https://github.com/Trinity-Grove/Aletheia/issues/9',
+        body: 'An unrelated report mentioning aletheia-feedback-id: ' + marker },
+      { number: 10, html_url: 'https://github.com/Trinity-Grove/Aletheia/issues/10',
+        body: '<!-- aletheia-feedback-id: ' + marker + ' -->\nOriginal report' },
+    ] }));
+    expect(await new GithubIssueGateway(new ConfigService()).findIssueByMarker(marker))
+      .toEqual({ number: 10, url: 'https://github.com/Trinity-Grove/Aletheia/issues/10' });
   });
 
   it('returns null when the search finds nothing', async () => {
@@ -263,6 +277,7 @@ describe('GithubIssueGateway', () => {
     );
   });
 });
+
 
 describe('GithubIssueGatewayFactory', () => {
   const env = { ...process.env };

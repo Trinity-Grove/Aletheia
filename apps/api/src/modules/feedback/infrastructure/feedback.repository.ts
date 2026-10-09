@@ -122,4 +122,15 @@ export class FeedbackRepository {
       },
     });
   }
+
+  async restorePending(id: string): Promise<void> {
+    await this.prisma.feedbackSubmission.updateMany({
+      where: { id, status: { in: ['APPROVED', 'REJECTED'] } },
+      data: {
+        status: 'PENDING',
+        reviewedByUserId: null,
+        reviewedAt: null,
+      },
+    });
+  }
 }

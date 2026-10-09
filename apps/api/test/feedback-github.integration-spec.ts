@@ -2,6 +2,9 @@ import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
 import { createApplication } from '../src/main.js';
 import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
+import { PrismaService } from '../src/platform/database/prisma.service.js';
+import { FeedbackRepository } from '../src/modules/feedback/infrastructure/feedback.repository.js';
+import { NotificationRepository } from '../src/modules/settings/infrastructure/notification.repository.js';
 import { GITHUB_ISSUE_GATEWAY } from '../src/modules/feedback/infrastructure/github-issue.gateway.interface.js';
 import { MockGithubIssueGateway } from '../src/modules/feedback/infrastructure/mock-github-issue.gateway.js';
 
@@ -13,409 +16,239 @@ describe('Feedback GitHub integration (real Postgres, mocked GitHub gateway)', (
   let familyBGuardianCookie: string;
   let familyBId: string;
   let mockGateway: MockGithubIssueGateway;
+  let prisma: PrismaService;
+  const originalProvider = process.env.GITHUB_ISSUE_PROVIDER;
+  const originalAdmins = process.env.PLATFORM_ADMIN_EMAILS;
 
-  async function registerWithFamily(
-    prefix: string,
-    emailOverride?: string,
-  ): Promise<{ cookie: string; familyId: string; email: string }> {
+  async function registerWithFamily(prefix: string, emailOverride?: string) {
     const email = emailOverride ?? `${prefix}-${crypto.randomUUID()}@example.com`;
-    const registerResponse = await registerAndConfirmGuardian(app, {
-      email,
-      password: 'somePassword123',
-      fullName: 'Feedback Test Guardian',
-      countryCode: 'BRA',
-      acceptedTermsOfUse: true,
-      acceptedPrivacyPolicy: true,
+    const registration = await registerAndConfirmGuardian(app, {
+      email, password: 'somePassword123', fullName: 'Feedback Test Guardian',
+      countryCode: 'BRA', acceptedTermsOfUse: true, acceptedPrivacyPolicy: true,
     });
+    const cookie = [registration.headers['set-cookie']].flat()
+      .find((value) => value?.startsWith('aletheia_session='))!;
+    const family = await supertest(app.getHttpServer()).post('/api/v1/families')
+      .set('Cookie', cookie).send({ name: `${prefix} Family`, countryCode: 'BR' }).expect(201);
+    return { cookie, familyId: family.body.id as string, email };
+  }
 
-    const cookie = [registerResponse.headers['set-cookie']]
-      .flat()
-      .find((c) => c?.startsWith('aletheia_session='))!;
+  async function submit(message: string, identifySelf = false) {
+    return supertest(app.getHttpServer()).post(`/api/v1/families/${familyAId}/feedback`)
+      .set('Cookie', familyAAdminCookie).send({ category: 'BUG', message, identifySelf }).expect(201);
+  }
 
-    const familyResponse = await supertest(app.getHttpServer())
-      .post('/api/v1/families')
-      .set('Cookie', cookie)
-      .send({ name: `${prefix} Family`, countryCode: 'BR' })
-      .expect(201);
+  function approve(id: string) {
+    return supertest(app.getHttpServer()).post(`/api/v1/admin/feedback/${id}/approve`)
+      .set('Cookie', familyAAdminCookie).send({ title: 'Feedback integration issue', labels: [] });
+  }
 
-    return { cookie, familyId: familyResponse.body.id, email };
+  async function notifications() {
+    const response = await supertest(app.getHttpServer())
+      .get(`/api/v1/families/${familyAId}/notifications`)
+      .set('Cookie', familyAAdminCookie).expect(200);
+    return response.body as Array<{ type: string; linkUrl: string | null; message: string }>;
   }
 
   beforeAll(async () => {
     process.env.GITHUB_ISSUE_PROVIDER = 'mock';
     const adminEmail = `admin-feedback-${crypto.randomUUID()}@example.com`;
     process.env.PLATFORM_ADMIN_EMAILS = adminEmail;
-
     app = await createApplication();
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
-
-    // Register family A with admin user
     const familyA = await registerWithFamily('feedback-family-a-admin', adminEmail);
     familyAAdminEmail = familyA.email;
     familyAAdminCookie = familyA.cookie;
     familyAId = familyA.familyId;
-
-    // Register family B
     const familyB = await registerWithFamily('feedback-family-b');
     familyBGuardianCookie = familyB.cookie;
     familyBId = familyB.familyId;
-
-    // Get mock gateway instance
-    mockGateway = app.get(GITHUB_ISSUE_GATEWAY) as MockGithubIssueGateway;
+    mockGateway = app.get(GITHUB_ISSUE_GATEWAY);
+    prisma = app.get(PrismaService);
   }, 30000);
 
   afterAll(async () => {
-    await app.close();
-    delete process.env.GITHUB_ISSUE_PROVIDER;
-    delete process.env.PLATFORM_ADMIN_EMAILS;
+    await app?.close();
+    if (originalProvider === undefined) delete process.env.GITHUB_ISSUE_PROVIDER;
+    else process.env.GITHUB_ISSUE_PROVIDER = originalProvider;
+    if (originalAdmins === undefined) delete process.env.PLATFORM_ADMIN_EMAILS;
+    else process.env.PLATFORM_ADMIN_EMAILS = originalAdmins;
   });
 
-  beforeEach(() => {
-    jest.restoreAllMocks();
-  });
+  beforeEach(() => jest.restoreAllMocks());
+  afterEach(() => jest.restoreAllMocks());
 
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  it('allows anonymous submission and stores identity snapshot only when opt-in', async () => {
-    const anonymousSubmission = await supertest(app.getHttpServer())
-      .post(`/api/v1/families/${familyAId}/feedback`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        category: 'BUG',
-        message: 'Something is broken anonymously',
-        identifySelf: false,
-        pagePath: '/dashboard',
-        locale: 'pt-BR',
-        appVersion: '1.0.0',
-        userAgent: 'test-agent',
-      })
-      .expect(201);
-
-    expect(anonymousSubmission.body).toMatchObject({
-      status: 'PENDING',
-      category: 'BUG',
-      identifySelf: false,
+  it('serializes concurrent approvals so only one issue and notification are created', async () => {
+    const submission = await submit('Concurrent approvals must not duplicate this issue');
+    const before = await notifications();
+    const create = mockGateway.createIssue.bind(mockGateway);
+    const createIssue = jest.spyOn(mockGateway, 'createIssue').mockImplementation(async params => {
+      await new Promise(resolve => setTimeout(resolve, 150));
+      return create(params);
     });
-
-    const list = await supertest(app.getHttpServer())
-      .get('/api/v1/admin/feedback')
-      .set('Cookie', familyAAdminCookie)
-      .expect(200);
-
-    const found = list.body.items.find(
-      (item: any) => item.id === anonymousSubmission.body.id,
-    );
-    expect(found).toBeDefined();
-    expect(found.identifySelf).toBe(false);
-    expect(found.submitterName).toBeNull();
-    expect(found.submitterEmail).toBeNull();
+    const results = await Promise.all([approve(submission.body.id), approve(submission.body.id)]);
+    expect(results.map(result => result.status).sort()).toEqual([200, 409]);
+    expect(createIssue).toHaveBeenCalledTimes(1);
+    expect(await notifications()).toHaveLength(before.length + 1);
   });
 
-  it('stores identity snapshot when identifySelf is true', async () => {
-    const identifiedSubmission = await supertest(app.getHttpServer())
-      .post(`/api/v1/families/${familyAId}/feedback`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        category: 'IDEA',
-        message: 'Great idea to implement',
-        identifySelf: true,
-      })
-      .expect(201);
-
-    expect(identifiedSubmission.body.identifySelf).toBe(true);
-
-    const list = await supertest(app.getHttpServer())
-      .get('/api/v1/admin/feedback')
-      .set('Cookie', familyAAdminCookie)
-      .expect(200);
-
-    const found = list.body.items.find(
-      (item: any) => item.id === identifiedSubmission.body.id,
-    );
-    expect(found).toBeDefined();
-    expect(found.identifySelf).toBe(true);
-    expect(found.submitterName).toBe('Feedback Test Guardian');
-    expect(found.submitterEmail).toBe(familyAAdminEmail);
+  it('does not let a rejection overtake an approval already creating its issue', async () => {
+    const submission = await submit('Approval and rejection must have one stable outcome');
+    let signalStarted!: () => void;
+    const started = new Promise<void>(resolve => { signalStarted = resolve; });
+    const create = mockGateway.createIssue.bind(mockGateway);
+    jest.spyOn(mockGateway, 'createIssue').mockImplementation(async params => {
+      signalStarted();
+      await new Promise(resolve => setTimeout(resolve, 150));
+      return create(params);
+    });
+    const approval = approve(submission.body.id).then(result => result);
+    await started;
+    const rejection = supertest(app.getHttpServer()).post(`/api/v1/admin/feedback/${submission.body.id}/reject`)
+      .set('Cookie', familyAAdminCookie).send({ reason: 'Concurrent rejection attempt' });
+    const results = await Promise.all([approval, rejection]);
+    expect(results.map(result => result.status)).toEqual([200, 409]);
+    expect((await prisma.feedbackSubmission.findUniqueOrThrow({ where: { id: submission.body.id } })).status).toBe('APPROVED');
   });
 
-  it('handles GitHub failure - leaves submission PENDING with lastIssueError', async () => {
-    const submission = await supertest(app.getHttpServer())
-      .post(`/api/v1/families/${familyAId}/feedback`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        category: 'BUG',
-        message: 'This will fail to create GitHub issue',
-        identifySelf: false,
-      })
-      .expect(201);
-
-    const submissionId = submission.body.id;
-
-    const createIssueSpy = jest
-      .spyOn(mockGateway, 'createIssue')
-      .mockRejectedValueOnce(new Error('GitHub 401: Bad credentials'));
-
-    await supertest(app.getHttpServer())
-      .patch(`/api/v1/admin/feedback/${submissionId}/approve`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        title: 'Failed approval test',
-        labels: ['test'],
-      })
-      .expect(502);
-
-    expect(createIssueSpy).toHaveBeenCalledTimes(1);
-
-    const list = await supertest(app.getHttpServer())
-      .get('/api/v1/admin/feedback')
-      .set('Cookie', familyAAdminCookie)
-      .expect(200);
-
-    const found = list.body.items.find((item: any) => item.id === submissionId);
-    expect(found).toBeDefined();
-    expect(found.status).toBe('PENDING');
-    expect(found.lastIssueError).toContain('GitHub 401');
-    expect(found.githubIssueNumber).toBeNull();
-    expect(found.githubIssueUrl).toBeNull();
+  it('rolls approval back when notification storage fails and retries without another issue', async () => {
+    const submission = await submit('The outcome and its notification must commit together');
+    const before = await notifications();
+    const createIssue = jest.spyOn(mockGateway, 'createIssue');
+    jest.spyOn(app.get(NotificationRepository), 'create').mockRejectedValueOnce(new Error('Notification storage failed'));
+    await approve(submission.body.id).expect(500);
+    expect((await prisma.feedbackSubmission.findUniqueOrThrow({ where: { id: submission.body.id } })).status).toBe('PENDING');
+    expect(await notifications()).toHaveLength(before.length);
+    await approve(submission.body.id).expect(200);
+    expect(createIssue).toHaveBeenCalledTimes(1);
+    expect(await notifications()).toHaveLength(before.length + 1);
   });
 
-  it('retries approval - reuses existing issue (no second create)', async () => {
-    const submission = await supertest(app.getHttpServer())
-      .post(`/api/v1/families/${familyAId}/feedback`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        category: 'FEATURE_REQUEST',
-        message: 'Retry test submission',
-        identifySelf: false,
-      })
+  it('defaults to anonymous and does not store or return identity fields', async () => {
+    const response = await supertest(app.getHttpServer())
+      .post(`/api/v1/families/${familyAId}/feedback`).set('Cookie', familyAAdminCookie)
+      .send({ category: 'BUG', message: 'Something is broken anonymously',
+        pagePath: '/dashboard', locale: 'pt-BR', appVersion: '1.0.0', userAgent: 'test-agent' })
       .expect(201);
-
-    const submissionId = submission.body.id;
-
-    const createIssueSpy = jest.spyOn(mockGateway, 'createIssue');
-
-    const firstApproval = await supertest(app.getHttpServer())
-      .patch(`/api/v1/admin/feedback/${submissionId}/approve`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        title: 'Retry test issue',
-        labels: ['enhancement'],
-      })
-      .expect(200);
-
-    expect(createIssueSpy).toHaveBeenCalledTimes(1);
-    const firstIssueNumber = firstApproval.body.githubIssueNumber;
-    expect(firstIssueNumber).toBeDefined();
-
-    // Create another submission - when approved, mock findIssueByMarker to return existing
-    const submission2 = await supertest(app.getHttpServer())
-      .post(`/api/v1/families/${familyAId}/feedback`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        category: 'IDEA',
-        message: 'Second submission that should reuse issue on retry',
-        identifySelf: false,
-      })
-      .expect(201);
-
-    const findIssueSpy = jest
-      .spyOn(mockGateway, 'findIssueByMarker')
-      .mockResolvedValue({
-        number: 999,
-        url: 'https://github.com/Trinity-Grove/Aletheia/issues/999',
-      });
-    const createIssueSpy2 = jest.spyOn(mockGateway, 'createIssue');
-
-    const approval = await supertest(app.getHttpServer())
-      .patch(`/api/v1/admin/feedback/${submission2.body.id}/approve`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        title: 'Should reuse',
-        labels: [],
-      })
-      .expect(200);
-
-    expect(findIssueSpy).toHaveBeenCalled();
-    expect(createIssueSpy2).not.toHaveBeenCalled();
-    expect(approval.body.githubIssueNumber).toBe(999);
+    expect(response.body).toEqual({
+      id: expect.any(String), status: 'PENDING', category: 'BUG',
+      identifySelf: false, createdAt: expect.any(String),
+    });
+    const detail = await supertest(app.getHttpServer())
+      .get(`/api/v1/admin/feedback/${response.body.id}`).set('Cookie', familyAAdminCookie).expect(200);
+    expect(detail.body.submitterName).toBeNull();
+    expect(detail.body.submitterEmail).toBeNull();
+    const row = await prisma.feedbackSubmission.findUniqueOrThrow({ where: { id: response.body.id } });
+    expect(row.submitterName).toBeNull();
+    expect(row.submitterEmail).toBeNull();
   });
 
-  it('sends notifications once per outcome (approval and rejection)', async () => {
-    const approvalSubmission = await supertest(app.getHttpServer())
-      .post(`/api/v1/families/${familyAId}/feedback`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        category: 'PRAISE',
-        message: 'Great job team',
-        identifySelf: false,
-      })
-      .expect(201);
-
-    await supertest(app.getHttpServer())
-      .patch(`/api/v1/admin/feedback/${approvalSubmission.body.id}/approve`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        title: 'Praise received',
-        labels: ['praise'],
-      })
-      .expect(200);
-
-    const rejectSubmission = await supertest(app.getHttpServer())
-      .post(`/api/v1/families/${familyAId}/feedback`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        category: 'BUG',
-        message: 'Not actionable',
-        identifySelf: false,
-      })
-      .expect(201);
-
-    await supertest(app.getHttpServer())
-      .patch(`/api/v1/admin/feedback/${rejectSubmission.body.id}/reject`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        reason: 'Duplicate submission',
-      })
-      .expect(200);
-
-    const notifications = await supertest(app.getHttpServer())
-      .get('/api/v1/settings/notifications')
-      .set('Cookie', familyAAdminCookie)
-      .expect(200);
-
-    const feedbackNotifications = notifications.body.items.filter(
-      (n: any) =>
-        n.type === 'FEEDBACK_APPROVED' || n.type === 'FEEDBACK_REJECTED',
-    );
-    expect(feedbackNotifications.length).toBeGreaterThanOrEqual(2);
+  it('freezes the authenticated identity at submission time when opted in', async () => {
+    const response = await submit('Identified feedback from the guardian', true);
+    const row = await prisma.feedbackSubmission.findUniqueOrThrow({ where: { id: response.body.id } });
+    await prisma.user.update({ where: { id: row.submittedByUserId }, data: { fullName: 'Changed after submission' } });
+    try {
+      const detail = await supertest(app.getHttpServer())
+        .get(`/api/v1/admin/feedback/${row.id}`).set('Cookie', familyAAdminCookie).expect(200);
+      expect(detail.body.submitterName).toBe('Feedback Test Guardian');
+      expect(detail.body.submitterEmail).toBe(familyAAdminEmail);
+    } finally {
+      await prisma.user.update({ where: { id: row.submittedByUserId }, data: { fullName: 'Feedback Test Guardian' } });
+    }
   });
 
-  it('returns 409 when approving/rejecting a non-pending submission (second approval)', async () => {
-    const submission = await supertest(app.getHttpServer())
-      .post(`/api/v1/families/${familyAId}/feedback`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        category: 'QUESTION',
-        message: 'Already processed',
-        identifySelf: false,
-      })
-      .expect(201);
-
-    const submissionId = submission.body.id;
-
-    await supertest(app.getHttpServer())
-      .patch(`/api/v1/admin/feedback/${submissionId}/approve`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        title: 'Processed',
-        labels: [],
-      })
-      .expect(200);
-
-    await supertest(app.getHttpServer())
-      .patch(`/api/v1/admin/feedback/${submissionId}/approve`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        title: 'Try again',
-        labels: [],
-      })
-      .expect(409);
-
-    const submission2 = await supertest(app.getHttpServer())
-      .post(`/api/v1/families/${familyAId}/feedback`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        category: 'BUG',
-        message: 'Will be rejected then tried again',
-        identifySelf: false,
-      })
-      .expect(201);
-
-    await supertest(app.getHttpServer())
-      .patch(`/api/v1/admin/feedback/${submission2.body.id}/reject`)
-      .set('Cookie', familyAAdminCookie)
-      .send({ reason: 'Not relevant' })
-      .expect(200);
-
-    await supertest(app.getHttpServer())
-      .patch(`/api/v1/admin/feedback/${submission2.body.id}/reject`)
-      .set('Cookie', familyAAdminCookie)
-      .send({ reason: 'Still not relevant' })
-      .expect(409);
+  it('keeps GitHub failures pending with an error and no notification, then permits retry', async () => {
+    const response = await submit('This issue will fail upstream before retry');
+    const before = await notifications();
+    jest.spyOn(mockGateway, 'createIssue').mockRejectedValueOnce(new Error('GitHub 401: Bad credentials'));
+    await approve(response.body.id).expect(502);
+    const pending = await prisma.feedbackSubmission.findUniqueOrThrow({ where: { id: response.body.id } });
+    expect(pending.status).toBe('PENDING');
+    expect(pending.lastIssueError).toContain('GitHub 401');
+    expect(pending.githubIssueNumber).toBeNull();
+    expect(await notifications()).toHaveLength(before.length);
+    const retried = await approve(response.body.id).expect(200);
+    expect(retried.body.status).toBe('APPROVED');
+    expect(retried.body.lastIssueError).toBeNull();
   });
 
-  it('blocks non-admin from triage operations', async () => {
-    const submission = await supertest(app.getHttpServer())
-      .post(`/api/v1/families/${familyAId}/feedback`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        category: 'IDEA',
-        message: 'Only admins should triage',
-        identifySelf: false,
-      })
+  it('reuses the issue on retry after GitHub succeeds but the database write fails', async () => {
+    const response = await submit('Retry after the database write fails');
+    const createIssue = jest.spyOn(mockGateway, 'createIssue');
+    const repository = app.get(FeedbackRepository);
+    jest.spyOn(repository, 'markApproved').mockRejectedValueOnce(new Error('Simulated database write failure'));
+    await approve(response.body.id).expect(500);
+    const pending = await prisma.feedbackSubmission.findUniqueOrThrow({ where: { id: response.body.id } });
+    expect(pending.status).toBe('PENDING');
+    const retried = await approve(response.body.id).expect(200);
+    expect(createIssue).toHaveBeenCalledTimes(1);
+    const created = await createIssue.mock.results[0]!.value;
+    expect(retried.body.githubIssueNumber).toBe(created.number);
+  });
+
+  it('sends exactly one notification per outcome and prevents a second review', async () => {
+    const before = await notifications();
+    const approved = await submit('A useful bug report to approve');
+    const approval = await approve(approved.body.id).expect(200);
+    await approve(approved.body.id).expect(409);
+    await supertest(app.getHttpServer()).post(`/api/v1/admin/feedback/${approved.body.id}/reject`)
+      .set('Cookie', familyAAdminCookie).send({ reason: 'Cannot reject an approval' }).expect(409);
+    const rejected = await submit('A duplicate report to reject');
+    await supertest(app.getHttpServer()).post(`/api/v1/admin/feedback/${rejected.body.id}/reject`)
+      .set('Cookie', familyAAdminCookie).send({ reason: 'Duplicate submission' }).expect(200);
+    await supertest(app.getHttpServer()).post(`/api/v1/admin/feedback/${rejected.body.id}/reject`)
+      .set('Cookie', familyAAdminCookie).send({ reason: 'Duplicate submission' }).expect(409);
+    const after = await notifications();
+    expect(after.filter((item) => item.type === 'FEEDBACK_APPROVED')).toHaveLength(
+      before.filter((item) => item.type === 'FEEDBACK_APPROVED').length + 1);
+    expect(after.filter((item) => item.type === 'FEEDBACK_REJECTED')).toHaveLength(
+      before.filter((item) => item.type === 'FEEDBACK_REJECTED').length + 1);
+    expect(after.some((item) => item.linkUrl === approval.body.githubIssueUrl)).toBe(true);
+    expect(after.some((item) => item.type === 'FEEDBACK_REJECTED' && item.message.includes('Duplicate submission'))).toBe(true);
+  });
+
+  it('blocks non-admins from every triage operation', async () => {
+    const response = await submit('Only platform admins should triage');
+    await supertest(app.getHttpServer()).get('/api/v1/admin/feedback')
+      .set('Cookie', familyBGuardianCookie).expect(403);
+    await supertest(app.getHttpServer()).get(`/api/v1/admin/feedback/${response.body.id}`)
+      .set('Cookie', familyBGuardianCookie).expect(403);
+    await supertest(app.getHttpServer()).post(`/api/v1/admin/feedback/${response.body.id}/approve`)
+      .set('Cookie', familyBGuardianCookie).send({ title: 'Unauthorized', labels: [] }).expect(403);
+    await supertest(app.getHttpServer()).post(`/api/v1/admin/feedback/${response.body.id}/reject`)
+      .set('Cookie', familyBGuardianCookie).send({ reason: 'Unauthorized' }).expect(403);
+  });
+
+  it('allows the second family guardian to submit and prevents crossing family boundaries', async () => {
+    await supertest(app.getHttpServer()).post(`/api/v1/families/${familyBId}/feedback`)
+      .set('Cookie', familyBGuardianCookie).send({ category: 'QUESTION', message: 'Question from family B', identifySelf: true })
       .expect(201);
-
-    const submissionId = submission.body.id;
-
-    await supertest(app.getHttpServer())
-      .get('/api/v1/admin/feedback')
-      .set('Cookie', familyBGuardianCookie)
-      .expect(403);
-
-    await supertest(app.getHttpServer())
-      .get(`/api/v1/admin/feedback/${submissionId}`)
-      .set('Cookie', familyBGuardianCookie)
-      .expect(403);
-
-    await supertest(app.getHttpServer())
-      .patch(`/api/v1/admin/feedback/${submissionId}/approve`)
-      .set('Cookie', familyBGuardianCookie)
-      .send({ title: 'Unauthorized', labels: [] })
-      .expect(403);
-
-    await supertest(app.getHttpServer())
-      .patch(`/api/v1/admin/feedback/${submissionId}/reject`)
-      .set('Cookie', familyBGuardianCookie)
-      .send({ reason: 'Unauthorized' })
+    await supertest(app.getHttpServer()).post(`/api/v1/families/${familyAId}/feedback`)
+      .set('Cookie', familyBGuardianCookie).send({ category: 'QUESTION', message: 'Attempt to cross family boundaries' })
       .expect(403);
   });
 
-  it('allows family guardians to submit feedback to their own family', async () => {
-    const submission = await supertest(app.getHttpServer())
-      .post(`/api/v1/families/${familyBId}/feedback`)
-      .set('Cookie', familyBGuardianCookie)
-      .send({
-        category: 'QUESTION',
-        message: 'Question from family B',
-        identifySelf: true,
-      })
-      .expect(201);
-
-    expect(submission.body.status).toBe('PENDING');
-    expect(submission.body.category).toBe('QUESTION');
-    expect(submission.body.identifySelf).toBe(true);
+  it('blocks an EDUCATOR even with a valid family membership', async () => {
+    const member = await prisma.familyMember.findFirstOrThrow({ where: { familyId: familyBId } });
+    await prisma.familyMember.update({ where: { id: member.id }, data: { role: 'EDUCATOR' } });
+    try {
+      await supertest(app.getHttpServer()).post(`/api/v1/families/${familyBId}/feedback`)
+        .set('Cookie', familyBGuardianCookie).send({ category: 'BUG', message: 'Educators cannot submit family feedback' })
+        .expect(403);
+    } finally {
+      await prisma.familyMember.update({ where: { id: member.id }, data: { role: member.role } });
+    }
   });
 
-  it('enforces family isolation - family B cannot see family A submissions via admin', async () => {
-    const submissionA = await supertest(app.getHttpServer())
-      .post(`/api/v1/families/${familyAId}/feedback`)
-      .set('Cookie', familyAAdminCookie)
-      .send({
-        category: 'QUESTION',
-        message: 'Family A question',
-        identifySelf: false,
-      })
-      .expect(201);
-
-    const listA = await supertest(app.getHttpServer())
-      .get('/api/v1/admin/feedback')
-      .set('Cookie', familyAAdminCookie)
-      .expect(200);
-    expect(listA.body.items.some((i: any) => i.id === submissionA.body.id)).toBe(
-      true,
-    );
+  it('validates message and category and requires a rejection reason', async () => {
+    await supertest(app.getHttpServer()).post(`/api/v1/families/${familyAId}/feedback`)
+      .set('Cookie', familyAAdminCookie).send({ category: 'FEATURE_REQUEST', message: 'An unsupported category' }).expect(400);
+    await supertest(app.getHttpServer()).post(`/api/v1/families/${familyAId}/feedback`)
+      .set('Cookie', familyAAdminCookie).send({ category: 'IDEA', message: ' '.repeat(40) }).expect(400);
+    const response = await submit('This rejection must include a reason');
+    await supertest(app.getHttpServer()).post(`/api/v1/admin/feedback/${response.body.id}/reject`)
+      .set('Cookie', familyAAdminCookie).send({ reason: '' }).expect(400);
+    expect((await prisma.feedbackSubmission.findUniqueOrThrow({ where: { id: response.body.id } })).status).toBe('PENDING');
   });
 });
