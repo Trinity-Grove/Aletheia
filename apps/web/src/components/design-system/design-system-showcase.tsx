@@ -21,8 +21,10 @@ import {
 import { RoleBadge } from '../auth/role-badge';
 import { Can, RequireRole } from '../auth/role-guard';
 import { AuthProvider } from '../../lib/auth/rbac-context';
+import { useLocale } from '../../lib/i18n/locale-context';
 
 export function DesignSystemShowcase() {
+  const { t } = useLocale();
   const [activeTab, setActiveTab] = useState<
     'tokens' | 'typography' | 'buttons' | 'cards' | 'badges' | 'forms' | 'modal' | 'rbac'
   >('tokens');
@@ -45,7 +47,7 @@ export function DesignSystemShowcase() {
       <div style={{ marginBottom: '2rem' }}>
         <p className="eyebrow" style={{ marginBottom: '0.5rem' }}>
           <span className="rule" />
-          Trinity Grove &bull; Design as Code
+          {t('showcase.eyebrow')}
         </p>
         <h1
           style={{
@@ -56,10 +58,10 @@ export function DesignSystemShowcase() {
             fontWeight: 400,
           }}
         >
-          Biblioteca de Componentes & Tokens
+          {t('showcase.title')}
         </h1>
         <p style={{ color: 'var(--muted, #5c6f67)', fontSize: '1rem', margin: 0, maxWidth: '750px' }}>
-          Guia vivo e playground interativo dos tokens visuais, componentes atômicos e padrões de interface da plataforma Aletheia.
+          {t('showcase.subtitle')}
         </p>
       </div>
 
@@ -75,14 +77,14 @@ export function DesignSystemShowcase() {
         }}
       >
         {[
-          { id: 'tokens', label: 'Cores & Tokens', icon: <AletheiaIcon name="palette" size={16} /> },
-          { id: 'typography', label: 'Tipografia', icon: <AletheiaIcon name="file-text" size={16} /> },
-          { id: 'buttons', label: 'Botões', icon: <AletheiaIcon name="check" size={16} /> },
-          { id: 'cards', label: 'Cartões', icon: <AletheiaIcon name="folder" size={16} /> },
-          { id: 'badges', label: 'Badges', icon: <AletheiaIcon name="sparkles" size={16} /> },
-          { id: 'forms', label: 'Formulários', icon: <AletheiaIcon name="file-text" size={16} /> },
-          { id: 'modal', label: 'Modais', icon: <AletheiaIcon name="sparkles" size={16} /> },
-          { id: 'rbac', label: 'RBAC & Guards', icon: <AletheiaIcon name="shield" size={16} /> },
+          { id: 'tokens', label: t('showcase.tabs.tokens'), icon: <AletheiaIcon name="palette" size={16} /> },
+          { id: 'typography', label: t('showcase.tabs.typography'), icon: <AletheiaIcon name="file-text" size={16} /> },
+          { id: 'buttons', label: t('showcase.tabs.buttons'), icon: <AletheiaIcon name="check" size={16} /> },
+          { id: 'cards', label: t('showcase.tabs.cards'), icon: <AletheiaIcon name="folder" size={16} /> },
+          { id: 'badges', label: t('showcase.tabs.badges'), icon: <AletheiaIcon name="sparkles" size={16} /> },
+          { id: 'forms', label: t('showcase.tabs.forms'), icon: <AletheiaIcon name="file-text" size={16} /> },
+          { id: 'modal', label: t('showcase.tabs.modal'), icon: <AletheiaIcon name="sparkles" size={16} /> },
+          { id: 'rbac', label: t('showcase.tabs.rbac'), icon: <AletheiaIcon name="shield" size={16} /> },
         ].map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -119,7 +121,7 @@ export function DesignSystemShowcase() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           <div>
             <h2 style={{ fontFamily: 'var(--font-serif)', color: 'var(--forest)', fontSize: '1.5rem', margin: '0 0 1rem 0' }}>
-              Paleta Oficial Trinity Grove
+              {t('showcase.tokens.paletteTitle')}
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
               {[
@@ -156,14 +158,14 @@ export function DesignSystemShowcase() {
 
           <div>
             <h2 style={{ fontFamily: 'var(--font-serif)', color: 'var(--forest)', fontSize: '1.5rem', margin: '0 0 1rem 0' }}>
-              Sombras & Elevação
+              {t('showcase.tokens.shadowsTitle')}
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' }}>
               {[
-                { name: '--shadow-sm', desc: 'Bordas sutis e cartões padrão' },
-                { name: '--shadow-md', desc: 'Cartões elevados e menus flutuantes' },
-                { name: '--shadow-lg', desc: 'Modais, banners heróicos e popovers' },
-                { name: '--shadow-xl', desc: 'Diálogos de máxima ênfase' },
+                { name: '--shadow-sm', desc: t('showcase.tokens.shadowSmDesc') },
+                { name: '--shadow-md', desc: t('showcase.tokens.shadowMdDesc') },
+                { name: '--shadow-lg', desc: t('showcase.tokens.shadowLgDesc') },
+                { name: '--shadow-xl', desc: t('showcase.tokens.shadowXlDesc') },
               ].map((s) => (
                 <div
                   key={s.name}
@@ -189,35 +191,35 @@ export function DesignSystemShowcase() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           <Card variant="bordered">
             <CardHeader>
-              <CardTitle>Hierarquia Tipográfica</CardTitle>
-              <CardDescription>Combinação de Libre Caslon Display (Serif) e DM Sans (Interface)</CardDescription>
+              <CardTitle>{t('showcase.typography.title')}</CardTitle>
+              <CardDescription>{t('showcase.typography.desc')}</CardDescription>
             </CardHeader>
             <CardContent style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
                 <p className="eyebrow" style={{ marginBottom: '0.5rem' }}>
                   <span className="rule" />
-                  Eyebrow Kicker — 11px uppercase
+                  {t('showcase.typography.eyebrowSample')}
                 </p>
                 <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.25rem', color: 'var(--forest)', margin: 0, fontWeight: 400 }}>
-                  Display Title (H1) — Libre Caslon Display
+                  {t('showcase.typography.h1Sample')}
                 </h1>
               </div>
 
               <div>
                 <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.75rem', color: 'var(--forest)', margin: 0, fontWeight: 400 }}>
-                  Heading Level 2 (H2) — Classical Noble Header
+                  {t('showcase.typography.h2Sample')}
                 </h2>
               </div>
 
               <div>
                 <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', color: 'var(--forest)', margin: 0, fontWeight: 400 }}>
-                  Heading Level 3 (H3) — Card & Section Titles
+                  {t('showcase.typography.h3Sample')}
                 </h3>
               </div>
 
               <div>
                 <p style={{ fontFamily: 'var(--font-sans)', fontSize: '1rem', color: 'var(--ink)', lineHeight: 1.6, margin: 0 }}>
-                  <strong>Body Text (DM Sans):</strong> Instrua a criança no caminho em que deve andar, e até quando envelhecer não se desviará dele. O design transmite serenidade, nobreza e reverência em cada detalhe tipográfico.
+                  <strong>{t('showcase.typography.bodyTextLabel')}</strong> {t('showcase.typography.bodyTextSample')}
                 </p>
               </div>
             </CardContent>
@@ -227,10 +229,10 @@ export function DesignSystemShowcase() {
           <div className="verse-card-trinity">
             <div style={{ position: 'relative', zIndex: 2, paddingLeft: '1.5rem' }}>
               <p style={{ fontFamily: 'var(--font-serif)', fontSize: '1.35rem', lineHeight: 1.5, margin: '0 0 0.75rem 0' }}>
-                &ldquo;Toda a Escritura é divinamente inspirada, e proveitosa para ensinar, para redarguir, para instruir em justiça.&rdquo;
+                {t('showcase.typography.scriptureVerse')}
               </p>
               <span style={{ fontSize: '0.875rem', color: 'var(--gold-soft)', fontWeight: 700, letterSpacing: '0.05em' }}>
-                — 2 Timóteo 3:16
+                {t('showcase.typography.scriptureCitation')}
               </span>
             </div>
           </div>
@@ -242,28 +244,28 @@ export function DesignSystemShowcase() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           <Card variant="bordered">
             <CardHeader>
-              <CardTitle>Variantes de Botões</CardTitle>
-              <CardDescription>Estilos consistentes para ações primárias, secundárias e destrutivas</CardDescription>
+              <CardTitle>{t('showcase.buttons.variantsTitle')}</CardTitle>
+              <CardDescription>{t('showcase.buttons.variantsDesc')}</CardDescription>
             </CardHeader>
             <CardContent style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
-              <Button variant="primary">Primary (Forest)</Button>
-              <Button variant="secondary">Secondary (Sage Soft)</Button>
-              <Button variant="outline">Outline</Button>
-              <Button variant="ghost">Ghost</Button>
-              <Button variant="danger">Danger</Button>
-              <Button variant="primary" isLoading>Carregando</Button>
-              <Button variant="primary" leftIcon={<AletheiaIcon name="book-open" size={16} />}>Com Ícone</Button>
+              <Button variant="primary">{t('showcase.buttons.primary')}</Button>
+              <Button variant="secondary">{t('showcase.buttons.secondary')}</Button>
+              <Button variant="outline">{t('showcase.buttons.outline')}</Button>
+              <Button variant="ghost">{t('showcase.buttons.ghost')}</Button>
+              <Button variant="danger">{t('showcase.buttons.danger')}</Button>
+              <Button variant="primary" isLoading>{t('showcase.buttons.loading')}</Button>
+              <Button variant="primary" leftIcon={<AletheiaIcon name="book-open" size={16} />}>{t('showcase.buttons.withIcon')}</Button>
             </CardContent>
           </Card>
 
           <Card variant="bordered">
             <CardHeader>
-              <CardTitle>Tamanhos de Botões</CardTitle>
+              <CardTitle>{t('showcase.buttons.sizesTitle')}</CardTitle>
             </CardHeader>
             <CardContent style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
-              <Button size="sm" variant="primary">Small (sm)</Button>
-              <Button size="md" variant="primary">Medium (md)</Button>
-              <Button size="lg" variant="primary">Large (lg)</Button>
+              <Button size="sm" variant="primary">{t('showcase.buttons.sizeSm')}</Button>
+              <Button size="md" variant="primary">{t('showcase.buttons.sizeMd')}</Button>
+              <Button size="lg" variant="primary">{t('showcase.buttons.sizeLg')}</Button>
             </CardContent>
           </Card>
         </div>
@@ -274,44 +276,44 @@ export function DesignSystemShowcase() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
           <Card variant="default">
             <CardHeader>
-              <CardTitle>Card Default</CardTitle>
-              <CardDescription>Borda sutil e fundo paper</CardDescription>
+              <CardTitle>{t('showcase.cards.defaultTitle')}</CardTitle>
+              <CardDescription>{t('showcase.cards.defaultDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
-              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--muted)' }}>Ideal para listas e painéis de dados gerais.</p>
+              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--muted)' }}>{t('showcase.cards.defaultContent')}</p>
             </CardContent>
             <CardFooter>
-              <Button size="sm" variant="secondary">Ação</Button>
+              <Button size="sm" variant="secondary">{t('showcase.cards.action')}</Button>
             </CardFooter>
           </Card>
 
           <Card variant="bordered">
             <CardHeader>
-              <CardTitle>Card Bordered</CardTitle>
-              <CardDescription>Borda reforçada para destaque</CardDescription>
+              <CardTitle>{t('showcase.cards.borderedTitle')}</CardTitle>
+              <CardDescription>{t('showcase.cards.borderedDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
-              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--muted)' }}>Usado para formulários e itens selecionáveis.</p>
+              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--muted)' }}>{t('showcase.cards.borderedContent')}</p>
             </CardContent>
           </Card>
 
           <Card variant="flat">
             <CardHeader>
-              <CardTitle>Card Flat</CardTitle>
-              <CardDescription>Fundo sálvia suave sem sombra</CardDescription>
+              <CardTitle>{t('showcase.cards.flatTitle')}</CardTitle>
+              <CardDescription>{t('showcase.cards.flatDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
-              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--muted)' }}>Ótimo para notas de rodapé e alertas internos.</p>
+              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--muted)' }}>{t('showcase.cards.flatContent')}</p>
             </CardContent>
           </Card>
 
           <Card variant="glass">
             <CardHeader>
-              <CardTitle>Card Glassmorphism</CardTitle>
-              <CardDescription>Fundo translúcido com desfoque</CardDescription>
+              <CardTitle>{t('showcase.cards.glassTitle')}</CardTitle>
+              <CardDescription>{t('showcase.cards.glassDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
-              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--muted)' }}>Para modais flutuantes e sobreposições elegantes.</p>
+              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--muted)' }}>{t('showcase.cards.glassContent')}</p>
             </CardContent>
           </Card>
         </div>
@@ -321,28 +323,28 @@ export function DesignSystemShowcase() {
       {activeTab === 'badges' && (
         <Card variant="bordered">
           <CardHeader>
-            <CardTitle>Badges & Tags Semânticas</CardTitle>
-            <CardDescription>Identificadores de etapas, status e taxonomias</CardDescription>
+            <CardTitle>{t('showcase.badges.title')}</CardTitle>
+            <CardDescription>{t('showcase.badges.desc')}</CardDescription>
           </CardHeader>
           <CardContent style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
-              <Badge variant="emerald">Emerald / Concluído</Badge>
-              <Badge variant="amber">Amber / Em Andamento</Badge>
-              <Badge variant="indigo">Indigo / Aliança</Badge>
-              <Badge variant="slate">Slate / Padrão</Badge>
-              <Badge variant="rose">Rose / Pendente</Badge>
+              <Badge variant="emerald">{t('showcase.badges.emerald')}</Badge>
+              <Badge variant="amber">{t('showcase.badges.amber')}</Badge>
+              <Badge variant="indigo">{t('showcase.badges.indigo')}</Badge>
+              <Badge variant="slate">{t('showcase.badges.slate')}</Badge>
+              <Badge variant="rose">{t('showcase.badges.rose')}</Badge>
             </div>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
-              <Badge variant="emerald" dot>Com Ponto</Badge>
-              <Badge variant="amber" dot>Atenção</Badge>
-              <Badge variant="rose" dot>Alerta</Badge>
+              <Badge variant="emerald" dot>{t('showcase.badges.dot')}</Badge>
+              <Badge variant="amber" dot>{t('showcase.badges.attention')}</Badge>
+              <Badge variant="rose" dot>{t('showcase.badges.alert')}</Badge>
             </div>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
-              <Badge size="sm" variant="indigo">Small</Badge>
-              <Badge size="md" variant="indigo">Medium</Badge>
-              <Badge size="lg" variant="indigo">Large</Badge>
+              <Badge size="sm" variant="indigo">{t('showcase.badges.sizeSm')}</Badge>
+              <Badge size="md" variant="indigo">{t('showcase.badges.sizeMd')}</Badge>
+              <Badge size="lg" variant="indigo">{t('showcase.badges.sizeLg')}</Badge>
             </div>
           </CardContent>
         </Card>
@@ -352,56 +354,56 @@ export function DesignSystemShowcase() {
       {activeTab === 'forms' && (
         <Card variant="bordered">
           <CardHeader>
-            <CardTitle>Primitivas de Formulário</CardTitle>
-            <CardDescription>Inputs, Selects, Textareas e Switches estilizados</CardDescription>
+            <CardTitle>{t('showcase.forms.title')}</CardTitle>
+            <CardDescription>{t('showcase.forms.desc')}</CardDescription>
           </CardHeader>
           <CardContent style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
             <Input
-              label="Campo de Texto Padrão"
-              placeholder="Digite seu texto..."
+              label={t('showcase.forms.defaultInputLabel')}
+              placeholder={t('showcase.forms.defaultInputPlaceholder')}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              helperText="Exemplo de mensagem auxiliar informativa"
+              helperText={t('showcase.forms.defaultInputHelper')}
             />
 
             <Input
-              label="Campo com Erro de Validação"
-              placeholder="Digite algo errado..."
+              label={t('showcase.forms.errorInputLabel')}
+              placeholder={t('showcase.forms.errorInputPlaceholder')}
               value={inputError}
               onChange={(e) => setInputError(e.target.value)}
-              error={inputError.length < 3 ? 'O texto deve conter pelo menos 3 caracteres' : undefined}
+              error={inputError.length < 3 ? t('showcase.forms.errorInputMessage') : undefined}
             />
 
             <Input
-              label="Campo com Ícone"
-              placeholder="Buscar objetivo..."
+              label={t('showcase.forms.iconInputLabel')}
+              placeholder={t('showcase.forms.iconInputPlaceholder')}
               leftIcon={<AletheiaIcon name="search" size={16} />}
               rightIcon={<AletheiaIcon name="sparkles" size={16} />}
             />
 
             <Select
-              label="Modelo Pedagógico"
+              label={t('showcase.forms.selectLabel')}
               value={selectVal}
               onChange={(e) => setSelectVal(e.target.value)}
               options={[
-                { value: 'classical', label: 'Educação Clássica (Trivium)' },
-                { value: 'charlotte_mason', label: 'Charlotte Mason (Living Books)' },
-                { value: 'traditional', label: 'Tradicional Estruturado' },
+                { value: 'classical', label: t('showcase.forms.classicalOption') },
+                { value: 'charlotte_mason', label: t('showcase.forms.charlotteOption') },
+                { value: 'traditional', label: t('showcase.forms.traditionalOption') },
               ]}
             />
 
             <div style={{ gridColumn: '1 / -1' }}>
               <Textarea
-                label="Anotações & Observações"
-                placeholder="Escreva anotações pedagógicas detalhadas..."
+                label={t('showcase.forms.notesLabel')}
+                placeholder={t('showcase.forms.notesPlaceholder')}
                 rows={3}
               />
             </div>
 
             <div style={{ gridColumn: '1 / -1' }}>
               <Switch
-                label="Notificações de Culto e Agenda"
-                description="Receba avisos diários no horário programado"
+                label={t('showcase.forms.switchLabel')}
+                description={t('showcase.forms.switchDesc')}
                 checked={switchVal}
                 onChange={(e) => setSwitchVal(e.target.checked)}
               />
@@ -414,34 +416,34 @@ export function DesignSystemShowcase() {
       {activeTab === 'modal' && (
         <Card variant="bordered">
           <CardHeader>
-            <CardTitle>Demonstração de Modal Acessível</CardTitle>
-            <CardDescription>Diálogo com backdrop blur, escape key, focus trapping e scroll locking</CardDescription>
+            <CardTitle>{t('showcase.modal.title')}</CardTitle>
+            <CardDescription>{t('showcase.modal.desc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="primary" onClick={() => setIsModalOpen(true)}>
-              Abrir Modal de Exemplo
+              {t('showcase.modal.openButton')}
             </Button>
 
             <Modal
               isOpen={isModalOpen}
               onClose={() => setIsModalOpen(false)}
-              title="Planejamento de Lição"
-              description="Configure o plano pedagógico para os educandos selecionados."
+              title={t('showcase.modal.demoTitle')}
+              description={t('showcase.modal.demoDesc')}
               footer={
                 <>
-                  <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-                  <Button variant="primary" onClick={() => setIsModalOpen(false)}>Salvar Plano</Button>
+                  <Button variant="secondary" onClick={() => setIsModalOpen(false)}>{t('showcase.modal.cancel')}</Button>
+                  <Button variant="primary" onClick={() => setIsModalOpen(false)}>{t('showcase.modal.savePlan')}</Button>
                 </>
               }
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <Input label="Título da Lição" placeholder="Ex: Gramática Latina — Capítulo 3" />
+                <Input label={t('showcase.modal.lessonTitleLabel')} placeholder={t('showcase.modal.lessonTitlePlaceholder')} />
                 <Select
-                  label="Disciplina"
+                  label={t('showcase.modal.subjectLabel')}
                   options={[
-                    { value: 'lat', label: 'Latim & Línguas Clássicas' },
-                    { value: 'mat', label: 'Matemática e Geometria' },
-                    { value: 'his', label: 'História Universal' },
+                    { value: 'lat', label: t('showcase.modal.subjectLatin') },
+                    { value: 'mat', label: t('showcase.modal.subjectMath') },
+                    { value: 'his', label: t('showcase.modal.subjectHistory') },
                   ]}
                 />
               </div>
@@ -454,12 +456,12 @@ export function DesignSystemShowcase() {
       {activeTab === 'rbac' && (
         <Card variant="bordered">
           <CardHeader>
-            <CardTitle>Simulador de RBAC (Controle de Acesso)</CardTitle>
-            <CardDescription>Alterne o papel ativo para ver como os componentes se adaptam dinamicamente</CardDescription>
+            <CardTitle>{t('showcase.rbac.title')}</CardTitle>
+            <CardDescription>{t('showcase.rbac.desc')}</CardDescription>
           </CardHeader>
           <CardContent style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>Simular Papel:</span>
+              <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>{t('showcase.rbac.simulateRoleLabel')}</span>
               {(['OWNER_GUARDIAN', 'GUARDIAN', 'CO_GUARDIAN', 'EDUCATOR'] as FamilyRole[]).map((r) => (
                 <button
                   key={r}
@@ -483,7 +485,7 @@ export function DesignSystemShowcase() {
 
             <div style={{ padding: '1rem', backgroundColor: 'var(--sage-soft)', borderRadius: 'var(--radius-md)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                <span>Papel Ativo:</span>
+                <span>{t('showcase.rbac.activeRoleLabel')}</span>
                 <RoleBadge role={simulatedRole} size="md" />
               </div>
 
@@ -492,28 +494,28 @@ export function DesignSystemShowcase() {
                   <Can action="delete_family">
                     <div style={{ padding: '0.5rem', backgroundColor: 'var(--color-rose-50)', color: 'var(--color-rose-700)', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                       <AletheiaIcon name="alert-circle" size={16} />
-                      <span>Visível apenas para <strong>OWNER_GUARDIAN</strong> (Excluir Núcleo Familiar)</span>
+                      <span>{t('showcase.rbac.ownerGuardianOnly')}</span>
                     </div>
                   </Can>
 
                   <Can action="delete_learner">
                     <div style={{ padding: '0.5rem', backgroundColor: 'var(--sage-soft)', color: 'var(--forest-2)', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                       <AletheiaIcon name="graduation-cap" size={16} />
-                      <span>Visível para <strong>GUARDIANS</strong> (Excluir / Arquivar Educando)</span>
+                      <span>{t('showcase.rbac.guardiansOnly')}</span>
                     </div>
                   </Can>
 
                   <Can action="log_learning">
                     <div style={{ padding: '0.5rem', backgroundColor: 'var(--color-indigo-50)', color: 'var(--color-indigo-700)', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                       <AletheiaIcon name="pencil" size={16} />
-                      <span>Visível para <strong>EDUCATOR & GUARDIANS</strong> (Registrar Diário & Lições)</span>
+                      <span>{t('showcase.rbac.educatorAndGuardians')}</span>
                     </div>
                   </Can>
 
                   <RequireRole roles={['EDUCATOR']}>
                     <div style={{ padding: '0.5rem', backgroundColor: 'var(--color-amber-50)', color: 'var(--color-amber-700)', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                       <AletheiaIcon name="info" size={16} />
-                      <span>Mensagem exclusiva de orientação para o Educador externo.</span>
+                      <span>{t('showcase.rbac.educatorMessage')}</span>
                     </div>
                   </RequireRole>
                 </div>

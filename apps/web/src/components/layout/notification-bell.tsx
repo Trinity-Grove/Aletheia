@@ -8,8 +8,8 @@ import { useLocale, type LocaleContextValue } from '../../lib/i18n/locale-contex
 export interface NotificationBellProps {
   notifications: NotificationItemResponseDto[];
   unreadCount: number;
-  onMarkAsRead: (id: string) => Promise<void>;
-  onMarkAllAsRead?: (() => Promise<void>) | undefined;
+  onMarkAsRead?(id: string): Promise<void>;
+  onMarkAllAsRead?(): Promise<void>;
 }
 
 const TYPE_ICONS: Record<NotificationType, React.ReactNode> = {
@@ -75,7 +75,7 @@ export function NotificationBell({
     e.stopPropagation();
     try {
       setIsProcessing(true);
-      await onMarkAsRead(id);
+      await onMarkAsRead?.(id);
     } finally {
       setIsProcessing(false);
     }
