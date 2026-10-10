@@ -17,6 +17,7 @@ interface FamilySettingsDbRecord {
   inAppNotificationsEnabled: boolean;
   supportWidgetLastSeenAt: Date | null;
   supportWidgetSnoozedUntil: Date | null;
+  onboardingDismissed: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,6 +56,7 @@ export class FamilySettingsRepository {
         attendanceReminderEnabled: true,
         emailNotificationsEnabled: true,
         inAppNotificationsEnabled: true,
+        onboardingDismissed: false,
       },
     });
 
@@ -111,6 +113,7 @@ export class FamilySettingsRepository {
         attendanceReminderEnabled: dto.attendanceReminderEnabled ?? true,
         emailNotificationsEnabled: dto.emailNotificationsEnabled ?? true,
         inAppNotificationsEnabled: dto.inAppNotificationsEnabled ?? true,
+        onboardingDismissed: dto.onboardingDismissed ?? false,
       },
       update: {
         ...(homeschoolName !== undefined ? { homeschoolName } : {}),
@@ -130,6 +133,7 @@ export class FamilySettingsRepository {
           : {}),
         ...(supportWidgetLastSeenAt !== undefined ? { supportWidgetLastSeenAt } : {}),
         ...(supportWidgetSnoozedUntil !== undefined ? { supportWidgetSnoozedUntil } : {}),
+        ...(dto.onboardingDismissed !== undefined ? { onboardingDismissed: dto.onboardingDismissed } : {}),
       },
     });
 
@@ -151,6 +155,7 @@ export class FamilySettingsRepository {
       inAppNotificationsEnabled: record.inAppNotificationsEnabled,
       supportWidgetLastSeenAt: record.supportWidgetLastSeenAt,
       supportWidgetSnoozedUntil: record.supportWidgetSnoozedUntil,
+      onboardingDismissed: record.onboardingDismissed,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     });

@@ -5,6 +5,8 @@ import type {
   DashboardQueryDto,
   DashboardResponseDto,
   LearnerSummaryDto,
+  OnboardingChecklistDto,
+  OnboardingStepDto,
 } from '@aletheia/contracts';
 import {
   FAMILY_PUBLIC_API,
@@ -22,6 +24,10 @@ import {
   CURRICULUM_PUBLIC_API,
   type CurriculumPublicApi,
 } from '../../curriculum/application/public-api.js';
+import {
+  SETTINGS_PUBLIC_API,
+  type SettingsPublicApi,
+} from '../../settings/application/public-api.js';
 
 function minutesBetween(start?: string | null, end?: string | null): number {
   if (!start || !end) return 0;
@@ -101,6 +107,8 @@ export class DashboardService {
     private readonly scheduleApi: SchedulePublicApi,
     @Inject(CURRICULUM_PUBLIC_API)
     private readonly curriculumApi: CurriculumPublicApi,
+    @Inject(SETTINGS_PUBLIC_API)
+    private readonly settingsApi: SettingsPublicApi,
   ) {}
 
   async getDashboard(
@@ -120,12 +128,60 @@ export class DashboardService {
       }
     }
 
-    const [learners, agenda, academicYearWindow] = await Promise.all([
+    const [
+      learners,
+      agenda,
+      academicYearWindow,
+      settings,
+      hasCurriculum,
+      hasSchedule,
+      hasCompletedLessons,
+    ] = await Promise.all([
       this.learnersApi.listActiveLearners(familyId),
       this.scheduleApi.getDailyAgenda(familyId, query.date, query.learnerId),
       this.curriculumApi.getCurrentAcademicYearWindow(familyId),
+      this.settingsApi.getSettings(familyId),
+      this.curriculumApi.hasCurriculum(familyId, query.learnerId),
+      this.scheduleApi.hasSchedule(familyId, query.learnerId),
+      this.scheduleApi.hasCompletedLessons(familyId, query.learnerId),
     ]);
     const lessonItems = agenda.items.filter((item) => item.type === 'LESSON');
+    const completedLessonsCount = lessonItems.filter((item) => item.isCompleted).length;
+
+    const onboardingSteps: OnboardingStepDto[] = [
+      {
+        id: 'create_learner',
+        completed: learners.length > 0,
+        actionUrl: '/learners',
+      },
+      {
+        id: 'choose_curriculum',
+        completed: hasCurriculum,
+        actionUrl: '/curriculum',
+      },
+      {
+        id: 'schedule_lesson',
+        completed: agenda.items.length > 0 || hasSchedule,
+        actionUrl: '/schedule',
+      },
+      {
+        id: 'complete_first_activity',
+        completed: completedLessonsCount > 0 || hasCompletedLessons,
+        actionUrl: '/aluno/agenda',
+      },
+    ];
+
+    const onboarding: OnboardingChecklistDto = {
+      dismissed: settings.onboardingDismissed ?? false,
+      completedCount: onboardingSteps.filter((step) => step.completed).length,
+      totalCount: 4,
+      steps: onboardingSteps as [
+        OnboardingStepDto,
+        OnboardingStepDto,
+        OnboardingStepDto,
+        OnboardingStepDto,
+      ],
+    };
 
     return {
       date: query.date,
@@ -148,11 +204,12 @@ export class DashboardService {
           (total, item) => total + minutesBetween(item.startTime, item.endTime),
           0,
         ),
-        completedLessons: lessonItems.filter((item) => item.isCompleted).length,
+        completedLessons: completedLessonsCount,
         totalLessons: lessonItems.length,
         daySequence: computeDaySequence(query.date, academicYearWindow),
       },
       activities: agenda.items.map(mapActivity),
+      onboarding,
     };
   }
 }

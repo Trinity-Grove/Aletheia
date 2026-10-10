@@ -31,6 +31,7 @@ describe('AttendanceService', () => {
             new Date(),
             new Date(),
             'Alice Smith',
+            dto.source ?? 'MANUAL',
           ),
         ),
       ),
@@ -51,6 +52,7 @@ describe('AttendanceService', () => {
                 new Date(),
                 new Date(),
                 id === LEARNER_ID ? 'Alice Smith' : 'Bob Smith',
+                dto.source ?? 'BULK_IMPORT',
               ),
           ),
         ),
@@ -118,9 +120,26 @@ describe('AttendanceService', () => {
       expect(res.learnerId).toBe(LEARNER_ID);
       expect(res.status).toBe('PRESENT');
       expect(res.date).toBe('2026-03-15');
+      expect(res.source).toBe('MANUAL');
       expect(attendanceRepo.log).toHaveBeenCalledWith(
         FAMILY_ID,
         expect.objectContaining({ learnerId: LEARNER_ID }),
+      );
+    });
+
+    it('logs attendance with AUTO_LESSON source', async () => {
+      const res = await service.logAttendance(FAMILY_ID, {
+        learnerId: LEARNER_ID,
+        academicYearId: YEAR_ID,
+        date: '2026-03-15',
+        status: 'PRESENT',
+        source: 'AUTO_LESSON',
+      });
+
+      expect(res.source).toBe('AUTO_LESSON');
+      expect(attendanceRepo.log).toHaveBeenCalledWith(
+        FAMILY_ID,
+        expect.objectContaining({ learnerId: LEARNER_ID, source: 'AUTO_LESSON' }),
       );
     });
 
@@ -135,6 +154,7 @@ describe('AttendanceService', () => {
 
       expect(res).toHaveLength(2);
       expect(res[0]?.learnerId).toBe(LEARNER_ID);
+      expect(res[0]?.source).toBe('BULK_IMPORT');
       expect(res[1]?.learnerId).toBe(LEARNER_2_ID);
       expect(attendanceRepo.bulkLog).toHaveBeenCalledWith(
         FAMILY_ID,

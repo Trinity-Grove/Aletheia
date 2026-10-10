@@ -95,6 +95,14 @@ export class ObjectiveRepository {
     return { total, achieved };
   }
 
+  async countObjectives(familyId: string, learnerId?: string): Promise<number> {
+    const where: Record<string, unknown> = { familyId };
+    if (learnerId) {
+      where.learnerId = learnerId;
+    }
+    return this.prisma.learningObjective.count({ where });
+  }
+
   private mapObjective(row: any): LearningObjectiveEntity {
     return new LearningObjectiveEntity(
       row.id,

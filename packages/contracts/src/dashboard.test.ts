@@ -3,7 +3,12 @@ import {
   dashboardActivitySchema,
   dashboardQuerySchema,
   dashboardResponseSchema,
+  onboardingChecklistSchema,
+  onboardingStepIdSchema,
+  onboardingStepSchema,
   type DashboardResponseDto,
+  type OnboardingChecklistDto,
+  type OnboardingStepDto,
 } from './dashboard.js';
 
 const FAMILY_ID = 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55';
@@ -88,5 +93,98 @@ describe('dashboard contracts', () => {
         type: 'routine',
       }).success,
     ).toBe(false);
+  });
+
+  describe('onboarding contracts', () => {
+    it('validates allowed onboarding step IDs', () => {
+      const stepIds = [
+        'create_learner',
+        'choose_curriculum',
+        'schedule_lesson',
+        'complete_first_activity',
+      ] as const;
+
+      for (const id of stepIds) {
+        expect(onboardingStepIdSchema.parse(id)).toBe(id);
+      }
+      expect(() => onboardingStepIdSchema.parse('invalid_step')).toThrow();
+    });
+
+    it('validates onboarding step schema', () => {
+      const step: OnboardingStepDto = {
+        id: 'create_learner',
+        completed: true,
+        actionUrl: '/learners/new',
+      };
+      expect(onboardingStepSchema.parse(step)).toEqual(step);
+    });
+
+    it('validates onboarding checklist schema with 4 steps', () => {
+      const checklist: OnboardingChecklistDto = {
+        dismissed: false,
+        completedCount: 2,
+        totalCount: 4,
+        steps: [
+          { id: 'create_learner', completed: true, actionUrl: '/learners/new' },
+          { id: 'choose_curriculum', completed: true, actionUrl: '/curriculum' },
+          { id: 'schedule_lesson', completed: false, actionUrl: '/schedule' },
+          { id: 'complete_first_activity', completed: false, actionUrl: '/activities' },
+        ],
+      };
+      expect(onboardingChecklistSchema.parse(checklist)).toEqual(checklist);
+    });
+
+    it('rejects checklist with invalid step counts or length', () => {
+      expect(() =>
+        onboardingChecklistSchema.parse({
+          dismissed: false,
+          completedCount: 5,
+          totalCount: 4,
+          steps: [
+            { id: 'create_learner', completed: true, actionUrl: '/learners/new' },
+            { id: 'choose_curriculum', completed: true, actionUrl: '/curriculum' },
+            { id: 'schedule_lesson', completed: false, actionUrl: '/schedule' },
+            { id: 'complete_first_activity', completed: false, actionUrl: '/activities' },
+          ],
+        }),
+      ).toThrow();
+
+      expect(() =>
+        onboardingChecklistSchema.parse({
+          dismissed: false,
+          completedCount: 1,
+          totalCount: 4,
+          steps: [
+            { id: 'create_learner', completed: true, actionUrl: '/learners/new' },
+          ],
+        }),
+      ).toThrow();
+    });
+
+    it('allows dashboard response without onboarding (optional)', () => {
+      const parsed = dashboardResponseSchema.parse(emptyDashboard);
+      expect(parsed.onboarding).toBeUndefined();
+    });
+
+    it('parses dashboard response with onboarding included', () => {
+      const withOnboarding: DashboardResponseDto = {
+        ...emptyDashboard,
+        onboarding: {
+          dismissed: false,
+          completedCount: 1,
+          totalCount: 4,
+          steps: [
+            { id: 'create_learner', completed: true, actionUrl: '/learners/new' },
+            { id: 'choose_curriculum', completed: false, actionUrl: '/curriculum' },
+            { id: 'schedule_lesson', completed: false, actionUrl: '/schedule' },
+            { id: 'complete_first_activity', completed: false, actionUrl: '/activities' },
+          ],
+        },
+      };
+
+      const parsed = dashboardResponseSchema.parse(withOnboarding);
+      expect(parsed.onboarding?.completedCount).toBe(1);
+      expect(parsed.onboarding?.dismissed).toBe(false);
+    });
   });
 });

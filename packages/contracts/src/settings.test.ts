@@ -59,6 +59,15 @@ describe('Family Settings Contracts', () => {
 
       expect(() => updateFamilySettingsSchema.parse(invalid)).toThrow();
     });
+
+    it('validates onboardingDismissed in update payload', () => {
+      const payload = {
+        onboardingDismissed: true,
+      };
+
+      const parsed = updateFamilySettingsSchema.parse(payload);
+      expect(parsed.onboardingDismissed).toBe(true);
+    });
   });
 
   describe('familySettingsResponseSchema', () => {
@@ -86,6 +95,30 @@ describe('Family Settings Contracts', () => {
       expect(parsed.familyId).toBe(FAMILY_ID);
       expect(parsed.defaultGradingScale).toBe('MASTERY_QUALITATIVE');
       expect(parsed.attendanceReminderEnabled).toBe(true);
+    });
+
+    it('validates onboardingDismissed in response DTO', () => {
+      const response = {
+        id: SETTINGS_ID,
+        familyId: FAMILY_ID,
+        homeschoolName: 'Academia Família Silva',
+        defaultGradingScale: 'MASTERY_QUALITATIVE' as const,
+        timezone: 'America/Sao_Paulo',
+        language: 'pt-BR',
+        devotionalReminderTime: '08:00',
+        dailyScheduleReminderTime: '07:30',
+        attendanceReminderEnabled: true,
+        emailNotificationsEnabled: true,
+        inAppNotificationsEnabled: true,
+        supportWidgetLastSeenAt: null,
+        supportWidgetSnoozedUntil: null,
+        onboardingDismissed: true,
+        createdAt: '2026-08-26T10:00:00.000Z',
+        updatedAt: '2026-08-26T10:00:00.000Z',
+      };
+
+      const parsed = familySettingsResponseSchema.parse(response);
+      expect(parsed.onboardingDismissed).toBe(true);
     });
   });
 });

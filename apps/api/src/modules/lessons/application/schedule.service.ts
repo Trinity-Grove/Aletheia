@@ -9,9 +9,10 @@ import type {
   ScheduleSlotResponseDto,
   UpdateScheduleSlotDto,
 } from '@aletheia/contracts';
+import type { SchedulePublicApi } from './public-api.js';
 
 @Injectable()
-export class ScheduleService {
+export class ScheduleService implements SchedulePublicApi {
   constructor(
     private readonly scheduleRepo: ScheduleRepository,
     private readonly lessonPlanRepo: LessonPlanRepository,
@@ -162,4 +163,22 @@ export class ScheduleService {
       items: allItems,
     };
   }
+
+  async hasSchedule(familyId: string, learnerId?: string): Promise<boolean> {
+    const slots = await this.scheduleRepo.list(familyId, learnerId ? { learnerId } : {});
+    if (slots.length > 0) {
+      return true;
+    }
+    const plans = await this.lessonPlanRepo.list(familyId, learnerId ? { learnerId } : {});
+    return plans.length > 0;
+  }
+
+  async hasCompletedLessons(familyId: string, learnerId?: string): Promise<boolean> {
+    const plans = await this.lessonPlanRepo.list(familyId, {
+      status: 'COMPLETED',
+      ...(learnerId ? { learnerId } : {}),
+    });
+    return plans.length > 0;
+  }
 }
+
