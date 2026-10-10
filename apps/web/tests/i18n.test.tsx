@@ -444,6 +444,179 @@ describe('i18n (Issue #33: Internacionalização, Dicionários e Formatadores)',
       expect(screen.getByTestId('submit-evidence-btn')).toHaveTextContent('Submit Evidence');
     });
   });
+
+  describe('Primeiros Passos, Auto-Presença e Origem de Presença (Task 5)', () => {
+    it('traduz chaves de dashboard.gettingStarted em pt-BR, en-US e es-ES', () => {
+      // pt-BR
+      const { unmount: unmountPt } = render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="dashboard.gettingStarted.title" />
+            <Probe translationKey="dashboard.gettingStarted.subtitle" />
+            <Probe translationKey="dashboard.gettingStarted.progress" vars={{ completed: 2, total: 4 }} />
+            <Probe translationKey="dashboard.gettingStarted.dismiss" />
+            <Probe translationKey="dashboard.gettingStarted.steps.createLearner.title" />
+            <Probe translationKey="dashboard.gettingStarted.steps.createLearner.description" />
+            <Probe translationKey="dashboard.gettingStarted.steps.createLearner.action" />
+            <Probe translationKey="dashboard.gettingStarted.steps.chooseCurriculum.title" />
+            <Probe translationKey="dashboard.gettingStarted.steps.scheduleLesson.title" />
+            <Probe translationKey="dashboard.gettingStarted.steps.completeFirstActivity.title" />
+          </div>
+        </LocaleProvider>
+      );
+      expect(screen.getByText('Primeiros Passos no Aletheia')).toBeInTheDocument();
+      expect(screen.getByText('Complete estes 4 marcos essenciais para estruturar a educação clássica da sua família.')).toBeInTheDocument();
+      expect(screen.getByText('2 de 4 concluídos')).toBeInTheDocument();
+      expect(screen.getByText('Ocultar guia')).toBeInTheDocument();
+      expect(screen.getByText('Cadastrar Educando')).toBeInTheDocument();
+      expect(screen.getByText('Adicione os educandos do seu núcleo familiar com suas etapas de desenvolvimento.')).toBeInTheDocument();
+      expect(screen.getByText('Ir para Educandos')).toBeInTheDocument();
+      expect(screen.getByText('Definir Currículo')).toBeInTheDocument();
+      expect(screen.getByText('Agendar Primeira Lição')).toBeInTheDocument();
+      expect(screen.getByText('Concluir Primeira Atividade')).toBeInTheDocument();
+      unmountPt();
+
+      // en-US
+      localStorage.setItem('aletheia_locale', 'en-US');
+      const { unmount: unmountEn } = render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="dashboard.gettingStarted.title" />
+            <Probe translationKey="dashboard.gettingStarted.subtitle" />
+            <Probe translationKey="dashboard.gettingStarted.progress" vars={{ completed: 1, total: 4 }} />
+            <Probe translationKey="dashboard.gettingStarted.dismiss" />
+            <Probe translationKey="dashboard.gettingStarted.steps.createLearner.title" />
+            <Probe translationKey="dashboard.gettingStarted.steps.createLearner.description" />
+            <Probe translationKey="dashboard.gettingStarted.steps.createLearner.action" />
+            <Probe translationKey="dashboard.gettingStarted.steps.chooseCurriculum.title" />
+            <Probe translationKey="dashboard.gettingStarted.steps.scheduleLesson.title" />
+            <Probe translationKey="dashboard.gettingStarted.steps.completeFirstActivity.title" />
+          </div>
+        </LocaleProvider>
+      );
+      expect(screen.getByText('Getting Started with Aletheia')).toBeInTheDocument();
+      expect(screen.getByText("Complete these 4 essential milestones to set up your family's classical education.")).toBeInTheDocument();
+      expect(screen.getByText('1 of 4 completed')).toBeInTheDocument();
+      expect(screen.getByText('Dismiss guide')).toBeInTheDocument();
+      expect(screen.getByText('Register Learner')).toBeInTheDocument();
+      expect(screen.getByText("Add your family's learners with their developmental stages.")).toBeInTheDocument();
+      expect(screen.getByText('Go to Learners')).toBeInTheDocument();
+      expect(screen.getByText('Set Curriculum')).toBeInTheDocument();
+      expect(screen.getByText('Schedule First Lesson')).toBeInTheDocument();
+      expect(screen.getByText('Complete First Activity')).toBeInTheDocument();
+      unmountEn();
+
+      // es-ES
+      localStorage.setItem('aletheia_locale', 'es-ES');
+      const { unmount: unmountEs } = render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="dashboard.gettingStarted.title" />
+            <Probe translationKey="dashboard.gettingStarted.subtitle" />
+            <Probe translationKey="dashboard.gettingStarted.progress" vars={{ completed: 3, total: 4 }} />
+            <Probe translationKey="dashboard.gettingStarted.dismiss" />
+            <Probe translationKey="dashboard.gettingStarted.steps.createLearner.title" />
+            <Probe translationKey="dashboard.gettingStarted.steps.createLearner.description" />
+            <Probe translationKey="dashboard.gettingStarted.steps.createLearner.action" />
+            <Probe translationKey="dashboard.gettingStarted.steps.chooseCurriculum.title" />
+            <Probe translationKey="dashboard.gettingStarted.steps.scheduleLesson.title" />
+            <Probe translationKey="dashboard.gettingStarted.steps.completeFirstActivity.title" />
+          </div>
+        </LocaleProvider>
+      );
+      expect(screen.getByText('Primeros Pasos en Aletheia')).toBeInTheDocument();
+      expect(screen.getByText('Complete estos 4 hitos esenciales para estructurar la educación clásica de su familia.')).toBeInTheDocument();
+      expect(screen.getByText('3 de 4 completados')).toBeInTheDocument();
+      expect(screen.getByText('Ocultar guía')).toBeInTheDocument();
+      expect(screen.getByText('Registrar Educando')).toBeInTheDocument();
+      expect(screen.getByText('Añada los educandos de su núcleo familiar con sus etapas de desarrollo.')).toBeInTheDocument();
+      expect(screen.getByText('Ir a Educandos')).toBeInTheDocument();
+      expect(screen.getByText('Definir Currículo')).toBeInTheDocument();
+      expect(screen.getByText('Programar Primera Lección')).toBeInTheDocument();
+      expect(screen.getByText('Completar Primera Actividad')).toBeInTheDocument();
+      unmountEs();
+    });
+
+    it('traduz aviso de auto-presença em lessons.completion.autoAttendanceNotice em pt-BR, en-US e es-ES', () => {
+      // pt-BR
+      const { unmount: unmountPt } = render(
+        <LocaleProvider>
+          <Probe translationKey="lessons.completion.autoAttendanceNotice" />
+        </LocaleProvider>
+      );
+      expect(screen.getByTestId('probe')).toHaveTextContent('Presença registrada automaticamente pela conclusão desta lição.');
+      unmountPt();
+
+      // en-US
+      localStorage.setItem('aletheia_locale', 'en-US');
+      const { unmount: unmountEn } = render(
+        <LocaleProvider>
+          <Probe translationKey="lessons.completion.autoAttendanceNotice" />
+        </LocaleProvider>
+      );
+      expect(screen.getByTestId('probe')).toHaveTextContent('Attendance automatically logged upon completion of this lesson.');
+      unmountEn();
+
+      // es-ES
+      localStorage.setItem('aletheia_locale', 'es-ES');
+      const { unmount: unmountEs } = render(
+        <LocaleProvider>
+          <Probe translationKey="lessons.completion.autoAttendanceNotice" />
+        </LocaleProvider>
+      );
+      expect(screen.getByTestId('probe')).toHaveTextContent('Asistencia registrada automáticamente al completar esta lección.');
+      unmountEs();
+    });
+
+    it('traduz origens de presença em reports.attendance.source.* em pt-BR, en-US e es-ES', () => {
+      // pt-BR
+      const { unmount: unmountPt } = render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="reports.attendance.source.autoLesson" />
+            <Probe translationKey="reports.attendance.source.manual" />
+            <Probe translationKey="reports.attendance.source.bulk" />
+          </div>
+        </LocaleProvider>
+      );
+      expect(screen.getByText('Auto (Lição)')).toBeInTheDocument();
+      expect(screen.getByText('Manual')).toBeInTheDocument();
+      expect(screen.getByText('Coletiva')).toBeInTheDocument();
+      unmountPt();
+
+      // en-US
+      localStorage.setItem('aletheia_locale', 'en-US');
+      const { unmount: unmountEn } = render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="reports.attendance.source.autoLesson" />
+            <Probe translationKey="reports.attendance.source.manual" />
+            <Probe translationKey="reports.attendance.source.bulk" />
+          </div>
+        </LocaleProvider>
+      );
+      expect(screen.getByText('Auto (Lesson)')).toBeInTheDocument();
+      expect(screen.getByText('Manual')).toBeInTheDocument();
+      expect(screen.getByText('Bulk')).toBeInTheDocument();
+      unmountEn();
+
+      // es-ES
+      localStorage.setItem('aletheia_locale', 'es-ES');
+      const { unmount: unmountEs } = render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="reports.attendance.source.autoLesson" />
+            <Probe translationKey="reports.attendance.source.manual" />
+            <Probe translationKey="reports.attendance.source.bulk" />
+          </div>
+        </LocaleProvider>
+      );
+      expect(screen.getByText('Auto (Lección)')).toBeInTheDocument();
+      expect(screen.getByText('Manual')).toBeInTheDocument();
+      expect(screen.getByText('Colectiva')).toBeInTheDocument();
+      unmountEs();
+    });
+  });
 });
 
 describe('Guardrails de Integridade Estrutural e Paridade de Dicionários', () => {

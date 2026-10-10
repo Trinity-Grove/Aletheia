@@ -171,4 +171,7 @@ export const lessons = {
     confirmDelete: '¿Eliminar este bloque de rutina? Esta acción no se puede deshacer.',
     addBlockDayBtn: '+ Añadir Bloque',
   },
+  completion: {
+    autoAttendanceNotice: 'Asistencia registrada automáticamente al completar esta lección.',
+  },
 } as const;

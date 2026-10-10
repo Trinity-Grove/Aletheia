@@ -171,4 +171,7 @@ export const lessons = {
     confirmDelete: 'Excluir este bloco de rotina? Esta ação não pode ser desfeita.',
     addBlockDayBtn: '+ Adicionar Bloco',
   },
+  completion: {
+    autoAttendanceNotice: 'Presença registrada automaticamente pela conclusão desta lição.',
+  },
 } as const;

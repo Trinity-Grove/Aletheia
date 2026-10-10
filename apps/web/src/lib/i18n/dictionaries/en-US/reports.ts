@@ -72,4 +72,11 @@ export const reports = {
     docIdPlaceholder: 'E.g.: 4ab4391b... (64 hex characters) or report UUID',
     legalDisclaimer: 'Legal Disclaimer:',
   },
+  attendance: {
+    source: {
+      autoLesson: 'Auto (Lesson)',
+      manual: 'Manual',
+      bulk: 'Bulk',
+    },
+  },
 } as const;
