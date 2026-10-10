@@ -6,6 +6,7 @@ describe('LessonPlanService', () => {
   let service: LessonPlanService;
   let lessonPlanRepo: any;
   let recordsApi: any;
+  let complianceApi: any;
 
   const FAMILY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
   const LESSON_ID = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
@@ -129,7 +130,18 @@ describe('LessonPlanService', () => {
       createRecord: jest.fn().mockResolvedValue({ id: 'record-1' }),
     };
 
-    service = new LessonPlanService(lessonPlanRepo, recordsApi);
+    complianceApi = {
+      listAttendance: jest.fn().mockResolvedValue([]),
+      logAttendance: jest.fn().mockResolvedValue({
+        id: 'att-1',
+        learnerId: LEARNER_ID,
+        date: '2026-08-26',
+        status: 'PRESENT',
+        source: 'AUTO_LESSON',
+      }),
+    };
+
+    service = new LessonPlanService(lessonPlanRepo, recordsApi, complianceApi);
   });
 
   describe('createLessonPlan', () => {
@@ -285,6 +297,131 @@ describe('LessonPlanService', () => {
       await expect(
         serviceWithoutRecords.completeLesson(FAMILY_ID, LESSON_ID, {}, LEARNER_ID),
       ).resolves.toBeDefined();
+    });
+
+    describe('auto-attendance logging', () => {
+      it('auto-logs daily attendance with source AUTO_LESSON upon lesson completion', async () => {
+        await service.completeLesson(
+          FAMILY_ID,
+          LESSON_ID,
+          { completedAt: '2026-10-10T10:00:00.000Z', actualDurationMinutes: 55 },
+          LEARNER_ID,
+        );
+
+        expect(complianceApi.listAttendance).toHaveBeenCalledWith(
+          FAMILY_ID,
+          expect.objectContaining({
+            learnerId: LEARNER_ID,
+            startDate: '2026-10-10',
+            endDate: '2026-10-10',
+          }),
+        );
+        expect(complianceApi.logAttendance).toHaveBeenCalledWith(
+          FAMILY_ID,
+          expect.objectContaining({
+            learnerId: LEARNER_ID,
+            date: '2026-10-10',
+            status: 'PRESENT',
+            source: 'AUTO_LESSON',
+            notes: 'Presença registrada automaticamente pela conclusão da lição.',
+          }),
+        );
+      });
+
+      it('is idempotent when PRESENT attendance already exists for the day', async () => {
+        complianceApi.listAttendance.mockResolvedValueOnce([
+          {
+            id: 'att-existing',
+            familyId: FAMILY_ID,
+            learnerId: LEARNER_ID,
+            date: '2026-10-10',
+            status: 'PRESENT',
+            source: 'MANUAL',
+          },
+        ]);
+
+        await service.completeLesson(
+          FAMILY_ID,
+          LESSON_ID,
+          { completedAt: '2026-10-10T10:00:00.000Z' },
+          LEARNER_ID,
+        );
+
+        expect(complianceApi.listAttendance).toHaveBeenCalled();
+        expect(complianceApi.logAttendance).not.toHaveBeenCalled();
+      });
+
+      it('preserves manually recorded ABSENT status and does not overwrite', async () => {
+        complianceApi.listAttendance.mockResolvedValueOnce([
+          {
+            id: 'att-manual-absent',
+            familyId: FAMILY_ID,
+            learnerId: LEARNER_ID,
+            date: '2026-10-10',
+            status: 'UNEXCUSED_ABSENCE',
+            source: 'MANUAL',
+          },
+        ]);
+
+        await service.completeLesson(
+          FAMILY_ID,
+          LESSON_ID,
+          { completedAt: '2026-10-10T10:00:00.000Z' },
+          LEARNER_ID,
+        );
+
+        expect(complianceApi.logAttendance).not.toHaveBeenCalled();
+      });
+
+      it('preserves manually recorded EXCUSED status and does not overwrite', async () => {
+        complianceApi.listAttendance.mockResolvedValueOnce([
+          {
+            id: 'att-manual-excused',
+            familyId: FAMILY_ID,
+            learnerId: LEARNER_ID,
+            date: '2026-10-10',
+            status: 'EXCUSED_ABSENCE',
+            source: 'MANUAL',
+          },
+        ]);
+
+        await service.completeLesson(
+          FAMILY_ID,
+          LESSON_ID,
+          { completedAt: '2026-10-10T10:00:00.000Z' },
+          LEARNER_ID,
+        );
+
+        expect(complianceApi.logAttendance).not.toHaveBeenCalled();
+      });
+
+      it('does not block lesson completion when complianceApi throws an error', async () => {
+        complianceApi.listAttendance.mockRejectedValueOnce(new Error('Compliance service unavailable'));
+
+        const res = await service.completeLesson(
+          FAMILY_ID,
+          LESSON_ID,
+          { actualDurationMinutes: 45 },
+          LEARNER_ID,
+        );
+
+        expect(res).toBeDefined();
+        expect(res.id).toBe(LESSON_ID);
+      });
+
+      it('does not touch compliance API when none is injected', async () => {
+        const serviceWithoutCompliance = new LessonPlanService(lessonPlanRepo, recordsApi);
+
+        await expect(
+          serviceWithoutCompliance.completeLesson(
+            FAMILY_ID,
+            LESSON_ID,
+            { completedAt: '2026-10-10T10:00:00.000Z' },
+            LEARNER_ID,
+          ),
+        ).resolves.toBeDefined();
+        expect(complianceApi.logAttendance).not.toHaveBeenCalled();
+      });
     });
   });
 
