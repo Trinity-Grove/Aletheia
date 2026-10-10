@@ -1,5 +1,6 @@
 import type {
   AttendanceResponseDto,
+  AttendanceSource,
   AttendanceStatus,
 } from '@aletheia/contracts';
 
@@ -17,6 +18,7 @@ export class AttendanceRecordEntity {
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
     public readonly learnerName?: string,
+    public readonly source: AttendanceSource = 'MANUAL',
   ) {}
 
   private formatDateOnly(date: Date): string {
@@ -31,6 +33,7 @@ export class AttendanceRecordEntity {
       date: this.formatDateOnly(this.date),
       status: this.status,
       isAutoLogged: this.isAutoLogged,
+      source: this.source,
       createdAt: this.createdAt.toISOString(),
       updatedAt: this.updatedAt.toISOString(),
     };

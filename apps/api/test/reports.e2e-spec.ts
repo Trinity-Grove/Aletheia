@@ -75,6 +75,7 @@ describe('Compliance, Attendance & Reports E2E & Multi-Tenant Isolation', () => 
         hoursSpent: dto.hoursSpent ?? undefined,
         notes: dto.notes ?? undefined,
         isAutoLogged: dto.isAutoLogged ?? false,
+        source: dto.source ?? 'MANUAL',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -94,6 +95,7 @@ describe('Compliance, Attendance & Reports E2E & Multi-Tenant Isolation', () => 
         hoursSpent: dto.hoursSpent ?? undefined,
         notes: dto.notes ?? undefined,
         isAutoLogged: dto.isAutoLogged ?? false,
+        source: dto.source ?? 'BULK_IMPORT',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }));
