@@ -21,6 +21,32 @@ export const dashboardActivitySchema = z.object({
 
 export type DashboardActivityDto = z.infer<typeof dashboardActivitySchema>;
 
+export const onboardingStepIdSchema = z.enum([
+  'create_learner',
+  'choose_curriculum',
+  'schedule_lesson',
+  'complete_first_activity',
+]);
+
+export type OnboardingStepId = z.infer<typeof onboardingStepIdSchema>;
+
+export const onboardingStepSchema = z.object({
+  id: onboardingStepIdSchema,
+  completed: z.boolean(),
+  actionUrl: z.string(),
+});
+
+export type OnboardingStepDto = z.infer<typeof onboardingStepSchema>;
+
+export const onboardingChecklistSchema = z.object({
+  dismissed: z.boolean(),
+  completedCount: z.number().int().min(0).max(4),
+  totalCount: z.literal(4),
+  steps: z.array(onboardingStepSchema).length(4),
+});
+
+export type OnboardingChecklistDto = z.infer<typeof onboardingChecklistSchema>;
+
 export const dashboardResponseSchema = z.object({
   date: dashboardDateSchema,
   family: z.object({
@@ -42,6 +68,7 @@ export const dashboardResponseSchema = z.object({
     daySequence: z.number().int().min(0),
   }),
   activities: z.array(dashboardActivitySchema),
+  onboarding: onboardingChecklistSchema.optional(),
 });
 
 export type DashboardResponseDto = z.infer<typeof dashboardResponseSchema>;

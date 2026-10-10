@@ -19,6 +19,7 @@ export const updateFamilySettingsSchema = z.object({
   inAppNotificationsEnabled: z.boolean().optional(),
   supportWidgetLastSeenAt: z.string().datetime().nullable().optional(),
   supportWidgetSnoozedUntil: z.string().datetime().nullable().optional(),
+  onboardingDismissed: z.boolean().optional(),
 });
 
 export type UpdateFamilySettingsDto = z.infer<typeof updateFamilySettingsSchema>;
@@ -37,6 +38,7 @@ export const familySettingsResponseSchema = z.object({
   inAppNotificationsEnabled: z.boolean(),
   supportWidgetLastSeenAt: z.string().nullable(),
   supportWidgetSnoozedUntil: z.string().nullable(),
+  onboardingDismissed: z.boolean().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
