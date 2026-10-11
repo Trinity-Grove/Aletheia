@@ -14,6 +14,7 @@ export interface FamilySettingsProps {
   inAppNotificationsEnabled: boolean;
   supportWidgetLastSeenAt?: Date | null | undefined;
   supportWidgetSnoozedUntil?: Date | null | undefined;
+  onboardingDismissed?: boolean | undefined;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -73,6 +74,10 @@ export class FamilySettingsEntity {
     return this.props.supportWidgetSnoozedUntil;
   }
 
+  get onboardingDismissed(): boolean {
+    return this.props.onboardingDismissed ?? false;
+  }
+
   get createdAt(): Date {
     return this.props.createdAt;
   }
@@ -96,6 +101,7 @@ export class FamilySettingsEntity {
       inAppNotificationsEnabled: this.inAppNotificationsEnabled,
       supportWidgetLastSeenAt: this.supportWidgetLastSeenAt?.toISOString() ?? null,
       supportWidgetSnoozedUntil: this.supportWidgetSnoozedUntil?.toISOString() ?? null,
+      onboardingDismissed: this.onboardingDismissed,
       createdAt: this.createdAt.toISOString(),
       updatedAt: this.updatedAt.toISOString(),
     };

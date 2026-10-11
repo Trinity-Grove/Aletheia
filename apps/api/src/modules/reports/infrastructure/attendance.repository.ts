@@ -3,6 +3,7 @@ import { PrismaService } from '../../../platform/database/prisma.service.js';
 import { AttendanceRecordEntity } from '../domain/attendance-record.entity.js';
 import type {
   AttendanceFilterDto,
+  AttendanceSource,
   BulkLogAttendanceDto,
   LogAttendanceDto,
 } from '@aletheia/contracts';
@@ -28,6 +29,7 @@ export class AttendanceRepository {
         hoursSpent: dto.hoursSpent ?? null,
         notes: dto.notes ?? null,
         isAutoLogged: dto.isAutoLogged ?? false,
+        source: dto.source ?? 'MANUAL',
       },
       create: {
         familyId,
@@ -38,6 +40,7 @@ export class AttendanceRepository {
         hoursSpent: dto.hoursSpent ?? null,
         notes: dto.notes ?? null,
         isAutoLogged: dto.isAutoLogged ?? false,
+        source: dto.source ?? 'MANUAL',
       },
       include: {
         learner: true,
@@ -59,6 +62,7 @@ export class AttendanceRepository {
         hoursSpent: dto.hoursSpent,
         notes: dto.notes,
         isAutoLogged: dto.isAutoLogged,
+        source: dto.source,
       });
       results.push(record);
     }
@@ -139,6 +143,7 @@ export class AttendanceRepository {
       row.createdAt,
       row.updatedAt,
       learnerName,
+      (row.source as AttendanceSource) ?? 'MANUAL',
     );
   }
 }

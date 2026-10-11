@@ -924,6 +924,7 @@ model AttendanceRecord {
   hoursSpent     Float?           @map("hours_spent")
   notes          String?
   isAutoLogged   Boolean          @default(false) @map("is_auto_logged")
+  source         String           @default("MANUAL") @db.VarChar(32)
   createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -1054,6 +1055,7 @@ model FamilySettings {
   inAppNotificationsEnabled Boolean      @default(true) @map("in_app_notifications_enabled")
   supportWidgetLastSeenAt   DateTime?    @map("support_widget_last_seen_at") @db.Timestamptz
   supportWidgetSnoozedUntil DateTime?    @map("support_widget_snoozed_until") @db.Timestamptz
+  onboardingDismissed       Boolean      @default(false)
   createdAt                 DateTime     @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                 DateTime     @updatedAt @map("updated_at") @db.Timestamptz
 

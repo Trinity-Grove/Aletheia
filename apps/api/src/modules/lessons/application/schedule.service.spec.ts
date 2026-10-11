@@ -229,4 +229,76 @@ describe('ScheduleService', () => {
       await moduleRef.close();
     });
   });
+
+  describe('hasSchedule', () => {
+    it('returns true when recurring schedule slots exist', async () => {
+      scheduleRepo.list.mockResolvedValue([mockSlotEntity()]);
+
+      const result = await service.hasSchedule(FAMILY_ID);
+
+      expect(result).toBe(true);
+      expect(scheduleRepo.list).toHaveBeenCalledWith(FAMILY_ID, {});
+    });
+
+    it('returns true when lesson plans exist even if routine slots are empty', async () => {
+      scheduleRepo.list.mockResolvedValue([]);
+      lessonPlanRepo.list.mockResolvedValue([mockLessonEntity()]);
+
+      const result = await service.hasSchedule(FAMILY_ID);
+
+      expect(result).toBe(true);
+      expect(lessonPlanRepo.list).toHaveBeenCalledWith(FAMILY_ID, {});
+    });
+
+    it('returns false when neither slots nor lesson plans exist', async () => {
+      scheduleRepo.list.mockResolvedValue([]);
+      lessonPlanRepo.list.mockResolvedValue([]);
+
+      const result = await service.hasSchedule(FAMILY_ID);
+
+      expect(result).toBe(false);
+    });
+
+    it('filters by learnerId when provided', async () => {
+      scheduleRepo.list.mockResolvedValue([mockSlotEntity()]);
+
+      const result = await service.hasSchedule(FAMILY_ID, LEARNER_ID);
+
+      expect(result).toBe(true);
+      expect(scheduleRepo.list).toHaveBeenCalledWith(FAMILY_ID, { learnerId: LEARNER_ID });
+    });
+  });
+
+  describe('hasCompletedLessons', () => {
+    it('returns true when completed lesson plans exist', async () => {
+      lessonPlanRepo.list.mockResolvedValue([mockLessonEntity({ status: 'COMPLETED' })]);
+
+      const result = await service.hasCompletedLessons(FAMILY_ID);
+
+      expect(result).toBe(true);
+      expect(lessonPlanRepo.list).toHaveBeenCalledWith(FAMILY_ID, { status: 'COMPLETED' });
+    });
+
+    it('returns false when no completed lesson plans exist', async () => {
+      lessonPlanRepo.list.mockResolvedValue([]);
+
+      const result = await service.hasCompletedLessons(FAMILY_ID);
+
+      expect(result).toBe(false);
+      expect(lessonPlanRepo.list).toHaveBeenCalledWith(FAMILY_ID, { status: 'COMPLETED' });
+    });
+
+    it('filters completed lesson plans by learnerId when provided', async () => {
+      lessonPlanRepo.list.mockResolvedValue([mockLessonEntity({ status: 'COMPLETED' })]);
+
+      const result = await service.hasCompletedLessons(FAMILY_ID, LEARNER_ID);
+
+      expect(result).toBe(true);
+      expect(lessonPlanRepo.list).toHaveBeenCalledWith(FAMILY_ID, {
+        status: 'COMPLETED',
+        learnerId: LEARNER_ID,
+      });
+    });
+  });
 });
+

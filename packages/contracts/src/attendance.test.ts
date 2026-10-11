@@ -133,6 +133,7 @@ describe('Attendance and Compliance Contracts', () => {
         hoursSpent: 4.5,
         notes: 'Aulas completadas com sucesso',
         isAutoLogged: false,
+        source: 'MANUAL' as const,
         createdAt: '2026-03-15T12:00:00.000Z',
         updatedAt: '2026-03-15T12:00:00.000Z',
       };
@@ -141,6 +142,7 @@ describe('Attendance and Compliance Contracts', () => {
       expect(parsed.id).toBe(ATTENDANCE_ID);
       expect(parsed.learnerName).toBe('Ester Sá');
       expect(parsed.hoursSpent).toBe(4.5);
+      expect(parsed.source).toBe('MANUAL');
     });
   });
 

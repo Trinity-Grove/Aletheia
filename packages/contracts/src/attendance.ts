@@ -11,6 +11,10 @@ export const attendanceStatusSchema = z.enum([
 
 export type AttendanceStatus = z.infer<typeof attendanceStatusSchema>;
 
+export const attendanceSourceSchema = z.enum(['MANUAL', 'AUTO_LESSON', 'BULK_IMPORT']);
+
+export type AttendanceSource = z.infer<typeof attendanceSourceSchema>;
+
 export const logAttendanceSchema = z.object({
   learnerId: z.string().uuid(),
   academicYearId: z.string().uuid().nullish(),
@@ -19,6 +23,7 @@ export const logAttendanceSchema = z.object({
   hoursSpent: z.number().min(0).max(24).nullish(),
   notes: z.string().nullish(),
   isAutoLogged: z.boolean().default(false),
+  source: attendanceSourceSchema.default('MANUAL'),
 });
 
 export type LogAttendanceDto = z.input<typeof logAttendanceSchema>;
@@ -32,6 +37,7 @@ export const bulkLogAttendanceSchema = z.object({
   hoursSpent: z.number().min(0).max(24).nullish(),
   notes: z.string().nullish(),
   isAutoLogged: z.boolean().default(false),
+  source: attendanceSourceSchema.default('BULK_IMPORT'),
 });
 
 export type BulkLogAttendanceDto = z.input<typeof bulkLogAttendanceSchema>;
@@ -58,6 +64,7 @@ export const attendanceResponseSchema = z.object({
   hoursSpent: z.number().nullable().optional(),
   notes: z.string().nullable().optional(),
   isAutoLogged: z.boolean(),
+  source: attendanceSourceSchema,
   createdAt: z.string(),
   updatedAt: z.string(),
 });

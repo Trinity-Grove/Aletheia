@@ -37,6 +37,7 @@ describe('FamilySettingsService', () => {
           attendanceReminderEnabled: true,
           emailNotificationsEnabled: true,
           inAppNotificationsEnabled: true,
+          onboardingDismissed: false,
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -76,6 +77,10 @@ describe('FamilySettingsService', () => {
             dto.inAppNotificationsEnabled !== undefined
               ? dto.inAppNotificationsEnabled
               : existing?.inAppNotificationsEnabled ?? true,
+          onboardingDismissed:
+            dto.onboardingDismissed !== undefined
+              ? dto.onboardingDismissed
+              : existing?.onboardingDismissed ?? false,
           createdAt: existing ? existing.createdAt : new Date(),
           updatedAt: new Date(),
         });
@@ -127,6 +132,7 @@ describe('FamilySettingsService', () => {
       expect(result.attendanceReminderEnabled).toBe(true);
       expect(result.emailNotificationsEnabled).toBe(true);
       expect(result.inAppNotificationsEnabled).toBe(true);
+      expect(result.onboardingDismissed).toBe(false);
     });
 
     it('returns existing settings when present', async () => {
@@ -161,6 +167,16 @@ describe('FamilySettingsService', () => {
       expect(updated.attendanceReminderEnabled).toBe(false);
       expect(updated.emailNotificationsEnabled).toBe(false);
       expect(updated.inAppNotificationsEnabled).toBe(true);
+    });
+
+    it('updates onboardingDismissed preference', async () => {
+      const updated = await service.updateSettings('fam-1', {
+        onboardingDismissed: true,
+      });
+
+      expect(updated.onboardingDismissed).toBe(true);
+      const fetched = await service.getSettings('fam-1');
+      expect(fetched.onboardingDismissed).toBe(true);
     });
 
     it('persists the widget cadence timestamps and reads them back, including the "sempre" sentinel', async () => {

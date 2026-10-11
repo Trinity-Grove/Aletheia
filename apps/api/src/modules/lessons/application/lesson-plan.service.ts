@@ -1,6 +1,7 @@
-import { Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { LessonPlanFilter, LessonPlanRepository } from '../infrastructure/lesson-plan.repository.js';
 import type {
+  AttendanceFilterDto,
   CompleteLessonDto,
   CreateLessonPlanDto,
   LessonPlanResponseDto,
@@ -11,16 +12,25 @@ import {
   LEARNING_RECORDS_PUBLIC_API,
   type LearningRecordsPublicApi,
 } from '../../records/application/public-api.js';
+import {
+  COMPLIANCE_REPORTS_PUBLIC_API,
+  type ComplianceReportsPublicApi,
+} from '../../reports/application/public-api.js';
 
 import type { LessonPlanPublicApi } from './public-api.js';
 
 @Injectable()
 export class LessonPlanService implements LessonPlanPublicApi {
+  private readonly logger = new Logger(LessonPlanService.name);
+
   constructor(
     private readonly lessonPlanRepo: LessonPlanRepository,
     @Optional()
     @Inject(LEARNING_RECORDS_PUBLIC_API)
     private readonly recordsApi?: LearningRecordsPublicApi,
+    @Optional()
+    @Inject(COMPLIANCE_REPORTS_PUBLIC_API)
+    private readonly complianceApi?: ComplianceReportsPublicApi,
   ) {}
 
   async createLessonPlan(familyId: string, dto: CreateLessonPlanDto): Promise<LessonPlanResponseDto> {
@@ -73,6 +83,7 @@ export class LessonPlanService implements LessonPlanPublicApi {
     }
     const response = updated.toResponseDto();
     await this.createDiaryRecordsForCompletion(familyId, response, dto, learnerId, completedAt);
+    await this.autoLogAttendanceForCompletion(familyId, response, learnerId, completedAt);
     return response;
   }
 
@@ -124,6 +135,51 @@ export class LessonPlanService implements LessonPlanPublicApi {
         objectiveIds,
         evidenceItemIds: [],
       });
+    }
+  }
+
+  private async autoLogAttendanceForCompletion(
+    familyId: string,
+    lesson: LessonPlanResponseDto,
+    learnerId: string | undefined,
+    completedAt: Date,
+  ): Promise<void> {
+    if (!this.complianceApi) return;
+
+    const targetLearnerIds = learnerId
+      ? [learnerId]
+      : (lesson as { learnerId?: string }).learnerId
+        ? [(lesson as { learnerId?: string }).learnerId!]
+        : lesson.learners.filter((l) => l.completed).map((l) => l.learnerId);
+
+    if (targetLearnerIds.length === 0) return;
+
+    const dateStr = completedAt.toISOString().slice(0, 10);
+
+    for (const targetLearnerId of targetLearnerIds) {
+      try {
+        const filter: AttendanceFilterDto & { date?: string } = {
+          learnerId: targetLearnerId,
+          startDate: dateStr,
+          endDate: dateStr,
+          date: dateStr,
+        };
+        const existingRecords = await this.complianceApi.listAttendance(familyId, filter);
+
+        if (existingRecords.length > 0) {
+          continue;
+        }
+
+        await this.complianceApi.logAttendance(familyId, {
+          learnerId: targetLearnerId,
+          date: dateStr,
+          status: 'PRESENT',
+          source: 'AUTO_LESSON',
+          notes: 'Presença registrada automaticamente pela conclusão da lição.',
+        });
+      } catch (error) {
+        this.logger.warn(`Falha ao registrar auto-frequência para lição ${lesson.id}: ${error}`);
+      }
     }
   }
 

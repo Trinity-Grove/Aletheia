@@ -28,4 +28,7 @@ export const SCHEDULE_PUBLIC_API = Symbol('SCHEDULE_PUBLIC_API');
 
 export interface SchedulePublicApi {
   getDailyAgenda(familyId: string, date: string, learnerId?: string): Promise<DailyAgendaDto>;
+  hasSchedule(familyId: string, learnerId?: string): Promise<boolean>;
+  hasCompletedLessons(familyId: string, learnerId?: string): Promise<boolean>;
 }
+

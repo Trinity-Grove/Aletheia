@@ -18,6 +18,8 @@ export interface CurriculumPublicApi {
   getCurrentAcademicYearWindow(
     familyId: string,
   ): Promise<{ startDate: Date; endDate: Date | null } | null>;
+
+  hasCurriculum(familyId: string, learnerId?: string): Promise<boolean>;
 }
 
 // Consumed by LearnerAccessModule (issue #34) to let a learner submit

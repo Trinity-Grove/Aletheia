@@ -74,6 +74,7 @@ describe('CurriculumService', () => {
 
     objectiveRepo = {
       create: jest.fn().mockResolvedValue({ id: 'o-1' }),
+      countObjectives: jest.fn().mockResolvedValue(0),
     };
 
     resolver = {
@@ -170,7 +171,47 @@ describe('CurriculumService', () => {
     ]);
     expect(rubricCatalogResolver.listPublishedCatalog).toHaveBeenCalledTimes(1);
   });
+
+  describe('hasCurriculum', () => {
+    it('returns true when objectives exist for the family', async () => {
+      objectiveRepo.countObjectives = jest.fn().mockResolvedValue(3);
+
+      const result = await service.hasCurriculum(FAMILY_ID);
+
+      expect(result).toBe(true);
+      expect(objectiveRepo.countObjectives).toHaveBeenCalledWith(FAMILY_ID, undefined);
+    });
+
+    it('returns true when subjects exist even if objectives count is zero', async () => {
+      objectiveRepo.countObjectives = jest.fn().mockResolvedValue(0);
+      curriculumRepo.listSubjects = jest.fn().mockResolvedValue([{ id: 's-1' }]);
+
+      const result = await service.hasCurriculum(FAMILY_ID);
+
+      expect(result).toBe(true);
+      expect(curriculumRepo.listSubjects).toHaveBeenCalledWith(FAMILY_ID);
+    });
+
+    it('returns false when neither objectives nor subjects exist', async () => {
+      objectiveRepo.countObjectives = jest.fn().mockResolvedValue(0);
+      curriculumRepo.listSubjects = jest.fn().mockResolvedValue([]);
+
+      const result = await service.hasCurriculum(FAMILY_ID);
+
+      expect(result).toBe(false);
+    });
+
+    it('passes learnerId to countObjectives when provided', async () => {
+      objectiveRepo.countObjectives = jest.fn().mockResolvedValue(1);
+
+      const result = await service.hasCurriculum(FAMILY_ID, LEARNER_ID);
+
+      expect(result).toBe(true);
+      expect(objectiveRepo.countObjectives).toHaveBeenCalledWith(FAMILY_ID, LEARNER_ID);
+    });
+  });
 });
+
 
 describe('published catalog application', () => {
   it('rejects unavailable definitions before any writes', async () => {
@@ -212,6 +253,7 @@ describe('published catalog application', () => {
     expect(repo.applyPublishedTemplate).toHaveBeenCalledWith('family', dto, definition, 'CUSTOM');
   });
 });
+
 
 describe('PedagogicalProfile-weighted applyTemplate (issue #95)', () => {
   const FAMILY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
@@ -303,3 +345,5 @@ describe('PedagogicalProfile-weighted applyTemplate (issue #95)', () => {
     expect(profilesService.getPedagogicalProfile).toHaveBeenCalledWith(FAMILY_ID);
   });
 });
+
+

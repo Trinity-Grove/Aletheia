@@ -243,6 +243,13 @@ export class CurriculumService implements CurriculumPublicApi {
     return { startDate: year.startDate, endDate: year.endDate };
   }
 
+  async hasCurriculum(familyId: string, learnerId?: string): Promise<boolean> {
+    const objectiveCount = await this.objectiveRepo.countObjectives(familyId, learnerId);
+    if (objectiveCount > 0) return true;
+    const subjects = await this.curriculumRepo.listSubjects(familyId);
+    return subjects.length > 0;
+  }
+
   private serializeYear(y: any): AcademicYearResponseDto {
     return {
       id: y.id,

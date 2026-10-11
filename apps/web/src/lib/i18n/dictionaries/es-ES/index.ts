@@ -22,6 +22,7 @@ import { invitations } from './invitations';
 import { landing } from './landing';
 import { shared } from './shared';
 import { showcase } from './showcase';
+import { dashboard } from './dashboard';
 
 export const esES: Dictionary = {
   common,
@@ -47,4 +48,5 @@ export const esES: Dictionary = {
   landing,
   shared,
   showcase,
+  dashboard,
 };

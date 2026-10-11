@@ -24,6 +24,10 @@ import {
   CURRICULUM_PUBLIC_API,
   type CurriculumPublicApi,
 } from '../src/modules/curriculum/application/public-api.js';
+import {
+  SETTINGS_PUBLIC_API,
+  type SettingsPublicApi,
+} from '../src/modules/settings/application/public-api.js';
 
 const FAMILY_A_ID = '00000000-0000-4000-8000-000000000001';
 const FAMILY_B_ID = '00000000-0000-4000-8000-000000000002';
@@ -132,6 +136,26 @@ describe('Family dashboard E2E', () => {
     // the documented "no current academic year" value (0).
     const curriculumApi = app.get<CurriculumPublicApi>(CURRICULUM_PUBLIC_API);
     jest.spyOn(curriculumApi, 'getCurrentAcademicYearWindow').mockResolvedValue(null);
+    jest.spyOn(curriculumApi, 'hasCurriculum').mockResolvedValue(true);
+    jest.spyOn(scheduleApi, 'hasSchedule').mockResolvedValue(true);
+    jest.spyOn(scheduleApi, 'hasCompletedLessons').mockResolvedValue(true);
+
+    const settingsApi = app.get<SettingsPublicApi>(SETTINGS_PUBLIC_API);
+    jest.spyOn(settingsApi, 'getSettings').mockResolvedValue({
+      id: '00000000-0000-4000-8000-000000000099',
+      familyId: FAMILY_A_ID,
+      defaultGradingScale: 'MASTERY_QUALITATIVE',
+      timezone: 'America/Sao_Paulo',
+      language: 'pt-BR',
+      attendanceReminderEnabled: true,
+      emailNotificationsEnabled: true,
+      inAppNotificationsEnabled: true,
+      supportWidgetLastSeenAt: null,
+      supportWidgetSnoozedUntil: null,
+      onboardingDismissed: false,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
 
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
@@ -180,6 +204,17 @@ describe('Family dashboard E2E', () => {
           type: 'lesson',
         },
       ],
+      onboarding: {
+        dismissed: false,
+        completedCount: 4,
+        totalCount: 4,
+        steps: [
+          { id: 'create_learner', completed: true, actionUrl: '/learners' },
+          { id: 'choose_curriculum', completed: true, actionUrl: '/curriculum' },
+          { id: 'schedule_lesson', completed: true, actionUrl: '/schedule' },
+          { id: 'complete_first_activity', completed: true, actionUrl: '/aluno/agenda' },
+        ],
+      },
     });
     expect(dashboardResponseSchema.safeParse(response.body).success).toBe(true);
   });

@@ -72,4 +72,11 @@ export const reports = {
     docIdPlaceholder: 'Ej.: 4ab4391b... (64 caracteres hexadecimales) o UUID del informe',
     legalDisclaimer: 'Aviso Legal:',
   },
+  attendance: {
+    source: {
+      autoLesson: 'Auto (Lección)',
+      manual: 'Manual',
+      bulk: 'Colectiva',
+    },
+  },
 } as const;

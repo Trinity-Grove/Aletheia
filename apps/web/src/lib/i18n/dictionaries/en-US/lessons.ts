@@ -171,4 +171,7 @@ export const lessons = {
     confirmDelete: 'Delete this routine block? This action cannot be undone.',
     addBlockDayBtn: '+ Add Block',
   },
+  completion: {
+    autoAttendanceNotice: 'Attendance automatically logged upon completion of this lesson.',
+  },
 } as const;
