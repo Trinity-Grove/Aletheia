@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import type { AttendanceResponseDto, LearnerSummaryDto } from '@aletheia/contracts';
 import { LocaleProvider } from '../src/lib/i18n/locale-context';
 import { AuthProvider } from '../src/lib/auth/rbac-context';
