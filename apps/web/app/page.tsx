@@ -14,6 +14,7 @@ import {
 } from '@aletheia/ui';
 import { ProductShell } from '../src/components/layout/product-shell';
 import { LearnerFocusHeader } from '../src/components/dashboard/learner-focus-header';
+import { GettingStartedCard } from '../src/components/dashboard/getting-started-card';
 import { useDashboard } from '../src/components/dashboard/use-dashboard';
 import { useDailyScripture } from '../src/components/dashboard/use-daily-scripture';
 import { PrivacyComplianceBanner } from '../src/components/settings/privacy-compliance-banner';
@@ -48,6 +49,7 @@ export default function HomePage() {
   })) as LearnerSummaryDto[];
 
   const [completionError, setCompletionError] = useState<string | null>(null);
+  const [isGettingStartedDismissed, setIsGettingStartedDismissed] = useState(false);
 
   useEffect(() => {
     if (status === 'loading') {
@@ -120,6 +122,17 @@ export default function HomePage() {
             </div>
           }
         />
+
+        {data?.onboarding &&
+        !data.onboarding.dismissed &&
+        data.onboarding.completedCount < 4 &&
+        !isGettingStartedDismissed ? (
+          <GettingStartedCard
+            checklist={data.onboarding}
+            familyId={data.family.id}
+            onDismiss={() => setIsGettingStartedDismissed(true)}
+          />
+        ) : null}
 
         {status === 'idle' && (
           <EmptyState
