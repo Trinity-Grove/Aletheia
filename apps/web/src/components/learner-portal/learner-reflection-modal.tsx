@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button, Checkbox, Modal, Select, Textarea } from '@aletheia/ui';
+import { AletheiaIcon, Button, Checkbox, Modal, Select, Textarea } from '@aletheia/ui';
 import { useLocale } from '../../lib/i18n/locale-context';
 import type { LessonReflectionData } from './types';
 
@@ -103,6 +103,27 @@ export function LearnerReflectionModal({
           <p style={{ margin: '0.25rem 0 0 0', fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>
             {lessonTitle}
           </p>
+        </div>
+
+        <div
+          data-testid="auto-attendance-notice"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.625rem',
+            backgroundColor: 'var(--color-emerald-50, #ecfdf5)',
+            border: '1px solid var(--color-emerald-200, #a7f3d0)',
+            color: 'var(--color-emerald-800, #065f46)',
+            padding: '0.625rem 0.875rem',
+            borderRadius: 'var(--radius-md)',
+            marginBottom: '1.25rem',
+            fontSize: '0.8125rem',
+            fontWeight: 500,
+            lineHeight: 1.4,
+          }}
+        >
+          <AletheiaIcon name="check" size={16} style={{ flexShrink: 0, color: 'var(--color-emerald-600, #059669)' }} />
+          <span>{t('lessons.completion.autoAttendanceNotice')}</span>
         </div>
 
         <form

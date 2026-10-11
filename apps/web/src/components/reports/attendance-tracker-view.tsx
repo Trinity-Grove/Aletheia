@@ -358,20 +358,16 @@ export function AttendanceTrackerView({
                         : '—'}
                     </td>
                     <td style={{ padding: '0.875rem 1rem', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                      {record.notes || '—'}
-                      {record.isAutoLogged && (
-                        <span
-                          style={{
-                            marginLeft: '0.5rem',
-                            fontSize: '0.6875rem',
-                            backgroundColor: 'var(--color-indigo-100)',
-                            color: 'var(--color-indigo-700)',
-                            padding: '0.125rem 0.375rem',
-                            borderRadius: 'var(--radius-sm)',
-                          }}
+                      <span>{record.notes || '—'}</span>
+                      {record.source === 'AUTO_LESSON' && (
+                        <Badge
+                          variant="indigo"
+                          size="sm"
+                          data-testid={`attendance-source-badge-${record.id}`}
+                          style={{ marginLeft: '0.5rem' }}
                         >
-                          Auto
-                        </span>
+                          {t('reports.attendance.source.autoLesson')}
+                        </Badge>
                       )}
                     </td>
                   </tr>
