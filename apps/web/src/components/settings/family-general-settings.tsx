@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { AletheiaIcon, Alert, Button, Card, Input, Select } from '@aletheia/ui';
+import { AletheiaIcon, Alert, Button, Card, Input, Select, Switch } from '@aletheia/ui';
 import type {
   FamilySettingsResponseDto,
   GradingScale,
@@ -67,6 +67,7 @@ export function FamilyGeneralSettings({
   const [timezone, setTimezone] = useState('America/Sao_Paulo');
   const [defaultGradingScale, setDefaultGradingScale] = useState<GradingScale>('MASTERY_QUALITATIVE');
   const [language, setLanguage] = useState('pt-BR');
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -77,6 +78,7 @@ export function FamilyGeneralSettings({
       setTimezone(settings.timezone || 'America/Sao_Paulo');
       setDefaultGradingScale(settings.defaultGradingScale || 'MASTERY_QUALITATIVE');
       setLanguage(settings.language || 'pt-BR');
+      setOnboardingDismissed(settings.onboardingDismissed ?? false);
     }
   }, [settings]);
 
@@ -92,6 +94,7 @@ export function FamilyGeneralSettings({
         timezone,
         defaultGradingScale,
         language,
+        onboardingDismissed,
       });
       if (language === 'pt-BR' || language === 'en-US' || language === 'es-ES') {
         setLocale(language as Locale);
@@ -208,6 +211,17 @@ export function FamilyGeneralSettings({
               <AletheiaIcon name="lightbulb" size={16} style={{ color: 'var(--color-amber-600)', flexShrink: 0 }} />
               <span>{GRADING_SCALES.find((s) => s.value === defaultGradingScale)?.description}</span>
             </div>
+          </div>
+
+          <div style={{ paddingTop: '0.5rem', borderTop: '1px solid var(--border-subtle)' }}>
+            <Switch
+              data-testid="tutorial-toggle"
+              label={t('settings.general.tutorialToggle.title')}
+              description={t('settings.general.tutorialToggle.description')}
+              checked={!onboardingDismissed}
+              onChange={(e) => setOnboardingDismissed(!e.target.checked)}
+              disabled={isLoading || isSaving || isReadOnly}
+            />
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
