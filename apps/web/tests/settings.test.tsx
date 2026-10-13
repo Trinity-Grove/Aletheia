@@ -163,6 +163,7 @@ describe('Settings Hub, Notification Center & Data Backup Web Components', () =>
           timezone: 'America/Manaus',
           defaultGradingScale: 'LETTER_A_F',
           language: 'en-US',
+          onboardingDismissed: false,
         });
       });
 

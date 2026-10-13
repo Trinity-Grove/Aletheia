@@ -617,6 +617,206 @@ describe('i18n (Issue #33: Internacionalização, Dicionários e Formatadores)',
       unmountEs();
     });
   });
+
+  describe('Tutorial Interativo Guiado & Autonomia de Onboarding (Task 1)', () => {
+    it('traduz chaves do tour guiado (welcome, steps, controls, startTourNav, nav.startTour) em pt-BR', () => {
+      render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="dashboard.tour.welcome.title" />
+            <Probe translationKey="dashboard.tour.welcome.subtitle" />
+            <Probe translationKey="dashboard.tour.welcome.start" />
+            <Probe translationKey="dashboard.tour.welcome.dismissNever" />
+            <Probe translationKey="dashboard.tour.steps.step1.title" />
+            <Probe translationKey="dashboard.tour.steps.step1.description" />
+            <Probe translationKey="dashboard.tour.steps.step2.title" />
+            <Probe translationKey="dashboard.tour.steps.step2.description" />
+            <Probe translationKey="dashboard.tour.steps.step3.title" />
+            <Probe translationKey="dashboard.tour.steps.step3.description" />
+            <Probe translationKey="dashboard.tour.steps.step4.title" />
+            <Probe translationKey="dashboard.tour.steps.step4.description" />
+            <Probe translationKey="dashboard.tour.steps.step5.title" />
+            <Probe translationKey="dashboard.tour.steps.step5.description" />
+            <Probe translationKey="dashboard.tour.controls.next" />
+            <Probe translationKey="dashboard.tour.controls.prev" />
+            <Probe translationKey="dashboard.tour.controls.skip" />
+            <Probe translationKey="dashboard.tour.controls.finish" />
+            <Probe translationKey="dashboard.tour.controls.stepIndicator" vars={{ current: 1, total: 5 }} />
+            <Probe translationKey="dashboard.tour.startTourNav" />
+            <Probe translationKey="nav.startTour" />
+          </div>
+        </LocaleProvider>
+      );
+
+      expect(screen.getByText('Bem-vindo ao Aletheia!')).toBeInTheDocument();
+      expect(screen.getByText('Gostaria de um tour guiado rápido pelas principais ferramentas do sistema?')).toBeInTheDocument();
+      expect(screen.getByText('Iniciar Tour Guiado (3 min)')).toBeInTheDocument();
+      expect(screen.getByText('Pular e não ver mais')).toBeInTheDocument();
+      expect(screen.getByText('Navegação & Módulos')).toBeInTheDocument();
+      expect(screen.getByText('Acesse Educandos, Currículo, Agenda semanal, Diário de Aprendizagem, Portfólio fotográfico e Relatórios estruturados.')).toBeInTheDocument();
+      expect(screen.getByText('Foco do Educando')).toBeInTheDocument();
+      expect(screen.getByText('Alterne facilmente entre o acompanhamento de cada filho individualmente ou veja a visão consolidada de toda a família.')).toBeInTheDocument();
+      expect(screen.getByText('Versículo & Devocional')).toBeInTheDocument();
+      expect(screen.getByText('Inspiração espiritual diária com registros de orações e reflexões bíblicas da família.')).toBeInTheDocument();
+      expect(screen.getByText('Jornada & Atividades')).toBeInTheDocument();
+      expect(screen.getByText('Acompanhe o tempo de instrução em tempo real e conclua lições com registro reflexivo.')).toBeInTheDocument();
+      expect(screen.getByText('Tudo Pronto para Começar!')).toBeInTheDocument();
+      expect(screen.getByText('Você conheceu os principais pontos do Aletheia. Parabéns pelo início desta jornada educativa!')).toBeInTheDocument();
+      expect(screen.getByText('Próximo')).toBeInTheDocument();
+      expect(screen.getByText('Anterior')).toBeInTheDocument();
+      expect(screen.getByText('Pular e sair')).toBeInTheDocument();
+      expect(screen.getByText('Concluir Tour')).toBeInTheDocument();
+      expect(screen.getByText('Passo 1 de 5')).toBeInTheDocument();
+      expect(screen.getAllByText('Fazer Tour pelo Sistema').length).toBe(2);
+    });
+
+    it('traduz chaves do tour guiado em en-US', () => {
+      localStorage.setItem('aletheia_locale', 'en-US');
+      render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="dashboard.tour.welcome.title" />
+            <Probe translationKey="dashboard.tour.welcome.subtitle" />
+            <Probe translationKey="dashboard.tour.welcome.start" />
+            <Probe translationKey="dashboard.tour.welcome.dismissNever" />
+            <Probe translationKey="dashboard.tour.steps.step1.title" />
+            <Probe translationKey="dashboard.tour.steps.step1.description" />
+            <Probe translationKey="dashboard.tour.steps.step2.title" />
+            <Probe translationKey="dashboard.tour.steps.step2.description" />
+            <Probe translationKey="dashboard.tour.steps.step3.title" />
+            <Probe translationKey="dashboard.tour.steps.step3.description" />
+            <Probe translationKey="dashboard.tour.steps.step4.title" />
+            <Probe translationKey="dashboard.tour.steps.step4.description" />
+            <Probe translationKey="dashboard.tour.steps.step5.title" />
+            <Probe translationKey="dashboard.tour.steps.step5.description" />
+            <Probe translationKey="dashboard.tour.controls.next" />
+            <Probe translationKey="dashboard.tour.controls.prev" />
+            <Probe translationKey="dashboard.tour.controls.skip" />
+            <Probe translationKey="dashboard.tour.controls.finish" />
+            <Probe translationKey="dashboard.tour.controls.stepIndicator" vars={{ current: 2, total: 5 }} />
+            <Probe translationKey="dashboard.tour.startTourNav" />
+            <Probe translationKey="nav.startTour" />
+          </div>
+        </LocaleProvider>
+      );
+
+      expect(screen.getByText('Welcome to Aletheia!')).toBeInTheDocument();
+      expect(screen.getByText('Would you like a quick guided tour of the system’s main features?')).toBeInTheDocument();
+      expect(screen.getByText('Start Guided Tour (3 min)')).toBeInTheDocument();
+      expect(screen.getByText("Skip and don't show again")).toBeInTheDocument();
+      expect(screen.getByText('Navigation & Modules')).toBeInTheDocument();
+      expect(screen.getByText('Access Learners, Curriculum, Weekly Schedule, Learning Journal, Photographic Portfolio, and Structured Reports.')).toBeInTheDocument();
+      expect(screen.getByText('Learner Focus')).toBeInTheDocument();
+      expect(screen.getByText('Easily switch between tracking each child individually or viewing the consolidated family overview.')).toBeInTheDocument();
+      expect(screen.getByText('Scripture & Devotional')).toBeInTheDocument();
+      expect(screen.getByText('Daily spiritual inspiration with prayer records and family biblical reflections.')).toBeInTheDocument();
+      expect(screen.getByText('Daily Journey & Activities')).toBeInTheDocument();
+      expect(screen.getByText('Track instruction time in real time and complete lessons with reflective records.')).toBeInTheDocument();
+      expect(screen.getByText('All Set to Begin!')).toBeInTheDocument();
+      expect(screen.getByText("You've explored the main highlights of Aletheia. Congratulations on beginning this educational journey!")).toBeInTheDocument();
+      expect(screen.getByText('Next')).toBeInTheDocument();
+      expect(screen.getByText('Previous')).toBeInTheDocument();
+      expect(screen.getByText('Skip and exit')).toBeInTheDocument();
+      expect(screen.getByText('Finish Tour')).toBeInTheDocument();
+      expect(screen.getByText('Step 2 of 5')).toBeInTheDocument();
+      expect(screen.getAllByText('Take System Tour').length).toBe(2);
+    });
+
+    it('traduz chaves do tour guiado em es-ES', () => {
+      localStorage.setItem('aletheia_locale', 'es-ES');
+      render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="dashboard.tour.welcome.title" />
+            <Probe translationKey="dashboard.tour.welcome.subtitle" />
+            <Probe translationKey="dashboard.tour.welcome.start" />
+            <Probe translationKey="dashboard.tour.welcome.dismissNever" />
+            <Probe translationKey="dashboard.tour.steps.step1.title" />
+            <Probe translationKey="dashboard.tour.steps.step1.description" />
+            <Probe translationKey="dashboard.tour.steps.step2.title" />
+            <Probe translationKey="dashboard.tour.steps.step2.description" />
+            <Probe translationKey="dashboard.tour.steps.step3.title" />
+            <Probe translationKey="dashboard.tour.steps.step3.description" />
+            <Probe translationKey="dashboard.tour.steps.step4.title" />
+            <Probe translationKey="dashboard.tour.steps.step4.description" />
+            <Probe translationKey="dashboard.tour.steps.step5.title" />
+            <Probe translationKey="dashboard.tour.steps.step5.description" />
+            <Probe translationKey="dashboard.tour.controls.next" />
+            <Probe translationKey="dashboard.tour.controls.prev" />
+            <Probe translationKey="dashboard.tour.controls.skip" />
+            <Probe translationKey="dashboard.tour.controls.finish" />
+            <Probe translationKey="dashboard.tour.controls.stepIndicator" vars={{ current: 3, total: 5 }} />
+            <Probe translationKey="dashboard.tour.startTourNav" />
+            <Probe translationKey="nav.startTour" />
+          </div>
+        </LocaleProvider>
+      );
+
+      expect(screen.getByText('¡Bienvenido a Aletheia!')).toBeInTheDocument();
+      expect(screen.getByText('¿Desea un recorrido guiado rápido por las principales herramientas del sistema?')).toBeInTheDocument();
+      expect(screen.getByText('Iniciar Tour Guiado (3 min)')).toBeInTheDocument();
+      expect(screen.getByText('Omitir y no volver a mostrar')).toBeInTheDocument();
+      expect(screen.getByText('Navegación y Módulos')).toBeInTheDocument();
+      expect(screen.getByText('Acceda a Educandos, Currículo, Horario semanal, Diario de Aprendizaje, Portafolio fotográfico e Informes estructurados.')).toBeInTheDocument();
+      expect(screen.getByText('Enfoque del Educando')).toBeInTheDocument();
+      expect(screen.getByText('Alterne fácilmente entre el seguimiento individual de cada hijo o consulte la vista consolidada de toda la familia.')).toBeInTheDocument();
+      expect(screen.getByText('Versículo y Devocional')).toBeInTheDocument();
+      expect(screen.getByText('Inspiración espiritual diaria con registros de oraciones y reflexiones bíblicas familiares.')).toBeInTheDocument();
+      expect(screen.getByText('Jornada y Actividades')).toBeInTheDocument();
+      expect(screen.getByText('Monitoree el tiempo de instrucción en tiempo real y complete lecciones con registro reflexivo.')).toBeInTheDocument();
+      expect(screen.getByText('¡Todo Listo para Empezar!')).toBeInTheDocument();
+      expect(screen.getByText('Ha explorado los puntos principales de Aletheia. ¡Felicitaciones por comenzar este viaje educativo!')).toBeInTheDocument();
+      expect(screen.getByText('Siguiente')).toBeInTheDocument();
+      expect(screen.getByText('Anterior')).toBeInTheDocument();
+      expect(screen.getByText('Saltar y salir')).toBeInTheDocument();
+      expect(screen.getByText('Completar Tour')).toBeInTheDocument();
+      expect(screen.getByText('Paso 3 de 5')).toBeInTheDocument();
+      expect(screen.getAllByText('Hacer Tour por el Sistema').length).toBe(2);
+    });
+
+    it('traduz chaves de configurações settings.general.tutorialToggle em pt-BR, en-US e es-ES', () => {
+      // pt-BR
+      const { unmount: unmountPt } = render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="settings.general.tutorialToggle.title" />
+            <Probe translationKey="settings.general.tutorialToggle.description" />
+          </div>
+        </LocaleProvider>
+      );
+      expect(screen.getByText('Tutorial de Primeiros Passos')).toBeInTheDocument();
+      expect(screen.getByText('Exibir tour interativo guiado pelas principais ferramentas do sistema.')).toBeInTheDocument();
+      unmountPt();
+
+      // en-US
+      localStorage.setItem('aletheia_locale', 'en-US');
+      const { unmount: unmountEn } = render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="settings.general.tutorialToggle.title" />
+            <Probe translationKey="settings.general.tutorialToggle.description" />
+          </div>
+        </LocaleProvider>
+      );
+      expect(screen.getByText('Getting Started Tutorial')).toBeInTheDocument();
+      expect(screen.getByText("Display an interactive guided tour of the system's main tools.")).toBeInTheDocument();
+      unmountEn();
+
+      // es-ES
+      localStorage.setItem('aletheia_locale', 'es-ES');
+      const { unmount: unmountEs } = render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="settings.general.tutorialToggle.title" />
+            <Probe translationKey="settings.general.tutorialToggle.description" />
+          </div>
+        </LocaleProvider>
+      );
+      expect(screen.getByText('Tutorial de Primeros Pasos')).toBeInTheDocument();
+      expect(screen.getByText('Mostrar recorrido guiado interactivo por las principales herramientas del sistema.')).toBeInTheDocument();
+      unmountEs();
+    });
+  });
 });
 
 describe('Guardrails de Integridade Estrutural e Paridade de Dicionários', () => {

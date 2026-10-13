@@ -8,6 +8,7 @@ import {
   AppShell,
   Breadcrumbs,
   BrandMark,
+  Button,
   EmptyState,
   IconButton,
   type BreadcrumbItem,
@@ -142,6 +143,7 @@ export interface ProductShellProps {
   unreadCount?: number | undefined;
   onMarkNotificationAsRead?(id: string): Promise<void>;
   onMarkAllNotificationsAsRead?(): Promise<void>;
+  onStartTour?(): void;
   user?: UserProfileSummary | undefined;
   familyId?: string | null | undefined;
   currentPath?: string | undefined;
@@ -156,6 +158,7 @@ export function ProductShell({
   unreadCount = 0,
   onMarkNotificationAsRead,
   onMarkAllNotificationsAsRead,
+  onStartTour,
   user,
   familyId,
   currentPath,
@@ -201,6 +204,19 @@ export function ProductShell({
 
   const topbarActions = (
     <div className="product-shell-topbar-actions">
+      {onStartTour !== undefined && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="start-tour-btn"
+          onClick={onStartTour}
+          leftIcon={<AletheiaIcon name="compass" size={16} />}
+        >
+          <span className="hidden sm:inline">{t('nav.startTour')}</span>
+        </Button>
+      )}
+
       {learners !== undefined && onSelectLearner !== undefined && (
         <LearnerFocusSwitcher
           learners={learners}

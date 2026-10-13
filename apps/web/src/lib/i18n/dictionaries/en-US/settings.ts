@@ -61,6 +61,10 @@ export const settings = {
     languageLabel: 'System Language',
     pedagogicalFrameworkLabel:
       'Pedagogical Framework & Standard Grading Scale',
+    tutorialToggle: {
+      title: 'Getting Started Tutorial',
+      description: "Display an interactive guided tour of the system's main tools.",
+    },
   },
   members: {
     emailLabel: 'Email',

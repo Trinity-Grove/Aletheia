@@ -27,4 +27,42 @@ export const dashboard = {
       },
     },
   },
+  tour: {
+    welcome: {
+      title: 'Bem-vindo ao Aletheia!',
+      subtitle: 'Gostaria de um tour guiado rápido pelas principais ferramentas do sistema?',
+      start: 'Iniciar Tour Guiado (3 min)',
+      dismissNever: 'Pular e não ver mais',
+    },
+    steps: {
+      step1: {
+        title: 'Navegação & Módulos',
+        description: 'Acesse Educandos, Currículo, Agenda semanal, Diário de Aprendizagem, Portfólio fotográfico e Relatórios estruturados.',
+      },
+      step2: {
+        title: 'Foco do Educando',
+        description: 'Alterne facilmente entre o acompanhamento de cada filho individualmente ou veja a visão consolidada de toda a família.',
+      },
+      step3: {
+        title: 'Versículo & Devocional',
+        description: 'Inspiração espiritual diária com registros de orações e reflexões bíblicas da família.',
+      },
+      step4: {
+        title: 'Jornada & Atividades',
+        description: 'Acompanhe o tempo de instrução em tempo real e conclua lições com registro reflexivo.',
+      },
+      step5: {
+        title: 'Tudo Pronto para Começar!',
+        description: 'Você conheceu os principais pontos do Aletheia. Parabéns pelo início desta jornada educativa!',
+      },
+    },
+    controls: {
+      next: 'Próximo',
+      prev: 'Anterior',
+      skip: 'Pular e sair',
+      finish: 'Concluir Tour',
+      stepIndicator: 'Passo {current} de {total}',
+    },
+    startTourNav: 'Fazer Tour pelo Sistema',
+  },
 } as const;

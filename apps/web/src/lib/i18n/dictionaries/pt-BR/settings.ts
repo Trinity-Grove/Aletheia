@@ -61,6 +61,10 @@ export const settings = {
     languageLabel: 'Idioma do Sistema',
     pedagogicalFrameworkLabel:
       'Estrutura Pedagógica & Escala de Avaliação Padrão',
+    tutorialToggle: {
+      title: 'Tutorial de Primeiros Passos',
+      description: 'Exibir tour interativo guiado pelas principais ferramentas do sistema.',
+    },
   },
   members: {
     emailLabel: 'E-mail',

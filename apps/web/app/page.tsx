@@ -14,7 +14,7 @@ import {
 } from '@aletheia/ui';
 import { ProductShell } from '../src/components/layout/product-shell';
 import { LearnerFocusHeader } from '../src/components/dashboard/learner-focus-header';
-import { GettingStartedCard } from '../src/components/dashboard/getting-started-card';
+import { WelcomeTourDialog, GuidedTour } from '../src/components/dashboard';
 import { useDashboard } from '../src/components/dashboard/use-dashboard';
 import { useDailyScripture } from '../src/components/dashboard/use-daily-scripture';
 import { PrivacyComplianceBanner } from '../src/components/settings/privacy-compliance-banner';
@@ -49,7 +49,44 @@ export default function HomePage() {
   })) as LearnerSummaryDto[];
 
   const [completionError, setCompletionError] = useState<string | null>(null);
-  const [isGettingStartedDismissed, setIsGettingStartedDismissed] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(false);
+  const [isWelcomeDismissed, setIsWelcomeDismissed] = useState(false);
+
+  const handleTourComplete = async () => {
+    const familyId = data?.family.id;
+    if (familyId) {
+      try {
+        await fetch(`/api/v1/families/${encodeURIComponent(familyId)}/settings`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ onboardingDismissed: true }),
+        });
+      } catch {
+        // Non-fatal if offline/error
+      }
+
+      if (data.learners.length > 0) {
+        const targetLearnerId = activeLearnerId ?? data.learners[0]?.id;
+        if (targetLearnerId) {
+          try {
+            await fetch(
+              `/api/v1/gamification/families/${encodeURIComponent(familyId)}/learners/${encodeURIComponent(targetLearnerId)}/badges/acknowledge`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ badgeCodes: ['FIRST_STEP'] }),
+              },
+            );
+          } catch {
+            // Non-fatal if offline/error
+          }
+        }
+      }
+    }
+    setIsTourOpen(false);
+  };
 
   useEffect(() => {
     if (status === 'loading') {
@@ -102,6 +139,7 @@ export default function HomePage() {
       learners={shellLearners}
       activeLearnerId={activeLearnerId}
       onSelectLearner={setActiveLearnerId}
+      onStartTour={() => setIsTourOpen(true)}
     >
       <div className="dashboard-page">
         <PrivacyComplianceBanner />
@@ -123,16 +161,24 @@ export default function HomePage() {
           }
         />
 
-        {data?.onboarding &&
-        !data.onboarding.dismissed &&
-        data.onboarding.completedCount < 4 &&
-        !isGettingStartedDismissed ? (
-          <GettingStartedCard
-            checklist={data.onboarding}
-            familyId={data.family.id}
-            onDismiss={() => setIsGettingStartedDismissed(true)}
+        {Boolean(data?.onboarding && !data.onboarding.dismissed && !isWelcomeDismissed) && (
+          <WelcomeTourDialog
+            isOpen={true}
+            familyId={data?.family.id ?? ''}
+            onStartTour={() => {
+              setIsWelcomeDismissed(true);
+              setIsTourOpen(true);
+            }}
+            onDismiss={() => setIsWelcomeDismissed(true)}
           />
-        ) : null}
+        )}
+
+        <GuidedTour
+          isOpen={isTourOpen}
+          familyId={data?.family.id ?? ''}
+          onSkip={() => setIsTourOpen(false)}
+          onComplete={handleTourComplete}
+        />
 
         {status === 'idle' && (
           <EmptyState
