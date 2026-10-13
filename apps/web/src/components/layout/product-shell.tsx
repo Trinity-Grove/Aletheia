@@ -213,7 +213,7 @@ export function ProductShell({
           onClick={onStartTour}
           leftIcon={<AletheiaIcon name="compass" size={16} />}
         >
-          {t('nav.startTour')}
+          <span className="hidden sm:inline">{t('nav.startTour')}</span>
         </Button>
       )}
 

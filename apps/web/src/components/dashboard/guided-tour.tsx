@@ -153,6 +153,9 @@ export function GuidedTour({
       if (top + 280 > window.innerHeight && targetRect.top - 280 > margin) {
         top = Math.max(margin, targetRect.top - 280 - margin);
       }
+      if (window.innerHeight > 300) {
+        top = Math.max(margin, Math.min(top, window.innerHeight - 280 - margin));
+      }
       if (left + cardWidth > window.innerWidth - margin) {
         left = Math.max(margin, window.innerWidth - cardWidth - margin);
       }
@@ -182,24 +185,28 @@ export function GuidedTour({
       data-testid="guided-tour"
       className="fixed inset-0 z-50 pointer-events-none"
     >
-      {isFallback && (
+      {isFallback ? (
         <div
           data-testid="tour-backdrop"
           className="fixed inset-0 bg-stone-900/65 backdrop-blur-sm pointer-events-auto"
         />
-      )}
-
-      {!isFallback && (
-        <div
-          data-testid="tour-spotlight-highlight"
-          className="fixed z-40 rounded-lg pointer-events-none transition-all duration-300 ring-2 ring-amber-500/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.65)]"
-          style={{
-            top: Math.max(0, targetRect ? targetRect.top - 6 : 0),
-            left: Math.max(0, targetRect ? targetRect.left - 6 : 0),
-            width: (targetRect ? targetRect.width : 0) + 12,
-            height: (targetRect ? targetRect.height : 0) + 12,
-          }}
-        />
+      ) : (
+        <>
+          <div
+            data-testid="tour-backdrop"
+            className="fixed inset-0 pointer-events-auto z-30"
+          />
+          <div
+            data-testid="tour-spotlight-highlight"
+            className="fixed z-40 rounded-lg pointer-events-none transition-all duration-300 ring-2 ring-amber-500/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.65)]"
+            style={{
+              top: Math.max(0, targetRect ? targetRect.top - 6 : 0),
+              left: Math.max(0, targetRect ? targetRect.left - 6 : 0),
+              width: (targetRect ? targetRect.width : 0) + 12,
+              height: (targetRect ? targetRect.height : 0) + 12,
+            }}
+          />
+        </>
       )}
 
       <div

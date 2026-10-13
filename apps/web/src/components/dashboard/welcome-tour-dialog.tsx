@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AletheiaIcon, Button } from '@aletheia/ui';
 import { useLocale } from '../../lib/i18n/locale-context';
 
@@ -19,6 +19,21 @@ export function WelcomeTourDialog({
 }: WelcomeTourDialogProps) {
   const { t } = useLocale();
   const [isDismissing, setIsDismissing] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onDismiss();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onDismiss]);
 
   if (!isOpen) {
     return null;

@@ -148,6 +148,26 @@ describe('WelcomeTourDialog', () => {
     expect(onStartTour).not.toHaveBeenCalled();
   });
 
+  it('permite fechar via tecla Escape disparando onDismiss', () => {
+    const onStartTour = vi.fn();
+    const onDismiss = vi.fn();
+
+    render(
+      <LocaleProvider>
+        <WelcomeTourDialog
+          familyId={FAMILY_ID}
+          isOpen={true}
+          onStartTour={onStartTour}
+          onDismiss={onDismiss}
+        />
+      </LocaleProvider>
+    );
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    expect(onStartTour).not.toHaveBeenCalled();
+  });
+
   it('renderiza textos traduzidos sob LocaleProvider em en-US e es-ES', () => {
     const onStartTour = vi.fn();
     const onDismiss = vi.fn();
