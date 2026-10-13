@@ -145,30 +145,39 @@ export function GuidedTour({
       return {};
     }
     const margin = 16;
-    const cardWidth = 420;
+    const cardWidth = 440;
+    const cardHeight = 260;
     let top = targetRect.bottom + margin;
     let left = targetRect.left;
 
     if (typeof window !== 'undefined') {
-      if (top + 280 > window.innerHeight && targetRect.top - 280 > margin) {
-        top = Math.max(margin, targetRect.top - 280 - margin);
+      const isSidebar = targetRect.left < 260 && targetRect.right <= 320;
+      const isNearRight = targetRect.right > window.innerWidth - 300;
+
+      if (isSidebar) {
+        left = targetRect.right + margin;
+        top = Math.max(margin, Math.min(targetRect.top + 20, window.innerHeight - cardHeight - margin));
+      } else if (isNearRight) {
+        left = Math.max(margin, targetRect.right - cardWidth);
+        top = targetRect.bottom + margin;
+      } else {
+        left = Math.max(margin, Math.min(targetRect.left, window.innerWidth - cardWidth - margin));
+        top = targetRect.bottom + margin;
       }
-      if (window.innerHeight > 300) {
-        top = Math.max(margin, Math.min(top, window.innerHeight - 280 - margin));
+
+      if (!isSidebar && top + cardHeight > window.innerHeight && targetRect.top - cardHeight > margin) {
+        top = Math.max(margin, targetRect.top - cardHeight - margin);
       }
-      if (left + cardWidth > window.innerWidth - margin) {
-        left = Math.max(margin, window.innerWidth - cardWidth - margin);
-      }
-      if (left < margin) {
-        left = margin;
-      }
+
+      top = Math.max(margin, Math.min(top, window.innerHeight - cardHeight - margin));
+      left = Math.max(margin, Math.min(left, window.innerWidth - cardWidth - margin));
     }
 
     return {
       position: 'fixed',
       top: `${top}px`,
       left: `${left}px`,
-      maxWidth: 'min(420px, calc(100vw - 32px))',
+      maxWidth: 'min(440px, calc(100vw - 32px))',
     };
   }, [isFallback, targetRect]);
 
@@ -183,22 +192,22 @@ export function GuidedTour({
       aria-labelledby="tour-step-title"
       aria-describedby="tour-step-description"
       data-testid="guided-tour"
-      className="fixed inset-0 z-50 pointer-events-none"
+      className="guided-tour-root"
     >
       {isFallback ? (
         <div
           data-testid="tour-backdrop"
-          className="fixed inset-0 bg-stone-900/65 backdrop-blur-sm pointer-events-auto"
+          className="guided-tour-backdrop guided-tour-backdrop--fallback"
         />
       ) : (
         <>
           <div
             data-testid="tour-backdrop"
-            className="fixed inset-0 pointer-events-auto z-30"
+            className="guided-tour-backdrop"
           />
           <div
             data-testid="tour-spotlight-highlight"
-            className="fixed z-40 rounded-lg pointer-events-none transition-all duration-300 ring-2 ring-amber-500/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.65)]"
+            className="guided-tour-spotlight"
             style={{
               top: Math.max(0, targetRect ? targetRect.top - 6 : 0),
               left: Math.max(0, targetRect ? targetRect.left - 6 : 0),
@@ -210,11 +219,11 @@ export function GuidedTour({
       )}
 
       <div
-        className={`fixed z-50 pointer-events-auto ${
+        className={
           isFallback || !targetRect || targetRect.width === 0
-            ? 'inset-0 flex items-center justify-center p-4'
-            : ''
-        }`}
+            ? 'guided-tour-card-container guided-tour-card-container--centered'
+            : 'guided-tour-card-container'
+        }
         style={
           !isFallback && targetRect && targetRect.width > 0
             ? tooltipStyle
@@ -224,12 +233,12 @@ export function GuidedTour({
         <div
           data-testid="tour-card"
           data-fallback={isFallback ? 'true' : 'false'}
-          className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-stone-200 dark:bg-stone-900 dark:border-stone-800 transition-all"
+          className="guided-tour-card"
         >
-          <div className="flex items-center justify-between gap-2">
+          <div className="guided-tour-header">
             <span
               data-testid="tour-step-indicator"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300"
+              className="guided-tour-indicator"
             >
               <AletheiaIcon name="compass" size="sm" aria-hidden={true} />
               {t('dashboard.tour.controls.stepIndicator', {
@@ -243,70 +252,70 @@ export function GuidedTour({
               onClick={handleSkip}
               aria-label={t('dashboard.tour.controls.skip')}
               data-testid="tour-close-btn"
-              className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 p-1 rounded-lg transition-colors"
+              className="guided-tour-close-btn"
             >
               <AletheiaIcon name="x" size="sm" aria-hidden={true} />
             </button>
           </div>
 
           {isLastStep ? (
-            <div className="mt-4 flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400">
+            <div className="guided-tour-celebrate-wrap">
+              <div className="guided-tour-celebrate-icon">
                 <AletheiaIcon name="sparkles" size="md" aria-hidden={true} />
               </div>
               <div>
                 <h3
                   id="tour-step-title"
                   data-testid="tour-step-title"
-                  className="text-lg font-bold font-serif text-stone-900 dark:text-stone-100"
+                  className="guided-tour-title"
                 >
                   {t(currentStep.titleKey)}
                 </h3>
                 <p
                   id="tour-step-description"
                   data-testid="tour-step-description"
-                  className="mt-2 text-sm text-stone-600 dark:text-stone-300 leading-relaxed"
+                  className="guided-tour-description"
                 >
                   {t(currentStep.descriptionKey)}
                 </p>
               </div>
             </div>
           ) : (
-            <div className="mt-4">
+            <div>
               <h3
                 id="tour-step-title"
                 data-testid="tour-step-title"
-                className="text-lg font-bold font-serif text-stone-900 dark:text-stone-100"
+                className="guided-tour-title"
               >
                 {t(currentStep.titleKey)}
               </h3>
               <p
                 id="tour-step-description"
                 data-testid="tour-step-description"
-                className="mt-2 text-sm text-stone-600 dark:text-stone-300 leading-relaxed"
+                className="guided-tour-description"
               >
                 {t(currentStep.descriptionKey)}
               </p>
             </div>
           )}
 
-          <div className="mt-6 flex items-center justify-between gap-3 pt-4 border-t border-stone-100 dark:border-stone-800">
+          <div className="guided-tour-footer">
             <Button
               variant="ghost"
               onClick={handleSkip}
               data-testid="tour-skip-btn"
-              className="text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200 text-xs sm:text-sm"
+              size="sm"
             >
               {t('dashboard.tour.controls.skip')}
             </Button>
 
-            <div className="flex items-center gap-2">
+            <div className="guided-tour-controls">
               <Button
                 variant="secondary"
                 onClick={handlePrev}
                 disabled={currentStepIndex === 0}
                 data-testid="tour-prev-btn"
-                className="text-xs sm:text-sm"
+                size="sm"
               >
                 {t('dashboard.tour.controls.prev')}
               </Button>
@@ -316,7 +325,7 @@ export function GuidedTour({
                   variant="primary"
                   onClick={handleNext}
                   data-testid="tour-finish-btn"
-                  className="text-xs sm:text-sm"
+                  size="sm"
                 >
                   {t('dashboard.tour.controls.finish')}
                 </Button>
@@ -325,7 +334,7 @@ export function GuidedTour({
                   variant="primary"
                   onClick={handleNext}
                   data-testid="tour-next-btn"
-                  className="text-xs sm:text-sm"
+                  size="sm"
                 >
                   {t('dashboard.tour.controls.next')}
                 </Button>

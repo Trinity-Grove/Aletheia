@@ -63,32 +63,32 @@ export function WelcomeTourDialog({
       aria-labelledby="welcome-tour-title"
       aria-describedby="welcome-tour-subtitle"
       data-testid="welcome-tour-dialog"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/50 backdrop-blur-sm"
+      className="welcome-tour-backdrop"
     >
-      <div className="relative w-full max-w-md rounded-2xl bg-white p-6 sm:p-8 text-center shadow-2xl dark:bg-stone-900 border border-stone-200 dark:border-stone-800">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
+      <div className="welcome-tour-modal">
+        <div className="welcome-tour-icon">
           <AletheiaIcon name="compass" size="xl" aria-hidden={true} />
         </div>
 
         <h2
           id="welcome-tour-title"
-          className="text-xl font-bold font-serif text-stone-900 dark:text-stone-100"
+          className="welcome-tour-title"
         >
           {t('dashboard.tour.welcome.title')}
         </h2>
 
         <p
           id="welcome-tour-subtitle"
-          className="mt-2 text-sm text-stone-600 dark:text-stone-400"
+          className="welcome-tour-subtitle"
         >
           {t('dashboard.tour.welcome.subtitle')}
         </p>
 
-        <div className="mt-6 flex flex-col gap-3">
+        <div className="welcome-tour-actions">
           <Button
             variant="primary"
             onClick={onStartTour}
-            className="w-full"
+            style={{ width: '100%' }}
             data-testid="welcome-tour-start-btn"
           >
             {t('dashboard.tour.welcome.start')}
@@ -98,7 +98,7 @@ export function WelcomeTourDialog({
             variant="ghost"
             onClick={handleDismiss}
             isLoading={isDismissing}
-            className="w-full text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200"
+            style={{ width: '100%' }}
             data-testid="welcome-tour-dismiss-btn"
           >
             {t('dashboard.tour.welcome.dismissNever')}

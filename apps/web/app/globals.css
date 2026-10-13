@@ -940,3 +940,213 @@ p.page-subtitle {
 @media (max-width: 768px) {
  :root { --support-widget-bottom: calc(var(--ui-tab-bar-height) + env(safe-area-inset-bottom, 0px) + 0.75rem); --support-widget-right: 0.75rem; }
 }
+
+/* ==========================================================================
+   Welcome Tour Dialog & Guided Tour (Spotlight Walkthrough)
+   ========================================================================== */
+
+.welcome-tour-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(18, 63, 52, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.welcome-tour-modal {
+  position: relative;
+  width: 100%;
+  max-width: 28rem;
+  border-radius: var(--radius-xl);
+  background: var(--bg-surface);
+  padding: 2.25rem 2rem;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-light);
+}
+
+.welcome-tour-icon {
+  margin: 0 auto 1.25rem auto;
+  display: flex;
+  height: 3.75rem;
+  width: 3.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--sage-soft);
+  color: var(--forest);
+  border: 1px solid var(--line);
+}
+
+.welcome-tour-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.375rem;
+  font-weight: 700;
+  font-family: var(--font-serif);
+  color: var(--forest);
+}
+
+.welcome-tour-subtitle {
+  margin: 0 0 1.5rem 0;
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.welcome-tour-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.guided-tour-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.guided-tour-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  pointer-events: auto;
+}
+
+.guided-tour-backdrop--fallback {
+  background: rgba(18, 63, 52, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.guided-tour-spotlight {
+  position: fixed;
+  z-index: 999;
+  border-radius: var(--radius-md);
+  pointer-events: none;
+  transition: all 0.25s ease-out;
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 0 9999px rgba(18, 63, 52, 0.7);
+}
+
+.guided-tour-card-container {
+  position: fixed;
+  z-index: 1001;
+  pointer-events: auto;
+}
+
+.guided-tour-card-container--centered {
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.guided-tour-card {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  border-radius: var(--radius-xl);
+  background: var(--bg-surface);
+  padding: 1.5rem;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--line);
+  transition: all 0.2s ease-out;
+  color: var(--text-primary);
+}
+
+.guided-tour-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.guided-tour-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--sage-soft);
+  color: var(--forest);
+  border: 1px solid var(--line);
+}
+
+.guided-tour-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.guided-tour-close-btn:hover {
+  color: var(--text-primary);
+}
+
+.guided-tour-celebrate-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.guided-tour-celebrate-icon {
+  display: flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--gold-soft);
+  color: var(--gold);
+  border: 1px solid var(--line);
+}
+
+.guided-tour-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-family: var(--font-serif);
+  color: var(--forest);
+}
+
+.guided-tour-description {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.guided-tour-footer {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.guided-tour-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
