@@ -14,4 +14,5 @@ export const nav: Dictionary['nav'] = {
   support: 'Support the Project ❤️',
   settings: 'Settings',
   startTour: 'Take System Tour',
+  legalGuide: 'Legal Guide',
 };

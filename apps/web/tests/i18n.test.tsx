@@ -817,6 +817,153 @@ describe('i18n (Issue #33: Internacionalização, Dicionários e Formatadores)',
       unmountEs();
     });
   });
+
+  describe('Amparo Legal & Guia dos Primeiros 30 Dias (Task 2)', () => {
+    it('traduz chaves de nav.legalGuide em pt-BR, en-US e es-ES', () => {
+      // pt-BR
+      const { unmount: unmountPt } = render(
+        <LocaleProvider>
+          <Probe translationKey="nav.legalGuide" />
+        </LocaleProvider>
+      );
+      expect(screen.getByTestId('probe')).toHaveTextContent('Amparo Legal');
+      unmountPt();
+
+      // en-US
+      localStorage.setItem('aletheia_locale', 'en-US');
+      const { unmount: unmountEn } = render(
+        <LocaleProvider>
+          <Probe translationKey="nav.legalGuide" />
+        </LocaleProvider>
+      );
+      expect(screen.getByTestId('probe')).toHaveTextContent('Legal Guide');
+      unmountEn();
+
+      // es-ES
+      localStorage.setItem('aletheia_locale', 'es-ES');
+      render(
+        <LocaleProvider>
+          <Probe translationKey="nav.legalGuide" />
+        </LocaleProvider>
+      );
+      expect(screen.getByTestId('probe')).toHaveTextContent('Amparo Legal');
+    });
+
+    it('traduz chaves completas de legalGuide.* (header, framework, evidence, checklist, faq) em pt-BR, en-US e es-ES com interpolação', () => {
+      // pt-BR
+      const { unmount: unmountPt } = render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="legalGuide.header.title" />
+            <Probe translationKey="legalGuide.header.subtitle" />
+            <Probe translationKey="legalGuide.header.jurisdictionBadge" vars={{ name: 'Brasil' }} />
+            <Probe translationKey="legalGuide.header.confidenceLabel" vars={{ level: 'ESTABLISHED' }} />
+            <Probe translationKey="legalGuide.framework.title" />
+            <Probe translationKey="legalGuide.framework.minDaysValue" vars={{ count: 200 }} />
+            <Probe translationKey="legalGuide.framework.minHoursValue" vars={{ count: 800 }} />
+            <Probe translationKey="legalGuide.evidence.title" />
+            <Probe translationKey="legalGuide.evidence.dossierAction" />
+            <Probe translationKey="legalGuide.checklist.title" />
+            <Probe translationKey="legalGuide.checklist.progress" vars={{ completed: 2, total: 6, percentage: 33 }} />
+            <Probe translationKey="legalGuide.checklist.steps.step1.title" />
+            <Probe translationKey="legalGuide.checklist.steps.step1.action" />
+            <Probe translationKey="legalGuide.checklist.steps.step6.title" />
+            <Probe translationKey="legalGuide.faq.title" />
+            <Probe translationKey="legalGuide.faq.q1.question" />
+            <Probe translationKey="legalGuide.faq.q4.question" />
+          </div>
+        </LocaleProvider>
+      );
+      expect(screen.getByText('Amparo Legal & Primeiros Passos')).toBeInTheDocument();
+      expect(screen.getByText('Jurisdição Ativa: Brasil')).toBeInTheDocument();
+      expect(screen.getByText('Nível de Certeza: ESTABLISHED')).toBeInTheDocument();
+      expect(screen.getByText('Seus Direitos e Amparo Constitucional')).toBeInTheDocument();
+      expect(screen.getByText('200 dias')).toBeInTheDocument();
+      expect(screen.getByText('800 horas')).toBeInTheDocument();
+      expect(screen.getByText('Emitir Dossiê de Conformidade Anual')).toBeInTheDocument();
+      expect(screen.getByText('Checklist dos Primeiros 30 Dias')).toBeInTheDocument();
+      expect(screen.getByText('2 de 6 etapas concluídas (33%)')).toBeInTheDocument();
+      expect(screen.getByText('1. Cadastrar seu primeiro educando')).toBeInTheDocument();
+      expect(screen.getByText('Ir para Educandos')).toBeInTheDocument();
+      expect(screen.getByText('Perguntas Frequentes (FAQ Jurídico)')).toBeInTheDocument();
+      expect(screen.getByText('O ensino domiciliar é crime no Brasil?')).toBeInTheDocument();
+      unmountPt();
+
+      // en-US
+      localStorage.setItem('aletheia_locale', 'en-US');
+      const { unmount: unmountEn } = render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="legalGuide.header.title" />
+            <Probe translationKey="legalGuide.header.jurisdictionBadge" vars={{ name: 'Brazil' }} />
+            <Probe translationKey="legalGuide.header.confidenceLabel" vars={{ level: 'ESTABLISHED' }} />
+            <Probe translationKey="legalGuide.framework.title" />
+            <Probe translationKey="legalGuide.framework.minDaysValue" vars={{ count: 200 }} />
+            <Probe translationKey="legalGuide.framework.minHoursValue" vars={{ count: 800 }} />
+            <Probe translationKey="legalGuide.checklist.title" />
+            <Probe translationKey="legalGuide.checklist.progress" vars={{ completed: 3, total: 6, percentage: 50 }} />
+            <Probe translationKey="legalGuide.checklist.steps.step1.title" />
+            <Probe translationKey="legalGuide.checklist.steps.step1.action" />
+            <Probe translationKey="legalGuide.faq.title" />
+          </div>
+        </LocaleProvider>
+      );
+      expect(screen.getByText('Legal Guide & First Steps')).toBeInTheDocument();
+      expect(screen.getByText('Active Jurisdiction: Brazil')).toBeInTheDocument();
+      expect(screen.getByText('Confidence Level: ESTABLISHED')).toBeInTheDocument();
+      expect(screen.getByText('Your Rights & Constitutional Protection')).toBeInTheDocument();
+      expect(screen.getByText('200 days')).toBeInTheDocument();
+      expect(screen.getByText('800 hours')).toBeInTheDocument();
+      expect(screen.getByText('First 30 Days Checklist')).toBeInTheDocument();
+      expect(screen.getByText('3 of 6 steps completed (50%)')).toBeInTheDocument();
+      expect(screen.getByText('1. Register your first learner')).toBeInTheDocument();
+      expect(screen.getByText('Go to Learners')).toBeInTheDocument();
+      expect(screen.getByText('Frequently Asked Questions (Legal FAQ)')).toBeInTheDocument();
+      unmountEn();
+
+      // es-ES
+      localStorage.setItem('aletheia_locale', 'es-ES');
+      const { unmount: unmountEs } = render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="legalGuide.header.title" />
+            <Probe translationKey="legalGuide.header.jurisdictionBadge" vars={{ name: 'Brasil' }} />
+            <Probe translationKey="legalGuide.header.confidenceLabel" vars={{ level: 'ESTABLISHED' }} />
+            <Probe translationKey="legalGuide.framework.title" />
+            <Probe translationKey="legalGuide.framework.minDaysValue" vars={{ count: 200 }} />
+            <Probe translationKey="legalGuide.framework.minHoursValue" vars={{ count: 800 }} />
+            <Probe translationKey="legalGuide.checklist.title" />
+            <Probe translationKey="legalGuide.checklist.progress" vars={{ completed: 1, total: 6, percentage: 16 }} />
+            <Probe translationKey="legalGuide.checklist.steps.step1.title" />
+            <Probe translationKey="legalGuide.checklist.steps.step1.action" />
+            <Probe translationKey="legalGuide.faq.title" />
+          </div>
+        </LocaleProvider>
+      );
+      expect(screen.getByText('Amparo Legal y Primeros Pasos')).toBeInTheDocument();
+      expect(screen.getByText('Jurisdicción Activa: Brasil')).toBeInTheDocument();
+      expect(screen.getByText('Nivel de Certeza: ESTABLISHED')).toBeInTheDocument();
+      expect(screen.getByText('Sus Derechos y Amparo Constitucional')).toBeInTheDocument();
+      expect(screen.getByText('200 días')).toBeInTheDocument();
+      expect(screen.getByText('800 horas')).toBeInTheDocument();
+      expect(screen.getByText('Checklist de los Primeros 30 Días')).toBeInTheDocument();
+      expect(screen.getByText('1 de 6 etapas completadas (16%)')).toBeInTheDocument();
+      expect(screen.getByText('1. Registrar a su primer estudiante')).toBeInTheDocument();
+      expect(screen.getByText('Ir a Estudiantes')).toBeInTheDocument();
+      expect(screen.getByText('Preguntas Frecuentes (FAQ Legal)')).toBeInTheDocument();
+      unmountEs();
+    });
+
+    it('possui todas as chaves de nav.legalGuide e legalGuide.* com simetria estrutural nos objetos dos dicionários', () => {
+      expect((ptBR as any).nav?.legalGuide).toBe('Amparo Legal');
+      expect((enUS as any).nav?.legalGuide).toBe('Legal Guide');
+      expect((esES as any).nav?.legalGuide).toBe('Amparo Legal');
+
+      expect((ptBR as any).legalGuide?.checklist?.steps?.step1?.title).toBeDefined();
+      expect((enUS as any).legalGuide?.checklist?.steps?.step1?.title).toBeDefined();
+      expect((esES as any).legalGuide?.checklist?.steps?.step1?.title).toBeDefined();
+    });
+  });
 });
 
 describe('Guardrails de Integridade Estrutural e Paridade de Dicionários', () => {
