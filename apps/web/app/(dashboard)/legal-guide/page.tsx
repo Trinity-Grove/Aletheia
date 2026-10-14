@@ -8,9 +8,15 @@ import { useOptionalAuth } from '../../../src/lib/auth/auth-context';
 import { useLocale } from '../../../src/lib/i18n/locale-context';
 
 export default function LegalGuidePage() {
-  const { t } = useLocale();
+  useLocale();
   const auth = useOptionalAuth();
-  const [familyId, setFamilyId] = useState<string | null>(null);
+  const [familyId, setFamilyId] = useState<string | null>(
+    () =>
+      auth?.activeFamilyId ??
+      (typeof window !== 'undefined'
+        ? localStorage.getItem('aletheia.activeFamilyId') ?? localStorage.getItem('familyId')
+        : null),
+  );
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
   const [activeLearnerId, setActiveLearnerId] = useState<string | null>(null);
 
@@ -26,7 +32,7 @@ export default function LegalGuidePage() {
         if (!storedFamilyId) return;
         setFamilyId(storedFamilyId);
 
-        const learnersRes = await fetch(`/api/v1/families/${storedFamilyId}/learners`, {
+        const learnersRes = await fetch(`/api/v1/families/${encodeURIComponent(storedFamilyId)}/learners`, {
           credentials: 'include',
         });
         if (learnersRes.ok) {

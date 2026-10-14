@@ -23,10 +23,15 @@ export function LegalGuideView({
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    if (!familyId) {
+      setIsLoading(false);
+      return;
+    }
+
     let isMounted = true;
     setIsLoading(true);
 
-    fetch(`/api/v1/families/${familyId}/jurisdiction`, {
+    fetch(`/api/v1/families/${encodeURIComponent(familyId)}/jurisdiction`, {
       credentials: 'include',
     })
       .then(async (res) => {
