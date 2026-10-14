@@ -12,6 +12,15 @@ import { PrismaService } from '../../../platform/database/prisma.service.js';
 import { JurisdictionDefinitionsRepository } from '../infrastructure/jurisdiction-definitions.repository.js';
 import { computeStatusTransition } from './definition-status-transition.js';
 
+export function normalizeCountryCode(code?: string | null): string {
+  if (!code) return 'BR';
+  const upper = code.trim().toUpperCase();
+  if (upper === 'BRA' || upper === 'BR') return 'BR';
+  if (upper === 'USA' || upper === 'US') return 'US';
+  if (upper === 'URY' || upper === 'UY') return 'UY';
+  return upper;
+}
+
 // Admin CRUD for the versioned jurisdiction/compliance catalog (issue #26,
 // "Brasil como organizador/complemento" first slice). Same DRAFT ->
 // PUBLISHED -> DEPRECATED -> ARCHIVED discipline as curriculum's
@@ -84,7 +93,7 @@ export class JurisdictionDefinitionsService {
       }
     }
 
-    const definition = await this.repository.findCurrentPublishedByCode(code);
+    const definition = await this.repository.findCurrentPublishedByCode(normalizeCountryCode(code));
     if (definition) {
       return this.toFamilyJurisdictionDto(definition);
     }

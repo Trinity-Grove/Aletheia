@@ -39,6 +39,8 @@ function getInitialSteps(
   learnersCount?: number | undefined,
   initialCompletedSteps?: string[] | undefined
 ): string[] {
+  if (!familyId) return [];
+
   if (typeof window !== 'undefined') {
     try {
       const stored = window.localStorage.getItem(
@@ -88,7 +90,7 @@ export function First30DaysChecklistCard({
       ? completedSteps.filter((k) => k !== stepKey)
       : [...completedSteps, stepKey];
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && familyId) {
       try {
         window.localStorage.setItem(
           `aletheia_checklist_30days_${familyId}`,

@@ -172,6 +172,20 @@ describe('Legal Guide Hub Components', () => {
       expect(screen.getByRole('link', { name: /Acessar Devocional/i })).toHaveAttribute('href', '/devotional');
       expect(screen.getByRole('link', { name: /Ver Relatórios/i })).toHaveAttribute('href', '/reports');
     });
+
+    it('retorna lista vazia e não acessa localStorage quando familyId for vazio', () => {
+      const getItemSpy = vi.spyOn(Storage.prototype, 'getItem');
+      renderWithLocale(
+        <First30DaysChecklistCard
+          familyId=""
+          learnersCount={2}
+        />
+      );
+
+      expect(getItemSpy).not.toHaveBeenCalledWith('aletheia_checklist_30days_');
+      expect(screen.getByText('0 de 6 etapas concluídas (0%)')).toBeInTheDocument();
+      getItemSpy.mockRestore();
+    });
   });
 
   describe('LegalFaqAccordion', () => {

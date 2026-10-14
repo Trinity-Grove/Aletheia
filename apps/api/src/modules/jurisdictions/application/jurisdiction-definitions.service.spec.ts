@@ -250,5 +250,39 @@ describe('JurisdictionDefinitionsService', () => {
       expect(result.code).toBe('BR');
       expect(result.name).toBe('Brasil Histórico');
     });
+
+    it('normalizes ISO alpha-3 countryCode BRA to BR when resolving family jurisdiction', async () => {
+      const publishedRow = buildRow({
+        code: 'BR',
+        name: 'Brasil',
+        version: 1,
+        status: 'PUBLISHED',
+      });
+      const prismaMock = {
+        complianceRequirement: {
+          findFirst: jest.fn().mockResolvedValue(null),
+        },
+        family: {
+          findUnique: jest.fn().mockResolvedValue({ countryCode: 'BRA' }),
+        },
+      };
+      const { service, repository } = buildService(
+        {
+          findCurrentPublishedByCode: jest.fn().mockResolvedValue(publishedRow),
+        },
+        prismaMock,
+      );
+
+      const validFamilyUuid = 'a0000000-0000-4000-8000-000000000001';
+      const result = await service.getFamilyJurisdiction(validFamilyUuid);
+
+      expect(prismaMock.family.findUnique).toHaveBeenCalledWith({
+        where: { id: validFamilyUuid },
+        select: { countryCode: true },
+      });
+      expect(repository.findCurrentPublishedByCode).toHaveBeenCalledWith('BR');
+      expect(result.code).toBe('BR');
+    });
   });
 });
+

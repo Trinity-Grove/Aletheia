@@ -54,12 +54,10 @@ export default function LegalGuidePage() {
       onSelectLearner={setActiveLearnerId}
       currentPath="/legal-guide"
     >
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.5rem 1rem' }}>
-        <LegalGuideView
-          familyId={familyId ?? ''}
-          learnersCount={learners.length}
-        />
-      </div>
+      <LegalGuideView
+        familyId={familyId ?? ''}
+        learnersCount={learners.length}
+      />
     </ProductShell>
   );
 }
