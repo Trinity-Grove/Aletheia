@@ -18,7 +18,10 @@ const nextConfig: NextConfig = {
   // to rewrite every call site to use an absolute URL.
   async rewrites() {
     const apiOrigin = (process.env.API_PROXY_TARGET || 'http://127.0.0.1:3001').replace(/\/+$/, '');
-    return [{ source: '/api/:path*', destination: `${apiOrigin}/api/:path*` }];
+    return [
+      { source: '/guia-legal', destination: '/legal-guide' },
+      { source: '/api/:path*', destination: `${apiOrigin}/api/:path*` },
+    ];
   },
   async redirects() {
     const backofficeUrl = (process.env.NEXT_PUBLIC_BACKOFFICE_URL || 'http://localhost:3002').replace(/\/+$/, '');

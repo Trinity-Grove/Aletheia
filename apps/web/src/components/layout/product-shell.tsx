@@ -54,6 +54,7 @@ export const MAIN_NAV_ITEMS: NavigationItem[] = [
   { id: 'portfolio', label: 'nav.portfolio', href: '/portfolio', icon: <AletheiaIcon name="folder-heart" size={18} /> },
   { id: 'attendance', label: 'nav.attendance', href: '/attendance', icon: <AletheiaIcon name="clipboard-check" size={18} /> },
   { id: 'reports', label: 'nav.reports', href: '/reports', icon: <AletheiaIcon name="bar-chart-3" size={18} /> },
+  { id: 'legal-guide', label: 'nav.legalGuide', href: '/legal-guide', icon: <AletheiaIcon name="shield-check" size={18} /> },
   { id: 'support', label: 'nav.support', href: '/support', icon: <AletheiaIcon name="heart" size={18} /> },
   { id: 'settings', label: 'nav.settings', href: '/settings', icon: <AletheiaIcon name="settings" size={18} /> },
 ];
@@ -71,6 +72,7 @@ const PRIORITY_NAV_ITEM_IDS: ReadonlyArray<NavigationItem['id']> = [
   'records',
   'portfolio',
   'reports',
+  'legal-guide',
   'attendance',
   'support',
   'settings',
