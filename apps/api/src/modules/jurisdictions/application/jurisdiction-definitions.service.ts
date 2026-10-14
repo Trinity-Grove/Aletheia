@@ -1,11 +1,14 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { JurisdictionDefinition } from '@prisma/client';
 import type {
   CreateJurisdictionDefinitionOutput,
   JurisdictionDefinitionResponseDto,
   DefinitionStatus,
+  FamilyJurisdictionResponseDto,
+  JurisdictionConfidenceLevel,
 } from '@aletheia/contracts';
+import { PrismaService } from '../../../platform/database/prisma.service.js';
 import { JurisdictionDefinitionsRepository } from '../infrastructure/jurisdiction-definitions.repository.js';
 import { computeStatusTransition } from './definition-status-transition.js';
 
@@ -15,15 +18,12 @@ import { computeStatusTransition } from './definition-status-transition.js';
 // DefinitionsService: transitions are explicit calls, never an implicit
 // side effect of create/update, and a PUBLISHED row's content is never
 // mutated in place.
-//
-// Deliberately NOT wired into any family-facing read path yet -- the
-// existing free-text ComplianceRequirement.jurisdiction field keeps
-// resolving exactly as before for every family that hasn't set
-// jurisdictionDefinitionId. That cutover, and the compliance-evaluation
-// engine issue #26 also describes, are separate follow-on work.
 @Injectable()
 export class JurisdictionDefinitionsService {
-  constructor(private readonly repository: JurisdictionDefinitionsRepository) {}
+  constructor(
+    private readonly repository: JurisdictionDefinitionsRepository,
+    @Optional() private readonly prisma?: PrismaService,
+  ) {}
 
   async create(dto: CreateJurisdictionDefinitionOutput): Promise<JurisdictionDefinitionResponseDto> {
     try {
@@ -53,6 +53,73 @@ export class JurisdictionDefinitionsService {
     const update = computeStatusTransition(existing.status as DefinitionStatus, status);
     const row = await this.repository.updateStatus(id, update);
     return this.toDto(row);
+  }
+
+  async getFamilyJurisdiction(familyId: string): Promise<FamilyJurisdictionResponseDto> {
+    let code = 'BR';
+
+    if (this.prisma && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(familyId)) {
+      const requirement = await this.prisma.complianceRequirement.findFirst({
+        where: { familyId },
+        select: { jurisdiction: true, jurisdictionDefinitionId: true },
+      });
+
+      if (requirement?.jurisdictionDefinitionId) {
+        const pinnedDef = await this.repository.findById(requirement.jurisdictionDefinitionId);
+        if (pinnedDef) {
+          return this.toFamilyJurisdictionDto(pinnedDef);
+        }
+      }
+
+      if (requirement?.jurisdiction) {
+        code = requirement.jurisdiction;
+      } else {
+        const family = await this.prisma.family.findUnique({
+          where: { id: familyId },
+          select: { countryCode: true },
+        });
+        if (family?.countryCode) {
+          code = family.countryCode;
+        }
+      }
+    }
+
+    const definition = await this.repository.findCurrentPublishedByCode(code);
+    if (definition) {
+      return this.toFamilyJurisdictionDto(definition);
+    }
+
+    return {
+      code: 'BR',
+      name: 'Brasil (Referencial Nacional)',
+      version: 1,
+      confidenceLevel: 'ESTABLISHED',
+      minInstructionalDays: 200,
+      minInstructionalHours: 800,
+      officialSource:
+        'Lei de Diretrizes e Bases da Educação Nacional (Lei 9.394/1996) e Jurisprudência do STF (RE 888.815)',
+      legalBasisSummary:
+        'Liberdade constitucional da família na condução pedagógica e dever de comprovação de instrução regular.',
+    };
+  }
+
+  private toFamilyJurisdictionDto(row: JurisdictionDefinition): FamilyJurisdictionResponseDto {
+    const meta = (row.metadata as Record<string, unknown>) ?? {};
+    return {
+      code: row.code,
+      name: row.name,
+      version: row.version,
+      confidenceLevel: (meta.confidenceLevel as JurisdictionConfidenceLevel) ?? 'ESTABLISHED',
+      minInstructionalDays: typeof meta.minInstructionalDays === 'number' ? meta.minInstructionalDays : null,
+      minInstructionalHours: typeof meta.minInstructionalHours === 'number' ? meta.minInstructionalHours : null,
+      officialSource: typeof meta.officialSource === 'string' ? meta.officialSource : null,
+      legalBasisSummary:
+        typeof meta.legalBasisNotes === 'string'
+          ? meta.legalBasisNotes
+          : typeof meta.summary === 'string'
+            ? meta.summary
+            : null,
+    };
   }
 
   private toDto(row: JurisdictionDefinition): JurisdictionDefinitionResponseDto {

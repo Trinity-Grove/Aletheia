@@ -21,7 +21,10 @@ function buildRow(overrides: Partial<Record<string, unknown>> = {}) {
 }
 
 describe('JurisdictionDefinitionsService', () => {
-  function buildService(repoOverrides: Partial<JurisdictionDefinitionsRepository> = {}) {
+  function buildService(
+    repoOverrides: Partial<JurisdictionDefinitionsRepository> = {},
+    prismaOverride?: any,
+  ) {
     const repository = {
       create: jest.fn(),
       list: jest.fn(),
@@ -31,7 +34,7 @@ describe('JurisdictionDefinitionsService', () => {
       updateStatus: jest.fn(),
       ...repoOverrides,
     } as unknown as JurisdictionDefinitionsRepository;
-    return { service: new JurisdictionDefinitionsService(repository), repository };
+    return { service: new JurisdictionDefinitionsService(repository, prismaOverride), repository };
   }
 
   it('creates a jurisdiction definition and maps it to a response DTO', async () => {
@@ -119,5 +122,133 @@ describe('JurisdictionDefinitionsService', () => {
     const { service } = buildService({ findById: jest.fn().mockResolvedValue(existing) });
 
     await expect(service.transitionStatus('jd-1', 'PUBLISHED')).rejects.toThrow(BadRequestException);
+  });
+
+  describe('getFamilyJurisdiction', () => {
+    it('returns published BR jurisdiction with instructional thresholds and sources when family has default settings', async () => {
+      const publishedRow = buildRow({
+        code: 'BR',
+        name: 'Brasil',
+        version: 1,
+        status: 'PUBLISHED',
+        metadata: {
+          minInstructionalDays: 200,
+          minInstructionalHours: 800,
+          confidenceLevel: 'CONTESTED',
+          officialSource: 'LDB Lei 9.394/1996, Art. 24, I',
+          legalBasisNotes: 'Liberdade constitucional da família na condução pedagógica.',
+        },
+      });
+      const { service, repository } = buildService({
+        findCurrentPublishedByCode: jest.fn().mockResolvedValue(publishedRow),
+      });
+
+      const result = await service.getFamilyJurisdiction('fam_123');
+
+      expect(repository.findCurrentPublishedByCode).toHaveBeenCalledWith('BR');
+      expect(result).toEqual({
+        code: 'BR',
+        name: 'Brasil',
+        version: 1,
+        confidenceLevel: 'CONTESTED',
+        minInstructionalDays: 200,
+        minInstructionalHours: 800,
+        officialSource: 'LDB Lei 9.394/1996, Art. 24, I',
+        legalBasisSummary: 'Liberdade constitucional da família na condução pedagógica.',
+      });
+    });
+
+    it('returns safe national fallback when no definition is found in DB', async () => {
+      const { service, repository } = buildService({
+        findCurrentPublishedByCode: jest.fn().mockResolvedValue(null),
+      });
+
+      const result = await service.getFamilyJurisdiction('fam_123');
+
+      expect(repository.findCurrentPublishedByCode).toHaveBeenCalledWith('BR');
+      expect(result).toEqual({
+        code: 'BR',
+        name: 'Brasil (Referencial Nacional)',
+        version: 1,
+        confidenceLevel: 'ESTABLISHED',
+        minInstructionalDays: 200,
+        minInstructionalHours: 800,
+        officialSource:
+          'Lei de Diretrizes e Bases da Educação Nacional (Lei 9.394/1996) e Jurisprudência do STF (RE 888.815)',
+        legalBasisSummary:
+          'Liberdade constitucional da família na condução pedagógica e dever de comprovação de instrução regular.',
+      });
+    });
+
+    it('resolves jurisdiction from family compliance requirement when present', async () => {
+      const publishedRow = buildRow({
+        code: 'US-FL',
+        name: 'United States - Florida',
+        version: 1,
+        status: 'PUBLISHED',
+        metadata: {
+          minInstructionalDays: 180,
+          minInstructionalHours: 720,
+          confidenceLevel: 'ESTABLISHED',
+          officialSource: 'Florida Statutes 1002.41',
+          legalBasisNotes: 'Annual educational evaluation required.',
+        },
+      });
+      const prismaMock = {
+        complianceRequirement: {
+          findFirst: jest.fn().mockResolvedValue({ jurisdiction: 'US-FL', jurisdictionDefinitionId: null }),
+        },
+        family: {
+          findUnique: jest.fn(),
+        },
+      };
+      const { service, repository } = buildService(
+        {
+          findCurrentPublishedByCode: jest.fn().mockResolvedValue(publishedRow),
+        },
+        prismaMock,
+      );
+
+      const validFamilyUuid = 'a0000000-0000-4000-8000-000000000001';
+      const result = await service.getFamilyJurisdiction(validFamilyUuid);
+
+      expect(repository.findCurrentPublishedByCode).toHaveBeenCalledWith('US-FL');
+      expect(result.code).toBe('US-FL');
+      expect(result.minInstructionalDays).toBe(180);
+      expect(result.minInstructionalHours).toBe(720);
+    });
+
+    it('resolves pinned jurisdiction by definition ID when compliance requirement specifies it', async () => {
+      const pinnedRow = buildRow({
+        id: 'pinned-id-1',
+        code: 'BR',
+        name: 'Brasil Histórico',
+        version: 1,
+        status: 'PUBLISHED',
+        metadata: {
+          minInstructionalDays: 200,
+          minInstructionalHours: 800,
+          confidenceLevel: 'ESTABLISHED',
+        },
+      });
+      const prismaMock = {
+        complianceRequirement: {
+          findFirst: jest.fn().mockResolvedValue({ jurisdiction: 'BR', jurisdictionDefinitionId: 'pinned-id-1' }),
+        },
+      };
+      const { service, repository } = buildService(
+        {
+          findById: jest.fn().mockResolvedValue(pinnedRow),
+        },
+        prismaMock,
+      );
+
+      const validFamilyUuid = 'a0000000-0000-4000-8000-000000000001';
+      const result = await service.getFamilyJurisdiction(validFamilyUuid);
+
+      expect(repository.findById).toHaveBeenCalledWith('pinned-id-1');
+      expect(result.code).toBe('BR');
+      expect(result.name).toBe('Brasil Histórico');
+    });
   });
 });
