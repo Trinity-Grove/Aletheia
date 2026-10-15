@@ -602,7 +602,7 @@ describe('Donation & Voluntary Support Components', () => {
 
     it('has translation for nav.support in pt-BR, en-US, and es-ES dictionaries', () => {
       expect((ptBR.nav as Record<string, string>)['support']).toBeDefined();
-      expect((ptBR.nav as Record<string, string>)['support']).toMatch(/apoiar|apoio/i);
+      expect((ptBR.nav as Record<string, string>)['support']).toMatch(/apoie|apoiar|apoio/i);
 
       expect((enUS.nav as Record<string, string>)['support']).toBeDefined();
       expect((enUS.nav as Record<string, string>)['support']).toMatch(/support/i);

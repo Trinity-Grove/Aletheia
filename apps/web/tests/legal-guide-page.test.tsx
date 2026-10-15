@@ -125,7 +125,7 @@ describe('LegalGuidePage', () => {
 
     // Legal Guide Hub components rendered
     await waitFor(() => {
-      expect(screen.getByText('Amparo Legal & Primeiros Passos')).toBeInTheDocument();
+      expect(screen.getByText('Guia legal e primeiros passos')).toBeInTheDocument();
     });
     expect(screen.getByText('Checklist dos Primeiros 30 Dias')).toBeInTheDocument();
     expect(screen.getByText('Seus Direitos e Amparo Constitucional')).toBeInTheDocument();

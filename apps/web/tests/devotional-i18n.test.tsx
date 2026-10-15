@@ -114,9 +114,9 @@ describe('Wave 2: Family Devotional and Scripture Comparator i18n', () => {
       expect((enUS as any).devotional).toBeDefined();
       expect((esES as any).devotional).toBeDefined();
 
-      expect((ptBR as any).devotional.page.title).toBe('Culto Doméstico & Devocional');
-      expect((enUS as any).devotional.page.title).toBe('Family Devotional & Worship');
-      expect((esES as any).devotional.page.title).toBe('Culto Doméstico y Devocional');
+      expect((ptBR as any).devotional.page.title).toBe('Devocional em família');
+      expect((enUS as any).devotional.page.title).toBe('Family devotional');
+      expect((esES as any).devotional.page.title).toBe('Devocional en familia');
     });
 
     it('possui os subtítulos e erros do comparador simétricos', () => {
@@ -288,8 +288,8 @@ describe('Wave 2: Family Devotional and Scripture Comparator i18n', () => {
         </AuthProvider>
       );
 
-      expect(screen.getByText('Family Devotional & Worship')).toBeInTheDocument();
-      expect(screen.getByText('Cultivate faith as a family through Scripture reading, reflection, praise, and daily prayer.')).toBeInTheDocument();
+      expect(screen.getByText('Family devotional')).toBeInTheDocument();
+      expect(screen.getByText('Read Scripture, reflect, pray, and record this time together.')).toBeInTheDocument();
     });
   });
 });
