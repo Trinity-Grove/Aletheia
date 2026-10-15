@@ -26,6 +26,7 @@ describe('CurriculumPackReportService - Community Reporting Engine & Auto-Suspen
     description: 'An approved community pack',
     metadata: {},
     authorUserId,
+    originFamilyCurriculumPackId: null,
     moderationStatus: 'APPROVED',
     moderationNotes: null,
     moderatedAt: new Date('2026-09-20T00:00:00Z'),

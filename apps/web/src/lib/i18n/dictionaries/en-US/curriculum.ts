@@ -457,6 +457,13 @@ export const curriculum: Dictionary['curriculum'] = {
     noDescription: 'No detailed description provided.',
     methodologicalPillars: 'Methodological Pillars',
     includedSubjects: 'Included Subjects & Content',
+    publicMediaTitle: 'Attached materials',
+    publicMediaDescription: 'View the links and files the author shared for this curriculum.',
+    loadPublicMediaBtn: 'View attached materials',
+    publicMediaLoading: 'Loading materials...',
+    publicMediaEmpty: 'No attached materials.',
+    publicMediaError: 'Could not load the materials. Try again.',
+    openPublicMediaBtn: 'Open material',
     gallery: {
       sectionEyebrow: 'Curriculum materials',
       galleryTitle: 'Curriculum and materials library',
