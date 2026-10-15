@@ -342,7 +342,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
       </div>
 
       {activeView === 'my-packs' ? (
-        <MyAuthoredPacksPanel />
+        <MyAuthoredPacksPanel availablePacks={catalogPacks} />
       ) : (
         <>
       {/* Filter and Search controls */}

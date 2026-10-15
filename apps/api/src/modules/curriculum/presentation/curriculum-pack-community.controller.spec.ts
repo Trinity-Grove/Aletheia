@@ -1,6 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { CurriculumPackCommunityController } from './curriculum-pack-community.controller.js';
-import type { CurriculumPackResponseDto, AuthorTrustProfileResponseDto } from '@aletheia/contracts';
+import type { CurriculumPackResponseDto, AuthorTrustProfileResponseDto, UpdateCurriculumPackOutput } from '@aletheia/contracts';
 import type { AuthorTrustProfile } from '@prisma/client';
 
 describe('CurriculumPackCommunityController', () => {
@@ -51,6 +51,8 @@ describe('CurriculumPackCommunityController', () => {
     listPublicPacks: jest.Mock;
     listMyAuthoredPacks: jest.Mock;
     createCommunityPack: jest.Mock;
+    updateCommunityPack: jest.Mock;
+    archiveCommunityPack: jest.Mock;
     submitPack: jest.Mock;
     getPack: jest.Mock;
   };
@@ -71,6 +73,8 @@ describe('CurriculumPackCommunityController', () => {
       listPublicPacks: jest.fn(),
       listMyAuthoredPacks: jest.fn(),
       createCommunityPack: jest.fn(),
+      updateCommunityPack: jest.fn(),
+      archiveCommunityPack: jest.fn(),
       submitPack: jest.fn(),
       getPack: jest.fn(),
     };
@@ -162,6 +166,25 @@ describe('CurriculumPackCommunityController', () => {
 
       expect(packService.submitPack).toHaveBeenCalledWith(packId, authorUserId);
       expect(result).toEqual(mockPackDto);
+    });
+  });
+
+  describe('author draft operations', () => {
+    it('delegates draft update to the authenticated author', async () => {
+      const dto: UpdateCurriculumPackOutput = { name: 'Edited' };
+      packService.updateCommunityPack.mockResolvedValue(mockDraftPackDto);
+
+      await controller.updateCommunityPack(packId, authorUserId, dto);
+
+      expect(packService.updateCommunityPack).toHaveBeenCalledWith(packId, authorUserId, dto);
+    });
+
+    it('delegates draft archive to the authenticated author', async () => {
+      packService.archiveCommunityPack.mockResolvedValue({ ...mockDraftPackDto, status: 'ARCHIVED' });
+
+      await controller.archiveCommunityPack(packId, authorUserId);
+
+      expect(packService.archiveCommunityPack).toHaveBeenCalledWith(packId, authorUserId);
     });
   });
 

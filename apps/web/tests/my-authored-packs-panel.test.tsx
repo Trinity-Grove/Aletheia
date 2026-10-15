@@ -1,6 +1,7 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { CurriculumPackResponseDto } from '@aletheia/contracts';
 import { MyAuthoredPacksPanel } from '../src/components/curriculum/my-authored-packs-panel';
 
 const mockProfile = {
@@ -135,5 +136,79 @@ describe('MyAuthoredPacksPanel', () => {
     await waitFor(() => {
       expect(screen.getByTestId('my-authored-packs-error')).toBeInTheDocument();
     });
+  });
+
+  it('creates a draft from a public base without publishing it', async () => {
+    let createRequest: { url: string; init?: RequestInit } | undefined;
+    const basePack: CurriculumPackResponseDto = {
+      ...draftPack,
+      id: 'public-base-1',
+      code: 'CLASSICAL_BASE',
+      name: 'Base público',
+      description: 'Descrição da base',
+      authorUserId: null,
+      status: 'PUBLISHED' as const,
+      moderationStatus: 'APPROVED' as const,
+      metadata: { category: 'Clássico' },
+    };
+
+    vi.spyOn(global, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.includes('/my-packs')) return { ok: true, json: async () => [] } as Response;
+      if (url.includes('/author-profile')) return { ok: true, json: async () => mockProfile } as Response;
+      if (url === '/api/v1/curriculum-packs' && init?.method === 'POST') {
+        createRequest = { url, init };
+        return { ok: true, json: async () => draftPack } as Response;
+      }
+      return { ok: false, status: 404 } as Response;
+    });
+
+    render(<MyAuthoredPacksPanel availablePacks={[basePack]} />);
+
+    await waitFor(() => expect(screen.getByTestId('create-community-pack-btn')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('create-community-pack-btn'));
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'public-base-1' } });
+    fireEvent.click(screen.getByRole('button', { name: /salvar rascunho/i }));
+
+    await waitFor(() => expect(screen.getByText('Material salvo como rascunho.')).toBeInTheDocument());
+    expect(createRequest).toBeDefined();
+    const savedRequest = createRequest as { url: string; init?: RequestInit };
+    expect(savedRequest.url).toBe('/api/v1/curriculum-packs');
+    expect(JSON.parse(String(savedRequest.init?.body))).toMatchObject({
+      code: 'CLASSICAL_BASE_AUTHOR',
+      status: 'DRAFT',
+      metadata: { category: 'Clássico' },
+    });
+  });
+
+  it('edits and archives only an owned draft', async () => {
+    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.includes('/my-packs')) return { ok: true, json: async () => [draftPack] } as Response;
+      if (url.includes('/author-profile')) return { ok: true, json: async () => mockProfile } as Response;
+      if (url.endsWith('/pack-draft-1') && init?.method === 'PATCH') {
+        return { ok: true, json: async () => ({ ...draftPack, name: 'Nome editado' }) } as Response;
+      }
+      if (url.endsWith('/pack-draft-1/archive') && init?.method === 'POST') {
+        return { ok: true, json: async () => ({ ...draftPack, status: 'ARCHIVED' }) } as Response;
+      }
+      return { ok: false, status: 404 } as Response;
+    });
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    render(<MyAuthoredPacksPanel />);
+    await waitFor(() => expect(screen.getByTestId('edit-community-pack-btn-pack-draft-1')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('edit-community-pack-btn-pack-draft-1'));
+    fireEvent.change(screen.getByTestId('community-pack-name-input'), { target: { value: 'Nome editado' } });
+    fireEvent.click(screen.getByRole('button', { name: /salvar rascunho/i }));
+    await waitFor(() => expect(screen.getByText('Rascunho atualizado.')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('archive-community-pack-btn-pack-draft-1'));
+    await waitFor(() => expect(screen.getByText('Material arquivado.')).toBeInTheDocument());
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/v1/curriculum-packs/pack-draft-1/archive',
+      expect.objectContaining({ method: 'POST', credentials: 'include' })
+    );
   });
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   createCurriculumPackSchema,
+  updateCurriculumPackSchema,
   addCurriculumPackItemSchema,
   addCurriculumPackDependencySchema,
   curriculumPackDefinitionTypeSchema,
@@ -20,6 +21,18 @@ describe('Curriculum Pack Contracts', () => {
     expect(() =>
       createCurriculumPackSchema.parse({ code: 'classical_trivium', name: 'x' }),
     ).toThrow();
+  });
+
+  it('validates the limited community draft update payload', () => {
+    const parsed = updateCurriculumPackSchema.parse({
+      name: 'Updated author material',
+      description: null,
+    });
+    expect(parsed.name).toBe('Updated author material');
+  });
+
+  it('rejects an empty community draft update payload', () => {
+    expect(() => updateCurriculumPackSchema.parse({})).toThrow();
   });
 
   it('accepts every known definition type for a pack item', () => {

@@ -7,6 +7,7 @@ import {
   Inject,
   NotFoundException,
   Param,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -18,6 +19,8 @@ import {
   type CreateCurriculumPackOutput,
   type CurriculumPackResponseDto,
   type AuthorTrustProfileResponseDto,
+  updateCurriculumPackSchema,
+  type UpdateCurriculumPackOutput,
 } from '@aletheia/contracts';
 import type { AuthorTrustProfile } from '@prisma/client';
 import { CurrentUser, JwtAuthGuard } from '../../../platform/auth/index.js';
@@ -126,6 +129,30 @@ export class CurriculumPackCommunityController {
     @CurrentUser('userId') userId: string,
   ): Promise<CurriculumPackResponseDto> {
     return this.packService.submitPack(id, userId);
+  }
+
+  @Patch(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Update an authored community draft' })
+  async updateCommunityPack(
+    @Param('id') id: string,
+    @CurrentUser('userId') userId: string,
+    @Body(new ZodValidationPipe(updateCurriculumPackSchema)) dto: UpdateCurriculumPackOutput,
+  ): Promise<CurriculumPackResponseDto> {
+    return this.packService.updateCommunityPack(id, userId, dto);
+  }
+
+  @Post(':id/archive')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Archive an authored community draft' })
+  async archiveCommunityPack(
+    @Param('id') id: string,
+    @CurrentUser('userId') userId: string,
+  ): Promise<CurriculumPackResponseDto> {
+    return this.packService.archiveCommunityPack(id, userId);
   }
 
   @Get(':id')

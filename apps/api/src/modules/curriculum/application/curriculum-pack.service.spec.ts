@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { CurriculumPackService } from './curriculum-pack.service.js';
 import type { CurriculumPack, AuthorTrustProfile } from '@prisma/client';
-import type { CreateCurriculumPackOutput, CurriculumPackExportDocument } from '@aletheia/contracts';
+import type { CreateCurriculumPackOutput, CurriculumPackExportDocument, UpdateCurriculumPackOutput } from '@aletheia/contracts';
 
 describe('CurriculumPackService - Community & Moderation', () => {
   const authorUserId = '11111111-1111-4111-8111-111111111111';
@@ -71,6 +71,8 @@ describe('CurriculumPackService - Community & Moderation', () => {
   let repository: {
     createPack: jest.Mock;
     createCommunityPack: jest.Mock;
+    updateCommunityPack: jest.Mock;
+    archiveCommunityPack: jest.Mock;
     listPacks: jest.Mock;
     listPublishedPacks: jest.Mock;
     listMyAuthoredPacks: jest.Mock;
@@ -102,6 +104,8 @@ describe('CurriculumPackService - Community & Moderation', () => {
     repository = {
       createPack: jest.fn(),
       createCommunityPack: jest.fn(),
+      updateCommunityPack: jest.fn(),
+      archiveCommunityPack: jest.fn(),
       listPacks: jest.fn(),
       listPublishedPacks: jest.fn(),
       listMyAuthoredPacks: jest.fn(),
@@ -375,6 +379,55 @@ describe('CurriculumPackService - Community & Moderation', () => {
       expect(result).toHaveLength(1);
       expect(result[0]!.status).toBe('PUBLISHED');
       expect(result[0]!.moderationStatus).toBe('APPROVED');
+    });
+  });
+
+  describe('updateCommunityPack', () => {
+    const dto: UpdateCurriculumPackOutput = { name: 'Edited pack' };
+
+    it('updates a draft owned by the authenticated author', async () => {
+      const updated = { ...mockPack, name: 'Edited pack' };
+      repository.updateCommunityPack.mockResolvedValue(updated);
+      repository.findPackById.mockResolvedValue(mockPack);
+
+      const result = await service.updateCommunityPack(packId, authorUserId, dto);
+
+      expect(repository.updateCommunityPack).toHaveBeenCalledWith(packId, dto);
+      expect(result.name).toBe('Edited pack');
+    });
+
+    it('rejects updates from another author', async () => {
+      repository.findPackById.mockResolvedValue(mockPack);
+
+      await expect(service.updateCommunityPack(packId, otherUserId, dto)).rejects.toThrow(ForbiddenException);
+      expect(repository.updateCommunityPack).not.toHaveBeenCalled();
+    });
+
+    it('rejects updates after a draft leaves DRAFT status', async () => {
+      repository.findPackById.mockResolvedValue({ ...mockPack, status: 'PUBLISHED' });
+
+      await expect(service.updateCommunityPack(packId, authorUserId, dto)).rejects.toThrow(BadRequestException);
+      expect(repository.updateCommunityPack).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('archiveCommunityPack', () => {
+    it('archives an owned draft', async () => {
+      const archived = { ...mockPack, status: 'ARCHIVED' as const };
+      repository.findPackById.mockResolvedValue(mockPack);
+      repository.archiveCommunityPack.mockResolvedValue(archived);
+
+      const result = await service.archiveCommunityPack(packId, authorUserId);
+
+      expect(repository.archiveCommunityPack).toHaveBeenCalledWith(packId);
+      expect(result.status).toBe('ARCHIVED');
+    });
+
+    it('rejects archiving another author\'s draft', async () => {
+      repository.findPackById.mockResolvedValue(mockPack);
+
+      await expect(service.archiveCommunityPack(packId, otherUserId)).rejects.toThrow(ForbiddenException);
+      expect(repository.archiveCommunityPack).not.toHaveBeenCalled();
     });
   });
 
