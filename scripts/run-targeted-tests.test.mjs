@@ -162,6 +162,24 @@ test('invokes only the owning package and stops after the first failure', () => 
   });
 });
 
+test('rejects an empty target list before spawning a package runner', () => {
+  let spawned = false;
+
+  assert.throws(
+    () => runTargetedTests({
+      targets: [],
+      testIndex,
+      spawn() {
+        spawned = true;
+        return { status: 0, signal: null };
+      },
+    }),
+    TargetRoutingError,
+  );
+
+  assert.equal(spawned, false);
+});
+
 test('uses pnpm.cmd on Windows', () => {
   const calls = [];
   const result = runTargetedTests({
