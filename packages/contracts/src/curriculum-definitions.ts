@@ -53,6 +53,7 @@ export const createLearningDomainSchema = z.object({
   name: z.string().min(1).max(150),
   description: z.string().max(2000).nullish(),
   parentId: z.string().uuid().nullish(),
+  isActive: z.boolean().default(true),
   metadata: z.record(z.string(), z.unknown()).default({}),
 });
 
@@ -68,6 +69,7 @@ export const learningDomainResponseSchema = z.object({
   name: z.string(),
   description: z.string().nullable().optional(),
   parentId: z.string().uuid().nullable().optional(),
+  isActive: z.boolean(),
   metadata: z.record(z.string(), z.unknown()),
   createdAt: z.string(),
   publishedAt: z.string().nullable().optional(),
@@ -75,6 +77,12 @@ export const learningDomainResponseSchema = z.object({
 });
 
 export type LearningDomainResponseDto = z.infer<typeof learningDomainResponseSchema>;
+
+export const updateLearningDomainActivationSchema = z.object({
+  isActive: z.boolean(),
+});
+
+export type UpdateLearningDomainActivationDto = z.infer<typeof updateLearningDomainActivationSchema>;
 
 // Competency Definition
 export const competencyAgeRecommendationSchema = z.object({

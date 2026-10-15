@@ -30,6 +30,7 @@ import type {
 } from '@prisma/client';
 import type {
   CreateLearningDomainOutput,
+  UpdateLearningDomainActivationDto,
   LearningDomainResponseDto,
   CreateCompetencyDefinitionOutput,
   CompetencyDefinitionResponseDto,
@@ -138,6 +139,21 @@ export class DefinitionsService {
       await this.operationsService.logStatusTransition(
         'LearningDomain', row.code, row.version, actorUserId, existing.status, row.status, reason,
         );
+    }
+    return this.toLearningDomainDto(row);
+  }
+
+  async updateLearningDomainActivation(
+    id: string,
+    dto: UpdateLearningDomainActivationDto,
+    actorUserId?: string,
+  ): Promise<LearningDomainResponseDto> {
+    const existing = await this.repository.findLearningDomainById(id);
+    if (!existing) throw new NotFoundException('Learning domain not found.');
+
+    const row = await this.repository.updateLearningDomainActivation(id, dto.isActive);
+    if (actorUserId) {
+      await this.operationsService.logUpdate('LearningDomain', row.code, row.version, actorUserId, ['isActive']);
     }
     return this.toLearningDomainDto(row);
   }
@@ -892,6 +908,7 @@ export class DefinitionsService {
       name: row.name,
       description: row.description,
       parentId: row.parentId,
+      isActive: row.isActive,
       metadata: row.metadata as Record<string, unknown>,
       createdAt: row.createdAt.toISOString(),
       publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,

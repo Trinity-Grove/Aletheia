@@ -82,6 +82,7 @@ export class DefinitionsRepository {
         name: dto.name,
         description: dto.description ?? null,
         parentId: dto.parentId ?? null,
+        isActive: dto.isActive,
         metadata: dto.metadata as Prisma.InputJsonValue,
       },
     });
@@ -97,6 +98,10 @@ export class DefinitionsRepository {
 
   updateLearningDomainStatus(id: string, update: DefinitionStatusUpdate): Promise<LearningDomain> {
     return this.prisma.learningDomain.update({ where: { id }, data: update });
+  }
+
+  updateLearningDomainActivation(id: string, isActive: boolean): Promise<LearningDomain> {
+    return this.prisma.learningDomain.update({ where: { id }, data: { isActive } });
   }
 
   // Competency Definition
