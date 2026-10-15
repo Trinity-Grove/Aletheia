@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, useToast } from '@aletheia/ui';
+import { Alert, Button, PageHeader, useToast } from '@aletheia/ui';
 import type { LearnerResponseDto } from '@aletheia/contracts';
 import { ProductShell } from '../../../src/components/product-shell';
 import { LearnersList } from '../../../src/components/learners/learners-list';
@@ -127,32 +127,18 @@ export default function LearnersPage({ initialLearners = [] }: LearnersPageProps
         avatarColor: l.avatarColor,
       }))}
     >
-      <div className="learners-page-container" style={{ padding: '2rem 1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '2rem',
-            flexWrap: 'wrap',
-            gap: '1rem',
-          }}
-        >
-          <div>
-            <h1 className="page-title" style={{ margin: 0, fontSize: '1.75rem', fontWeight: 700 }}>
-              {t('learners.title')}
-            </h1>
-            <p className="page-subtitle" style={{ margin: '0.25rem 0 0 0', color: 'var(--text-secondary)' }}>
-              {t('learners.subtitle')}
-            </p>
-          </div>
-
-          <Can action="create_learner">
-            <Button data-testid="add-learner-btn" onClick={handleOpenCreate}>
-              {t('learners.addLearner')}
-            </Button>
-          </Can>
-        </div>
+      <div className="page-container learners-page-container">
+        <PageHeader
+          title={t('learners.title')}
+          description={t('learners.subtitle')}
+          action={
+            <Can action="create_learner">
+              <Button data-testid="add-learner-btn" onClick={handleOpenCreate}>
+                {t('learners.addLearner')}
+              </Button>
+            </Can>
+          }
+        />
 
         {loadError && (
           <Alert variant="error" style={{ marginBottom: '1.5rem' }}>
