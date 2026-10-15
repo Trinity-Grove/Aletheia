@@ -16,7 +16,7 @@ export class CurriculumRepository {
     dto: ApplyCurriculumTemplateDto,
     definition: PublishedPedagogicalModel,
     pedagogicalFramework: PedagogicalFramework,
-  ): Promise<{ subjectsCount: number; objectivesCount: number }> {
+  ): Promise<{ subjectsCount: number; objectivesCount: number; reusedObjectivesCount: number }> {
     return this.prisma.$transaction(async (tx) => {
       const [learner, year] = await Promise.all([
         tx.learner.findFirst({ where: { id: dto.learnerId, familyId }, select: { id: true } }),
@@ -31,6 +31,7 @@ export class CurriculumRepository {
       });
       let subjectsCount = 0;
       let objectivesCount = 0;
+      let reusedObjectivesCount = 0;
       for (const subjectDefinition of definition.subjects) {
         let subject = await tx.subject.findFirst({ where: { familyId, name: subjectDefinition.name } });
         if (!subject) {
@@ -41,13 +42,21 @@ export class CurriculumRepository {
           subjectsCount++;
         }
         for (const [order, title] of subjectDefinition.starterObjectives.entries()) {
+          const existingObjective = await tx.learningObjective.findFirst({
+            where: { ...identity, subjectId: subject.id, title },
+            select: { id: true },
+          });
+          if (existingObjective) {
+            reusedObjectivesCount++;
+            continue;
+          }
           await tx.learningObjective.create({ data: {
             ...identity, subjectId: subject.id, title, order,
           } });
           objectivesCount++;
         }
       }
-      return { subjectsCount, objectivesCount };
+      return { subjectsCount, objectivesCount, reusedObjectivesCount };
     });
   }
 
