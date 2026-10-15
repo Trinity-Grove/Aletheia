@@ -11,6 +11,6 @@ export const nav = {
   reports: 'Relatórios',
   support: 'Apoiar o Projeto ❤️',
   settings: 'Configurações',
-  startTour: 'Fazer Tour pelo Sistema',
+  startTour: 'Fazer Tour',
   legalGuide: 'Amparo Legal',
 } as const;

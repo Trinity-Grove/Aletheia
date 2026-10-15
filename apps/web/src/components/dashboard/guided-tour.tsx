@@ -145,8 +145,8 @@ export function GuidedTour({
       return {};
     }
     const margin = 16;
-    const cardWidth = 440;
-    const cardHeight = 260;
+    const cardWidth = typeof window !== 'undefined' ? Math.min(440, window.innerWidth - 32) : 440;
+    const cardHeight = typeof window !== 'undefined' ? Math.min(360, window.innerHeight - 32) : 260;
     let top = targetRect.bottom + margin;
     let left = targetRect.left;
 

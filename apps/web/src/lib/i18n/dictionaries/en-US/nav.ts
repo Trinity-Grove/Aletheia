@@ -13,6 +13,6 @@ export const nav: Dictionary['nav'] = {
   reports: 'Reports',
   support: 'Support the Project ❤️',
   settings: 'Settings',
-  startTour: 'Take System Tour',
+  startTour: 'Take Tour',
   legalGuide: 'Legal Guide',
 };
