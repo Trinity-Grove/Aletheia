@@ -152,7 +152,16 @@ describe('AI Lesson Assistant Components', () => {
           expect(JSON.parse(String(init?.body))).toEqual(expect.objectContaining({ learningDomainCode: 'SCIENCE' }));
           return {
             ok: true,
-            json: async () => ({ ...mockDraftResponse, catalogContext: mockLearningDomains[0] }),
+            json: async () => ({
+              ...mockDraftResponse,
+              catalogContext: mockLearningDomains[0],
+              groundingContext: {
+                sources: [
+                  { type: 'LEARNING_DOMAIN', code: 'SCIENCE', version: 2, label: 'Ciências' },
+                  { type: 'PEDAGOGICAL_PROFILE', code: 'CHARLOTTE_MASON', version: 1, label: 'CHARLOTTE_MASON' },
+                ],
+              },
+            }),
           } as Response;
         }
         return { ok: false } as Response;
@@ -178,6 +187,7 @@ describe('AI Lesson Assistant Components', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('ai-catalog-context')).toHaveTextContent('Ciências');
+        expect(screen.getByTestId('ai-grounding-context')).toHaveTextContent('CHARLOTTE_MASON');
         expect(fetchSpy).toHaveBeenCalledWith(
           '/api/v1/families/fam-1/ai/lesson-plan-draft',
           expect.objectContaining({ method: 'POST' }),

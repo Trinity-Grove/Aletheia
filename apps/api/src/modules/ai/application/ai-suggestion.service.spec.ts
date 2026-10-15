@@ -53,6 +53,7 @@ describe('AiSuggestionService', () => {
     status: 'PENDING_REVIEW',
     sanitizedPrompt: 'Gere um plano de aula sobre Botânica',
     catalogContext: null,
+    groundingContext: null,
     rawModelOutput: {
       title: 'Plano de Aula: Botânica',
       summary: 'Estudo prático sobre folhas e sementes.',
@@ -398,6 +399,70 @@ describe('AiSuggestionService', () => {
         },
       }));
       expect(result.catalogContext).toEqual(expect.objectContaining({ code: 'SCIENCE', version: 3 }));
+    });
+
+    it('should persist and return deterministic grounding sources from loaded server context', async () => {
+      prisma.learningDomain.findFirst.mockResolvedValueOnce({
+        id: '99999999-9999-4999-a999-999999999999',
+        code: 'SCIENCE',
+        version: 3,
+        status: 'PUBLISHED',
+        isActive: true,
+        name: 'Ciências da Natureza',
+        description: 'Investigação do mundo natural.',
+      });
+      prisma.pedagogicalProfile.findFirst.mockResolvedValueOnce({
+        version: 2,
+        primaryModelCode: 'CHARLOTTE_MASON',
+        secondaryModels: [],
+      });
+      prisma.theologicalProfile.findFirst.mockResolvedValueOnce({
+        version: 1,
+        preferredTraditionCode: 'REFORMED',
+        topicOverrides: {},
+      });
+      prisma.activityDefinition.findFirst.mockResolvedValueOnce({
+        id: activityDefinitionId,
+        code: 'SCIENCE.FIRE',
+        version: 4,
+        status: 'PUBLISHED',
+        name: 'Fogueira supervisionada',
+        ageMin: 6,
+        ageMax: 12,
+        riskLevel: 'HIGH',
+        supervisionRequired: true,
+      });
+
+      const result = await service.generateLessonPlanDraft(familyId, actorUserId, {
+        ...validDto,
+        learningDomainCode: 'SCIENCE',
+        activityDefinitionId,
+      });
+
+      const expectedGrounding = {
+        sources: [
+          { type: 'LEARNING_DOMAIN', code: 'SCIENCE', version: 3, label: 'Ciências da Natureza' },
+          { type: 'PEDAGOGICAL_PROFILE', code: 'CHARLOTTE_MASON', version: 2, label: 'CHARLOTTE_MASON' },
+          { type: 'THEOLOGICAL_PROFILE', code: 'REFORMED', version: 1, label: 'REFORMED' },
+          { type: 'ACTIVITY_DEFINITION', code: 'SCIENCE.FIRE', version: 4, label: 'Fogueira supervisionada' },
+        ],
+      };
+
+      expect(suggestionRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+        groundingContext: expectedGrounding,
+      }));
+      expect(result.groundingContext).toEqual(expectedGrounding);
+      expect(JSON.stringify(result.groundingContext)).not.toContain('Família Silva');
+      expect(JSON.stringify(result.groundingContext)).not.toContain('secondaryModels');
+    });
+
+    it('should return an empty grounding context for a legacy request without optional catalog context', async () => {
+      const result = await service.generateLessonPlanDraft(familyId, actorUserId, validDto);
+
+      expect(result.groundingContext).toEqual({ sources: [] });
+      expect(suggestionRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+        groundingContext: { sources: [] },
+      }));
     });
 
     it('should reject an unavailable learning domain before provider call or quota charge', async () => {

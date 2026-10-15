@@ -12,6 +12,8 @@ import {
 } from '@aletheia/ui';
 import type {
   AiLessonPlanDraftResponseDto,
+  AiGroundingContextDto,
+  AiGroundingSourceDto,
   AiUsageQuotaResponseDto,
   GenerateLessonPlanDraftRequestDto,
   LearningDomainCatalogEntryDto,
@@ -48,6 +50,18 @@ export function AiLessonDraftModal({
   onLessonCreated,
 }: AiLessonDraftModalProps) {
   const { t } = useLocale();
+  const getGroundingSourceLabel = (type: AiGroundingSourceDto['type']) => {
+    switch (type) {
+      case 'LEARNING_DOMAIN':
+        return t('lessons.aiAssistant.groundingSourceLearningDomain');
+      case 'PEDAGOGICAL_PROFILE':
+        return t('lessons.aiAssistant.groundingSourcePedagogicalProfile');
+      case 'THEOLOGICAL_PROFILE':
+        return t('lessons.aiAssistant.groundingSourceTheologicalProfile');
+      case 'ACTIVITY_DEFINITION':
+        return t('lessons.aiAssistant.groundingSourceActivityDefinition');
+    }
+  };
 
   // Mode: CONFIG or REVIEW
   const [mode, setMode] = useState<'CONFIG' | 'REVIEW'>('CONFIG');
@@ -78,6 +92,7 @@ export function AiLessonDraftModal({
   const [draftSteps, setDraftSteps] = useState<LessonPlanDraftStep[]>([]);
   const [draftAssessment, setDraftAssessment] = useState<string>('');
   const [catalogContext, setCatalogContext] = useState<AiLessonPlanDraftResponseDto['catalogContext']>();
+  const [groundingContext, setGroundingContext] = useState<AiGroundingContextDto>({ sources: [] });
 
   // Fetch quota
   const fetchQuota = useCallback(async () => {
@@ -123,6 +138,7 @@ export function AiLessonDraftModal({
       setInstructions('');
       setLearningDomainCode('');
       setCatalogContext(undefined);
+      setGroundingContext({ sources: [] });
       setErrorMessage(null);
       setDraftDate(initialDate || new Date().toISOString().split('T')[0]!);
       void fetchQuota();
@@ -186,6 +202,7 @@ export function AiLessonDraftModal({
       setDraftSteps(data.draft.steps || []);
       setDraftAssessment(data.draft.assessmentObservations || '');
       setCatalogContext(data.catalogContext);
+      setGroundingContext(data.groundingContext ?? { sources: [] });
       setMode('REVIEW');
     } catch {
       setErrorMessage(t('lessons.aiAssistant.genericError'));
@@ -504,6 +521,23 @@ export function AiLessonDraftModal({
                   </span>
                 </Alert>
               )}
+
+              <Alert variant="info" title={t('lessons.aiAssistant.groundingTitle')}>
+                <div data-testid="ai-grounding-context">
+                  <p>{t('lessons.aiAssistant.groundingDescription')}</p>
+                  {groundingContext.sources.length > 0 ? (
+                    <ul>
+                      {groundingContext.sources.map((source) => (
+                        <li key={`${source.type}-${source.code}-${source.version}`}>
+                          {getGroundingSourceLabel(source.type)}: {source.label} ({source.code}, v{source.version})
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>{t('lessons.aiAssistant.groundingEmpty')}</p>
+                  )}
+                </div>
+              </Alert>
 
               {/* Draft Title */}
               <Input

@@ -18,7 +18,7 @@ Verify with the focused contracts test.
 Files:
 
 - `apps/api/prisma/schema.prisma`
-- `apps/api/prisma/migrations/<timestamp>_add_ai_grounding_context/migration.sql`
+- `apps/api/prisma/migrations/20261015130000_add_ai_grounding_context/migration.sql`
 - `apps/api/src/modules/ai/infrastructure/ai-suggestion.repository.ts`
 - `apps/api/src/modules/ai/infrastructure/ai-suggestion.repository.spec.ts` (or the existing repository test location)
 
