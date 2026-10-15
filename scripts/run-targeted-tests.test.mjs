@@ -101,6 +101,21 @@ test('accepts explicit workspace paths and normalizes them for the package runne
   assert.deepEqual(result[0].targets, ['tests/product-shell.test.tsx']);
 });
 
+test('preserves a same-package glob so the package runner can select multiple files', () => {
+  const patternIndex = [
+    ...testIndex,
+    {
+      packageName: '@aletheia/web',
+      packageRoot: 'apps/web',
+      relativePath: 'tests/curriculum-planning.test.tsx',
+    },
+  ];
+
+  const result = partitionTargets(['curriculum*.test.tsx'], patternIndex);
+
+  assert.deepEqual(result[0].targets, ['curriculum*.test.tsx']);
+});
+
 test('rejects an unknown target before any process is started', () => {
   assert.throws(
     () => partitionTargets(['missing.test.ts'], testIndex),

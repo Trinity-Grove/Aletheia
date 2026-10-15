@@ -126,6 +126,10 @@ function packageTargetFor(parsedTarget, entry) {
     return parsedTarget.value;
   }
 
+  if (GLOB_META.test(parsedTarget.value)) {
+    return parsedTarget.value;
+  }
+
   return parsedTarget.value.includes('/') ? entry.relativePath : entry.relativePath;
 }
 
