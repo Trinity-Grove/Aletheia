@@ -27,6 +27,16 @@ A implementação deve ocorrer em duas fases:
 
 Não misturar a migração das dez rotas com uma refatoração ampla não relacionada.
 
+### 2.3. Requisitos de performance e boas práticas de UI
+
+- **Responsividade em CSS**: não adicionar `window.innerWidth`, listeners de resize ou estado React apenas para decidir layout. Breakpoints, wrapping e empilhamento devem ser resolvidos por CSS.
+- **Renderização previsível**: `PageHeader` deve permanecer presentacional, sem `useEffect`, novas requisições ou medições do DOM. A migração não pode duplicar os fetches existentes das páginas.
+- **Layout estável**: loading e conteúdo devem reservar espaço compatível, evitando CLS ao trocar cabeçalhos ou ações. Flex children devem aceitar `min-width: 0`; textos longos devem usar quebra segura (`overflow-wrap`) e grades devem limitar o mínimo a `min(VALOR, 100%)`.
+- **CSS reutilizável**: preferir classes e tokens a objetos `style` recriados a cada render. Evitar novos seletores globais ou regras duplicadas para `.dashboard-page`.
+- **Acessibilidade**: manter exatamente um `h1` por rota, landmark semântico, foco visível, ordem de tabulação, nomes acessíveis e alvos de toque de pelo menos `44px` para controles interativos.
+- **Legibilidade e densidade**: usar `clamp()` apenas onde houver ganho real, limitar largura de descrições, permitir quebra do bloco de ações e respeitar `prefers-reduced-motion` caso sejam adicionadas transições.
+- **Percepção de carregamento**: preservar `aria-busy`/estados de loading existentes e evitar que o novo header apareça e desapareça em posições diferentes durante a carga.
+
 1. **Padronização do Contêiner Global (`.page-container`)**:
    - Criar e padronizar a classe utilitária semântica `.page-container` em `apps/web/app/globals.css`.
    - Largura máxima unificada: `76rem` (`1216px`), centralizada (`margin-left: auto; margin-right: auto;`).
@@ -139,3 +149,7 @@ O `PageHeader` deve expor classes estáveis para seu layout e tipografia (`ui-pa
 4. **Validação responsiva**:
    - Verificar 320px, 375px, 640px, 768px e desktop.
    - Confirmar que as grades de `/support` e `/curriculum` não criam overflow horizontal; `minmax(360px, 1fr)` e `minmax(22rem, 1fr)` não podem ser aceitos sem uma regra de empilhamento ou limite baseado em `100%`.
+5. **Checklist de performance e UI**:
+   - Confirmar que a refatoração não adiciona requests, efeitos, listeners de resize ou medições de DOM.
+   - Confirmar que o header não causa overflow, CLS perceptível ou perda de foco/teclado.
+   - Validar contraste, foco visível, tamanho dos alvos e um único `h1` nas rotas migradas.

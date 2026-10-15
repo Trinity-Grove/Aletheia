@@ -31,6 +31,16 @@
 | `/curriculum` | shell especial ou `PageHeader` com `titleAdornment` | badge pedagógico, seletor de ano, links e ações curriculares |
 | `/support` | banner especial com `PageHeader` integrado | ícone, três benefícios, formulário, recibos e layout mobile |
 
+### Performance e qualidade de UI — critérios transversais
+
+- Resolver responsividade exclusivamente com CSS; não introduzir `window.innerWidth`, listeners de resize, medições de DOM ou estado React para layout.
+- Manter `PageHeader` presentacional, sem `useEffect`, novas requisições ou efeitos colaterais.
+- Remover objetos `style` do próprio `PageHeader` e dos wrappers migrados quando houver classe/token equivalente; não criar novos seletores globais.
+- Garantir `min-width: 0` em colunas flexíveis, quebra segura de textos longos e grids com `minmax(min(VALOR, 100%), 1fr)` quando o conteúdo puder atingir 320px/375px.
+- Preservar estados de loading/`aria-busy` com altura e estrutura estáveis, evitando CLS ao carregar dados ou alternar ações.
+- Garantir um único `h1`, foco visível, ordem de teclado, nomes acessíveis, contraste adequado e alvos interativos de pelo menos `44px`.
+- Não adicionar animações sem fallback para `prefers-reduced-motion`.
+
 ---
 
 ### Task 0: Consolidar o contrato do `PageHeader` e a matriz de migração
@@ -45,6 +55,7 @@
 - [ ] Migrar a tipografia e o layout do `PageHeader` de estilos inline para CSS/tokens, preservando API e consumidores existentes.
 - [ ] Adicionar `titleAdornment` somente se for necessário para o badge do currículo; caso contrário, registrar `/curriculum` como exceção customizada.
 - [ ] Cobrir o contrato com testes de renderização, incluindo `title`, `description`, `action`, `eyebrow` e `titleAdornment` quando existir.
+- [ ] Confirmar que a alteração não adiciona `useEffect`, requests, listeners de resize ou medição de DOM.
 - [ ] Validar o contrato antes de iniciar a migração das rotas.
 
 ---
@@ -421,3 +432,21 @@ Validação final obrigatória: smoke visual das dez rotas em 320px, 375px, 640p
 git add apps/web/app/(dashboard)/settings/page.tsx apps/web/app/(dashboard)/support/page.tsx apps/web/tests/design-system-harmonization.test.tsx
 git commit -m "feat(web): harmonize settings and support pages with PageHeader and page-container"
 ```
+
+---
+
+### Task 5: Auditoria final de performance, acessibilidade e responsividade
+
+**Files:**
+- Review: `packages/ui/src/components/page-header.tsx`
+- Review: `packages/ui/src/styles/components.css`
+- Review: `apps/web/app/globals.css`
+- Review: as dez rotas migradas e os grids de currículo/suporte
+- Extend: `apps/web/tests/design-system-harmonization.test.tsx` e cenários `apps/web/e2e-visual/` quando disponíveis
+
+- [ ] Comparar a contagem de requests da carga inicial antes/depois e confirmar que a migração não adiciona chamadas, efeitos ou listeners de resize.
+- [ ] Verificar ausência de overflow horizontal em 320px e 375px, especialmente nas ações do header, tabs da agenda e grids de currículo/suporte.
+- [ ] Confirmar `min-width: 0`, quebra de textos longos, um único `h1`, foco visível, ordem de teclado, nomes acessíveis e alvos de toque de pelo menos `44px`.
+- [ ] Confirmar que loading/`aria-busy` mantém uma estrutura estável e não introduz CLS perceptível.
+- [ ] Validar contraste e que nenhuma nova transição ignora `prefers-reduced-motion`.
+- [ ] Registrar lacunas de cobertura visual sem declarar as dez rotas como cobertas quando algum cenário ainda não existir.
