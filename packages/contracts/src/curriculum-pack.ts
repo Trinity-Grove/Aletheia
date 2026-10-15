@@ -52,6 +52,23 @@ export const createCurriculumPackSchema = z.object({
 export type CreateCurriculumPackDto = z.input<typeof createCurriculumPackSchema>;
 export type CreateCurriculumPackOutput = z.output<typeof createCurriculumPackSchema>;
 
+export const updateCurriculumPackSchema = z
+  .object({
+    code: z
+      .string()
+      .min(1)
+      .max(150)
+      .regex(DEFINITION_CODE_REGEX, 'code must be upper snake/dot case, e.g. CLASSICAL_TRIVIUM_STARTER'),
+    name: z.string().min(1).max(250),
+    description: z.string().max(2000).nullish(),
+    metadata: z.record(z.string(), z.unknown()),
+  })
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, 'At least one field is required to update a pack.');
+
+export type UpdateCurriculumPackDto = z.input<typeof updateCurriculumPackSchema>;
+export type UpdateCurriculumPackOutput = z.output<typeof updateCurriculumPackSchema>;
+
 export const curriculumPackResponseSchema = z.object({
   id: z.string().uuid(),
   code: z.string(),

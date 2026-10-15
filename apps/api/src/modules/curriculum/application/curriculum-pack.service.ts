@@ -10,6 +10,7 @@ import type {
   CurriculumPackDefinitionType,
   CurriculumPackModerationStatus,
   DefinitionStatus,
+  UpdateCurriculumPackOutput,
 } from '@aletheia/contracts';
 import { CurriculumPackRepository } from '../infrastructure/curriculum-pack.repository.js';
 import { computeStatusTransition } from './definition-status-transition.js';
@@ -109,6 +110,22 @@ export class CurriculumPackService {
     return rows.map((row) => this.toPackDto(row));
   }
 
+  async updateCommunityPack(
+    packId: string,
+    userId: string,
+    dto: UpdateCurriculumPackOutput,
+  ): Promise<CurriculumPackResponseDto> {
+    const existing = await this.requireEditableCommunityPack(packId, userId);
+    const row = await this.withWriteErrorMapping(() => this.repository.updateCommunityPack(existing.id, dto));
+    return this.toPackDto(row);
+  }
+
+  async archiveCommunityPack(packId: string, userId: string): Promise<CurriculumPackResponseDto> {
+    const existing = await this.requireEditableCommunityPack(packId, userId);
+    const row = await this.withWriteErrorMapping(() => this.repository.archiveCommunityPack(existing.id));
+    return this.toPackDto(row);
+  }
+
   async listPacks(): Promise<CurriculumPackResponseDto[]> {
     const rows = await this.repository.listPacks();
     return rows.map((row) => this.toPackDto(row));
@@ -161,6 +178,18 @@ export class CurriculumPackService {
   private async requirePack(id: string): Promise<void> {
     const existing = await this.repository.findPackById(id);
     if (!existing) throw new NotFoundException('Curriculum pack not found.');
+  }
+
+  private async requireEditableCommunityPack(packId: string, userId: string): Promise<CurriculumPack> {
+    const existing = await this.repository.findPackById(packId);
+    if (!existing) throw new NotFoundException('Curriculum pack not found.');
+    if (existing.authorUserId !== userId) {
+      throw new ForbiddenException('You can only manage packs that you have authored.');
+    }
+    if (existing.status !== 'DRAFT' || existing.moderationStatus !== 'DRAFT') {
+      throw new BadRequestException('Only community drafts can be edited or archived.');
+    }
+    return existing;
   }
 
   private async withWriteErrorMapping<T>(write: () => Promise<T>): Promise<T> {

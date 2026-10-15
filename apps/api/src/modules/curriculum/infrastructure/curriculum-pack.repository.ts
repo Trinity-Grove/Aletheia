@@ -4,6 +4,7 @@ import type {
   CreateCurriculumPackOutput,
   AddCurriculumPackItemOutput,
   AddCurriculumPackDependencyOutput,
+  UpdateCurriculumPackOutput,
   CurriculumPackModerationStatus,
   DefinitionStatus,
 } from '@aletheia/contracts';
@@ -52,6 +53,25 @@ export class CurriculumPackRepository {
         authorUserId: userId,
         moderationStatus: 'DRAFT',
       },
+    });
+  }
+
+  updateCommunityPack(id: string, dto: UpdateCurriculumPackOutput): Promise<CurriculumPack> {
+    return this.prisma.curriculumPack.update({
+      where: { id },
+      data: {
+        ...(dto.code !== undefined && { code: dto.code }),
+        ...(dto.name !== undefined && { name: dto.name }),
+        ...(dto.description !== undefined && { description: dto.description ?? null }),
+        ...(dto.metadata !== undefined && { metadata: dto.metadata as Prisma.InputJsonValue }),
+      },
+    });
+  }
+
+  archiveCommunityPack(id: string): Promise<CurriculumPack> {
+    return this.prisma.curriculumPack.update({
+      where: { id },
+      data: { status: 'ARCHIVED', deprecatedAt: new Date() },
     });
   }
 
