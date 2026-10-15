@@ -156,6 +156,12 @@ describe('AiSuggestionService', () => {
         findFirst: jest.fn().mockResolvedValue({ id: subjectId, familyId, name: 'Ciências' }),
         create: jest.fn().mockResolvedValue({ id: subjectId, familyId, name: 'Geral' }),
       },
+      pedagogicalProfile: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
+      theologicalProfile: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
     };
 
     service = new AiSuggestionService(
@@ -241,6 +247,48 @@ describe('AiSuggestionService', () => {
 
       expect(quotaService.recordUsage).not.toHaveBeenCalled();
       expect(suggestionRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('should pass the latest family pedagogical and theological preferences to the provider', async () => {
+      prisma.pedagogicalProfile.findFirst.mockResolvedValueOnce({
+        version: 3,
+        primaryModelCode: 'CHARLOTTE_MASON',
+        secondaryModels: [{ code: 'UNIT_STUDIES', weight: 0.4 }],
+        overrides: { internalNote: 'do not leak this value' },
+      });
+      prisma.theologicalProfile.findFirst.mockResolvedValueOnce({
+        version: 2,
+        preferredTraditionCode: 'REFORMED',
+        topicOverrides: { BAPTISM: 'CREDOBAPTISM' },
+      });
+      const providerSpy = jest.spyOn(mockLlmProvider, 'generateDraft');
+
+      await service.generateLessonPlanDraft(familyId, actorUserId, validDto);
+
+      const prompt = providerSpy.mock.calls[0]?.[0] ?? '';
+      expect(prompt).toContain('CHARLOTTE_MASON');
+      expect(prompt).toContain('UNIT_STUDIES (peso 0.4)');
+      expect(prompt).toContain('REFORMED');
+      expect(prompt).toContain('BAPTISM=CREDOBAPTISM');
+      expect(prompt).not.toContain('do not leak this value');
+      expect(prisma.pedagogicalProfile.findFirst).toHaveBeenCalledWith({
+        where: { familyId },
+        orderBy: { version: 'desc' },
+      });
+      expect(prisma.theologicalProfile.findFirst).toHaveBeenCalledWith({
+        where: { familyId },
+        orderBy: { version: 'desc' },
+      });
+    });
+
+    it('should preserve the prompt shape when the family has no profiles', async () => {
+      const providerSpy = jest.spyOn(mockLlmProvider, 'generateDraft');
+
+      await service.generateLessonPlanDraft(familyId, actorUserId, validDto);
+
+      const prompt = providerSpy.mock.calls[0]?.[0] ?? '';
+      expect(prompt).not.toContain('Preferências pedagógicas');
+      expect(prompt).not.toContain('Preferências teológicas');
     });
 
     it('should audit sensitive data access, mask prompt, generate draft, record quota, and save suggestion as PENDING_REVIEW', async () => {
