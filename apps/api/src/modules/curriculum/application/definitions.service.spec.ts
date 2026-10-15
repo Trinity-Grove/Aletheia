@@ -90,6 +90,34 @@ describe('DefinitionsService learning domain activation', () => {
 });
 
 describe('DefinitionsService activity definition search', () => {
+  it('maps valid materials from metadata to the typed response field', async () => {
+    const activity = activityDefinition({ metadata: { materials: ['Lenha', 'Balde de água'] } });
+    const repository = {
+      listActivityDefinitions: jest.fn().mockResolvedValue([activity]),
+    };
+    const service = new DefinitionsService(repository as never, {} as never);
+
+    const result = await service.listActivityDefinitions();
+
+    expect(result[0]?.materials).toEqual(['Lenha', 'Balde de água']);
+  });
+
+  it('returns an empty materials list for legacy or malformed metadata', async () => {
+    const legacy = activityDefinition({ metadata: {} });
+    const malformed = activityDefinition({
+      id: '7c5d2e6a-4b7c-4a2a-9d43-5e4c1f3b8a22',
+      metadata: { materials: ['valid', 42, null] },
+    });
+    const repository = {
+      listActivityDefinitions: jest.fn().mockResolvedValue([legacy, malformed]),
+    };
+    const service = new DefinitionsService(repository as never, {} as never);
+
+    const result = await service.listActivityDefinitions();
+
+    expect(result.map((item) => item.materials)).toEqual([[], []]);
+  });
+
   it('passes all validated filters to the repository and maps the result', async () => {
     const activity = activityDefinition();
     const repository = {

@@ -70,6 +70,7 @@ export const activityDefinitionResponseSchema = z.object({
   supervisionRequired: z.boolean(),
   riskLevel: z.string().nullable().optional(),
   evidenceRequirementMode: evidenceRequirementModeSchema,
+  materials: z.array(z.string()).default([]),
   metadata: z.record(z.string(), z.unknown()),
   createdAt: z.string(),
   publishedAt: z.string().nullable().optional(),
