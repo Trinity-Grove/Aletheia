@@ -130,6 +130,7 @@ describe('CurriculumExploreGallery', () => {
       }),
     );
     expect(screen.getByTestId('curriculum-explore-adoption-success')).toBeInTheDocument();
+    expect(screen.getByTestId('curriculum-explore-adoption-success')).toHaveTextContent('1');
   });
 
   it('shows an adoption error and remains usable when the API rejects the request', async () => {
