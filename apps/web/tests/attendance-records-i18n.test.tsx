@@ -93,9 +93,9 @@ describe('Wave 1: Attendance and Records i18n', () => {
       expect((enUS as any).attendance).toBeDefined();
       expect((esES as any).attendance).toBeDefined();
 
-      expect((ptBR as any).attendance.page.title).toBe('Controle de Frequência & Conformidade Legal');
-      expect((enUS as any).attendance.page.title).toBe('Attendance & Legal Compliance Tracking');
-      expect((esES as any).attendance.page.title).toBe('Control de Asistencia y Conformidad Legal');
+      expect((ptBR as any).attendance.page.title).toBe('Frequência e horas de estudo');
+      expect((enUS as any).attendance.page.title).toBe('Attendance and study hours');
+      expect((esES as any).attendance.page.title).toBe('Asistencia y horas de estudio');
     });
 
     it('possui o namespace records registrado em ptBR, enUS e esES', () => {
@@ -103,9 +103,9 @@ describe('Wave 1: Attendance and Records i18n', () => {
       expect((enUS as any).records).toBeDefined();
       expect((esES as any).records).toBeDefined();
 
-      expect((ptBR as any).records.page.title).toBe('Diário de Aprendizagem & Domínio');
-      expect((enUS as any).records.page.title).toBe('Learning Journal & Mastery');
-      expect((esES as any).records.page.title).toBe('Diario de Aprendizaje y Dominio');
+      expect((ptBR as any).records.page.title).toBe('Diário de aprendizagem');
+      expect((enUS as any).records.page.title).toBe('Learning journal');
+      expect((esES as any).records.page.title).toBe('Diario de aprendizaje');
     });
 
     it('traduz chaves de attendance e records via useLocale() em múltiplos idiomas', () => {
@@ -289,7 +289,7 @@ describe('Wave 1: Attendance and Records i18n', () => {
         </AuthProvider>
       );
 
-      expect(screen.getByText('Living Portfolio & Evidence Gallery')).toBeInTheDocument();
+      expect(screen.getByText('Work portfolio')).toBeInTheDocument();
       expect(screen.getByTestId('open-add-portfolio-btn')).toHaveTextContent('+ Add Evidence');
       expect(screen.getByTestId('search-portfolio-input')).toHaveAttribute('placeholder', 'Search portfolio...');
     });
