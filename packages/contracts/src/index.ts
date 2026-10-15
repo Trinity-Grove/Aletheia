@@ -32,6 +32,7 @@ export * from './curriculum-pack-composition.js';
 export * from './curriculum-pack-export.js';
 export * from './curriculum-pack-import.js';
 export * from './family-activity.js';
+export * from './community-activity.js';
 export * from './family-curriculum-pack.js';
 export * from './family-curriculum-pack-media.js';
 export * from './curriculum-pack-moderation.js';

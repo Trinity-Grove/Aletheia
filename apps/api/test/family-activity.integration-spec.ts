@@ -87,6 +87,23 @@ describe('Family-created activities (issue #96 section 7, issue #245) (real Post
       .expect(200);
     expect(updated.body.visibility).toBe('PUBLIC');
 
+    const community = await supertest(app.getHttpServer())
+      .get('/api/v1/activities/community')
+      .set('Cookie', otherFamilyCookie)
+      .expect(200);
+    const shared = community.body.find((activity: { id: string }) => activity.id === created.body.id);
+    expect(shared).toBeDefined();
+    expect(shared.familyId).toBeUndefined();
+
+    const adopted = await supertest(app.getHttpServer())
+      .post(`/api/v1/families/${otherFamilyId}/activities/adopt`)
+      .set('Cookie', otherFamilyCookie)
+      .send({ sourceActivityId: created.body.id })
+      .expect(201);
+    expect(adopted.body.familyId).toBe(otherFamilyId);
+    expect(adopted.body.visibility).toBe('PRIVATE');
+    expect(adopted.body.name).toBe('Passeio no parque');
+
     await supertest(app.getHttpServer())
       .delete(`/api/v1/families/${familyId}/activities/${created.body.id}`)
       .set('Cookie', familyCookie)
@@ -112,6 +129,18 @@ describe('Family-created activities (issue #96 section 7, issue #245) (real Post
       .set('Cookie', familyCookie)
       .send({ name: 'Atividade privada da família A' })
       .expect(201);
+
+    const community = await supertest(app.getHttpServer())
+      .get('/api/v1/activities/community')
+      .set('Cookie', otherFamilyCookie)
+      .expect(200);
+    expect(community.body.map((activity: { id: string }) => activity.id)).not.toContain(created.body.id);
+
+    await supertest(app.getHttpServer())
+      .post(`/api/v1/families/${otherFamilyId}/activities/adopt`)
+      .set('Cookie', otherFamilyCookie)
+      .send({ sourceActivityId: created.body.id })
+      .expect(404);
 
     await supertest(app.getHttpServer())
       .get(`/api/v1/families/${familyId}/activities/${created.body.id}`)

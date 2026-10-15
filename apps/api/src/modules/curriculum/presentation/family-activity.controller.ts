@@ -13,8 +13,10 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   createFamilyActivitySchema,
+  adoptCommunityActivitySchema,
   updateFamilyActivitySchema,
   type CreateFamilyActivityOutput,
+  type AdoptCommunityActivityDto,
   type FamilyActivityResponseDto,
   type UpdateFamilyActivityOutput,
 } from '@aletheia/contracts';
@@ -43,6 +45,15 @@ export class FamilyActivityController {
   @ApiOperation({ summary: 'List activities created by a family' })
   async list(@Param('familyId') familyId: string): Promise<FamilyActivityResponseDto[]> {
     return this.service.list(familyId);
+  }
+
+  @Post('adopt')
+  @ApiOperation({ summary: 'Adopt a public activity as a private family copy' })
+  async adopt(
+    @Param('familyId') familyId: string,
+    @Body(new ZodValidationPipe(adoptCommunityActivitySchema)) dto: AdoptCommunityActivityDto,
+  ): Promise<FamilyActivityResponseDto> {
+    return this.service.adopt(familyId, dto.sourceActivityId);
   }
 
   @Get(':id')

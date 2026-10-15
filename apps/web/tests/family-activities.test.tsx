@@ -113,4 +113,27 @@ describe('FamilyActivitiesGallery', () => {
       expect(screen.queryByText('Passeio no parque')).not.toBeInTheDocument();
     });
   });
+
+  it('loads shared activities and adopts one as a private copy', async () => {
+    const fetchMock = vi.fn();
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    const sharedActivity = { ...mockActivity, id: 'shared-1', familyId: undefined, visibility: undefined, name: 'Mapa do bairro' };
+    const adoptedActivity = { ...mockActivity, id: 'adopted-1', name: 'Mapa do bairro', visibility: 'PRIVATE' };
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => [] });
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => [sharedActivity] });
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => adoptedActivity });
+
+    render(<FamilyActivitiesGallery familyId={testFamilyId} />);
+    await waitFor(() => expect(screen.getByText(/nenhuma atividade própria ainda/i)).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('community-activities-tab'));
+    await waitFor(() => expect(screen.getByText('Mapa do bairro')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('adopt-community-activity-btn-shared-1'));
+
+    await waitFor(() => expect(screen.getByText(/foi adicionada à sua família como privada/i)).toBeInTheDocument());
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/v1/families/${testFamilyId}/activities/adopt`,
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ sourceActivityId: 'shared-1' }) }),
+    );
+  });
 });

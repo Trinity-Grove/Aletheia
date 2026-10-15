@@ -33,6 +33,18 @@ export class FamilyActivityRepository {
     });
   }
 
+  listPublic(): Promise<FamilyActivity[]> {
+    return this.prisma.familyActivity.findMany({
+      where: { visibility: 'PUBLIC' },
+      orderBy: { updatedAt: 'desc' },
+      take: 100,
+    });
+  }
+
+  findPublicById(id: string): Promise<FamilyActivity | null> {
+    return this.prisma.familyActivity.findFirst({ where: { id, visibility: 'PUBLIC' } });
+  }
+
   findByIdAndFamily(id: string, familyId: string): Promise<FamilyActivity | null> {
     return this.prisma.familyActivity.findFirst({ where: { id, familyId } });
   }

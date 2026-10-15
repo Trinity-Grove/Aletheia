@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Card } from '@aletheia/ui';
-import type { FamilyActivityResponseDto } from '@aletheia/contracts';
+import type { CommunityActivityResponseDto, FamilyActivityResponseDto } from '@aletheia/contracts';
 import { FamilyActivityModal } from './family-activity-modal';
 import { useLocale } from '../../lib/i18n/locale-context';
 
@@ -19,6 +19,11 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
   const [editingActivity, setEditingActivity] = useState<FamilyActivityResponseDto | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<'mine' | 'community'>('mine');
+  const [communityActivities, setCommunityActivities] = useState<CommunityActivityResponseDto[]>([]);
+  const [communityLoading, setCommunityLoading] = useState(false);
+  const [communityError, setCommunityError] = useState(false);
+  const [adoptingId, setAdoptingId] = useState<string | null>(null);
 
   const loadData = async () => {
     if (!familyId) return;
@@ -40,6 +45,48 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
   useEffect(() => {
     void loadData();
   }, [familyId]);
+
+  const loadCommunityActivities = async () => {
+    setCommunityLoading(true);
+    setCommunityError(false);
+    try {
+      const res = await fetch('/api/v1/activities/community', { credentials: 'include' });
+      if (!res.ok) throw new Error('community-activities-load-failed');
+      const data = await res.json();
+      setCommunityActivities(Array.isArray(data) ? data : []);
+    } catch {
+      setCommunityError(true);
+    } finally {
+      setCommunityLoading(false);
+    }
+  };
+
+  const handleAdopt = async (activity: CommunityActivityResponseDto) => {
+    try {
+      setAdoptingId(activity.id);
+      setError(null);
+      const res = await fetch(`/api/v1/families/${familyId}/activities/adopt`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceActivityId: activity.id }),
+      });
+      if (!res.ok) throw new Error('community-activity-adopt-failed');
+      const adopted: FamilyActivityResponseDto = await res.json();
+      setActivities((prev) => [adopted, ...prev]);
+      setActiveView('mine');
+      setSuccessMsg(t('curriculum.familyActivities.adoptedSuccess', { name: adopted.name }));
+    } catch {
+      setError(t('curriculum.familyActivities.adoptError'));
+    } finally {
+      setAdoptingId(null);
+    }
+  };
+
+  const handleViewChange = (view: 'mine' | 'community') => {
+    setActiveView(view);
+    if (view === 'community' && communityActivities.length === 0 && !communityLoading) void loadCommunityActivities();
+  };
 
   const handleSaved = (saved: FamilyActivityResponseDto) => {
     setActivities((prev) => {
@@ -130,7 +177,67 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
       {successMsg && <Alert variant="success">{successMsg}</Alert>}
       {error && <Alert variant="error">{error}</Alert>}
 
-      {loading ? (
+      <div className="portfolio-view-switcher" role="group" aria-label={t('curriculum.familyActivities.viewLabel')}>
+        <button
+          type="button"
+          className={`portfolio-view-switcher__tab${activeView === 'mine' ? ' portfolio-view-switcher__tab--active' : ''}`}
+          aria-pressed={activeView === 'mine'}
+          onClick={() => handleViewChange('mine')}
+        >
+          {t('curriculum.familyActivities.mineTab')}
+        </button>
+        <button
+          type="button"
+          data-testid="community-activities-tab"
+          className={`portfolio-view-switcher__tab${activeView === 'community' ? ' portfolio-view-switcher__tab--active' : ''}`}
+          aria-pressed={activeView === 'community'}
+          onClick={() => handleViewChange('community')}
+        >
+          {t('curriculum.familyActivities.communityTab')}
+        </button>
+      </div>
+
+      {activeView === 'community' ? (
+        communityLoading ? (
+          <div data-testid="community-activities-loading" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
+            {t('curriculum.familyActivities.communityLoading')}
+          </div>
+        ) : communityError ? (
+          <Alert variant="error" data-testid="community-activities-error">
+            {t('curriculum.familyActivities.communityLoadError')}
+            <Button variant="secondary" size="sm" onClick={() => void loadCommunityActivities()}>{t('curriculum.familyActivities.retry')}</Button>
+          </Alert>
+        ) : communityActivities.length === 0 ? (
+          <div data-testid="community-activities-empty" style={{ backgroundColor: 'var(--bg-surface)', border: '1px dashed var(--border-light)', borderRadius: 'var(--radius-lg)', padding: '3rem 2rem', textAlign: 'center' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: 'var(--forest)', fontSize: '1.125rem' }}>{t('curriculum.familyActivities.communityEmptyTitle')}</h3>
+            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{t('curriculum.familyActivities.communityEmptyDescription')}</p>
+          </div>
+        ) : (
+          <div data-testid="community-activities-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(20rem, 1fr))', gap: '1.5rem' }}>
+            {communityActivities.map((activity) => (
+              <Card key={activity.id} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '1.5rem', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-lg)' }}>
+                <div>
+                  <span style={{ fontSize: '0.6875rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: 'var(--radius-full)', backgroundColor: 'var(--sage-soft)', color: 'var(--forest)' }}>
+                    {t('curriculum.familyActivities.sharedBadge')}
+                  </span>
+                  <h3 style={{ margin: '0.75rem 0 0.5rem', fontSize: '1.125rem', fontWeight: 700, color: 'var(--forest)' }}>{activity.name}</h3>
+                  <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>{activity.description || t('curriculum.familyActivities.noDescription')}</p>
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  data-testid={`adopt-community-activity-btn-${activity.id}`}
+                  isLoading={adoptingId === activity.id}
+                  onClick={() => void handleAdopt(activity)}
+                  style={{ marginTop: '1.5rem' }}
+                >
+                  {t('curriculum.familyActivities.adopt')}
+                </Button>
+              </Card>
+            ))}
+          </div>
+        )
+      ) : loading ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
           {t('curriculum.familyActivities.loading')}
         </div>
