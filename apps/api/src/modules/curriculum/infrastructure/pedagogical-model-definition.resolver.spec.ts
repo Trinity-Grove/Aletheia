@@ -23,6 +23,11 @@ describe('PedagogicalModelDefinitionResolver', () => {
               approach: 'CHARLOTTE_MASON',
               recommendedAgeRange: { min: 6, max: 18 },
               educationalStages: ['PRIMARY', 'LOWER_SECONDARY', 'UPPER_SECONDARY'],
+              principles: ['Autonomia'],
+              preferredActivityTypes: ['NATURE.STUDY'],
+              assessmentTypeWeights: { NARRATION: 0.7, PORTFOLIO: 0.3 },
+              preferredDurationMinutes: { min: 30, max: 60 },
+              recommendationHints: ['Começar com observação direta'],
             },
           },
         ]),
@@ -37,6 +42,11 @@ describe('PedagogicalModelDefinitionResolver', () => {
         recommendedAgeRange: { min: 6, max: 18 },
         educationalStages: ['PRIMARY', 'LOWER_SECONDARY', 'UPPER_SECONDARY'],
         subjects: [expect.objectContaining({ name: 'Natureza' })],
+        principles: ['Autonomia'],
+        preferredActivityTypes: ['NATURE.STUDY'],
+        assessmentTypeWeights: { NARRATION: 0.7, PORTFOLIO: 0.3 },
+        preferredDurationMinutes: { min: 30, max: 60 },
+        recommendationHints: ['Começar com observação direta'],
       }),
     ]);
   });

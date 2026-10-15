@@ -48,7 +48,14 @@ export class PedagogicalModelDefinitionResolver {
       let subjects: TemplateSubjectDefinition[] | undefined;
       let discovery: Pick<
         PedagogicalModelCatalogEntryDto,
-        'approach' | 'recommendedAgeRange' | 'educationalStages'
+        | 'approach'
+        | 'recommendedAgeRange'
+        | 'educationalStages'
+        | 'principles'
+        | 'preferredActivityTypes'
+        | 'assessmentTypeWeights'
+        | 'preferredDurationMinutes'
+        | 'recommendationHints'
       > = {};
       try {
         const meta = pedagogicalModelMetadataSchema.safeParse(row.metadata);
@@ -63,6 +70,19 @@ export class PedagogicalModelDefinitionResolver {
               : {}),
             ...(meta.data.educationalStages
               ? { educationalStages: meta.data.educationalStages }
+              : {}),
+            ...(meta.data.principles.length > 0 ? { principles: meta.data.principles } : {}),
+            ...(meta.data.preferredActivityTypes.length > 0
+              ? { preferredActivityTypes: meta.data.preferredActivityTypes }
+              : {}),
+            ...(Object.keys(meta.data.assessmentTypeWeights).length > 0
+              ? { assessmentTypeWeights: meta.data.assessmentTypeWeights }
+              : {}),
+            ...(meta.data.preferredDurationMinutes
+              ? { preferredDurationMinutes: meta.data.preferredDurationMinutes }
+              : {}),
+            ...(meta.data.recommendationHints.length > 0
+              ? { recommendationHints: meta.data.recommendationHints }
               : {}),
           };
         }
