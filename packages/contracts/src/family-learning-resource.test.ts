@@ -3,6 +3,7 @@ import {
   adoptFamilyLearningResourceSchema,
   communityLearningResourceResponseSchema,
   createFamilyLearningResourceSchema,
+  updateFamilyLearningResourceSchema,
 } from './family-learning-resource.js';
 
 const id = '11111111-1111-4111-8111-111111111111';
@@ -42,6 +43,19 @@ describe('family learning resource contracts', () => {
       resourceType: 'MATERIAL',
       title: 'Plano inválido',
       content: { kind: 'LESSON_PLAN', objective: 'x', durationMinutes: 20, materials: [], steps: [] },
+    })).toThrow();
+  });
+
+  it('rejects updates whose discriminant does not match the resource type', () => {
+    expect(() => updateFamilyLearningResourceSchema.parse({
+      resourceType: 'MATERIAL',
+      content: {
+        kind: 'LESSON_PLAN',
+        objective: 'x',
+        durationMinutes: 20,
+        materials: [],
+        steps: [{ title: 'Etapa' }],
+      },
     })).toThrow();
   });
 

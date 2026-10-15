@@ -98,6 +98,9 @@ export const updateFamilyLearningResourceSchema = resourceFieldsSchema.partial()
   if ((value.resourceType == null) !== (value.content == null)) {
     ctx.addIssue({ code: 'custom', path: ['content'], message: 'resourceType and content must be updated together.' });
   }
+  if (value.resourceType != null && value.content != null && value.resourceType !== value.content.kind) {
+    ctx.addIssue({ code: 'custom', path: ['content', 'kind'], message: 'Content kind must match resource type.' });
+  }
   if (value.ageMin != null && value.ageMax != null && value.ageMin > value.ageMax) {
     ctx.addIssue({ code: 'custom', path: ['ageMax'], message: 'ageMax must be greater than or equal to ageMin.' });
   }
