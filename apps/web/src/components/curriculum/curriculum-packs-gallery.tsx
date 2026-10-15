@@ -41,6 +41,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
   const [reportingPack, setReportingPack] = useState<CurriculumPackResponseDto | null>(null);
   const [publishingPack, setPublishingPack] = useState<FamilyCurriculumPackResponseDto | null>(null);
   const [activeView, setActiveView] = useState<'catalog' | 'my-packs'>('catalog');
+  const [focusAuthoredPackId, setFocusAuthoredPackId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [error, setError] = useState<string | null>(null);
@@ -295,7 +296,11 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
           fontSize: '0.875rem',
         }}
       >
-        {familyId ? t('curriculum.community.familyContext') : t('curriculum.community.communityContext')}
+        {activeView === 'my-packs'
+          ? t('curriculum.community.authorContext')
+          : familyId
+            ? t('curriculum.community.familyContext')
+            : t('curriculum.community.communityContext')}
       </div>
 
       {successMsg && <Alert variant="success">{successMsg}</Alert>}
@@ -342,7 +347,15 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
       </div>
 
       {activeView === 'my-packs' ? (
-        <MyAuthoredPacksPanel availablePacks={catalogPacks} />
+        <MyAuthoredPacksPanel
+          availablePacks={catalogPacks}
+          focusPackId={focusAuthoredPackId}
+          onOpenCatalog={() => setActiveView('catalog')}
+          onOpenImport={familyId ? () => {
+            setActiveView('catalog');
+            setIsImportModalOpen(true);
+          } : undefined}
+        />
       ) : (
         <>
       {/* Filter and Search controls */}
@@ -772,7 +785,9 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
           familyCurriculumPackId={publishingPack.id}
           sourceName={publishingPack.document.pack.name}
           onClose={() => setPublishingPack(null)}
-          onSuccess={() => {
+          onSuccess={(createdPack) => {
+            setFocusAuthoredPackId(createdPack.id);
+            setActiveView('my-packs');
             setSuccessMsg(t('curriculum.community.publishSuccessMsg'));
             setTimeout(() => setSuccessMsg(null), 5000);
           }}

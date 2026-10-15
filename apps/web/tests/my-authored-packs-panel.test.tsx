@@ -121,11 +121,47 @@ describe('MyAuthoredPacksPanel', () => {
       return { ok: false, status: 404 } as Response;
     });
 
-    render(<MyAuthoredPacksPanel />);
+    render(<MyAuthoredPacksPanel onOpenCatalog={vi.fn()} onOpenImport={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByTestId('my-authored-packs-empty')).toBeInTheDocument();
     });
+    expect(screen.getByTestId('empty-create-community-pack-btn')).toBeInTheDocument();
+    expect(screen.getByTestId('empty-open-catalog-btn')).toBeInTheDocument();
+    expect(screen.getByTestId('empty-import-material-btn')).toBeInTheDocument();
+  });
+
+  it('shows an actionable retry when loading the author workspace fails', async () => {
+    let attempts = 0;
+    vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
+      attempts += 1;
+      if (attempts <= 2) return { ok: false, status: 500 } as Response;
+      const url = String(input);
+      if (url.includes('/my-packs')) return { ok: true, json: async () => [draftPack] } as Response;
+      if (url.includes('/author-profile')) return { ok: true, json: async () => mockProfile } as Response;
+      return { ok: false, status: 404 } as Response;
+    });
+
+    render(<MyAuthoredPacksPanel />);
+    await waitFor(() => expect(screen.getByTestId('my-authored-packs-error')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /tentar carregar novamente/i }));
+    await waitFor(() => expect(screen.getByText('Meu Pacote em Rascunho')).toBeInTheDocument());
+  });
+
+  it('explains the publication visibility and moderation progress', async () => {
+    vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes('/my-packs')) return { ok: true, json: async () => [rejectedPack] } as Response;
+      if (url.includes('/author-profile')) return { ok: true, json: async () => mockProfile } as Response;
+      return { ok: false, status: 404 } as Response;
+    });
+
+    render(<MyAuthoredPacksPanel />);
+
+    await waitFor(() => expect(screen.getByTestId('community-pack-publication-status-pack-rejected-1')).toBeInTheDocument());
+    expect(screen.getByTestId('community-pack-visibility-pack-rejected-1')).toHaveTextContent('Não publicado');
+    expect(screen.getByTestId('community-pack-progress-step-pack-rejected-1-rejected')).toHaveAttribute('aria-current', 'step');
+    expect(screen.getByTestId('community-pack-moderation-notes-pack-rejected-1')).toHaveTextContent('Conteúdo incompleto.');
   });
 
   it('shows an error state when loading fails', async () => {

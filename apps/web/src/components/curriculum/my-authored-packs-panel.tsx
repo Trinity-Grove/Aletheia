@@ -9,6 +9,7 @@ import type {
 } from '@aletheia/contracts';
 import { AuthorTrustBadge } from './author-trust-badge';
 import { CommunityPackCompositionEditor } from './community-pack-composition-editor';
+import { CommunityPackPublicationStatus } from './community-pack-publication-status';
 import { useLocale } from '../../lib/i18n/locale-context';
 
 const STATUS_KEYS: Record<CurriculumPackModerationStatus, string> = {
@@ -29,6 +30,9 @@ const STATUS_STYLES: Record<CurriculumPackModerationStatus, { backgroundColor: s
 
 interface MyAuthoredPacksPanelProps {
   availablePacks?: CurriculumPackResponseDto[];
+  onOpenCatalog?: (() => void) | undefined;
+  onOpenImport?: (() => void) | undefined;
+  focusPackId?: string | null | undefined;
 }
 
 interface DraftForm {
@@ -45,7 +49,12 @@ const EMPTY_DRAFT_FORM: DraftForm = {
   metadata: {},
 };
 
-export function MyAuthoredPacksPanel({ availablePacks = [] }: MyAuthoredPacksPanelProps) {
+export function MyAuthoredPacksPanel({
+  availablePacks = [],
+  onOpenCatalog,
+  onOpenImport,
+  focusPackId = null,
+}: MyAuthoredPacksPanelProps) {
   const { t } = useLocale();
   const [packs, setPacks] = useState<CurriculumPackResponseDto[]>([]);
   const [profile, setProfile] = useState<AuthorTrustProfileResponseDto | null>(null);
@@ -84,6 +93,12 @@ export function MyAuthoredPacksPanel({ availablePacks = [] }: MyAuthoredPacksPan
   useEffect(() => {
     void loadData();
   }, []);
+
+  useEffect(() => {
+    if (!focusPackId || loading) return;
+    const element = document.querySelector(`[data-testid="my-authored-pack-${focusPackId}"]`);
+    if (element && typeof element.scrollIntoView === 'function') element.scrollIntoView({ block: 'nearest' });
+  }, [focusPackId, loading, packs]);
 
   const handleSubmitForReview = async (packId: string) => {
     setSubmittingId(packId);
@@ -195,7 +210,10 @@ export function MyAuthoredPacksPanel({ availablePacks = [] }: MyAuthoredPacksPan
   if (loadError) {
     return (
       <Alert variant="error" data-testid="my-authored-packs-error">
-        {t('curriculum.community.myPacksLoadError')}
+        {t('curriculum.community.myPacksLoadError')}{' '}
+        <Button variant="secondary" size="sm" onClick={() => void loadData()}>
+          {t('curriculum.community.retryLoadBtn')}
+        </Button>
       </Alert>
     );
   }
@@ -231,10 +249,32 @@ export function MyAuthoredPacksPanel({ availablePacks = [] }: MyAuthoredPacksPan
         <EmptyState
           data-testid="my-authored-packs-empty"
           title={t('curriculum.community.myPacksEmpty')}
+          description={t('curriculum.community.myPacksEmptyDescription')}
+          action={(
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <Button variant="primary" data-testid="empty-create-community-pack-btn" onClick={openCreateEditor}>
+                {t('curriculum.community.createPackBtn')}
+              </Button>
+              {onOpenCatalog && (
+                <Button variant="secondary" data-testid="empty-open-catalog-btn" onClick={onOpenCatalog}>
+                  {t('curriculum.community.openCatalogBtn')}
+                </Button>
+              )}
+              {onOpenImport && (
+                <Button variant="secondary" data-testid="empty-import-material-btn" onClick={onOpenImport}>
+                  {t('curriculum.community.importMaterialBtn')}
+                </Button>
+              )}
+            </div>
+          )}
         />
       ) : (
         packs.map((pack) => (
-          <Card key={pack.id} data-testid={`my-authored-pack-${pack.id}`} style={{ padding: '1rem' }}>
+          <Card
+            key={pack.id}
+            data-testid={`my-authored-pack-${pack.id}`}
+            style={{ padding: '1rem', border: focusPackId === pack.id ? '2px solid var(--forest)' : undefined }}
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
               <div>
                 <div style={{ fontWeight: 700 }}>{pack.name}</div>
@@ -256,12 +296,6 @@ export function MyAuthoredPacksPanel({ availablePacks = [] }: MyAuthoredPacksPan
               )}
             </div>
 
-            {pack.moderationNotes && (pack.moderationStatus === 'REJECTED' || pack.moderationStatus === 'SUSPENDED') && (
-              <div style={{ marginTop: '0.5rem', fontSize: '0.8125rem' }}>
-                <strong>{t('curriculum.community.moderationNotesLabel')}</strong> {pack.moderationNotes}
-              </div>
-            )}
-
             {feedback?.id === pack.id && feedback.kind === 'success' && (
               <Alert variant="success" data-testid={`submit-for-review-success-${pack.id}`} style={{ marginTop: '0.5rem' }}>
                 {t('curriculum.community.submitForReviewSuccessMsg')}
@@ -269,9 +303,19 @@ export function MyAuthoredPacksPanel({ availablePacks = [] }: MyAuthoredPacksPan
             )}
             {feedback?.id === pack.id && feedback.kind === 'error' && (
               <Alert variant="error" data-testid={`submit-for-review-error-${pack.id}`} style={{ marginTop: '0.5rem' }}>
-                {t('curriculum.community.submitForReviewErrorMsg')}
+                <span>{t('curriculum.community.submitForReviewErrorMsg')}</span>{' '}
+                <Button variant="secondary" size="sm" onClick={() => void handleSubmitForReview(pack.id)}>
+                  {t('curriculum.community.retrySubmitForReviewBtn')}
+                </Button>
               </Alert>
             )}
+
+            <CommunityPackPublicationStatus
+              packId={pack.id}
+              packStatus={pack.status}
+              moderationStatus={pack.moderationStatus ?? 'DRAFT'}
+              moderationNotes={pack.moderationNotes}
+            />
 
             {pack.status === 'DRAFT' && pack.moderationStatus === 'DRAFT' && (
               <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>

@@ -1109,6 +1109,25 @@ describe('CurriculumPacksGallery (Task 7 & 8: Plugins / Pacotes Curriculares)', 
         if (url.includes('/publish-to-community') && init?.method === 'POST') {
           return { ok: true, status: 201, json: async () => publishedPack } as Response;
         }
+        if (url.includes('/curriculum-packs/my-packs')) {
+          return { ok: true, json: async () => [publishedPack] } as Response;
+        }
+        if (url.includes('/curriculum-packs/author-profile')) {
+          return {
+            ok: true,
+            json: async () => ({
+              userId: 'user-1',
+              trustScore: 10,
+              tier: 'NOVICE',
+              approvedPacksCount: 0,
+              rejectedPacksCount: 0,
+              upheldReportsCount: 0,
+              lastEvaluatedAt: '2026-09-25T00:00:00.000Z',
+              createdAt: '2026-09-25T00:00:00.000Z',
+              updatedAt: '2026-09-25T00:00:00.000Z',
+            }),
+          } as Response;
+        }
         return { ok: false, status: 404 } as Response;
       });
 
@@ -1133,7 +1152,10 @@ describe('CurriculumPacksGallery (Task 7 & 8: Plugins / Pacotes Curriculares)', 
 
       await waitFor(() => {
         expect(screen.getByTestId('publish-success-alert')).toBeInTheDocument();
+        expect(screen.getByTestId('my-authored-pack-community-pack-1')).toBeInTheDocument();
       });
+
+      expect(screen.getByTestId('submit-for-review-btn-community-pack-1')).toBeInTheDocument();
 
       expect(global.fetch).toHaveBeenCalledWith(
         '/api/v1/families/fam-1/curriculum-packs/inst-1/publish-to-community',
