@@ -134,6 +134,7 @@ describe('JurisdictionDefinitionsService', () => {
         metadata: {
           minInstructionalDays: 200,
           minInstructionalHours: 800,
+          privacyProfile: 'GDPR_LIKE',
           confidenceLevel: 'CONTESTED',
           officialSource: 'LDB Lei 9.394/1996, Art. 24, I',
           legalBasisNotes: 'Liberdade constitucional da família na condução pedagógica.',
@@ -150,6 +151,7 @@ describe('JurisdictionDefinitionsService', () => {
         code: 'BR',
         name: 'Brasil',
         version: 1,
+        privacyProfile: 'GDPR_LIKE',
         confidenceLevel: 'CONTESTED',
         minInstructionalDays: 200,
         minInstructionalHours: 800,
@@ -170,6 +172,7 @@ describe('JurisdictionDefinitionsService', () => {
         code: 'BR',
         name: 'Brasil (Referencial Nacional)',
         version: 1,
+        privacyProfile: 'GDPR_LIKE',
         confidenceLevel: 'ESTABLISHED',
         minInstructionalDays: 200,
         minInstructionalHours: 800,

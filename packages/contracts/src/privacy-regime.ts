@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 /**
  * Which data-protection law regime applies to a family, based on its
  * country. Scoped to the markets this product already validates for
@@ -25,13 +27,17 @@ export type PrivacyRegime =
  * grant or deny consent and intentionally do not encode a country's complete
  * legal obligations.
  */
-export type PrivacyProfileCode =
-  | 'GDPR_LIKE'
-  | 'COMPREHENSIVE'
-  | 'DATA_SOVEREIGNTY'
-  | 'FEDERAL_REGIONAL'
-  | 'SECTORAL_FRAGMENTED'
-  | 'LIMITED';
+
+export const privacyProfileCodeSchema = z.enum([
+  'GDPR_LIKE',
+  'COMPREHENSIVE',
+  'DATA_SOVEREIGNTY',
+  'FEDERAL_REGIONAL',
+  'SECTORAL_FRAGMENTED',
+  'LIMITED',
+]);
+
+export type PrivacyProfileCode = z.infer<typeof privacyProfileCodeSchema>;
 
 export interface PrivacyProfileDefinition {
   code: PrivacyProfileCode;
