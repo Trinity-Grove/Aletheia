@@ -24,7 +24,7 @@ const PACKAGE_DEFINITIONS = [
   },
 ];
 
-const GLOB_META = /[*?[]/;
+const GLOB_META = /[*?]/;
 
 export class TargetRoutingError extends Error {
   constructor(message) {
@@ -54,7 +54,6 @@ function parseTarget(target) {
     }
 
     return {
-      original: target,
       value: normalizePath(packageQualified[2]),
       explicitPackage: definition,
     };
@@ -65,7 +64,6 @@ function parseTarget(target) {
   );
 
   return {
-    original: target,
     value: workspacePath
       ? normalized.slice(workspacePath.packageRoot.length).replace(/^\//, '')
       : normalized,
