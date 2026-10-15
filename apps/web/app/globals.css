@@ -589,6 +589,55 @@ p.page-subtitle {
   }
 }
 
+/* Portfolio evidence stays usable on narrow screens without horizontal scroll. */
+.portfolio-form-grid {
+  min-width: 0;
+}
+
+.portfolio-form-grid > * {
+  min-width: 0;
+}
+
+.portfolio-card-actions {
+  min-width: 0;
+}
+
+.portfolio-filter-bar .ui-form-group {
+  min-width: min(180px, 100%);
+  flex: 1 1 180px;
+}
+
+.portfolio-filter-bar .ui-input-control {
+  max-width: 100%;
+}
+
+.portfolio-card-action-row {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .portfolio-form-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .portfolio-card-actions {
+    flex: 1 1 100%;
+  }
+
+  .portfolio-filter-bar .ui-form-group {
+    flex-basis: 100%;
+  }
+
+  .portfolio-card-action-row {
+    align-items: stretch !important;
+    flex-direction: column;
+  }
+
+  .portfolio-card-action-row > div:last-child {
+    justify-content: flex-end;
+  }
+}
+
 /* Home dashboard page layout */
 .dashboard-page {
   padding: 2rem 1.5rem;
