@@ -11,6 +11,7 @@ import {
   createEvidenceTypeDefinitionSchema,
   createCurriculumDefinitionSchema,
   addCurriculumDefinitionDomainSchema,
+  addCurriculumDefinitionPathSchema,
   addCurriculumDefinitionCompetencySchema,
   addCurriculumDefinitionRubricSchema,
   addCurriculumDefinitionActivitySchema,
@@ -47,6 +48,8 @@ import {
   type CurriculumDefinitionResponseDto,
   type AddCurriculumDefinitionDomainOutput,
   type CurriculumDefinitionDomainResponseDto,
+  type AddCurriculumDefinitionPathOutput,
+  type CurriculumDefinitionPathResponseDto,
   type AddCurriculumDefinitionCompetencyOutput,
   type CurriculumDefinitionCompetencyResponseDto,
   type AddCurriculumDefinitionRubricOutput,
@@ -345,6 +348,24 @@ export class DefinitionsController {
     @Param('curriculumId') curriculumId: string,
   ): Promise<CurriculumDefinitionDomainResponseDto[]> {
     return this.definitionsService.listCurriculumDefinitionDomains(curriculumId);
+  }
+
+  @Post('curriculum-definitions/:curriculumId/paths')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Link a learning path to a curriculum definition' })
+  async addCurriculumDefinitionPath(
+    @Param('curriculumId') curriculumId: string,
+    @Body(new ZodValidationPipe(addCurriculumDefinitionPathSchema)) dto: AddCurriculumDefinitionPathOutput,
+  ): Promise<CurriculumDefinitionPathResponseDto> {
+    return this.definitionsService.addCurriculumDefinitionPath(curriculumId, dto);
+  }
+
+  @Get('curriculum-definitions/:curriculumId/paths')
+  @ApiOperation({ summary: 'List learning paths linked to a curriculum definition' })
+  async listCurriculumDefinitionPaths(
+    @Param('curriculumId') curriculumId: string,
+  ): Promise<CurriculumDefinitionPathResponseDto[]> {
+    return this.definitionsService.listCurriculumDefinitionPaths(curriculumId);
   }
 
   @Post('curriculum-definitions/:curriculumId/competencies')

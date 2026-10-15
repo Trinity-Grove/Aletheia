@@ -93,6 +93,26 @@ export const curriculumDefinitionDomainResponseSchema = z.object({
 
 export type CurriculumDefinitionDomainResponseDto = z.infer<typeof curriculumDefinitionDomainResponseSchema>;
 
+export const addCurriculumDefinitionPathSchema = z.object({
+  pathId: z.string().uuid(),
+  required: z.boolean().default(true),
+  order: z.number().int().min(0).default(0),
+});
+
+export type AddCurriculumDefinitionPathDto = z.input<typeof addCurriculumDefinitionPathSchema>;
+export type AddCurriculumDefinitionPathOutput = z.output<typeof addCurriculumDefinitionPathSchema>;
+
+export const curriculumDefinitionPathResponseSchema = z.object({
+  id: z.string().uuid(),
+  curriculumDefinitionId: z.string().uuid(),
+  pathId: z.string().uuid(),
+  required: z.boolean(),
+  order: z.number().int(),
+  createdAt: z.string(),
+});
+
+export type CurriculumDefinitionPathResponseDto = z.infer<typeof curriculumDefinitionPathResponseSchema>;
+
 export const addCurriculumDefinitionCompetencySchema = z.object({
   competencyId: z.string().uuid(),
   required: z.boolean().default(true),

@@ -169,7 +169,7 @@ describe('Curriculum definitions admin API -- rubric/evidence/curriculum/activit
     expect(listResponse.body.some((e: { id: string }) => e.id === created.body.id)).toBe(true);
   });
 
-  it('creates a curriculum definition and links a domain, a competency, a rubric, and an activity', async () => {
+  it('creates a curriculum definition and links a domain, path, competency, rubric, and activity', async () => {
     const domain = await supertest(app.getHttpServer())
       .post('/api/v1/admin/curriculum-definitions/learning-domains')
       .set('Cookie', adminCookie)
@@ -183,6 +183,16 @@ describe('Curriculum definitions admin API -- rubric/evidence/curriculum/activit
         code: `TEST.CURRIC.COMPETENCY.${Date.now()}`,
         domainId: domain.body.id,
         title: 'Curriculum Test Competency',
+      })
+      .expect(201);
+
+    const path = await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-definitions/learning-paths')
+      .set('Cookie', adminCookie)
+      .send({
+        code: `TEST.CURRIC.PATH.${Date.now()}`,
+        domainId: domain.body.id,
+        name: 'Curriculum Test Path',
       })
       .expect(201);
 
@@ -209,6 +219,31 @@ describe('Curriculum definitions admin API -- rubric/evidence/curriculum/activit
       .set('Cookie', adminCookie)
       .send({ domainId: domain.body.id })
       .expect(201);
+
+    await supertest(app.getHttpServer())
+      .post(`/api/v1/admin/curriculum-definitions/curriculum-definitions/${curriculum.body.id}/paths`)
+      .set('Cookie', adminCookie)
+      .send({ pathId: path.body.id, required: false, order: 2 })
+      .expect(201);
+
+    const pathsList = await supertest(app.getHttpServer())
+      .get(`/api/v1/admin/curriculum-definitions/curriculum-definitions/${curriculum.body.id}/paths`)
+      .set('Cookie', adminCookie)
+      .expect(200);
+    expect(pathsList.body).toHaveLength(1);
+    expect(pathsList.body[0]).toMatchObject({ pathId: path.body.id, required: false, order: 2 });
+
+    await supertest(app.getHttpServer())
+      .post(`/api/v1/admin/curriculum-definitions/curriculum-definitions/${curriculum.body.id}/paths`)
+      .set('Cookie', adminCookie)
+      .send({ pathId: path.body.id })
+      .expect(400);
+
+    await supertest(app.getHttpServer())
+      .post(`/api/v1/admin/curriculum-definitions/curriculum-definitions/${curriculum.body.id}/paths`)
+      .set('Cookie', adminCookie)
+      .send({ pathId: '00000000-0000-0000-0000-000000000000' })
+      .expect(400);
 
     await supertest(app.getHttpServer())
       .post(`/api/v1/admin/curriculum-definitions/curriculum-definitions/${curriculum.body.id}/competencies`)
