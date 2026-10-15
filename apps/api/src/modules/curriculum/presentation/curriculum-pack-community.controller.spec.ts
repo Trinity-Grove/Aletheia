@@ -50,6 +50,7 @@ describe('CurriculumPackCommunityController', () => {
   let packService: {
     listPublicPacks: jest.Mock;
     listMyAuthoredPacks: jest.Mock;
+    listModerationHistory: jest.Mock;
     createCommunityPack: jest.Mock;
     updateCommunityPack: jest.Mock;
     archiveCommunityPack: jest.Mock;
@@ -72,6 +73,7 @@ describe('CurriculumPackCommunityController', () => {
     packService = {
       listPublicPacks: jest.fn(),
       listMyAuthoredPacks: jest.fn(),
+      listModerationHistory: jest.fn(),
       createCommunityPack: jest.fn(),
       updateCommunityPack: jest.fn(),
       archiveCommunityPack: jest.fn(),
@@ -166,6 +168,25 @@ describe('CurriculumPackCommunityController', () => {
 
       expect(packService.submitPack).toHaveBeenCalledWith(packId, authorUserId);
       expect(result).toEqual(mockPackDto);
+    });
+  });
+
+  describe('listModerationHistory', () => {
+    it('delegates history retrieval to the authenticated author', async () => {
+      const history = [{
+        id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+        packId,
+        event: 'SUBMITTED' as const,
+        moderationStatus: 'PENDING_REVIEW' as const,
+        notes: null,
+        createdAt: '2026-10-15T00:00:00.000Z',
+      }];
+      packService.listModerationHistory.mockResolvedValue(history);
+
+      const result = await controller.listModerationHistory(packId, authorUserId);
+
+      expect(packService.listModerationHistory).toHaveBeenCalledWith(packId, authorUserId);
+      expect(result).toEqual(history);
     });
   });
 

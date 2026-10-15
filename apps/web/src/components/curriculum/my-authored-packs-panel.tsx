@@ -10,6 +10,7 @@ import type {
 import { AuthorTrustBadge } from './author-trust-badge';
 import { CommunityPackCompositionEditor } from './community-pack-composition-editor';
 import { CommunityPackPublicationStatus } from './community-pack-publication-status';
+import { CommunityPackModerationHistory } from './community-pack-moderation-history';
 import { useLocale } from '../../lib/i18n/locale-context';
 
 const STATUS_KEYS: Record<CurriculumPackModerationStatus, string> = {
@@ -317,7 +318,9 @@ export function MyAuthoredPacksPanel({
               moderationNotes={pack.moderationNotes}
             />
 
-            {pack.status === 'DRAFT' && pack.moderationStatus === 'DRAFT' && (
+            <CommunityPackModerationHistory packId={pack.id} />
+
+            {pack.status === 'DRAFT' && (pack.moderationStatus === 'DRAFT' || pack.moderationStatus === 'REJECTED') && (
               <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <Button
                   variant="secondary"
@@ -325,7 +328,9 @@ export function MyAuthoredPacksPanel({
                   data-testid={`edit-community-pack-btn-${pack.id}`}
                   onClick={() => openEditEditor(pack)}
                 >
-                  {t('curriculum.community.editPackBtn')}
+                  {pack.moderationStatus === 'REJECTED'
+                    ? t('curriculum.community.correctRejectedPackBtn')
+                    : t('curriculum.community.editPackBtn')}
                 </Button>
                 <Button
                   variant="secondary"
@@ -337,7 +342,9 @@ export function MyAuthoredPacksPanel({
                 >
                   {submittingId === pack.id
                     ? t('curriculum.community.submittingForReviewBtn')
-                    : t('curriculum.community.submitForReviewBtn')}
+                    : pack.moderationStatus === 'REJECTED'
+                      ? t('curriculum.community.resubmitForReviewBtn')
+                      : t('curriculum.community.submitForReviewBtn')}
                 </Button>
                 <Button
                   variant="secondary"

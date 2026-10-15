@@ -31,6 +31,7 @@ import {
   type CurriculumCompositionCatalogItem,
   type CurriculumPackCompositionResponseDto,
   type CurriculumPackCompositionRevisionResponseDto,
+  type CurriculumPackModerationHistoryResponseDto,
 } from '@aletheia/contracts';
 import type { AuthorTrustProfile } from '@prisma/client';
 import { CurrentUser, JwtAuthGuard } from '../../../platform/auth/index.js';
@@ -141,6 +142,17 @@ export class CurriculumPackCommunityController {
     @CurrentUser('userId') userId: string,
   ): Promise<CurriculumPackResponseDto> {
     return this.packService.submitPack(id, userId);
+  }
+
+  @Get(':id/moderation-history')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'List the moderation and correction history of an authored pack' })
+  async listModerationHistory(
+    @Param('id') id: string,
+    @CurrentUser('userId') userId: string,
+  ): Promise<CurriculumPackModerationHistoryResponseDto[]> {
+    return this.packService.listModerationHistory(id, userId);
   }
 
   @Patch(':id')
