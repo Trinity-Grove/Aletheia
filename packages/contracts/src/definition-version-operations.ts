@@ -86,6 +86,7 @@ export const definitionVersionOperationTypeSchema = z.enum([
   'ROLLBACK',
   'CREATE',
   'STATUS_TRANSITION',
+  'UPDATE',
 ]);
 export type DefinitionVersionOperationType = z.infer<typeof definitionVersionOperationTypeSchema>;
 

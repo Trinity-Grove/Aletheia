@@ -294,6 +294,63 @@ describe('Curriculum definitions admin API -- rubric/evidence/curriculum/activit
       .expect(400);
   });
 
+  it('edits a curriculum draft, audits the changed fields, and protects published content', async () => {
+    const base = '/api/v1/admin/curriculum-definitions/curriculum-definitions';
+    const created = await supertest(app.getHttpServer())
+      .post(base)
+      .set('Cookie', adminCookie)
+      .send({
+        code: `TEST.CURRIC.DRAFT_EDIT.${Date.now()}`,
+        name: 'Draft curriculum',
+        description: 'Before editing',
+        metadata: { audience: 'family' },
+      })
+      .expect(201);
+
+    const updated = await supertest(app.getHttpServer())
+      .patch(`${base}/${created.body.id}`)
+      .set('Cookie', adminCookie)
+      .send({ name: 'Edited curriculum', description: null, metadata: { audience: 'educator' } })
+      .expect(200);
+    expect(updated.body).toMatchObject({
+      id: created.body.id,
+      code: created.body.code,
+      version: created.body.version,
+      status: 'DRAFT',
+      name: 'Edited curriculum',
+      description: null,
+      metadata: { audience: 'educator' },
+    });
+
+    await supertest(app.getHttpServer())
+      .patch(`${base}/${created.body.id}`)
+      .set('Cookie', adminCookie)
+      .send({ status: 'PUBLISHED' })
+      .expect(400);
+
+    const publishUrl = `${base}/${created.body.id}/status`;
+    await supertest(app.getHttpServer())
+      .patch(publishUrl)
+      .set('Cookie', adminCookie)
+      .send({ status: 'PUBLISHED' })
+      .expect(200);
+
+    await supertest(app.getHttpServer())
+      .patch(`${base}/${created.body.id}`)
+      .set('Cookie', adminCookie)
+      .send({ name: 'Must remain published' })
+      .expect(400);
+
+    const logs = await supertest(app.getHttpServer())
+      .get(`/api/v1/admin/curriculum-definitions/version-operations/logs?code=${created.body.code}`)
+      .set('Cookie', adminCookie)
+      .expect(200);
+    const updateLog = logs.body.find((l: { operationType: string }) => l.operationType === 'UPDATE');
+    expect(updateLog).toBeTruthy();
+    expect(updateLog.performedByUserId).toBeTruthy();
+    expect(updateLog.metadata.changedFields).toEqual(['description', 'metadata', 'name']);
+  });
+
   it('creates an activity definition and links a competency and an evidence type', async () => {
     const domain = await supertest(app.getHttpServer())
       .post('/api/v1/admin/curriculum-definitions/learning-domains')

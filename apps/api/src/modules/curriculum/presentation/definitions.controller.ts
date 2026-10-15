@@ -10,6 +10,7 @@ import {
   createRubricCriterionSchema,
   createEvidenceTypeDefinitionSchema,
   createCurriculumDefinitionSchema,
+  updateCurriculumDefinitionSchema,
   addCurriculumDefinitionDomainSchema,
   addCurriculumDefinitionPathSchema,
   addCurriculumDefinitionCompetencySchema,
@@ -46,6 +47,7 @@ import {
   type EvidenceTypeDefinitionResponseDto,
   type CreateCurriculumDefinitionOutput,
   type CurriculumDefinitionResponseDto,
+  type UpdateCurriculumDefinitionOutput,
   type AddCurriculumDefinitionDomainOutput,
   type CurriculumDefinitionDomainResponseDto,
   type AddCurriculumDefinitionPathOutput,
@@ -320,6 +322,16 @@ export class DefinitionsController {
   @ApiOperation({ summary: 'List curriculum definitions' })
   async listCurriculumDefinitions(): Promise<CurriculumDefinitionResponseDto[]> {
     return this.definitionsService.listCurriculumDefinitions();
+  }
+
+  @Patch('curriculum-definitions/:id')
+  @ApiOperation({ summary: 'Edit a draft curriculum definition' })
+  async updateCurriculumDefinitionDraft(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateCurriculumDefinitionSchema)) dto: UpdateCurriculumDefinitionOutput,
+    @CurrentUser('userId') actorId: string,
+  ): Promise<CurriculumDefinitionResponseDto> {
+    return this.definitionsService.updateCurriculumDefinitionDraft(id, dto, actorId);
   }
 
   @Patch('curriculum-definitions/:id/status')
