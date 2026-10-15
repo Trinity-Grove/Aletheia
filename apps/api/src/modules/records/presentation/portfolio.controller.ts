@@ -44,8 +44,9 @@ export class PortfolioController {
   async createItem(
     @Param('familyId') familyId: string,
     @Body(new ZodValidationPipe(createPortfolioItemSchema)) dto: CreatePortfolioItemDto,
+    @CurrentUser('userId') userId: string,
   ): Promise<PortfolioItemResponseDto> {
-    return this.portfolioService.createItem(familyId, dto);
+    return this.portfolioService.createItem(familyId, dto, userId);
   }
 
   @Post('from-evidence-submission/:evidenceSubmissionId')
@@ -56,14 +57,16 @@ export class PortfolioController {
     @Param('evidenceSubmissionId') evidenceSubmissionId: string,
     @Body(new ZodValidationPipe(createPortfolioItemFromEvidenceSubmissionSchema))
     dto: CreatePortfolioItemFromEvidenceSubmissionOutput,
+    @CurrentUser('userId') userId: string,
   ): Promise<PortfolioItemResponseDto> {
-    return this.portfolioService.createItemFromEvidenceSubmission(familyId, evidenceSubmissionId, dto);
+    return this.portfolioService.createItemFromEvidenceSubmission(familyId, evidenceSubmissionId, dto, userId);
   }
 
   @Get()
   @ApiOperation({ summary: 'List portfolio evidence items with optional filters' })
   async getItems(
     @Param('familyId') familyId: string,
+    @CurrentUser('userId') userId: string,
     @Query('learnerId') learnerId?: string,
     @Query('learningRecordId') learningRecordId?: string,
     @Query('subjectId') subjectId?: string,
@@ -81,7 +84,7 @@ export class PortfolioController {
       ...(isHighlight !== undefined ? { isHighlight: isHighlight === 'true' } : {}),
       ...(tag ? { tag } : {}),
     };
-    return this.portfolioService.listItems(familyId, filter);
+    return this.portfolioService.listItems(familyId, userId, filter);
   }
 
   @Get(':id')
@@ -89,8 +92,9 @@ export class PortfolioController {
   async getItemById(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
+    @CurrentUser('userId') userId: string,
   ): Promise<PortfolioItemResponseDto> {
-    return this.portfolioService.getItem(familyId, id);
+    return this.portfolioService.getItem(familyId, id, userId);
   }
 
   @Patch(':id')
@@ -99,8 +103,9 @@ export class PortfolioController {
     @Param('familyId') familyId: string,
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updatePortfolioItemSchema)) dto: UpdatePortfolioItemDto,
+    @CurrentUser('userId') userId: string,
   ): Promise<PortfolioItemResponseDto> {
-    return this.portfolioService.updateItem(familyId, id, dto);
+    return this.portfolioService.updateItem(familyId, id, dto, userId);
   }
 
   @Delete(':id')
@@ -122,8 +127,9 @@ export class PortfolioController {
     @Param('familyId') familyId: string,
     @Param('id') id: string,
     @Body(new ZodValidationPipe(requestPortfolioUploadSchema)) dto: RequestPortfolioUploadDto,
+    @CurrentUser('userId') userId: string,
   ): Promise<PortfolioUploadUrlResponseDto> {
-    return this.portfolioService.requestUpload(familyId, id, dto);
+    return this.portfolioService.requestUpload(familyId, id, dto, userId);
   }
 
   @Post(':id/confirm-upload')
@@ -132,8 +138,9 @@ export class PortfolioController {
   async confirmUpload(
     @Param('familyId') familyId: string,
     @Param('id') id: string,
+    @CurrentUser('userId') userId: string,
   ): Promise<PortfolioItemResponseDto> {
-    return this.portfolioService.confirmUpload(familyId, id);
+    return this.portfolioService.confirmUpload(familyId, id, userId);
   }
 
   @Get(':id/download-url')

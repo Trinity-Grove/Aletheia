@@ -1,4 +1,4 @@
-import type { FamilyRole } from '@aletheia/contracts';
+import { canAccessPortfolio, type FamilyRole, type PortfolioPermissionAction } from '@aletheia/contracts';
 import { useAuthRole } from './rbac-context';
 
 export type PermissionAction =
@@ -31,6 +31,10 @@ export type PermissionAction =
   | 'upload_portfolio_item'
   | 'upload_portfolio'
   | 'manage_portfolio'
+  | 'view_portfolio'
+  | 'create_portfolio_items'
+  | 'edit_portfolio_items'
+  | 'delete_portfolio_items'
   | 'export_family_data'
   | 'export_data'
   | 'modify_compliance_targets'
@@ -53,6 +57,10 @@ export interface RbacPermissions {
   canLogAttendance: boolean;
   canUploadPortfolioItems: boolean;
   canManagePortfolio: boolean;
+  canViewPortfolio: boolean;
+  canCreatePortfolioItems: boolean;
+  canEditPortfolioItems: boolean;
+  canDeletePortfolioItems: boolean;
   canExportFamilyData: boolean;
   canModifyComplianceTargets: boolean;
 
@@ -75,6 +83,10 @@ export interface RbacPermissions {
   log_attendance: boolean;
   upload_portfolio_items: boolean;
   manage_portfolio: boolean;
+  view_portfolio: boolean;
+  create_portfolio_items: boolean;
+  edit_portfolio_items: boolean;
+  delete_portfolio_items: boolean;
   export_family_data: boolean;
   modify_compliance_targets: boolean;
 
@@ -182,6 +194,12 @@ export function hasPermission(
         role === 'EDUCATOR'
       );
 
+    case 'view_portfolio':
+    case 'create_portfolio_items':
+    case 'edit_portfolio_items':
+    case 'delete_portfolio_items':
+      return canAccessPortfolio(role, normalizedAction as PortfolioPermissionAction);
+
     case 'export_family_data':
     case 'export_data':
       return role === 'OWNER_GUARDIAN' || role === 'GUARDIAN' || role === 'CO_GUARDIAN';
@@ -215,6 +233,10 @@ export function getPermissions(role: FamilyRole | null | undefined): RbacPermiss
   const canLogAttendance = isAnyActiveRole;
   const canUploadPortfolioItems = isAnyActiveRole;
   const canManagePortfolio = isAnyActiveRole;
+  const canViewPortfolio = isAnyActiveRole;
+  const canCreatePortfolioItems = isAnyActiveRole;
+  const canEditPortfolioItems = isAnyActiveRole;
+  const canDeletePortfolioItems = isGuardianOrOwner;
   const canExportFamilyData = isGuardianOrOwner;
   const canModifyComplianceTargets = isGuardianOrOwner;
 
@@ -235,6 +257,10 @@ export function getPermissions(role: FamilyRole | null | undefined): RbacPermiss
     canLogAttendance,
     canUploadPortfolioItems,
     canManagePortfolio,
+    canViewPortfolio,
+    canCreatePortfolioItems,
+    canEditPortfolioItems,
+    canDeletePortfolioItems,
     canExportFamilyData,
     canModifyComplianceTargets,
 
@@ -256,6 +282,10 @@ export function getPermissions(role: FamilyRole | null | undefined): RbacPermiss
     log_attendance: canLogAttendance,
     upload_portfolio_items: canUploadPortfolioItems,
     manage_portfolio: canManagePortfolio,
+    view_portfolio: canViewPortfolio,
+    create_portfolio_items: canCreatePortfolioItems,
+    edit_portfolio_items: canEditPortfolioItems,
+    delete_portfolio_items: canDeletePortfolioItems,
     export_family_data: canExportFamilyData,
     modify_compliance_targets: canModifyComplianceTargets,
 

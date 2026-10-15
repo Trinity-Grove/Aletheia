@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PortfolioRepository } from '../infrastructure/portfolio.repository.js';
 import { ObjectStorageService } from '../../../platform/storage/object-storage.service.js';
@@ -9,6 +9,7 @@ import {
 } from '../../curriculum/application/public-api.js';
 import { PRIVACY_PUBLIC_API, type PrivacyPublicApi } from '../../privacy/application/public-api.js';
 import { mapEvidenceTypeCodeToLegacyType } from './evidence-type-code.mapper.js';
+import { canAccessPortfolio, type PortfolioPermissionAction } from '@aletheia/contracts';
 import type {
   CreatePortfolioItemDto,
   CreatePortfolioItemFromEvidenceSubmissionOutput,
@@ -19,6 +20,7 @@ import type {
   RequestPortfolioUploadDto,
   UpdatePortfolioItemDto,
 } from '@aletheia/contracts';
+import { FAMILY_PUBLIC_API, type FamilyPublicApi } from '../../families/application/public-api.js';
 
 @Injectable()
 export class PortfolioService {
@@ -30,11 +32,19 @@ export class PortfolioService {
     private readonly evidenceSubmissionApi: EvidenceSubmissionPublicApi,
     @Inject(PRIVACY_PUBLIC_API)
     private readonly privacyPublicApi: PrivacyPublicApi,
+    @Inject(FAMILY_PUBLIC_API)
+    private readonly familyApi: FamilyPublicApi,
   ) {}
 
-  async createItem(familyId: string, dto: CreatePortfolioItemDto): Promise<PortfolioItemResponseDto> {
+  async createItem(
+    familyId: string,
+    dto: CreatePortfolioItemDto,
+    actorUserId: string,
+  ): Promise<PortfolioItemResponseDto> {
+    await this.ensurePermission(familyId, actorUserId, 'create_portfolio_items');
     await this.ensureContext(familyId, dto);
     const item = await this.portfolioRepo.create(familyId, dto);
+    await this.recordPortfolioAudit(actorUserId, familyId, item.learnerId, 'CREATE', item.id);
     return item.toResponseDto();
   }
 
@@ -47,7 +57,9 @@ export class PortfolioService {
     familyId: string,
     evidenceSubmissionId: string,
     dto: CreatePortfolioItemFromEvidenceSubmissionOutput,
+    actorUserId: string,
   ): Promise<PortfolioItemResponseDto> {
+    await this.ensurePermission(familyId, actorUserId, 'create_portfolio_items');
     const source = await this.evidenceSubmissionApi.getEvidenceSubmissionForPortfolio(
       familyId,
       evidenceSubmissionId,
@@ -91,10 +103,14 @@ export class PortfolioService {
       throw error;
     }
 
+    await this.recordPortfolioAudit(actorUserId, familyId, item.learnerId, 'CREATE', item.id, {
+      operation: 'EVIDENCE_SUBMISSION_PROMOTION',
+    });
     return item.toResponseDto();
   }
 
-  async getItem(familyId: string, id: string): Promise<PortfolioItemResponseDto> {
+  async getItem(familyId: string, id: string, actorUserId: string): Promise<PortfolioItemResponseDto> {
+    await this.ensurePermission(familyId, actorUserId, 'view_portfolio');
     const item = await this.portfolioRepo.findById(familyId, id);
     if (!item) {
       throw new NotFoundException('Portfolio item not found');
@@ -104,8 +120,10 @@ export class PortfolioService {
 
   async listItems(
     familyId: string,
+    actorUserId: string,
     filter: PortfolioItemFilterDto = {},
   ): Promise<PortfolioItemResponseDto[]> {
+    await this.ensurePermission(familyId, actorUserId, 'view_portfolio');
     const items = await this.portfolioRepo.list(familyId, filter);
     return items.map((i) => i.toResponseDto());
   }
@@ -114,7 +132,9 @@ export class PortfolioService {
     familyId: string,
     id: string,
     dto: UpdatePortfolioItemDto,
+    actorUserId: string,
   ): Promise<PortfolioItemResponseDto> {
+    await this.ensurePermission(familyId, actorUserId, 'edit_portfolio_items');
     const existing = await this.portfolioRepo.findById(familyId, id);
     if (!existing) {
       throw new NotFoundException('Portfolio item not found');
@@ -131,6 +151,7 @@ export class PortfolioService {
     if (!updated) {
       throw new NotFoundException('Portfolio item not found');
     }
+    await this.recordPortfolioAudit(actorUserId, familyId, updated.learnerId, 'UPDATE', updated.id);
     return updated.toResponseDto();
   }
 
@@ -145,6 +166,7 @@ export class PortfolioService {
   }
 
   async deleteItem(familyId: string, id: string, actorUserId: string): Promise<boolean> {
+    await this.ensurePermission(familyId, actorUserId, 'delete_portfolio_items');
     const item = await this.portfolioRepo.findById(familyId, id);
     if (!item) {
       throw new NotFoundException('Portfolio item not found');
@@ -172,7 +194,9 @@ export class PortfolioService {
     familyId: string,
     id: string,
     dto: RequestPortfolioUploadDto,
+    actorUserId: string,
   ): Promise<PortfolioUploadUrlResponseDto> {
+    await this.ensurePermission(familyId, actorUserId, 'edit_portfolio_items');
     const item = await this.portfolioRepo.findById(familyId, id);
     if (!item) {
       throw new NotFoundException('Portfolio item not found');
@@ -192,7 +216,12 @@ export class PortfolioService {
     return { uploadUrl, storageKey, expiresAt: expiresAt.toISOString() };
   }
 
-  async confirmUpload(familyId: string, id: string): Promise<PortfolioItemResponseDto> {
+  async confirmUpload(
+    familyId: string,
+    id: string,
+    actorUserId: string,
+  ): Promise<PortfolioItemResponseDto> {
+    await this.ensurePermission(familyId, actorUserId, 'edit_portfolio_items');
     const item = await this.portfolioRepo.findById(familyId, id);
     if (!item) {
       throw new NotFoundException('Portfolio item not found');
@@ -224,6 +253,10 @@ export class PortfolioService {
       throw new NotFoundException('Portfolio item not found');
     }
 
+    await this.recordPortfolioAudit(actorUserId, familyId, updated.learnerId, 'UPDATE', updated.id, {
+      operation: 'UPLOAD',
+    });
+
     return updated.toResponseDto();
   }
 
@@ -232,6 +265,7 @@ export class PortfolioService {
     id: string,
     actorUserId: string,
   ): Promise<PortfolioDownloadUrlResponseDto> {
+    await this.ensurePermission(familyId, actorUserId, 'view_portfolio');
     const item = await this.portfolioRepo.findById(familyId, id);
     if (!item || !item.storageKey) {
       throw new NotFoundException('Portfolio item not found');
@@ -241,15 +275,44 @@ export class PortfolioService {
       item.storageKey,
     );
 
+    await this.recordPortfolioAudit(actorUserId, familyId, item.learnerId, 'READ', id);
+
+    return { downloadUrl, expiresAt: expiresAt.toISOString() };
+  }
+
+  private async ensurePermission(
+    familyId: string,
+    actorUserId: string,
+    action: PortfolioPermissionAction,
+  ): Promise<void> {
+    const role = await this.familyApi.getFamilyMemberRole(actorUserId, familyId);
+    if (!canAccessPortfolio(role, action)) {
+      const messages: Record<PortfolioPermissionAction, string> = {
+        view_portfolio: 'You do not have permission to view this portfolio.',
+        create_portfolio_items: 'You do not have permission to add portfolio evidence.',
+        edit_portfolio_items: 'You do not have permission to edit portfolio evidence.',
+        delete_portfolio_items: 'Only family guardians can delete portfolio evidence.',
+      };
+      throw new ForbiddenException(messages[action]);
+    }
+  }
+
+  private async recordPortfolioAudit(
+    actorUserId: string,
+    familyId: string,
+    learnerId: string,
+    action: 'READ' | 'CREATE' | 'UPDATE' | 'DELETE',
+    resourceId: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<void> {
     await this.privacyPublicApi.recordSensitiveDataAccess({
       actorUserId,
       familyId,
-      learnerId: item.learnerId,
-      action: 'READ',
+      learnerId,
+      action,
       resourceType: 'PORTFOLIO_ITEM',
-      resourceId: id,
+      resourceId,
+      ...(metadata ? { metadata } : {}),
     });
-
-    return { downloadUrl, expiresAt: expiresAt.toISOString() };
   }
 }

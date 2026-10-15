@@ -5,6 +5,7 @@ import { ToastProvider } from '@aletheia/ui';
 import type { LearnerSummaryDto, LearningRecordResponseDto, PortfolioItemResponseDto } from '@aletheia/contracts';
 import type { AuthContextValue } from '../src/lib/auth/auth-context';
 import { AuthContext } from '../src/lib/auth/auth-context';
+import { AuthProvider as AuthRoleProvider } from '../src/lib/auth/rbac-context';
 import { LocaleProvider } from '../src/lib/i18n/locale-context';
 import PortfolioPage from '../app/(dashboard)/portfolio/page';
 import { PortfolioGalleryView } from '../src/components/records/portfolio-gallery-view';
@@ -356,6 +357,32 @@ describe('PortfolioGalleryView states', () => {
 
     expect(screen.getByTestId('portfolio-read-only-state')).toBeInTheDocument();
     expect(screen.queryByTestId('open-add-portfolio-btn')).not.toBeInTheDocument();
+  });
+
+  it('gives educators create/edit actions without exposing portfolio deletion', () => {
+    render(
+      <AuthRoleProvider role="EDUCATOR">
+        <AuthContext.Provider value={makeAuth({ activeRole: 'EDUCATOR' })}>
+          <LocaleProvider>
+            <ToastProvider>
+              <PortfolioGalleryView
+                items={[portfolioItem]}
+                learners={[learner]}
+                subjects={[]}
+                activeLearnerId={null}
+                onOpenAddItem={vi.fn()}
+                onEditItem={vi.fn()}
+                onDeleteItem={vi.fn()}
+              />
+            </ToastProvider>
+          </LocaleProvider>
+        </AuthContext.Provider>
+      </AuthRoleProvider>,
+    );
+
+    expect(screen.getByTestId('open-add-portfolio-btn')).toBeInTheDocument();
+    expect(screen.getByTestId(`edit-portfolio-btn-${portfolioItem.id}`)).toBeInTheDocument();
+    expect(screen.queryByTestId(`delete-portfolio-btn-${portfolioItem.id}`)).not.toBeInTheDocument();
   });
 
   it('distinguishes an empty portfolio from filters with no matching work', () => {

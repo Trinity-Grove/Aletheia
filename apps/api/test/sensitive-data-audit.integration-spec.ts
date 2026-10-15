@@ -131,7 +131,7 @@ describe('Sensitive data access log: immutable audit trail for family/learner da
       .expect(200);
 
     const logs = await prisma.sensitiveDataAccessLog.findMany({
-      where: { familyId, learnerId, resourceType: 'PORTFOLIO_ITEM', resourceId: itemId },
+      where: { familyId, learnerId, resourceType: 'PORTFOLIO_ITEM', resourceId: itemId, action: 'DELETE' },
     });
 
     expect(logs).toHaveLength(1);

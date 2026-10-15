@@ -227,7 +227,7 @@ export function PortfolioGalleryView({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <Can
-        action="upload_portfolio_items"
+        action="view_portfolio"
         fallback={
           <div
             data-testid="portfolio-read-only-state"
@@ -283,7 +283,7 @@ export function PortfolioGalleryView({
             </div>
           </div>
 
-          <Can action="upload_portfolio_items">
+          <Can action="create_portfolio_items">
             <Button data-testid="open-add-portfolio-btn" onClick={onOpenAddItem}>
               {t('records.portfolio.addEvidenceBtn')}
             </Button>
@@ -419,7 +419,7 @@ export function PortfolioGalleryView({
           title={t('records.portfolio.emptyTitle')}
           description={t('records.portfolio.emptyDesc')}
           action={
-            <Can action="upload_portfolio_items">
+            <Can action="create_portfolio_items">
               <Button data-testid="empty-add-portfolio-btn" onClick={onOpenAddItem}>
                 {t('records.portfolio.addFirstWork')}
               </Button>
@@ -605,7 +605,7 @@ export function PortfolioGalleryView({
                     )}
 
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <Can action="upload_portfolio_items">
+                      <Can action="edit_portfolio_items">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -615,7 +615,7 @@ export function PortfolioGalleryView({
                           {t('records.portfolio.editBtn')}
                         </Button>
                       </Can>
-                      <Can action="delete_learners">
+                      <Can action="delete_portfolio_items">
                         <Button
                           variant="ghost"
                           size="sm"
