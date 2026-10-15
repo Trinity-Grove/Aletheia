@@ -1,11 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import type { CurriculumPack, CurriculumPackItem, CurriculumPackDependency, Prisma } from '@prisma/client';
+import type {
+  CurriculumPack,
+  CurriculumPackItem,
+  CurriculumPackDependency,
+  CurriculumPackModerationHistory,
+  Prisma,
+} from '@prisma/client';
 import type {
   CreateCurriculumPackOutput,
   AddCurriculumPackItemOutput,
   AddCurriculumPackDependencyOutput,
   UpdateCurriculumPackOutput,
   CurriculumPackModerationStatus,
+  CurriculumPackModerationHistoryEvent,
   DefinitionStatus,
 } from '@aletheia/contracts';
 import { PrismaService } from '../../../platform/database/prisma.service.js';
@@ -54,37 +61,63 @@ export class CurriculumPackRepository {
   }
 
   createCommunityPack(userId: string, dto: CreateCurriculumPackOutput): Promise<CurriculumPack> {
-    return this.prisma.curriculumPack.create({
-      data: {
-        code: dto.code,
-        version: dto.version,
-        status: 'DRAFT',
-        schemaVersion: dto.schemaVersion,
-        name: dto.name,
-        description: dto.description ?? null,
-        metadata: dto.metadata as Prisma.InputJsonValue,
-        authorUserId: userId,
-        moderationStatus: 'DRAFT',
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const pack = await tx.curriculumPack.create({
+        data: {
+          code: dto.code,
+          version: dto.version,
+          status: 'DRAFT',
+          schemaVersion: dto.schemaVersion,
+          name: dto.name,
+          description: dto.description ?? null,
+          metadata: dto.metadata as Prisma.InputJsonValue,
+          authorUserId: userId,
+          moderationStatus: 'DRAFT',
+        },
+      });
+      await tx.curriculumPackModerationHistory.create({
+        data: { packId: pack.id, event: 'CREATED', moderationStatus: 'DRAFT' },
+      });
+      return pack;
     });
   }
 
   updateCommunityPack(id: string, dto: UpdateCurriculumPackOutput): Promise<CurriculumPack> {
-    return this.prisma.curriculumPack.update({
-      where: { id },
-      data: {
-        ...(dto.code !== undefined && { code: dto.code }),
-        ...(dto.name !== undefined && { name: dto.name }),
-        ...(dto.description !== undefined && { description: dto.description ?? null }),
-        ...(dto.metadata !== undefined && { metadata: dto.metadata as Prisma.InputJsonValue }),
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const current = await tx.curriculumPack.findUniqueOrThrow({
+        where: { id },
+        select: { moderationStatus: true },
+      });
+      const pack = await tx.curriculumPack.update({
+        where: { id },
+        data: {
+          ...(dto.code !== undefined && { code: dto.code }),
+          ...(dto.name !== undefined && { name: dto.name }),
+          ...(dto.description !== undefined && { description: dto.description ?? null }),
+          ...(dto.metadata !== undefined && { metadata: dto.metadata as Prisma.InputJsonValue }),
+        },
+      });
+      await tx.curriculumPackModerationHistory.create({
+        data: { packId: id, event: 'EDITED', moderationStatus: current.moderationStatus },
+      });
+      return pack;
     });
   }
 
   archiveCommunityPack(id: string): Promise<CurriculumPack> {
-    return this.prisma.curriculumPack.update({
-      where: { id },
-      data: { status: 'ARCHIVED', deprecatedAt: new Date() },
+    return this.prisma.$transaction(async (tx) => {
+      const current = await tx.curriculumPack.findUniqueOrThrow({
+        where: { id },
+        select: { moderationStatus: true },
+      });
+      const pack = await tx.curriculumPack.update({
+        where: { id },
+        data: { status: 'ARCHIVED', deprecatedAt: new Date() },
+      });
+      await tx.curriculumPackModerationHistory.create({
+        data: { packId: id, event: 'ARCHIVED', moderationStatus: current.moderationStatus },
+      });
+      return pack;
     });
   }
 
@@ -155,16 +188,34 @@ export class CurriculumPackRepository {
       publishedAt?: Date | null;
     },
   ): Promise<CurriculumPack> {
-    return this.prisma.curriculumPack.update({
-      where: { id },
-      data: {
-        moderationStatus: data.moderationStatus,
-        ...(data.moderationNotes !== undefined && { moderationNotes: data.moderationNotes }),
-        ...(data.moderatedAt !== undefined && { moderatedAt: data.moderatedAt }),
-        ...(data.moderatedByUserId !== undefined && { moderatedByUserId: data.moderatedByUserId }),
-        ...(data.status !== undefined && { status: data.status }),
-        ...(data.publishedAt !== undefined && { publishedAt: data.publishedAt }),
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.curriculumPack.update({
+        where: { id },
+        data: {
+          moderationStatus: data.moderationStatus,
+          ...(data.moderationNotes !== undefined && { moderationNotes: data.moderationNotes }),
+          ...(data.moderatedAt !== undefined && { moderatedAt: data.moderatedAt }),
+          ...(data.moderatedByUserId !== undefined && { moderatedByUserId: data.moderatedByUserId }),
+          ...(data.status !== undefined && { status: data.status }),
+          ...(data.publishedAt !== undefined && { publishedAt: data.publishedAt }),
+        },
+      });
+      await tx.curriculumPackModerationHistory.create({
+        data: {
+          packId: id,
+          event: moderationHistoryEventForStatus(data.moderationStatus),
+          moderationStatus: data.moderationStatus,
+          notes: data.moderationNotes ?? null,
+        },
+      });
+      return updated;
+    });
+  }
+
+  listModerationHistory(packId: string): Promise<CurriculumPackModerationHistory[]> {
+    return this.prisma.curriculumPackModerationHistory.findMany({
+      where: { packId },
+      orderBy: { createdAt: 'asc' },
     });
   }
 
@@ -204,5 +255,22 @@ export class CurriculumPackRepository {
 
   listDependencies(packId: string): Promise<CurriculumPackDependency[]> {
     return this.prisma.curriculumPackDependency.findMany({ where: { packId }, orderBy: { createdAt: 'asc' } });
+  }
+}
+
+function moderationHistoryEventForStatus(
+  status: CurriculumPackModerationStatus,
+): CurriculumPackModerationHistoryEvent {
+  switch (status) {
+    case 'PENDING_REVIEW':
+      return 'SUBMITTED';
+    case 'APPROVED':
+      return 'APPROVED';
+    case 'REJECTED':
+      return 'REJECTED';
+    case 'SUSPENDED':
+      return 'SUSPENDED';
+    case 'DRAFT':
+      return 'EDITED';
   }
 }

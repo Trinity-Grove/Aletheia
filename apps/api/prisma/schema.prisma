@@ -2330,6 +2330,7 @@ model CurriculumPack {
   reports         CurriculumPackReport[]
   media           CurriculumPackMedia[]
   compositionRevisions CurriculumPackCompositionRevision[]
+  moderationHistory CurriculumPackModerationHistory[]
 
   @@unique([code, version])
   @@index([code])
@@ -2508,12 +2509,40 @@ model CurriculumPackDependency {
   @@map("curriculum_pack_dependencies")
 }
 
+// Append-only lifecycle history for community pack authors. The current pack
+// columns remain the fast read model; this table preserves rejection, edits,
+// and subsequent submissions for a transparent correction cycle.
+model CurriculumPackModerationHistory {
+  id               String                         @id @default(uuid()) @db.Uuid
+  packId           String                         @map("pack_id") @db.Uuid
+  event            CurriculumPackModerationHistoryEvent
+  moderationStatus CurriculumPackModerationStatus @map("moderation_status")
+  notes            String?
+  createdAt        DateTime                       @default(now()) @map("created_at") @db.Timestamptz
+
+  pack CurriculumPack @relation(fields: [packId], references: [id], onDelete: Cascade)
+
+  @@index([packId, createdAt])
+  @@map("curriculum_pack_moderation_history")
+}
+
 enum CurriculumPackModerationStatus {
   DRAFT
   PENDING_REVIEW
   APPROVED
   SUSPENDED
   REJECTED
+}
+
+enum CurriculumPackModerationHistoryEvent {
+  CREATED
+  EDITED
+  SUBMITTED
+  APPROVED
+  REJECTED
+  SUSPENDED
+  RESTORED
+  ARCHIVED
 }
 
 enum AuthorTrustTier {

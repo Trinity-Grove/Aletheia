@@ -164,6 +164,68 @@ describe('MyAuthoredPacksPanel', () => {
     expect(screen.getByTestId('community-pack-moderation-notes-pack-rejected-1')).toHaveTextContent('Conteúdo incompleto.');
   });
 
+  it('lets an author correct and resubmit a rejected pack', async () => {
+    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.includes('/my-packs')) return { ok: true, json: async () => [rejectedPack] } as Response;
+      if (url.includes('/author-profile')) return { ok: true, json: async () => mockProfile } as Response;
+      if (url.endsWith('/pack-rejected-1') && init?.method === 'PATCH') {
+        return { ok: true, json: async () => ({ ...rejectedPack, name: 'Material corrigido' }) } as Response;
+      }
+      if (url.endsWith('/pack-rejected-1/submit') && init?.method === 'POST') {
+        return { ok: true, json: async () => ({ ...rejectedPack, moderationStatus: 'PENDING_REVIEW' }) } as Response;
+      }
+      if (url.endsWith('/composition') || url.endsWith('/composition/revisions') || url.includes('/composition-catalog')) {
+        return { ok: false, status: 404 } as Response;
+      }
+      return { ok: false, status: 404 } as Response;
+    });
+
+    render(<MyAuthoredPacksPanel />);
+    await waitFor(() => expect(screen.getByTestId('edit-community-pack-btn-pack-rejected-1')).toBeInTheDocument());
+    expect(screen.getByTestId('submit-for-review-btn-pack-rejected-1')).toHaveTextContent('Enviar novamente para revisão');
+
+    fireEvent.click(screen.getByTestId('edit-community-pack-btn-pack-rejected-1'));
+    fireEvent.change(screen.getByTestId('community-pack-name-input'), { target: { value: 'Material corrigido' } });
+    fireEvent.click(screen.getByRole('button', { name: /salvar rascunho/i }));
+    await waitFor(() => expect(screen.getByText('Rascunho atualizado.')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('submit-for-review-btn-pack-rejected-1'));
+    await waitFor(() => expect(screen.getByTestId('submit-for-review-success-pack-rejected-1')).toBeInTheDocument());
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/v1/curriculum-packs/pack-rejected-1/submit',
+      expect.objectContaining({ method: 'POST', credentials: 'include' })
+    );
+  });
+
+  it('loads the immutable moderation history on demand', async () => {
+    vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes('/my-packs')) return { ok: true, json: async () => [rejectedPack] } as Response;
+      if (url.includes('/author-profile')) return { ok: true, json: async () => mockProfile } as Response;
+      if (url.includes('/moderation-history')) {
+        return {
+          ok: true,
+          json: async () => [
+            { id: 'history-1', packId: rejectedPack.id, event: 'REJECTED', moderationStatus: 'REJECTED', notes: 'Conteúdo incompleto.', createdAt: '2026-10-15T00:00:00.000Z' },
+            { id: 'history-2', packId: rejectedPack.id, event: 'EDITED', moderationStatus: 'REJECTED', notes: null, createdAt: '2026-10-15T01:00:00.000Z' },
+            { id: 'history-3', packId: rejectedPack.id, event: 'SUBMITTED', moderationStatus: 'PENDING_REVIEW', notes: null, createdAt: '2026-10-15T02:00:00.000Z' },
+          ],
+        } as Response;
+      }
+      return { ok: false, status: 404 } as Response;
+    });
+
+    render(<MyAuthoredPacksPanel />);
+    await waitFor(() => expect(screen.getByTestId('view-moderation-history-btn-pack-rejected-1')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('view-moderation-history-btn-pack-rejected-1'));
+
+    await waitFor(() => expect(screen.getByTestId('moderation-history-pack-rejected-1')).toBeInTheDocument());
+    expect(screen.getByTestId('moderation-history-entry-history-1')).toHaveTextContent('Rejeitado pela moderação');
+    expect(screen.getByTestId('moderation-history-entry-history-2')).toHaveTextContent('Conteúdo corrigido');
+    expect(screen.getByTestId('moderation-history-entry-history-3')).toHaveTextContent('Enviado para revisão');
+  });
+
   it('shows an error state when loading fails', async () => {
     vi.spyOn(global, 'fetch').mockResolvedValue({ ok: false, status: 500 } as Response);
 

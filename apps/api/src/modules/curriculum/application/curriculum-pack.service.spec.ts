@@ -78,6 +78,7 @@ describe('CurriculumPackService - Community & Moderation', () => {
     listPacks: jest.Mock;
     listPublishedPacks: jest.Mock;
     listMyAuthoredPacks: jest.Mock;
+    listModerationHistory: jest.Mock;
     findPackById: jest.Mock;
     findPackByCodeVersion: jest.Mock;
     updatePackStatus: jest.Mock;
@@ -111,6 +112,7 @@ describe('CurriculumPackService - Community & Moderation', () => {
       listPacks: jest.fn(),
       listPublishedPacks: jest.fn(),
       listMyAuthoredPacks: jest.fn(),
+      listModerationHistory: jest.fn(),
       findPackById: jest.fn(),
       findPackByCodeVersion: jest.fn(),
       updatePackStatus: jest.fn(),
@@ -205,6 +207,19 @@ describe('CurriculumPackService - Community & Moderation', () => {
       expect(authorTrustService.onPackApproved).not.toHaveBeenCalled();
       expect(result.moderationStatus).toBe('PENDING_REVIEW');
       expect(result.status).toBe('DRAFT');
+    });
+
+    it('allows an owned rejected pack to be corrected and resubmitted', async () => {
+      repository.findPackById.mockResolvedValue({ ...mockPack, moderationStatus: 'REJECTED' });
+      authorTrustService.getOrCreateProfile.mockResolvedValue(noviceProfile);
+      repository.updateModeration.mockResolvedValue({ ...mockPack, moderationStatus: 'PENDING_REVIEW' });
+
+      const result = await service.submitPack(packId, authorUserId);
+
+      expect(repository.updateModeration).toHaveBeenCalledWith(packId, {
+        moderationStatus: 'PENDING_REVIEW',
+      });
+      expect(result.moderationStatus).toBe('PENDING_REVIEW');
     });
 
     it('auto-approves pack to APPROVED and PUBLISHED when author is TRUSTED, calling onPackApproved', async () => {
@@ -411,6 +426,17 @@ describe('CurriculumPackService - Community & Moderation', () => {
       await expect(service.updateCommunityPack(packId, authorUserId, dto)).rejects.toThrow(BadRequestException);
       expect(repository.updateCommunityPack).not.toHaveBeenCalled();
     });
+
+    it('allows an owned rejected pack to be corrected', async () => {
+      const rejectedPack = { ...mockPack, moderationStatus: 'REJECTED' as const };
+      repository.findPackById.mockResolvedValue(rejectedPack);
+      repository.updateCommunityPack.mockResolvedValue({ ...rejectedPack, name: 'Corrected pack' });
+
+      const result = await service.updateCommunityPack(packId, authorUserId, dto);
+
+      expect(repository.updateCommunityPack).toHaveBeenCalledWith(packId, dto);
+      expect(result.name).toBe('Corrected pack');
+    });
   });
 
   describe('archiveCommunityPack', () => {
@@ -442,6 +468,43 @@ describe('CurriculumPackService - Community & Moderation', () => {
       expect(repository.listMyAuthoredPacks).toHaveBeenCalledWith(authorUserId);
       expect(result).toHaveLength(1);
       expect(result[0]!.authorUserId).toBe(authorUserId);
+    });
+  });
+
+  describe('listModerationHistory', () => {
+    it('returns the owned pack correction and moderation history', async () => {
+      repository.findPackById.mockResolvedValue(mockPack);
+      repository.listModerationHistory.mockResolvedValue([
+        {
+          id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+          packId,
+          event: 'REJECTED',
+          moderationStatus: 'REJECTED',
+          notes: 'Add objectives.',
+          createdAt: new Date('2026-10-15T00:00:00Z'),
+        },
+        {
+          id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+          packId,
+          event: 'EDITED',
+          moderationStatus: 'REJECTED',
+          notes: null,
+          createdAt: new Date('2026-10-15T01:00:00Z'),
+        },
+        {
+          id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+          packId,
+          event: 'SUBMITTED',
+          moderationStatus: 'PENDING_REVIEW',
+          notes: null,
+          createdAt: new Date('2026-10-15T02:00:00Z'),
+        },
+      ]);
+
+      const result = await service.listModerationHistory(packId, authorUserId);
+
+      expect(result.map((entry) => entry.event)).toEqual(['REJECTED', 'EDITED', 'SUBMITTED']);
+      expect(result[0]!.notes).toBe('Add objectives.');
     });
   });
 });

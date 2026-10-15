@@ -11,6 +11,7 @@ import type {
   CurriculumPackModerationStatus,
   DefinitionStatus,
   UpdateCurriculumPackOutput,
+  CurriculumPackModerationHistoryResponseDto,
 } from '@aletheia/contracts';
 import { CurriculumPackRepository } from '../infrastructure/curriculum-pack.repository.js';
 import { computeStatusTransition } from './definition-status-transition.js';
@@ -110,6 +111,26 @@ export class CurriculumPackService {
     return rows.map((row) => this.toPackDto(row));
   }
 
+  async listModerationHistory(
+    packId: string,
+    userId: string,
+  ): Promise<CurriculumPackModerationHistoryResponseDto[]> {
+    const existing = await this.repository.findPackById(packId);
+    if (!existing) throw new NotFoundException('Curriculum pack not found.');
+    if (existing.authorUserId !== userId) {
+      throw new ForbiddenException('You can only view the history of packs that you have authored.');
+    }
+    const history = await this.repository.listModerationHistory(packId);
+    return history.map((entry) => ({
+      id: entry.id,
+      packId: entry.packId,
+      event: entry.event as CurriculumPackModerationHistoryResponseDto['event'],
+      moderationStatus: entry.moderationStatus as CurriculumPackModerationHistoryResponseDto['moderationStatus'],
+      notes: entry.notes,
+      createdAt: entry.createdAt.toISOString(),
+    }));
+  }
+
   async updateCommunityPack(
     packId: string,
     userId: string,
@@ -186,8 +207,11 @@ export class CurriculumPackService {
     if (existing.authorUserId !== userId) {
       throw new ForbiddenException('You can only manage packs that you have authored.');
     }
-    if (existing.status !== 'DRAFT' || existing.moderationStatus !== 'DRAFT') {
-      throw new BadRequestException('Only community drafts can be edited or archived.');
+    if (
+      existing.status !== 'DRAFT' ||
+      (existing.moderationStatus !== 'DRAFT' && existing.moderationStatus !== 'REJECTED')
+    ) {
+      throw new BadRequestException('Only community drafts or rejected packs can be edited or archived.');
     }
     return existing;
   }
