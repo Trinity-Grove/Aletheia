@@ -159,4 +159,52 @@ describe('Generic definition tagging (real Postgres)', () => {
   it('rejects an unauthenticated request', async () => {
     await supertest(app.getHttpServer()).get(`${base}/tags/search?tag=x`).expect(401);
   });
+
+  it('groups tags by namespace/type and filters by prefix', async () => {
+    const stamp = randomUUID().replace(/-/g, '');
+    const first = await supertest(app.getHttpServer())
+      .post(`${base}/activity-definitions`)
+      .set('Cookie', adminCookie)
+      .send({ code: `TEST.TAG.FACET.${stamp}.ONE`, name: 'First tagged activity' })
+      .expect(201);
+    const second = await supertest(app.getHttpServer())
+      .post(`${base}/activity-definitions`)
+      .set('Cookie', adminCookie)
+      .send({ code: `TEST.TAG.FACET.${stamp}.TWO`, name: 'Second tagged activity' })
+      .expect(201);
+
+    for (const definitionId of [first.body.id, second.body.id]) {
+      await supertest(app.getHttpServer())
+        .post(`${base}/tags`)
+        .set('Cookie', adminCookie)
+        .send({
+          entityType: 'ActivityDefinition',
+          definitionId,
+          namespace: `theme-${stamp}`,
+          tag: `api-${stamp}`,
+        })
+        .expect(201);
+    }
+
+    const response = await supertest(app.getHttpServer())
+      .get(`${base}/tags/facets`)
+      .query({ namespace: `theme-${stamp}`, q: `API-${stamp}` })
+      .set('Cookie', adminCookie)
+      .expect(200);
+
+    expect(response.body).toEqual([
+      {
+        namespace: `theme-${stamp}`,
+        tag: `api-${stamp}`,
+        entityType: 'ActivityDefinition',
+        definitionCount: 2,
+      },
+    ]);
+
+    await supertest(app.getHttpServer())
+      .get(`${base}/tags/facets`)
+      .query({ entityType: 'ProgressionPolicy' })
+      .set('Cookie', adminCookie)
+      .expect(400);
+  });
 });

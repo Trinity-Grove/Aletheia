@@ -13,9 +13,12 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   addDefinitionTagSchema,
+  searchDefinitionTagFacetsQuerySchema,
   searchDefinitionsByTagSchema,
   type AddDefinitionTagOutput,
+  type DefinitionTagFacetResponseDto,
   type DefinitionTagResponseDto,
+  type SearchDefinitionTagFacetsQueryDto,
   type SearchDefinitionsByTagDto,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, PlatformAdminGuard } from '../../../platform/auth/index.js';
@@ -56,6 +59,14 @@ export class DefinitionTagsController {
     @Query(new ZodValidationPipe(searchDefinitionsByTagSchema)) query: SearchDefinitionsByTagDto,
   ): Promise<DefinitionTagResponseDto[]> {
     return this.service.search(query);
+  }
+
+  @Get('facets')
+  @ApiOperation({ summary: 'List discoverable tag facets for catalog definitions' })
+  async searchFacets(
+    @Query(new ZodValidationPipe(searchDefinitionTagFacetsQuerySchema)) query: SearchDefinitionTagFacetsQueryDto,
+  ): Promise<DefinitionTagFacetResponseDto[]> {
+    return this.service.searchFacets(query);
   }
 
   @Delete(':id')
