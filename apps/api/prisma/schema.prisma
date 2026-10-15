@@ -1145,7 +1145,6 @@ model LearningDomain {
   createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz
   publishedAt   DateTime?        @map("published_at") @db.Timestamptz
   deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
-
   parent          LearningDomain?              @relation("LearningDomainHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children        LearningDomain[]             @relation("LearningDomainHierarchy")
   competencies    CompetencyDefinition[]
@@ -2317,6 +2316,7 @@ model CurriculumPack {
   moderationNotes   String?                         @map("moderation_notes")
   moderatedAt       DateTime?                       @map("moderated_at") @db.Timestamptz
   moderatedByUserId String?                         @map("moderated_by_user_id") @db.Uuid
+  compositionRevision Int          @default(0)    @map("composition_revision")
   createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz
   publishedAt   DateTime?        @map("published_at") @db.Timestamptz
   deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
@@ -2329,6 +2329,7 @@ model CurriculumPack {
   familyInstances FamilyCurriculumPack[]
   reports         CurriculumPackReport[]
   media           CurriculumPackMedia[]
+  compositionRevisions CurriculumPackCompositionRevision[]
 
   @@unique([code, version])
   @@index([code])
@@ -2466,6 +2467,7 @@ model CurriculumPackItem {
   definitionType String   @map("definition_type")
   code           String
   version        Int
+  position       Int      @default(0)
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   pack CurriculumPack @relation(fields: [packId], references: [id], onDelete: Cascade)
@@ -2473,6 +2475,20 @@ model CurriculumPackItem {
   @@unique([packId, definitionType, code, version])
   @@index([packId])
   @@map("curriculum_pack_items")
+}
+
+model CurriculumPackCompositionRevision {
+  id        String   @id @default(uuid()) @db.Uuid
+  packId    String   @map("pack_id") @db.Uuid
+  revision  Int
+  items     Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  pack CurriculumPack @relation(fields: [packId], references: [id], onDelete: Cascade)
+
+  @@unique([packId, revision], name: "curriculum_pack_composition_revisions_pack_revision_unique")
+  @@index([packId, revision])
+  @@map("curriculum_pack_composition_revisions")
 }
 
 // Soft reference by (code, version) value -- deliberately NOT a hard FK

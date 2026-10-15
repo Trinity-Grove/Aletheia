@@ -150,6 +150,12 @@ export class LearnerAccessService {
       const sigPart = token.slice(dotIndex + 1);
       const idBuf = Buffer.from(idPart, 'base64url');
       const sig = Buffer.from(sigPart, 'base64url');
+      // Reject alternate/non-canonical base64url spellings. Without this,
+      // changing unused trailing bits in the compact signature text can
+      // decode to the same bytes and make a visibly tampered URL verify.
+      if (idBuf.toString('base64url') !== idPart || sig.toString('base64url') !== sigPart) {
+        return null;
+      }
       if (sig.length !== 10) {
         return null;
       }

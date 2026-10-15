@@ -211,4 +211,78 @@ describe('MyAuthoredPacksPanel', () => {
       expect.objectContaining({ method: 'POST', credentials: 'include' })
     );
   });
+
+  it('adds, reorders and saves the authored pack composition with a preview', async () => {
+    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.includes('/my-packs')) return { ok: true, json: async () => [draftPack] } as Response;
+      if (url.includes('/author-profile')) return { ok: true, json: async () => mockProfile } as Response;
+      if (url.includes('/composition-catalog')) {
+        return {
+          ok: true,
+          json: async () => [
+            {
+              definitionType: 'SkillDefinition',
+              code: 'READING',
+              version: 1,
+              label: 'Leitura',
+              description: null,
+              status: 'PUBLISHED',
+              schemaVersion: '1.0.0',
+            },
+            {
+              definitionType: 'SkillDefinition',
+              code: 'WRITING',
+              version: 1,
+              label: 'Escrita',
+              description: null,
+              status: 'PUBLISHED',
+              schemaVersion: '1.0.0',
+            },
+          ],
+        } as Response;
+      }
+      if (url.endsWith('/composition') && !init?.method) {
+        return { ok: true, json: async () => ({ packId: 'pack-draft-1', revision: 0, items: [], preview: [] }) } as Response;
+      }
+      if (url.endsWith('/composition/revisions')) return { ok: true, json: async () => [] } as Response;
+      if (url.endsWith('/composition') && init?.method === 'PUT') {
+        return {
+          ok: true,
+          json: async () => ({
+            packId: 'pack-draft-1',
+            revision: 1,
+            items: [
+              { definitionType: 'SkillDefinition', code: 'WRITING', version: 1, position: 0 },
+              { definitionType: 'SkillDefinition', code: 'READING', version: 1, position: 1 },
+            ],
+            preview: [],
+          }),
+        } as Response;
+      }
+      return { ok: false, status: 404 } as Response;
+    });
+
+    render(<MyAuthoredPacksPanel />);
+    await waitFor(() => expect(screen.getByTestId('edit-community-pack-btn-pack-draft-1')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('edit-community-pack-btn-pack-draft-1'));
+    await waitFor(() => expect(screen.getByTestId('community-pack-composition-editor')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('add-composition-item-SkillDefinition-READING-1'));
+    fireEvent.click(screen.getByTestId('add-composition-item-SkillDefinition-WRITING-1'));
+    fireEvent.click(screen.getByTestId('move-composition-item-up-SkillDefinition-WRITING-1'));
+    expect(screen.getByTestId('composition-preview')).toHaveTextContent('WRITING');
+    fireEvent.click(screen.getByTestId('save-composition-btn'));
+
+    await waitFor(() => expect(screen.getByTestId('composition-saved-alert')).toBeInTheDocument());
+    const saveCall = fetchSpy.mock.calls.find(([request, requestInit]) => String(request).endsWith('/composition') && requestInit?.method === 'PUT');
+    expect(saveCall).toBeDefined();
+    expect(JSON.parse(String(saveCall?.[1]?.body))).toMatchObject({
+      expectedRevision: 0,
+      items: [
+        { definitionType: 'SkillDefinition', code: 'WRITING', version: 1 },
+        { definitionType: 'SkillDefinition', code: 'READING', version: 1 },
+      ],
+    });
+  });
 });
