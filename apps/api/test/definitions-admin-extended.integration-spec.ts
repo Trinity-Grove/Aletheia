@@ -420,6 +420,69 @@ describe('Curriculum definitions admin API -- rubric/evidence/curriculum/activit
     expect(published.body.status).toBe('PUBLISHED');
   });
 
+  it('searches activity definitions by text, status and intersecting age range', async () => {
+    const stamp = Date.now();
+    const create = (payload: Record<string, unknown>) => {
+      const { code: suffix, ...definition } = payload;
+      return supertest(app.getHttpServer())
+        .post('/api/v1/admin/curriculum-definitions/activity-definitions')
+        .set('Cookie', adminCookie)
+        .send({ code: `TEST.SEARCH.${stamp}.${suffix}`, ...definition })
+        .expect(201);
+    };
+
+    const fireActivity = await create({
+      code: 'FIRE',
+      name: `UniqueSearchFire-${stamp} safety practice`,
+      description: 'A supervised outdoor activity.',
+      status: 'PUBLISHED',
+      ageMin: 8,
+      ageMax: 12,
+    });
+    const openActivity = await create({
+      code: 'OPEN',
+      name: 'Open-ended activity',
+      ageMax: 10,
+    });
+    const olderActivity = await create({
+      code: 'OLDER',
+      name: 'Older learner activity',
+      status: 'PUBLISHED',
+      ageMin: 13,
+      ageMax: 17,
+    });
+
+    const byText = await supertest(app.getHttpServer())
+      .get('/api/v1/admin/curriculum-definitions/activity-definitions')
+      .query({ q: `UniqueSearchFire-${stamp}` })
+      .set('Cookie', adminCookie)
+      .expect(200);
+    expect(byText.body.map((row: { id: string }) => row.id)).toEqual([fireActivity.body.id]);
+
+    const byAge = await supertest(app.getHttpServer())
+      .get('/api/v1/admin/curriculum-definitions/activity-definitions')
+      .query({ age: 10 })
+      .set('Cookie', adminCookie)
+      .expect(200);
+    expect(byAge.body.map((row: { id: string }) => row.id)).toEqual(
+      expect.arrayContaining([fireActivity.body.id, openActivity.body.id]),
+    );
+    expect(byAge.body.map((row: { id: string }) => row.id)).not.toContain(olderActivity.body.id);
+
+    const combined = await supertest(app.getHttpServer())
+      .get('/api/v1/admin/curriculum-definitions/activity-definitions')
+      .query({ q: `UniqueSearchFire-${stamp}`, status: 'PUBLISHED', age: 10 })
+      .set('Cookie', adminCookie)
+      .expect(200);
+    expect(combined.body.map((row: { id: string }) => row.id)).toEqual([fireActivity.body.id]);
+
+    await supertest(app.getHttpServer())
+      .get('/api/v1/admin/curriculum-definitions/activity-definitions')
+      .query({ age: 121 })
+      .set('Cookie', adminCookie)
+      .expect(400);
+  });
+
   // Issue #96 section 8's own literal test: "Construir uma horta" pode
   // validar Matemática, Ciências, Cultivo e Planejamento sem criar
   // lógica especial para horta. Every call below is the exact same

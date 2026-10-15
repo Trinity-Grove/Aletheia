@@ -78,6 +78,14 @@ export const activityDefinitionResponseSchema = z.object({
 
 export type ActivityDefinitionResponseDto = z.infer<typeof activityDefinitionResponseSchema>;
 
+export const searchActivityDefinitionsQuerySchema = z.object({
+  q: z.string().trim().min(1).max(150).optional(),
+  status: definitionStatusSchema.optional(),
+  age: z.coerce.number().int().min(0).max(120).optional(),
+});
+
+export type SearchActivityDefinitionsQueryDto = z.infer<typeof searchActivityDefinitionsQuerySchema>;
+
 export const addActivityDefinitionCompetencySchema = z.object({
   competencyId: z.string().uuid(),
   required: z.boolean().default(true),
