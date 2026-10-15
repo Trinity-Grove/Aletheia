@@ -8,6 +8,7 @@ import type {
   CurriculumPackResponseDto,
 } from '@aletheia/contracts';
 import { AuthorTrustBadge } from './author-trust-badge';
+import { CommunityPackCompositionEditor } from './community-pack-composition-editor';
 import { useLocale } from '../../lib/i18n/locale-context';
 
 const STATUS_KEYS: Record<CurriculumPackModerationStatus, string> = {
@@ -371,6 +372,7 @@ export function MyAuthoredPacksPanel({ availablePacks = [] }: MyAuthoredPacksPan
               data-testid="community-pack-description-input"
             />
           </label>
+          {editingPack && <CommunityPackCompositionEditor packId={editingPack.id} />}
         </form>
       </Modal>
     </div>

@@ -117,6 +117,8 @@ import { DefinitionTagsController } from './presentation/definition-tags.control
 import { FamilyActivityRepository } from './infrastructure/family-activity.repository.js';
 import { FamilyActivityService } from './application/family-activity.service.js';
 import { FamilyActivityController } from './presentation/family-activity.controller.js';
+import { CurriculumPackCompositionRepository } from './infrastructure/curriculum-pack-composition.repository.js';
+import { CurriculumPackCompositionService } from './application/curriculum-pack-composition.service.js';
 
 @Module({
   imports: [DatabaseModule, DevotionalModule, StorageModule, PrivacyModule],
@@ -210,6 +212,7 @@ import { FamilyActivityController } from './presentation/family-activity.control
     FamilyCurriculumPackMediaRepository,
     CurriculumPackMediaRepository,
     FamilyActivityRepository,
+    CurriculumPackCompositionRepository,
     CurriculumService,
     ObjectiveService,
     DefinitionsService,
@@ -225,6 +228,7 @@ import { FamilyActivityController } from './presentation/family-activity.control
     FamilyCurriculumPackMediaService,
     CurriculumPackMediaService,
     FamilyActivityService,
+    CurriculumPackCompositionService,
     DefinitionVersionOperationsService,
     AuthorTrustRepository,
     AuthorTrustService,

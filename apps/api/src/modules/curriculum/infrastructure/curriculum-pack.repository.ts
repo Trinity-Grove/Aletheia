@@ -168,19 +168,28 @@ export class CurriculumPackRepository {
     });
   }
 
-  addItem(packId: string, dto: AddCurriculumPackItemOutput): Promise<CurriculumPackItem> {
+  async addItem(packId: string, dto: AddCurriculumPackItemOutput): Promise<CurriculumPackItem> {
+    const lastItem = await this.prisma.curriculumPackItem.findFirst({
+      where: { packId },
+      orderBy: [{ position: 'desc' }, { createdAt: 'desc' }],
+      select: { position: true },
+    });
     return this.prisma.curriculumPackItem.create({
       data: {
         packId,
         definitionType: dto.definitionType,
         code: dto.code,
         version: dto.version,
+        position: (lastItem?.position ?? -1) + 1,
       },
     });
   }
 
   listItems(packId: string): Promise<CurriculumPackItem[]> {
-    return this.prisma.curriculumPackItem.findMany({ where: { packId }, orderBy: { createdAt: 'asc' } });
+    return this.prisma.curriculumPackItem.findMany({
+      where: { packId },
+      orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
+    });
   }
 
   addDependency(packId: string, dto: AddCurriculumPackDependencyOutput): Promise<CurriculumPackDependency> {

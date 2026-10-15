@@ -27,6 +27,7 @@ describe('CurriculumPackReportService - Community Reporting Engine & Auto-Suspen
     metadata: {},
     authorUserId,
     originFamilyCurriculumPackId: null,
+    compositionRevision: 0,
     moderationStatus: 'APPROVED',
     moderationNotes: null,
     moderatedAt: new Date('2026-09-20T00:00:00Z'),
