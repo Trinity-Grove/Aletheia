@@ -103,6 +103,18 @@ export function PortfolioItemModal({
     setError(null);
   }, [itemToEdit, isOpen, initialRecordId, defaultLearnerId, learners]);
 
+  const compatibleRecords = records.filter((record) => !learnerId || record.learnerId === learnerId);
+
+  const handleLearnerChange = (nextLearnerId: string) => {
+    setLearnerId(nextLearnerId);
+    if (
+      learningRecordId &&
+      !records.some((record) => record.id === learningRecordId && record.learnerId === nextLearnerId)
+    ) {
+      setLearningRecordId('');
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
     setFileError(null);
@@ -200,7 +212,7 @@ export function PortfolioItemModal({
             label={t('records.portfolioModal.learnerLabel')}
             data-testid="portfolio-learner-select"
             value={learnerId}
-            onChange={(e) => setLearnerId(e.target.value)}
+            onChange={(e) => handleLearnerChange(e.target.value)}
             options={[
               { value: '', label: t('records.portfolioModal.learnerPlaceholder') },
               ...learners.map((l) => ({ value: l.id, label: l.preferredName || l.firstName })),
@@ -247,7 +259,7 @@ export function PortfolioItemModal({
             onChange={(e) => setLearningRecordId(e.target.value)}
             options={[
               { value: '', label: t('records.portfolioModal.recordPlaceholder') },
-              ...records.map((r) => ({ value: r.id, label: `${r.title} (${r.date})` })),
+              ...compatibleRecords.map((r) => ({ value: r.id, label: `${r.title} (${r.date})` })),
             ]}
           />
         </div>

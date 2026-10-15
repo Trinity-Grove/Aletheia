@@ -33,6 +33,7 @@ export class PortfolioService {
   ) {}
 
   async createItem(familyId: string, dto: CreatePortfolioItemDto): Promise<PortfolioItemResponseDto> {
+    await this.ensureContext(familyId, dto);
     const item = await this.portfolioRepo.create(familyId, dto);
     return item.toResponseDto();
   }
@@ -57,6 +58,12 @@ export class PortfolioService {
     if (source.validationStatus !== 'VALIDATED') {
       throw new BadRequestException('Only a validated evidence submission can be added to the portfolio.');
     }
+
+    await this.ensureContext(familyId, {
+      learnerId: source.learnerId,
+      academicYearId: dto.academicYearId ?? null,
+      subjectId: dto.subjectId ?? null,
+    });
 
     let item;
     try {
@@ -108,11 +115,33 @@ export class PortfolioService {
     id: string,
     dto: UpdatePortfolioItemDto,
   ): Promise<PortfolioItemResponseDto> {
+    const existing = await this.portfolioRepo.findById(familyId, id);
+    if (!existing) {
+      throw new NotFoundException('Portfolio item not found');
+    }
+
+    await this.ensureContext(familyId, {
+      learnerId: dto.learnerId ?? existing.learnerId,
+      learningRecordId: dto.learningRecordId !== undefined ? dto.learningRecordId : existing.learningRecordId,
+      academicYearId: dto.academicYearId !== undefined ? dto.academicYearId : existing.academicYearId,
+      subjectId: dto.subjectId !== undefined ? dto.subjectId : existing.subjectId,
+    });
+
     const updated = await this.portfolioRepo.update(familyId, id, dto);
     if (!updated) {
       throw new NotFoundException('Portfolio item not found');
     }
     return updated.toResponseDto();
+  }
+
+  private async ensureContext(
+    familyId: string,
+    input: Parameters<PortfolioRepository['validateContext']>[1],
+  ): Promise<void> {
+    const validation = await this.portfolioRepo.validateContext(familyId, input);
+    if (!validation.valid) {
+      throw new BadRequestException(validation.message);
+    }
   }
 
   async deleteItem(familyId: string, id: string, actorUserId: string): Promise<boolean> {
