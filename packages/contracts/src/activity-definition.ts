@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { definitionStatusSchema } from './curriculum-definitions.js';
+import { definitionStatusSchema, safetyPolicySchema } from './curriculum-definitions.js';
 
 // --- Activity definition (Aletheia issue #96, Fase 0, section 7) ---
 //
@@ -25,6 +25,7 @@ export type EvidenceRequirementMode = z.infer<typeof evidenceRequirementModeSche
 
 export const activityMetadataSchema = z.object({
   materials: z.array(z.string()).default([]),
+  safetyPolicy: safetyPolicySchema.optional(),
 });
 
 export type ActivityMetadata = z.infer<typeof activityMetadataSchema>;

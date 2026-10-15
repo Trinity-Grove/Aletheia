@@ -102,7 +102,7 @@ export type CompetencyAssessmentPolicy = z.infer<typeof competencyAssessmentPoli
 
 const SAFETY_TRAINING_CODE_REGEX = /^[A-Z0-9][A-Z0-9_.]*$/;
 
-export const competencySafetyPolicySchema = z.object({
+export const safetyPolicySchema = z.object({
   riskLevel: z.enum(['LOW', 'MODERATE', 'HIGH', 'CRITICAL']),
   supervision: z.enum(['NONE', 'RECOMMENDED', 'REQUIRED', 'ADULT_ONLY']),
   minimumAge: z.number().int().min(0).max(120).optional(),
@@ -132,7 +132,12 @@ export const competencySafetyPolicySchema = z.object({
   }
 });
 
-export type CompetencySafetyPolicy = z.infer<typeof competencySafetyPolicySchema>;
+export type SafetyPolicy = z.infer<typeof safetyPolicySchema>;
+
+// Backward-compatible competency names remain public while the policy is
+// shared by every catalog definition that needs safety metadata.
+export const competencySafetyPolicySchema = safetyPolicySchema;
+export type CompetencySafetyPolicy = SafetyPolicy;
 
 export const competencyMetadataSchema = z.object({
   ageRecommendation: competencyAgeRecommendationSchema.optional(),
@@ -144,7 +149,7 @@ export const competencyMetadataSchema = z.object({
   prerequisites: z.array(z.string()).default([]),
   evidenceTypes: z.array(z.string()).default([]),
   assessmentPolicy: competencyAssessmentPolicySchema.optional(),
-  safetyPolicy: competencySafetyPolicySchema.optional(),
+  safetyPolicy: safetyPolicySchema.optional(),
   // Concrete, portfolio-friendly starter objectives for this competency --
   // same tone/purpose as TemplateSubjectDefinition.starterObjectives
   // (curriculum-template.engine.ts), just scoped to one competency instead

@@ -53,6 +53,49 @@ describe('Activity Definition Contracts', () => {
     expect(parsed.metadata.materials).toEqual(['fósforos', 'lenha', 'balde de água']);
   });
 
+  it('accepts a structured safety policy without changing legacy safety fields', () => {
+    const parsed = createActivityDefinitionSchema.parse({
+      code: 'OUTDOOR.FIRE_SAFETY.CAMPFIRE_BUILD',
+      name: 'Construir uma fogueira com segurança',
+      supervisionRequired: true,
+      riskLevel: 'medium',
+      metadata: {
+        materials: ['fósforos', 'lenha'],
+        safetyPolicy: {
+          riskLevel: 'HIGH',
+          supervision: 'ADULT_ONLY',
+          minimumAge: 12,
+          requiresAdultConsent: true,
+          requiredTrainingCodes: ['SAFETY.FIRE.INTRO'],
+          instructions: 'Mantenha água disponível e apague o fogo completamente ao terminar.',
+        },
+      },
+    });
+
+    expect(parsed.supervisionRequired).toBe(true);
+    expect(parsed.riskLevel).toBe('medium');
+    expect(parsed.metadata.safetyPolicy).toEqual({
+      riskLevel: 'HIGH',
+      supervision: 'ADULT_ONLY',
+      minimumAge: 12,
+      requiresAdultConsent: true,
+      requiredTrainingCodes: ['SAFETY.FIRE.INTRO'],
+      instructions: 'Mantenha água disponível e apague o fogo completamente ao terminar.',
+    });
+  });
+
+  it.each([
+    ['rejects high risk without required supervision', { riskLevel: 'HIGH', supervision: 'NONE' }],
+    ['rejects adult-only supervision without adult consent', { riskLevel: 'MODERATE', supervision: 'ADULT_ONLY' }],
+    ['rejects unknown safety policy fields', { riskLevel: 'LOW', supervision: 'NONE', unsupportedFlag: true }],
+  ])('%s', (_name, safetyPolicy) => {
+    expect(() => createActivityDefinitionSchema.parse({
+      code: 'OUTDOOR.FIRE_SAFETY.CAMPFIRE_BUILD',
+      name: 'Construir uma fogueira com segurança',
+      metadata: { safetyPolicy },
+    })).toThrow();
+  });
+
   it('rejects an invalid evidenceRequirementMode', () => {
     expect(() =>
       createActivityDefinitionSchema.parse({
