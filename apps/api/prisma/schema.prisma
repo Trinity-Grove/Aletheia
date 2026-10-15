@@ -337,6 +337,7 @@ model Family {
   curriculumPackReports     CurriculumPackReport[]
   mentorGrants           MentorGrant[]
   activities             FamilyActivity[]
+  learningResources      FamilyLearningResource[]
   feedbackSubmissions    FeedbackSubmission[]
   sensitiveDataAccessLogs SensitiveDataAccessLog[]
   aiSuggestions          AiSuggestion[]
@@ -1782,6 +1783,39 @@ model FamilyActivity {
 
   @@index([familyId])
   @@map("family_activities")
+}
+
+model FamilyLearningResource {
+  id               String                    @id @default(uuid()) @db.Uuid
+  familyId         String                    @map("family_id") @db.Uuid
+  resourceType     FamilyLearningResourceType @map("resource_type")
+  title            String
+  description      String?
+  subject          String?
+  ageMin           Int?                      @map("age_min")
+  ageMax           Int?                      @map("age_max")
+  content          Json
+  visibility       FamilyContentVisibility   @default(PRIVATE)
+  originResourceId String?                   @map("origin_resource_id") @db.Uuid
+  createdAt        DateTime                  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
+
+  family         Family                   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  originResource FamilyLearningResource?  @relation("LearningResourceOrigin", fields: [originResourceId], references: [id], onDelete: SetNull)
+  adoptedCopies  FamilyLearningResource[] @relation("LearningResourceOrigin")
+
+  @@index([familyId])
+  @@index([visibility, resourceType, updatedAt])
+  @@index([originResourceId])
+  @@map("family_learning_resources")
+}
+
+enum FamilyLearningResourceType {
+  MATERIAL
+  LESSON_PLAN
+  CHRONOGRAM
+
+  @@map("family_learning_resource_types")
 }
 
 enum FamilyContentVisibility {
