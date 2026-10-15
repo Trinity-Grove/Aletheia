@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import React, { useState } from 'react';
 import type { LearnerSummaryDto, NotificationItemResponseDto } from '@aletheia/contracts';
-import { ProductShell, LearnerFocusSwitcher } from '../src/components/product-shell';
+import { ProductShell, LearnerFocusSwitcher, MAIN_NAV_ITEMS } from '../src/components/product-shell';
 import { AuthProvider, useAuthRole } from '../src/lib/auth/rbac-context';
 import { AuthContext, type AuthContextValue } from '../src/lib/auth/auth-context';
 
@@ -118,6 +118,23 @@ describe('ProductShell adapter', () => {
     );
 
     expect(screen.getByTestId('appshell-nav-support')).toBeInTheDocument();
+  });
+
+  it('includes the legal-guide navigation item in MAIN_NAV_ITEMS pointing to /legal-guide', () => {
+    const legalGuideItem = MAIN_NAV_ITEMS.find((item) => item.id === 'legal-guide');
+    expect(legalGuideItem).toBeDefined();
+    expect(legalGuideItem?.href).toBe('/legal-guide');
+    expect(legalGuideItem?.label).toBe('nav.legalGuide');
+
+    render(
+      <ProductShell currentPath="/legal-guide">
+        <p>Conteúdo do Guia Legal</p>
+      </ProductShell>,
+    );
+
+    const link = screen.getByRole('link', { name: 'Amparo Legal' });
+    expect(link).toHaveAttribute('href', '/legal-guide');
+    expect(link).toHaveAttribute('aria-current', 'page');
   });
 
   it('derives the active route from Next and renders Next-integrated desktop and overflow-sheet links', () => {

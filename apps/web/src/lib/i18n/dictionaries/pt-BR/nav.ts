@@ -12,4 +12,5 @@ export const nav = {
   support: 'Apoiar o Projeto ❤️',
   settings: 'Configurações',
   startTour: 'Fazer Tour',
+  legalGuide: 'Amparo Legal',
 } as const;
