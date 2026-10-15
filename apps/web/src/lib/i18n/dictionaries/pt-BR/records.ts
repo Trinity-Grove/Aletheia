@@ -207,6 +207,8 @@ export const records = {
       noResultsTitle: 'Nenhum trabalho corresponde aos filtros',
       noResultsDescription: 'Tente remover um filtro ou buscar por outro termo.',
       clearFilters: 'Limpar filtros',
+      mediaLoading: 'Preparando a mídia...',
+      mediaUnavailable: 'Não foi possível carregar esta mídia.',
     },
     highlightBadge: 'Destaque',
     openMedia: 'Abrir Mídia ↗',

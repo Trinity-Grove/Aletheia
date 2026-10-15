@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AletheiaIcon, Button, EmptyState, PageHeader, useToast } from '@aletheia/ui';
 import type {
@@ -30,6 +30,8 @@ export default function PortfolioPage() {
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItemResponseDto[]>([]);
   const [pageState, setPageState] = useState<PortfolioPageState>('loading');
   const [portfolioState, setPortfolioState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const mediaUrlCache = useRef(new Map<string, { url: string; expiresAt: number }>());
+  const mediaUrlRequests = useRef(new Map<string, Promise<string | null>>());
 
   // Modals
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
@@ -64,6 +66,45 @@ export default function PortfolioPage() {
       setPageState('error');
     }
   }, []);
+
+  const resolvePortfolioMediaUrl = useCallback(async (itemId: string): Promise<string | null> => {
+    if (!familyId) return null;
+
+    const cached = mediaUrlCache.current.get(itemId);
+    if (cached && cached.expiresAt > Date.now() + 5_000) {
+      return cached.url;
+    }
+
+    const pendingRequest = mediaUrlRequests.current.get(itemId);
+    if (pendingRequest) return pendingRequest;
+
+    let request: Promise<string | null>;
+    request = fetch(`/api/v1/families/${familyId}/portfolio/${itemId}/download-url`, {
+      credentials: 'include',
+    })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        const payload: { downloadUrl?: string; expiresAt?: string } = await res.json();
+        const expiresAt = payload.expiresAt ? Date.parse(payload.expiresAt) : Number.NaN;
+        if (!payload.downloadUrl || !Number.isFinite(expiresAt)) return null;
+        mediaUrlCache.current.set(itemId, { url: payload.downloadUrl, expiresAt });
+        return payload.downloadUrl;
+      })
+      .catch(() => null)
+      .finally(() => {
+        if (mediaUrlRequests.current.get(itemId) === request) {
+          mediaUrlRequests.current.delete(itemId);
+        }
+      });
+
+    mediaUrlRequests.current.set(itemId, request);
+    return request;
+  }, [familyId]);
+
+  useEffect(() => {
+    mediaUrlCache.current.clear();
+    mediaUrlRequests.current.clear();
+  }, [familyId]);
 
   // Resolve the active family from the session first, preserving the legacy
   // localStorage fallback used by older dashboard entry points and tests.
@@ -105,31 +146,9 @@ export default function PortfolioPage() {
       }
 
       const data: PortfolioItemResponseDto[] = await res.json();
-      // A real file upload never populates `fileUrl` — that field is only
-      // ever the guardian-supplied external URL for LINK-type items. For
-      // everything else, the only way to view the uploaded file is a
-      // short-lived presigned GET URL fetched on demand, so resolve one
-      // per uploaded item before rendering (the gallery already knows how
-      // to render `fileUrl` for previews, it just never had one).
-      const withDownloadUrls = await Promise.all(
-        data.map(async (item) => {
-          if (item.fileUrl || !item.mimeType) return item;
-          try {
-            const dlRes = await fetch(
-              `/api/v1/families/${familyId}/portfolio/${item.id}/download-url`,
-              { credentials: 'include' },
-            );
-            if (dlRes.ok) {
-              const { downloadUrl } = await dlRes.json();
-              return { ...item, fileUrl: downloadUrl };
-            }
-          } catch {
-            // A missing preview must not hide the rest of the portfolio.
-          }
-          return item;
-        }),
-      );
-      setPortfolioItems(withDownloadUrls);
+      mediaUrlCache.current.clear();
+      mediaUrlRequests.current.clear();
+      setPortfolioItems(data);
       setPortfolioState('ready');
     } catch {
       setPortfolioState('error');
@@ -291,6 +310,7 @@ export default function PortfolioPage() {
             onOpenAddItem={handleOpenAddItem}
             onEditItem={handleEditItem}
             onDeleteItem={handleDeleteItem}
+            onResolveMediaUrl={resolvePortfolioMediaUrl}
           />
         )}
 
