@@ -44,25 +44,8 @@ export class FamilyActivityService {
   }
 
   async adopt(familyId: string, sourceActivityId: string): Promise<FamilyActivityResponseDto> {
-    const source = await this.repository.findPublicById(sourceActivityId);
-    if (!source) throw new NotFoundException('Community activity not found.');
-
-    const metadata = source.metadata && typeof source.metadata === 'object' && !Array.isArray(source.metadata)
-      ? source.metadata as Record<string, unknown>
-      : {};
-    const copy = await this.repository.create({
-      familyId,
-      name: source.name,
-      description: source.description,
-      ageMin: source.ageMin,
-      ageMax: source.ageMax,
-      estimatedDurationMinutes: source.estimatedDurationMinutes,
-      supervisionRequired: source.supervisionRequired,
-      riskLevel: source.riskLevel,
-      evidenceRequirementMode: source.evidenceRequirementMode,
-      metadata: { ...metadata, origin: { kind: 'COMMUNITY_ACTIVITY', sourceActivityId } } as Prisma.InputJsonValue,
-      visibility: 'PRIVATE',
-    });
+    const copy = await this.repository.adoptPublic(sourceActivityId, familyId);
+    if (!copy) throw new NotFoundException('Community activity not found.');
     return this.toDto(copy);
   }
 

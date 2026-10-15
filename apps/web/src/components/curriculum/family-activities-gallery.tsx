@@ -25,26 +25,40 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
   const [communityError, setCommunityError] = useState(false);
   const [adoptingId, setAdoptingId] = useState<string | null>(null);
 
-  const loadData = async () => {
-    if (!familyId) return;
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await fetch(`/api/v1/families/${familyId}/activities`, { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        setActivities(Array.isArray(data) ? data : []);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('curriculum.familyActivities.loadError'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    void loadData();
-  }, [familyId]);
+    if (!familyId) {
+      setActivities([]);
+      setLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setActivities([]);
+    setLoading(true);
+    setError(null);
+
+    void fetch(`/api/v1/families/${familyId}/activities`, {
+      credentials: 'include',
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error('family-activities-load-failed');
+        const data = await res.json();
+        if (!controller.signal.aborted) setActivities(Array.isArray(data) ? data : []);
+      })
+      .catch((err: unknown) => {
+        if (!controller.signal.aborted) {
+          setError(err instanceof Error && err.message !== 'family-activities-load-failed'
+            ? err.message
+            : t('curriculum.familyActivities.loadError'));
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [familyId, t]);
 
   const loadCommunityActivities = async () => {
     setCommunityLoading(true);
@@ -241,7 +255,7 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
           {t('curriculum.familyActivities.loading')}
         </div>
-      ) : activities.length === 0 ? (
+      ) : error ? null : activities.length === 0 ? (
         <div
           style={{
             backgroundColor: 'var(--bg-surface)',
