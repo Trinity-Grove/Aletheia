@@ -20,6 +20,7 @@ import type {
   ProjectDefinition,
   ProjectDefinitionDomain,
   ProjectDefinitionCompetency,
+  ProjectDefinitionPhase,
   ProjectDefinitionMilestone,
   CurriculumDefinitionProject,
   TheologicalTraditionDefinition,
@@ -50,6 +51,7 @@ import type {
   CreateProjectDefinitionOutput,
   AddProjectDefinitionDomainOutput,
   AddProjectDefinitionCompetencyOutput,
+  AddProjectDefinitionPhaseOutput,
   AddProjectDefinitionMilestoneOutput,
   AddCurriculumDefinitionProjectOutput,
   CreateTheologicalTraditionDefinitionOutput,
@@ -573,6 +575,32 @@ export class DefinitionsRepository {
     });
   }
 
+  addProjectDefinitionPhase(
+    projectId: string,
+    dto: AddProjectDefinitionPhaseOutput,
+  ): Promise<ProjectDefinitionPhase> {
+    return this.prisma.projectDefinitionPhase.create({
+      data: {
+        projectId,
+        code: dto.code,
+        title: dto.title,
+        description: dto.description ?? null,
+        order: dto.order,
+      },
+    });
+  }
+
+  listProjectDefinitionPhases(projectId: string): Promise<ProjectDefinitionPhase[]> {
+    return this.prisma.projectDefinitionPhase.findMany({
+      where: { projectId },
+      orderBy: [{ order: 'asc' }, { code: 'asc' }],
+    });
+  }
+
+  findProjectDefinitionPhaseForProject(id: string, projectId: string): Promise<ProjectDefinitionPhase | null> {
+    return this.prisma.projectDefinitionPhase.findFirst({ where: { id, projectId } });
+  }
+
   addProjectDefinitionMilestone(
     projectId: string,
     dto: AddProjectDefinitionMilestoneOutput,
@@ -580,6 +608,7 @@ export class DefinitionsRepository {
     return this.prisma.projectDefinitionMilestone.create({
       data: {
         projectId,
+        phaseId: dto.phaseId ?? null,
         code: dto.code,
         title: dto.title,
         description: dto.description ?? null,
@@ -591,7 +620,7 @@ export class DefinitionsRepository {
   listProjectDefinitionMilestones(projectId: string): Promise<ProjectDefinitionMilestone[]> {
     return this.prisma.projectDefinitionMilestone.findMany({
       where: { projectId },
-      orderBy: { order: 'asc' },
+      orderBy: [{ order: 'asc' }, { code: 'asc' }],
     });
   }
 

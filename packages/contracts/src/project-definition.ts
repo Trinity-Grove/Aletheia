@@ -88,6 +88,32 @@ export const projectDefinitionCompetencyResponseSchema = z.object({
 
 export type ProjectDefinitionCompetencyResponseDto = z.infer<typeof projectDefinitionCompetencyResponseSchema>;
 
+export const addProjectDefinitionPhaseSchema = z.object({
+  code: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(DEFINITION_CODE_REGEX, 'code must be upper snake/dot case, e.g. PLANNING'),
+  title: z.string().min(1).max(250),
+  description: z.string().max(2000).nullish(),
+  order: z.number().int().min(0).default(0),
+});
+
+export type AddProjectDefinitionPhaseDto = z.input<typeof addProjectDefinitionPhaseSchema>;
+export type AddProjectDefinitionPhaseOutput = z.output<typeof addProjectDefinitionPhaseSchema>;
+
+export const projectDefinitionPhaseResponseSchema = z.object({
+  id: z.string().uuid(),
+  projectId: z.string().uuid(),
+  code: z.string(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  order: z.number().int(),
+  createdAt: z.string(),
+});
+
+export type ProjectDefinitionPhaseResponseDto = z.infer<typeof projectDefinitionPhaseResponseSchema>;
+
 export const addProjectDefinitionMilestoneSchema = z.object({
   code: z
     .string()
@@ -96,6 +122,7 @@ export const addProjectDefinitionMilestoneSchema = z.object({
     .regex(DEFINITION_CODE_REGEX, 'code must be upper snake/dot case, e.g. SOIL_PREP'),
   title: z.string().min(1).max(250),
   description: z.string().max(2000).nullish(),
+  phaseId: z.string().uuid().nullish(),
   order: z.number().int().min(0).default(0),
 });
 
@@ -108,6 +135,7 @@ export const projectDefinitionMilestoneResponseSchema = z.object({
   code: z.string(),
   title: z.string(),
   description: z.string().nullable().optional(),
+  phaseId: z.string().uuid().nullable().optional(),
   order: z.number().int(),
   createdAt: z.string(),
 });

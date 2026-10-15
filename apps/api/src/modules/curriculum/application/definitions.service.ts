@@ -21,6 +21,7 @@ import type {
   ProjectDefinition,
   ProjectDefinitionDomain,
   ProjectDefinitionCompetency,
+  ProjectDefinitionPhase,
   ProjectDefinitionMilestone,
   CurriculumDefinitionProject,
   TheologicalTraditionDefinition,
@@ -71,6 +72,8 @@ import type {
   ProjectDefinitionDomainResponseDto,
   AddProjectDefinitionCompetencyOutput,
   ProjectDefinitionCompetencyResponseDto,
+  AddProjectDefinitionPhaseOutput,
+  ProjectDefinitionPhaseResponseDto,
   AddProjectDefinitionMilestoneOutput,
   ProjectDefinitionMilestoneResponseDto,
   AddCurriculumDefinitionProjectOutput,
@@ -705,10 +708,31 @@ export class DefinitionsService {
     dto: AddProjectDefinitionMilestoneOutput,
   ): Promise<ProjectDefinitionMilestoneResponseDto> {
     await this.requireProjectDefinition(projectId);
+    if (dto.phaseId) {
+      const phase = await this.repository.findProjectDefinitionPhaseForProject(dto.phaseId, projectId);
+      if (!phase) {
+        throw new BadRequestException('The milestone phase must belong to the same project definition.');
+      }
+    }
     const row = await this.withWriteErrorMapping(() =>
       this.repository.addProjectDefinitionMilestone(projectId, dto),
     );
     return this.toProjectDefinitionMilestoneDto(row);
+  }
+
+  async addProjectDefinitionPhase(
+    projectId: string,
+    dto: AddProjectDefinitionPhaseOutput,
+  ): Promise<ProjectDefinitionPhaseResponseDto> {
+    await this.requireProjectDefinition(projectId);
+    const row = await this.withWriteErrorMapping(() => this.repository.addProjectDefinitionPhase(projectId, dto));
+    return this.toProjectDefinitionPhaseDto(row);
+  }
+
+  async listProjectDefinitionPhases(projectId: string): Promise<ProjectDefinitionPhaseResponseDto[]> {
+    await this.requireProjectDefinition(projectId);
+    const rows = await this.repository.listProjectDefinitionPhases(projectId);
+    return rows.map((row) => this.toProjectDefinitionPhaseDto(row));
   }
 
   async listProjectDefinitionMilestones(projectId: string): Promise<ProjectDefinitionMilestoneResponseDto[]> {
@@ -1151,6 +1175,19 @@ export class DefinitionsService {
   private toProjectDefinitionMilestoneDto(
     row: ProjectDefinitionMilestone,
   ): ProjectDefinitionMilestoneResponseDto {
+    return {
+      id: row.id,
+      projectId: row.projectId,
+      phaseId: row.phaseId,
+      code: row.code,
+      title: row.title,
+      description: row.description,
+      order: row.order,
+      createdAt: row.createdAt.toISOString(),
+    };
+  }
+
+  private toProjectDefinitionPhaseDto(row: ProjectDefinitionPhase): ProjectDefinitionPhaseResponseDto {
     return {
       id: row.id,
       projectId: row.projectId,
