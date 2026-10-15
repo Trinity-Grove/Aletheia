@@ -409,8 +409,8 @@ export function PortfolioGalleryView({
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div data-testid="portfolio-count-stats" style={{ textAlign: 'right' }}>
+        <div className="portfolio-header-banner__right" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="portfolio-header-banner__stats" data-testid="portfolio-count-stats" style={{ textAlign: 'right' }}>
             <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               {t('records.portfolio.worksCount', { count: filteredItems.length })}
             </span>
@@ -421,7 +421,7 @@ export function PortfolioGalleryView({
           </div>
 
           <Can action="create_portfolio_items">
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'flex-end' }}>
+            <div className="portfolio-header-banner__actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'flex-end' }}>
               <Button data-testid="open-add-portfolio-btn" onClick={onOpenAddItem}>
                 {t('records.portfolio.addEvidenceBtn')}
               </Button>
