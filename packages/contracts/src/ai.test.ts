@@ -3,6 +3,8 @@ import {
   aiSuggestionStatusSchema,
   aiFeatureTypeSchema,
   aiProviderNameSchema,
+  aiGroundingContextSchema,
+  aiGroundingSourceSchema,
   generateLessonPlanDraftRequestSchema,
   lessonPlanDraftStepSchema,
   lessonPlanDraftContentSchema,
@@ -243,6 +245,49 @@ describe('AI Contracts Zod Schemas', () => {
   });
 
   describe('aiLessonPlanDraftResponseSchema', () => {
+    it('accepts a server-generated grounding context with only supported source types', () => {
+      const parsed = aiGroundingContextSchema.safeParse({
+        sources: [
+          { type: 'LEARNING_DOMAIN', code: 'SCIENCE', version: 3, label: 'Ciências da Natureza' },
+          { type: 'PEDAGOGICAL_PROFILE', code: 'CHARLOTTE_MASON', version: 2, label: 'Charlotte Mason' },
+          { type: 'THEOLOGICAL_PROFILE', code: 'REFORMED', version: 1, label: 'Reformada' },
+          { type: 'ACTIVITY_DEFINITION', code: 'SCIENCE.FIRE', version: 4, label: 'Fogueira supervisionada' },
+        ],
+      });
+
+      expect(parsed.success).toBe(true);
+    });
+
+    it('rejects arbitrary provider-authored grounding types and invalid versions', () => {
+      expect(() => aiGroundingSourceSchema.parse({
+        type: 'LLM_RATIONALE',
+        code: 'made-up',
+        version: 0,
+        label: 'Inventado pelo modelo',
+      })).toThrow();
+    });
+
+    it('accepts a response without grounding for legacy drafts', () => {
+      const parsed = aiLessonPlanDraftResponseSchema.safeParse({
+        suggestionId: validUuid,
+        status: 'PENDING_REVIEW',
+        draft: {
+          title: 'Aula de História',
+          summary: 'Visão geral da Grécia antiga',
+          steps: [{ order: 1, title: 'Introdução', durationMinutes: 10, instructions: 'Apresentar o mapa' }],
+        },
+        metadata: {
+          provider: 'MOCK',
+          model: 'mock-deterministic',
+          promptTokens: 100,
+          completionTokens: 200,
+          estimatedCostMicrosUsd: 0,
+        },
+      });
+
+      expect(parsed.success).toBe(true);
+    });
+
     it('should validate draft response payload', () => {
       const parsed = aiLessonPlanDraftResponseSchema.safeParse({
         suggestionId: validUuid,

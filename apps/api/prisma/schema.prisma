@@ -2929,6 +2929,7 @@ model AiSuggestion {
   status             AiSuggestionStatus @default(PENDING_REVIEW)
   sanitizedPrompt    String             @map("sanitized_prompt") @db.Text
   catalogContext     Json?              @map("catalog_context")
+  groundingContext   Json?              @map("grounding_context")
   rawModelOutput     Json               @map("raw_model_output")
   finalHumanOutput   Json?              @map("final_human_output")
   createdEntityId    String?            @map("created_entity_id") @db.Uuid

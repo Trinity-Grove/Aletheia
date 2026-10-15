@@ -26,6 +26,27 @@ export const aiCatalogContextSchema = z.object({
 });
 export type AiCatalogContextDto = z.infer<typeof aiCatalogContextSchema>;
 
+export const aiGroundingSourceTypeSchema = z.enum([
+  'LEARNING_DOMAIN',
+  'PEDAGOGICAL_PROFILE',
+  'THEOLOGICAL_PROFILE',
+  'ACTIVITY_DEFINITION',
+]);
+export type AiGroundingSourceType = z.infer<typeof aiGroundingSourceTypeSchema>;
+
+export const aiGroundingSourceSchema = z.object({
+  type: aiGroundingSourceTypeSchema,
+  code: z.string().min(1),
+  version: z.number().int().positive(),
+  label: z.string().min(1),
+});
+export type AiGroundingSourceDto = z.infer<typeof aiGroundingSourceSchema>;
+
+export const aiGroundingContextSchema = z.object({
+  sources: z.array(aiGroundingSourceSchema),
+});
+export type AiGroundingContextDto = z.infer<typeof aiGroundingContextSchema>;
+
 export const generateLessonPlanDraftRequestSchema = z.object({
   learnerId: z.string().uuid(),
   activityDefinitionId: z.string().uuid().optional(),
@@ -65,6 +86,7 @@ export const aiLessonPlanDraftResponseSchema = z.object({
   status: z.literal('PENDING_REVIEW'),
   draft: lessonPlanDraftContentSchema,
   catalogContext: aiCatalogContextSchema.optional(),
+  groundingContext: aiGroundingContextSchema.optional(),
   metadata: z.object({
     provider: z.string(),
     model: z.string(),

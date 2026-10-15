@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import type {
   AiCatalogContextDto,
+  AiGroundingContextDto,
   AiLessonPlanDraftResponseDto,
   AiUsageQuotaResponseDto,
   GenerateLessonPlanDraftRequestDto,
@@ -53,6 +54,59 @@ function formatTopicOverrides(value: unknown): string[] {
     const safePosition = safeProfileCode(position);
     return safeTopic && safePosition ? [`${safeTopic}=${safePosition}`] : [];
   });
+}
+
+function buildGroundingContext(input: {
+  catalogContext?: AiCatalogContextDto;
+  pedagogicalProfile: { version: number; primaryModelCode: string | null } | null;
+  theologicalProfile: { version: number; preferredTraditionCode: string | null } | null;
+  activityDefinition: { code: string; version: number; name: string } | null;
+}): AiGroundingContextDto {
+  const sources: AiGroundingContextDto['sources'] = [];
+
+  if (input.catalogContext) {
+    sources.push({
+      type: 'LEARNING_DOMAIN',
+      code: input.catalogContext.code,
+      version: input.catalogContext.version,
+      label: input.catalogContext.name,
+    });
+  }
+
+  const pedagogicalCode = input.pedagogicalProfile
+    ? safeProfileCode(input.pedagogicalProfile.primaryModelCode)
+    : null;
+  if (input.pedagogicalProfile && pedagogicalCode) {
+    sources.push({
+      type: 'PEDAGOGICAL_PROFILE',
+      code: pedagogicalCode,
+      version: input.pedagogicalProfile.version,
+      label: pedagogicalCode,
+    });
+  }
+
+  const theologicalCode = input.theologicalProfile
+    ? safeProfileCode(input.theologicalProfile.preferredTraditionCode)
+    : null;
+  if (input.theologicalProfile && theologicalCode) {
+    sources.push({
+      type: 'THEOLOGICAL_PROFILE',
+      code: theologicalCode,
+      version: input.theologicalProfile.version,
+      label: theologicalCode,
+    });
+  }
+
+  if (input.activityDefinition) {
+    sources.push({
+      type: 'ACTIVITY_DEFINITION',
+      code: input.activityDefinition.code,
+      version: input.activityDefinition.version,
+      label: input.activityDefinition.name,
+    });
+  }
+
+  return { sources };
 }
 
 @Injectable()
@@ -169,8 +223,9 @@ export class AiSuggestionService implements AiPublicApi {
     const gradeLevel = dto.gradeLevel || learner.customGrade || undefined;
 
     let activitySafetyContext = '';
+    let activityDefinition: { code: string; version: number; name: string; ageMin: number | null; ageMax: number | null; riskLevel: string | null; supervisionRequired: boolean } | null = null;
     if (dto.activityDefinitionId) {
-      const activityDefinition = await this.prisma.activityDefinition.findFirst({
+      activityDefinition = await this.prisma.activityDefinition.findFirst({
         where: { id: dto.activityDefinitionId, status: 'PUBLISHED' },
       });
       if (!activityDefinition) {
@@ -216,6 +271,13 @@ export class AiSuggestionService implements AiPublicApi {
           ].join(' ')
         : '',
     ].filter(Boolean);
+
+    const groundingContext = buildGroundingContext({
+      ...(catalogContext ? { catalogContext } : {}),
+      pedagogicalProfile,
+      theologicalProfile,
+      activityDefinition,
+    });
 
     const session = this.pseudonymizationService.createSession({
       learnerName: learnerDisplayName,
@@ -286,6 +348,7 @@ export class AiSuggestionService implements AiPublicApi {
       featureType: 'LESSON_PLAN_DRAFT',
       sanitizedPrompt: maskedPrompt,
       catalogContext: catalogContext ?? null,
+      groundingContext,
       rawModelOutput: rawOutput as any,
       provider: llmResult.provider,
       model: llmResult.model,
@@ -303,6 +366,7 @@ export class AiSuggestionService implements AiPublicApi {
       status: 'PENDING_REVIEW',
       draft: rehydratedDraft,
       ...(catalogContext ? { catalogContext } : {}),
+      groundingContext,
       metadata: {
         provider: llmResult.provider,
         model: llmResult.model,
