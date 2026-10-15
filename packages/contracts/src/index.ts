@@ -35,6 +35,7 @@ export * from './family-activity.js';
 export * from './community-activity.js';
 export * from './family-curriculum-pack.js';
 export * from './family-curriculum-pack-media.js';
+export * from './family-learning-path-selection.js';
 export * from './curriculum-pack-moderation.js';
 export * from './curriculum-pack-moderation-history.js';
 export * from './learner-competency-tracking.js';

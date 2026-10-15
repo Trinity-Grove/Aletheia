@@ -342,6 +342,7 @@ model Family {
   aiSuggestions          AiSuggestion[]
   aiFamilyUsages         AiFamilyUsage[]
   badgeAwards            LearnerBadgeAward[]
+  learningPathSelections FamilyLearningPathSelection[]
 
   @@map("families")
 }
@@ -1214,12 +1215,30 @@ model LearningPath {
   domain           LearningDomain                   @relation(fields: [domainId], references: [id], onDelete: Restrict)
   curriculumLinks CurriculumDefinitionPath[]
   competencies    CompetencyDefinition[]
+  familySelections FamilyLearningPathSelection[]
 
   @@unique([code, version])
   @@index([code])
   @@index([domainId])
   @@index([status])
   @@map("learning_paths")
+}
+
+model FamilyLearningPathSelection {
+  id        String   @id @default(uuid()) @db.Uuid
+  familyId  String   @map("family_id") @db.Uuid
+  pathId    String   @map("path_id") @db.Uuid
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  family Family      @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  path   LearningPath @relation(fields: [pathId], references: [id], onDelete: Restrict)
+
+  @@unique([familyId, pathId])
+  @@index([familyId])
+  @@index([pathId])
+  @@map("family_learning_path_selections")
 }
 
 // Skill definition: belongs to a competency (issue #96 section 6).

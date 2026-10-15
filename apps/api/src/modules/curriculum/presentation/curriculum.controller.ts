@@ -16,6 +16,7 @@ import {
   applyCurriculumTemplateSchema,
   createAcademicYearSchema,
   createSubjectSchema,
+  upsertFamilyLearningPathSelectionSchema,
   updateSubjectSchema,
   upsertLearnerPlanSchema,
   type AcademicYearResponseDto,
@@ -24,6 +25,7 @@ import {
   type CreateSubjectDto,
   type CurriculumDefinitionCatalogEntryDto,
   type EvidenceTypeCatalogEntryDto,
+  type FamilyLearningPathSelectionResponseDto,
   type ProgressionPolicyCatalogEntryDto,
   type RubricCatalogEntryDto,
   type LearnerPlanResponseDto,
@@ -32,17 +34,22 @@ import {
   type TheologicalTraditionCatalogEntryDto,
   type UpdateSubjectDto,
   type UpsertLearnerPlanDto,
+  type UpsertFamilyLearningPathSelectionDto,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
 import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { CurriculumService } from '../application/curriculum.service.js';
+import { FamilyLearningPathSelectionService } from '../application/family-learning-path-selection.service.js';
 
 @ApiTags('Curriculum')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, FamilyTenantGuard)
 @Controller({ path: 'families/:familyId/curriculum', version: '1' })
 export class CurriculumController {
-  constructor(private readonly curriculumService: CurriculumService) {}
+  constructor(
+    private readonly curriculumService: CurriculumService,
+    private readonly familyLearningPathSelectionService: FamilyLearningPathSelectionService,
+  ) {}
 
   // Academic Years
   @Post('academic-years')
@@ -124,6 +131,27 @@ export class CurriculumController {
     @Query('academicYearId') academicYearId: string,
   ): Promise<LearnerPlanResponseDto | null> {
     return this.curriculumService.getLearnerPlan(familyId, learnerId, academicYearId);
+  }
+
+  // Family learning-path preferences (issue #96): explicit, family-scoped
+  // enable/disable state for published paths. This does not retire or delete
+  // any learner progress; consumers may opt into these selections separately.
+  @Get('paths/selections')
+  @ApiOperation({ summary: 'List learning-path selections for this family' })
+  async listFamilyLearningPathSelections(
+    @Param('familyId') familyId: string,
+  ): Promise<FamilyLearningPathSelectionResponseDto[]> {
+    return this.familyLearningPathSelectionService.list(familyId);
+  }
+
+  @Put('paths/:pathId/selection')
+  @ApiOperation({ summary: 'Enable or disable a published learning path for this family' })
+  async upsertFamilyLearningPathSelection(
+    @Param('familyId') familyId: string,
+    @Param('pathId') pathId: string,
+    @Body(new ZodValidationPipe(upsertFamilyLearningPathSelectionSchema)) dto: UpsertFamilyLearningPathSelectionDto,
+  ): Promise<FamilyLearningPathSelectionResponseDto> {
+    return this.familyLearningPathSelectionService.upsert(familyId, pathId, dto);
   }
 
   // Template Catalog (issue #96 section 35: UI data-driven -- a family
