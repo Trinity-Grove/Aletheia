@@ -22,6 +22,7 @@ export const URUGUAY_JURISDICTION_SEED: {
   description:
     'Uruguay (nivel nacional). Marco regulado por la Ley General de Educación (Ley 18.437) y Código de la Niñez y la Adolescencia (Ley 17.823).',
   metadata: {
+    privacyProfile: 'GDPR_LIKE',
     minInstructionalDays: 180,
     minInstructionalHours: null,
     minLearnerAge: 4,

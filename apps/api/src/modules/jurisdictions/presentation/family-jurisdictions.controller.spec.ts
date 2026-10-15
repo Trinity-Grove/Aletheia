@@ -10,6 +10,7 @@ describe('FamilyJurisdictionsController', () => {
     code: 'BR',
     name: 'Brasil (Referencial Nacional)',
     version: 1,
+    privacyProfile: 'GDPR_LIKE',
     confidenceLevel: 'ESTABLISHED',
     minInstructionalDays: 200,
     minInstructionalHours: 800,

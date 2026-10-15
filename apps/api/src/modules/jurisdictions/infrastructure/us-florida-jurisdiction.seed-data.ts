@@ -25,6 +25,7 @@ export const US_FLORIDA_JURISDICTION_SEED: {
   description:
     'State of Florida home education program requirements pursuant to Florida Statutes § 1002.41.',
   metadata: {
+    privacyProfile: 'SECTORAL_FRAGMENTED',
     minInstructionalDays: 180,
     minInstructionalHours: null,
     minLearnerAge: 6,

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { definitionStatusSchema } from './curriculum-definitions.js';
+import { privacyProfileCodeSchema } from './privacy-regime.js';
 
 // --- Jurisdiction definition (Aletheia issue #26) ---
 //
@@ -43,6 +44,7 @@ export type JurisdictionConfidenceLevel = z.infer<typeof jurisdictionConfidenceL
 // a jurisdiction with an actively-evolving legal basis (Brasil, at seeding
 // time) may only be able to state a subset with any confidence at all.
 export const jurisdictionComplianceMetadataSchema = z.object({
+  privacyProfile: privacyProfileCodeSchema.nullish(),
   minInstructionalDays: z.number().int().min(0).max(366).nullish(),
   minInstructionalHours: z.number().min(0).max(3000).nullish(),
   minLearnerAge: z.number().int().min(0).max(25).nullish(),
@@ -178,6 +180,7 @@ export const familyJurisdictionResponseSchema = z.object({
   code: z.string(),
   name: z.string(),
   version: z.number().int(),
+  privacyProfile: privacyProfileCodeSchema.nullish(),
   confidenceLevel: jurisdictionConfidenceLevelSchema,
   minInstructionalDays: z.number().int().nullish(),
   minInstructionalHours: z.number().nullish(),

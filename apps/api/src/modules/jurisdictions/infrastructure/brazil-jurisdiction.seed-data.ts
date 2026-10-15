@@ -55,6 +55,7 @@ export const BRAZIL_JURISDICTION_SEED: {
     'Brasil (nível federal). Educação domiciliar não é regulamentada por lei federal; ver legalBasisNotes e ' +
     'confidenceLevel antes de usar estes parâmetros para qualquer decisão de conformidade.',
   metadata: {
+    privacyProfile: 'GDPR_LIKE',
     minInstructionalDays: 200,
     minInstructionalHours: 800,
     minLearnerAge: null,

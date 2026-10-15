@@ -25,6 +25,7 @@ export const US_TEXAS_JURISDICTION_SEED: {
   description:
     'State of Texas homeschool requirements pursuant to Texas Education Code § 25.086 and Leeper v. Arlington ISD (1987).',
   metadata: {
+    privacyProfile: 'SECTORAL_FRAGMENTED',
     minInstructionalDays: null,
     minInstructionalHours: null,
     minLearnerAge: 6,
