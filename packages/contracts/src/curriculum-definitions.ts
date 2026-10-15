@@ -100,6 +100,40 @@ export const competencyAssessmentPolicySchema = z.object({
 
 export type CompetencyAssessmentPolicy = z.infer<typeof competencyAssessmentPolicySchema>;
 
+const SAFETY_TRAINING_CODE_REGEX = /^[A-Z0-9][A-Z0-9_.]*$/;
+
+export const competencySafetyPolicySchema = z.object({
+  riskLevel: z.enum(['LOW', 'MODERATE', 'HIGH', 'CRITICAL']),
+  supervision: z.enum(['NONE', 'RECOMMENDED', 'REQUIRED', 'ADULT_ONLY']),
+  minimumAge: z.number().int().min(0).max(120).optional(),
+  requiresAdultConsent: z.boolean().default(false),
+  requiredTrainingCodes: z.array(
+    z.string().min(1).max(100).regex(SAFETY_TRAINING_CODE_REGEX),
+  ).max(20).default([]),
+  instructions: z.string().max(2000).optional(),
+}).strict().superRefine((value, ctx) => {
+  if (
+    ['HIGH', 'CRITICAL'].includes(value.riskLevel)
+    && !['REQUIRED', 'ADULT_ONLY'].includes(value.supervision)
+  ) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['supervision'],
+      message: 'High and critical risk require required or adult-only supervision.',
+    });
+  }
+
+  if (value.supervision === 'ADULT_ONLY' && !value.requiresAdultConsent) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['requiresAdultConsent'],
+      message: 'Adult-only supervision requires adult consent.',
+    });
+  }
+});
+
+export type CompetencySafetyPolicy = z.infer<typeof competencySafetyPolicySchema>;
+
 export const competencyMetadataSchema = z.object({
   ageRecommendation: competencyAgeRecommendationSchema.optional(),
   educationalStage: universalEducationalStageSchema.optional(),
@@ -110,6 +144,7 @@ export const competencyMetadataSchema = z.object({
   prerequisites: z.array(z.string()).default([]),
   evidenceTypes: z.array(z.string()).default([]),
   assessmentPolicy: competencyAssessmentPolicySchema.optional(),
+  safetyPolicy: competencySafetyPolicySchema.optional(),
   // Concrete, portfolio-friendly starter objectives for this competency --
   // same tone/purpose as TemplateSubjectDefinition.starterObjectives
   // (curriculum-template.engine.ts), just scoped to one competency instead
