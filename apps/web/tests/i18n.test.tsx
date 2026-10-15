@@ -667,7 +667,7 @@ describe('i18n (Issue #33: Internacionalização, Dicionários e Formatadores)',
       expect(screen.getByText('Pular e sair')).toBeInTheDocument();
       expect(screen.getByText('Concluir Tour')).toBeInTheDocument();
       expect(screen.getByText('Passo 1 de 5')).toBeInTheDocument();
-      expect(screen.getAllByText('Fazer Tour pelo Sistema').length).toBe(2);
+      expect(screen.getAllByText('Fazer Tour').length).toBe(1);
     });
 
     it('traduz chaves do tour guiado em en-US', () => {
@@ -719,7 +719,7 @@ describe('i18n (Issue #33: Internacionalização, Dicionários e Formatadores)',
       expect(screen.getByText('Skip and exit')).toBeInTheDocument();
       expect(screen.getByText('Finish Tour')).toBeInTheDocument();
       expect(screen.getByText('Step 2 of 5')).toBeInTheDocument();
-      expect(screen.getAllByText('Take System Tour').length).toBe(2);
+      expect(screen.getAllByText('Take Tour').length).toBe(1);
     });
 
     it('traduz chaves do tour guiado em es-ES', () => {
@@ -771,7 +771,7 @@ describe('i18n (Issue #33: Internacionalização, Dicionários e Formatadores)',
       expect(screen.getByText('Saltar y salir')).toBeInTheDocument();
       expect(screen.getByText('Completar Tour')).toBeInTheDocument();
       expect(screen.getByText('Paso 3 de 5')).toBeInTheDocument();
-      expect(screen.getAllByText('Hacer Tour por el Sistema').length).toBe(2);
+      expect(screen.getAllByText('Hacer Tour').length).toBe(1);
     });
 
     it('traduz chaves de configurações settings.general.tutorialToggle em pt-BR, en-US e es-ES', () => {

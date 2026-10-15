@@ -165,7 +165,7 @@ describe('Settings Tutorial Toggle & On-Demand Tour Button', () => {
 
       const tourButton = screen.getByTestId('start-tour-btn');
       expect(tourButton).toBeDefined();
-      expect(tourButton).toHaveTextContent('Fazer Tour pelo Sistema');
+      expect(tourButton).toHaveTextContent('Fazer Tour');
 
       fireEvent.click(tourButton);
       expect(onStartTourMock).toHaveBeenCalledTimes(1);

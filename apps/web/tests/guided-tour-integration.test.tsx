@@ -202,7 +202,7 @@ describe('Dashboard Guided Tour & Onboarding Integration', () => {
     expect(screen.getByText('Passo 1 de 5')).toBeInTheDocument();
   });
 
-  it('permite abrir o tour sob demanda através do botão na barra superior (ProductShell)', () => {
+  it('oculta o botão da barra superior quando o onboarding já foi dispensado', () => {
     mockController.useDashboard.mockReturnValue(
       buildController({
         data: buildDashboard({
@@ -226,13 +226,7 @@ describe('Dashboard Guided Tour & Onboarding Integration', () => {
     expect(screen.queryByTestId('welcome-tour-dialog')).not.toBeInTheDocument();
     expect(screen.queryByTestId('guided-tour')).not.toBeInTheDocument();
 
-    const onDemandBtn = screen.getByTestId('start-tour-btn');
-    expect(onDemandBtn).toBeInTheDocument();
-
-    fireEvent.click(onDemandBtn);
-
-    expect(screen.getByTestId('guided-tour')).toBeInTheDocument();
-    expect(screen.getByText('Passo 1 de 5')).toBeInTheDocument();
+    expect(screen.queryByTestId('start-tour-btn')).not.toBeInTheDocument();
   });
 
   it('concluir o tour dispara PATCH de dispensa e POST de gamificação para o educando ativo', async () => {
@@ -289,6 +283,8 @@ describe('Dashboard Guided Tour & Onboarding Integration', () => {
     await waitFor(() => {
       expect(screen.queryByTestId('guided-tour')).not.toBeInTheDocument();
     });
+
+    expect(screen.queryByTestId('start-tour-btn')).not.toBeInTheDocument();
   });
 
   it('pular o tour via botão "Pular e sair" fecha o tour sem acionar a API de gamificação', async () => {

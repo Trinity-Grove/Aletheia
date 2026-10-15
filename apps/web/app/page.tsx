@@ -20,6 +20,7 @@ import { useDailyScripture } from '../src/components/dashboard/use-daily-scriptu
 import { PrivacyComplianceBanner } from '../src/components/settings/privacy-compliance-banner';
 import { useLocale } from '../src/lib/i18n/locale-context';
 import type { LearnerSummaryDto } from '@aletheia/contracts';
+import { shouldShowTourTrigger } from '../src/components/dashboard/tour-state';
 
 export default function HomePage() {
   const { t } = useLocale();
@@ -51,6 +52,12 @@ export default function HomePage() {
   const [completionError, setCompletionError] = useState<string | null>(null);
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [isWelcomeDismissed, setIsWelcomeDismissed] = useState(false);
+  const [isTourCompleted, setIsTourCompleted] = useState(false);
+
+  const startTour = () => {
+    setIsWelcomeDismissed(true);
+    setIsTourOpen(true);
+  };
 
   const handleTourComplete = async () => {
     const familyId = data?.family.id;
@@ -85,6 +92,7 @@ export default function HomePage() {
         }
       }
     }
+    setIsTourCompleted(true);
     setIsTourOpen(false);
   };
 
@@ -139,7 +147,7 @@ export default function HomePage() {
       learners={shellLearners}
       activeLearnerId={activeLearnerId}
       onSelectLearner={setActiveLearnerId}
-      onStartTour={() => setIsTourOpen(true)}
+      {...(shouldShowTourTrigger(data, isTourCompleted) ? { onStartTour: startTour } : {})}
     >
       <div className="dashboard-page">
         <PrivacyComplianceBanner />
@@ -165,10 +173,7 @@ export default function HomePage() {
           <WelcomeTourDialog
             isOpen={true}
             familyId={data?.family.id ?? ''}
-            onStartTour={() => {
-              setIsWelcomeDismissed(true);
-              setIsTourOpen(true);
-            }}
+            onStartTour={startTour}
             onDismiss={() => setIsWelcomeDismissed(true)}
           />
         )}
