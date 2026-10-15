@@ -10,6 +10,7 @@ describe('CurriculumService', () => {
   let objectiveRepo: any;
   let resolver: any;
   let rubricCatalogResolver: any;
+  let learningDomainCatalogResolver: any;
   let profilesService: any;
 
   const FAMILY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
@@ -106,6 +107,7 @@ describe('CurriculumService', () => {
         },
       ]),
     };
+    learningDomainCatalogResolver = { listPublishedCatalog: jest.fn().mockResolvedValue([]) };
     service = new CurriculumService(
       curriculumRepo,
       objectiveRepo,
@@ -116,6 +118,7 @@ describe('CurriculumService', () => {
       evidenceTypeCatalogResolver,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       rubricCatalogResolver,
+      learningDomainCatalogResolver,
     );
   });
 
@@ -177,6 +180,17 @@ describe('CurriculumService', () => {
     expect(rubricCatalogResolver.listPublishedCatalog).toHaveBeenCalledTimes(1);
   });
 
+  it('lists the published active learning-domain catalog for AI lesson planning', async () => {
+    learningDomainCatalogResolver.listPublishedCatalog.mockResolvedValue([
+      { id: 'domain-1', code: 'SCIENCE', version: 1, name: 'Ciências', description: null },
+    ]);
+
+    await expect(service.listPublishedLearningDomainCatalog()).resolves.toEqual([
+      expect.objectContaining({ code: 'SCIENCE', version: 1 }),
+    ]);
+    expect(learningDomainCatalogResolver.listPublishedCatalog).toHaveBeenCalledTimes(1);
+  });
+
   describe('hasCurriculum', () => {
     it('returns true when objectives exist for the family', async () => {
       objectiveRepo.countObjectives = jest.fn().mockResolvedValue(3);
@@ -232,6 +246,7 @@ describe('published catalog application', () => {
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
     );
     await expect(service.applyTemplate('family', { learnerId: 'learner', academicYearId: 'year', template: 'NEW_MODEL' })).rejects.toThrow('Published pedagogical model not found');
     expect(repo.applyPublishedTemplate).not.toHaveBeenCalled();
@@ -246,6 +261,7 @@ describe('published catalog application', () => {
       {} as any,
       resolver as any,
       { getPedagogicalProfile: jest.fn().mockResolvedValue(null) } as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
@@ -285,6 +301,7 @@ describe('PedagogicalProfile-weighted applyTemplate (issue #95)', () => {
       {} as any,
       resolver as any,
       profilesService as any,
+      { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,
       { listPublishedCatalog: jest.fn().mockResolvedValue([]) } as any,

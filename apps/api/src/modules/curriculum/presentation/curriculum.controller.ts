@@ -26,6 +26,7 @@ import {
   type CreateSubjectDto,
   type CurriculumDefinitionCatalogEntryDto,
   type EvidenceTypeCatalogEntryDto,
+  type LearningDomainCatalogEntryDto,
   type FamilyLearningPathSelectionResponseDto,
   type ProgressionPolicyCatalogEntryDto,
   type RubricCatalogEntryDto,
@@ -185,6 +186,12 @@ export class CurriculumController {
   @ApiOperation({ summary: 'List published pedagogical model templates a family can apply' })
   async listTemplateCatalog(): Promise<PedagogicalModelCatalogEntryDto[]> {
     return this.curriculumService.listPublishedTemplateCatalog();
+  }
+
+  @Get('learning-domains/catalog')
+  @ApiOperation({ summary: 'List active published learning domains for AI-assisted planning' })
+  async listLearningDomainCatalog(): Promise<LearningDomainCatalogEntryDto[]> {
+    return this.curriculumService.listPublishedLearningDomainCatalog();
   }
 
   // Theological Tradition Catalog (issue #126 item 1) -- same reasoning

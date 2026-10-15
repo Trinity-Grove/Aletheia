@@ -58,6 +58,16 @@ const mockQuota = {
   resetAt: '2026-11-01T00:00:00.000Z',
 };
 
+const mockLearningDomains = [
+  {
+    id: '33333333-3333-3333-3333-333333333333',
+    code: 'SCIENCE',
+    version: 2,
+    name: 'Ciências',
+    description: 'Investigação do mundo criado.',
+  },
+];
+
 const mockDraftResponse = {
   suggestionId: '99999999-9999-9999-9999-999999999999',
   status: 'PENDING_REVIEW',
@@ -129,6 +139,52 @@ describe('AI Lesson Assistant Components', () => {
   });
 
   describe('AiLessonDraftModal', () => {
+    it('loads the published learning-domain catalog, sends the selected code, and shows the grounded snapshot', async () => {
+      const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (url: RequestInfo | URL, init?: RequestInit) => {
+        const u = url.toString();
+        if (u.includes('/ai/quota')) {
+          return { ok: true, json: async () => mockQuota } as Response;
+        }
+        if (u.includes('/curriculum/learning-domains/catalog')) {
+          return { ok: true, json: async () => mockLearningDomains } as Response;
+        }
+        if (u.includes('/ai/lesson-plan-draft')) {
+          expect(JSON.parse(String(init?.body))).toEqual(expect.objectContaining({ learningDomainCode: 'SCIENCE' }));
+          return {
+            ok: true,
+            json: async () => ({ ...mockDraftResponse, catalogContext: mockLearningDomains[0] }),
+          } as Response;
+        }
+        return { ok: false } as Response;
+      });
+
+      render(
+        <LocaleProvider>
+          <AiLessonDraftModal
+            isOpen={true}
+            onClose={vi.fn()}
+            familyId="fam-1"
+            learners={mockLearners}
+            subjects={mockSubjects}
+            initialDate="2026-10-15"
+          />
+        </LocaleProvider>,
+      );
+
+      await waitFor(() => expect(screen.getByTestId('ai-learning-domain-select')).toBeInTheDocument());
+      fireEvent.change(screen.getByTestId('ai-learning-domain-select'), { target: { value: 'SCIENCE' } });
+      fireEvent.change(screen.getByTestId('ai-topic-input'), { target: { value: 'Ecossistemas' } });
+      fireEvent.click(screen.getByTestId('ai-generate-draft-btn'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('ai-catalog-context')).toHaveTextContent('Ciências');
+        expect(fetchSpy).toHaveBeenCalledWith(
+          '/api/v1/families/fam-1/ai/lesson-plan-draft',
+          expect.objectContaining({ method: 'POST' }),
+        );
+      });
+    });
+
     it('fetches quota and renders configuration form with prefilled values', async () => {
       vi.spyOn(global, 'fetch').mockImplementation(async (url: RequestInfo | URL) => {
         const u = url.toString();
