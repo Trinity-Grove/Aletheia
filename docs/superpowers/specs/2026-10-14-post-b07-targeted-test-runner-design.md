@@ -1,6 +1,6 @@
 # Post-B07 Targeted Workspace Test Runner Design
 
-**Status:** Planned after ALET-B07 is merged
+**Status:** Implemented on `chore/targeted-test-runner`
 
 **Related issue:** B07 verification caveat
 
