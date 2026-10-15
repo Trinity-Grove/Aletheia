@@ -54,6 +54,17 @@ describe('FamilyActivitiesGallery', () => {
     });
   });
 
+  it('shows a localized error when the family activity request fails', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 500 }) as unknown as typeof fetch;
+
+    render(<FamilyActivitiesGallery familyId={testFamilyId} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Falha ao carregar atividades da família.')).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/nenhuma atividade própria ainda/i)).not.toBeInTheDocument();
+  });
+
   it('creates a new activity, defaulting to PRIVATE, and lets the creator switch it to PUBLIC before saving', async () => {
     const fetchMock = vi.fn();
     globalThis.fetch = fetchMock as unknown as typeof fetch;
@@ -112,5 +123,45 @@ describe('FamilyActivitiesGallery', () => {
     await waitFor(() => {
       expect(screen.queryByText('Passeio no parque')).not.toBeInTheDocument();
     });
+  });
+
+  it('loads shared activities and adopts one as a private copy', async () => {
+    const fetchMock = vi.fn();
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    const sharedActivity = { ...mockActivity, id: 'shared-1', familyId: undefined, visibility: undefined, name: 'Mapa do bairro' };
+    const adoptedActivity = { ...mockActivity, id: 'adopted-1', name: 'Mapa do bairro', visibility: 'PRIVATE' };
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => [] });
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => [sharedActivity] });
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => adoptedActivity });
+
+    render(<FamilyActivitiesGallery familyId={testFamilyId} />);
+    await waitFor(() => expect(screen.getByText(/nenhuma atividade própria ainda/i)).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('community-activities-tab'));
+    await waitFor(() => expect(screen.getByText('Mapa do bairro')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('adopt-community-activity-btn-shared-1'));
+
+    await waitFor(() => expect(screen.getByText(/foi adicionada à sua família como privada/i)).toBeInTheDocument());
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/v1/families/${testFamilyId}/activities/adopt`,
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ sourceActivityId: 'shared-1' }) }),
+    );
+  });
+
+  it('shows a community loading error and retries the catalog request', async () => {
+    const fetchMock = vi.fn();
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => [] });
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 503 });
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => [{ ...mockActivity, id: 'shared-2', name: 'Horta em família' }] });
+
+    render(<FamilyActivitiesGallery familyId={testFamilyId} />);
+    await waitFor(() => expect(screen.getByText(/nenhuma atividade própria ainda/i)).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('community-activities-tab'));
+    await waitFor(() => expect(screen.getByTestId('community-activities-error')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Tentar novamente'));
+
+    await waitFor(() => expect(screen.getByText('Horta em família')).toBeInTheDocument());
   });
 });

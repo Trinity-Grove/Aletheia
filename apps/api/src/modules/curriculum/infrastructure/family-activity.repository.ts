@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { FamilyActivity, Prisma } from '@prisma/client';
+import { Prisma, type FamilyActivity } from '@prisma/client';
 import { PrismaService } from '../../../platform/database/prisma.service.js';
 
 export interface CreateFamilyActivityData {
@@ -31,6 +31,43 @@ export class FamilyActivityRepository {
       where: { familyId },
       orderBy: { updatedAt: 'desc' },
     });
+  }
+
+  listPublic(): Promise<FamilyActivity[]> {
+    return this.prisma.familyActivity.findMany({
+      where: { visibility: 'PUBLIC' },
+      orderBy: { updatedAt: 'desc' },
+      take: 100,
+    });
+  }
+
+  async adoptPublic(sourceActivityId: string, familyId: string): Promise<FamilyActivity | null> {
+    return this.prisma.$transaction(async (tx) => {
+      const source = await tx.familyActivity.findFirst({
+        where: { id: sourceActivityId, visibility: 'PUBLIC' },
+      });
+      if (!source) return null;
+
+      const metadata = source.metadata && typeof source.metadata === 'object' && !Array.isArray(source.metadata)
+        ? source.metadata as Record<string, unknown>
+        : {};
+
+      return tx.familyActivity.create({
+        data: {
+          familyId,
+          name: source.name,
+          description: source.description,
+          ageMin: source.ageMin,
+          ageMax: source.ageMax,
+          estimatedDurationMinutes: source.estimatedDurationMinutes,
+          supervisionRequired: source.supervisionRequired,
+          riskLevel: source.riskLevel,
+          evidenceRequirementMode: source.evidenceRequirementMode,
+          metadata: { ...metadata, origin: { kind: 'COMMUNITY_ACTIVITY', sourceActivityId } } as Prisma.InputJsonValue,
+          visibility: 'PRIVATE',
+        },
+      });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
   findByIdAndFamily(id: string, familyId: string): Promise<FamilyActivity | null> {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Button, Card } from '@aletheia/ui';
 import type { FamilyActivityResponseDto } from '@aletheia/contracts';
 import { useLocale } from '../../lib/i18n/locale-context';
@@ -27,6 +27,13 @@ export function FamilyActivityModal({
   const [supervisionRequired, setSupervisionRequired] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -36,6 +43,45 @@ export function FamilyActivityModal({
     setSupervisionRequired(activity?.supervisionRequired ?? false);
     setError(null);
   }, [isOpen, activity]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const focusable = () =>
+      Array.from(
+        dialogRef.current?.querySelectorAll<HTMLElement>(
+          'button, input, textarea, select, [href], [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      ).filter((element) => !element.hasAttribute('disabled'));
+
+    focusable()[0]?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const elements = focusable();
+      if (elements.length === 0) return;
+      const first = elements[0]!;
+      const last = elements[elements.length - 1]!;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      previousFocusRef.current?.focus();
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -83,8 +129,10 @@ export function FamilyActivityModal({
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      aria-labelledby="family-activity-dialog-title"
       style={{
         position: 'fixed',
         inset: 0,
@@ -97,7 +145,7 @@ export function FamilyActivityModal({
       }}
     >
       <Card style={{ maxWidth: '32rem', width: '100%', padding: '1.75rem' }}>
-        <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.25rem', fontWeight: 700, color: 'var(--forest)' }}>
+        <h2 id="family-activity-dialog-title" style={{ margin: '0 0 1rem 0', fontSize: '1.25rem', fontWeight: 700, color: 'var(--forest)' }}>
           {activity ? t('curriculum.familyActivities.editTitle') : t('curriculum.familyActivities.createTitle')}
         </h2>
 
@@ -156,6 +204,7 @@ export function FamilyActivityModal({
               <button
                 type="button"
                 data-testid="family-activity-visibility-private"
+                aria-pressed={visibility === 'PRIVATE'}
                 onClick={() => setVisibility('PRIVATE')}
                 style={{
                   padding: '0.4rem 0.875rem',
@@ -174,6 +223,7 @@ export function FamilyActivityModal({
               <button
                 type="button"
                 data-testid="family-activity-visibility-public"
+                aria-pressed={visibility === 'PUBLIC'}
                 onClick={() => setVisibility('PUBLIC')}
                 style={{
                   padding: '0.4rem 0.875rem',

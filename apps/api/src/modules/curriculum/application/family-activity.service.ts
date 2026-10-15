@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type { FamilyActivity, Prisma } from '@prisma/client';
 import type {
   CreateFamilyActivityOutput,
+  CommunityActivityResponseDto,
   FamilyActivityResponseDto,
   FamilyContentVisibility,
   UpdateFamilyActivityOutput,
@@ -35,6 +36,17 @@ export class FamilyActivityService {
   async list(familyId: string): Promise<FamilyActivityResponseDto[]> {
     const rows = await this.repository.listByFamily(familyId);
     return rows.map((row) => this.toDto(row));
+  }
+
+  async listPublic(): Promise<CommunityActivityResponseDto[]> {
+    const rows = await this.repository.listPublic();
+    return rows.map((row) => this.toCommunityDto(row));
+  }
+
+  async adopt(familyId: string, sourceActivityId: string): Promise<FamilyActivityResponseDto> {
+    const copy = await this.repository.adoptPublic(sourceActivityId, familyId);
+    if (!copy) throw new NotFoundException('Community activity not found.');
+    return this.toDto(copy);
   }
 
   async get(familyId: string, id: string): Promise<FamilyActivityResponseDto> {
@@ -89,6 +101,23 @@ export class FamilyActivityService {
       evidenceRequirementMode: row.evidenceRequirementMode as 'ANY' | 'ALL',
       metadata: row.metadata as Record<string, unknown>,
       visibility: row.visibility as FamilyContentVisibility,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    };
+  }
+
+  private toCommunityDto(row: FamilyActivity): CommunityActivityResponseDto {
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      ageMin: row.ageMin,
+      ageMax: row.ageMax,
+      estimatedDurationMinutes: row.estimatedDurationMinutes,
+      supervisionRequired: row.supervisionRequired,
+      riskLevel: row.riskLevel,
+      evidenceRequirementMode: row.evidenceRequirementMode as 'ANY' | 'ALL',
+      metadata: row.metadata as Record<string, unknown>,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };

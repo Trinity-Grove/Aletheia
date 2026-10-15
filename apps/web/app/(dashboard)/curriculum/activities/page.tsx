@@ -17,6 +17,8 @@ export default function FamilyActivitiesPage() {
   useEffect(() => {
     if (status === 'loading') return;
 
+    const controller = new AbortController();
+
     async function loadData() {
       try {
         const effectiveFamilyId =
@@ -26,27 +28,32 @@ export default function FamilyActivitiesPage() {
             : null);
 
         if (!effectiveFamilyId) {
+          setFamilyId(null);
+          setLearners([]);
           setLoading(false);
           return;
         }
 
         setFamilyId(effectiveFamilyId);
+        setLearners([]);
 
         const res = await fetch(`/api/v1/families/${effectiveFamilyId}/learners`, {
           credentials: 'include',
+          signal: controller.signal,
         });
-        if (res.ok) {
-          const data = await res.json();
-          setLearners(Array.isArray(data) ? data : []);
-        }
+        if (!res.ok) throw new Error('learners-load-failed');
+        const data = await res.json();
+        if (!controller.signal.aborted) setLearners(Array.isArray(data) ? data : []);
       } catch {
-        // ignore
+        if (!controller.signal.aborted) setLearners([]);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 
-    loadData();
+    setLoading(true);
+    void loadData();
+    return () => controller.abort();
   }, [activeFamilyId, status]);
 
   return (
@@ -57,7 +64,7 @@ export default function FamilyActivitiesPage() {
             {t('curriculum.pages.activities.loading')}
           </div>
         ) : familyId ? (
-          <FamilyActivitiesGallery familyId={familyId} />
+          <FamilyActivitiesGallery key={familyId} familyId={familyId} />
         ) : (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
             {t('curriculum.pages.activities.noFamily')}

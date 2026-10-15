@@ -117,6 +117,7 @@ import { DefinitionTagsController } from './presentation/definition-tags.control
 import { FamilyActivityRepository } from './infrastructure/family-activity.repository.js';
 import { FamilyActivityService } from './application/family-activity.service.js';
 import { FamilyActivityController } from './presentation/family-activity.controller.js';
+import { CommunityActivityController } from './presentation/community-activity.controller.js';
 import { CurriculumPackCompositionRepository } from './infrastructure/curriculum-pack-composition.repository.js';
 import { CurriculumPackCompositionService } from './application/curriculum-pack-composition.service.js';
 
@@ -143,6 +144,7 @@ import { CurriculumPackCompositionService } from './application/curriculum-pack-
     CurriculumPackModerationAdminController,
     DefinitionTagsController,
     FamilyActivityController,
+    CommunityActivityController,
   ],
   providers: [
     ProgressionRepository,
