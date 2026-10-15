@@ -125,7 +125,7 @@ describe('PortfolioService', () => {
             input.textContent ?? null,
             input.mimeType ?? null,
             input.fileSizeBytes ?? null,
-            null,
+            input.storageKey ?? null,
             input.checksumSha256 ?? null,
             null,
             input.capturedAt ? new Date(input.capturedAt) : null,
@@ -182,6 +182,7 @@ describe('PortfolioService', () => {
         downloadUrl: 'https://storage.local/download-signed',
         expiresAt: new Date('2026-08-25T00:05:00.000Z'),
       }),
+      copyObject: jest.fn().mockResolvedValue(undefined),
       headObject: jest.fn().mockResolvedValue({ contentType: 'image/png', contentLength: 2048 }),
       computeChecksumSha256: jest.fn().mockResolvedValue('a'.repeat(64)),
       deleteObject: jest.fn().mockResolvedValue(undefined),
@@ -362,7 +363,7 @@ describe('PortfolioService', () => {
       validationStatus: 'VALIDATED',
       textContent: null,
       fileUrl: 'https://storage.example.com/evidence/garden.jpg',
-      storageKey: null,
+      storageKey: `families/${FAMILY_ID}/evidence/private-garden.jpg`,
       mimeType: 'image/jpeg',
       fileSizeBytes: 4096,
       checksumSha256: 'b'.repeat(64),
@@ -388,8 +389,14 @@ describe('PortfolioService', () => {
           evidenceSubmissionId: EVIDENCE_SUBMISSION_ID,
           type: 'IMAGE',
           fileUrl: validatedSource.fileUrl,
+          storageKey: expect.any(String),
           capturedAt: '2026-05-10',
         }),
+      );
+      expect(objectStorage.copyObject).toHaveBeenCalledWith(
+        validatedSource.storageKey,
+        expect.any(String),
+        validatedSource.mimeType,
       );
     });
 
@@ -429,6 +436,22 @@ describe('PortfolioService', () => {
           tags: [],
         }, ACTOR_USER_ID),
       ).rejects.toThrow('This evidence submission has already been added to the portfolio.');
+    });
+
+    it('rejects a source media key owned by another family', async () => {
+      evidenceSubmissionApi.getEvidenceSubmissionForPortfolio.mockResolvedValue({
+        ...validatedSource,
+        storageKey: 'families/other-family/evidence/private.jpg',
+      });
+
+      await expect(
+        service.createItemFromEvidenceSubmission(FAMILY_ID, EVIDENCE_SUBMISSION_ID, {
+          title: 'X',
+          isHighlight: false,
+          tags: [],
+        }, ACTOR_USER_ID),
+      ).rejects.toThrow('Evidence media does not belong to this family.');
+      expect(objectStorage.copyObject).not.toHaveBeenCalled();
     });
   });
 

@@ -109,3 +109,12 @@ export const evidenceSubmissionResponseSchema = z.object({
 });
 
 export type EvidenceSubmissionResponseDto = z.infer<typeof evidenceSubmissionResponseSchema>;
+
+export const evidenceSubmissionDownloadUrlResponseSchema = z.object({
+  downloadUrl: z.string().url(),
+  expiresAt: z.string(),
+});
+
+export type EvidenceSubmissionDownloadUrlResponseDto = z.infer<
+  typeof evidenceSubmissionDownloadUrlResponseSchema
+>;

@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AletheiaIcon, Button, EmptyState, PageHeader, useToast } from '@aletheia/ui';
 import type {
   CreatePortfolioItemDto,
+  CreatePortfolioItemFromEvidenceSubmissionDto,
+  EvidenceSubmissionResponseDto,
+  EvidenceTypeCatalogEntryDto,
   LearnerSummaryDto,
   LearningRecordResponseDto,
   PortfolioItemResponseDto,
@@ -13,6 +16,7 @@ import type {
 import { ProductShell } from '../../../src/components/product-shell';
 import { PortfolioGalleryView } from '../../../src/components/records/portfolio-gallery-view';
 import { PortfolioItemModal } from '../../../src/components/records/portfolio-item-modal';
+import { ValidatedEvidencePromotionModal } from '../../../src/components/records/validated-evidence-promotion-modal';
 import { useOptionalAuth } from '../../../src/lib/auth/auth-context';
 import { useLocale } from '../../../src/lib/i18n/locale-context';
 
@@ -28,24 +32,30 @@ export default function PortfolioPage() {
   const [subjects, setSubjects] = useState<SubjectResponseDto[]>([]);
   const [records, setRecords] = useState<LearningRecordResponseDto[]>([]);
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItemResponseDto[]>([]);
+  const [validatedEvidence, setValidatedEvidence] = useState<EvidenceSubmissionResponseDto[]>([]);
+  const [evidenceTypes, setEvidenceTypes] = useState<EvidenceTypeCatalogEntryDto[]>([]);
   const [pageState, setPageState] = useState<PortfolioPageState>('loading');
   const [portfolioState, setPortfolioState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const mediaUrlCache = useRef(new Map<string, { url: string; expiresAt: number }>());
   const mediaUrlRequests = useRef(new Map<string, Promise<string | null>>());
+  const validatedMediaUrlCache = useRef(new Map<string, { url: string; expiresAt: number }>());
+  const validatedMediaUrlRequests = useRef(new Map<string, Promise<string | null>>());
 
   // Modals
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [isValidatedEvidenceModalOpen, setIsValidatedEvidenceModalOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<PortfolioItemResponseDto | null>(null);
 
-  const loadBaseData = useCallback(async (targetFamilyId: string) => {
+  const loadBaseData = useCallback(async (targetFamilyId: string, resetPortfolioState = true) => {
     setPageState('loading');
-    setPortfolioState('idle');
+    if (resetPortfolioState) setPortfolioState('idle');
 
     try {
-      const [learnersRes, subjectsRes, recordsRes] = await Promise.all([
+      const [learnersRes, subjectsRes, recordsRes, evidenceTypesRes] = await Promise.all([
         fetch(`/api/v1/families/${targetFamilyId}/learners`, { credentials: 'include' }),
         fetch(`/api/v1/families/${targetFamilyId}/curriculum/subjects`, { credentials: 'include' }),
         fetch(`/api/v1/families/${targetFamilyId}/records`, { credentials: 'include' }),
+        fetch(`/api/v1/families/${targetFamilyId}/curriculum/evidence-types/catalog`, { credentials: 'include' }),
       ]);
 
       if (!learnersRes.ok || !subjectsRes.ok || !recordsRes.ok) {
@@ -61,6 +71,10 @@ export default function PortfolioPage() {
       setLearners(learnersData);
       setSubjects(subjectsData);
       setRecords(recordsData);
+      if (evidenceTypesRes.ok) {
+        const evidenceTypesData: unknown = await evidenceTypesRes.json();
+        setEvidenceTypes(Array.isArray(evidenceTypesData) ? evidenceTypesData as EvidenceTypeCatalogEntryDto[] : []);
+      }
       setPageState('ready');
     } catch {
       setPageState('error');
@@ -104,6 +118,8 @@ export default function PortfolioPage() {
   useEffect(() => {
     mediaUrlCache.current.clear();
     mediaUrlRequests.current.clear();
+    validatedMediaUrlCache.current.clear();
+    validatedMediaUrlRequests.current.clear();
   }, [familyId]);
 
   // Resolve the active family from the session first, preserving the legacy
@@ -138,22 +154,54 @@ export default function PortfolioPage() {
       if (activeLearnerId) {
         params.append('learnerId', activeLearnerId);
       }
-      const res = await fetch(`/api/v1/families/${familyId}/portfolio?${params.toString()}`, {
-        credentials: 'include',
-      });
+      const [res, evidenceRes] = await Promise.all([
+        fetch(`/api/v1/families/${familyId}/portfolio?${params.toString()}`, {
+          credentials: 'include',
+        }),
+        activeLearnerId
+          ? fetch(`/api/v1/families/${familyId}/curriculum/evidence-submissions?learnerId=${activeLearnerId}`, { credentials: 'include' })
+          : Promise.resolve(null),
+      ]);
       if (!res.ok) {
         throw new Error('portfolio-items-request-failed');
       }
 
       const data: PortfolioItemResponseDto[] = await res.json();
+      const evidenceData: unknown = evidenceRes?.ok ? await evidenceRes.json() : [];
       mediaUrlCache.current.clear();
       mediaUrlRequests.current.clear();
       setPortfolioItems(data);
+      setValidatedEvidence(Array.isArray(evidenceData) ? (evidenceData as EvidenceSubmissionResponseDto[]).filter((submission) => submission.validationStatus === 'VALIDATED') : []);
       setPortfolioState('ready');
     } catch {
       setPortfolioState('error');
     }
   }, [familyId, activeLearnerId]);
+
+  const resolveValidatedEvidenceMediaUrl = useCallback(async (submissionId: string): Promise<string | null> => {
+    if (!familyId) return null;
+    const cached = validatedMediaUrlCache.current.get(submissionId);
+    if (cached && cached.expiresAt > Date.now() + 5_000) return cached.url;
+    const pendingRequest = validatedMediaUrlRequests.current.get(submissionId);
+    if (pendingRequest) return pendingRequest;
+
+    let request: Promise<string | null>;
+    request = fetch(`/api/v1/families/${familyId}/curriculum/evidence-submissions/${submissionId}/download-url`, { credentials: 'include' })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        const payload: { downloadUrl?: string; expiresAt?: string } = await res.json();
+        const expiresAt = payload.expiresAt ? Date.parse(payload.expiresAt) : Number.NaN;
+        if (!payload.downloadUrl || !Number.isFinite(expiresAt)) return null;
+        validatedMediaUrlCache.current.set(submissionId, { url: payload.downloadUrl, expiresAt });
+        return payload.downloadUrl;
+      })
+      .catch(() => null)
+      .finally(() => {
+        if (validatedMediaUrlRequests.current.get(submissionId) === request) validatedMediaUrlRequests.current.delete(submissionId);
+      });
+    validatedMediaUrlRequests.current.set(submissionId, request);
+    return request;
+  }, [familyId]);
 
   useEffect(() => {
     if (pageState === 'ready') {
@@ -163,7 +211,8 @@ export default function PortfolioPage() {
 
   const handleRetry = () => {
     if (familyId) {
-      void loadBaseData(familyId);
+      setPortfolioState('loading');
+      void loadBaseData(familyId, false);
     }
   };
 
@@ -253,6 +302,26 @@ export default function PortfolioPage() {
     setIsItemModalOpen(true);
   };
 
+  const handlePromoteValidatedEvidence = async (submissionId: string, dto: CreatePortfolioItemFromEvidenceSubmissionDto) => {
+    if (!familyId) throw new Error(t('records.portfolio.messages.authRequired'));
+    const res = await fetch(`/api/v1/families/${familyId}/portfolio/from-evidence-submission/${submissionId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(dto),
+    });
+    if (!res.ok) {
+      const payload = await res.json().catch(() => ({})) as { message?: string };
+      throw new Error(payload.message || t('records.validatedEvidence.promoteError'));
+    }
+    await fetchPortfolioItems();
+  };
+
+  const promotedSubmissionIds = useMemo(
+    () => new Set(portfolioItems.flatMap((item) => item.evidenceSubmissionId ? [item.evidenceSubmissionId] : [])),
+    [portfolioItems],
+  );
+
   return (
     <ProductShell
       learners={learners}
@@ -311,6 +380,8 @@ export default function PortfolioPage() {
             onEditItem={handleEditItem}
             onDeleteItem={handleDeleteItem}
             onResolveMediaUrl={resolvePortfolioMediaUrl}
+            onOpenPromoteValidatedEvidence={() => setIsValidatedEvidenceModalOpen(true)}
+            validatedEvidenceCount={validatedEvidence.filter((submission) => !promotedSubmissionIds.has(submission.id)).length}
           />
         )}
 
@@ -325,6 +396,15 @@ export default function PortfolioPage() {
           records={records}
           itemToEdit={itemToEdit}
           defaultLearnerId={activeLearnerId}
+        />
+        <ValidatedEvidencePromotionModal
+          isOpen={isValidatedEvidenceModalOpen}
+          onClose={() => setIsValidatedEvidenceModalOpen(false)}
+          submissions={validatedEvidence}
+          evidenceTypes={evidenceTypes}
+          promotedSubmissionIds={promotedSubmissionIds}
+          onPromote={handlePromoteValidatedEvidence}
+          onResolveMediaUrl={resolveValidatedEvidenceMediaUrl}
         />
       </div>
     </ProductShell>

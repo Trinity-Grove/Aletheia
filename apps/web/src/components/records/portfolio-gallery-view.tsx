@@ -20,6 +20,8 @@ export interface PortfolioGalleryViewProps {
   onEditItem(item: PortfolioItemResponseDto): void;
   onDeleteItem(itemId: string): void;
   onResolveMediaUrl?(itemId: string): Promise<string | null>;
+  onOpenPromoteValidatedEvidence?(): void;
+  validatedEvidenceCount?: number;
 }
 
 interface PortfolioMediaPreviewProps {
@@ -254,6 +256,8 @@ export function PortfolioGalleryView({
   onEditItem,
   onDeleteItem,
   onResolveMediaUrl,
+  onOpenPromoteValidatedEvidence,
+  validatedEvidenceCount = 0,
 }: PortfolioGalleryViewProps) {
   const { t, formatDate } = useLocale();
   const [filterType, setFilterType] = useState<string>('');
@@ -417,9 +421,21 @@ export function PortfolioGalleryView({
           </div>
 
           <Can action="create_portfolio_items">
-            <Button data-testid="open-add-portfolio-btn" onClick={onOpenAddItem}>
-              {t('records.portfolio.addEvidenceBtn')}
-            </Button>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <Button data-testid="open-add-portfolio-btn" onClick={onOpenAddItem}>
+                {t('records.portfolio.addEvidenceBtn')}
+              </Button>
+              {onOpenPromoteValidatedEvidence && (
+                <Button
+                  variant="outline"
+                  data-testid="open-promote-validated-evidence-btn"
+                  onClick={onOpenPromoteValidatedEvidence}
+                  disabled={!activeLearnerId}
+                >
+                  {t('records.portfolio.addValidatedEvidenceBtn')}{validatedEvidenceCount > 0 ? ` (${validatedEvidenceCount})` : ''}
+                </Button>
+              )}
+            </div>
           </Can>
         </div>
       </div>

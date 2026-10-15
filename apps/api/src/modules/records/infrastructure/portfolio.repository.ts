@@ -21,6 +21,7 @@ export interface CreatePortfolioItemFromEvidenceSubmissionInput {
   academicYearId: string | null;
   subjectId: string | null;
   fileUrl: string | null;
+  storageKey: string | null;
   textContent: string | null;
   mimeType: string | null;
   fileSizeBytes: number | null;
@@ -172,6 +173,7 @@ export class PortfolioRepository {
         description: input.description,
         type: input.type,
         fileUrl: input.fileUrl,
+        storageKey: input.storageKey,
         textContent: input.textContent,
         mimeType: input.mimeType,
         fileSizeBytes: input.fileSizeBytes,
