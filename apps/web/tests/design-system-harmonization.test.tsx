@@ -1,11 +1,15 @@
 import React from 'react';
 import fs from 'node:fs';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
 import { PageHeader } from '@aletheia/ui';
 
 describe('Design System Harmonization (ALET-B05)', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it('renders @aletheia/ui PageHeader with institutional typography, adornment, and testids', () => {
     render(
       <PageHeader
@@ -151,6 +155,112 @@ describe('Design System Harmonization (ALET-B05)', () => {
       expect(content).not.toContain("maxWidth: '1100px'");
     });
   });
+
+  describe('Task 5: Global Audit, a11y & Content Variability', () => {
+    it('renders long descriptions and titles gracefully in PageHeader without layout breakage', () => {
+      const longTitle = 'História Geral da Civilização e Fundamentos Filosóficos da Cosmovisão Cristã Ocidental';
+      const longDescription = 'Este plano curricular detalhado visa guiar a família através de leituras aprofundadas, exercícios dialéticos e reflexões cotidianas durante todo o ano letivo de 2026, com ênfase em virtudes morais e excelência acadêmica.';
+
+      render(
+        <PageHeader
+          title={longTitle}
+          description={longDescription}
+          titleAdornment={<span data-testid="test-badge">Badge</span>}
+          action={<button type="button">Ação</button>}
+        />
+      );
+
+      const title = screen.getByTestId('page-header-title');
+      expect(title).toHaveTextContent(longTitle);
+
+      const desc = screen.getByTestId('page-header-description');
+      expect(desc).toHaveTextContent(longDescription);
+    });
+
+    it('ensures each of the 10 migrated routes uses PageHeader and has no inline maxWidth wrappers', () => {
+      const routes = [
+        '../app/(dashboard)/attendance/page.tsx',
+        '../src/components/curriculum/curriculum-view.tsx',
+        '../app/(dashboard)/devotional/page.tsx',
+        '../app/(dashboard)/learners/page.tsx',
+        '../app/(dashboard)/portfolio/page.tsx',
+        '../app/(dashboard)/records/page.tsx',
+        '../app/(dashboard)/reports/page.tsx',
+        '../app/(dashboard)/schedule/page.tsx',
+        '../app/(dashboard)/settings/page.tsx',
+        '../app/(dashboard)/support/page.tsx',
+      ];
+
+      for (const route of routes) {
+        const filePath = path.resolve(__dirname, route);
+        const content = fs.readFileSync(filePath, 'utf-8');
+
+        expect(content, `Route ${route} must import or use PageHeader`).toContain('<PageHeader');
+        expect(content, `Route ${route} must use .page-container`).toContain('page-container');
+        expect(content, `Route ${route} must not use legacy maxWidth 1200px/1100px/76rem`).not.toMatch(/maxWidth:\s*['"](1200px|1100px|76rem)['"]/);
+      }
+    });
+
+    it('ensures single h1 semantic ownership across all 10 migrated components', () => {
+      const routes = [
+        '../app/(dashboard)/attendance/page.tsx',
+        '../src/components/curriculum/curriculum-view.tsx',
+        '../app/(dashboard)/devotional/page.tsx',
+        '../app/(dashboard)/learners/page.tsx',
+        '../app/(dashboard)/portfolio/page.tsx',
+        '../app/(dashboard)/records/page.tsx',
+        '../app/(dashboard)/reports/page.tsx',
+        '../app/(dashboard)/schedule/page.tsx',
+        '../app/(dashboard)/settings/page.tsx',
+        '../app/(dashboard)/support/page.tsx',
+      ];
+
+      for (const route of routes) {
+        const filePath = path.resolve(__dirname, route);
+        const content = fs.readFileSync(filePath, 'utf-8');
+
+        // After migrating to PageHeader, there should be zero manual <h1 tags in the JSX body
+        const manualH1Matches = content.match(/<h1[^>]*>/g);
+        expect(manualH1Matches, `Route ${route} should delegate h1 strictly to PageHeader`).toBeNull();
+      }
+    });
+
+    it('confirms zero Tailwind classes in all migrated dashboard routes', () => {
+      const routes = [
+        '../app/(dashboard)/attendance/page.tsx',
+        '../src/components/curriculum/curriculum-view.tsx',
+        '../app/(dashboard)/devotional/page.tsx',
+        '../app/(dashboard)/learners/page.tsx',
+        '../app/(dashboard)/portfolio/page.tsx',
+        '../app/(dashboard)/records/page.tsx',
+        '../app/(dashboard)/reports/page.tsx',
+        '../app/(dashboard)/schedule/page.tsx',
+        '../app/(dashboard)/settings/page.tsx',
+        '../app/(dashboard)/support/page.tsx',
+      ];
+
+      const tailwindPattern = /^(?:flex-col|items-center|justify-between|p-\d|px-\d|py-\d|m-\d|text-sm|text-lg|bg-white|rounded-lg|shadow-sm)$/;
+
+      for (const route of routes) {
+        const filePath = path.resolve(__dirname, route);
+        const content = fs.readFileSync(filePath, 'utf-8');
+
+        const classNameRegex = /className="([^"]+)"/g;
+        let match: RegExpExecArray | null;
+        while ((match = classNameRegex.exec(content)) !== null) {
+          const rawClassAttr = match[1];
+          if (!rawClassAttr) continue;
+          const classNames = rawClassAttr.split(/\s+/);
+          for (const cls of classNames) {
+            expect(cls, `Route ${route} has forbidden Tailwind utility class "${cls}"`).not.toMatch(tailwindPattern);
+          }
+        }
+
+      }
+    });
+  });
 });
+
+
 
 
