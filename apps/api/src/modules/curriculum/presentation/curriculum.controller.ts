@@ -17,6 +17,7 @@ import {
   createAcademicYearSchema,
   createSubjectSchema,
   upsertFamilyLearningPathSelectionSchema,
+  upsertFamilyProjectSelectionSchema,
   updateSubjectSchema,
   upsertLearnerPlanSchema,
   type AcademicYearResponseDto,
@@ -35,11 +36,14 @@ import {
   type UpdateSubjectDto,
   type UpsertLearnerPlanDto,
   type UpsertFamilyLearningPathSelectionDto,
+  type FamilyProjectSelectionResponseDto,
+  type UpsertFamilyProjectSelectionDto,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
 import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { CurriculumService } from '../application/curriculum.service.js';
 import { FamilyLearningPathSelectionService } from '../application/family-learning-path-selection.service.js';
+import { FamilyProjectSelectionService } from '../application/family-project-selection.service.js';
 
 @ApiTags('Curriculum')
 @ApiBearerAuth()
@@ -49,6 +53,7 @@ export class CurriculumController {
   constructor(
     private readonly curriculumService: CurriculumService,
     private readonly familyLearningPathSelectionService: FamilyLearningPathSelectionService,
+    private readonly familyProjectSelectionService: FamilyProjectSelectionService,
   ) {}
 
   // Academic Years
@@ -152,6 +157,24 @@ export class CurriculumController {
     @Body(new ZodValidationPipe(upsertFamilyLearningPathSelectionSchema)) dto: UpsertFamilyLearningPathSelectionDto,
   ): Promise<FamilyLearningPathSelectionResponseDto> {
     return this.familyLearningPathSelectionService.upsert(familyId, pathId, dto);
+  }
+
+  @Get('projects/selections')
+  @ApiOperation({ summary: 'List projects selected by this family' })
+  async listFamilyProjectSelections(
+    @Param('familyId') familyId: string,
+  ): Promise<FamilyProjectSelectionResponseDto[]> {
+    return this.familyProjectSelectionService.list(familyId);
+  }
+
+  @Put('projects/:projectId/selection')
+  @ApiOperation({ summary: 'Enable or disable a published project for this family' })
+  async upsertFamilyProjectSelection(
+    @Param('familyId') familyId: string,
+    @Param('projectId') projectId: string,
+    @Body(new ZodValidationPipe(upsertFamilyProjectSelectionSchema)) dto: UpsertFamilyProjectSelectionDto,
+  ): Promise<FamilyProjectSelectionResponseDto> {
+    return this.familyProjectSelectionService.upsert(familyId, projectId, dto);
   }
 
   // Template Catalog (issue #96 section 35: UI data-driven -- a family

@@ -122,6 +122,8 @@ import { CurriculumPackCompositionRepository } from './infrastructure/curriculum
 import { CurriculumPackCompositionService } from './application/curriculum-pack-composition.service.js';
 import { FamilyLearningPathSelectionRepository } from './infrastructure/family-learning-path-selection.repository.js';
 import { FamilyLearningPathSelectionService } from './application/family-learning-path-selection.service.js';
+import { FamilyProjectSelectionRepository } from './infrastructure/family-project-selection.repository.js';
+import { FamilyProjectSelectionService } from './application/family-project-selection.service.js';
 
 @Module({
   imports: [DatabaseModule, DevotionalModule, StorageModule, PrivacyModule],
@@ -218,6 +220,7 @@ import { FamilyLearningPathSelectionService } from './application/family-learnin
     FamilyActivityRepository,
     CurriculumPackCompositionRepository,
     FamilyLearningPathSelectionRepository,
+    FamilyProjectSelectionRepository,
     CurriculumService,
     ObjectiveService,
     DefinitionsService,
@@ -235,6 +238,7 @@ import { FamilyLearningPathSelectionService } from './application/family-learnin
     FamilyActivityService,
     CurriculumPackCompositionService,
     FamilyLearningPathSelectionService,
+    FamilyProjectSelectionService,
     DefinitionVersionOperationsService,
     AuthorTrustRepository,
     AuthorTrustService,
