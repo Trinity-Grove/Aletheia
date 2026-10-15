@@ -6,6 +6,8 @@ import {
   type RollbackDefinitionVersionResultDto,
   type MigrateCompetencyTrackingReferencesResultDto,
   type DefinitionVersionOperationLogResponseDto,
+  type DefinitionVersionDiffQueryDto,
+  type DefinitionVersionDiffResponseDto,
 } from '@aletheia/contracts';
 import { PrismaService } from '../../../platform/database/prisma.service.js';
 import { computeStatusTransition } from './definition-status-transition.js';
@@ -57,8 +59,28 @@ interface DefinitionRow {
 
 type DefinitionDelegate = {
   findFirst(args: unknown): Promise<DefinitionRow | null>;
+  findMany(args: unknown): Promise<DefinitionRow[]>;
   update(args: unknown): Promise<DefinitionRow>;
 };
+
+const GENERATED_DEFINITION_FIELDS = new Set([
+  'id',
+  'code',
+  'version',
+  'createdAt',
+  'updatedAt',
+  'publishedAt',
+  'deprecatedAt',
+]);
+
+function comparableValue(value: unknown): unknown {
+  if (value instanceof Date) return value.toISOString();
+  return value;
+}
+
+function valuesEqual(left: unknown, right: unknown): boolean {
+  return JSON.stringify(comparableValue(left)) === JSON.stringify(comparableValue(right));
+}
 
 function majorSchemaVersion(schemaVersion: string): string {
   return schemaVersion.split('.')[0] ?? schemaVersion;
@@ -71,6 +93,38 @@ function isSchemaMajorCompatible(a: string, b: string): boolean {
 @Injectable()
 export class DefinitionVersionOperationsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async diffDefinitionVersions(query: DefinitionVersionDiffQueryDto): Promise<DefinitionVersionDiffResponseDto> {
+    const delegate = this.delegate(this.prisma, query.entityType);
+    const rows = await delegate.findMany({
+      where: { code: query.code, version: { in: [query.fromVersion, query.toVersion] } },
+    });
+    const from = rows.find((row) => row.version === query.fromVersion);
+    const to = rows.find((row) => row.version === query.toVersion);
+    if (!from || !to) {
+      throw new NotFoundException(
+        `${query.entityType} ${query.code} must have both versions ${query.fromVersion} and ${query.toVersion}.`,
+      );
+    }
+
+    const fields = new Set([...Object.keys(from), ...Object.keys(to)]);
+    const changedFields = [...fields]
+      .filter((field) => !GENERATED_DEFINITION_FIELDS.has(field))
+      .sort()
+      .flatMap((field) => {
+        const left = comparableValue(from[field as keyof DefinitionRow]);
+        const right = comparableValue(to[field as keyof DefinitionRow]);
+        return valuesEqual(left, right) ? [] : [{ field, from: left, to: right }];
+      });
+
+    return {
+      entityType: query.entityType,
+      code: query.code,
+      fromVersion: query.fromVersion,
+      toVersion: query.toVersion,
+      changedFields,
+    };
+  }
 
   private delegate(client: PrismaService | Prisma.TransactionClient, entityType: RollbackEligibleEntityType): DefinitionDelegate {
     const accessor = MODEL_ACCESSOR[entityType];

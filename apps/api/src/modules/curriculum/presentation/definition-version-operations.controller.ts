@@ -8,6 +8,9 @@ import {
   type MigrateCompetencyTrackingReferencesDto,
   type MigrateCompetencyTrackingReferencesResultDto,
   type DefinitionVersionOperationLogResponseDto,
+  definitionVersionDiffQuerySchema,
+  type DefinitionVersionDiffQueryDto,
+  type DefinitionVersionDiffResponseDto,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, PlatformAdminGuard, CurrentUser } from '../../../platform/auth/index.js';
 import { ZodValidationPipe } from '../../../platform/validation/index.js';
@@ -63,5 +66,13 @@ export class DefinitionVersionOperationsController {
   @ApiOperation({ summary: 'List Definition/Version operation log entries (traceability), optionally filtered by code' })
   async listLogs(@Query('code') code?: string): Promise<DefinitionVersionOperationLogResponseDto[]> {
     return this.service.listOperationLogs(code);
+  }
+
+  @Get('diff')
+  @ApiOperation({ summary: 'Compare two immutable Definition/Version rows by code' })
+  async diff(
+    @Query(new ZodValidationPipe(definitionVersionDiffQuerySchema)) dto: DefinitionVersionDiffQueryDto,
+  ): Promise<DefinitionVersionDiffResponseDto> {
+    return this.service.diffDefinitionVersions(dto);
   }
 }
