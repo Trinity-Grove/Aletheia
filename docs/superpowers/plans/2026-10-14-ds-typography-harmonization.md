@@ -40,6 +40,10 @@
 - Preservar estados de loading/`aria-busy` com altura e estrutura estáveis, evitando CLS ao carregar dados ou alternar ações.
 - Garantir um único `h1`, foco visível, ordem de teclado, nomes acessíveis, contraste adequado e alvos interativos de pelo menos `44px`.
 - Não adicionar animações sem fallback para `prefers-reduced-motion`.
+- Registrar baseline antes/depois de requests iniciais e, quando disponível, CLS/LCP/INP; a migração não deve adicionar chamadas de rede.
+- Testar nomes longos, descrições extensas e traduções maiores de `en-US`/`es-ES`, sem truncamento de informação essencial.
+- Executar smoke automatizado de acessibilidade com axe ou ferramenta equivalente.
+- Tratar cancelamento de requests obsoletos com `AbortController` como follow-up separado, sem ampliar a B05.
 
 ---
 
@@ -449,4 +453,8 @@ git commit -m "feat(web): harmonize settings and support pages with PageHeader a
 - [ ] Confirmar `min-width: 0`, quebra de textos longos, um único `h1`, foco visível, ordem de teclado, nomes acessíveis e alvos de toque de pelo menos `44px`.
 - [ ] Confirmar que loading/`aria-busy` mantém uma estrutura estável e não introduz CLS perceptível.
 - [ ] Validar contraste e que nenhuma nova transição ignora `prefers-reduced-motion`.
+- [ ] Capturar e comparar o baseline de requests iniciais e, quando o ambiente permitir, CLS/LCP/INP.
+- [ ] Repetir o smoke com textos longos e nos dicionários `pt-BR`, `en-US` e `es-ES`.
+- [ ] Executar smoke automatizado de acessibilidade e registrar eventuais lacunas de cobertura.
+- [ ] Abrir follow-up para `AbortController` nas páginas com múltiplos `fetch` em `useEffect`, caso ainda não exista.
 - [ ] Registrar lacunas de cobertura visual sem declarar as dez rotas como cobertas quando algum cenário ainda não existir.

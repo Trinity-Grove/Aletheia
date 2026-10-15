@@ -36,6 +36,11 @@ Não misturar a migração das dez rotas com uma refatoração ampla não relaci
 - **Acessibilidade**: manter exatamente um `h1` por rota, landmark semântico, foco visível, ordem de tabulação, nomes acessíveis e alvos de toque de pelo menos `44px` para controles interativos.
 - **Legibilidade e densidade**: usar `clamp()` apenas onde houver ganho real, limitar largura de descrições, permitir quebra do bloco de ações e respeitar `prefers-reduced-motion` caso sejam adicionadas transições.
 - **Percepção de carregamento**: preservar `aria-busy`/estados de loading existentes e evitar que o novo header apareça e desapareça em posições diferentes durante a carga.
+- **Baseline de performance**: registrar antes/depois a quantidade de requests iniciais e, quando o ambiente permitir, CLS, LCP e INP. A B05 não pode adicionar requests nem piorar os indicadores sem justificativa.
+- **Conteúdo variável**: validar nomes longos, descrições extensas e traduções maiores de `en-US`/`es-ES`; nenhuma informação essencial deve ser truncada ou causar overflow.
+- **Acessibilidade automatizada**: executar smoke com axe ou ferramenta equivalente nas rotas migradas, cobrindo landmarks, contraste, nomes acessíveis, foco e hierarquia de headings.
+
+Cancelamento de requests obsoletos com `AbortController` é uma melhoria recomendada para as páginas que possuem múltiplos `fetch` em `useEffect`, mas fica registrada como follow-up separado para não ampliar o escopo visual da B05.
 
 1. **Padronização do Contêiner Global (`.page-container`)**:
    - Criar e padronizar a classe utilitária semântica `.page-container` em `apps/web/app/globals.css`.
@@ -153,3 +158,6 @@ O `PageHeader` deve expor classes estáveis para seu layout e tipografia (`ui-pa
    - Confirmar que a refatoração não adiciona requests, efeitos, listeners de resize ou medições de DOM.
    - Confirmar que o header não causa overflow, CLS perceptível ou perda de foco/teclado.
    - Validar contraste, foco visível, tamanho dos alvos e um único `h1` nas rotas migradas.
+   - Comparar o baseline de requests e, quando disponível, CLS/LCP/INP antes e depois.
+   - Repetir os cenários com textos longos e nos três dicionários suportados.
+   - Executar smoke automatizado de acessibilidade.
