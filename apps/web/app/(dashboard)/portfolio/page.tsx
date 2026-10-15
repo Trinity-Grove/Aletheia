@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { PageHeader, useToast } from '@aletheia/ui';
+import Link from 'next/link';
+import { AletheiaIcon, Button, EmptyState, PageHeader, useToast } from '@aletheia/ui';
 import type {
   CreatePortfolioItemDto,
   LearnerSummaryDto,
@@ -12,72 +13,85 @@ import type {
 import { ProductShell } from '../../../src/components/product-shell';
 import { PortfolioGalleryView } from '../../../src/components/records/portfolio-gallery-view';
 import { PortfolioItemModal } from '../../../src/components/records/portfolio-item-modal';
+import { useOptionalAuth } from '../../../src/lib/auth/auth-context';
 import { useLocale } from '../../../src/lib/i18n/locale-context';
+
+type PortfolioPageState = 'loading' | 'ready' | 'error' | 'no-family';
 
 export default function PortfolioPage() {
   const { t } = useLocale();
   const { toast } = useToast();
+  const auth = useOptionalAuth();
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerSummaryDto[]>([]);
   const [activeLearnerId, setActiveLearnerId] = useState<string | null>(null);
   const [subjects, setSubjects] = useState<SubjectResponseDto[]>([]);
   const [records, setRecords] = useState<LearningRecordResponseDto[]>([]);
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItemResponseDto[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [pageState, setPageState] = useState<PortfolioPageState>('loading');
+  const [portfolioState, setPortfolioState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
 
   // Modals
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<PortfolioItemResponseDto | null>(null);
 
-  // Initial Load: family, learners, subjects, records
-  useEffect(() => {
-    async function loadBaseData() {
-      try {
-        const storedFamilyId = localStorage.getItem('familyId');
-        if (!storedFamilyId) {
-          setLoading(false);
-          return;
-        }
-        setFamilyId(storedFamilyId);
+  const loadBaseData = useCallback(async (targetFamilyId: string) => {
+    setPageState('loading');
+    setPortfolioState('idle');
 
-        // Learners
-        const learnersRes = await fetch(`/api/v1/families/${storedFamilyId}/learners`, {
-          credentials: 'include',
-        });
-        if (learnersRes.ok) {
-          const lData = await learnersRes.json();
-          setLearners(lData);
-        }
+    try {
+      const [learnersRes, subjectsRes, recordsRes] = await Promise.all([
+        fetch(`/api/v1/families/${targetFamilyId}/learners`, { credentials: 'include' }),
+        fetch(`/api/v1/families/${targetFamilyId}/curriculum/subjects`, { credentials: 'include' }),
+        fetch(`/api/v1/families/${targetFamilyId}/records`, { credentials: 'include' }),
+      ]);
 
-        // Subjects
-        const subjectsRes = await fetch(`/api/v1/families/${storedFamilyId}/curriculum/subjects`, {
-          credentials: 'include',
-        });
-        if (subjectsRes.ok) {
-          const sData = await subjectsRes.json();
-          setSubjects(sData);
-        }
-
-        // Records (for linking)
-        const recordsRes = await fetch(`/api/v1/families/${storedFamilyId}/records`, {
-          credentials: 'include',
-        });
-        if (recordsRes.ok) {
-          const rData = await recordsRes.json();
-          setRecords(rData);
-        }
-      } catch {
-        // ignore
-      } finally {
-        setLoading(false);
+      if (!learnersRes.ok || !subjectsRes.ok || !recordsRes.ok) {
+        throw new Error('portfolio-base-data-request-failed');
       }
+
+      const [learnersData, subjectsData, recordsData] = await Promise.all([
+        learnersRes.json() as Promise<LearnerSummaryDto[]>,
+        subjectsRes.json() as Promise<SubjectResponseDto[]>,
+        recordsRes.json() as Promise<LearningRecordResponseDto[]>,
+      ]);
+
+      setLearners(learnersData);
+      setSubjects(subjectsData);
+      setRecords(recordsData);
+      setPageState('ready');
+    } catch {
+      setPageState('error');
     }
-    loadBaseData();
   }, []);
+
+  // Resolve the active family from the session first, preserving the legacy
+  // localStorage fallback used by older dashboard entry points and tests.
+  useEffect(() => {
+    if (auth?.status === 'loading') {
+      setFamilyId(null);
+      setPageState('loading');
+      setPortfolioState('idle');
+      return;
+    }
+
+    const storedFamilyId = localStorage.getItem('aletheia.activeFamilyId') ?? localStorage.getItem('familyId');
+    const resolvedFamilyId = auth?.activeFamilyId ?? storedFamilyId;
+    setFamilyId(resolvedFamilyId);
+
+    if (!resolvedFamilyId) {
+      setPageState('no-family');
+      setPortfolioState('idle');
+      return;
+    }
+
+    void loadBaseData(resolvedFamilyId);
+  }, [auth?.activeFamilyId, auth?.status, loadBaseData]);
 
   // Fetch Portfolio Items
   const fetchPortfolioItems = useCallback(async () => {
     if (!familyId) return;
+    setPortfolioState('loading');
     try {
       const params = new URLSearchParams();
       if (activeLearnerId) {
@@ -86,42 +100,53 @@ export default function PortfolioPage() {
       const res = await fetch(`/api/v1/families/${familyId}/portfolio?${params.toString()}`, {
         credentials: 'include',
       });
-      if (res.ok) {
-        const data: PortfolioItemResponseDto[] = await res.json();
-        // A real file upload never populates `fileUrl` — that field is only
-        // ever the guardian-supplied external URL for LINK-type items. For
-        // everything else, the only way to view the uploaded file is a
-        // short-lived presigned GET URL fetched on demand, so resolve one
-        // per uploaded item before rendering (the gallery already knows how
-        // to render `fileUrl` for previews/links, it just never had one).
-        const withDownloadUrls = await Promise.all(
-          data.map(async (item) => {
-            if (item.fileUrl || !item.mimeType) return item;
-            try {
-              const dlRes = await fetch(
-                `/api/v1/families/${familyId}/portfolio/${item.id}/download-url`,
-                { credentials: 'include' },
-              );
-              if (dlRes.ok) {
-                const { downloadUrl } = await dlRes.json();
-                return { ...item, fileUrl: downloadUrl };
-              }
-            } catch {
-              // ignore — item just renders without a preview link
-            }
-            return item;
-          }),
-        );
-        setPortfolioItems(withDownloadUrls);
+      if (!res.ok) {
+        throw new Error('portfolio-items-request-failed');
       }
+
+      const data: PortfolioItemResponseDto[] = await res.json();
+      // A real file upload never populates `fileUrl` — that field is only
+      // ever the guardian-supplied external URL for LINK-type items. For
+      // everything else, the only way to view the uploaded file is a
+      // short-lived presigned GET URL fetched on demand, so resolve one
+      // per uploaded item before rendering (the gallery already knows how
+      // to render `fileUrl` for previews, it just never had one).
+      const withDownloadUrls = await Promise.all(
+        data.map(async (item) => {
+          if (item.fileUrl || !item.mimeType) return item;
+          try {
+            const dlRes = await fetch(
+              `/api/v1/families/${familyId}/portfolio/${item.id}/download-url`,
+              { credentials: 'include' },
+            );
+            if (dlRes.ok) {
+              const { downloadUrl } = await dlRes.json();
+              return { ...item, fileUrl: downloadUrl };
+            }
+          } catch {
+            // A missing preview must not hide the rest of the portfolio.
+          }
+          return item;
+        }),
+      );
+      setPortfolioItems(withDownloadUrls);
+      setPortfolioState('ready');
     } catch {
-      // ignore
+      setPortfolioState('error');
     }
   }, [familyId, activeLearnerId]);
 
   useEffect(() => {
-    fetchPortfolioItems();
-  }, [fetchPortfolioItems]);
+    if (pageState === 'ready') {
+      void fetchPortfolioItems();
+    }
+  }, [fetchPortfolioItems, pageState]);
+
+  const handleRetry = () => {
+    if (familyId) {
+      void loadBaseData(familyId);
+    }
+  };
 
   // Actions
   const handleSaveItem = async (dto: CreatePortfolioItemDto): Promise<PortfolioItemResponseDto> => {
@@ -222,10 +247,41 @@ export default function PortfolioPage() {
         />
 
 
-        {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+        {pageState === 'no-family' ? (
+          <EmptyState
+            data-testid="portfolio-no-family-state"
+            icon={<AletheiaIcon name="users" size={40} style={{ color: 'var(--forest)' }} />}
+            title={t('reports.pages.portfolio.noFamilyTitle')}
+            description={t('reports.pages.portfolio.noFamilyDescription')}
+            action={
+              auth?.families && auth.families.length > 0 ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center' }}>
+                  {auth.families.map((family) => (
+                    <Button key={family.id} onClick={() => auth.selectFamily(family.id)}>
+                      {family.name}
+                    </Button>
+                  ))}
+                </div>
+              ) : (
+                <Link className="ui-button ui-button--primary ui-button--md" href="/onboarding">
+                  {t('reports.pages.portfolio.createFamily')}
+                </Link>
+              )
+            }
+          />
+        ) : pageState === 'loading' || portfolioState === 'loading' ? (
+          <div data-testid="portfolio-loading-state" aria-busy="true" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
             {t('reports.pages.portfolio.loading')}
           </div>
+        ) : pageState === 'error' || portfolioState === 'error' ? (
+          <EmptyState
+            data-testid="portfolio-error-state"
+            role="alert"
+            icon={<AletheiaIcon name="alert-circle" size={40} style={{ color: 'var(--color-amber-600)' }} />}
+            title={t('reports.pages.portfolio.errorTitle')}
+            description={t('reports.pages.portfolio.errorDescription')}
+            action={<Button onClick={handleRetry}>{t('reports.pages.portfolio.retry')}</Button>}
+          />
         ) : (
           <PortfolioGalleryView
             items={portfolioItems}

@@ -67,6 +67,28 @@ export function PortfolioGalleryView({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <Can
+        action="upload_portfolio_items"
+        fallback={
+          <div
+            data-testid="portfolio-read-only-state"
+            role="status"
+            style={{
+              border: '1px solid var(--border-light)',
+              borderRadius: 'var(--radius-md)',
+              padding: '0.75rem 1rem',
+              backgroundColor: 'var(--bg-surface)',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            <strong style={{ color: 'var(--text-primary)' }}>{t('records.portfolio.states.readOnlyTitle')}</strong>
+            <span> {t('records.portfolio.states.readOnlyDescription')}</span>
+          </div>
+        }
+      >
+        {null}
+      </Can>
+
       {/* Portfolio Banner & Highlights count */}
       <div
         data-testid="portfolio-header-banner"
@@ -209,6 +231,29 @@ export function PortfolioGalleryView({
 
       {/* Grid of Portfolio items */}
       {filteredItems.length === 0 ? (
+        filterType || filterSubject || filterOnlyHighlights || selectedTag || searchTerm ? (
+          <EmptyState
+            data-testid="portfolio-no-results-state"
+            icon={<AletheiaIcon name="search-x" size={40} style={{ color: 'var(--color-amber-600)' }} />}
+            title={t('records.portfolio.states.noResultsTitle')}
+            description={t('records.portfolio.states.noResultsDescription')}
+            action={
+              <Button
+                data-testid="clear-portfolio-filters-btn"
+                variant="outline"
+                onClick={() => {
+                  setFilterType('');
+                  setFilterSubject('');
+                  setFilterOnlyHighlights(false);
+                  setSelectedTag('');
+                  setSearchTerm('');
+                }}
+              >
+                {t('records.portfolio.states.clearFilters')}
+              </Button>
+            }
+          />
+        ) : (
         <EmptyState
           data-testid="portfolio-empty-state"
           icon={<AletheiaIcon name="palette" size={40} style={{ color: 'var(--color-amber-600)' }} />}
@@ -222,6 +267,7 @@ export function PortfolioGalleryView({
             </Can>
           }
         />
+        )
       ) : (
         <div
           data-testid="portfolio-gallery-grid"
