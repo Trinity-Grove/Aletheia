@@ -312,6 +312,12 @@ export const curriculum: Dictionary['curriculum'] = {
     ageFilter: 'Learner age',
     allAges: 'All ages',
     ageRange: 'Recommended: ages {min}–{max}',
+    stages: {
+      EARLY_YEARS: 'Early years',
+      PRIMARY: 'Primary',
+      LOWER_SECONDARY: 'Lower secondary',
+      UPPER_SECONDARY: 'Upper secondary',
+    },
     subjectCount: '{count} suggested subjects',
     adopt: 'Adopt learning path',
     loading: 'Loading curriculum paths...',

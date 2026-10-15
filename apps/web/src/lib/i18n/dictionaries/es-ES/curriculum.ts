@@ -312,6 +312,12 @@ export const curriculum: Dictionary['curriculum'] = {
     ageFilter: 'Edad del educando',
     allAges: 'Todas las edades',
     ageRange: 'Recomendado: {min}–{max} años',
+    stages: {
+      EARLY_YEARS: 'Primera infancia',
+      PRIMARY: 'Primaria',
+      LOWER_SECONDARY: 'Secundaria inferior',
+      UPPER_SECONDARY: 'Secundaria superior',
+    },
     subjectCount: '{count} asignaturas sugeridas',
     adopt: 'Adoptar ruta',
     loading: 'Cargando rutas curriculares...',

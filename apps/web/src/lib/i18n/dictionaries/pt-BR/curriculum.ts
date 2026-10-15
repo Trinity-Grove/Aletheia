@@ -310,6 +310,12 @@ export const curriculum = {
     ageFilter: 'Idade do educando',
     allAges: 'Todas as idades',
     ageRange: 'Recomendado: {min}–{max} anos',
+    stages: {
+      EARLY_YEARS: 'Primeira infância',
+      PRIMARY: 'Ensino fundamental — anos iniciais',
+      LOWER_SECONDARY: 'Ensino fundamental — anos finais',
+      UPPER_SECONDARY: 'Ensino médio',
+    },
     subjectCount: '{count} disciplinas sugeridas',
     adopt: 'Adotar trilha',
     loading: 'Carregando trilhas curriculares...',

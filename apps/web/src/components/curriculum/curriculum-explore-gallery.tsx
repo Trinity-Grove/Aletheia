@@ -306,7 +306,9 @@ export function CurriculumExploreGallery({
                     {entry.educationalStages && entry.educationalStages.length > 0 && (
                       <span>
                         <AletheiaIcon name="layers" size={14} />
-                        {entry.educationalStages.join(', ')}
+                        {entry.educationalStages
+                          .map((stage) => t(`curriculum.explore.stages.${stage}`))
+                          .join(', ')}
                       </span>
                     )}
                   </div>
