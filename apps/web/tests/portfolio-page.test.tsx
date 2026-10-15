@@ -174,6 +174,32 @@ afterEach(() => {
 });
 
 describe('PortfolioPage states', () => {
+  it('records first useful render timing and initial media request count', async () => {
+    const performanceEvents: CustomEvent[] = [];
+    const onPerformanceEvent = (event: Event) => performanceEvents.push(event as CustomEvent);
+    window.addEventListener('aletheia:portfolio-performance', onPerformanceEvent);
+
+    try {
+      const imageItem = { ...portfolioItem, type: 'IMAGE' as const, mimeType: 'image/jpeg' };
+      const fetchMock = mockPortfolioFetch([imageItem]);
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+      renderPage();
+
+      expect(await screen.findByTestId(`portfolio-title-${imageItem.id}`)).toBeInTheDocument();
+      await waitFor(() => expect(performanceEvents).toHaveLength(1));
+
+      expect(performanceEvents[0]?.detail).toMatchObject({
+        portfolioItemCount: 1,
+        mediaResolutionRequests: 0,
+      });
+      expect(performanceEvents[0]?.detail.firstUsefulRenderMs).toEqual(expect.any(Number));
+      expect(performanceEvents[0]?.detail.firstUsefulRenderMs).toBeGreaterThanOrEqual(0);
+    } finally {
+      window.removeEventListener('aletheia:portfolio-performance', onPerformanceEvent);
+    }
+  });
+
   it('defers signed media URLs until the user opens the file and reuses the in-memory cache', async () => {
     let downloadAttempts = 0;
     const downloadUrl = 'https://storage.example.com/signed/portfolio-1.jpg';

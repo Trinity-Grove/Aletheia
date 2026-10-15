@@ -23,6 +23,12 @@ import { useLocale } from '../../../src/lib/i18n/locale-context';
 
 type PortfolioPageState = 'loading' | 'ready' | 'error' | 'no-family';
 
+const PORTFOLIO_PERFORMANCE_EVENT = 'aletheia:portfolio-performance';
+
+function getPerformanceNow(): number {
+  return typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now();
+}
+
 export default function PortfolioPage() {
   const { t } = useLocale();
   const { toast } = useToast();
@@ -41,6 +47,9 @@ export default function PortfolioPage() {
   const baseDataRequestId = useRef(0);
   const mediaUrlCache = useRef(new Map<string, { url: string; expiresAt: number }>());
   const mediaUrlRequests = useRef(new Map<string, Promise<string | null>>());
+  const portfolioLoadStartedAt = useRef<number | null>(null);
+  const mediaResolutionRequests = useRef(0);
+  const hasReportedFirstUsefulRender = useRef(false);
   const validatedMediaUrlCache = useRef(new Map<string, { url: string; expiresAt: number }>());
   const validatedMediaUrlRequests = useRef(new Map<string, Promise<string | null>>());
 
@@ -99,6 +108,7 @@ export default function PortfolioPage() {
     const pendingRequest = mediaUrlRequests.current.get(itemId);
     if (pendingRequest) return pendingRequest;
 
+    mediaResolutionRequests.current += 1;
     let request: Promise<string | null>;
     request = fetch(`/api/v1/families/${familyId}/portfolio/${itemId}/download-url`, {
       credentials: 'include',
@@ -157,6 +167,9 @@ export default function PortfolioPage() {
   // Fetch Portfolio Items
   const fetchPortfolioItems = useCallback(async () => {
     if (!familyId) return;
+    portfolioLoadStartedAt.current = getPerformanceNow();
+    mediaResolutionRequests.current = 0;
+    hasReportedFirstUsefulRender.current = false;
     setPortfolioState('loading');
     try {
       const params = new URLSearchParams();
@@ -186,6 +199,22 @@ export default function PortfolioPage() {
       setPortfolioState('error');
     }
   }, [familyId, activeLearnerId]);
+
+  const handleFirstUsefulRender = useCallback((portfolioItemCount: number) => {
+    if (hasReportedFirstUsefulRender.current || portfolioLoadStartedAt.current === null || typeof window === 'undefined') return;
+    hasReportedFirstUsefulRender.current = true;
+    window.dispatchEvent(new CustomEvent(PORTFOLIO_PERFORMANCE_EVENT, {
+      detail: {
+        portfolioItemCount,
+        mediaResolutionRequests: mediaResolutionRequests.current,
+        firstUsefulRenderMs: Math.max(0, getPerformanceNow() - portfolioLoadStartedAt.current),
+      },
+    }));
+  }, []);
+
+  useEffect(() => {
+    if (portfolioState === 'ready') handleFirstUsefulRender(portfolioItems.length);
+  }, [handleFirstUsefulRender, portfolioItems.length, portfolioState]);
 
   const resolveValidatedEvidenceMediaUrl = useCallback(async (submissionId: string): Promise<string | null> => {
     if (!familyId) return null;
