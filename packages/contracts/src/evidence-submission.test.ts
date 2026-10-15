@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   createEvidenceSubmissionSchema,
+  evidenceSubmissionDownloadUrlResponseSchema,
   evidenceValidationStatusSchema,
   learnerSubmitEvidenceSchema,
 } from './evidence-submission.js';
@@ -11,6 +12,14 @@ const COMPETENCY_ID_1 = 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13';
 const COMPETENCY_ID_2 = 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14';
 
 describe('Evidence Submission Contracts', () => {
+  it('validates a signed download URL response', () => {
+    const parsed = evidenceSubmissionDownloadUrlResponseSchema.parse({
+      downloadUrl: 'https://storage.example.com/evidence/signed-url',
+      expiresAt: '2026-10-15T12:00:00.000Z',
+    });
+    expect(parsed.expiresAt).toContain('2026-10-15');
+  });
+
   it('validates a minimal text submission with one competency', () => {
     const parsed = createEvidenceSubmissionSchema.parse({
       learnerId: LEARNER_ID,

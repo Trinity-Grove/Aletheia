@@ -2,7 +2,7 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToastProvider } from '@aletheia/ui';
-import type { LearnerSummaryDto, LearningRecordResponseDto, PortfolioItemResponseDto } from '@aletheia/contracts';
+import type { EvidenceSubmissionResponseDto, EvidenceTypeCatalogEntryDto, LearnerSummaryDto, LearningRecordResponseDto, PortfolioItemResponseDto } from '@aletheia/contracts';
 import type { AuthContextValue } from '../src/lib/auth/auth-context';
 import { AuthContext } from '../src/lib/auth/auth-context';
 import { AuthProvider as AuthRoleProvider } from '../src/lib/auth/rbac-context';
@@ -10,6 +10,7 @@ import { LocaleProvider } from '../src/lib/i18n/locale-context';
 import PortfolioPage from '../app/(dashboard)/portfolio/page';
 import { PortfolioGalleryView } from '../src/components/records/portfolio-gallery-view';
 import { PortfolioItemModal } from '../src/components/records/portfolio-item-modal';
+import { ValidatedEvidencePromotionModal } from '../src/components/records/validated-evidence-promotion-modal';
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/portfolio',
@@ -646,5 +647,84 @@ describe('PortfolioItemModal context filters', () => {
     expect(screen.getByTestId('portfolio-context-grid')).toHaveClass('portfolio-form-grid');
     expect(screen.getByTestId('portfolio-subject-grid')).toHaveClass('portfolio-form-grid');
     expect(screen.getByTestId('portfolio-date-grid')).toHaveClass('portfolio-form-grid');
+  });
+});
+
+describe('ValidatedEvidencePromotionModal', () => {
+  const evidenceType: EvidenceTypeCatalogEntryDto = {
+    id: 'type-1',
+    code: 'PHOTO',
+    name: 'Foto do projeto',
+    description: 'Imagem validada',
+  };
+  const validatedEvidence: EvidenceSubmissionResponseDto = {
+    id: 'evidence-1',
+    familyId: family.id,
+    learnerId: learner.id,
+    evidenceTypeId: evidenceType.id,
+    authorId: 'user-1',
+    textContent: 'A família registrou o crescimento da horta.',
+    fileUrl: null,
+    storageKey: null,
+    mimeType: null,
+    fileSizeBytes: null,
+    checksumSha256: null,
+    validationStatus: 'VALIDATED',
+    validatedByUserId: 'user-1',
+    validatedAt: '2026-09-20T10:00:00.000Z',
+    createdAt: '2026-09-15T10:00:00.000Z',
+    competencies: [],
+  };
+
+  it('lists validated evidence, previews content, and promotes editable metadata', async () => {
+    const onPromote = vi.fn().mockResolvedValue(undefined);
+    render(
+      <LocaleProvider>
+        <ToastProvider>
+          <ValidatedEvidencePromotionModal
+            isOpen
+            onClose={vi.fn()}
+            submissions={[validatedEvidence]}
+            evidenceTypes={[evidenceType]}
+            promotedSubmissionIds={new Set()}
+            onPromote={onPromote}
+          />
+        </ToastProvider>
+      </LocaleProvider>,
+    );
+
+    expect(screen.getByTestId('validated-evidence-option-evidence-1')).toBeInTheDocument();
+    expect(screen.getByTestId('validated-evidence-text-preview')).toHaveTextContent(validatedEvidence.textContent!);
+    fireEvent.change(screen.getByTestId('validated-evidence-title-input'), { target: { value: 'Diário da horta' } });
+    fireEvent.change(screen.getByTestId('validated-evidence-tags-input'), { target: { value: 'horta, natureza' } });
+    fireEvent.click(screen.getByRole('button', { name: /adicionar ao portfólio/i }));
+
+    await waitFor(() => expect(onPromote).toHaveBeenCalledWith('evidence-1', {
+      title: 'Diário da horta',
+      description: undefined,
+      isHighlight: false,
+      tags: ['horta', 'natureza'],
+    }));
+  });
+
+  it('marks a previously promoted submission and prevents duplicate selection', () => {
+    render(
+      <LocaleProvider>
+        <ToastProvider>
+          <ValidatedEvidencePromotionModal
+            isOpen
+            onClose={vi.fn()}
+            submissions={[validatedEvidence]}
+            evidenceTypes={[evidenceType]}
+            promotedSubmissionIds={new Set(['evidence-1'])}
+            onPromote={vi.fn()}
+          />
+        </ToastProvider>
+      </LocaleProvider>,
+    );
+
+    expect(screen.getByText('Já adicionada')).toBeInTheDocument();
+    expect(screen.getByTestId('validated-evidence-option-evidence-1')).toBeDisabled();
+    expect(screen.queryByTestId('validated-evidence-title-input')).not.toBeInTheDocument();
   });
 });

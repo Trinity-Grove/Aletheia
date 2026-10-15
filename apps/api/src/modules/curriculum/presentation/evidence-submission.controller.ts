@@ -5,6 +5,7 @@ import {
   validateEvidenceSubmissionSchema,
   type CreateEvidenceSubmissionOutput,
   type EvidenceSubmissionResponseDto,
+  type EvidenceSubmissionDownloadUrlResponseDto,
   type ValidateEvidenceSubmissionDto,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, FamilyTenantGuard, CurrentUser } from '../../../platform/auth/index.js';
@@ -41,6 +42,16 @@ export class EvidenceSubmissionController {
     @Query('learnerId') learnerId?: string,
   ): Promise<EvidenceSubmissionResponseDto[]> {
     return this.evidenceSubmissionService.listEvidenceSubmissions(familyId, learnerId);
+  }
+
+  @Get(':id/download-url')
+  @ApiOperation({ summary: 'Get a short-lived preview URL for validated evidence media' })
+  async getDownloadUrl(
+    @Param('familyId') familyId: string,
+    @Param('id') id: string,
+    @CurrentUser('userId') userId: string,
+  ): Promise<EvidenceSubmissionDownloadUrlResponseDto> {
+    return this.evidenceSubmissionService.getDownloadUrl(familyId, id, userId);
   }
 
   @Get(':id')

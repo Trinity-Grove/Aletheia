@@ -22,6 +22,7 @@ describe('Portfolio <- EvidenceSubmission promotion (real Postgres)', () => {
   let familyAId: string;
   let familyALearnerId: string;
   let familyBCookie: string;
+  let familyBId: string;
   let evidenceTypeId: string;
   const adminEmail = `portfolio-link-admin-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
   const portfolioBase = (familyId: string) => `/api/v1/families/${familyId}/portfolio`;
@@ -52,7 +53,13 @@ describe('Portfolio <- EvidenceSubmission promotion (real Postgres)', () => {
     return { cookie, familyId, learnerId: learnerResponse.body.id };
   }
 
-  async function createEvidenceSubmission(cookie: string, familyId: string, learnerId: string) {
+  async function createEvidenceSubmission(
+    cookie: string,
+    familyId: string,
+    learnerId: string,
+    storageKey?: string,
+    expectedStatus = 201,
+  ) {
     const competencyDomain = await supertest(app.getHttpServer())
       .post('/api/v1/admin/curriculum-definitions/learning-domains')
       .set('Cookie', adminCookie)
@@ -77,8 +84,9 @@ describe('Portfolio <- EvidenceSubmission promotion (real Postgres)', () => {
         competencies: [{ competencyDefinitionId: competency.body.id }],
         textContent: 'Fotos do canteiro pronto para o plantio.',
         fileUrl: 'https://storage.example.com/evidence/garden.jpg',
+        ...(storageKey ? { storageKey } : {}),
       })
-      .expect(201);
+      .expect(expectedStatus);
     return submission.body;
   }
 
@@ -108,6 +116,7 @@ describe('Portfolio <- EvidenceSubmission promotion (real Postgres)', () => {
 
     const familyB = await registerWithFamilyAndLearner('portfolio-link-family-b');
     familyBCookie = familyB.cookie;
+    familyBId = familyB.familyId;
   });
 
   afterAll(async () => {
@@ -158,6 +167,43 @@ describe('Portfolio <- EvidenceSubmission promotion (real Postgres)', () => {
       .set('Cookie', familyACookie)
       .send({ title: 'Ainda não validado' })
       .expect(400);
+  });
+
+  it('rejects a private evidence key owned by another family at creation time', async () => {
+    await createEvidenceSubmission(
+      familyACookie,
+      familyAId,
+      familyALearnerId,
+      `families/${familyBId}/evidence/not-owned.jpg`,
+      400,
+    );
+  });
+
+  it('previews only validated media belonging to the requested family', async () => {
+    const storageKey = `families/${familyAId}/evidence/validated-garden.jpg`;
+    const submission = await createEvidenceSubmission(familyACookie, familyAId, familyALearnerId, storageKey);
+
+    await supertest(app.getHttpServer())
+      .get(`${evidenceBase(familyAId)}/${submission.id}/download-url`)
+      .set('Cookie', familyACookie)
+      .expect(400);
+
+    await supertest(app.getHttpServer())
+      .patch(`${evidenceBase(familyAId)}/${submission.id}/validation`)
+      .set('Cookie', familyACookie)
+      .send({ status: 'VALIDATED' })
+      .expect(200);
+
+    const preview = await supertest(app.getHttpServer())
+      .get(`${evidenceBase(familyAId)}/${submission.id}/download-url`)
+      .set('Cookie', familyACookie)
+      .expect(200);
+    expect(preview.body.downloadUrl).toContain('X-Amz-Signature');
+
+    await supertest(app.getHttpServer())
+      .get(`${evidenceBase(familyAId)}/${submission.id}/download-url`)
+      .set('Cookie', familyBCookie)
+      .expect(403);
   });
 
   it('rejects promoting the same evidence submission twice', async () => {

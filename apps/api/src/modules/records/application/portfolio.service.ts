@@ -77,6 +77,21 @@ export class PortfolioService {
       subjectId: dto.subjectId ?? null,
     });
 
+    let promotedStorageKey: string | null = null;
+    if (source.storageKey) {
+      if (!source.storageKey.startsWith(`families/${familyId}/`)) {
+        throw new BadRequestException('Evidence media does not belong to this family.');
+      }
+      const fileName = source.storageKey.split('/').pop() || 'evidence-media';
+      promotedStorageKey = this.objectStorage.buildStorageKey(
+        familyId,
+        evidenceSubmissionId,
+        fileName,
+        'portfolio-promoted',
+      );
+      await this.objectStorage.copyObject(source.storageKey, promotedStorageKey, source.mimeType ?? undefined);
+    }
+
     let item;
     try {
       item = await this.portfolioRepo.createFromEvidenceSubmission(familyId, {
@@ -88,6 +103,7 @@ export class PortfolioService {
         academicYearId: dto.academicYearId ?? null,
         subjectId: dto.subjectId ?? null,
         fileUrl: source.fileUrl,
+        storageKey: promotedStorageKey,
         textContent: source.textContent,
         mimeType: source.mimeType,
         fileSizeBytes: source.fileSizeBytes,
@@ -97,6 +113,9 @@ export class PortfolioService {
         tags: dto.tags,
       });
     } catch (error) {
+      if (promotedStorageKey) {
+        await this.objectStorage.deleteObject(promotedStorageKey).catch(() => undefined);
+      }
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new BadRequestException('This evidence submission has already been added to the portfolio.');
       }

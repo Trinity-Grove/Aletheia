@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type {
   CreateEvidenceSubmissionOutput,
+  EvidenceSubmissionDownloadUrlResponseDto,
   EvidenceSubmissionResponseDto,
   EvidenceValidationStatus,
 } from '@aletheia/contracts';
@@ -11,6 +12,7 @@ import {
 import { AchievementRepository } from '../infrastructure/achievement.repository.js';
 import type { EvidenceSubmissionPortfolioSourceDto } from './public-api.js';
 import { PRIVACY_PUBLIC_API, type PrivacyPublicApi } from '../../privacy/application/public-api.js';
+import { ObjectStorageService } from '../../../platform/storage/object-storage.service.js';
 
 // Family-scoped evidence submission workflow (issue #96 Fase 2, section
 // 9). Deliberately NOT wired into LearningObjective/LearningRecord --
@@ -27,6 +29,7 @@ export class EvidenceSubmissionService {
     private readonly repository: EvidenceSubmissionRepository,
     private readonly achievementRepository: AchievementRepository,
     @Inject(PRIVACY_PUBLIC_API) private readonly privacyPublicApi: PrivacyPublicApi,
+    private readonly objectStorage: ObjectStorageService,
   ) {}
 
   async createEvidenceSubmission(
@@ -50,6 +53,10 @@ export class EvidenceSubmissionService {
 
     if (dto.projectDefinitionId && !(await this.repository.projectDefinitionExists(dto.projectDefinitionId))) {
       throw new BadRequestException('Referenced project definition does not exist.');
+    }
+
+    if (dto.storageKey) {
+      this.assertFamilyStorageKey(familyId, dto.storageKey);
     }
 
     const created = await this.repository.create({
@@ -99,6 +106,33 @@ export class EvidenceSubmissionService {
     const row = await this.repository.findById(familyId, id);
     if (!row) throw new NotFoundException('Evidence submission not found.');
     return this.toDto(row);
+  }
+
+  async getDownloadUrl(
+    familyId: string,
+    id: string,
+    actorUserId: string,
+  ): Promise<EvidenceSubmissionDownloadUrlResponseDto> {
+    const row = await this.repository.findById(familyId, id);
+    if (!row) throw new NotFoundException('Evidence submission not found.');
+    if (row.validationStatus !== 'VALIDATED') {
+      throw new BadRequestException('Only validated evidence can be previewed.');
+    }
+    if (!row.storageKey) {
+      throw new BadRequestException('This evidence does not have private media.');
+    }
+    this.assertFamilyStorageKey(familyId, row.storageKey);
+
+    const { downloadUrl, expiresAt } = await this.objectStorage.getPresignedDownloadUrl(row.storageKey);
+    await this.privacyPublicApi.recordSensitiveDataAccess({
+      actorUserId,
+      familyId,
+      learnerId: row.learnerId,
+      action: 'READ',
+      resourceType: 'EVIDENCE_SUBMISSION',
+      resourceId: id,
+    });
+    return { downloadUrl, expiresAt: expiresAt.toISOString() };
   }
 
   // Issue #230 -- see public-api.ts for why this returns a narrower shape
@@ -162,5 +196,11 @@ export class EvidenceSubmissionService {
         createdAt: c.createdAt.toISOString(),
       })),
     };
+  }
+
+  private assertFamilyStorageKey(familyId: string, storageKey: string): void {
+    if (!storageKey.startsWith(`families/${familyId}/`)) {
+      throw new BadRequestException('Evidence media does not belong to this family.');
+    }
   }
 }
