@@ -253,7 +253,7 @@ describe('Operational Dashboard and Railway Cockpit in apps/backoffice (/operati
     await screen.findByTestId('operational-alerts-feed');
 
     // Check alerts content and badges
-    expect(screen.getByText('Process killed by OOM killer')).toBeInTheDocument();
+    expect(await screen.findByText('Process killed by OOM killer')).toBeInTheDocument();
     expect(screen.getByText('CRITICAL')).toBeInTheDocument();
 
     expect(screen.getByText('Connection pool near 80% saturation')).toBeInTheDocument();

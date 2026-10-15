@@ -120,6 +120,8 @@ import { FamilyActivityController } from './presentation/family-activity.control
 import { CommunityActivityController } from './presentation/community-activity.controller.js';
 import { CurriculumPackCompositionRepository } from './infrastructure/curriculum-pack-composition.repository.js';
 import { CurriculumPackCompositionService } from './application/curriculum-pack-composition.service.js';
+import { FamilyLearningPathSelectionRepository } from './infrastructure/family-learning-path-selection.repository.js';
+import { FamilyLearningPathSelectionService } from './application/family-learning-path-selection.service.js';
 
 @Module({
   imports: [DatabaseModule, DevotionalModule, StorageModule, PrivacyModule],
@@ -215,6 +217,7 @@ import { CurriculumPackCompositionService } from './application/curriculum-pack-
     CurriculumPackMediaRepository,
     FamilyActivityRepository,
     CurriculumPackCompositionRepository,
+    FamilyLearningPathSelectionRepository,
     CurriculumService,
     ObjectiveService,
     DefinitionsService,
@@ -231,6 +234,7 @@ import { CurriculumPackCompositionService } from './application/curriculum-pack-
     CurriculumPackMediaService,
     FamilyActivityService,
     CurriculumPackCompositionService,
+    FamilyLearningPathSelectionService,
     DefinitionVersionOperationsService,
     AuthorTrustRepository,
     AuthorTrustService,
