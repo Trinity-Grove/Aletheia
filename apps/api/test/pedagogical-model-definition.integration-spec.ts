@@ -73,11 +73,22 @@ describe('Pedagogical model definition resolver equivalence (real Postgres)', ()
       }
     });
 
-    it('returns only code/name/description, no admin-facing fields', async () => {
+    it('returns discovery fields without admin-facing fields', async () => {
       const catalog = await resolver.listPublishedCatalog();
       const montessori = catalog.find((entry) => entry.code === 'MONTESSORI');
       expect(montessori).toBeDefined();
-      expect(Object.keys(montessori!).sort()).toEqual(['code', 'description', 'name', 'subjects']);
+      expect(Object.keys(montessori!).sort()).toEqual([
+        'approach',
+        'code',
+        'description',
+        'educationalStages',
+        'name',
+        'recommendedAgeRange',
+        'subjects',
+      ]);
+      expect(montessori?.approach).toBe('MONTESSORI');
+      expect(montessori?.recommendedAgeRange).toEqual({ min: 3, max: 12 });
+      expect(montessori?.educationalStages).toEqual(['EARLY_YEARS', 'PRIMARY', 'LOWER_SECONDARY']);
     });
 
     it('picks up a brand-new PUBLISHED code with no code change or deploy', async () => {
