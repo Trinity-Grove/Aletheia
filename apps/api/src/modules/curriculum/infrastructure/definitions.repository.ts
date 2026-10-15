@@ -10,6 +10,7 @@ import type {
   EvidenceTypeDefinition,
   CurriculumDefinition,
   CurriculumDefinitionDomain,
+  CurriculumDefinitionPath,
   CurriculumDefinitionCompetency,
   CurriculumDefinitionRubric,
   CurriculumDefinitionActivity,
@@ -38,6 +39,7 @@ import type {
   CreateEvidenceTypeDefinitionOutput,
   CreateCurriculumDefinitionOutput,
   AddCurriculumDefinitionDomainOutput,
+  AddCurriculumDefinitionPathOutput,
   AddCurriculumDefinitionCompetencyOutput,
   AddCurriculumDefinitionRubricOutput,
   AddCurriculumDefinitionActivityOutput,
@@ -327,6 +329,22 @@ export class DefinitionsRepository {
 
   listCurriculumDefinitionDomains(curriculumDefinitionId: string): Promise<CurriculumDefinitionDomain[]> {
     return this.prisma.curriculumDefinitionDomain.findMany({
+      where: { curriculumDefinitionId },
+      orderBy: { order: 'asc' },
+    });
+  }
+
+  addCurriculumDefinitionPath(
+    curriculumDefinitionId: string,
+    dto: AddCurriculumDefinitionPathOutput,
+  ): Promise<CurriculumDefinitionPath> {
+    return this.prisma.curriculumDefinitionPath.create({
+      data: { curriculumDefinitionId, pathId: dto.pathId, required: dto.required, order: dto.order },
+    });
+  }
+
+  listCurriculumDefinitionPaths(curriculumDefinitionId: string): Promise<CurriculumDefinitionPath[]> {
+    return this.prisma.curriculumDefinitionPath.findMany({
       where: { curriculumDefinitionId },
       orderBy: { order: 'asc' },
     });

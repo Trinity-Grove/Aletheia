@@ -5,6 +5,7 @@ import {
   addCurriculumDefinitionCompetencySchema,
   addCurriculumDefinitionRubricSchema,
   addCurriculumDefinitionActivitySchema,
+  addCurriculumDefinitionPathSchema,
   curriculumDefinitionCatalogEntrySchema,
 } from './curriculum-definition.js';
 
@@ -13,6 +14,7 @@ const DOMAIN_ID = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
 const COMPETENCY_ID = 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33';
 const RUBRIC_ID = 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44';
 const ACTIVITY_ID = 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55';
+const PATH_ID = 'f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66';
 
 describe('Curriculum Definition Contracts', () => {
   it('validates a minimal curriculum definition with defaults', () => {
@@ -62,6 +64,12 @@ describe('Curriculum Definition Contracts', () => {
 
   it('validates an activity link with defaults', () => {
     const parsed = addCurriculumDefinitionActivitySchema.parse({ activityId: ACTIVITY_ID });
+    expect(parsed.required).toBe(true);
+    expect(parsed.order).toBe(0);
+  });
+
+  it('validates a learning path link with defaults', () => {
+    const parsed = addCurriculumDefinitionPathSchema.parse({ pathId: PATH_ID });
     expect(parsed.required).toBe(true);
     expect(parsed.order).toBe(0);
   });

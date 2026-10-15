@@ -225,8 +225,9 @@ export async function exportDefinitionContent(
     case 'CurriculumDefinition': {
       const row = await prisma.curriculumDefinition.findUnique({ where: { code_version: { code, version } } });
       if (!row) return null;
-      const [domainLinks, competencyLinks, rubricLinks, activityLinks] = await Promise.all([
+      const [domainLinks, pathLinks, competencyLinks, rubricLinks, activityLinks] = await Promise.all([
         prisma.curriculumDefinitionDomain.findMany({ where: { curriculumDefinitionId: row.id } }),
+        prisma.curriculumDefinitionPath.findMany({ where: { curriculumDefinitionId: row.id } }),
         prisma.curriculumDefinitionCompetency.findMany({ where: { curriculumDefinitionId: row.id } }),
         prisma.curriculumDefinitionRubric.findMany({ where: { curriculumDefinitionId: row.id } }),
         prisma.curriculumDefinitionActivity.findMany({ where: { curriculumDefinitionId: row.id } }),
@@ -238,6 +239,13 @@ export async function exportDefinitionContent(
         domainLinks: await Promise.all(
           domainLinks.map(async (l) => ({
             ref: await refFromId(prisma, 'LearningDomain', l.domainId),
+            required: l.required,
+            order: l.order,
+          })),
+        ),
+        pathLinks: await Promise.all(
+          pathLinks.map(async (l) => ({
+            ref: await refFromId(prisma, 'LearningPath', l.pathId),
             required: l.required,
             order: l.order,
           })),
@@ -504,6 +512,7 @@ export async function importDefinition(
     case 'CurriculumDefinition': {
       const pedagogicalModelId = await resolveOptional(resolveRef, content.pedagogicalModelRef as PortableRef | null);
       const domainLinks = (content.domainLinks as Array<{ ref: PortableRef; required: boolean; order: number }>) ?? [];
+      const pathLinks = (content.pathLinks as Array<{ ref: PortableRef; required: boolean; order: number }>) ?? [];
       const competencyLinks =
         (content.competencyLinks as Array<{ ref: PortableRef; required: boolean; order: number }>) ?? [];
       const rubricLinks = (content.rubricLinks as Array<{ ref: PortableRef }>) ?? [];
@@ -525,6 +534,12 @@ export async function importDefinition(
         const domainId = await resolveRequired(resolveRef, link.ref);
         await prisma.curriculumDefinitionDomain.create({
           data: { curriculumDefinitionId: row.id, domainId, required: link.required ?? true, order: link.order ?? 0 },
+        });
+      }
+      for (const link of pathLinks) {
+        const pathId = await resolveRequired(resolveRef, link.ref);
+        await prisma.curriculumDefinitionPath.create({
+          data: { curriculumDefinitionId: row.id, pathId, required: link.required ?? true, order: link.order ?? 0 },
         });
       }
       for (const link of competencyLinks) {

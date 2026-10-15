@@ -1211,8 +1211,9 @@ model LearningPath {
   publishedAt   DateTime?        @map("published_at") @db.Timestamptz
   deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
 
-  domain       LearningDomain         @relation(fields: [domainId], references: [id], onDelete: Restrict)
-  competencies CompetencyDefinition[]
+  domain           LearningDomain                   @relation(fields: [domainId], references: [id], onDelete: Restrict)
+  curriculumLinks CurriculumDefinitionPath[]
+  competencies    CompetencyDefinition[]
 
   @@unique([code, version])
   @@index([code])
@@ -1430,6 +1431,7 @@ model CurriculumDefinition {
 
   pedagogicalModel    PedagogicalModelDefinition?      @relation(fields: [pedagogicalModelDefinitionId], references: [id], onDelete: SetNull)
   domains             CurriculumDefinitionDomain[]
+  paths               CurriculumDefinitionPath[]
   competencies        CurriculumDefinitionCompetency[]
   rubrics             CurriculumDefinitionRubric[]
   activities          CurriculumDefinitionActivity[]
@@ -1459,6 +1461,23 @@ model CurriculumDefinitionDomain {
   @@index([curriculumDefinitionId])
   @@index([domainId])
   @@map("curriculum_definition_domains")
+}
+
+model CurriculumDefinitionPath {
+  id                     String   @id @default(uuid()) @db.Uuid
+  curriculumDefinitionId String   @map("curriculum_definition_id") @db.Uuid
+  pathId                 String   @map("path_id") @db.Uuid
+  required               Boolean  @default(true)
+  order                  Int      @default(0)
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  curriculumDefinition CurriculumDefinition @relation(fields: [curriculumDefinitionId], references: [id], onDelete: Cascade)
+  path                LearningPath         @relation(fields: [pathId], references: [id], onDelete: Restrict)
+
+  @@unique([curriculumDefinitionId, pathId])
+  @@index([curriculumDefinitionId])
+  @@index([pathId])
+  @@map("curriculum_definition_paths")
 }
 
 model CurriculumDefinitionCompetency {

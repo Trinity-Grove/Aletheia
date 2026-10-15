@@ -11,6 +11,7 @@ import type {
   EvidenceTypeDefinition,
   CurriculumDefinition,
   CurriculumDefinitionDomain,
+  CurriculumDefinitionPath,
   CurriculumDefinitionCompetency,
   CurriculumDefinitionRubric,
   CurriculumDefinitionActivity,
@@ -47,7 +48,9 @@ import type {
   CreateCurriculumDefinitionOutput,
   CurriculumDefinitionResponseDto,
   AddCurriculumDefinitionDomainOutput,
+  AddCurriculumDefinitionPathOutput,
   CurriculumDefinitionDomainResponseDto,
+  CurriculumDefinitionPathResponseDto,
   AddCurriculumDefinitionCompetencyOutput,
   CurriculumDefinitionCompetencyResponseDto,
   AddCurriculumDefinitionRubricOutput,
@@ -417,6 +420,25 @@ export class DefinitionsService {
     await this.requireCurriculumDefinition(curriculumDefinitionId);
     const rows = await this.repository.listCurriculumDefinitionDomains(curriculumDefinitionId);
     return rows.map((row) => this.toCurriculumDefinitionDomainDto(row));
+  }
+
+  async addCurriculumDefinitionPath(
+    curriculumDefinitionId: string,
+    dto: AddCurriculumDefinitionPathOutput,
+  ): Promise<CurriculumDefinitionPathResponseDto> {
+    await this.requireCurriculumDefinition(curriculumDefinitionId);
+    const row = await this.withWriteErrorMapping(() =>
+      this.repository.addCurriculumDefinitionPath(curriculumDefinitionId, dto),
+    );
+    return this.toCurriculumDefinitionPathDto(row);
+  }
+
+  async listCurriculumDefinitionPaths(
+    curriculumDefinitionId: string,
+  ): Promise<CurriculumDefinitionPathResponseDto[]> {
+    await this.requireCurriculumDefinition(curriculumDefinitionId);
+    const rows = await this.repository.listCurriculumDefinitionPaths(curriculumDefinitionId);
+    return rows.map((row) => this.toCurriculumDefinitionPathDto(row));
   }
 
   async addCurriculumDefinitionCompetency(
@@ -994,6 +1016,17 @@ export class DefinitionsService {
       id: row.id,
       curriculumDefinitionId: row.curriculumDefinitionId,
       domainId: row.domainId,
+      required: row.required,
+      order: row.order,
+      createdAt: row.createdAt.toISOString(),
+    };
+  }
+
+  private toCurriculumDefinitionPathDto(row: CurriculumDefinitionPath): CurriculumDefinitionPathResponseDto {
+    return {
+      id: row.id,
+      curriculumDefinitionId: row.curriculumDefinitionId,
+      pathId: row.pathId,
       required: row.required,
       order: row.order,
       createdAt: row.createdAt.toISOString(),
