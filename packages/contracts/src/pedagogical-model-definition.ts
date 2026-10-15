@@ -50,11 +50,39 @@ export const recommendedAgeRangeSchema = z
 
 export type RecommendedAgeRange = z.infer<typeof recommendedAgeRangeSchema>;
 
+const pedagogicalActivityTypeSchema = z
+  .string()
+  .min(1)
+  .max(100)
+  .regex(/^[A-Z0-9][A-Z0-9_.:-]*$/, 'Activity type must be a namespaced uppercase code');
+
+const preferredDurationMinutesSchema = z
+  .object({
+    min: z.number().int().positive().max(1440),
+    max: z.number().int().positive().max(1440),
+  })
+  .refine(({ min, max }) => min <= max, {
+    message: 'preferredDurationMinutes.min must be less than or equal to max',
+    path: ['max'],
+  });
+
+const assessmentTypeWeightsSchema = z
+  .record(z.string().min(1).max(100), z.number().min(0).max(1))
+  .refine((weights) => {
+    const values = Object.values(weights);
+    return values.length === 0 || Math.abs(values.reduce((sum, weight) => sum + weight, 0) - 1) <= 0.001;
+  }, 'assessmentTypeWeights must sum to 1 when provided');
+
 export const pedagogicalModelMetadataSchema = z.object({
   subjects: z.array(templateSubjectDefinitionSchema).default([]),
   approach: pedagogicalModelApproachSchema.optional(),
   recommendedAgeRange: recommendedAgeRangeSchema.optional(),
   educationalStages: z.array(universalEducationalStageSchema).min(1).optional(),
+  principles: z.array(z.string().min(1).max(500)).max(50).default([]),
+  preferredActivityTypes: z.array(pedagogicalActivityTypeSchema).max(50).default([]),
+  assessmentTypeWeights: assessmentTypeWeightsSchema.default({}),
+  preferredDurationMinutes: preferredDurationMinutesSchema.optional(),
+  recommendationHints: z.array(z.string().min(1).max(500)).max(50).default([]),
 });
 
 export type PedagogicalModelMetadata = z.infer<typeof pedagogicalModelMetadataSchema>;
@@ -109,6 +137,11 @@ export const pedagogicalModelCatalogEntrySchema = z.object({
   approach: pedagogicalModelApproachSchema.optional(),
   recommendedAgeRange: recommendedAgeRangeSchema.optional(),
   educationalStages: z.array(universalEducationalStageSchema).min(1).optional(),
+  principles: z.array(z.string().min(1).max(500)).optional(),
+  preferredActivityTypes: z.array(pedagogicalActivityTypeSchema).optional(),
+  assessmentTypeWeights: assessmentTypeWeightsSchema.optional(),
+  preferredDurationMinutes: preferredDurationMinutesSchema.optional(),
+  recommendationHints: z.array(z.string().min(1).max(500)).optional(),
 });
 
 export type PedagogicalModelCatalogEntryDto = z.infer<typeof pedagogicalModelCatalogEntrySchema>;

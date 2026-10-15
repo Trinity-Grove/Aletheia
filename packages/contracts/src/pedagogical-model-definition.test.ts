@@ -65,6 +65,35 @@ describe('Pedagogical Model Definition Contracts', () => {
     expect(parsed.metadata.subjects?.[0]?.name).toBe('Vida Prática');
   });
 
+  it('validates declarative pedagogical preferences', () => {
+    const parsed = createPedagogicalModelDefinitionSchema.parse({
+      code: 'MONTESSORI',
+      name: 'Montessori',
+      metadata: {
+        principles: ['Autonomia com ordem e propósito'],
+        preferredActivityTypes: ['PRACTICAL_LIFE', 'PROJECT.BASED'],
+        assessmentTypeWeights: { OBSERVATION: 0.6, PORTFOLIO: 0.4 },
+        preferredDurationMinutes: { min: 20, max: 45 },
+        recommendationHints: ['Priorizar atividades concretas antes de abstrações'],
+      },
+    });
+
+    expect(parsed.metadata.preferredActivityTypes).toContain('PRACTICAL_LIFE');
+    expect(parsed.metadata.preferredDurationMinutes).toEqual({ min: 20, max: 45 });
+  });
+
+  it('rejects invalid pedagogical preference values', () => {
+    expect(() => createPedagogicalModelDefinitionSchema.parse({
+      code: 'MONTESSORI', name: 'Montessori', metadata: { preferredDurationMinutes: { min: 45, max: 20 } },
+    })).toThrow();
+    expect(() => createPedagogicalModelDefinitionSchema.parse({
+      code: 'MONTESSORI', name: 'Montessori', metadata: { assessmentTypeWeights: { OBSERVATION: 0.8 } },
+    })).toThrow();
+    expect(() => createPedagogicalModelDefinitionSchema.parse({
+      code: 'MONTESSORI', name: 'Montessori', metadata: { preferredActivityTypes: ['free form'] },
+    })).toThrow();
+  });
+
   it('rejects a lowercase framework code', () => {
     expect(() =>
       createPedagogicalModelDefinitionSchema.parse({ code: 'montessori', name: 'Montessori' }),
@@ -101,6 +130,20 @@ describe('Pedagogical Model Catalog Entry Contract', () => {
 
     expect(parsed.recommendedAgeRange).toEqual({ min: 6, max: 18 });
     expect(parsed.educationalStages).toContain('PRIMARY');
+  });
+
+  it('validates declarative preferences in a catalog entry', () => {
+    const parsed = pedagogicalModelCatalogEntrySchema.parse({
+      code: 'MONTESSORI',
+      name: 'Montessori',
+      principles: ['Autonomia'],
+      preferredActivityTypes: ['PRACTICAL_LIFE'],
+      assessmentTypeWeights: { OBSERVATION: 1 },
+      preferredDurationMinutes: { min: 20, max: 45 },
+      recommendationHints: ['Do concreto ao abstrato'],
+    });
+
+    expect(parsed.principles).toEqual(['Autonomia']);
   });
 
   it('rejects an inverted or out-of-range recommended age range', () => {
