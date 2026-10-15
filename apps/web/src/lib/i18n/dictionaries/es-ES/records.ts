@@ -1,7 +1,7 @@
 export const records = {
   page: {
-    title: 'Diario de Aprendizaje y Dominio',
-    subtitle: 'Siga la evolución individual, registre narraciones, vivencias espontáneas y el florecimiento del carácter.',
+    title: 'Diario de aprendizaje',
+    subtitle: 'Registre lo estudiado, lo que se ha creado y cómo progresa cada estudiante.',
     loading: 'Cargando diario de aprendizaje...',
   },
   tabs: {
@@ -187,8 +187,8 @@ export const records = {
     fileUrlPlaceholder: 'https://...',
   },
   portfolio: {
-    title: 'Galería de Evidencias y Portafolio Vivo',
-    subtitle: 'Guarde producciones autorales, cuadernos, dibujos de la naturaleza, audios de narración y conquistas.',
+    title: 'Portafolio de trabajos',
+    subtitle: 'Guarde trabajos, fotos, audios y otros momentos importantes del aprendizaje.',
     worksCount: '{count} obra(s)',
     highlightsCount: '{count} destacado(s)',
     addEvidenceBtn: '+ Agregar Evidencia',
@@ -205,7 +205,17 @@ export const records = {
     openMedia: 'Abrir Archivo ↗',
     editBtn: 'Editar',
     deleteBtn: 'Eliminar',
-    confirmDelete: '¿Eliminar esta evidencia del portafolio? Esta acción no se puede deshacer.',
+    confirmDelete: '¿Eliminar este trabajo del portafolio? Esta acción no se puede deshacer.',
+    messages: {
+      authRequired: 'La familia no está autenticada.',
+      updateError: 'No se pudo actualizar el trabajo.',
+      createError: 'No se pudo añadir el trabajo.',
+      uploadPrepareError: 'No se pudo preparar la subida del archivo.',
+      uploadTransferError: 'No se pudo subir el archivo.',
+      uploadConfirmError: 'No se pudo confirmar la subida del archivo.',
+      deleteSuccess: 'Trabajo eliminado.',
+      deleteError: 'No se pudo eliminar el trabajo.',
+    },
   },
   portfolioModal: {
     editTitle: 'Editar Evidencia de Portafolio',

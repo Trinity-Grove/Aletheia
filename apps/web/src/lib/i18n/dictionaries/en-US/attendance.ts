@@ -1,7 +1,7 @@
 export const attendance = {
   page: {
-    title: 'Attendance & Legal Compliance Tracking',
-    subtitle: 'Track school days and annual hours for learners without comparisons between siblings.',
+    title: 'Attendance and study hours',
+    subtitle: 'Track study days and each learner’s hours throughout the year.',
     loading: 'Loading attendance tracking...',
     errorLog: 'Failed to log attendance',
     errorBulkLog: 'Failed to log collective attendance',

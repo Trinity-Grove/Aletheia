@@ -1,7 +1,7 @@
 export const legalGuide = {
   header: {
-    title: 'Legal Guide & First Steps',
-    subtitle: "Essential legal guidance, pedagogical assurance, and a practical roadmap for your family's first 30 days in Aletheia.",
+    title: 'Legal guide and getting started',
+    subtitle: "Understand important records and organize your family's first days in Aletheia.",
     jurisdictionBadge: 'Active Jurisdiction: {name}',
     confidenceLabel: 'Confidence Level: {level}',
   },

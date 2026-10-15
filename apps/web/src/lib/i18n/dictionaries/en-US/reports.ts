@@ -1,13 +1,13 @@
 export const reports = {
   pages: {
     portfolio: {
-      title: 'Living Portfolio of Evidence',
-      description: 'Living exhibition of artwork, recorded narrations, nature journals, and project reports.',
+      title: 'Work portfolio',
+      description: 'See the work, records, and projects that show learning over time.',
       loading: 'Loading portfolio...',
     },
     reports: {
-      title: 'Official Document & Transcript Generator',
-      description: 'Issue official academic transcripts with flexible grading conversion, attendance summaries, and compliance reports.',
+      title: 'Reports and academic records',
+      description: 'Create academic records, attendance summaries, and family learning reports.',
       loading: 'Loading official reports...',
     },
   },

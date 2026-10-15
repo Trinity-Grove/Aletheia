@@ -1,7 +1,7 @@
 export const attendance = {
   page: {
-    title: 'Controle de Frequência & Conformidade Legal',
-    subtitle: 'Acompanhe os dias letivos e carga horária anual dos educandos sem comparações entre irmãos.',
+    title: 'Frequência e horas de estudo',
+    subtitle: 'Acompanhe os dias estudados e as horas de cada educando ao longo do ano.',
     loading: 'Carregando controle de frequência...',
     errorLog: 'Falha ao registrar frequência',
     errorBulkLog: 'Falha ao registrar frequência coletiva',

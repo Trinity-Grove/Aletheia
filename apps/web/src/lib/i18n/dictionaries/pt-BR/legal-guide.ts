@@ -1,7 +1,7 @@
 export const legalGuide = {
   header: {
-    title: 'Amparo Legal & Primeiros Passos',
-    subtitle: 'Orientações jurídicas essenciais, segurança pedagógica e o roteiro prático para os primeiros 30 dias da sua família no Aletheia.',
+    title: 'Guia legal e primeiros passos',
+    subtitle: 'Entenda os registros importantes e organize os primeiros dias da sua família no Aletheia.',
     jurisdictionBadge: 'Jurisdição Ativa: {name}',
     confidenceLabel: 'Nível de Certeza: {level}',
   },

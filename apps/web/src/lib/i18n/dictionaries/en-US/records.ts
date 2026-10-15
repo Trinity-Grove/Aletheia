@@ -1,7 +1,7 @@
 export const records = {
   page: {
-    title: 'Learning Journal & Mastery',
-    subtitle: 'Follow individual growth, record narrations, spontaneous experiences, and character development.',
+    title: 'Learning journal',
+    subtitle: 'Record what was studied, what was made, and how each learner is progressing.',
     loading: 'Loading learning journal...',
   },
   tabs: {
@@ -187,8 +187,8 @@ export const records = {
     fileUrlPlaceholder: 'https://...',
   },
   portfolio: {
-    title: 'Living Portfolio & Evidence Gallery',
-    subtitle: 'Keep original works, notebooks, nature drawings, narration audio, and achievements.',
+    title: 'Work portfolio',
+    subtitle: 'Keep work, photos, audio, and other meaningful parts of the learning journey.',
     worksCount: '{count} work(s)',
     highlightsCount: '{count} highlight(s)',
     addEvidenceBtn: '+ Add Evidence',
@@ -205,7 +205,17 @@ export const records = {
     openMedia: 'Open Media ↗',
     editBtn: 'Edit',
     deleteBtn: 'Delete',
-    confirmDelete: 'Delete this evidence from the portfolio? This action cannot be undone.',
+    confirmDelete: 'Delete this work from the portfolio? This action cannot be undone.',
+    messages: {
+      authRequired: 'Family is not authenticated.',
+      updateError: 'The work could not be updated.',
+      createError: 'The work could not be added.',
+      uploadPrepareError: 'The file upload could not be prepared.',
+      uploadTransferError: 'The file could not be uploaded.',
+      uploadConfirmError: 'The file upload could not be confirmed.',
+      deleteSuccess: 'Work deleted.',
+      deleteError: 'The work could not be deleted.',
+    },
   },
   portfolioModal: {
     editTitle: 'Edit Portfolio Evidence',

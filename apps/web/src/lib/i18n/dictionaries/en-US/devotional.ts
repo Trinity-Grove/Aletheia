@@ -1,7 +1,7 @@
 export const devotional = {
   page: {
-    title: 'Family Devotional & Worship',
-    subtitle: 'Cultivate faith as a family through Scripture reading, reflection, praise, and daily prayer.',
+    title: 'Family devotional',
+    subtitle: 'Read Scripture, reflect, pray, and record this time together.',
     errors: {
       loadDevotional: 'Could not load devotional for the day.',
       loadDevotionalConnection: 'Could not load devotional for the day. Please check your connection.',
