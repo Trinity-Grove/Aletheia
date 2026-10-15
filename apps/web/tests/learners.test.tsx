@@ -69,6 +69,17 @@ describe('Learner Components', () => {
       expect(screen.getByTestId('learner-stage-chip')).toBeInTheDocument();
       expect(screen.getByTestId('learner-age-pill')).toBeInTheDocument();
 
+      const actionsContainer = screen.getByTestId(`learner-card-actions-${mockLearner.id}`);
+      expect(actionsContainer).toHaveStyle({
+        display: 'flex',
+        flexWrap: 'wrap',
+      });
+
+      const medalsBtn = screen.getByTestId(`achievements-btn-${mockLearner.id}`);
+      expect(medalsBtn).toHaveStyle({
+        marginRight: 'auto',
+      });
+
       const editBtn = screen.getByRole('button', { name: /editar/i });
       fireEvent.click(editBtn);
       expect(onEdit).toHaveBeenCalledWith(mockLearner);

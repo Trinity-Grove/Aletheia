@@ -185,13 +185,16 @@ export function LearnerCard({ learner, onEdit, onToggleArchive, onManageAccess, 
 
       {/* Action Buttons wrapped in RBAC <Can> */}
       <div
+        data-testid={`learner-card-actions-${learner.id}`}
         style={{
           display: 'flex',
+          flexWrap: 'wrap',
           gap: '0.5rem',
           marginTop: 'auto',
           paddingTop: '0.75rem',
           borderTop: '1px solid var(--border-light)',
           justifyContent: 'flex-end',
+          alignItems: 'center',
         }}
       >
         <Can action="manage_learners">
@@ -199,6 +202,7 @@ export function LearnerCard({ learner, onEdit, onToggleArchive, onManageAccess, 
             variant="secondary"
             size="sm"
             data-testid={`achievements-btn-${learner.id}`}
+            style={{ marginRight: 'auto' }}
             onClick={() => setIsAchievementsOpen(true)}
           >
             {t('learners.card.medalsBtn')}

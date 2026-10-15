@@ -167,17 +167,45 @@ export function ComplianceEvaluationPanel({
 
   if (!learnerId) {
     return (
-      <Card data-testid="compliance-panel-no-learner" className="p-6 text-center text-slate-500">
-        <AletheiaIcon name="book-open" size={32} className="mx-auto mb-2 text-slate-400" />
-        <p className="text-sm font-medium">{t('compliance.panel.selectLearner')}</p>
+      <Card
+        data-testid="compliance-panel-no-learner"
+        style={{
+          padding: '2.5rem 1.5rem',
+          textAlign: 'center',
+          color: 'var(--text-secondary)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.75rem',
+        }}
+      >
+        <AletheiaIcon name="book-open" size={32} style={{ color: 'var(--sage)' }} />
+        <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
+          {t('compliance.panel.selectLearner')}
+        </p>
       </Card>
     );
   }
 
   if (loading && !evaluation) {
     return (
-      <Card className="p-6 text-center text-slate-500">
-        <p className="text-sm animate-pulse">{t('compliance.panel.evaluating')}</p>
+      <Card
+        data-testid="compliance-panel-loading"
+        style={{
+          padding: '2.5rem 1.5rem',
+          textAlign: 'center',
+          color: 'var(--text-secondary)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.75rem',
+        }}
+      >
+        <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
+          {t('compliance.panel.evaluating')}
+        </p>
       </Card>
     );
   }

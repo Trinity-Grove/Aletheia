@@ -115,7 +115,12 @@ describe('ComplianceEvaluationPanel', () => {
   it('renders select prompt when learnerId is not provided', () => {
     render(<ComplianceEvaluationPanel familyId={familyId} learnerId={null} />);
 
-    expect(screen.getByTestId('compliance-panel-no-learner')).toBeDefined();
+    const noLearnerPanel = screen.getByTestId('compliance-panel-no-learner');
+    expect(noLearnerPanel).toBeDefined();
+    expect(noLearnerPanel).toHaveStyle({
+      padding: '2.5rem 1.5rem',
+      textAlign: 'center',
+    });
     expect(screen.getByText(/Selecione um educando para avaliar a conformidade/i)).toBeDefined();
   });
 
