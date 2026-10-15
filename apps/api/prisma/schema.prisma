@@ -343,6 +343,7 @@ model Family {
   aiFamilyUsages         AiFamilyUsage[]
   badgeAwards            LearnerBadgeAward[]
   learningPathSelections FamilyLearningPathSelection[]
+  projectSelections      FamilyProjectSelection[]
 
   @@map("families")
 }
@@ -1580,12 +1581,30 @@ model ProjectDefinition {
   milestones          ProjectDefinitionMilestone[]
   curriculumLinks     CurriculumDefinitionProject[]
   evidenceSubmissions EvidenceSubmission[]
+  familySelections    FamilyProjectSelection[]
 
   @@unique([code, version])
   @@index([code])
   @@index([status])
   @@index([rubricDefinitionId])
   @@map("project_definitions")
+}
+
+model FamilyProjectSelection {
+  id        String   @id @default(uuid()) @db.Uuid
+  familyId  String   @map("family_id") @db.Uuid
+  projectId String   @map("project_id") @db.Uuid
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  family  Family           @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  project ProjectDefinition @relation(fields: [projectId], references: [id], onDelete: Restrict)
+
+  @@unique([familyId, projectId])
+  @@index([familyId])
+  @@index([projectId])
+  @@map("family_project_selections")
 }
 
 model ProjectDefinitionDomain {

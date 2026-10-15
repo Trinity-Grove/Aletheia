@@ -14,6 +14,7 @@ export * from './curriculum-path-skill-definitions.js';
 export * from './curriculum-definition.js';
 export * from './activity-definition.js';
 export * from './project-definition.js';
+export * from './family-project-selection.js';
 export * from './definition-tag.js';
 export * from './theological-taxonomy.js';
 export * from './rubric-definition.js';
