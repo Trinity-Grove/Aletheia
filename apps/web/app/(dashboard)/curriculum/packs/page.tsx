@@ -26,6 +26,8 @@ export default function CurriculumPacksPage() {
             : null);
 
         if (!effectiveFamilyId) {
+          setFamilyId(null);
+          setLearners([]);
           setLoading(false);
           return;
         }
@@ -56,12 +58,8 @@ export default function CurriculumPacksPage() {
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
             {t('curriculum.pages.packs.loading')}
           </div>
-        ) : familyId ? (
-          <CurriculumPacksGallery familyId={familyId} />
         ) : (
-          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-            {t('curriculum.pages.packs.noFamily')}
-          </div>
+          <CurriculumPacksGallery familyId={familyId} />
         )}
       </div>
     </ProductShell>

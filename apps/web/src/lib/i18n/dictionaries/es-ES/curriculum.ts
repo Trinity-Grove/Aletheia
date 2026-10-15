@@ -81,6 +81,8 @@ export const curriculum: Dictionary['curriculum'] = {
     publishSuccessMsg: 'Paquete publicado como borrador. Siga su estado en "Mis Paquetes Comunitarios".',
     publishConflictMsg: 'Ya existe un paquete con ese código. Elija otro.',
     publishErrorMsg: 'Error al publicar el paquete. Intente nuevamente más tarde.',
+    familyContext: 'Contexto de la familia: está eligiendo materiales para el currículo de la familia activa.',
+    communityContext: 'Espacio comunitario: explore materiales y gestione sus propios borradores. Seleccione una familia para añadir un material a su currículo.',
     tabCatalog: 'Catálogo',
     tabMyPacks: 'Mis Paquetes Comunitarios',
     myPacksEmpty: 'Aún no ha publicado ningún paquete en la comunidad.',

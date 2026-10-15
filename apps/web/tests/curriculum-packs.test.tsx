@@ -99,6 +99,104 @@ describe('CurriculumPacksGallery (Task 7 & 8: Plugins / Pacotes Curriculares)', 
     expect(screen.getByTestId('install-pack-btn-pack-2')).toBeInTheDocument();
   });
 
+  it('renders the public community gallery without a family context', async () => {
+    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockPublishedPacks,
+    } as Response);
+
+    render(<CurriculumPacksGallery />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Trivium Clássico & Artes Liberais')).toBeInTheDocument();
+    });
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/v1/curriculum-packs',
+      expect.objectContaining({ credentials: 'include' })
+    );
+    expect(fetchSpy.mock.calls.some(([url]) => String(url).includes('/families/'))).toBe(false);
+    expect(screen.getByTestId('community-context-banner')).toBeInTheDocument();
+    expect(screen.queryByTestId('install-pack-btn-pack-2')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('manage-pack-btn-pack-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('publish-to-community-btn-pack-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('report-pack-btn-pack-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('export-pack-btn-pack-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('open-import-pack-modal-btn')).not.toBeInTheDocument();
+
+    fetchSpy.mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes('/my-packs')) {
+        return { ok: true, json: async () => [] } as Response;
+      }
+      if (url.includes('/author-profile')) {
+        return {
+          ok: true,
+          json: async () => ({
+            userId: 'user-1',
+            trustScore: 45,
+            tier: 'NOVICE',
+            approvedPacksCount: 0,
+            rejectedPacksCount: 0,
+            upheldReportsCount: 0,
+            lastEvaluatedAt: '2026-09-01T00:00:00.000Z',
+            createdAt: '2026-09-01T00:00:00.000Z',
+            updatedAt: '2026-09-01T00:00:00.000Z',
+          }),
+        } as Response;
+      }
+      return { ok: false, status: 404 } as Response;
+    });
+
+    fireEvent.click(screen.getByTestId('curriculum-view-tab-my-packs'));
+    await waitFor(() => {
+      expect(screen.getByTestId('my-authored-packs-panel')).toBeInTheDocument();
+      expect(screen.getByTestId('my-authored-packs-empty')).toBeInTheDocument();
+    });
+    expect(fetchSpy).toHaveBeenCalledWith('/api/v1/curriculum-packs/my-packs', { credentials: 'include' });
+  });
+
+  it('uses only the selected family when the family context changes', async () => {
+    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
+      const url = String(input);
+      if (url === '/api/v1/families/fam-1/curriculum-packs/available') {
+        return { ok: true, json: async () => mockPublishedPacks } as Response;
+      }
+      if (url === '/api/v1/families/fam-1/curriculum-packs') {
+        return { ok: true, json: async () => mockInstalledPacks } as Response;
+      }
+      if (url === '/api/v1/families/fam-2/curriculum-packs/available') {
+        return { ok: true, json: async () => [mockPublishedPacks[1]] } as Response;
+      }
+      if (url === '/api/v1/families/fam-2/curriculum-packs') {
+        return { ok: true, json: async () => [] } as Response;
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    });
+
+    const { rerender } = render(<CurriculumPacksGallery familyId="fam-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('installed-badge-pack-1')).toBeInTheDocument();
+    });
+
+    rerender(<CurriculumPacksGallery familyId="fam-2" />);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('installed-badge-pack-1')).not.toBeInTheDocument();
+      expect(screen.getByTestId('install-pack-btn-pack-2')).toBeInTheDocument();
+    });
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/v1/families/fam-2/curriculum-packs/available',
+      expect.objectContaining({ credentials: 'include' })
+    );
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/v1/families/fam-2/curriculum-packs',
+      expect.objectContaining({ credentials: 'include' })
+    );
+  });
+
   it('allows guardian to install an available curriculum pack into family', async () => {
     const fetchSpy = vi.spyOn(global, 'fetch')
       .mockResolvedValueOnce({

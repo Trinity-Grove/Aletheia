@@ -24,7 +24,7 @@ import { PackAuthorSupportModal } from './pack-author-support-modal';
 import { useLocale } from '../../lib/i18n/locale-context';
 
 interface CurriculumPacksGalleryProps {
-  familyId: string;
+  familyId?: string | null;
 }
 
 export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps) {
@@ -90,25 +90,27 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
   };
 
   const loadData = async () => {
-    if (!familyId) return;
     try {
       setLoading(true);
       setError(null);
 
-      // Load catalog packs and family installed packs in parallel
-      const [catRes, instRes] = await Promise.all([
-        fetch(`/api/v1/families/${familyId}/curriculum-packs/available`, { credentials: 'include' }),
-        fetch(`/api/v1/families/${familyId}/curriculum-packs`, { credentials: 'include' }),
-      ]);
+      const [catRes, instRes] = familyId
+        ? await Promise.all([
+            fetch(`/api/v1/families/${familyId}/curriculum-packs/available`, { credentials: 'include' }),
+            fetch(`/api/v1/families/${familyId}/curriculum-packs`, { credentials: 'include' }),
+          ])
+        : [await fetch('/api/v1/curriculum-packs', { credentials: 'include' }), null];
 
       if (catRes.ok) {
         const catData = await catRes.json();
         setCatalogPacks(Array.isArray(catData) ? catData : []);
       }
 
-      if (instRes.ok) {
+      if (instRes?.ok) {
         const instData = await instRes.json();
         setInstalledPacks(Array.isArray(instData) ? instData : []);
+      } else if (!familyId) {
+        setInstalledPacks([]);
       }
     } catch {
       setError(t('curriculum.packs.gallery.loadError'));
@@ -122,6 +124,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
   }, [familyId]);
 
   const handleInstall = async (pack: CurriculumPackResponseDto) => {
+    if (!familyId) return;
     try {
       setInstallingId(pack.id);
       setError(null);
@@ -148,6 +151,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
   };
 
   const handleCheckUpdate = async (pack: CurriculumPackResponseDto, installed: FamilyCurriculumPackResponseDto) => {
+    if (!familyId) return;
     try {
       setCheckingUpdatePackId(pack.id);
       setError(null);
@@ -167,7 +171,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
   };
 
   const handleApplyUpdate = async () => {
-    if (!diffModalData) return;
+    if (!diffModalData || !familyId) return;
     try {
       setIsApplyingUpdate(true);
       setError(null);
@@ -253,7 +257,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <Button
+            {familyId && <Button
               variant="secondary"
               size="sm"
               data-testid="open-import-pack-modal-btn"
@@ -261,7 +265,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
               style={{ fontWeight: 600 }}
             >
                📥 {t('curriculum.packs.gallery.import')}
-            </Button>
+            </Button>}
             <a
               href="/curriculum"
               style={{
@@ -279,6 +283,20 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
           </div>
         </div>
       </Card>
+
+      <div
+        data-testid="community-context-banner"
+        style={{
+          padding: '0.875rem 1rem',
+          borderRadius: 'var(--radius-md)',
+          backgroundColor: familyId ? 'var(--sage-soft)' : 'var(--bg-canvas)',
+          border: '1px solid var(--border-light)',
+          color: 'var(--text-secondary)',
+          fontSize: '0.875rem',
+        }}
+      >
+        {familyId ? t('curriculum.community.familyContext') : t('curriculum.community.communityContext')}
+      </div>
 
       {successMsg && <Alert variant="success">{successMsg}</Alert>}
       {error && <Alert variant="error">{error}</Alert>}
@@ -548,7 +566,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
                 </div>
 
                 <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-light)', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-                  {isInstalled ? (
+                  {familyId && (isInstalled ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
                       <div
                         data-testid={`installed-badge-${pack.id}`}
@@ -634,7 +652,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
                     >
                        {t('curriculum.packs.gallery.install')}
                     </Button>
-                  )}
+                  ))}
 
                   {pricingModel === 'VOLUNTARY_SUPPORT' && (
                     <Button
@@ -665,7 +683,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
                      {t('curriculum.packs.gallery.viewDetails')} 🔍
                   </Button>
 
-                  <Button
+                  {familyId && <Button
                     variant="secondary"
                     size="sm"
                     data-testid={`export-pack-btn-${pack.id}`}
@@ -675,9 +693,9 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
                     style={{ width: '100%', fontSize: '0.8125rem', fontWeight: 500 }}
                   >
                      {t('curriculum.packs.gallery.export')} 📤
-                  </Button>
+                  </Button>}
 
-                  <Button
+                  {familyId && <Button
                     variant="secondary"
                     size="sm"
                     data-testid={`report-pack-btn-${pack.id}`}
@@ -685,7 +703,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
                     style={{ width: '100%', fontSize: '0.8125rem', fontWeight: 500 }}
                   >
                     🚩 {t('curriculum.moderation.reportBtnShort')}
-                  </Button>
+                  </Button>}
                 </div>
               </Card>
             );
@@ -701,26 +719,32 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
         pack={selectedDetailPack}
         isInstalled={selectedDetailPack ? installedPackMap.has(selectedDetailPack.id) : false}
         onClose={() => setSelectedDetailPack(null)}
-        onInstall={(pack) => {
-          setSelectedDetailPack(null);
-          void handleInstall(pack);
-        }}
+        {...(familyId
+          ? {
+              onInstall: (pack: CurriculumPackResponseDto) => {
+                setSelectedDetailPack(null);
+                void handleInstall(pack);
+              },
+            }
+          : {})}
       />
 
       {/* Modal de Gestão de Mídias e Detalhes do Pacote */}
-      <FamilyCurriculumPackModal
-        isOpen={Boolean(managingPack)}
-        onClose={() => setManagingPack(null)}
-        familyId={familyId}
-        installedPack={managingPack?.installed ?? null}
-        catalogPack={managingPack?.catalog ?? null}
-        onPackUpdated={(updated) => {
-          setInstalledPacks((prev) =>
-            prev.map((p) => (p.id === updated.id ? updated : p))
-          );
-          setManagingPack((prev) => (prev ? { ...prev, installed: updated } : null));
-        }}
-      />
+      {managingPack && familyId && (
+        <FamilyCurriculumPackModal
+          isOpen
+          onClose={() => setManagingPack(null)}
+          familyId={familyId}
+          installedPack={managingPack.installed}
+          catalogPack={managingPack.catalog}
+          onPackUpdated={(updated) => {
+            setInstalledPacks((prev) =>
+              prev.map((p) => (p.id === updated.id ? updated : p))
+            );
+            setManagingPack((prev) => (prev ? { ...prev, installed: updated } : null));
+          }}
+        />
+      )}
 
       {/* Modal de Importação de Pacote Curricular */}
       <CurriculumPackImportModal
@@ -730,7 +754,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
       />
 
       {/* Modal de Denúncia do Pacote Curricular */}
-      {reportingPack && (
+      {reportingPack && familyId && (
         <PackReportModal
           isOpen={Boolean(reportingPack)}
           packId={reportingPack.id}
@@ -741,7 +765,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
       )}
 
       {/* Modal de Publicação do Pacote na Comunidade */}
-      {publishingPack && (
+      {publishingPack && familyId && (
         <PublishToCommunityModal
           isOpen={Boolean(publishingPack)}
           familyId={familyId}

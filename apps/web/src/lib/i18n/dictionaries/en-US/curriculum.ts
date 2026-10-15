@@ -81,6 +81,8 @@ export const curriculum: Dictionary['curriculum'] = {
     publishSuccessMsg: 'Pack published as a draft. Track it under "My Community Packs".',
     publishConflictMsg: 'A pack with that code already exists. Choose another.',
     publishErrorMsg: 'Failed to publish the pack. Please try again later.',
+    familyContext: 'Family context: you are choosing materials for the active family curriculum.',
+    communityContext: 'Community space: explore materials and manage your own drafts. Select a family to add a material to its curriculum.',
     tabCatalog: 'Catalog',
     tabMyPacks: 'My Community Packs',
     myPacksEmpty: 'You have not published any community packs yet.',
