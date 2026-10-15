@@ -47,6 +47,7 @@ import type {
   EvidenceTypeDefinitionResponseDto,
   CreateCurriculumDefinitionOutput,
   CurriculumDefinitionResponseDto,
+  UpdateCurriculumDefinitionOutput,
   AddCurriculumDefinitionDomainOutput,
   AddCurriculumDefinitionPathOutput,
   CurriculumDefinitionDomainResponseDto,
@@ -383,6 +384,28 @@ export class DefinitionsService {
   async listCurriculumDefinitions(): Promise<CurriculumDefinitionResponseDto[]> {
     const rows = await this.repository.listCurriculumDefinitions();
     return rows.map((row) => this.toCurriculumDefinitionDto(row));
+  }
+
+  async updateCurriculumDefinitionDraft(
+    id: string,
+    dto: UpdateCurriculumDefinitionOutput,
+    actorUserId: string,
+  ): Promise<CurriculumDefinitionResponseDto> {
+    const existing = await this.repository.findCurriculumDefinitionById(id);
+    if (!existing) throw new NotFoundException('Curriculum definition not found.');
+    if (existing.status !== 'DRAFT') {
+      throw new BadRequestException('Only DRAFT curriculum definitions can be edited.');
+    }
+
+    const row = await this.withWriteErrorMapping(() => this.repository.updateCurriculumDefinitionDraft(id, dto));
+    await this.operationsService.logUpdate(
+      'CurriculumDefinition',
+      row.code,
+      row.version,
+      actorUserId,
+      Object.keys(dto).sort(),
+    );
+    return this.toCurriculumDefinitionDto(row);
   }
 
   async transitionCurriculumDefinitionStatus(

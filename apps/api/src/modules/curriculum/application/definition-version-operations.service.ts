@@ -357,6 +357,27 @@ export class DefinitionVersionOperationsService {
     });
   }
 
+  async logUpdate(
+    entityType: string,
+    code: string,
+    version: number,
+    performedByUserId: string,
+    changedFields: string[],
+  ): Promise<void> {
+    await this.prisma.definitionVersionOperationLog.create({
+      data: {
+        operationType: 'UPDATE',
+        definitionCode: code,
+        fromVersion: version,
+        toVersion: version,
+        affectedEntityType: entityType,
+        affectedEntityIds: [],
+        performedByUserId,
+        metadata: { changedFields },
+      },
+    });
+  }
+
   async listOperationLogs(code?: string): Promise<DefinitionVersionOperationLogResponseDto[]> {
     const rows = await this.prisma.definitionVersionOperationLog.findMany({
       ...(code ? { where: { definitionCode: code } } : {}),

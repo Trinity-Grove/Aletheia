@@ -38,6 +38,7 @@ import type {
   CreateRubricCriterionOutput,
   CreateEvidenceTypeDefinitionOutput,
   CreateCurriculumDefinitionOutput,
+  UpdateCurriculumDefinitionOutput,
   AddCurriculumDefinitionDomainOutput,
   AddCurriculumDefinitionPathOutput,
   AddCurriculumDefinitionCompetencyOutput,
@@ -316,6 +317,23 @@ export class DefinitionsRepository {
 
   updateCurriculumDefinitionStatus(id: string, update: DefinitionStatusUpdate): Promise<CurriculumDefinition> {
     return this.prisma.curriculumDefinition.update({ where: { id }, data: update });
+  }
+
+  updateCurriculumDefinitionDraft(
+    id: string,
+    dto: UpdateCurriculumDefinitionOutput,
+  ): Promise<CurriculumDefinition> {
+    return this.prisma.curriculumDefinition.update({
+      where: { id },
+      data: {
+        ...(dto.name !== undefined ? { name: dto.name } : {}),
+        ...(dto.description !== undefined ? { description: dto.description } : {}),
+        ...(dto.pedagogicalModelDefinitionId !== undefined
+          ? { pedagogicalModelDefinitionId: dto.pedagogicalModelDefinitionId }
+          : {}),
+        ...(dto.metadata !== undefined ? { metadata: dto.metadata as Prisma.InputJsonValue } : {}),
+      },
+    });
   }
 
   addCurriculumDefinitionDomain(

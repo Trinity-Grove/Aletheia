@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   createCurriculumDefinitionSchema,
+  updateCurriculumDefinitionSchema,
   addCurriculumDefinitionDomainSchema,
   addCurriculumDefinitionCompetencySchema,
   addCurriculumDefinitionRubricSchema,
@@ -39,6 +40,21 @@ describe('Curriculum Definition Contracts', () => {
     expect(() =>
       createCurriculumDefinitionSchema.parse({ code: 'classical.core', name: 'x' }),
     ).toThrow();
+  });
+
+  it('accepts a non-empty partial draft update', () => {
+    const parsed = updateCurriculumDefinitionSchema.parse({
+      name: 'Updated curriculum',
+      metadata: { audience: 'family' },
+    });
+
+    expect(parsed.name).toBe('Updated curriculum');
+  });
+
+  it('rejects empty and immutable-field updates', () => {
+    expect(() => updateCurriculumDefinitionSchema.parse({})).toThrow();
+    expect(() => updateCurriculumDefinitionSchema.parse({ status: 'PUBLISHED' })).toThrow();
+    expect(() => updateCurriculumDefinitionSchema.parse({ code: 'IMMUTABLE' })).toThrow();
   });
 
   it('validates a domain link with defaults', () => {

@@ -2200,6 +2200,7 @@ enum DefinitionVersionOperationType {
   ROLLBACK
   CREATE
   STATUS_TRANSITION
+  UPDATE
 
   @@map("definition_version_operation_types")
 }

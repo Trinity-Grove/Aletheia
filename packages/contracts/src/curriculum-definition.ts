@@ -35,6 +35,20 @@ export const createCurriculumDefinitionSchema = z.object({
 export type CreateCurriculumDefinitionDto = z.input<typeof createCurriculumDefinitionSchema>;
 export type CreateCurriculumDefinitionOutput = z.output<typeof createCurriculumDefinitionSchema>;
 
+export const updateCurriculumDefinitionSchema = z
+  .object({
+    name: z.string().min(1).max(250),
+    description: z.string().max(2000).nullable(),
+    pedagogicalModelDefinitionId: z.string().uuid().nullable(),
+    metadata: z.record(z.string(), z.unknown()),
+  })
+  .partial()
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, 'At least one field is required to update a curriculum definition.');
+
+export type UpdateCurriculumDefinitionDto = z.input<typeof updateCurriculumDefinitionSchema>;
+export type UpdateCurriculumDefinitionOutput = z.output<typeof updateCurriculumDefinitionSchema>;
+
 export const curriculumDefinitionResponseSchema = z.object({
   id: z.string().uuid(),
   code: z.string(),
