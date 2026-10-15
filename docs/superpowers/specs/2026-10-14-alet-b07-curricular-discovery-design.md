@@ -71,7 +71,22 @@ Criar `CurriculumExploreGallery` como componente independente. Ele será respons
 - exibir loading, erro e resultado da adoção;
 - bloquear a ação enquanto uma adoção estiver em andamento.
 
-A página `/curriculum/explore` carregará família, alunos e ano letivo atual, fornecendo o contexto à galeria. O primeiro aluno será selecionado por padrão quando não houver foco definido. A navegação principal apontará `Currículos & Trilhas` para `/curriculum/explore`; a página manterá um retorno claro para o planejamento em `/curriculum`.
+A página `/curriculum/explore` carregará família, alunos e ano letivo atual, fornecendo o contexto à galeria. O primeiro aluno será selecionado por padrão quando não houver foco definido. A página manterá um retorno claro para o planejamento em `/curriculum` e uma entrada explícita a partir da página de planejamento.
+
+O item existente de navegação principal deve continuar apontando para `/curriculum`, preservando o contrato de `ProductShell` e o acesso direto ao planejamento. `/curriculum` deve oferecer um CTA/aba para `/curriculum/explore`, e a vitrine deve oferecer um link/breadcrumb de retorno para `/curriculum`. Em `/curriculum/explore`, o item de navegação de currículo deve continuar marcado como ativo.
+
+O JSX da galeria deve usar componentes de `@aletheia/ui` e classes BEM/tokens CSS. Utilitários Tailwind não entram nesta superfície.
+
+O contrato mínimo da galeria deve manter callbacks com sintaxe de método:
+
+```ts
+export interface CurriculumExploreGalleryProps {
+  familyId: string;
+  learners: LearnerSummaryDto[];
+  academicYears: AcademicYearResponseDto[];
+  onAdopt?(templateCode: string): Promise<void> | void;
+}
+```
 
 ## Metadados de descoberta
 
@@ -81,7 +96,7 @@ O schema de metadados do modelo pedagógico receberá:
 - `recommendedAgeRange.min` e `.max`: inteiros entre 3 e 25, com `min <= max`;
 - `educationalStages`: lista não vazia de estágios canônicos.
 
-Os modelos existentes devem ser preenchidos com valores editoriais explícitos. A migração deve preservar `metadata.subjects` e apenas mesclar os novos campos. O seed deve produzir os mesmos campos para novas instalações.
+Os modelos existentes devem ser preenchidos com valores editoriais explícitos. A migração deve preservar `metadata.subjects` e apenas mesclar os novos campos. Como versões publicadas são imutáveis no catálogo, não atualizar uma versão publicada in-place: criar uma nova versão publicada com o JSONB mesclado, preservando a versão anterior. O seed deve produzir os mesmos campos para novas instalações.
 
 O filtro por faixa etária usa interseção: uma trilha aparece quando sua recomendação inclui a idade selecionada. Os rótulos e as opções são traduzidos pelo frontend; o backend não envia texto de interface.
 
@@ -113,6 +128,9 @@ O status de um objetivo existente nunca será resetado ao reaplicar uma trilha. 
 - Cada cartão terá título semântico, descrição e botão com nome da trilha.
 - O grid deve colapsar para uma coluna em viewport móvel sem overflow horizontal.
 - O foco deve permanecer utilizável após sucesso ou erro; não depender apenas de cor para indicar estado.
+- O item de navegação de currículo permanece ativo em `/curriculum/explore` e o usuário consegue retornar ao planejamento sem usar o botão voltar do navegador.
+- A galeria não deve introduzir novos requests além do catálogo/contexto já necessários, nem usar JS para breakpoints.
+- Foco, contraste, nomes acessíveis e tamanho mínimo de alvos interativos devem ser validados por smoke automatizado de acessibilidade.
 
 ## Testes de aceitação
 
@@ -131,6 +149,7 @@ O status de um objetivo existente nunca será resetado ao reaplicar uma trilha. 
 - filtro por abordagem restringe os cartões;
 - filtro por faixa etária usa interseção;
 - cartão envia o template, aluno e ano corretos ao endpoint existente;
+- navegação mantém `/curriculum` como destino principal e oferece entrada/retorno para `/curriculum/explore`;
 - sucesso mostra o resumo retornado;
 - erro não perde a seleção;
 - estado móvel não exige largura fixa.

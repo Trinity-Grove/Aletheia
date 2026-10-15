@@ -48,3 +48,11 @@ O desenho está adequado se o agente confirmar que:
 2. A adoção deve usar o aluno e o ano letivo selecionados e continuar no endpoint de aplicação existente.
 3. Reaplicar a mesma trilha, ou outra trilha com o mesmo objetivo, não deve criar um segundo objetivo equivalente.
 4. Abordagem e idade são metadados de descoberta; não substituem a taxonomia educacional canônica.
+
+## Avaliação incorporada
+
+- A navegação principal deve continuar apontando `Currículo` para `/curriculum`, pois esse contrato já é coberto por `product-shell.test.tsx` e preserva o acesso ao planejamento existente. A descoberta será acessível por CTA/aba em `/curriculum`, e `/curriculum/explore` terá retorno claro para o planejamento.
+- O JSX da galeria deve usar `@aletheia/ui` e classes BEM/tokens CSS; não serão introduzidos utilitários Tailwind.
+- A migração de metadados deve preservar `metadata.subjects`. Como `PedagogicalModelDefinition` publicado é versionado e o seeder não altera conteúdo existente, não usar `UPDATE` in-place como estratégia padrão. Criar uma nova versão publicada com `metadata` mesclado, preservando a versão anterior.
+- Props de callbacks da galeria usarão sintaxe de método (`onAdopt?(templateCode: string): Promise<void> | void`) para permanecer compatível com os scanners do repositório.
+- Toda cópia nova será adicionada simultaneamente a `pt-BR`, `en-US` e `es-ES`, seguida de `pnpm audit:i18n`.

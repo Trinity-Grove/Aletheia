@@ -15,9 +15,12 @@
 - Reutilizar a taxonomia educacional universal `EARLY_YEARS`, `PRIMARY`, `LOWER_SECONDARY`, `UPPER_SECONDARY`.
 - Idade é recomendação/calibração; não criar uma nova dimensão curricular por país ou idade.
 - Toda cópia nova do frontend deve usar `useLocale`; adicionar pt-BR, en-US e es-ES no mesmo commit.
+- O JSX de `@aletheia/web` não deve usar utilitários Tailwind; usar componentes de `@aletheia/ui` e classes BEM/tokens CSS.
 - Não criar entidade ou endpoint paralelo de adoção; usar `POST /families/:familyId/curriculum/templates/apply`.
 - Não alterar a semântica de `CurriculumPack` ou o fluxo de `/curriculum/packs`.
 - Validar fronteiras de família para aluno e ano antes de qualquer escrita.
+- Manter `MAIN_NAV_ITEMS` apontando `curriculum` para `/curriculum`; descoberta e planejamento devem ter links explícitos de ida e volta.
+- Props com callbacks novos devem usar sintaxe de método nas interfaces para evitar falsos positivos do scanner i18n.
 
 ## Review Focus
 
@@ -26,6 +29,8 @@
 - Faixa etária sobreposta: deve incluir trilhas cuja recomendação intersecta a idade filtrada — cobrir no teste da galeria.
 - Catálogo com metadados ausentes ou inválidos: deve ser tratado sem derrubar a resposta inteira — cobrir no resolver e no teste de contrato.
 - Família, aluno e ano inconsistentes: deve falhar antes da escrita — preservar/cobrir o teste de isolamento do repositório.
+- Navegação: `/curriculum` permanece o destino principal e `/curriculum/explore` mantém o item de currículo ativo.
+- UI: a galeria não pode criar overflow mobile, strings hardcoded ou classes Tailwind.
 
 ---
 
@@ -94,7 +99,9 @@
 
 - [ ] **Step 4: Add the migration**
 
-  Merge the new JSON keys into existing published rows by `code`, preserving each row’s current `subjects`. The migration must be idempotent for the repository’s migration workflow and must not recreate model rows.
+  Merge the new JSON keys into `metadata` while preserving each row’s current `subjects`. Published catalog rows are versioned and immutable in this repository; do not use an in-place `UPDATE` of the existing published version. Create a new published version per affected `code`, copying the existing columns and using `metadata || jsonb_build_object(...)` (or the equivalent safe JSONB merge). Preserve the previous version and ensure the migration does not create a second duplicate version if the target version already exists.
+
+  The SQL must be reviewed against `schema.prisma` and existing migration conventions before execution. The seed must continue producing the same metadata shape for fresh installations.
 
 - [ ] **Step 5: Update the resolver**
 
@@ -160,7 +167,15 @@
 - Modify: `apps/web/src/components/layout/product-shell.tsx`
 
 **Interfaces:**
-- `CurriculumExploreGalleryProps`: `{ familyId: string; learners: LearnerSummaryDto[]; academicYears: AcademicYearResponseDto[] }`.
+- `CurriculumExploreGalleryProps` deve usar callbacks em sintaxe de método:
+  ```ts
+  export interface CurriculumExploreGalleryProps {
+    familyId: string;
+    learners: LearnerSummaryDto[];
+    academicYears: AcademicYearResponseDto[];
+    onAdopt?(templateCode: string): Promise<void> | void;
+  }
+  ```
 - Uses the catalog GET and existing template-apply POST.
 
 - [ ] **Step 1: Write failing frontend tests**
@@ -179,11 +194,11 @@
 
 - [ ] **Step 4: Implement the gallery**
 
-  Fetch the family-facing catalog, derive filter options from returned metadata, filter by approach and age overlap, render cards, and call the existing apply endpoint with the selected learner/year/template code. Keep all copy localized.
+  Fetch the family-facing catalog, derive filter options from returned metadata, filter by approach and age overlap, render cards with `@aletheia/ui` and BEM/token CSS (no Tailwind), and call the existing apply endpoint with the selected learner/year/template code. Keep all copy localized and avoid JS-driven breakpoints.
 
 - [ ] **Step 5: Add navigation entry points**
 
-  Point the primary curriculum navigation to `/curriculum/explore` with the localized “Currículos & Trilhas” label. Add a clear “Meu planejamento” link back to `/curriculum` and update the existing curriculum header CTA to use the explore route.
+  Keep `MAIN_NAV_ITEMS` item `curriculum` pointing to `/curriculum` so the existing ProductShell contract and planning access remain intact. Add a localized “Currículos & Trilhas” CTA/aba from `/curriculum`, a clear “Meu planejamento” link back from `/curriculum/explore`, and make `/curriculum/explore` keep the curriculum nav item active. Extend `product-shell.test.tsx` for this route-family behavior.
 
 - [ ] **Step 6: Run the focused frontend test**
 
@@ -215,7 +230,7 @@
 
 - [ ] **Step 2: Add translation regression assertions**
 
-  Render the gallery under each supported locale or extend the existing locale test to ensure the route does not fall back to a missing key.
+  Render the gallery under `pt-BR`, `en-US` and `es-ES`, or extend the existing locale test to ensure the route does not fall back to a missing key. Add every key to all three dictionaries in the same change.
 
 - [ ] **Step 3: Run focused frontend tests**
 
@@ -223,7 +238,13 @@
 
   Expected: PASS.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 4: Run the i18n audit**
+
+  Run: `pnpm audit:i18n`
+
+  Expected: 100% coverage with no new hardcoded user-visible strings.
+
+- [ ] **Step 5: Commit**
 
   `git add apps/web/src/lib/i18n/dictionaries apps/web/tests && git commit -m "feat(web): localize curriculum discovery"`
 
@@ -244,6 +265,10 @@
 
   Expected: exit code 0 with no failed tests.
 
+  Also run: `pnpm --filter @aletheia/web test -- product-shell.test.tsx curriculum-explore.test.tsx`
+
+  Expected: `/curriculum` remains the primary navigation href and `/curriculum/explore` marks the curriculum item active.
+
 - [ ] **Step 3: Run repository quality gates**
 
   Run: `pnpm --workspace-concurrency=1 lint`
@@ -251,6 +276,14 @@
   Run: `pnpm --workspace-concurrency=1 typecheck`
 
   Expected: all packages pass.
+
+  Run: `pnpm audit:i18n`
+
+  Expected: 100% coverage with no hardcoded strings introduced.
+
+  Run: `pnpm check:boundaries`
+
+  Expected: no module-boundary regressions.
 
 - [ ] **Step 4: Review acceptance criteria manually**
 
@@ -266,4 +299,7 @@
 - [x] Type consistency: the catalog DTO fields and apply response are named once and reused by the API/frontend tasks.
 - [x] Scope: no new marketplace, pack rewrite or separate trail entity.
 - [x] Review focus: all five likely failure modes have explicit tests in the owning task.
+- [x] Navigation: `/curriculum` remains the primary planning route; discovery is linked without breaking existing ProductShell tests.
+- [x] Migration safety: published pedagogical model versions are not mutated in place; JSONB is merged into a new version preserving `subjects`.
+- [x] Frontend governance: no Tailwind JSX, callback props use method syntax, and all copy is symmetric across three locales.
 - [x] Handoff: implementation must wait for validation of this design/plan and then use `superpowers:executing-plans` or `superpowers:subagent-driven-development`.
