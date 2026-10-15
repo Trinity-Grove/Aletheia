@@ -61,6 +61,7 @@ import type {
   AddCurriculumDefinitionActivityOutput,
   CurriculumDefinitionActivityResponseDto,
   CreateActivityDefinitionOutput,
+  SearchActivityDefinitionsQueryDto,
   ActivityDefinitionResponseDto,
   AddActivityDefinitionCompetencyOutput,
   ActivityDefinitionCompetencyResponseDto,
@@ -552,8 +553,10 @@ export class DefinitionsService {
     return this.toActivityDefinitionDto(row);
   }
 
-  async listActivityDefinitions(): Promise<ActivityDefinitionResponseDto[]> {
-    const rows = await this.repository.listActivityDefinitions();
+  async listActivityDefinitions(
+    query: SearchActivityDefinitionsQueryDto = {},
+  ): Promise<ActivityDefinitionResponseDto[]> {
+    const rows = await this.repository.listActivityDefinitions(query);
     return rows.map((row) => this.toActivityDefinitionDto(row));
   }
 

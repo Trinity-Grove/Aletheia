@@ -46,6 +46,7 @@ import type {
   AddCurriculumDefinitionRubricOutput,
   AddCurriculumDefinitionActivityOutput,
   CreateActivityDefinitionOutput,
+  SearchActivityDefinitionsQueryDto,
   AddActivityDefinitionCompetencyOutput,
   AddActivityDefinitionEvidenceTypeOutput,
   CreateProjectDefinitionOutput,
@@ -455,8 +456,32 @@ export class DefinitionsRepository {
     });
   }
 
-  listActivityDefinitions(): Promise<ActivityDefinition[]> {
-    return this.prisma.activityDefinition.findMany({ orderBy: [{ code: 'asc' }, { version: 'desc' }] });
+  listActivityDefinitions(query: SearchActivityDefinitionsQueryDto = {}): Promise<ActivityDefinition[]> {
+    const where: Prisma.ActivityDefinitionWhereInput = {
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.q
+        ? {
+            OR: [
+              { code: { contains: query.q, mode: 'insensitive' } },
+              { name: { contains: query.q, mode: 'insensitive' } },
+              { description: { contains: query.q, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+      ...(query.age !== undefined
+        ? {
+            AND: [
+              { OR: [{ ageMin: null }, { ageMin: { lte: query.age } }] },
+              { OR: [{ ageMax: null }, { ageMax: { gte: query.age } }] },
+            ],
+          }
+        : {}),
+    };
+
+    return this.prisma.activityDefinition.findMany({
+      where,
+      orderBy: [{ code: 'asc' }, { version: 'desc' }],
+    });
   }
 
   findActivityDefinitionById(id: string): Promise<ActivityDefinition | null> {

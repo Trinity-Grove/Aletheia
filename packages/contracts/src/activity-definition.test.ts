@@ -3,6 +3,7 @@ import {
   createActivityDefinitionSchema,
   addActivityDefinitionCompetencySchema,
   addActivityDefinitionEvidenceTypeSchema,
+  searchActivityDefinitionsQuerySchema,
 } from './activity-definition.js';
 
 const COMPETENCY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
@@ -121,5 +122,29 @@ describe('Activity Definition Contracts', () => {
   it('validates an evidence type link', () => {
     const parsed = addActivityDefinitionEvidenceTypeSchema.parse({ evidenceTypeId: EVIDENCE_TYPE_ID });
     expect(parsed.evidenceTypeId).toBe(EVIDENCE_TYPE_ID);
+  });
+
+  describe('search query', () => {
+    it('accepts optional text, status and age filters', () => {
+      expect(searchActivityDefinitionsQuerySchema.parse({
+        q: '  FOGO  ',
+        status: 'PUBLISHED',
+        age: '12',
+      })).toEqual({ q: 'FOGO', status: 'PUBLISHED', age: 12 });
+    });
+
+    it('accepts an empty query for the backwards-compatible full list', () => {
+      expect(searchActivityDefinitionsQuerySchema.parse({})).toEqual({});
+    });
+
+    it.each([
+      { q: '   ' },
+      { status: 'UNKNOWN' },
+      { age: '-1' },
+      { age: '121' },
+      { age: 'not-a-number' },
+    ])('rejects invalid filters %j', (query) => {
+      expect(searchActivityDefinitionsQuerySchema.safeParse(query).success).toBe(false);
+    });
   });
 });

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   createLearningDomainSchema,
@@ -18,6 +18,7 @@ import {
   addCurriculumDefinitionRubricSchema,
   addCurriculumDefinitionActivitySchema,
   createActivityDefinitionSchema,
+  searchActivityDefinitionsQuerySchema,
   addActivityDefinitionCompetencySchema,
   addActivityDefinitionEvidenceTypeSchema,
   addCurriculumDefinitionProjectSchema,
@@ -62,6 +63,7 @@ import {
   type AddCurriculumDefinitionActivityOutput,
   type CurriculumDefinitionActivityResponseDto,
   type CreateActivityDefinitionOutput,
+  type SearchActivityDefinitionsQueryDto,
   type ActivityDefinitionResponseDto,
   type AddActivityDefinitionCompetencyOutput,
   type ActivityDefinitionCompetencyResponseDto,
@@ -481,8 +483,10 @@ export class DefinitionsController {
 
   @Get('activity-definitions')
   @ApiOperation({ summary: 'List activity definitions' })
-  async listActivityDefinitions(): Promise<ActivityDefinitionResponseDto[]> {
-    return this.definitionsService.listActivityDefinitions();
+  async listActivityDefinitions(
+    @Query(new ZodValidationPipe(searchActivityDefinitionsQuerySchema)) query: SearchActivityDefinitionsQueryDto,
+  ): Promise<ActivityDefinitionResponseDto[]> {
+    return this.definitionsService.listActivityDefinitions(query);
   }
 
   @Patch('activity-definitions/:id/status')
