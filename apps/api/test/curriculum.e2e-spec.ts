@@ -146,7 +146,7 @@ describe('Curriculum & Objectives E2E & Multi-Tenant Isolation', () => {
     });
 
     jest.spyOn(curriculumService, 'applyTemplate').mockImplementation(async (_familyId, _dto) => {
-      return { subjectsCount: 5, objectivesCount: 15 };
+      return { subjectsCount: 5, objectivesCount: 15, reusedObjectivesCount: 0 };
     });
 
     // This job's DATABASE_URL is a placeholder (no real Postgres --

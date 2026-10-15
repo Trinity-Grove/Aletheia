@@ -157,6 +157,19 @@ describe('ProductShell adapter', () => {
     expect(overflowLink).toHaveAttribute('data-next-link', 'true');
   });
 
+  it('keeps the curriculum navigation active on the discovery route', () => {
+    nextNavigation.pathname = '/curriculum/explore';
+
+    render(
+      <ProductShell>
+        <p>Descoberta curricular</p>
+      </ProductShell>,
+    );
+
+    expect(screen.getByTestId('appshell-nav-curriculum')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('main')).toHaveTextContent('Descoberta curricular');
+  });
+
   it('splits navigation into four primary tab-bar items and the rest as overflow', () => {
     render(
       <ProductShell>

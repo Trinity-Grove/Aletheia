@@ -138,7 +138,12 @@ export class CurriculumService implements CurriculumPublicApi {
   async applyTemplate(
     familyId: string,
     dto: ApplyCurriculumTemplateDto,
-  ): Promise<{ subjectsCount: number; objectivesCount: number; subjectRelevance?: SubjectRelevance[] }> {
+  ): Promise<{
+    subjectsCount: number;
+    objectivesCount: number;
+    reusedObjectivesCount: number;
+    subjectRelevance?: SubjectRelevance[];
+  }> {
     // CUSTOM historically used the traditional engine fallback.
     const code = dto.template === 'CUSTOM' ? 'TRADITIONAL' : dto.template;
     const definition = await this.modelResolver.resolvePublished(code);

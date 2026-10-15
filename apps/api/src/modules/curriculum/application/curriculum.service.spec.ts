@@ -81,7 +81,11 @@ describe('CurriculumService', () => {
       resolvePublished: jest.fn().mockResolvedValue({ id: 'definition-1', subjects: [{ name: 'Catalog subject', color: '#123456', description: 'Catalog', starterObjectives: ['Catalog objective'] }] }),
       getSubjectDefinitions: jest.fn().mockResolvedValue([]),
     };
-    curriculumRepo.applyPublishedTemplate = jest.fn().mockResolvedValue({ subjectsCount: 1, objectivesCount: 1 });
+    curriculumRepo.applyPublishedTemplate = jest.fn().mockResolvedValue({
+      subjectsCount: 1,
+      objectivesCount: 1,
+      reusedObjectivesCount: 0,
+    });
     // Default: no PedagogicalProfile configured -- applyTemplate must be a
     // no-op with respect to weighting in this default setup (see the
     // dedicated 'PedagogicalProfile-weighted applyTemplate' suite below for
@@ -141,6 +145,7 @@ describe('CurriculumService', () => {
     });
     expect(res.subjectsCount).toBeGreaterThan(0);
     expect(res.objectivesCount).toBeGreaterThan(0);
+    expect(res.reusedObjectivesCount).toBe(0);
     expect(curriculumRepo.applyPublishedTemplate).toHaveBeenCalledWith(
       FAMILY_ID,
       expect.objectContaining({ template: 'CLASSICAL_TRIVIUM' }),
@@ -266,7 +271,7 @@ describe('PedagogicalProfile-weighted applyTemplate (issue #95)', () => {
     subjectsByCode: Record<string, Array<{ name: string }>>;
   }) {
     const repo = {
-      applyPublishedTemplate: jest.fn().mockResolvedValue({ subjectsCount: 2, objectivesCount: 2 }),
+      applyPublishedTemplate: jest.fn().mockResolvedValue({ subjectsCount: 2, objectivesCount: 2, reusedObjectivesCount: 0 }),
     };
     const resolver = {
       resolvePublished: jest.fn().mockResolvedValue({
@@ -305,7 +310,7 @@ describe('PedagogicalProfile-weighted applyTemplate (issue #95)', () => {
     expect(passedDefinition).toBe(resolvedDefinition);
     expect(passedDefinition.subjects).toEqual([CLASSICAL_ONLY, CROSS_CUTTING]);
     // Response carries no weighting artifact at all.
-    expect(result).toEqual({ subjectsCount: 2, objectivesCount: 2 });
+    expect(result).toEqual({ subjectsCount: 2, objectivesCount: 2, reusedObjectivesCount: 0 });
     expect('subjectRelevance' in result).toBe(false);
   });
 

@@ -35,4 +35,16 @@ describe('buildPedagogicalModelDefinitionSeedRows', () => {
       expect(row.description.length).toBeGreaterThan(0);
     }
   });
+
+  it('provides valid discovery metadata for every published model', () => {
+    const rows = buildPedagogicalModelDefinitionSeedRows(engine);
+    for (const row of rows) {
+      expect(row.approach).toBe(row.code);
+      expect(row.recommendedAgeRange.min).toBeGreaterThanOrEqual(3);
+      expect(row.recommendedAgeRange.max).toBeLessThanOrEqual(25);
+      expect(row.recommendedAgeRange.min).toBeLessThanOrEqual(row.recommendedAgeRange.max);
+      expect(row.educationalStages.length).toBeGreaterThan(0);
+      expect(row.subjects.length).toBeGreaterThan(0);
+    }
+  });
 });

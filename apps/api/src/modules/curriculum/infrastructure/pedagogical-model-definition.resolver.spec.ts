@@ -1,0 +1,43 @@
+import { PedagogicalModelDefinitionResolver } from './pedagogical-model-definition.resolver.js';
+
+describe('PedagogicalModelDefinitionResolver', () => {
+  it('returns discovery metadata while preserving subjects from JSONB', async () => {
+    const prisma = {
+      pedagogicalModelDefinition: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            code: 'CHARLOTTE_MASON',
+            version: 2,
+            status: 'PUBLISHED',
+            name: 'Charlotte Mason',
+            description: 'Livros vivos e narração.',
+            metadata: {
+              subjects: [
+                {
+                  name: 'Natureza',
+                  color: '#16A34A',
+                  description: 'Estudo do mundo criado.',
+                  starterObjectives: ['Observar uma espécie local'],
+                },
+              ],
+              approach: 'CHARLOTTE_MASON',
+              recommendedAgeRange: { min: 6, max: 18 },
+              educationalStages: ['PRIMARY', 'LOWER_SECONDARY', 'UPPER_SECONDARY'],
+            },
+          },
+        ]),
+      },
+    };
+    const resolver = new PedagogicalModelDefinitionResolver(prisma as never);
+
+    await expect(resolver.listPublishedCatalog()).resolves.toEqual([
+      expect.objectContaining({
+        code: 'CHARLOTTE_MASON',
+        approach: 'CHARLOTTE_MASON',
+        recommendedAgeRange: { min: 6, max: 18 },
+        educationalStages: ['PRIMARY', 'LOWER_SECONDARY', 'UPPER_SECONDARY'],
+        subjects: [expect.objectContaining({ name: 'Natureza' })],
+      }),
+    ]);
+  });
+});
