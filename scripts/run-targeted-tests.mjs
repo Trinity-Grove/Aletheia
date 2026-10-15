@@ -41,10 +41,6 @@ function packageDefinitionForName(packageName) {
   return PACKAGE_DEFINITIONS.find((definition) => definition.packageName === packageName);
 }
 
-function packageDefinitionForRoot(packageRoot) {
-  return PACKAGE_DEFINITIONS.find((definition) => definition.packageRoot === packageRoot);
-}
-
 function parseTarget(target) {
   const normalized = normalizePath(String(target).trim());
   const packageQualified = normalized.match(/^(@aletheia\/[^:]+):(.+)$/);
@@ -130,7 +126,7 @@ function packageTargetFor(parsedTarget, entry) {
     return parsedTarget.value;
   }
 
-  return parsedTarget.value.includes('/') ? entry.relativePath : entry.relativePath;
+  return entry.relativePath;
 }
 
 function resolveOneTarget(target, testIndex) {
@@ -177,9 +173,10 @@ export function partitionTargets(targets, testIndex) {
   }
 
   const groups = new Map();
+  const resolvedTestIndex = testIndex ?? buildTestIndex();
 
   for (const target of targets) {
-    const resolved = resolveOneTarget(target, testIndex ?? buildTestIndex());
+    const resolved = resolveOneTarget(target, resolvedTestIndex);
     const group = groups.get(resolved.packageName) ?? {
       packageName: resolved.packageName,
       packageRoot: resolved.packageRoot,
