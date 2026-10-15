@@ -273,8 +273,10 @@ describe('Curriculum definitions admin API -- rubric/evidence/curriculum/activit
         code: `TEST.ACT.COMPETENCY.${Date.now()}`,
         domainId: domain.body.id,
         title: 'Activity Test Competency',
+        description: 'Competência usada para validar uma atividade do catálogo.',
       })
       .expect(201);
+    expect(competency.body.description).toBe('Competência usada para validar uma atividade do catálogo.');
 
     const evidenceType = await supertest(app.getHttpServer())
       .post('/api/v1/admin/curriculum-definitions/evidence-type-definitions')

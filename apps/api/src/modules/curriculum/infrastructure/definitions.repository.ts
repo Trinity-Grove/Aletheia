@@ -107,6 +107,7 @@ export class DefinitionsRepository {
         domainId: dto.domainId,
         pathId: dto.pathId ?? null,
         title: dto.title,
+        description: dto.description ?? null,
         level: dto.level ?? null,
         metadata: dto.metadata as Prisma.InputJsonValue,
       },
