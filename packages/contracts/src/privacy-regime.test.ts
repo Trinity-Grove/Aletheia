@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolvePrivacyRegime } from './privacy-regime.js';
+import { resolvePrivacyProfile, resolvePrivacyRegime } from './privacy-regime.js';
 
 describe('resolvePrivacyRegime', () => {
   it('resolves Brazil to LGPD', () => {
@@ -25,5 +25,18 @@ describe('resolvePrivacyRegime', () => {
   it('resolves any other country to GENERIC', () => {
     expect(resolvePrivacyRegime('JPN')).toBe('GENERIC');
     expect(resolvePrivacyRegime('AUS')).toBe('GENERIC');
+  });
+
+  it('resolves countries to descriptive privacy profiles without changing consent regimes', () => {
+    expect(resolvePrivacyProfile('BRA').code).toBe('GDPR_LIKE');
+    expect(resolvePrivacyProfile('DEU').code).toBe('GDPR_LIKE');
+    expect(resolvePrivacyProfile('USA').code).toBe('SECTORAL_FRAGMENTED');
+    expect(resolvePrivacyProfile('IND').code).toBe('DATA_SOVEREIGNTY');
+    expect(resolvePrivacyProfile('ZZZ').code).toBe('LIMITED');
+  });
+
+  it('normalizes country codes before resolving both catalogs', () => {
+    expect(resolvePrivacyProfile(' bra ').code).toBe('GDPR_LIKE');
+    expect(resolvePrivacyRegime(' bra ')).toBe('LGPD');
   });
 });
