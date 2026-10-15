@@ -224,6 +224,25 @@ describe('AiSuggestionService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
+    it('should reject malformed provider output before quota consumption or persistence', async () => {
+      jest.spyOn(mockLlmProvider, 'generateDraft').mockResolvedValueOnce({
+        text: JSON.stringify({ title: 'Draft incompleto' }),
+        parsedJson: { title: 'Draft incompleto' },
+        promptTokens: 10,
+        completionTokens: 20,
+        model: 'mock-invalid',
+        provider: 'MOCK',
+        durationMs: 1,
+      });
+
+      await expect(
+        service.generateLessonPlanDraft(familyId, actorUserId, validDto),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(quotaService.recordUsage).not.toHaveBeenCalled();
+      expect(suggestionRepo.create).not.toHaveBeenCalled();
+    });
+
     it('should audit sensitive data access, mask prompt, generate draft, record quota, and save suggestion as PENDING_REVIEW', async () => {
       const result = await service.generateLessonPlanDraft(familyId, actorUserId, validDto);
 

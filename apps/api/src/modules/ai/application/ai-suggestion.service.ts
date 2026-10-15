@@ -13,6 +13,7 @@ import type {
   LessonPlanDraftContent,
   ReviewAiSuggestionRequestDto,
 } from '@aletheia/contracts';
+import { lessonPlanDraftContentSchema } from '@aletheia/contracts';
 import { PromptInjectionScanner } from '../domain/prompt-injection-scanner.js';
 import { PseudonymizationService } from '../domain/pseudonymizer.js';
 import { MockLlmProvider } from '../infrastructure/mock-llm-provider.js';
@@ -132,12 +133,31 @@ export class AiSuggestionService implements AiPublicApi {
       });
     }
 
-    // 9. Record quota consumption
+    // 9. Validate the provider output before charging or persisting it. The
+    // provider response is untrusted data even when it claims to be JSON;
+    // schema validation is the boundary that protects the review workflow
+    // and the raw_model_output record from malformed drafts.
+    let parsedOutput: unknown;
+    try {
+      parsedOutput = llmResult.parsedJson ?? JSON.parse(llmResult.text);
+    } catch {
+      throw new BadRequestException('The generated lesson draft could not be parsed. Please try again.');
+    }
+
+    const parsedDraft = lessonPlanDraftContentSchema.safeParse(parsedOutput);
+    if (!parsedDraft.success) {
+      throw new BadRequestException({
+        message: 'The generated lesson draft did not match the expected format. Please try again.',
+        fields: parsedDraft.error.issues.map((issue) => issue.path.join('.')).filter(Boolean),
+      });
+    }
+
+    // 10. Record quota consumption
     const totalTokens = llmResult.promptTokens + llmResult.completionTokens;
     await this.quotaService.recordUsage(familyId, totalTokens, 1);
 
-    // 10. Save draft in AiSuggestionRepository with status PENDING_REVIEW
-    const rawOutput = (llmResult.parsedJson ?? JSON.parse(llmResult.text)) as unknown as LessonPlanDraftContent;
+    // 11. Save draft in AiSuggestionRepository with status PENDING_REVIEW
+    const rawOutput: LessonPlanDraftContent = parsedDraft.data;
     const suggestion = await this.suggestionRepository.create({
       familyId,
       learnerId: dto.learnerId,
@@ -152,10 +172,10 @@ export class AiSuggestionService implements AiPublicApi {
       costMicrosUsd: 0,
     });
 
-    // 11. Rehydrate draft in memory with real learner name
+    // 12. Rehydrate draft in memory with real learner name
     const rehydratedDraft = session.rehydrate(rawOutput);
 
-    // 12. Return AiLessonPlanDraftResponseDto
+    // 13. Return AiLessonPlanDraftResponseDto
     return {
       suggestionId: suggestion.id,
       status: 'PENDING_REVIEW',
