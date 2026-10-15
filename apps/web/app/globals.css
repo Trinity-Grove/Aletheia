@@ -667,6 +667,148 @@ p.page-subtitle {
   background: var(--forest);
 }
 
+.community-resources-gallery {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.community-resources-gallery__intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.community-resources-gallery__intro h2 {
+  margin: 0.5rem 0 0;
+  color: var(--forest);
+  font-size: 1.5rem;
+}
+
+.community-resources-gallery__intro p {
+  max-width: 48rem;
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+}
+
+.community-resources-gallery__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 1rem;
+}
+
+.community-resources-gallery__card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+}
+
+.community-resources-gallery__card h3,
+.community-resources-gallery__card p {
+  margin: 0;
+}
+
+.community-resources-gallery__card h3 {
+  color: var(--forest);
+}
+
+.community-resources-gallery__card p {
+  flex: 1;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.community-resources-gallery__card-top,
+.community-resources-gallery__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.community-resources-gallery__card-top {
+  justify-content: space-between;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.community-resources-gallery__state {
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.community-resource-modal {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(15 23 42 / 45%);
+}
+
+.community-resource-modal__panel {
+  width: min(100%, 42rem);
+  max-height: min(92vh, 50rem);
+  overflow: auto;
+  padding: 1.5rem;
+}
+
+.community-resource-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.community-resource-modal__header h2 {
+  margin: 0;
+  color: var(--forest);
+}
+
+.community-resource-modal__form {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.community-resource-modal__form input,
+.community-resource-modal__form textarea,
+.community-resource-modal__form select {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.community-resource-modal__help {
+  margin: 0 0 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .community-resources-gallery__intro {
+    flex-direction: column;
+  }
+
+  .community-resources-gallery__intro > * {
+    width: 100%;
+  }
+
+  .community-resources-gallery__actions > * {
+    flex: 1 1 8rem;
+  }
+}
+
 .portfolio-timeline {
   display: flex;
   flex-direction: column;
