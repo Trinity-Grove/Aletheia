@@ -24,6 +24,7 @@ import {
   createProjectDefinitionSchema,
   addProjectDefinitionDomainSchema,
   addProjectDefinitionCompetencySchema,
+  addProjectDefinitionPhaseSchema,
   addProjectDefinitionMilestoneSchema,
   createTheologicalTraditionDefinitionSchema,
   createTheologicalPositionDefinitionSchema,
@@ -74,6 +75,8 @@ import {
   type ProjectDefinitionDomainResponseDto,
   type AddProjectDefinitionCompetencyOutput,
   type ProjectDefinitionCompetencyResponseDto,
+  type AddProjectDefinitionPhaseOutput,
+  type ProjectDefinitionPhaseResponseDto,
   type AddProjectDefinitionMilestoneOutput,
   type ProjectDefinitionMilestoneResponseDto,
   type CreateTheologicalTraditionDefinitionOutput,
@@ -590,6 +593,24 @@ export class DefinitionsController {
     @Param('projectId') projectId: string,
   ): Promise<ProjectDefinitionCompetencyResponseDto[]> {
     return this.definitionsService.listProjectDefinitionCompetencies(projectId);
+  }
+
+  @Post('project-definitions/:projectId/phases')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Add a phase to a project definition' })
+  async addProjectDefinitionPhase(
+    @Param('projectId') projectId: string,
+    @Body(new ZodValidationPipe(addProjectDefinitionPhaseSchema)) dto: AddProjectDefinitionPhaseOutput,
+  ): Promise<ProjectDefinitionPhaseResponseDto> {
+    return this.definitionsService.addProjectDefinitionPhase(projectId, dto);
+  }
+
+  @Get('project-definitions/:projectId/phases')
+  @ApiOperation({ summary: 'List phases for a project definition' })
+  async listProjectDefinitionPhases(
+    @Param('projectId') projectId: string,
+  ): Promise<ProjectDefinitionPhaseResponseDto[]> {
+    return this.definitionsService.listProjectDefinitionPhases(projectId);
   }
 
   @Post('project-definitions/:projectId/milestones')

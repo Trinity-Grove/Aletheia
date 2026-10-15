@@ -487,6 +487,26 @@ describe('Curriculum definitions admin API -- rubric/evidence/curriculum/activit
       .expect(201);
     expect(project.body.rubricDefinitionId).toBe(rubric.body.id);
 
+    const planningPhase = await supertest(app.getHttpServer())
+      .post(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/phases`)
+      .set('Cookie', adminCookie)
+      .send({ code: 'PLANNING', title: 'Planejamento', order: 0 })
+      .expect(201);
+    const executionPhase = await supertest(app.getHttpServer())
+      .post(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/phases`)
+      .set('Cookie', adminCookie)
+      .send({ code: 'EXECUTION', title: 'Execução', order: 1 })
+      .expect(201);
+
+    const phasesList = await supertest(app.getHttpServer())
+      .get(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/phases`)
+      .set('Cookie', adminCookie)
+      .expect(200);
+    expect(phasesList.body).toMatchObject([
+      { id: planningPhase.body.id, code: 'PLANNING', order: 0 },
+      { id: executionPhase.body.id, code: 'EXECUTION', order: 1 },
+    ]);
+
     for (const domain of [domainMath, domainScience, domainGardening, domainPlanning]) {
       await supertest(app.getHttpServer())
         .post(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/domains`)
@@ -506,12 +526,12 @@ describe('Curriculum definitions admin API -- rubric/evidence/curriculum/activit
     await supertest(app.getHttpServer())
       .post(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/milestones`)
       .set('Cookie', adminCookie)
-      .send({ code: 'PLANNING', title: 'Planejar o canteiro e a lista de espécies', order: 0 })
+      .send({ code: 'PLANNING', title: 'Planejar o canteiro e a lista de espécies', phaseId: planningPhase.body.id, order: 0 })
       .expect(201);
     await supertest(app.getHttpServer())
       .post(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/milestones`)
       .set('Cookie', adminCookie)
-      .send({ code: 'SOIL_PREP', title: 'Preparar o solo', order: 1 })
+      .send({ code: 'SOIL_PREP', title: 'Preparar o solo', phaseId: executionPhase.body.id, order: 1 })
       .expect(201);
     await supertest(app.getHttpServer())
       .post(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/milestones`)
@@ -540,6 +560,29 @@ describe('Curriculum definitions admin API -- rubric/evidence/curriculum/activit
       'SOIL_PREP',
       'HARVEST',
     ]);
+    expect(milestonesList.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'PLANNING', phaseId: planningPhase.body.id }),
+        expect.objectContaining({ code: 'SOIL_PREP', phaseId: executionPhase.body.id }),
+        expect.objectContaining({ code: 'HARVEST', phaseId: null }),
+      ]),
+    );
+
+    const otherProject = await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-definitions/project-definitions')
+      .set('Cookie', adminCookie)
+      .send({ code: `GARDEN_BUILD.OTHER.${stamp}`, name: 'Outro projeto' })
+      .expect(201);
+    const otherPhase = await supertest(app.getHttpServer())
+      .post(`/api/v1/admin/curriculum-definitions/project-definitions/${otherProject.body.id}/phases`)
+      .set('Cookie', adminCookie)
+      .send({ code: 'OTHER_PHASE', title: 'Outra fase' })
+      .expect(201);
+    await supertest(app.getHttpServer())
+      .post(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/milestones`)
+      .set('Cookie', adminCookie)
+      .send({ code: 'CROSS_PROJECT', title: 'Invalid cross-project milestone', phaseId: otherPhase.body.id })
+      .expect(400);
 
     // Reusable: the same published project can be linked into a real
     // curriculum, same as any activity.

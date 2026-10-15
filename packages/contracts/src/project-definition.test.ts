@@ -3,6 +3,7 @@ import {
   createProjectDefinitionSchema,
   addProjectDefinitionDomainSchema,
   addProjectDefinitionCompetencySchema,
+  addProjectDefinitionPhaseSchema,
   addProjectDefinitionMilestoneSchema,
 } from './project-definition.js';
 
@@ -65,6 +66,30 @@ describe('Project Definition Contracts', () => {
     });
     expect(parsed.order).toBe(0);
     expect(parsed.description).toBeUndefined();
+  });
+
+  it('validates a project phase with defaults', () => {
+    const parsed = addProjectDefinitionPhaseSchema.parse({
+      code: 'PLANNING',
+      title: 'Planejamento',
+    });
+    expect(parsed.order).toBe(0);
+    expect(parsed.description).toBeUndefined();
+  });
+
+  it('rejects a lowercase phase code', () => {
+    expect(() =>
+      addProjectDefinitionPhaseSchema.parse({ code: 'planning', title: 'x' }),
+    ).toThrow();
+  });
+
+  it('accepts an optional phase on a milestone', () => {
+    const parsed = addProjectDefinitionMilestoneSchema.parse({
+      code: 'SOIL_PREP',
+      title: 'Preparar o solo',
+      phaseId: DOMAIN_ID,
+    });
+    expect(parsed.phaseId).toBe(DOMAIN_ID);
   });
 
   it('rejects a lowercase milestone code', () => {
