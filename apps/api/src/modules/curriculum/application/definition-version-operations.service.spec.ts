@@ -18,11 +18,13 @@ describe('DefinitionVersionOperationsService', () => {
     const prisma: any = {
       competencyDefinition: {
         findFirst: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
         update: jest.fn(),
         ...overrides.competencyDefinition,
       },
       learningDomain: {
         findFirst: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
         update: jest.fn(),
         ...overrides.learningDomain,
       },
@@ -120,6 +122,49 @@ describe('DefinitionVersionOperationsService', () => {
       const result = await service.rollbackDefinitionVersion('LearningDomain', 'MATH', 2, actorId);
       expect(prisma.learningDomain.update).toHaveBeenCalled();
       expect(result.entityType).toBe('LearningDomain');
+    });
+  });
+
+  describe('diffDefinitionVersions', () => {
+    it('returns changed content fields and ignores generated timestamps and IDs', async () => {
+      const { service, prisma } = makeService({
+        learningDomain: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              id: 'v1', code: 'MATH', version: 1, status: 'PUBLISHED', schemaVersion: '1.0.0',
+              name: 'Matemática', description: 'Base', metadata: { level: 1 },
+              createdAt: new Date('2026-01-01'), updatedAt: new Date('2026-01-01'),
+            },
+            {
+              id: 'v2', code: 'MATH', version: 2, status: 'PUBLISHED', schemaVersion: '1.0.0',
+              name: 'Matemática', description: 'Avançada', metadata: { level: 2 },
+              createdAt: new Date('2026-02-01'), updatedAt: new Date('2026-02-01'),
+            },
+          ]),
+        },
+      });
+
+      const result = await service.diffDefinitionVersions({
+        entityType: 'LearningDomain', code: 'MATH', fromVersion: 1, toVersion: 2,
+      });
+
+      expect(prisma.learningDomain.findMany).toHaveBeenCalledWith({
+        where: { code: 'MATH', version: { in: [1, 2] } },
+      });
+      expect(result.changedFields).toEqual([
+        { field: 'description', from: 'Base', to: 'Avançada' },
+        { field: 'metadata', from: { level: 1 }, to: { level: 2 } },
+      ]);
+    });
+
+    it('rejects missing versions and equal versions', async () => {
+      const { service } = makeService({
+        learningDomain: { findMany: jest.fn().mockResolvedValue([]) },
+      });
+
+      await expect(service.diffDefinitionVersions({
+        entityType: 'LearningDomain', code: 'MATH', fromVersion: 1, toVersion: 2,
+      })).rejects.toThrow(NotFoundException);
     });
   });
 

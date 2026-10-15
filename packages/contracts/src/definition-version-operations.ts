@@ -103,3 +103,33 @@ export const definitionVersionOperationLogResponseSchema = z.object({
 });
 
 export type DefinitionVersionOperationLogResponseDto = z.infer<typeof definitionVersionOperationLogResponseSchema>;
+
+export const definitionVersionDiffQuerySchema = z.object({
+  entityType: rollbackEligibleEntityTypeSchema,
+  code: z.string().min(1).max(150),
+  fromVersion: z.coerce.number().int().min(1),
+  toVersion: z.coerce.number().int().min(1),
+}).refine((value) => value.fromVersion !== value.toVersion, {
+  message: 'fromVersion and toVersion must differ.',
+  path: ['toVersion'],
+});
+
+export type DefinitionVersionDiffQueryDto = z.infer<typeof definitionVersionDiffQuerySchema>;
+
+export const definitionVersionDiffFieldSchema = z.object({
+  field: z.string().min(1),
+  from: z.unknown(),
+  to: z.unknown(),
+});
+
+export type DefinitionVersionDiffFieldDto = z.infer<typeof definitionVersionDiffFieldSchema>;
+
+export const definitionVersionDiffResponseSchema = z.object({
+  entityType: rollbackEligibleEntityTypeSchema,
+  code: z.string(),
+  fromVersion: z.number().int(),
+  toVersion: z.number().int(),
+  changedFields: z.array(definitionVersionDiffFieldSchema),
+});
+
+export type DefinitionVersionDiffResponseDto = z.infer<typeof definitionVersionDiffResponseSchema>;
