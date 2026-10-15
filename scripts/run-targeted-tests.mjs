@@ -232,15 +232,23 @@ export function runTargetedTests({
   repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url))),
   spawn = spawnSync,
   platform = process.platform,
+  comSpec = process.env.ComSpec ?? 'cmd.exe',
 } = {}) {
   const groups = partitionTargets(targets, testIndex ?? buildTestIndex(repoRoot));
-  const pnpmExecutable = platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+  const pnpmExecutable = platform === 'win32' ? comSpec : 'pnpm';
+  const pnpmPrefix = platform === 'win32' ? ['/d', '/s', '/c', 'pnpm.cmd'] : [];
 
   for (const group of groups) {
     console.log(`\n[targeted-tests] ${group.packageName}: ${group.targets.join(', ')}`);
+    const packageArguments = ['--filter', group.packageName, 'test'];
+    if (platform !== 'win32') {
+      packageArguments.push('--');
+    }
+    packageArguments.push(...group.targets);
+
     const result = spawn(
       pnpmExecutable,
-      ['--filter', group.packageName, 'test', '--', ...group.targets],
+      [...pnpmPrefix, ...packageArguments],
       { cwd: repoRoot, stdio: 'inherit', windowsHide: true },
     );
 

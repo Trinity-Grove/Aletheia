@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   partitionTargets,
+  runTargetedTests,
   TargetRoutingError,
 } from './run-targeted-tests.mjs';
 
@@ -130,4 +132,61 @@ test('rejects an ambiguous bare target and asks for an explicit path', () => {
       return true;
     },
   );
+});
+
+test('invokes only the owning package and stops after the first failure', () => {
+  const calls = [];
+  const result = runTargetedTests({
+    targets: ['curriculum.service.spec.ts', 'curriculum-explore.test.tsx'],
+    testIndex,
+    repoRoot: 'repo-root',
+    platform: 'linux',
+    spawn(executable, args, options) {
+      calls.push({ executable, args, options });
+      return { status: 7, signal: null };
+    },
+  });
+
+  assert.equal(result, 7);
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0], {
+    executable: 'pnpm',
+    args: [
+      '--filter',
+      '@aletheia/web',
+      'test',
+      '--',
+      'tests/curriculum-explore.test.tsx',
+    ],
+    options: { cwd: 'repo-root', stdio: 'inherit', windowsHide: true },
+  });
+});
+
+test('uses pnpm.cmd on Windows', () => {
+  const calls = [];
+  const result = runTargetedTests({
+    targets: ['pedagogical-model-definition.test.ts'],
+    testIndex,
+    repoRoot: 'repo-root',
+    platform: 'win32',
+    comSpec: 'cmd.exe',
+    spawn(executable, args) {
+      calls.push({ executable, args });
+      return { status: 0, signal: null };
+    },
+  });
+
+  assert.equal(result, 0);
+  assert.deepEqual(calls[0], {
+    executable: 'cmd.exe',
+    args: ['/d', '/s', '/c', 'pnpm.cmd', '--filter', '@aletheia/contracts', 'test', 'src/pedagogical-model-definition.test.ts'],
+  });
+});
+
+test('exposes a dedicated root command without changing the full-suite scripts', () => {
+  const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+
+  assert.equal(packageJson.scripts['test:targeted'], 'node scripts/run-targeted-tests.mjs');
+  assert.equal(packageJson.scripts.test, 'pnpm -r --if-present test');
+  assert.equal(packageJson.scripts['test:ci'], 'pnpm -r --if-present test');
 });

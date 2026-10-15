@@ -17,6 +17,7 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
     "test:ci": "pnpm -r --if-present test",
+    "test:targeted": "node scripts/run-targeted-tests.mjs",
     "test:distribution": "node --test scripts/api-distribution.test.mjs",
     "verify": "pnpm prisma:generate && pnpm check:boundaries && pnpm check:no-sibling-comparison && pnpm lint && pnpm test:clean-typegen && pnpm typecheck && pnpm test:ci && pnpm --filter @aletheia/api test:e2e && pnpm test:distribution && pnpm build"
   },
