@@ -43,3 +43,20 @@ export const searchDefinitionsByTagSchema = z.object({
 });
 
 export type SearchDefinitionsByTagDto = z.infer<typeof searchDefinitionsByTagSchema>;
+
+export const searchDefinitionTagFacetsQuerySchema = z.object({
+  namespace: z.string().trim().min(1).max(50).optional(),
+  entityType: curriculumPackDefinitionTypeSchema.optional(),
+  q: z.string().trim().min(1).max(100).optional(),
+});
+
+export type SearchDefinitionTagFacetsQueryDto = z.infer<typeof searchDefinitionTagFacetsQuerySchema>;
+
+export const definitionTagFacetResponseSchema = z.object({
+  namespace: z.string(),
+  tag: z.string(),
+  entityType: curriculumPackDefinitionTypeSchema,
+  definitionCount: z.number().int().nonnegative(),
+});
+
+export type DefinitionTagFacetResponseDto = z.infer<typeof definitionTagFacetResponseSchema>;

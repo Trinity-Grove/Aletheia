@@ -2,7 +2,9 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Prisma } from '@prisma/client';
 import type {
   AddDefinitionTagOutput,
+  DefinitionTagFacetResponseDto,
   DefinitionTagResponseDto,
+  SearchDefinitionTagFacetsQueryDto,
   SearchDefinitionsByTagDto,
 } from '@aletheia/contracts';
 import { DefinitionTagsRepository } from '../infrastructure/definition-tags.repository.js';
@@ -40,6 +42,10 @@ export class DefinitionTagsService {
   async search(query: SearchDefinitionsByTagDto): Promise<DefinitionTagResponseDto[]> {
     const rows = await this.repository.search(query);
     return rows.map((row) => this.toDto(row));
+  }
+
+  async searchFacets(query: SearchDefinitionTagFacetsQueryDto): Promise<DefinitionTagFacetResponseDto[]> {
+    return this.repository.searchFacets(query);
   }
 
   private async withWriteErrorMapping<T>(write: () => Promise<T>): Promise<T> {

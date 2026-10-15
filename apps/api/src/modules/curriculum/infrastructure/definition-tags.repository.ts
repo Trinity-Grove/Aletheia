@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import type { DefinitionTag } from '@prisma/client';
-import type { AddDefinitionTagOutput, CurriculumPackDefinitionType, SearchDefinitionsByTagDto } from '@aletheia/contracts';
+import type {
+  AddDefinitionTagOutput,
+  CurriculumPackDefinitionType,
+  DefinitionTagFacetResponseDto,
+  SearchDefinitionTagFacetsQueryDto,
+  SearchDefinitionsByTagDto,
+} from '@aletheia/contracts';
 import { PrismaService } from '../../../platform/database/prisma.service.js';
 
 // Same accessor map as DefinitionVersionOperationsService.MODEL_ACCESSOR --
@@ -73,5 +79,25 @@ export class DefinitionTagsRepository {
       },
       orderBy: [{ entityType: 'asc' }, { createdAt: 'desc' }],
     });
+  }
+
+  async searchFacets(query: SearchDefinitionTagFacetsQueryDto): Promise<DefinitionTagFacetResponseDto[]> {
+    const rows = await this.prisma.definitionTag.groupBy({
+      by: ['namespace', 'tag', 'entityType'],
+      where: {
+        ...(query.namespace ? { namespace: query.namespace } : {}),
+        ...(query.entityType ? { entityType: query.entityType } : {}),
+        ...(query.q ? { tag: { startsWith: query.q, mode: 'insensitive' } } : {}),
+      },
+      _count: { definitionId: true },
+      orderBy: [{ namespace: 'asc' }, { tag: 'asc' }, { entityType: 'asc' }],
+    });
+
+    return rows.map((row) => ({
+      namespace: row.namespace,
+      tag: row.tag,
+      entityType: row.entityType as CurriculumPackDefinitionType,
+      definitionCount: row._count.definitionId,
+    }));
   }
 }
