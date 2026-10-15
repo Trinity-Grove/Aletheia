@@ -127,5 +127,30 @@ describe('Design System Harmonization (ALET-B05)', () => {
       expect(content).not.toContain("maxWidth: '1200px'");
     });
   });
+
+  describe('Task 4: Settings & Support routes harmonization', () => {
+    it('uses .page-container and PageHeader in /settings', () => {
+      const filePath = path.resolve(__dirname, '../app/(dashboard)/settings/page.tsx');
+      const content = fs.readFileSync(filePath, 'utf-8');
+
+      expect(content).toContain('className="page-container"');
+      expect(content).toContain('<PageHeader');
+      expect(content).toContain('data-testid="settings-sidebar-nav"');
+      expect(content).not.toContain("maxWidth: '1200px'");
+    });
+
+    it('uses .page-container and PageHeader in /support', () => {
+      const filePath = path.resolve(__dirname, '../app/(dashboard)/support/page.tsx');
+      const content = fs.readFileSync(filePath, 'utf-8');
+
+      expect(content).toContain('className="page-container"');
+      expect(content).toContain('<PageHeader');
+      expect(content).toContain("t('support.pageTitle')");
+      expect(content).toContain("t('support.pageSubtitle')");
+      expect(content).toContain("t('support.featureFreeAndSovereign')");
+      expect(content).not.toContain("maxWidth: '1100px'");
+    });
+  });
 });
+
 
