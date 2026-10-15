@@ -30,9 +30,98 @@ export interface CreatePortfolioItemFromEvidenceSubmissionInput {
   tags: string[];
 }
 
+export type PortfolioContextInput = {
+  learnerId: string;
+  learningRecordId?: string | null | undefined;
+  subjectId?: string | null | undefined;
+  academicYearId?: string | null | undefined;
+};
+
+export type PortfolioContextValidation =
+  | { valid: true }
+  | {
+      valid: false;
+      field: 'learnerId' | 'learningRecordId' | 'subjectId' | 'academicYearId';
+      message: string;
+    };
+
 @Injectable()
 export class PortfolioRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  async validateContext(
+    familyId: string,
+    input: PortfolioContextInput,
+  ): Promise<PortfolioContextValidation> {
+    const [learner, record, subject, academicYear] = await Promise.all([
+      this.prisma.learner.findFirst({
+        where: { id: input.learnerId, familyId, archivedAt: null },
+        select: { id: true },
+      }),
+      input.learningRecordId
+        ? this.prisma.learningRecord.findFirst({
+            where: { id: input.learningRecordId, familyId },
+            select: { learnerId: true, subjectId: true, academicYearId: true },
+          })
+        : null,
+      input.subjectId
+        ? this.prisma.subject.findFirst({
+            where: { id: input.subjectId, familyId, archivedAt: null },
+            select: { id: true },
+          })
+        : null,
+      input.academicYearId
+        ? this.prisma.academicYear.findFirst({
+            where: { id: input.academicYearId, familyId },
+            select: { id: true },
+          })
+        : null,
+    ]);
+
+    if (!learner) {
+      return { valid: false, field: 'learnerId', message: 'Learner does not belong to this family.' };
+    }
+    if (input.learningRecordId && !record) {
+      return {
+        valid: false,
+        field: 'learningRecordId',
+        message: 'Learning record does not belong to this family.',
+      };
+    }
+    if (input.subjectId && !subject) {
+      return { valid: false, field: 'subjectId', message: 'Subject does not belong to this family.' };
+    }
+    if (input.academicYearId && !academicYear) {
+      return {
+        valid: false,
+        field: 'academicYearId',
+        message: 'Academic year does not belong to this family.',
+      };
+    }
+    if (record && record.learnerId !== input.learnerId) {
+      return {
+        valid: false,
+        field: 'learningRecordId',
+        message: 'Learning record must belong to the selected learner.',
+      };
+    }
+    if (record && input.subjectId && record.subjectId !== input.subjectId) {
+      return {
+        valid: false,
+        field: 'subjectId',
+        message: 'Subject must match the selected learning record.',
+      };
+    }
+    if (record && input.academicYearId && record.academicYearId !== input.academicYearId) {
+      return {
+        valid: false,
+        field: 'academicYearId',
+        message: 'Academic year must match the selected learning record.',
+      };
+    }
+
+    return { valid: true };
+  }
 
   async create(familyId: string, dto: CreatePortfolioItemDto): Promise<PortfolioItemEntity> {
     const data: Parameters<typeof this.prisma.portfolioItem.create>[0]['data'] = {

@@ -2,12 +2,13 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToastProvider } from '@aletheia/ui';
-import type { LearnerSummaryDto, PortfolioItemResponseDto } from '@aletheia/contracts';
+import type { LearnerSummaryDto, LearningRecordResponseDto, PortfolioItemResponseDto } from '@aletheia/contracts';
 import type { AuthContextValue } from '../src/lib/auth/auth-context';
 import { AuthContext } from '../src/lib/auth/auth-context';
 import { LocaleProvider } from '../src/lib/i18n/locale-context';
 import PortfolioPage from '../app/(dashboard)/portfolio/page';
 import { PortfolioGalleryView } from '../src/components/records/portfolio-gallery-view';
+import { PortfolioItemModal } from '../src/components/records/portfolio-item-modal';
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/portfolio',
@@ -35,6 +36,51 @@ const learner: LearnerSummaryDto = {
   stage: 'PRIMARY',
   avatarColor: '#3B82F6',
 };
+
+const secondLearner: LearnerSummaryDto = {
+  id: 'learner-2',
+  firstName: 'Miguel',
+  preferredName: 'Mika',
+  stage: 'PRIMARY',
+  avatarColor: '#10B981',
+};
+
+const records: LearningRecordResponseDto[] = [
+  {
+    id: 'record-1',
+    familyId: 'fam-1',
+    learnerId: learner.id,
+    learnerName: learner.firstName,
+    subjectId: null,
+    subjectName: null,
+    type: 'PLANNED_LESSON',
+    title: 'Leitura de Sofia',
+    date: '2026-09-15',
+    masteryLevel: 'DEVELOPING',
+    assessmentMethod: 'OBSERVATION',
+    objectives: [],
+    portfolioItemIds: [],
+    createdAt: '2026-09-15T10:00:00.000Z',
+    updatedAt: '2026-09-15T10:00:00.000Z',
+  },
+  {
+    id: 'record-2',
+    familyId: 'fam-1',
+    learnerId: secondLearner.id,
+    learnerName: secondLearner.firstName,
+    subjectId: null,
+    subjectName: null,
+    type: 'PLANNED_LESSON',
+    title: 'Leitura de Miguel',
+    date: '2026-09-16',
+    masteryLevel: 'DEVELOPING',
+    assessmentMethod: 'OBSERVATION',
+    objectives: [],
+    portfolioItemIds: [],
+    createdAt: '2026-09-16T10:00:00.000Z',
+    updatedAt: '2026-09-16T10:00:00.000Z',
+  },
+];
 
 const portfolioItem: PortfolioItemResponseDto = {
   id: 'portfolio-1',
@@ -336,5 +382,37 @@ describe('PortfolioGalleryView states', () => {
     expect(screen.getByTestId('portfolio-no-results-state')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /limpar filtros/i })).toBeInTheDocument();
     expect(screen.queryByTestId('portfolio-empty-state')).not.toBeInTheDocument();
+  });
+});
+
+describe('PortfolioItemModal context filters', () => {
+  it('shows only records for the selected learner and clears incompatible selections', () => {
+    render(
+      <LocaleProvider>
+        <ToastProvider>
+          <PortfolioItemModal
+            isOpen
+            onClose={vi.fn()}
+            onSave={vi.fn()}
+            learners={[learner, secondLearner]}
+            subjects={[]}
+            records={records}
+            defaultLearnerId={learner.id}
+          />
+        </ToastProvider>
+      </LocaleProvider>,
+    );
+
+    const learnerSelect = screen.getByTestId('portfolio-learner-select');
+    const recordSelect = screen.getByTestId('portfolio-record-select');
+
+    expect(screen.getByRole('option', { name: /Leitura de Sofia/ })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /Leitura de Miguel/ })).not.toBeInTheDocument();
+
+    fireEvent.change(learnerSelect, { target: { value: secondLearner.id } });
+
+    expect(recordSelect).toHaveValue('');
+    expect(screen.getByRole('option', { name: /Leitura de Miguel/ })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /Leitura de Sofia/ })).not.toBeInTheDocument();
   });
 });

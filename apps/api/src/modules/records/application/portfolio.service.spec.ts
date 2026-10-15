@@ -19,6 +19,7 @@ describe('PortfolioService', () => {
 
   beforeEach(() => {
     portfolioRepo = {
+      validateContext: jest.fn().mockResolvedValue({ valid: true }),
       create: jest.fn().mockImplementation((familyId, dto) =>
         Promise.resolve(
           new PortfolioItemEntity(
@@ -225,6 +226,41 @@ describe('PortfolioService', () => {
     expect(portfolioRepo.create).toHaveBeenCalledWith(FAMILY_ID, expect.objectContaining({
       title: 'Botanical Drawing',
     }));
+  });
+
+  it('rejects a portfolio item when its learner and learning record do not share context', async () => {
+    portfolioRepo.validateContext.mockResolvedValue({
+      valid: false,
+      field: 'learningRecordId',
+      message: 'Learning record must belong to the selected learner.',
+    });
+
+    await expect(
+      service.createItem(FAMILY_ID, {
+        learnerId: LEARNER_ID,
+        learningRecordId: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
+        title: 'Inconsistent evidence',
+        type: 'TEXT',
+      }),
+    ).rejects.toThrow('Learning record must belong to the selected learner.');
+
+    expect(portfolioRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('applies the same context validation when updating a portfolio item', async () => {
+    portfolioRepo.validateContext.mockResolvedValue({
+      valid: false,
+      field: 'subjectId',
+      message: 'Subject must match the selected learning record.',
+    });
+
+    await expect(
+      service.updateItem(FAMILY_ID, ITEM_ID, {
+        subjectId: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
+      }),
+    ).rejects.toThrow('Subject must match the selected learning record.');
+
+    expect(portfolioRepo.update).not.toHaveBeenCalled();
   });
 
   it('retrieves a portfolio item by id', async () => {
