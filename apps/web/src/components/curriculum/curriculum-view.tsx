@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AletheiaIcon, Button, EmptyState } from '@aletheia/ui';
+import { AletheiaIcon, Button, EmptyState, PageHeader } from '@aletheia/ui';
 import type {
   AcademicYearResponseDto,
   CreateObjectiveDto,
@@ -98,131 +98,112 @@ export function CurriculumView({
   return (
     <div
       data-testid="curriculum-view"
+      className="page-container"
       style={{
-        maxWidth: '76rem',
-        margin: '0 auto',
-        padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
         gap: '1.5rem',
       }}
     >
-      {/* Top Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '1rem',
-          padding: '1.5rem',
-          backgroundColor: 'var(--bg-surface)',
-          borderRadius: 'var(--radius-lg)',
-          border: '1px solid var(--border-light)',
-          boxShadow: 'var(--shadow-sm)',
-        }}
-      >
-        <div>
+      <PageHeader
+        title={
+          activeLearner
+            ? t('curriculum.view.learnerCurriculum', { name: activeLearner.preferredName || activeLearner.firstName })
+            : t('curriculum.view.defaultTitle')
+        }
+        titleAdornment={
+          learnerPlan ? (
+            <span
+              data-testid="pedagogical-framework-badge"
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                padding: '0.25rem 0.75rem',
+                borderRadius: 'var(--radius-full)',
+                backgroundColor: 'var(--color-indigo-50)',
+                color: 'var(--color-indigo-700)',
+                border: '1px solid var(--color-indigo-100)',
+              }}
+            >
+              {getFrameworkLabel(learnerPlan.pedagogicalFramework)}
+            </span>
+          ) : undefined
+        }
+        description={
+          activeLearner
+            ? `${t('curriculum.view.headerSubtitle')} — ${t('curriculum.view.familySharedNotice', { name: activeLearner.preferredName || activeLearner.firstName })}`
+            : t('curriculum.view.headerSubtitle')
+        }
+        action={
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
-              {activeLearner
-                ? t('curriculum.view.learnerCurriculum', { name: activeLearner.preferredName || activeLearner.firstName })
-                : t('curriculum.view.defaultTitle')}
-            </h1>
-            {learnerPlan && (
-              <span
-                data-testid="pedagogical-framework-badge"
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  padding: '0.25rem 0.75rem',
-                  borderRadius: 'var(--radius-full)',
-                  backgroundColor: 'var(--color-indigo-50)',
-                  color: 'var(--color-indigo-700)',
-                  border: '1px solid var(--color-indigo-100)',
-                }}
-              >
-                {getFrameworkLabel(learnerPlan.pedagogicalFramework)}
-              </span>
+            <AcademicYearSwitcher
+              years={years}
+              activeYearId={activeYearId}
+              onSelectYear={onSelectYear}
+            />
+            <a
+              href="/curriculum/packs"
+              className="ui-button ui-button--secondary ui-button--sm"
+              data-testid="explore-curriculum-packs-btn"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+                textDecoration: 'none',
+              }}
+            >
+              <AletheiaIcon name="package" size="sm" />
+              <span>{t('curriculum.view.packsAndPlugins')}</span>
+            </a>
+            <a
+              href="/curriculum/activities"
+              className="ui-button ui-button--secondary ui-button--sm"
+              data-testid="explore-family-activities-btn"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+                textDecoration: 'none',
+              }}
+            >
+              <AletheiaIcon name="sparkles" size="sm" />
+              <span>{t('curriculum.view.myActivities')}</span>
+            </a>
+            {activeLearner && (
+              <Can action="manage_curriculum">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  data-testid="open-planning-wizard-btn"
+                  onClick={() => setIsPlanningWizardOpen(true)}
+                  leftIcon={<AletheiaIcon name="sparkles" size={14} />}
+                >
+                  {t('curriculum.view.guidedPlanning')}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  data-testid="open-template-modal-btn"
+                  onClick={() => setIsTemplateModalOpen(true)}
+                  leftIcon={<AletheiaIcon name="sparkles" size={14} />}
+                >
+                  {t('curriculum.view.pedagogicalModels')}
+                </Button>
+              </Can>
             )}
-          </div>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem', marginBottom: 0 }}>
-            {t('curriculum.view.headerSubtitle')}
-          </p>
-          {activeLearner && (
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', marginBottom: 0 }}>
-              {t('curriculum.view.familySharedNotice', { name: activeLearner.preferredName || activeLearner.firstName })}
-            </p>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <AcademicYearSwitcher
-            years={years}
-            activeYearId={activeYearId}
-            onSelectYear={onSelectYear}
-          />
-          <a
-            href="/curriculum/packs"
-            className="ui-button ui-button--secondary ui-button--sm"
-            data-testid="explore-curriculum-packs-btn"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-              textDecoration: 'none',
-            }}
-          >
-            <AletheiaIcon name="package" size="sm" />
-            <span>{t('curriculum.view.packsAndPlugins')}</span>
-          </a>
-          <a
-            href="/curriculum/activities"
-            className="ui-button ui-button--secondary ui-button--sm"
-            data-testid="explore-family-activities-btn"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-              textDecoration: 'none',
-            }}
-          >
-            <AletheiaIcon name="sparkles" size="sm" />
-            <span>{t('curriculum.view.myActivities')}</span>
-          </a>
-          {activeLearner && (
             <Can action="manage_curriculum">
               <Button
-                variant="primary"
                 size="sm"
-                data-testid="open-planning-wizard-btn"
-                onClick={() => setIsPlanningWizardOpen(true)}
-                leftIcon={<AletheiaIcon name="sparkles" size={14} />}
+                data-testid="open-subject-modal-btn"
+                onClick={() => setIsSubjectModalOpen(true)}
               >
-                {t('curriculum.view.guidedPlanning')}
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                data-testid="open-template-modal-btn"
-                onClick={() => setIsTemplateModalOpen(true)}
-                leftIcon={<AletheiaIcon name="sparkles" size={14} />}
-              >
-                {t('curriculum.view.pedagogicalModels')}
+                {`+ ${t('curriculum.view.newSubject')}`}
               </Button>
             </Can>
-          )}
-          <Can action="manage_curriculum">
-            <Button
-              size="sm"
-              data-testid="open-subject-modal-btn"
-              onClick={() => setIsSubjectModalOpen(true)}
-            >
-              {`+ ${t('curriculum.view.newSubject')}`}
-            </Button>
-          </Can>
-        </div>
-      </div>
+          </div>
+        }
+      />
+
 
       {/* Progress Summary Card */}
       <div

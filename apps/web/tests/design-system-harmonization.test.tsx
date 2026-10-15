@@ -87,4 +87,45 @@ describe('Design System Harmonization (ALET-B05)', () => {
       expect(content).not.toContain("maxWidth: '1200px'");
     });
   });
+
+  describe('Task 3: Curriculum & Evaluation routes harmonization', () => {
+    it('uses .page-container and PageHeader with titleAdornment in CurriculumView', () => {
+      const filePath = path.resolve(__dirname, '../src/components/curriculum/curriculum-view.tsx');
+      const content = fs.readFileSync(filePath, 'utf-8');
+
+      expect(content).toContain('className="page-container"');
+      expect(content).toContain('<PageHeader');
+      expect(content).toContain('titleAdornment=');
+      expect(content).toContain('data-testid="pedagogical-framework-badge"');
+      expect(content).not.toContain("maxWidth: '76rem'");
+    });
+
+    it('uses .page-container and PageHeader in /records', () => {
+      const filePath = path.resolve(__dirname, '../app/(dashboard)/records/page.tsx');
+      const content = fs.readFileSync(filePath, 'utf-8');
+
+      expect(content).toContain('className="page-container"');
+      expect(content).toContain('<PageHeader');
+      expect(content).not.toContain("maxWidth: '1200px'");
+    });
+
+    it('uses .page-container and PageHeader in /portfolio', () => {
+      const filePath = path.resolve(__dirname, '../app/(dashboard)/portfolio/page.tsx');
+      const content = fs.readFileSync(filePath, 'utf-8');
+
+      expect(content).toContain('className="page-container"');
+      expect(content).toContain('<PageHeader');
+      expect(content).not.toContain("maxWidth: '1200px'");
+    });
+
+    it('uses .page-container and PageHeader in /reports', () => {
+      const filePath = path.resolve(__dirname, '../app/(dashboard)/reports/page.tsx');
+      const content = fs.readFileSync(filePath, 'utf-8');
+
+      expect(content).toContain('className="page-container"');
+      expect(content).toContain('<PageHeader');
+      expect(content).not.toContain("maxWidth: '1200px'");
+    });
+  });
 });
+
