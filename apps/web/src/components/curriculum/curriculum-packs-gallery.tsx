@@ -82,7 +82,7 @@ export function CurriculumPacksGallery({ familyId }: CurriculumPacksGalleryProps
 
       setSuccessMsg(t('curriculum.packs.gallery.exportSuccess', { name: pack.name }));
       setTimeout(() => setSuccessMsg(null), 4000);
-    } catch (err: unknown) {
+    } catch {
       setError(t('curriculum.packs.gallery.exportError'));
     } finally {
       setExportingPackId(null);
