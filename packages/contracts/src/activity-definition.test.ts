@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   createActivityDefinitionSchema,
+  activityDefinitionResponseSchema,
   addActivityDefinitionCompetencySchema,
   addActivityDefinitionEvidenceTypeSchema,
   searchActivityDefinitionsQuerySchema,
@@ -10,6 +11,42 @@ const COMPETENCY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 const EVIDENCE_TYPE_ID = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
 
 describe('Activity Definition Contracts', () => {
+  it('exposes materials as a typed response field', () => {
+    const parsed = activityDefinitionResponseSchema.parse({
+      id: '9c5d2e6a-4b7c-4a2a-9d43-5e4c1f3b8a11',
+      code: 'OUTDOOR.FIRE',
+      version: 1,
+      status: 'PUBLISHED',
+      schemaVersion: '1.0.0',
+      name: 'Fogueira',
+      supervisionRequired: true,
+      riskLevel: 'HIGH',
+      evidenceRequirementMode: 'ANY',
+      materials: ['lenha', 'balde de água'],
+      metadata: { materials: ['lenha', 'balde de água'] },
+      createdAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    expect(parsed.materials).toEqual(['lenha', 'balde de água']);
+  });
+
+  it('defaults materials for legacy responses', () => {
+    const parsed = activityDefinitionResponseSchema.parse({
+      id: '9c5d2e6a-4b7c-4a2a-9d43-5e4c1f3b8a11',
+      code: 'TEST.ACTIVITY',
+      version: 1,
+      status: 'PUBLISHED',
+      schemaVersion: '1.0.0',
+      name: 'Atividade legada',
+      supervisionRequired: false,
+      evidenceRequirementMode: 'ANY',
+      metadata: {},
+      createdAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    expect(parsed.materials).toEqual([]);
+  });
+
   it('rejects an inverted age range', () => {
     expect(() => createActivityDefinitionSchema.parse({
       code: 'TEST.AGE', name: 'Age range', ageMin: 17, ageMax: 10,

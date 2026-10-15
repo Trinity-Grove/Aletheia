@@ -89,6 +89,15 @@ import type {
   BibleTranslationDefinitionResponseDto,
   DefinitionStatus,
 } from '@aletheia/contracts';
+
+function extractActivityMaterials(metadata: unknown): string[] {
+  if (typeof metadata !== 'object' || metadata === null || Array.isArray(metadata)) return [];
+
+  const materials = (metadata as { materials?: unknown }).materials;
+  if (!Array.isArray(materials) || !materials.every((item) => typeof item === 'string')) return [];
+
+  return materials;
+}
 import { DefinitionsRepository } from '../infrastructure/definitions.repository.js';
 import { DefinitionVersionOperationsService } from './definition-version-operations.service.js';
 import { computeStatusTransition } from './definition-status-transition.js';
@@ -1230,6 +1239,7 @@ export class DefinitionsService {
       supervisionRequired: row.supervisionRequired,
       riskLevel: row.riskLevel,
       evidenceRequirementMode: row.evidenceRequirementMode as ActivityDefinitionResponseDto['evidenceRequirementMode'],
+      materials: extractActivityMaterials(row.metadata),
       metadata: row.metadata as Record<string, unknown>,
       createdAt: row.createdAt.toISOString(),
       publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,
