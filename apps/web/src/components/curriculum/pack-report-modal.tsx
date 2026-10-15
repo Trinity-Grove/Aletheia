@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Button, Modal } from '@aletheia/ui';
 import type { PackReportReason } from '@aletheia/contracts';
 import { useLocale } from '../../lib/i18n/locale-context';
@@ -35,6 +35,16 @@ export function PackReportModal({
   const [details, setDetails] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'conflict' | 'error'>('idle');
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+        closeTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -79,7 +89,8 @@ export function PackReportModal({
 
       setStatus('success');
       onSuccess?.();
-      setTimeout(() => {
+      closeTimeoutRef.current = setTimeout(() => {
+        closeTimeoutRef.current = null;
         onClose();
       }, 1200);
     } catch {

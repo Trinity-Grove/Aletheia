@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { ForbiddenException } from '@nestjs/common';
 import { PortfolioService } from './portfolio.service.js';
 import { PortfolioItemEntity } from '../domain/portfolio-item.entity.js';
 
@@ -9,6 +10,7 @@ describe('PortfolioService', () => {
   let avScanner: any;
   let evidenceSubmissionApi: any;
   let privacyPublicApi: any;
+  let familyApi: any;
   let recordedAccess: Array<Record<string, unknown>>;
 
   const FAMILY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
@@ -200,12 +202,17 @@ describe('PortfolioService', () => {
       }),
     };
 
+    familyApi = {
+      getFamilyMemberRole: jest.fn().mockResolvedValue('OWNER_GUARDIAN'),
+    };
+
     service = new PortfolioService(
       portfolioRepo,
       objectStorage,
       avScanner,
       evidenceSubmissionApi,
       privacyPublicApi,
+      familyApi,
     );
   });
 
@@ -217,7 +224,7 @@ describe('PortfolioService', () => {
       fileUrl: 'https://example.com/drawing.jpg',
       isHighlight: true,
       tags: ['botany', 'drawing'],
-    });
+    }, ACTOR_USER_ID);
 
     expect(res.id).toBe(ITEM_ID);
     expect(res.title).toBe('Botanical Drawing');
@@ -226,6 +233,34 @@ describe('PortfolioService', () => {
     expect(portfolioRepo.create).toHaveBeenCalledWith(FAMILY_ID, expect.objectContaining({
       title: 'Botanical Drawing',
     }));
+    expect(recordedAccess).toContainEqual(expect.objectContaining({
+      actorUserId: ACTOR_USER_ID,
+      action: 'CREATE',
+      resourceType: 'PORTFOLIO_ITEM',
+      resourceId: ITEM_ID,
+    }));
+  });
+
+  it('allows educators to create and edit evidence but not delete it', async () => {
+    familyApi.getFamilyMemberRole.mockResolvedValue('EDUCATOR');
+
+    await expect(
+      service.createItem(FAMILY_ID, { learnerId: LEARNER_ID, title: 'Educator note', type: 'TEXT' }, ACTOR_USER_ID),
+    ).resolves.toBeDefined();
+    await expect(
+      service.updateItem(FAMILY_ID, ITEM_ID, { title: 'Updated educator note' }, ACTOR_USER_ID),
+    ).resolves.toBeDefined();
+    await expect(service.deleteItem(FAMILY_ID, ITEM_ID, ACTOR_USER_ID)).rejects.toThrow(ForbiddenException);
+
+    expect(portfolioRepo.softDelete).not.toHaveBeenCalled();
+  });
+
+  it('rejects portfolio access when the actor has no family role', async () => {
+    familyApi.getFamilyMemberRole.mockResolvedValue(null);
+
+    await expect(service.getItem(FAMILY_ID, ITEM_ID, ACTOR_USER_ID)).rejects.toThrow(
+      'You do not have permission to view this portfolio.',
+    );
   });
 
   it('rejects a portfolio item when its learner and learning record do not share context', async () => {
@@ -241,7 +276,7 @@ describe('PortfolioService', () => {
         learningRecordId: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
         title: 'Inconsistent evidence',
         type: 'TEXT',
-      }),
+      }, ACTOR_USER_ID),
     ).rejects.toThrow('Learning record must belong to the selected learner.');
 
     expect(portfolioRepo.create).not.toHaveBeenCalled();
@@ -257,14 +292,14 @@ describe('PortfolioService', () => {
     await expect(
       service.updateItem(FAMILY_ID, ITEM_ID, {
         subjectId: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
-      }),
+      }, ACTOR_USER_ID),
     ).rejects.toThrow('Subject must match the selected learning record.');
 
     expect(portfolioRepo.update).not.toHaveBeenCalled();
   });
 
   it('retrieves a portfolio item by id', async () => {
-    const res = await service.getItem(FAMILY_ID, ITEM_ID);
+    const res = await service.getItem(FAMILY_ID, ITEM_ID, ACTOR_USER_ID);
     expect(res.id).toBe(ITEM_ID);
     expect(res.title).toBe('Drawing of Tree');
     expect(res.capturedAt).toBe('2026-08-25');
@@ -272,7 +307,7 @@ describe('PortfolioService', () => {
 
   it('throws NotFoundException when item not found by id', async () => {
     portfolioRepo.findById.mockResolvedValue(null);
-    await expect(service.getItem(FAMILY_ID, 'non-existent')).rejects.toThrow('Portfolio item not found');
+    await expect(service.getItem(FAMILY_ID, 'non-existent', ACTOR_USER_ID)).rejects.toThrow('Portfolio item not found');
   });
 
   it('lists portfolio items with filters', async () => {
@@ -302,7 +337,7 @@ describe('PortfolioService', () => {
       ),
     ]);
 
-    const res = await service.listItems(FAMILY_ID, { isHighlight: true });
+    const res = await service.listItems(FAMILY_ID, ACTOR_USER_ID, { isHighlight: true });
     expect(res.length).toBe(1);
     expect(portfolioRepo.list).toHaveBeenCalledWith(FAMILY_ID, { isHighlight: true });
   });
@@ -311,7 +346,7 @@ describe('PortfolioService', () => {
     const res = await service.updateItem(FAMILY_ID, ITEM_ID, {
       title: 'Updated Artwork',
       isHighlight: false,
-    });
+    }, ACTOR_USER_ID);
     expect(res.title).toBe('Updated Artwork');
     expect(res.isHighlight).toBe(false);
   });
@@ -341,7 +376,7 @@ describe('PortfolioService', () => {
         title: 'Horta comunitária',
         isHighlight: false,
         tags: [],
-      });
+      }, ACTOR_USER_ID);
 
       expect(res.title).toBe('Horta comunitária');
       expect(res.type).toBe('IMAGE');
@@ -361,7 +396,7 @@ describe('PortfolioService', () => {
     it('throws NotFoundException when the evidence submission does not exist for this family', async () => {
       evidenceSubmissionApi.getEvidenceSubmissionForPortfolio.mockResolvedValue(null);
       await expect(
-        service.createItemFromEvidenceSubmission(FAMILY_ID, 'missing', { title: 'X', isHighlight: false, tags: [] }),
+        service.createItemFromEvidenceSubmission(FAMILY_ID, 'missing', { title: 'X', isHighlight: false, tags: [] }, ACTOR_USER_ID),
       ).rejects.toThrow('Evidence submission not found.');
     });
 
@@ -375,7 +410,7 @@ describe('PortfolioService', () => {
           title: 'X',
           isHighlight: false,
           tags: [],
-        }),
+        }, ACTOR_USER_ID),
       ).rejects.toThrow('Only a validated evidence submission can be added to the portfolio.');
     });
 
@@ -392,7 +427,7 @@ describe('PortfolioService', () => {
           title: 'X',
           isHighlight: false,
           tags: [],
-        }),
+        }, ACTOR_USER_ID),
       ).rejects.toThrow('This evidence submission has already been added to the portfolio.');
     });
   });
@@ -439,7 +474,7 @@ describe('PortfolioService', () => {
         fileName: 'tree.png',
         mimeType: 'image/png',
         fileSizeBytes: 2048,
-      });
+      }, ACTOR_USER_ID);
 
       expect(objectStorage.buildStorageKey).toHaveBeenCalledWith(FAMILY_ID, ITEM_ID, 'tree.png');
       expect(portfolioRepo.savePendingUpload).toHaveBeenCalledWith(FAMILY_ID, ITEM_ID, STORAGE_KEY);
@@ -454,14 +489,14 @@ describe('PortfolioService', () => {
           fileName: 'x.png',
           mimeType: 'image/png',
           fileSizeBytes: 10,
-        }),
+        }, ACTOR_USER_ID),
       ).rejects.toThrow('Portfolio item not found');
     });
   });
 
   describe('confirmUpload', () => {
     it('verifies the object in storage, scans it, and persists real metadata', async () => {
-      const res = await service.confirmUpload(FAMILY_ID, ITEM_ID);
+      const res = await service.confirmUpload(FAMILY_ID, ITEM_ID, ACTOR_USER_ID);
 
       expect(objectStorage.headObject).toHaveBeenCalledWith(STORAGE_KEY);
       expect(avScanner.scan).toHaveBeenCalled();
@@ -476,14 +511,14 @@ describe('PortfolioService', () => {
 
     it('rejects when the object has not finished uploading', async () => {
       objectStorage.headObject.mockResolvedValue(null);
-      await expect(service.confirmUpload(FAMILY_ID, ITEM_ID)).rejects.toThrow(
+      await expect(service.confirmUpload(FAMILY_ID, ITEM_ID, ACTOR_USER_ID)).rejects.toThrow(
         'Upload has not completed yet.',
       );
     });
 
     it('deletes the object and rejects when the AV scan fails', async () => {
       avScanner.scan.mockResolvedValue({ clean: false, threatName: 'EICAR-Test' });
-      await expect(service.confirmUpload(FAMILY_ID, ITEM_ID)).rejects.toThrow(
+      await expect(service.confirmUpload(FAMILY_ID, ITEM_ID, ACTOR_USER_ID)).rejects.toThrow(
         'Uploaded file failed the security scan.',
       );
       expect(objectStorage.deleteObject).toHaveBeenCalled();
@@ -498,7 +533,7 @@ describe('PortfolioService', () => {
           null, null, null, null, false, [], new Date(), new Date(),
         ),
       );
-      await expect(service.confirmUpload(FAMILY_ID, ITEM_ID)).rejects.toThrow(
+      await expect(service.confirmUpload(FAMILY_ID, ITEM_ID, ACTOR_USER_ID)).rejects.toThrow(
         'No pending upload for this portfolio item.',
       );
     });

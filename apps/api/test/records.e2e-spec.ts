@@ -172,7 +172,7 @@ describe("Learning Records & Portfolio E2E & Multi-Tenant Isolation", () => {
       return item;
     });
 
-    jest.spyOn(portfolioService, "listItems").mockImplementation(async (familyId: string, filter: PortfolioItemFilterDto = {}) => {
+    jest.spyOn(portfolioService, "listItems").mockImplementation(async (familyId: string, _actorUserId: string, filter: PortfolioItemFilterDto = {}) => {
       return portfolioStore.filter((p) => {
         if (p.familyId !== familyId) return false;
         if (filter.learnerId && p.learnerId !== filter.learnerId) return false;

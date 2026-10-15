@@ -337,7 +337,7 @@ export function RecordCard({ record, onEdit, onDelete, onAddEvidence, onReopenLe
             </Badge>
           )}
           {onAddEvidence && (
-            <Can action="upload_portfolio_items">
+            <Can action="create_portfolio_items">
               <Button
                 variant="outline"
                 size="sm"
