@@ -119,6 +119,10 @@ import { FamilyActivityRepository } from './infrastructure/family-activity.repos
 import { FamilyActivityService } from './application/family-activity.service.js';
 import { FamilyActivityController } from './presentation/family-activity.controller.js';
 import { CommunityActivityController } from './presentation/community-activity.controller.js';
+import { FamilyLearningResourceRepository } from './infrastructure/family-learning-resource.repository.js';
+import { FamilyLearningResourceService } from './application/family-learning-resource.service.js';
+import { FamilyLearningResourceController } from './presentation/family-learning-resource.controller.js';
+import { CommunityLearningResourceController } from './presentation/community-learning-resource.controller.js';
 import { CurriculumPackCompositionRepository } from './infrastructure/curriculum-pack-composition.repository.js';
 import { CurriculumPackCompositionService } from './application/curriculum-pack-composition.service.js';
 import { FamilyLearningPathSelectionRepository } from './infrastructure/family-learning-path-selection.repository.js';
@@ -150,6 +154,8 @@ import { FamilyProjectSelectionService } from './application/family-project-sele
     DefinitionTagsController,
     FamilyActivityController,
     CommunityActivityController,
+    FamilyLearningResourceController,
+    CommunityLearningResourceController,
   ],
   providers: [
     ProgressionRepository,
@@ -220,6 +226,7 @@ import { FamilyProjectSelectionService } from './application/family-project-sele
     FamilyCurriculumPackMediaRepository,
     CurriculumPackMediaRepository,
     FamilyActivityRepository,
+    FamilyLearningResourceRepository,
     CurriculumPackCompositionRepository,
     FamilyLearningPathSelectionRepository,
     FamilyProjectSelectionRepository,
@@ -238,6 +245,7 @@ import { FamilyProjectSelectionService } from './application/family-project-sele
     FamilyCurriculumPackMediaService,
     CurriculumPackMediaService,
     FamilyActivityService,
+    FamilyLearningResourceService,
     CurriculumPackCompositionService,
     FamilyLearningPathSelectionService,
     FamilyProjectSelectionService,

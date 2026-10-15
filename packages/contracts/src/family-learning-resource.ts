@@ -67,7 +67,7 @@ export const familyLearningResourceContentSchema = z.discriminatedUnion('kind', 
 
 export type FamilyLearningResourceContent = z.infer<typeof familyLearningResourceContentSchema>;
 
-const resourceBaseSchema = z.object({
+const resourceFieldsSchema = z.object({
   resourceType: familyLearningResourceTypeSchema,
   title: z.string().min(1).max(250),
   description: z.string().max(2_000).nullish(),
@@ -76,7 +76,9 @@ const resourceBaseSchema = z.object({
   ageMax: z.number().int().min(0).max(120).nullish(),
   content: familyLearningResourceContentSchema,
   visibility: familyLearningResourceVisibilitySchema.default('PRIVATE'),
-}).superRefine((value, ctx) => {
+});
+
+const resourceBaseSchema = resourceFieldsSchema.superRefine((value, ctx) => {
   if (value.resourceType !== value.content.kind) {
     ctx.addIssue({ code: 'custom', path: ['content', 'kind'], message: 'Content kind must match resource type.' });
   }
@@ -89,10 +91,17 @@ export const createFamilyLearningResourceSchema = resourceBaseSchema;
 export type CreateFamilyLearningResourceDto = z.input<typeof createFamilyLearningResourceSchema>;
 export type CreateFamilyLearningResourceOutput = z.output<typeof createFamilyLearningResourceSchema>;
 
-export const updateFamilyLearningResourceSchema = resourceBaseSchema.partial().refine(
+export const updateFamilyLearningResourceSchema = resourceFieldsSchema.partial().refine(
   (value) => Object.keys(value).length > 0,
   'At least one field is required to update a resource.',
-);
+).superRefine((value, ctx) => {
+  if ((value.resourceType == null) !== (value.content == null)) {
+    ctx.addIssue({ code: 'custom', path: ['content'], message: 'resourceType and content must be updated together.' });
+  }
+  if (value.ageMin != null && value.ageMax != null && value.ageMin > value.ageMax) {
+    ctx.addIssue({ code: 'custom', path: ['ageMax'], message: 'ageMax must be greater than or equal to ageMin.' });
+  }
+});
 export type UpdateFamilyLearningResourceDto = z.input<typeof updateFamilyLearningResourceSchema>;
 export type UpdateFamilyLearningResourceOutput = z.output<typeof updateFamilyLearningResourceSchema>;
 
