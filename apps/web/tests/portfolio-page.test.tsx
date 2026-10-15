@@ -409,6 +409,79 @@ describe('PortfolioGalleryView states', () => {
     expect(resolveMediaUrl).toHaveBeenCalledTimes(2);
   });
 
+  it('renews a failed direct media URL and handles media load errors with retry', async () => {
+    const renewedUrl = 'https://storage.example.com/signed/portfolio-1-renewed.jpg';
+    const resolveMediaUrl = vi.fn().mockResolvedValue(renewedUrl);
+    const imageItem = { ...portfolioItem, type: 'IMAGE' as const, fileUrl: 'https://storage.example.com/expired.jpg', mimeType: 'image/jpeg' };
+
+    render(
+      <AuthContext.Provider value={makeAuth()}>
+        <LocaleProvider>
+          <ToastProvider>
+            <PortfolioGalleryView
+              items={[imageItem]}
+              learners={[learner]}
+              subjects={[]}
+              activeLearnerId={null}
+              onOpenAddItem={vi.fn()}
+              onEditItem={vi.fn()}
+              onDeleteItem={vi.fn()}
+              onResolveMediaUrl={resolveMediaUrl}
+            />
+          </ToastProvider>
+        </LocaleProvider>
+      </AuthContext.Provider>,
+    );
+
+    fireEvent.click(screen.getByTestId(`preview-media-btn-${imageItem.id}`));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.error(within(dialog).getByTestId(`portfolio-image-preview-${imageItem.id}`));
+    expect(await screen.findByTestId(`portfolio-media-modal-error-${imageItem.id}`)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId(`retry-media-preview-${imageItem.id}`));
+    expect(await screen.findByTestId(`portfolio-image-preview-${imageItem.id}`)).toHaveAttribute('src', renewedUrl);
+    expect(resolveMediaUrl).toHaveBeenCalledWith(imageItem.id);
+  });
+
+  it('ignores a stale preview request when the user opens another item', async () => {
+    let resolveFirst: ((value: string) => void) | undefined;
+    let resolveSecond: ((value: string) => void) | undefined;
+    const firstItem = { ...portfolioItem, id: 'image-first', type: 'IMAGE' as const, mimeType: 'image/jpeg' };
+    const secondItem = { ...portfolioItem, id: 'image-second', type: 'IMAGE' as const, mimeType: 'image/jpeg' };
+    const resolveMediaUrl = vi.fn((itemId: string) => new Promise<string>((resolve) => {
+      if (itemId === firstItem.id) resolveFirst = resolve;
+      else resolveSecond = resolve;
+    }));
+
+    render(
+      <AuthContext.Provider value={makeAuth()}>
+        <LocaleProvider>
+          <ToastProvider>
+            <PortfolioGalleryView
+              items={[firstItem, secondItem]}
+              learners={[learner]}
+              subjects={[]}
+              activeLearnerId={null}
+              onOpenAddItem={vi.fn()}
+              onEditItem={vi.fn()}
+              onDeleteItem={vi.fn()}
+              onResolveMediaUrl={resolveMediaUrl}
+            />
+          </ToastProvider>
+        </LocaleProvider>
+      </AuthContext.Provider>,
+    );
+
+    fireEvent.click(screen.getByTestId('preview-media-btn-image-first'));
+    fireEvent.click(screen.getByTestId('preview-media-btn-image-second'));
+    resolveSecond?.('https://storage.example.com/second.jpg');
+    expect(await screen.findByTestId('portfolio-image-preview-image-second')).toHaveAttribute('src', 'https://storage.example.com/second.jpg');
+
+    resolveFirst?.('https://storage.example.com/first.jpg');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.getByTestId('portfolio-image-preview-image-second')).toHaveAttribute('src', 'https://storage.example.com/second.jpg');
+  });
+
   it('loads an image preview on demand and keeps the card usable when media resolution fails', async () => {
     const resolvedUrl = 'https://storage.example.com/signed/portfolio-1-retry.jpg';
     const resolveMediaUrl = vi.fn()

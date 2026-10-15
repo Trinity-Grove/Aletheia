@@ -39,12 +39,13 @@ interface PortfolioMediaDialogProps {
   isLoading: boolean;
   hasError: boolean;
   onRetry(): void;
+  onMediaError(itemId: string): void;
   onClose(): void;
   translate: (key: string) => string;
 }
 
 function formatFileSize(bytes: number | null | undefined): string | null {
-  if (bytes == null || !Number.isFinite(bytes)) return null;
+  if (bytes == null || !Number.isFinite(bytes) || bytes < 0) return null;
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -56,6 +57,7 @@ function PortfolioMediaDialog({
   isLoading,
   hasError,
   onRetry,
+  onMediaError,
   onClose,
   translate,
 }: PortfolioMediaDialogProps) {
@@ -83,6 +85,7 @@ function PortfolioMediaDialog({
             src={mediaUrl}
             alt={item.title}
             data-testid={`portfolio-image-preview-${item.id}`}
+            onError={() => onMediaError(item.id)}
             style={{ display: 'block', width: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: 'var(--radius-md)' }}
           />
         ) : item.type === 'AUDIO' ? (
@@ -92,6 +95,7 @@ function PortfolioMediaDialog({
             src={mediaUrl}
             aria-label={item.title}
             data-testid={`portfolio-audio-player-${item.id}`}
+            onError={() => onMediaError(item.id)}
             style={{ width: '100%' }}
           />
         ) : item.type === 'VIDEO' ? (
@@ -102,6 +106,7 @@ function PortfolioMediaDialog({
             src={mediaUrl}
             aria-label={item.title}
             data-testid={`portfolio-video-player-${item.id}`}
+            onError={() => onMediaError(item.id)}
             style={{ display: 'block', width: '100%', maxHeight: '70vh', backgroundColor: 'var(--text-primary)', borderRadius: 'var(--radius-md)' }}
           />
         ) : item.type === 'DOCUMENT' || item.type === 'CERTIFICATE' ? (
@@ -262,9 +267,10 @@ export function PortfolioGalleryView({
   const [previewItem, setPreviewItem] = useState<PortfolioItemResponseDto | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewState, setPreviewState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const previewRequestId = useRef(0);
 
-  const resolveMediaUrl = useCallback(async (item: PortfolioItemResponseDto): Promise<string | null> => {
-    if (item.fileUrl) return item.fileUrl;
+  const resolveMediaUrl = useCallback(async (item: PortfolioItemResponseDto, forceRefresh = false): Promise<string | null> => {
+    if (item.fileUrl && !forceRefresh) return item.fileUrl;
     if (!onResolveMediaUrl) return null;
 
     setMediaLoadingIds((current) => new Set(current).add(item.id));
@@ -297,23 +303,31 @@ export function PortfolioGalleryView({
     }
   }, [resolveMediaUrl]);
 
-  const handlePreviewMedia = useCallback(async (item: PortfolioItemResponseDto) => {
+  const handlePreviewMedia = useCallback(async (item: PortfolioItemResponseDto, forceRefresh = false) => {
+    const requestId = ++previewRequestId.current;
     setPreviewItem(item);
-    setPreviewUrl(item.fileUrl ?? resolvedMediaUrls[item.id] ?? null);
-    if (item.fileUrl || resolvedMediaUrls[item.id]) {
+    setPreviewUrl(forceRefresh ? null : item.fileUrl ?? resolvedMediaUrls[item.id] ?? null);
+    if (!forceRefresh && (item.fileUrl || resolvedMediaUrls[item.id])) {
       setPreviewState('ready');
       return;
     }
 
     setPreviewState('loading');
-    const mediaUrl = await resolveMediaUrl(item);
+    const mediaUrl = await resolveMediaUrl(item, forceRefresh);
+    if (requestId !== previewRequestId.current) return;
     setPreviewUrl(mediaUrl);
     setPreviewState(mediaUrl ? 'ready' : 'error');
   }, [resolveMediaUrl, resolvedMediaUrls]);
 
   const handleRetryPreview = useCallback(() => {
-    if (previewItem) void handlePreviewMedia(previewItem);
+    if (previewItem) void handlePreviewMedia(previewItem, true);
   }, [handlePreviewMedia, previewItem]);
+
+  const handlePreviewMediaError = useCallback((itemId: string) => {
+    if (previewItem?.id !== itemId) return;
+    previewRequestId.current += 1;
+    setPreviewState('error');
+  }, [previewItem?.id]);
 
   // Collect all distinct tags
   const allTags = useMemo(() => {
@@ -778,7 +792,9 @@ export function PortfolioGalleryView({
           isLoading={previewState === 'loading'}
           hasError={previewState === 'error'}
           onRetry={handleRetryPreview}
+          onMediaError={handlePreviewMediaError}
           onClose={() => {
+            previewRequestId.current += 1;
             setPreviewItem(null);
             setPreviewUrl(null);
             setPreviewState('idle');
