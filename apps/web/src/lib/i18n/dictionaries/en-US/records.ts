@@ -202,6 +202,7 @@ export const records = {
     emptyTitle: 'No evidence in portfolio',
     emptyDesc: 'Photograph notebooks, nature drawings, add audio narrations, and celebrate the educational journey!',
     addFirstWork: 'Add First Work',
+    exploreCurriculumPacks: 'Explore learning materials',
     states: {
       readOnlyTitle: 'Portfolio is read-only',
       readOnlyDescription: 'You can view the work, but you do not have permission to change it.',

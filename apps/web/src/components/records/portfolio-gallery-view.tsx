@@ -568,11 +568,21 @@ export function PortfolioGalleryView({
           title={t('records.portfolio.emptyTitle')}
           description={t('records.portfolio.emptyDesc')}
           action={
-            <Can action="create_portfolio_items">
-              <Button data-testid="empty-add-portfolio-btn" onClick={onOpenAddItem}>
-                {t('records.portfolio.addFirstWork')}
-              </Button>
-            </Can>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center' }}>
+              <Can action="create_portfolio_items">
+                <Button data-testid="empty-add-portfolio-btn" onClick={onOpenAddItem}>
+                  {t('records.portfolio.addFirstWork')}
+                </Button>
+              </Can>
+              <a
+                href="/curriculum/packs"
+                className="ui-button ui-button--secondary ui-button--md"
+                data-testid="explore-curriculum-packs-from-empty"
+                style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
+              >
+                {t('records.portfolio.exploreCurriculumPacks')}
+              </a>
+            </div>
           }
         />
         )

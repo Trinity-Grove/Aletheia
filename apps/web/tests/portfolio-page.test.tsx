@@ -296,6 +296,19 @@ describe('PortfolioPage states', () => {
     });
     expect(portfolioAttempts).toBe(2);
   });
+
+  it('guides an empty portfolio toward curriculum packs', async () => {
+    const fetchMock = mockPortfolioFetch();
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    renderPage();
+
+    expect(await screen.findByTestId('portfolio-empty-state')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /explorar materiais didáticos/i })).toHaveAttribute(
+      'href',
+      '/curriculum/packs',
+    );
+  });
 });
 
 describe('PortfolioGalleryView states', () => {
