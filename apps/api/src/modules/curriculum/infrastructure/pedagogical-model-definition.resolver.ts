@@ -46,10 +46,25 @@ export class PedagogicalModelDefinitionResolver {
       seenCodes.add(row.code);
 
       let subjects: TemplateSubjectDefinition[] | undefined;
+      let discovery: Pick<
+        PedagogicalModelCatalogEntryDto,
+        'approach' | 'recommendedAgeRange' | 'educationalStages'
+      > = {};
       try {
         const meta = pedagogicalModelMetadataSchema.safeParse(row.metadata);
-        if (meta.success && meta.data.subjects && meta.data.subjects.length > 0) {
-          subjects = meta.data.subjects;
+        if (meta.success) {
+          if (meta.data.subjects && meta.data.subjects.length > 0) {
+            subjects = meta.data.subjects;
+          }
+          discovery = {
+            ...(meta.data.approach ? { approach: meta.data.approach } : {}),
+            ...(meta.data.recommendedAgeRange
+              ? { recommendedAgeRange: meta.data.recommendedAgeRange }
+              : {}),
+            ...(meta.data.educationalStages
+              ? { educationalStages: meta.data.educationalStages }
+              : {}),
+          };
         }
       } catch {
         // ignore parsing error
@@ -60,6 +75,7 @@ export class PedagogicalModelDefinitionResolver {
         name: row.name,
         description: row.description,
         ...(subjects ? { subjects } : {}),
+        ...discovery,
       });
     }
 

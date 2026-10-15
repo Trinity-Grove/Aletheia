@@ -80,6 +80,7 @@ describe('PedagogicalProfile-weighted applyTemplate (real Postgres, issue #95)',
     expect(applied.body).toEqual({
       subjectsCount: expectedSubjects.length,
       objectivesCount: expectedObjectives,
+      reusedObjectivesCount: 0,
     });
     expect('subjectRelevance' in applied.body).toBe(false);
   });

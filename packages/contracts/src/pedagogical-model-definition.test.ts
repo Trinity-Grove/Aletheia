@@ -89,4 +89,49 @@ describe('Pedagogical Model Catalog Entry Contract', () => {
     });
     expect(parsed.description).toBeNull();
   });
+
+  it('validates discovery metadata with an approach, age range and canonical stages', () => {
+    const parsed = pedagogicalModelCatalogEntrySchema.parse({
+      code: 'CHARLOTTE_MASON',
+      name: 'Charlotte Mason',
+      approach: 'CHARLOTTE_MASON',
+      recommendedAgeRange: { min: 6, max: 18 },
+      educationalStages: ['PRIMARY', 'LOWER_SECONDARY', 'UPPER_SECONDARY'],
+    });
+
+    expect(parsed.recommendedAgeRange).toEqual({ min: 6, max: 18 });
+    expect(parsed.educationalStages).toContain('PRIMARY');
+  });
+
+  it('rejects an inverted or out-of-range recommended age range', () => {
+    expect(() =>
+      pedagogicalModelCatalogEntrySchema.parse({
+        code: 'MONTESSORI',
+        name: 'Montessori',
+        approach: 'MONTESSORI',
+        recommendedAgeRange: { min: 18, max: 6 },
+        educationalStages: ['PRIMARY'],
+      }),
+    ).toThrow();
+
+    expect(() =>
+      pedagogicalModelCatalogEntrySchema.parse({
+        code: 'MONTESSORI',
+        name: 'Montessori',
+        approach: 'MONTESSORI',
+        recommendedAgeRange: { min: 2, max: 18 },
+        educationalStages: ['PRIMARY'],
+      }),
+    ).toThrow();
+
+    expect(() =>
+      pedagogicalModelCatalogEntrySchema.parse({
+        code: 'MONTESSORI',
+        name: 'Montessori',
+        approach: 'MONTESSORI',
+        recommendedAgeRange: { min: 6, max: 18 },
+        educationalStages: ['UNKNOWN_STAGE'],
+      }),
+    ).toThrow();
+  });
 });

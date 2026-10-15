@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { definitionStatusSchema } from './curriculum-definitions.js';
+import { universalEducationalStageSchema } from './educational-taxonomy.js';
 
 // --- Pedagogical model definition (Aletheia issue #96, Fase 0) ---
 //
@@ -21,8 +22,39 @@ export const templateSubjectDefinitionSchema = z.object({
 
 export type TemplateSubjectDefinition = z.infer<typeof templateSubjectDefinitionSchema>;
 
+// Published pedagogical model codes are the stable approach identifiers used
+// by the family-facing discovery catalog. CUSTOM is intentionally excluded:
+// it is a learner-plan fallback, not a published catalog model.
+export const pedagogicalModelApproachSchema = z.enum([
+  'CLASSICAL_TRIVIUM',
+  'CHARLOTTE_MASON',
+  'TRADITIONAL',
+  'UNIT_STUDIES',
+  'MONTESSORI',
+  'PROJECT_BASED',
+  'GUIDED_UNSCHOOLING',
+  'ECLECTIC',
+]);
+
+export type PedagogicalModelApproach = z.infer<typeof pedagogicalModelApproachSchema>;
+
+export const recommendedAgeRangeSchema = z
+  .object({
+    min: z.number().int().min(3).max(25),
+    max: z.number().int().min(3).max(25),
+  })
+  .refine(({ min, max }) => min <= max, {
+    message: 'recommendedAgeRange.min must be less than or equal to max',
+    path: ['max'],
+  });
+
+export type RecommendedAgeRange = z.infer<typeof recommendedAgeRangeSchema>;
+
 export const pedagogicalModelMetadataSchema = z.object({
   subjects: z.array(templateSubjectDefinitionSchema).default([]),
+  approach: pedagogicalModelApproachSchema.optional(),
+  recommendedAgeRange: recommendedAgeRangeSchema.optional(),
+  educationalStages: z.array(universalEducationalStageSchema).min(1).optional(),
 });
 
 export type PedagogicalModelMetadata = z.infer<typeof pedagogicalModelMetadataSchema>;
@@ -74,6 +106,9 @@ export const pedagogicalModelCatalogEntrySchema = z.object({
   name: z.string(),
   description: z.string().nullable().optional(),
   subjects: z.array(templateSubjectDefinitionSchema).optional(),
+  approach: pedagogicalModelApproachSchema.optional(),
+  recommendedAgeRange: recommendedAgeRangeSchema.optional(),
+  educationalStages: z.array(universalEducationalStageSchema).min(1).optional(),
 });
 
 export type PedagogicalModelCatalogEntryDto = z.infer<typeof pedagogicalModelCatalogEntrySchema>;

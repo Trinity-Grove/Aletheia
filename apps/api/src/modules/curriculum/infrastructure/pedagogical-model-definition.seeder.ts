@@ -26,7 +26,12 @@ export class PedagogicalModelDefinitionSeeder {
           status: 'PUBLISHED',
           name: row.name,
           description: row.description,
-          metadata: { subjects: row.subjects },
+          metadata: {
+            subjects: row.subjects,
+            approach: row.approach,
+            recommendedAgeRange: row.recommendedAgeRange,
+            educationalStages: row.educationalStages,
+          },
           publishedAt: now,
         },
         update: {},

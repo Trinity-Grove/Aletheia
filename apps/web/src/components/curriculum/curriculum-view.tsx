@@ -177,6 +177,14 @@ export function CurriculumView({
             <span>{t('curriculum.view.packsAndPlugins')}</span>
           </a>
           <a
+            href="/curriculum/explore"
+            className="ui-button ui-button--secondary ui-button--sm curriculum-explore-entry-link"
+            data-testid="explore-curriculum-trails-btn"
+          >
+            <AletheiaIcon name="compass" size="sm" />
+            <span>{t('curriculum.view.exploreTrails')}</span>
+          </a>
+          <a
             href="/curriculum/activities"
             className="ui-button ui-button--secondary ui-button--sm"
             data-testid="explore-family-activities-btn"

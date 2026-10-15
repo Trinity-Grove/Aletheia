@@ -92,7 +92,7 @@ describe('Published pedagogical catalog (real Postgres)', () => {
     const firstId = await createModel(code);
     await publish(firstId);
     const applied = await apply(target, code).expect(201);
-    expect(applied.body).toEqual({ subjectsCount: 1, objectivesCount: 2 });
+    expect(applied.body).toEqual({ subjectsCount: 1, objectivesCount: 2, reusedObjectivesCount: 0 });
     const first = await snapshot(target);
     expect(first.subjects).toHaveLength(1);
     expect(first.subjects[0]).toMatchObject({ name: subjects[0].name, color: subjects[0].color,
@@ -118,7 +118,11 @@ describe('Published pedagogical catalog (real Postgres)', () => {
       expect(afterEdit.subjects).toEqual(first.subjects);
       expect(afterEdit.objectives).toEqual(first.objectives);
     }
-    expect((await apply(target, code).expect(201)).body).toEqual({ subjectsCount: 1, objectivesCount: 1 });
+    expect((await apply(target, code).expect(201)).body).toEqual({
+      subjectsCount: 1,
+      objectivesCount: 1,
+      reusedObjectivesCount: 0,
+    });
     const second = await snapshot(target);
     expect(second.plan).toMatchObject({ id: first.plan.id, pedagogicalModelDefinitionId: secondId });
     expect(second.subjects).toHaveLength(2);
@@ -140,8 +144,11 @@ describe('Published pedagogical catalog (real Postgres)', () => {
     expect(legacy.length).toBeGreaterThan(0);
     expect(traditional!.metadata.subjects).toEqual(legacy);
     const applied = await apply(target, 'CUSTOM').expect(201);
-    expect(applied.body).toEqual({ subjectsCount: legacy.length,
-      objectivesCount: legacy.reduce((count, subject) => count + subject.starterObjectives.length, 0) });
+    expect(applied.body).toEqual({
+      subjectsCount: legacy.length,
+      objectivesCount: legacy.reduce((count, subject) => count + subject.starterObjectives.length, 0),
+      reusedObjectivesCount: 0,
+    });
     const actual = await snapshot(target);
     expect(actual.plan).toMatchObject({ pedagogicalFramework: 'CUSTOM',
       pedagogicalModelDefinitionId: traditional!.id });
