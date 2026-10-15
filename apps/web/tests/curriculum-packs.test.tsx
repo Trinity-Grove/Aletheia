@@ -624,8 +624,8 @@ describe('CurriculumPacksGallery (Task 7 & 8: Plugins / Pacotes Curriculares)', 
       expect(screen.getByText(/Nova revisão do pacote salva com sucesso!/i)).toBeInTheDocument();
     });
 
-    // Check that gallery card badge updated to Rev. 2
-    expect(screen.getByTestId('installed-badge-pack-1')).toHaveTextContent(/Rev\. 2/i);
+    // Check that gallery card badge updated to the localized version label
+    expect(screen.getByTestId('installed-badge-pack-1')).toHaveTextContent(/Versão 2/i);
   });
 
   it('displays error alert when revision save fails or name is empty', async () => {

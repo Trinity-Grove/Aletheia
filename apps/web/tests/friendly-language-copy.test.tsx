@@ -1,4 +1,6 @@
 import React from 'react';
+import fs from 'node:fs';
+import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import { LocaleProvider, type Locale, useLocale } from '../src/lib/i18n/locale-context';
@@ -92,6 +94,30 @@ describe('Friendly multilingual content', () => {
       for (const dictionary of dictionaries.slice(1)) {
         expect(Object.keys(readPath(dictionary, namespace) as object)).toEqual(Object.keys(reference as object));
       }
+    }
+  });
+
+  it('does not keep user-facing pack gallery copy in JSX', () => {
+    const filePath = path.resolve(__dirname, '../src/components/curriculum/curriculum-packs-gallery.tsx');
+    const source = fs.readFileSync(filePath, 'utf8');
+
+    expect(source).toContain("t('curriculum.packs.gallery.galleryTitle')");
+    expect(source).toContain("t('curriculum.packs.gallery.import')");
+    expect(source).toContain("t('curriculum.packs.gallery.loading')");
+    expect(source).toContain("t('curriculum.packs.gallery.empty')");
+
+    for (const literal of [
+      'Galeria de Pacotes Curriculares',
+      'Importar Pacote Curricular',
+      'Voltar ao Currículo',
+      'Carregando pacotes curriculares',
+      'Nenhum pacote curricular encontrado',
+      'Gerenciar Pacote',
+      'Instalar no Currículo',
+      'Conhecer Pacote',
+      'Exportar JSON',
+    ]) {
+      expect(source).not.toContain(literal);
     }
   });
 });
