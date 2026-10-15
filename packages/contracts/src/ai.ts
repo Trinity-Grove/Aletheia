@@ -19,6 +19,7 @@ export type AiProviderName = z.infer<typeof aiProviderNameSchema>;
 
 export const generateLessonPlanDraftRequestSchema = z.object({
   learnerId: z.string().uuid(),
+  activityDefinitionId: z.string().uuid().optional(),
   subject: z.string().min(2).max(80),
   topic: z.string().min(3).max(200),
   targetAge: z.number().int().min(3).max(25).optional(),
