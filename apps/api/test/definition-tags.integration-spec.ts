@@ -161,7 +161,7 @@ describe('Generic definition tagging (real Postgres)', () => {
   });
 
   it('groups tags by namespace/type and filters by prefix', async () => {
-    const stamp = randomUUID().replace(/-/g, '');
+    const stamp = randomUUID().replace(/-/g, '').toUpperCase();
     const first = await supertest(app.getHttpServer())
       .post(`${base}/activity-definitions`)
       .set('Cookie', adminCookie)
