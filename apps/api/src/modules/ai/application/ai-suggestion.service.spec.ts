@@ -52,6 +52,7 @@ describe('AiSuggestionService', () => {
     featureType: 'LESSON_PLAN_DRAFT',
     status: 'PENDING_REVIEW',
     sanitizedPrompt: 'Gere um plano de aula sobre Botânica',
+    catalogContext: null,
     rawModelOutput: {
       title: 'Plano de Aula: Botânica',
       summary: 'Estudo prático sobre folhas e sementes.',
@@ -164,6 +165,9 @@ describe('AiSuggestionService', () => {
         findFirst: jest.fn().mockResolvedValue(null),
       },
       activityDefinition: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
+      learningDomain: {
         findFirst: jest.fn().mockResolvedValue(null),
       },
     };
@@ -360,6 +364,55 @@ describe('AiSuggestionService', () => {
       ).rejects.toThrow(NotFoundException);
 
       expect(providerSpy).not.toHaveBeenCalled();
+    });
+
+    it('should ground the prompt and persisted suggestion in the latest published learning domain', async () => {
+      prisma.learningDomain.findFirst.mockResolvedValueOnce({
+        id: '99999999-9999-4999-a999-999999999999',
+        code: 'SCIENCE',
+        version: 3,
+        status: 'PUBLISHED',
+        isActive: true,
+        name: 'Ciências da Natureza',
+        description: 'Investigação do mundo natural.',
+      });
+      const providerSpy = jest.spyOn(mockLlmProvider, 'generateDraft');
+
+      const result = await service.generateLessonPlanDraft(familyId, actorUserId, {
+        ...validDto,
+        learningDomainCode: 'SCIENCE',
+      });
+
+      expect(prisma.learningDomain.findFirst).toHaveBeenCalledWith({
+        where: { code: 'SCIENCE', status: 'PUBLISHED', isActive: true },
+        orderBy: { version: 'desc' },
+      });
+      expect(providerSpy.mock.calls[0]?.[0]).toContain('Domínio catalogado: SCIENCE (versão 3)');
+      expect(suggestionRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+        catalogContext: {
+          id: '99999999-9999-4999-a999-999999999999',
+          code: 'SCIENCE',
+          version: 3,
+          name: 'Ciências da Natureza',
+          description: 'Investigação do mundo natural.',
+        },
+      }));
+      expect(result.catalogContext).toEqual(expect.objectContaining({ code: 'SCIENCE', version: 3 }));
+    });
+
+    it('should reject an unavailable learning domain before provider call or quota charge', async () => {
+      const providerSpy = jest.spyOn(mockLlmProvider, 'generateDraft');
+
+      await expect(
+        service.generateLessonPlanDraft(familyId, actorUserId, {
+          ...validDto,
+          learningDomainCode: 'UNKNOWN_DOMAIN',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(providerSpy).not.toHaveBeenCalled();
+      expect(quotaService.verifyQuota).not.toHaveBeenCalled();
+      expect(suggestionRepo.create).not.toHaveBeenCalled();
     });
 
     it('should audit sensitive data access, mask prompt, generate draft, record quota, and save suggestion as PENDING_REVIEW', async () => {

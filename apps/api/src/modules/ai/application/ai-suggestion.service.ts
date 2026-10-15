@@ -7,6 +7,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import type {
+  AiCatalogContextDto,
   AiLessonPlanDraftResponseDto,
   AiUsageQuotaResponseDto,
   GenerateLessonPlanDraftRequestDto,
@@ -80,6 +81,36 @@ export class AiSuggestionService implements AiPublicApi {
         termCode: 'AI_PEDAGOGICAL_ASSISTANCE',
         learnerId: dto.learnerId,
       });
+    }
+
+    let catalogContext: AiCatalogContextDto | undefined;
+    let catalogContextPrompt = '';
+    if (dto.learningDomainCode) {
+      const domain = await this.prisma.learningDomain.findFirst({
+        where: {
+          code: dto.learningDomainCode,
+          status: 'PUBLISHED',
+          isActive: true,
+        },
+        orderBy: { version: 'desc' },
+      });
+      if (!domain) {
+        throw new BadRequestException('The selected learning domain is not published or active.');
+      }
+
+      catalogContext = {
+        id: domain.id,
+        code: domain.code,
+        version: domain.version,
+        name: domain.name,
+        description: domain.description,
+      };
+      catalogContextPrompt = [
+        `Domínio catalogado: ${domain.code} (versão ${domain.version}) — ${domain.name}.`,
+        domain.description ? `Descrição do domínio: ${domain.description}.` : '',
+      ]
+        .filter(Boolean)
+        .join(' ');
     }
 
     // 2. Verify quota
@@ -200,6 +231,7 @@ export class AiSuggestionService implements AiPublicApi {
       gradeLevel ? `Ano/Nível: ${gradeLevel}.` : '',
       dto.objectives && dto.objectives.length > 0 ? `Objetivos: ${dto.objectives.join(', ')}.` : '',
       dto.additionalInstructions ? `Instruções adicionais: ${dto.additionalInstructions}` : '',
+      catalogContextPrompt,
       ...profileContext,
       activitySafetyContext,
     ]
@@ -253,6 +285,7 @@ export class AiSuggestionService implements AiPublicApi {
       actorUserId,
       featureType: 'LESSON_PLAN_DRAFT',
       sanitizedPrompt: maskedPrompt,
+      catalogContext: catalogContext ?? null,
       rawModelOutput: rawOutput as any,
       provider: llmResult.provider,
       model: llmResult.model,
@@ -269,6 +302,7 @@ export class AiSuggestionService implements AiPublicApi {
       suggestionId: suggestion.id,
       status: 'PENDING_REVIEW',
       draft: rehydratedDraft,
+      ...(catalogContext ? { catalogContext } : {}),
       metadata: {
         provider: llmResult.provider,
         model: llmResult.model,

@@ -8,6 +8,7 @@ export interface CreateAiSuggestionData {
   actorUserId: string;
   featureType?: AiFeatureType;
   sanitizedPrompt: string;
+  catalogContext?: Prisma.InputJsonValue | null;
   rawModelOutput: Prisma.InputJsonValue;
   provider: string;
   model: string;
@@ -37,6 +38,7 @@ export class AiSuggestionRepository {
         featureType: data.featureType ?? 'LESSON_PLAN_DRAFT',
         status: 'PENDING_REVIEW',
         sanitizedPrompt: data.sanitizedPrompt,
+        catalogContext: data.catalogContext ?? Prisma.JsonNull,
         rawModelOutput: data.rawModelOutput,
         provider: data.provider,
         model: data.model,

@@ -2928,6 +2928,7 @@ model AiSuggestion {
   featureType        AiFeatureType      @map("feature_type")
   status             AiSuggestionStatus @default(PENDING_REVIEW)
   sanitizedPrompt    String             @map("sanitized_prompt") @db.Text
+  catalogContext     Json?              @map("catalog_context")
   rawModelOutput     Json               @map("raw_model_output")
   finalHumanOutput   Json?              @map("final_human_output")
   createdEntityId    String?            @map("created_entity_id") @db.Uuid
