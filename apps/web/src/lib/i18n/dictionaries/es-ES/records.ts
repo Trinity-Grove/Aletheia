@@ -202,6 +202,7 @@ export const records = {
     emptyTitle: 'Ninguna evidencia en el portafolio',
     emptyDesc: '¡Fotografíe cuadernos, dibujos de la naturaleza, agregue audios de narración y celebre el camino educativo!',
     addFirstWork: 'Agregar Primera Obra',
+    exploreCurriculumPacks: 'Explorar materiales didácticos',
     states: {
       readOnlyTitle: 'Portafolio en modo de lectura',
       readOnlyDescription: 'Puede consultar los trabajos, pero no tiene permiso para modificarlos.',
