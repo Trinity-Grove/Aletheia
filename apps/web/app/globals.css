@@ -638,6 +638,169 @@ p.page-subtitle {
   }
 }
 
+/* Longitudinal portfolio view: one readable column on mobile, a calm
+   vertical memory path on larger screens. */
+.portfolio-view-switcher {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+}
+
+.portfolio-view-switcher__tab {
+  border: 0;
+  border-radius: var(--radius-full);
+  padding: 0.55rem 0.9rem;
+  color: var(--text-secondary);
+  background: transparent;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.portfolio-view-switcher__tab--active {
+  color: #fff;
+  background: var(--forest);
+}
+
+.portfolio-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.portfolio-timeline__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.portfolio-timeline__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.portfolio-timeline__year {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.portfolio-timeline__year-title {
+  margin: 0;
+  color: var(--forest);
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+}
+
+.portfolio-timeline__events {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-left: 1.15rem;
+}
+
+.portfolio-timeline__events::before {
+  position: absolute;
+  top: 0.75rem;
+  bottom: 0.75rem;
+  left: 0.4rem;
+  width: 2px;
+  background: var(--border-light);
+  content: '';
+}
+
+.portfolio-timeline__event {
+  position: relative;
+  min-width: 0;
+}
+
+.portfolio-timeline__marker {
+  position: absolute;
+  z-index: 1;
+  top: 1rem;
+  left: -1.15rem;
+  display: grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  border: 2px solid var(--bg-surface);
+  border-radius: 50%;
+  color: var(--forest);
+  background: var(--sage-soft);
+}
+
+.portfolio-timeline__card {
+  min-width: 0;
+  padding: 1rem;
+}
+
+.portfolio-timeline__card-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.portfolio-timeline__kind {
+  color: var(--forest);
+  font-weight: 700;
+}
+
+.portfolio-timeline__card h4 {
+  margin: 0.5rem 0 0;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.portfolio-timeline__card p {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.portfolio-timeline__photo {
+  display: block;
+  width: min(100%, 28rem);
+  max-height: 18rem;
+  margin-top: 0.75rem;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}
+
+@media (max-width: 639px) {
+  .portfolio-view-switcher {
+    width: 100%;
+  }
+
+  .portfolio-view-switcher__tab {
+    flex: 1;
+    padding-inline: 0.5rem;
+  }
+
+  .portfolio-timeline__events {
+    padding-left: 0.9rem;
+  }
+
+  .portfolio-timeline__marker {
+    left: -0.9rem;
+    width: 1.45rem;
+    height: 1.45rem;
+  }
+}
+
 /* Home dashboard page layout */
 .dashboard-page {
   padding: 2rem 1.5rem;

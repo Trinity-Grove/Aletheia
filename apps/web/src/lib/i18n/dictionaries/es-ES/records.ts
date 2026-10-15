@@ -229,6 +229,15 @@ export const records = {
       deleteSuccess: 'Trabajo eliminado.',
       deleteError: 'No se pudo eliminar el trabajo.',
     },
+    timeline: {
+      viewLabel: 'Vista del portafolio',
+      galleryTab: 'Galería',
+      timelineTab: 'Línea del tiempo',
+      legendLabel: 'Tipos de memoria',
+      kinds: { photo: 'Foto', memory: 'Memoria', reflection: 'Reflexión', book: 'Libro terminado', milestone: 'Hito de aprendizaje' },
+      emptyTitle: 'Todavía no hay recuerdos para este educando',
+      emptyDescription: 'Añade un trabajo al portafolio o registra un aprendizaje para comenzar esta historia.',
+    },
   },
   validatedEvidence: {
     modalTitle: 'Agregar evidencia validada al portafolio',

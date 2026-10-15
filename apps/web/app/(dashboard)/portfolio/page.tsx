@@ -15,6 +15,7 @@ import type {
 } from '@aletheia/contracts';
 import { ProductShell } from '../../../src/components/product-shell';
 import { PortfolioGalleryView } from '../../../src/components/records/portfolio-gallery-view';
+import { PortfolioTimelineView } from '../../../src/components/records/portfolio-timeline-view';
 import { PortfolioItemModal } from '../../../src/components/records/portfolio-item-modal';
 import { ValidatedEvidencePromotionModal } from '../../../src/components/records/validated-evidence-promotion-modal';
 import { useOptionalAuth } from '../../../src/lib/auth/auth-context';
@@ -36,6 +37,8 @@ export default function PortfolioPage() {
   const [evidenceTypes, setEvidenceTypes] = useState<EvidenceTypeCatalogEntryDto[]>([]);
   const [pageState, setPageState] = useState<PortfolioPageState>('loading');
   const [portfolioState, setPortfolioState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [portfolioView, setPortfolioView] = useState<'gallery' | 'timeline'>('gallery');
+  const baseDataRequestId = useRef(0);
   const mediaUrlCache = useRef(new Map<string, { url: string; expiresAt: number }>());
   const mediaUrlRequests = useRef(new Map<string, Promise<string | null>>());
   const validatedMediaUrlCache = useRef(new Map<string, { url: string; expiresAt: number }>());
@@ -47,6 +50,7 @@ export default function PortfolioPage() {
   const [itemToEdit, setItemToEdit] = useState<PortfolioItemResponseDto | null>(null);
 
   const loadBaseData = useCallback(async (targetFamilyId: string, resetPortfolioState = true) => {
+    const requestId = ++baseDataRequestId.current;
     setPageState('loading');
     if (resetPortfolioState) setPortfolioState('idle');
 
@@ -68,6 +72,8 @@ export default function PortfolioPage() {
         recordsRes.json() as Promise<LearningRecordResponseDto[]>,
       ]);
 
+      if (requestId !== baseDataRequestId.current) return;
+
       setLearners(learnersData);
       setSubjects(subjectsData);
       setRecords(recordsData);
@@ -77,6 +83,7 @@ export default function PortfolioPage() {
       }
       setPageState('ready');
     } catch {
+      if (requestId !== baseDataRequestId.current) return;
       setPageState('error');
     }
   }, []);
@@ -126,6 +133,7 @@ export default function PortfolioPage() {
   // localStorage fallback used by older dashboard entry points and tests.
   useEffect(() => {
     if (auth?.status === 'loading') {
+      baseDataRequestId.current += 1;
       setFamilyId(null);
       setPageState('loading');
       setPortfolioState('idle');
@@ -137,6 +145,7 @@ export default function PortfolioPage() {
     setFamilyId(resolvedFamilyId);
 
     if (!resolvedFamilyId) {
+      baseDataRequestId.current += 1;
       setPageState('no-family');
       setPortfolioState('idle');
       return;
@@ -371,18 +380,47 @@ export default function PortfolioPage() {
             action={<Button onClick={handleRetry}>{t('reports.pages.portfolio.retry')}</Button>}
           />
         ) : (
-          <PortfolioGalleryView
-            items={portfolioItems}
-            learners={learners}
-            subjects={subjects}
-            activeLearnerId={activeLearnerId}
-            onOpenAddItem={handleOpenAddItem}
-            onEditItem={handleEditItem}
-            onDeleteItem={handleDeleteItem}
-            onResolveMediaUrl={resolvePortfolioMediaUrl}
-            onOpenPromoteValidatedEvidence={() => setIsValidatedEvidenceModalOpen(true)}
-            validatedEvidenceCount={validatedEvidence.filter((submission) => !promotedSubmissionIds.has(submission.id)).length}
-          />
+          <>
+            <div className="portfolio-view-switcher" role="group" aria-label={t('records.portfolio.timeline.viewLabel')}>
+              <button
+                type="button"
+                aria-pressed={portfolioView === 'gallery'}
+                className={`portfolio-view-switcher__tab${portfolioView === 'gallery' ? ' portfolio-view-switcher__tab--active' : ''}`}
+                onClick={() => setPortfolioView('gallery')}
+              >
+                {t('records.portfolio.timeline.galleryTab')}
+              </button>
+              <button
+                type="button"
+                aria-pressed={portfolioView === 'timeline'}
+                className={`portfolio-view-switcher__tab${portfolioView === 'timeline' ? ' portfolio-view-switcher__tab--active' : ''}`}
+                onClick={() => setPortfolioView('timeline')}
+              >
+                {t('records.portfolio.timeline.timelineTab')}
+              </button>
+            </div>
+            {portfolioView === 'timeline' ? (
+              <PortfolioTimelineView
+                items={portfolioItems}
+                records={records}
+                activeLearnerId={activeLearnerId}
+                onResolveMediaUrl={resolvePortfolioMediaUrl}
+              />
+            ) : (
+              <PortfolioGalleryView
+                items={portfolioItems}
+                learners={learners}
+                subjects={subjects}
+                activeLearnerId={activeLearnerId}
+                onOpenAddItem={handleOpenAddItem}
+                onEditItem={handleEditItem}
+                onDeleteItem={handleDeleteItem}
+                onResolveMediaUrl={resolvePortfolioMediaUrl}
+                onOpenPromoteValidatedEvidence={() => setIsValidatedEvidenceModalOpen(true)}
+                validatedEvidenceCount={validatedEvidence.filter((submission) => !promotedSubmissionIds.has(submission.id)).length}
+              />
+            )}
+          </>
         )}
 
         {/* Modal */}

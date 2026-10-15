@@ -229,6 +229,15 @@ export const records = {
       deleteSuccess: 'Trabalho excluído.',
       deleteError: 'Não foi possível excluir o trabalho.',
     },
+    timeline: {
+      viewLabel: 'Visualização do portfólio',
+      galleryTab: 'Galeria',
+      timelineTab: 'Linha do tempo',
+      legendLabel: 'Tipos de memória',
+      kinds: { photo: 'Foto', memory: 'Memória', reflection: 'Reflexão', book: 'Livro concluído', milestone: 'Marco de aprendizagem' },
+      emptyTitle: 'Ainda não há memórias para este educando',
+      emptyDescription: 'Adicione um trabalho ao portfólio ou registre uma aprendizagem para começar a construir esta história.',
+    },
   },
   validatedEvidence: {
     modalTitle: 'Adicionar evidência validada ao portfólio',
