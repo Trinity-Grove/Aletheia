@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { AletheiaIcon, useToast } from '@aletheia/ui';
+import { AletheiaIcon, PageHeader, useToast } from '@aletheia/ui';
 import type {
   CompleteLessonDto,
   CreateLessonPlanDto,
@@ -316,83 +316,68 @@ export default function SchedulePage() {
       activeLearnerId={activeLearnerId}
       onSelectLearner={setActiveLearnerId}
     >
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.5rem 1rem' }}>
+      <div className="page-container">
         {/* Top Header and Navigation Tabs */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '1.5rem',
-            flexWrap: 'wrap',
-            gap: '1rem',
-          }}
-        >
-          <div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-              {t('shared.schedule.title')}
-            </h1>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-              {t('shared.schedule.subtitle')}
-            </p>
-          </div>
-
-          {/* Tab Switcher */}
-          <div
-            style={{
-              display: 'inline-flex',
-              backgroundColor: 'var(--sage-soft)',
-              padding: '0.25rem',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-light)',
-            }}
-          >
-            <button
-              type="button"
-              data-testid="tab-agenda"
-              onClick={() => setActiveTab('agenda')}
+        <PageHeader
+          title={t('shared.schedule.title')}
+          description={t('shared.schedule.subtitle')}
+          action={
+            <div
               style={{
-                padding: '0.5rem 1rem',
-                borderRadius: 'var(--radius-sm)',
-                border: 'none',
-                backgroundColor: activeTab === 'agenda' ? 'var(--bg-surface)' : 'transparent',
-                color: activeTab === 'agenda' ? 'var(--forest)' : 'var(--text-secondary)',
-                fontWeight: activeTab === 'agenda' ? 700 : 500,
-                fontSize: '0.875rem',
-                boxShadow: activeTab === 'agenda' ? 'var(--shadow-sm)' : 'none',
-                cursor: 'pointer',
                 display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
+                backgroundColor: 'var(--sage-soft)',
+                padding: '0.25rem',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-light)',
               }}
             >
-              <AletheiaIcon name="calendar" size="sm" />
-              <span>{t('shared.schedule.dailyAgenda') === 'shared.schedule.dailyAgenda' ? t('shared.schedule.tabAgenda') : t('shared.schedule.dailyAgenda')}</span>
-            </button>
-            <button
-              type="button"
-              data-testid="tab-routine"
-              onClick={() => setActiveTab('routine')}
-              style={{
-                padding: '0.5rem 1rem',
-                borderRadius: 'var(--radius-sm)',
-                border: 'none',
-                backgroundColor: activeTab === 'routine' ? 'var(--bg-surface)' : 'transparent',
-                color: activeTab === 'routine' ? 'var(--forest)' : 'var(--text-secondary)',
-                fontWeight: activeTab === 'routine' ? 700 : 500,
-                fontSize: '0.875rem',
-                boxShadow: activeTab === 'routine' ? 'var(--shadow-sm)' : 'none',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-              }}
-            >
-              <AletheiaIcon name="calendar-range" size="sm" />
-              <span>{t('shared.schedule.weeklyRoutine') === 'shared.schedule.weeklyRoutine' ? t('shared.schedule.tabRoutine') : t('shared.schedule.weeklyRoutine')}</span>
-            </button>
-          </div>
-        </div>
+              <button
+                type="button"
+                data-testid="tab-agenda"
+                onClick={() => setActiveTab('agenda')}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: 'none',
+                  backgroundColor: activeTab === 'agenda' ? 'var(--bg-surface)' : 'transparent',
+                  color: activeTab === 'agenda' ? 'var(--forest)' : 'var(--text-secondary)',
+                  fontWeight: activeTab === 'agenda' ? 700 : 500,
+                  fontSize: '0.875rem',
+                  boxShadow: activeTab === 'agenda' ? 'var(--shadow-sm)' : 'none',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                }}
+              >
+                <AletheiaIcon name="calendar" size="sm" />
+                <span>{t('shared.schedule.dailyAgenda') === 'shared.schedule.dailyAgenda' ? t('shared.schedule.tabAgenda') : t('shared.schedule.dailyAgenda')}</span>
+              </button>
+              <button
+                type="button"
+                data-testid="tab-routine"
+                onClick={() => setActiveTab('routine')}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: 'none',
+                  backgroundColor: activeTab === 'routine' ? 'var(--bg-surface)' : 'transparent',
+                  color: activeTab === 'routine' ? 'var(--forest)' : 'var(--text-secondary)',
+                  fontWeight: activeTab === 'routine' ? 700 : 500,
+                  fontSize: '0.875rem',
+                  boxShadow: activeTab === 'routine' ? 'var(--shadow-sm)' : 'none',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                }}
+              >
+                <AletheiaIcon name="calendar-range" size="sm" />
+                <span>{t('shared.schedule.weeklyRoutine') === 'shared.schedule.weeklyRoutine' ? t('shared.schedule.tabRoutine') : t('shared.schedule.weeklyRoutine')}</span>
+              </button>
+            </div>
+          }
+        />
 
         {loading ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>

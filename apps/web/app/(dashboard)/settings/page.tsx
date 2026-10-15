@@ -3,7 +3,7 @@ import { SupportWidgetPreferencesCard } from '../../../src/components/settings/s
 
 import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { AletheiaIcon } from '@aletheia/ui';
+import { AletheiaIcon, PageHeader } from '@aletheia/ui';
 import type {
   AccountAuditLogEntryDto,
   DataExportJobResponseDto,
@@ -305,15 +305,12 @@ function SettingsPageContent() {
       onMarkNotificationAsRead={handleMarkNotificationAsRead}
       onMarkAllNotificationsAsRead={handleMarkAllNotificationsAsRead}
     >
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem' }}>
-        <div style={{ marginBottom: '2rem' }}>
-          <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-            {t('settings.pageTitle')}
-          </h1>
-          <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', margin: '0.375rem 0 0 0' }}>
-            {t('settings.pageDescription')}
-          </p>
-        </div>
+      <div className="page-container">
+        <PageHeader
+          title={t('settings.pageTitle')}
+          description={t('settings.pageDescription')}
+        />
+
 
         {loading ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>

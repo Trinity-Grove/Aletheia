@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert } from '@aletheia/ui';
+import { Alert, PageHeader } from '@aletheia/ui';
 import type {
   CreatePrayerDto,
   DailyDevotionalResponseDto,
@@ -193,15 +193,11 @@ export default function DevotionalPage({
 
   return (
     <ProductShell currentPath="/devotional">
-      <div className="devotional-page-container" style={{ padding: '2rem 1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ marginBottom: '2rem' }}>
-          <h1 className="page-title" style={{ margin: 0, fontSize: '1.75rem', fontWeight: 700 }}>
-            {t('devotional.page.title')}
-          </h1>
-          <p className="page-subtitle" style={{ margin: '0.25rem 0 0 0', color: 'var(--text-secondary)', fontSize: '1rem' }}>
-            {t('devotional.page.subtitle')}
-          </p>
-        </div>
+      <div className="page-container devotional-page-container">
+        <PageHeader
+          title={t('devotional.page.title')}
+          description={t('devotional.page.subtitle')}
+        />
 
         {loadError && (
           <Alert variant="error" style={{ marginBottom: '1.5rem' }}>

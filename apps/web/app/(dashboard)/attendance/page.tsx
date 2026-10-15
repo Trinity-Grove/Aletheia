@@ -9,6 +9,7 @@ import type {
   LearnerSummaryDto,
   LogAttendanceDto,
 } from '@aletheia/contracts';
+import { PageHeader } from '@aletheia/ui';
 import { ProductShell } from '../../../src/components/product-shell';
 import { AttendanceTrackerView } from '../../../src/components/reports/attendance-tracker-view';
 import { ComplianceEvaluationPanel } from '../../../src/components/compliance/compliance-evaluation-panel';
@@ -151,15 +152,11 @@ export default function AttendancePage() {
       activeLearnerId={activeLearnerId}
       onSelectLearner={setActiveLearnerId}
     >
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.5rem 1rem' }}>
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-            {t('attendance.page.title')}
-          </h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-            {t('attendance.page.subtitle')}
-          </p>
-        </div>
+      <div className="page-container">
+        <PageHeader
+          title={t('attendance.page.title')}
+          description={t('attendance.page.subtitle')}
+        />
 
         {loading ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>

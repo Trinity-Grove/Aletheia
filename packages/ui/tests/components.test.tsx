@@ -216,6 +216,18 @@ describe('@aletheia/ui Component Primitives', () => {
       expect(screen.getByTestId('page-header-action')).toHaveTextContent('Novo Registro');
     });
 
+    it('renders PageHeader with titleAdornment and BEM class names', () => {
+      render(
+        <PageHeader
+          title="Currículo do Educando"
+          titleAdornment={<span data-testid="test-adornment">Badge</span>}
+        />
+      );
+
+      expect(screen.getByTestId('page-header-title')).toHaveClass('ui-page-header__title');
+      expect(screen.getByTestId('page-header-title-adornment')).toContainElement(screen.getByTestId('test-adornment'));
+    });
+
     it('renders ScriptureCard with verse and citation', () => {
       render(
         <ScriptureCard

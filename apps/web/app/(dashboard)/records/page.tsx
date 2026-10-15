@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { useToast } from '@aletheia/ui';
+import { PageHeader, useToast } from '@aletheia/ui';
 import type {
   CreateLearningRecordDto,
   CreatePortfolioItemDto,
@@ -288,16 +288,12 @@ export default function RecordsPage() {
       activeLearnerId={activeLearnerId}
       onSelectLearner={setActiveLearnerId}
     >
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.5rem 1rem' }}>
-        {/* Header */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-            {t('records.page.title')}
-          </h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-            {t('records.page.subtitle')}
-          </p>
-        </div>
+      <div className="page-container">
+        <PageHeader
+          title={t('records.page.title')}
+          description={t('records.page.subtitle')}
+        />
+
 
         {/* Tab switcher (issue #126 item 3): "Competências" is additive
             alongside the existing "Diário" tab -- the existing Diario de
