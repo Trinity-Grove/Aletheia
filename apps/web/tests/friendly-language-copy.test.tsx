@@ -120,4 +120,27 @@ describe('Friendly multilingual content', () => {
       expect(source).not.toContain(literal);
     }
   });
+
+  it('does not keep user-facing family pack editor copy in JSX', () => {
+    const filePath = path.resolve(__dirname, '../src/components/curriculum/family-curriculum-pack-modal.tsx');
+    const source = fs.readFileSync(filePath, 'utf8');
+
+    expect(source).toContain("t('curriculum.packs.editor.editorTitle'");
+    expect(source).toContain("t('curriculum.packs.editor.mediaTab'");
+    expect(source).toContain("t('curriculum.packs.editor.revisionsTab'");
+    expect(source).toContain("t('curriculum.packs.editor.editorTab'");
+
+    for (const literal of [
+      'Pacote Curricular',
+      'Mídias & Anexos',
+      'Histórico de Revisões',
+      'Personalizar Conteúdo',
+      'Anexar Novo Material ou Link Complementar',
+      'Mídias Complementares da Família',
+      'Linha do Tempo de Revisões',
+      'Salvar Nova Revisão',
+    ]) {
+      expect(source).not.toContain(literal);
+    }
+  });
 });

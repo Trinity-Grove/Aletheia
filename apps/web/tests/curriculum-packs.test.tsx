@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { CurriculumPacksGallery } from '../src/components/curriculum/curriculum-packs-gallery';
 import { AuthorTrustBadge } from '../src/components/curriculum/author-trust-badge';
 import { LocaleProvider } from '../src/lib/i18n/locale-context';
@@ -257,7 +257,7 @@ describe('CurriculumPacksGallery (Task 7 & 8: Plugins / Pacotes Curriculares)', 
         description: 'Guia complementar de apoio',
       });
       expect(screen.getByText('Guia de Leitura em PDF')).toBeInTheDocument();
-      expect(screen.getByTestId('pack-modal-success')).toHaveTextContent(/Mídia complementar anexada com sucesso/i);
+      expect(screen.getByTestId('pack-modal-success')).toHaveTextContent(/Mídia adicionada com sucesso/i);
     });
   });
 
@@ -462,9 +462,10 @@ describe('CurriculumPacksGallery (Task 7 & 8: Plugins / Pacotes Curriculares)', 
     fireEvent.click(screen.getByTestId('pack-modal-tab-revisions'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('pack-revisions-list')).toBeInTheDocument();
-      expect(screen.getByText(/Revisão 2/i)).toBeInTheDocument();
-      expect(screen.getByText(/Revisão 1/i)).toBeInTheDocument();
+      const revisionsList = screen.getByTestId('pack-revisions-list');
+      expect(revisionsList).toBeInTheDocument();
+      expect(within(revisionsList).getByText(/Versão 2/i)).toBeInTheDocument();
+      expect(within(revisionsList).getByText(/Versão 1/i)).toBeInTheDocument();
     });
   });
 
@@ -621,7 +622,7 @@ describe('CurriculumPacksGallery (Task 7 & 8: Plugins / Pacotes Curriculares)', 
       expect(putPayload.document.pack.name).toBe('Trivium Clássico Customizado da Família Silva');
       expect(putPayload.document.pack.metadata.familyNotes).toBe('Enfatizar leitura em voz alta às quintas.');
       expect(screen.getByTestId('pack-edit-success-alert')).toBeInTheDocument();
-      expect(screen.getByText(/Nova revisão do pacote salva com sucesso!/i)).toBeInTheDocument();
+      expect(screen.getByText(/Nova versão salva com sucesso\./i)).toBeInTheDocument();
     });
 
     // Check that gallery card badge updated to the localized version label
@@ -671,7 +672,7 @@ describe('CurriculumPacksGallery (Task 7 & 8: Plugins / Pacotes Curriculares)', 
 
     await waitFor(() => {
       expect(screen.getByTestId('pack-edit-error-alert')).toHaveTextContent(
-        'O nome do pacote não pode ficar vazio.'
+        'O nome do material não pode ficar vazio.'
       );
     });
 
@@ -681,7 +682,7 @@ describe('CurriculumPacksGallery (Task 7 & 8: Plugins / Pacotes Curriculares)', 
 
     await waitFor(() => {
       expect(screen.getByTestId('pack-edit-error-alert')).toHaveTextContent(
-        'Documento inválido rejeitado pelo servidor.'
+        'Não foi possível salvar a nova versão.'
       );
     });
   });
