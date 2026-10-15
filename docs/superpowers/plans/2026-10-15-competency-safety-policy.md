@@ -44,7 +44,7 @@
 - [x] **Step 3: Implement the minimal strict schema** and cross-field `superRefine` rules in `curriculum-definitions.ts`.
 - [x] **Step 4: Run `pnpm --filter @aletheia/contracts test -- curriculum-definitions.test.ts` and verify all focused tests pass.**
 - [x] **Step 5: Run `pnpm --filter @aletheia/contracts typecheck`.**
-- [ ] **Step 6: Commit** with `feat(contracts): validate competency safety policies`.
+- [x] **Step 6: Commit** with `feat(contracts): validate competency safety policies`.
 
 ### Task 2: Real admin API round-trip
 
@@ -58,7 +58,7 @@
 - [x] **Step 1: Write the integration test** with a platform-admin session, a prerequisite learning domain, and a competency containing a valid high-risk policy; assert the create response and subsequent list response preserve every policy field.
 - [x] **Step 2: Add negative requests** for high risk with no supervision and adult-only without consent; assert `400`.
 - [x] **Step 3: Run the focused integration test against real Postgres.** Expected: pass in the CI Postgres job; local environments without Postgres should report only the environmental connection failure.
-- [ ] **Step 4: Commit** with `test(curriculum): cover competency safety policy persistence`.
+- [x] **Step 4: Commit** with `test(curriculum): cover competency safety policy persistence`.
 
 ### Task 3: Repository-wide verification and handoff
 
@@ -68,5 +68,5 @@
 - [x] **Step 1: Run `pnpm --filter @aletheia/api typecheck` and `pnpm --filter @aletheia/api lint`.**
 - [x] **Step 2: Run `pnpm --filter @aletheia/api test` and `pnpm --filter @aletheia/contracts test`.**
 - [x] **Step 3: Run `pnpm check:boundaries`, `pnpm check:no-sibling-comparison`, `pnpm audit:i18n`, and `git diff --check`.**
-- [ ] **Step 4: Run the CI-equivalent integration suite when Postgres is available.**
+- [ ] **Step 4: Run the CI-equivalent integration suite when Postgres is available.** Local execution was attempted and blocked by the unavailable local Postgres; CI remains authoritative for this real-database check.
 - [ ] **Step 5: Commit any verification-only correction, push, open the PR using the repository's conventional title/body style, and merge only after all four CI jobs are green.**
