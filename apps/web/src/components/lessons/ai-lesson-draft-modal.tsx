@@ -14,6 +14,7 @@ import type {
   AiLessonPlanDraftResponseDto,
   AiUsageQuotaResponseDto,
   GenerateLessonPlanDraftRequestDto,
+  LearningDomainCatalogEntryDto,
   LearnerSummaryDto,
   LessonPlanDraftContent,
   LessonPlanDraftStep,
@@ -57,6 +58,8 @@ export function AiLessonDraftModal({
   const [topic, setTopic] = useState<string>('');
   const [durationMinutes, setDurationMinutes] = useState<number>(45);
   const [instructions, setInstructions] = useState<string>('');
+  const [learningDomainCode, setLearningDomainCode] = useState<string>('');
+  const [learningDomains, setLearningDomains] = useState<LearningDomainCatalogEntryDto[]>([]);
 
   // Quota & Consent State
   const [quota, setQuota] = useState<AiUsageQuotaResponseDto | null>(null);
@@ -74,6 +77,7 @@ export function AiLessonDraftModal({
   const [draftDate, setDraftDate] = useState<string>('');
   const [draftSteps, setDraftSteps] = useState<LessonPlanDraftStep[]>([]);
   const [draftAssessment, setDraftAssessment] = useState<string>('');
+  const [catalogContext, setCatalogContext] = useState<AiLessonPlanDraftResponseDto['catalogContext']>();
 
   // Fetch quota
   const fetchQuota = useCallback(async () => {
@@ -91,6 +95,23 @@ export function AiLessonDraftModal({
     }
   }, [familyId]);
 
+  const fetchLearningDomains = useCallback(async () => {
+    if (!familyId) return;
+    try {
+      const res = await fetch(`/api/v1/families/${familyId}/curriculum/learning-domains/catalog`, {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setLearningDomains(await res.json());
+      } else {
+        setLearningDomains([]);
+      }
+    } catch {
+      // Catalog discovery is optional; legacy AI generation remains available.
+      setLearningDomains([]);
+    }
+  }, [familyId]);
+
   // Reset or initialize state when opening
   useEffect(() => {
     if (isOpen) {
@@ -100,11 +121,14 @@ export function AiLessonDraftModal({
       setTopic('');
       setDurationMinutes(45);
       setInstructions('');
+      setLearningDomainCode('');
+      setCatalogContext(undefined);
       setErrorMessage(null);
       setDraftDate(initialDate || new Date().toISOString().split('T')[0]!);
       void fetchQuota();
+      void fetchLearningDomains();
     }
-  }, [isOpen, initialLearnerId, initialSubjectId, initialDate, learners, subjects, fetchQuota]);
+  }, [isOpen, initialLearnerId, initialSubjectId, initialDate, learners, subjects, fetchQuota, fetchLearningDomains]);
 
   // Handle draft generation
   const handleGenerateDraft = async () => {
@@ -122,6 +146,7 @@ export function AiLessonDraftModal({
       topic: topic.trim(),
       durationMinutes: Number(durationMinutes) || 45,
       additionalInstructions: instructions.trim() || undefined,
+      learningDomainCode: learningDomainCode || undefined,
     };
 
     try {
@@ -160,6 +185,7 @@ export function AiLessonDraftModal({
       );
       setDraftSteps(data.draft.steps || []);
       setDraftAssessment(data.draft.assessmentObservations || '');
+      setCatalogContext(data.catalogContext);
       setMode('REVIEW');
     } catch {
       setErrorMessage(t('lessons.aiAssistant.genericError'));
@@ -370,6 +396,18 @@ export function AiLessonDraftModal({
                 }))}
               />
 
+              <Select
+                data-testid="ai-learning-domain-select"
+                label={t('lessons.aiAssistant.learningDomainLabel')}
+                helperText={t('lessons.aiAssistant.learningDomainHelper')}
+                value={learningDomainCode}
+                onChange={(e) => setLearningDomainCode(e.target.value)}
+                options={[
+                  { value: '', label: t('lessons.aiAssistant.learningDomainNone') },
+                  ...learningDomains.map((domain) => ({ value: domain.code, label: `${domain.name} (${domain.code})` })),
+                ]}
+              />
+
               {/* Topic Input */}
               <Input
                 data-testid="ai-topic-input"
@@ -454,6 +492,18 @@ export function AiLessonDraftModal({
               <Alert variant="info" title={t('lessons.aiAssistant.humanReviewRequired')}>
                 {t('lessons.aiAssistant.reviewNotice')}
               </Alert>
+
+              {catalogContext && (
+                <Alert variant="info" title={t('lessons.aiAssistant.catalogContextTitle')}>
+                  <span data-testid="ai-catalog-context">
+                    {t('lessons.aiAssistant.catalogContextDescription', {
+                      name: catalogContext.name,
+                      code: catalogContext.code,
+                      version: catalogContext.version,
+                    })}
+                  </span>
+                </Alert>
+              )}
 
               {/* Draft Title */}
               <Input

@@ -78,6 +78,19 @@ export const learningDomainResponseSchema = z.object({
 
 export type LearningDomainResponseDto = z.infer<typeof learningDomainResponseSchema>;
 
+// Family-facing catalog entry used by AI-assisted lesson planning. It keeps
+// only the public, immutable snapshot fields needed to select a domain and
+// explain which catalog context grounded the generated draft.
+export const learningDomainCatalogEntrySchema = z.object({
+  id: z.string().uuid(),
+  code: z.string(),
+  version: z.number().int().positive(),
+  name: z.string(),
+  description: z.string().nullable(),
+});
+
+export type LearningDomainCatalogEntryDto = z.infer<typeof learningDomainCatalogEntrySchema>;
+
 export const updateLearningDomainActivationSchema = z.object({
   isActive: z.boolean(),
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   createLearningDomainSchema,
+  learningDomainCatalogEntrySchema,
   createCompetencyDefinitionSchema,
   definitionStatusSchema,
   updateLearningDomainActivationSchema,
@@ -39,6 +40,19 @@ describe('Curriculum Definition Contracts', () => {
   it('requires an explicit activation state', () => {
     expect(updateLearningDomainActivationSchema.parse({ isActive: false })).toEqual({ isActive: false });
     expect(() => updateLearningDomainActivationSchema.parse({})).toThrow();
+  });
+
+  it('accepts a family-facing published learning domain catalog entry', () => {
+    const parsed = learningDomainCatalogEntrySchema.parse({
+      id: DOMAIN_ID,
+      code: 'MUSIC',
+      version: 2,
+      name: 'Música',
+      description: 'Formação musical prática.',
+    });
+
+    expect(parsed.version).toBe(2);
+    expect(parsed.description).toBe('Formação musical prática.');
   });
 
   it('validates a learning domain with a parent', () => {
