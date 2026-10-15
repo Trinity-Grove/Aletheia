@@ -602,6 +602,16 @@ p.page-subtitle {
   min-width: 0;
 }
 
+.portfolio-header-banner__right,
+.portfolio-header-banner__actions {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.portfolio-header-banner__actions .ui-button {
+  max-width: 100%;
+}
+
 .portfolio-filter-bar .ui-form-group {
   min-width: min(180px, 100%);
   flex: 1 1 180px;
@@ -616,6 +626,16 @@ p.page-subtitle {
 }
 
 @media (max-width: 640px) {
+  .portfolio-header-banner__right {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .portfolio-header-banner__actions {
+    flex: 1 1 100%;
+    justify-content: flex-start !important;
+  }
+
   .portfolio-form-grid {
     grid-template-columns: minmax(0, 1fr) !important;
   }
