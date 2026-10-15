@@ -6,6 +6,8 @@
 
 **Architecture:** Introdução da classe `.page-container` em `apps/web/app/globals.css` com largura máxima de `76rem` e paddings responsivos padronizados; refatoração das 10 rotas de primeiro nível (`/attendance`, `/curriculum`, `/devotional`, `/learners`, `/portfolio`, `/records`, `/reports`, `/schedule`, `/settings`, `/support`) com preservação dos cabeçalhos especiais de currículo e suporte; preservação integral de IDs de teste, sem fixar previamente a quantidade de testes.
 
+**Delivery strategy:** executar em duas fases independentes: (1) consolidar o contrato do design system (`.page-container`, `PageHeader`, tokens e testes); (2) migrar as rotas padrão e depois tratar `/curriculum` e `/support` como exceções visuais controladas. Evitar misturar nesta entrega refatorações não relacionadas.
+
 **Tech Stack:** React 19, Next.js 15, TypeScript 5.9, `@aletheia/ui`, `@aletheia/contracts`, Vitest, Testing Library.
 
 **Spec:** `docs/superpowers/specs/2026-10-14-ds-typography-harmonization-design.md`
@@ -19,6 +21,31 @@
 - Static i18n scanner `pnpm audit:i18n` MUST maintain its current coverage with no new hardcoded strings.
 - Strict typing (TypeScript 5.9) and lint without introducing unrelated refactors.
 - Compatibility with `exactOptionalPropertyTypes: true`.
+
+### Route migration matrix
+
+| Rota | Estratégia | Regressões proibidas |
+| --- | --- | --- |
+| `/attendance`, `/learners`, `/devotional`, `/records`, `/portfolio`, `/reports`, `/settings` | `PageHeader` + `.page-container` | título, descrição, ações, loading, testids e navegação |
+| `/schedule` | `PageHeader` + tabs em `action` | `tab-agenda`, `tab-routine`, roles, estado ativo e foco |
+| `/curriculum` | shell especial ou `PageHeader` com `titleAdornment` | badge pedagógico, seletor de ano, links e ações curriculares |
+| `/support` | banner especial com `PageHeader` integrado | ícone, três benefícios, formulário, recibos e layout mobile |
+
+---
+
+### Task 0: Consolidar o contrato do `PageHeader` e a matriz de migração
+
+**Files:**
+- Modify: `packages/ui/src/components/page-header.tsx`
+- Modify: `packages/ui/src/index.ts` only if the public export changes
+- Modify: `apps/web/app/globals.css`
+- Create or extend: tests do `@aletheia/ui` e `apps/web/tests/design-system-harmonization.test.tsx`
+
+- [ ] Definir as classes estáveis `.ui-page-header`, `.ui-page-header__title`, `.ui-page-header__description` e `.ui-page-header__action`.
+- [ ] Migrar a tipografia e o layout do `PageHeader` de estilos inline para CSS/tokens, preservando API e consumidores existentes.
+- [ ] Adicionar `titleAdornment` somente se for necessário para o badge do currículo; caso contrário, registrar `/curriculum` como exceção customizada.
+- [ ] Cobrir o contrato com testes de renderização, incluindo `title`, `description`, `action`, `eyebrow` e `titleAdornment` quando existir.
+- [ ] Validar o contrato antes de iniciar a migração das rotas.
 
 ---
 
@@ -71,7 +98,7 @@ describe('Design System Harmonization (ALET-B05)', () => {
 
     const title = screen.getByTestId('page-header-title');
     expect(title).toHaveTextContent('Harmonized Title');
-    expect(title.style.fontFamily).toBe('var(--font-serif)');
+    expect(title).toHaveClass('ui-page-header__title');
 
     const desc = screen.getByTestId('page-header-description');
     expect(desc).toHaveTextContent('Harmonized Subtitle');
@@ -383,7 +410,10 @@ Expected: 0 errors
 Run: `pnpm --filter @aletheia/web lint`
 Expected: 0 errors
 
-Validação final obrigatória: smoke visual das dez rotas em 320px, 375px, 640px, 768px e desktop, verificando ausência de overflow horizontal, um único `h1`, preservação dos testids/ARIA e manutenção do conteúdo especial de currículo, suporte e configurações.
+Run: `pnpm --filter @aletheia/web test:e2e:visual`
+Expected: smoke visual aprovado nos cenários B05 disponíveis
+
+Validação final obrigatória: smoke visual das dez rotas em 320px, 375px, 640px, 768px e desktop, verificando ausência de overflow horizontal, um único `h1`, preservação dos testids/ARIA e manutenção do conteúdo especial de currículo, suporte e configurações. Se ainda não houver cenário visual para alguma rota, registrar a lacuna e não declarar cobertura total.
 
 - [ ] **Step 5: Commit das alterações da Task 4**
 

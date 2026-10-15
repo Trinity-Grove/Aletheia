@@ -18,6 +18,15 @@ O escopo desta entrega são as dez rotas de primeiro nível listadas abaixo. Rot
 
 Ficam fora deste escopo, salvo decisão registrada, `/curriculum/activities`, `/curriculum/packs`, `/curriculum/seminary`, `/devotional/comparador`, `/settings/privacy`, `/design-system`, `/legal-guide` e `/onboarding`.
 
+### 2.2. Estratégia de entrega
+
+A implementação deve ocorrer em duas fases:
+
+1. **Contrato do design system**: consolidar `.page-container`, migrar o `PageHeader` para classes CSS/tokens e criar os testes de contrato/responsividade.
+2. **Migração de rotas**: aplicar o contrato às páginas padrão e, em seguida, tratar `/curriculum` e `/support` como páginas especiais, preservando seus elementos de marca e comportamento.
+
+Não misturar a migração das dez rotas com uma refatoração ampla não relacionada.
+
 1. **Padronização do Contêiner Global (`.page-container`)**:
    - Criar e padronizar a classe utilitária semântica `.page-container` em `apps/web/app/globals.css`.
    - Largura máxima unificada: `76rem` (`1216px`), centralizada (`margin-left: auto; margin-right: auto;`).
@@ -100,7 +109,18 @@ Renderizando:
 </header>
 ```
 
-O uso de `<PageHeader>` nesta issue consome os estilos institucionais existentes. A migração interna dos estilos inline do próprio componente para classes CSS/tokens não é implícita nesta entrega; caso seja necessária para a governança do design system, deve entrar como tarefa explícita e cobrir todos os consumidores.
+O `PageHeader` deve expor classes estáveis para seu layout e tipografia (`ui-page-header`, `ui-page-header__title`, `ui-page-header__description`, `ui-page-header__action`) e consumir tokens CSS, evitando estilos inline no componente. A migração deve preservar os consumidores existentes e ser coberta por teste de contrato.
+
+`/curriculum` e `/support` são exceções visuais controladas: podem manter um shell customizado, desde que usem os mesmos tokens, tenham um único `h1`, preservem os `data-testid`/ARIA existentes e não criem um segundo container estrutural.
+
+### 3.3. Matriz de migração por rota
+
+| Rota | Tratamento | Elementos que não podem regredir |
+| --- | --- | --- |
+| `/attendance`, `/learners`, `/devotional`, `/records`, `/portfolio`, `/reports`, `/settings` | `PageHeader` + `.page-container` | título, descrição, ações, loading, testids e navegação |
+| `/schedule` | `PageHeader` + tabs em `action` | `tab-agenda`, `tab-routine`, roles, estado ativo e foco |
+| `/curriculum` | shell especial ou `PageHeader` com `titleAdornment` | badge pedagógico, seletor de ano, links e ações curriculares |
+| `/support` | banner especial com `PageHeader` integrado | ícone, três benefícios, formulário, recibos e layout mobile |
 
 ## 4. Plano de Testes & Verificação
 
