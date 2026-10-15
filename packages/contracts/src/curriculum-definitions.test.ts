@@ -71,6 +71,52 @@ describe('Curriculum Definition Contracts', () => {
     expect(parsed.metadata.evidenceTypes).toEqual(['video', 'mentor_assessment']);
   });
 
+  it('accepts a structured safety policy and keeps existing competencies without one valid', () => {
+    const parsed = createCompetencyDefinitionSchema.parse({
+      code: 'TRADES.WOODWORKING.SAFE_TOOL_USE',
+      domainId: DOMAIN_ID,
+      title: 'Usar ferramentas com segurança',
+      metadata: {
+        safetyPolicy: {
+          riskLevel: 'HIGH',
+          supervision: 'ADULT_ONLY',
+          minimumAge: 12,
+          requiresAdultConsent: true,
+          requiredTrainingCodes: ['SAFETY.TOOL.INTRO'],
+          instructions: 'Use equipamento de proteção e realize a atividade com um adulto responsável.',
+        },
+      },
+    });
+
+    expect(parsed.metadata.safetyPolicy).toEqual({
+      riskLevel: 'HIGH',
+      supervision: 'ADULT_ONLY',
+      minimumAge: 12,
+      requiresAdultConsent: true,
+      requiredTrainingCodes: ['SAFETY.TOOL.INTRO'],
+      instructions: 'Use equipamento de proteção e realize a atividade com um adulto responsável.',
+    });
+    expect(createCompetencyDefinitionSchema.parse({
+      code: 'MUSIC.PIANO.LEVEL_01',
+      domainId: DOMAIN_ID,
+      title: 'Postura básica',
+    }).metadata.safetyPolicy).toBeUndefined();
+  });
+
+  it.each([
+    ['rejects high risk without required supervision', { riskLevel: 'HIGH', supervision: 'NONE' }],
+    ['rejects adult-only supervision without adult consent', { riskLevel: 'MODERATE', supervision: 'ADULT_ONLY' }],
+    ['rejects malformed required training codes', { riskLevel: 'LOW', supervision: 'RECOMMENDED', requiredTrainingCodes: ['unsafe code'] }],
+    ['rejects unknown safety policy fields', { riskLevel: 'LOW', supervision: 'NONE', unsupportedFlag: true }],
+  ])('%s', (_name, safetyPolicy) => {
+    expect(() => createCompetencyDefinitionSchema.parse({
+      code: 'TRADES.WOODWORKING.SAFE_TOOL_USE',
+      domainId: DOMAIN_ID,
+      title: 'Usar ferramentas com segurança',
+      metadata: { safetyPolicy },
+    })).toThrow();
+  });
+
   it('rejects an invalid competency assessment policy type', () => {
     expect(() =>
       createCompetencyDefinitionSchema.parse({
