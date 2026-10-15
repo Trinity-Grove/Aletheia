@@ -1,6 +1,6 @@
 export const learners = {
-  title: 'Gestão de Educandos',
-  subtitle: 'Gerencie os perfis pedagógicos e etapas de desenvolvimento dos seus filhos.',
+  title: 'Educandos',
+  subtitle: 'Cadastre seus filhos ou estudantes e acompanhe a jornada de cada um.',
   addLearner: '+ Adicionar Educando',
   loadError: 'Não foi possível carregar os educandos.',
   loadErrorConnection: 'Não foi possível carregar os educandos. Verifique sua conexão.',

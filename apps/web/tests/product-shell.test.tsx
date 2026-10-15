@@ -132,7 +132,7 @@ describe('ProductShell adapter', () => {
       </ProductShell>,
     );
 
-    const link = screen.getByRole('link', { name: 'Amparo Legal' });
+    const link = screen.getByRole('link', { name: 'Guia legal' });
     expect(link).toHaveAttribute('href', '/legal-guide');
     expect(link).toHaveAttribute('aria-current', 'page');
   });
@@ -262,7 +262,7 @@ describe('ProductShell adapter', () => {
       </ProductShell>,
     );
 
-    expect(screen.getByRole('link', { name: 'Diário de Aprendizagem' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Diário de aprendizagem' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Relatórios' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Configurações' })).not.toBeInTheDocument();
   });

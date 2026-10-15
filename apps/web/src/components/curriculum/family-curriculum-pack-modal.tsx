@@ -53,7 +53,7 @@ export function FamilyCurriculumPackModal({
   catalogPack,
   onPackUpdated,
 }: FamilyCurriculumPackModalProps) {
-  const { t } = useLocale();
+  const { t, formatDate, formatTime, formatNumber } = useLocale();
   const [activeTab, setActiveTab] = useState<'media' | 'revisions' | 'editor'>('media');
 
   // Media state
@@ -77,7 +77,7 @@ export function FamilyCurriculumPackModal({
   const [revisionsList, setRevisionsList] = useState<FamilyCurriculumPackRevisionResponseDto[]>([]);
   const [loadingRevisions, setLoadingRevisions] = useState(false);
 
-  const packName = catalogPack?.name || installedPack?.sourcePackCode || 'Pacote Curricular';
+  const packName = catalogPack?.name || installedPack?.sourcePackCode || t('curriculum.packs.editor.defaultName');
 
   const loadMedia = async () => {
     if (!installedPack) return;
@@ -93,7 +93,7 @@ export function FamilyCurriculumPackModal({
         setMediaList(Array.isArray(data) ? data : []);
       }
     } catch {
-      setMediaError('Falha ao carregar mídias complementares.');
+      setMediaError(t('curriculum.packs.editor.mediaLoadError'));
     } finally {
       setLoadingMedia(false);
     }
@@ -150,13 +150,13 @@ export function FamilyCurriculumPackModal({
       void loadMedia();
       void loadRevisions();
     }
-  }, [isOpen, installedPack?.id, installedPack?.revision]);
+  }, [isOpen, installedPack?.id]);
 
   const handleSaveRevision = async () => {
     const targetPack = currentPack || installedPack;
     if (!targetPack) return;
     if (!editName.trim()) {
-      setEditError('O nome do pacote não pode ficar vazio.');
+      setEditError(t('curriculum.packs.editor.nameRequired'));
       return;
     }
 
@@ -205,21 +205,20 @@ export function FamilyCurriculumPackModal({
       );
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao salvar nova revisão do pacote.');
+        throw new Error(t('curriculum.packs.editor.revisionSaveError'));
       }
 
       const updated: FamilyCurriculumPackResponseDto = await res.json();
       setCurrentPack(updated);
-      setEditSuccess('Nova revisão do pacote salva com sucesso!');
+      setEditSuccess(t('curriculum.packs.editor.revisionSaved'));
 
       if (onPackUpdated) {
         onPackUpdated(updated);
       }
 
       void loadRevisions();
-    } catch (err: unknown) {
-      setEditError(err instanceof Error ? err.message : 'Erro ao salvar revisão.');
+    } catch {
+      setEditError(t('curriculum.packs.editor.revisionSaveError'));
     } finally {
       setIsSavingRevision(false);
     }
@@ -235,12 +234,12 @@ export function FamilyCurriculumPackModal({
       return;
     }
     if (file.size > FAMILY_CURRICULUM_PACK_MEDIA_MAX_FILE_SIZE_BYTES) {
-      setFileError('Arquivo muito grande (máximo 25MB).');
+      setFileError(t('curriculum.packs.editor.fileTooLarge'));
       setSelectedFile(null);
       return;
     }
     if (!(ALLOWED_FAMILY_CURRICULUM_PACK_MEDIA_MIME_TYPES as readonly string[]).includes(file.type)) {
-      setFileError('Formato de arquivo não suportado. Use imagens (PNG/JPEG/WebP), vídeos (MP4/WebM) ou PDF.');
+      setFileError(t('curriculum.packs.editor.unsupportedFile'));
       setSelectedFile(null);
       return;
     }
@@ -260,13 +259,13 @@ export function FamilyCurriculumPackModal({
   const handleAddMedia = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!mediaTitle.trim()) {
-      setMediaError('O título da mídia é obrigatório.');
+      setMediaError(t('curriculum.packs.editor.mediaTitleRequired'));
       return;
     }
 
     if (mediaSourceType === 'EXTERNAL_URL') {
       if (!mediaUrl.trim() || !mediaUrl.startsWith('https://')) {
-        setMediaError('A URL deve ser válida e usar o protocolo seguro HTTPS (https://).');
+        setMediaError(t('curriculum.packs.editor.httpsRequired'));
         return;
       }
 
@@ -290,8 +289,7 @@ export function FamilyCurriculumPackModal({
         );
 
         if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.message || 'Falha ao anexar mídia ao pacote.');
+          throw new Error(t('curriculum.packs.editor.mediaAttachError'));
         }
 
         const created: FamilyCurriculumPackMediaResponseDto = await res.json();
@@ -299,20 +297,20 @@ export function FamilyCurriculumPackModal({
         setMediaTitle('');
         setMediaUrl('');
         setMediaDescription('');
-        setMediaSuccess('Mídia complementar anexada com sucesso!');
+        setMediaSuccess(t('curriculum.packs.editor.mediaAttachSuccess'));
         setTimeout(() => setMediaSuccess(null), 4000);
-      } catch (err: unknown) {
-        setMediaError(err instanceof Error ? err.message : 'Falha ao anexar mídia.');
+      } catch {
+        setMediaError(t('curriculum.packs.editor.mediaAttachError'));
       } finally {
         setSubmittingMedia(false);
       }
     } else {
       if (!selectedFile) {
-        setMediaError('Por favor selecione um arquivo para upload.');
+        setMediaError(t('curriculum.packs.editor.selectFileRequired'));
         return;
       }
       if (selectedFile.size > FAMILY_CURRICULUM_PACK_MEDIA_MAX_FILE_SIZE_BYTES) {
-        setMediaError('Arquivo muito grande (máximo 25MB).');
+        setMediaError(t('curriculum.packs.editor.fileTooLarge'));
         return;
       }
 
@@ -338,8 +336,7 @@ export function FamilyCurriculumPackModal({
         );
 
         if (!uploadUrlRes.ok) {
-          const err = await uploadUrlRes.json().catch(() => ({}));
-          throw new Error(err.message || 'Falha ao preparar upload.');
+          throw new Error(t('curriculum.packs.editor.uploadPrepareError'));
         }
 
         const { mediaId, uploadUrl }: FamilyCurriculumPackMediaUploadUrlResponseDto = await uploadUrlRes.json();
@@ -351,7 +348,7 @@ export function FamilyCurriculumPackModal({
         });
 
         if (!putRes.ok) {
-          throw new Error('Falha ao enviar arquivo para o armazenamento.');
+          throw new Error(t('curriculum.packs.editor.uploadTransferError'));
         }
 
         const confirmRes = await fetch(
@@ -363,8 +360,7 @@ export function FamilyCurriculumPackModal({
         );
 
         if (!confirmRes.ok) {
-          const err = await confirmRes.json().catch(() => ({}));
-          throw new Error(err.message || 'Falha ao confirmar envio do arquivo.');
+          throw new Error(t('curriculum.packs.editor.uploadConfirmError'));
         }
 
         const created: FamilyCurriculumPackMediaResponseDto = await confirmRes.json();
@@ -372,10 +368,10 @@ export function FamilyCurriculumPackModal({
         setMediaTitle('');
         setSelectedFile(null);
         setMediaDescription('');
-        setMediaSuccess('Mídia complementar anexada com sucesso!');
+        setMediaSuccess(t('curriculum.packs.editor.mediaAttachSuccess'));
         setTimeout(() => setMediaSuccess(null), 4000);
-      } catch (err: unknown) {
-        setMediaError(err instanceof Error ? err.message : 'Falha ao anexar mídia.');
+      } catch {
+        setMediaError(t('curriculum.packs.editor.mediaAttachError'));
       } finally {
         setSubmittingMedia(false);
       }
@@ -395,36 +391,35 @@ export function FamilyCurriculumPackModal({
       );
 
       if (!res.ok && res.status !== 204) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao remover mídia.');
+        throw new Error(t('curriculum.packs.editor.mediaRemoveError'));
       }
 
       setMediaList((prev) => prev.filter((m) => m.id !== mediaId));
-      setMediaSuccess('Mídia removida com sucesso.');
+      setMediaSuccess(t('curriculum.packs.editor.mediaRemoved'));
       setTimeout(() => setMediaSuccess(null), 3000);
-    } catch (err: unknown) {
-      setMediaError(err instanceof Error ? err.message : 'Erro ao remover mídia.');
+    } catch {
+      setMediaError(t('curriculum.packs.editor.mediaRemoveError'));
     } finally {
       setDeletingMediaId(null);
     }
   };
 
   const mediaTypeOptions = [
-    { value: 'DOCUMENT', label: 'Documento (PDF, Texto)' },
-    { value: 'IMAGE', label: 'Imagem / Infográfico' },
-    { value: 'VIDEO', label: 'Vídeo / Aula Externa' },
+    { value: 'DOCUMENT', label: t('curriculum.packs.editor.documentType') },
+    { value: 'IMAGE', label: t('curriculum.packs.editor.imageType') },
+    { value: 'VIDEO', label: t('curriculum.packs.editor.videoType') },
   ];
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Gerenciar Pacote — ${packName}`}
+      title={t('curriculum.packs.editor.editorTitle', { name: packName })}
       description={t('curriculum.packs.manageMediaDescription')}
       maxWidth="lg"
       footer={
         <Button variant="secondary" onClick={onClose}>
-          Fechar
+          {t('curriculum.packs.editor.close')}
         </Button>
       }
     >
@@ -468,7 +463,7 @@ export function FamilyCurriculumPackModal({
               marginBottom: '-2px',
             }}
           >
-            Mídias & Anexos ({mediaList.length})
+            {t('curriculum.packs.editor.mediaTab', { count: mediaList.length })}
           </button>
 
           <button
@@ -489,7 +484,7 @@ export function FamilyCurriculumPackModal({
               marginBottom: '-2px',
             }}
           >
-            Histórico de Revisões ({revisionsList.length || (currentPack?.revision ?? installedPack.revision)})
+            {t('curriculum.packs.editor.revisionsTab', { count: revisionsList.length || (currentPack?.revision ?? installedPack.revision) })}
           </button>
 
           <button
@@ -510,7 +505,7 @@ export function FamilyCurriculumPackModal({
               marginBottom: '-2px',
             }}
           >
-            Personalizar Conteúdo ✏️
+            {t('curriculum.packs.editor.editorTab')}
           </button>
         </div>
 
@@ -532,7 +527,7 @@ export function FamilyCurriculumPackModal({
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--forest)' }}>
-                  Anexar Novo Material ou Link Complementar
+                  {t('curriculum.packs.editor.attachMaterial')}
                 </span>
 
                 {/* Seletor de Modo: Link Externo vs Upload */}
@@ -556,7 +551,7 @@ export function FamilyCurriculumPackModal({
                       cursor: 'pointer',
                     }}
                   >
-                    🌐 Link Externo / YouTube
+                    🌐 {t('curriculum.packs.editor.externalLink')}
                   </button>
                   <button
                     type="button"
@@ -577,7 +572,7 @@ export function FamilyCurriculumPackModal({
                       cursor: 'pointer',
                     }}
                   >
-                    📤 Upload de Arquivo
+                    📤 {t('curriculum.packs.editor.fileUpload')}
                   </button>
                 </div>
               </div>
@@ -609,13 +604,13 @@ export function FamilyCurriculumPackModal({
                   data-testid="pack-media-url-input"
                   value={mediaUrl}
                   onChange={(e) => setMediaUrl(e.target.value)}
-                  placeholder="https://meudrive.com/arquivo.pdf ou https://youtube.com/watch?v=..."
+                  placeholder={t('curriculum.packs.editor.urlPlaceholder')}
                   required
                 />
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
                   <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    Arquivo para Upload (Máx. 25MB) *
+                    {t('curriculum.packs.editor.uploadFileLabel')}
                   </label>
                   <input
                     type="file"
@@ -637,7 +632,10 @@ export function FamilyCurriculumPackModal({
                   )}
                   {selectedFile && (
                     <div style={{ fontSize: '0.75rem', color: 'var(--forest)', fontWeight: 600 }}>
-                      Arquivo selecionado: {selectedFile.name} ({(selectedFile.size / (1024 * 1024)).toFixed(2)} MB)
+                      {t('curriculum.packs.editor.selectedFile', {
+                        name: selectedFile.name,
+                        size: formatNumber(selectedFile.size / (1024 * 1024), { maximumFractionDigits: 2 }),
+                      })}
                     </div>
                   )}
                 </div>
@@ -660,7 +658,7 @@ export function FamilyCurriculumPackModal({
                   data-testid="add-pack-media-btn"
                   isLoading={submittingMedia}
                 >
-                  Anexar Mídia 📎
+                  {t('curriculum.packs.editor.addMedia')}
                 </Button>
               </div>
             </form>
@@ -668,12 +666,12 @@ export function FamilyCurriculumPackModal({
             {/* Lista de Mídias Anexadas */}
             <div>
               <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--forest)', display: 'block', marginBottom: '0.75rem' }}>
-                Mídias Complementares da Família
+                {t('curriculum.packs.editor.familyMedia')}
               </span>
 
               {loadingMedia ? (
                 <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-secondary)' }}>
-                  Carregando mídias...
+                  {t('curriculum.packs.editor.loadingMedia')}
                 </div>
               ) : mediaList.length === 0 ? (
                 <div
@@ -687,7 +685,7 @@ export function FamilyCurriculumPackModal({
                     fontSize: '0.875rem',
                   }}
                 >
-                  Nenhuma mídia complementar anexada a este pacote ainda.
+                  {t('curriculum.packs.editor.emptyMedia')}
                 </div>
               ) : (
                 <div data-testid="pack-media-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -715,7 +713,9 @@ export function FamilyCurriculumPackModal({
                               {media.mediaType}
                             </Badge>
                             <Badge variant="slate" size="sm">
-                              {media.sourceType === 'UPLOAD' ? 'Arquivo' : 'Link Web'}
+                              {media.sourceType === 'UPLOAD'
+                                ? t('curriculum.packs.editor.sourceFile')
+                                : t('curriculum.packs.editor.sourceWeb')}
                             </Badge>
                             <span
                               style={{
@@ -735,7 +735,7 @@ export function FamilyCurriculumPackModal({
                             isLoading={deletingMediaId === media.id}
                             onClick={() => handleDeleteMedia(media.id)}
                           >
-                            Excluir
+                            {t('curriculum.packs.editor.delete')}
                           </Button>
                         </div>
 
@@ -801,7 +801,7 @@ export function FamilyCurriculumPackModal({
                                 textDecoration: 'underline',
                               }}
                             >
-                              📄 Abrir Documento em Nova Aba ↗
+                              📄 {t('curriculum.packs.editor.openDocument')}
                             </a>
                             {media.sizeBytes && (
                               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -819,16 +819,16 @@ export function FamilyCurriculumPackModal({
           </div>
         )}
 
-        {/* Tab 2: Histórico de Revisões */}
+        {/* Tab 2: Version history */}
         {activeTab === 'revisions' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--forest)' }}>
-              Linha do Tempo de Revisões
+              {t('curriculum.packs.editor.revisionTimeline')}
             </span>
 
             {loadingRevisions ? (
               <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-secondary)' }}>
-                Carregando histórico...
+                {t('curriculum.packs.editor.loadingRevisions')}
               </div>
             ) : revisionsList.length === 0 ? (
               <div
@@ -841,10 +841,10 @@ export function FamilyCurriculumPackModal({
                 }}
               >
                 <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--forest)' }}>
-                  Revisão Atual: {installedPack.revision}
+                  {t('curriculum.packs.editor.currentRevision', { revision: installedPack.revision })}
                 </div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                  Instalado em: {new Date(installedPack.createdAt).toLocaleDateString('pt-BR')}
+                  {t('curriculum.packs.editor.installedOn', { date: formatDate(installedPack.createdAt) })}
                 </div>
               </div>
             ) : (
@@ -865,15 +865,19 @@ export function FamilyCurriculumPackModal({
                   >
                     <div>
                       <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--forest)' }}>
-                        Revisão {rev.revision}
+                        {t('curriculum.packs.editor.revision', { revision: rev.revision })}
                       </span>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        Gravado em: {new Date(rev.createdAt).toLocaleDateString('pt-BR')} às{' '}
-                        {new Date(rev.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        {t('curriculum.packs.editor.recordedOn', {
+                          date: formatDate(rev.createdAt),
+                          time: formatTime(rev.createdAt),
+                        })}
                       </div>
                     </div>
                     <Badge variant={rev.revision === installedPack.revision ? 'emerald' : 'slate'} size="sm">
-                      {rev.revision === installedPack.revision ? 'Atual' : 'Histórico'}
+                      {rev.revision === installedPack.revision
+                        ? t('curriculum.packs.editor.current')
+                        : t('curriculum.packs.editor.history')}
                     </Badge>
                   </div>
                 ))}
@@ -882,7 +886,7 @@ export function FamilyCurriculumPackModal({
           </div>
         )}
 
-        {/* Tab 3: Personalizar Conteúdo */}
+        {/* Tab 3: Customize content */}
         {activeTab === 'editor' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div
@@ -896,7 +900,8 @@ export function FamilyCurriculumPackModal({
                 lineHeight: 1.5,
               }}
             >
-              <strong style={{ color: 'var(--forest)' }}>{t('curriculum.packs.familyCustomizationTitle')}</strong> Personalize o título, orientações práticas e notas de estudo desta cópia do pacote. Cada alteração gera uma nova revisão imutável no histórico da sua família.
+              <strong style={{ color: 'var(--forest)' }}>{t('curriculum.packs.familyCustomizationTitle')}</strong>{' '}
+              {t('curriculum.packs.editor.customizationNotice')}
             </div>
 
             {editError && (
@@ -934,7 +939,7 @@ export function FamilyCurriculumPackModal({
                     marginBottom: '0.375rem',
                   }}
                 >
-                  Descrição / Objetivo Familiar
+                  {t('curriculum.packs.editor.familyDescriptionLabel')}
                 </label>
                 <Textarea
                   id="pack-edit-description-input"
@@ -957,7 +962,7 @@ export function FamilyCurriculumPackModal({
                     marginBottom: '0.375rem',
                   }}
                 >
-                  Notas de Orientação Familiar (Pedagógicas & Práticas)
+                  {t('curriculum.packs.editor.familyNotesLabel')}
                 </label>
                 <Textarea
                   id="pack-edit-notes-input"
@@ -973,7 +978,7 @@ export function FamilyCurriculumPackModal({
               {editItems.length > 0 && (
                 <div>
                   <span style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', color: 'var(--forest)', marginBottom: '0.5rem' }}>
-                    Itens Curriculares Inclusos ({editItems.length}):
+                    {t('curriculum.packs.editor.includedItems', { count: editItems.length })}
                   </span>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '180px', overflowY: 'auto' }}>
                     {editItems.map((item, idx) => (
@@ -994,7 +999,7 @@ export function FamilyCurriculumPackModal({
                           {item.content?.title || item.content?.name || item.code}
                         </span>
                         <Badge variant="slate" size="sm">
-                          {item.definitionType || 'ITEM'}
+                          {item.definitionType || t('curriculum.packs.editor.itemTypeFallback')}
                         </Badge>
                       </div>
                     ))}
@@ -1011,7 +1016,7 @@ export function FamilyCurriculumPackModal({
                   disabled={isSavingRevision}
                   style={{ fontWeight: 600 }}
                 >
-                  Salvar Nova Revisão
+                  {t('curriculum.packs.editor.saveRevision')}
                 </Button>
               </div>
             </div>

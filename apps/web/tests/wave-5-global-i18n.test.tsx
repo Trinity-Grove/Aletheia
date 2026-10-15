@@ -134,7 +134,7 @@ describe('Wave 5 Global i18n — Dicionários e Testes TDD', () => {
         </LocaleProvider>
       );
 
-      expect(screen.getByText('Gestão de Educandos')).toBeInTheDocument();
+      expect(screen.getByText('Educandos')).toBeInTheDocument();
       expect(screen.getByText('Convite para Família')).toBeInTheDocument();
       expect(screen.getByText('Agenda & Checklist')).toBeInTheDocument();
       expect(screen.getByText('Carregando...')).toBeInTheDocument();
@@ -155,7 +155,7 @@ describe('Wave 5 Global i18n — Dicionários e Testes TDD', () => {
         </LocaleProvider>
       );
 
-      expect(screen.getByText('Learner Management')).toBeInTheDocument();
+      expect(screen.getByText('Learners')).toBeInTheDocument();
       expect(screen.getByText('Family Invitation')).toBeInTheDocument();
       expect(screen.getByText('Schedule & Checklist')).toBeInTheDocument();
       expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -176,7 +176,7 @@ describe('Wave 5 Global i18n — Dicionários e Testes TDD', () => {
         </LocaleProvider>
       );
 
-      expect(screen.getByText('Gestión de Educandos')).toBeInTheDocument();
+      expect(screen.getByText('Estudiantes')).toBeInTheDocument();
       expect(screen.getByText('Invitación para la Familia')).toBeInTheDocument();
       expect(screen.getByText('Agenda y Lista de Tareas')).toBeInTheDocument();
       expect(screen.getByText('Cargando...')).toBeInTheDocument();

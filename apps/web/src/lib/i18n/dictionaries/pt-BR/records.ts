@@ -1,7 +1,7 @@
 export const records = {
   page: {
-    title: 'Diário de Aprendizagem & Domínio',
-    subtitle: 'Acompanhe a evolução individual, registre narrações, vivências espontâneas e o florescimento do caráter.',
+    title: 'Diário de aprendizagem',
+    subtitle: 'Registre o que foi estudado, o que foi produzido e como cada educando está avançando.',
     loading: 'Carregando diário de aprendizagem...',
   },
   tabs: {
@@ -187,8 +187,8 @@ export const records = {
     fileUrlPlaceholder: 'https://...',
   },
   portfolio: {
-    title: 'Galeria de Evidências & Portfólio Vivo',
-    subtitle: 'Guarde produções autorais, cadernos, desenhos da natureza, áudios de narração e conquistas.',
+    title: 'Trabalhos e portfólio',
+    subtitle: 'Guarde trabalhos, fotos, áudios e outras lembranças importantes da aprendizagem.',
     worksCount: '{count} obra(s)',
     highlightsCount: '{count} destaque(s)',
     addEvidenceBtn: '+ Adicionar Evidência',
@@ -205,7 +205,17 @@ export const records = {
     openMedia: 'Abrir Mídia ↗',
     editBtn: 'Editar',
     deleteBtn: 'Excluir',
-    confirmDelete: 'Excluir esta evidência do portfólio? Esta ação não pode ser desfeita.',
+    confirmDelete: 'Excluir este trabalho do portfólio? Esta ação não pode ser desfeita.',
+    messages: {
+      authRequired: 'Família não autenticada.',
+      updateError: 'Não foi possível atualizar o trabalho.',
+      createError: 'Não foi possível adicionar o trabalho.',
+      uploadPrepareError: 'Não foi possível preparar o envio do arquivo.',
+      uploadTransferError: 'Não foi possível enviar o arquivo.',
+      uploadConfirmError: 'Não foi possível confirmar o envio do arquivo.',
+      deleteSuccess: 'Trabalho excluído.',
+      deleteError: 'Não foi possível excluir o trabalho.',
+    },
   },
   portfolioModal: {
     editTitle: 'Editar Evidência de Portfólio',

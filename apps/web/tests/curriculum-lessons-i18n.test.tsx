@@ -35,9 +35,9 @@ describe('Wave 3: Curriculum & Lessons i18n parity', () => {
       expect((enUS as any).curriculum).toBeDefined();
       expect((esES as any).curriculum).toBeDefined();
 
-      expect((ptBR as any).curriculum.pages.curriculum.title).toBe('Planejamento Curricular');
-      expect((enUS as any).curriculum.pages.curriculum.title).toBe('Curriculum Planning');
-      expect((esES as any).curriculum.pages.curriculum.title).toBe('Planificación Curricular');
+      expect((ptBR as any).curriculum.pages.curriculum.title).toBe('Planejamento curricular');
+      expect((enUS as any).curriculum.pages.curriculum.title).toBe('Curriculum planning');
+      expect((esES as any).curriculum.pages.curriculum.title).toBe('Planificación curricular');
     });
 
     it('possui chaves de modais de lição em ptBR, enUS e esES', () => {
@@ -67,7 +67,7 @@ describe('Wave 3: Curriculum & Lessons i18n parity', () => {
           <Probe translationKey="curriculum.pages.curriculum.title" />
         </LocaleProvider>
       );
-      expect(screen.getByTestId('probe')).toHaveTextContent('Curriculum Planning');
+      expect(screen.getByTestId('probe')).toHaveTextContent('Curriculum planning');
     });
   });
 });

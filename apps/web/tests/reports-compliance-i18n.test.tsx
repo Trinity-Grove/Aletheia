@@ -183,7 +183,7 @@ describe('Wave 4: Dicionários i18n Reports & Compliance', () => {
           <Probe translationKey="reports.pages.portfolio.title" />
         </LocaleProvider>
       );
-      expect(screen.getByTestId('probe')).toHaveTextContent('Portfólio Vivo de Evidências');
+      expect(screen.getByTestId('probe')).toHaveTextContent('Trabalhos e portfólio');
       unmountPt();
 
       // en-US
@@ -193,7 +193,7 @@ describe('Wave 4: Dicionários i18n Reports & Compliance', () => {
           <Probe translationKey="reports.pages.portfolio.title" />
         </LocaleProvider>
       );
-      expect(screen.getByTestId('probe')).toHaveTextContent('Living Portfolio of Evidence');
+      expect(screen.getByTestId('probe')).toHaveTextContent('Work portfolio');
       unmountEn();
 
       // es-ES
@@ -203,7 +203,7 @@ describe('Wave 4: Dicionários i18n Reports & Compliance', () => {
           <Probe translationKey="reports.pages.portfolio.title" />
         </LocaleProvider>
       );
-      expect(screen.getByTestId('probe')).toHaveTextContent('Portafolio Vivo de Evidencias');
+      expect(screen.getByTestId('probe')).toHaveTextContent('Portafolio de trabajos');
     });
 
     it('renderiza chaves de compliance nos três idiomas', () => {

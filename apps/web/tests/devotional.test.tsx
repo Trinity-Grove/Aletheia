@@ -346,7 +346,7 @@ describe('Devotional & Prayer Components', () => {
         </AuthProvider>
       );
 
-      expect(screen.getByText('Culto Doméstico & Devocional')).toBeInTheDocument();
+      expect(screen.getByText('Devocional em família')).toBeInTheDocument();
       expect(screen.getByTestId('prayer-journal')).toBeInTheDocument();
       expect(screen.getByText('Salmos 23:1-6')).toBeInTheDocument();
 

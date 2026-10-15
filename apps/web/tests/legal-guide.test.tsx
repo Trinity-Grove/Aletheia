@@ -232,7 +232,7 @@ describe('Legal Guide Hub Components', () => {
         expect(screen.getByText('Jurisdição Ativa: Brasil (Diretriz Federal)')).toBeInTheDocument();
       });
 
-      expect(screen.getByText('Amparo Legal & Primeiros Passos')).toBeInTheDocument();
+      expect(screen.getByText('Guia legal e primeiros passos')).toBeInTheDocument();
       expect(screen.getByText('Checklist dos Primeiros 30 Dias')).toBeInTheDocument();
       expect(screen.getByText('Seus Direitos e Amparo Constitucional')).toBeInTheDocument();
       expect(screen.getByText('Como se Proteger com Evidências de Aprendizagem')).toBeInTheDocument();

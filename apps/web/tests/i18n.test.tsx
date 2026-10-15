@@ -826,7 +826,7 @@ describe('i18n (Issue #33: Internacionalização, Dicionários e Formatadores)',
           <Probe translationKey="nav.legalGuide" />
         </LocaleProvider>
       );
-      expect(screen.getByTestId('probe')).toHaveTextContent('Amparo Legal');
+      expect(screen.getByTestId('probe')).toHaveTextContent('Guia legal');
       unmountPt();
 
       // en-US
@@ -836,7 +836,7 @@ describe('i18n (Issue #33: Internacionalização, Dicionários e Formatadores)',
           <Probe translationKey="nav.legalGuide" />
         </LocaleProvider>
       );
-      expect(screen.getByTestId('probe')).toHaveTextContent('Legal Guide');
+      expect(screen.getByTestId('probe')).toHaveTextContent('Legal guide');
       unmountEn();
 
       // es-ES
@@ -846,7 +846,7 @@ describe('i18n (Issue #33: Internacionalização, Dicionários e Formatadores)',
           <Probe translationKey="nav.legalGuide" />
         </LocaleProvider>
       );
-      expect(screen.getByTestId('probe')).toHaveTextContent('Amparo Legal');
+      expect(screen.getByTestId('probe')).toHaveTextContent('Guía legal');
     });
 
     it('traduz chaves completas de legalGuide.* (header, framework, evidence, checklist, faq) em pt-BR, en-US e es-ES com interpolação', () => {
@@ -874,7 +874,7 @@ describe('i18n (Issue #33: Internacionalização, Dicionários e Formatadores)',
           </div>
         </LocaleProvider>
       );
-      expect(screen.getByText('Amparo Legal & Primeiros Passos')).toBeInTheDocument();
+      expect(screen.getByText('Guia legal e primeiros passos')).toBeInTheDocument();
       expect(screen.getByText('Jurisdição Ativa: Brasil')).toBeInTheDocument();
       expect(screen.getByText('Nível de Certeza: ESTABLISHED')).toBeInTheDocument();
       expect(screen.getByText('Seus Direitos e Amparo Constitucional')).toBeInTheDocument();
@@ -908,7 +908,7 @@ describe('i18n (Issue #33: Internacionalização, Dicionários e Formatadores)',
           </div>
         </LocaleProvider>
       );
-      expect(screen.getByText('Legal Guide & First Steps')).toBeInTheDocument();
+      expect(screen.getByText('Legal guide and getting started')).toBeInTheDocument();
       expect(screen.getByText('Active Jurisdiction: Brazil')).toBeInTheDocument();
       expect(screen.getByText('Confidence Level: ESTABLISHED')).toBeInTheDocument();
       expect(screen.getByText('Your Rights & Constitutional Protection')).toBeInTheDocument();
@@ -940,7 +940,7 @@ describe('i18n (Issue #33: Internacionalização, Dicionários e Formatadores)',
           </div>
         </LocaleProvider>
       );
-      expect(screen.getByText('Amparo Legal y Primeros Pasos')).toBeInTheDocument();
+      expect(screen.getByText('Guía legal y primeros pasos')).toBeInTheDocument();
       expect(screen.getByText('Jurisdicción Activa: Brasil')).toBeInTheDocument();
       expect(screen.getByText('Nivel de Certeza: ESTABLISHED')).toBeInTheDocument();
       expect(screen.getByText('Sus Derechos y Amparo Constitucional')).toBeInTheDocument();
@@ -955,9 +955,9 @@ describe('i18n (Issue #33: Internacionalização, Dicionários e Formatadores)',
     });
 
     it('possui todas as chaves de nav.legalGuide e legalGuide.* com simetria estrutural nos objetos dos dicionários', () => {
-      expect((ptBR as any).nav?.legalGuide).toBe('Amparo Legal');
-      expect((enUS as any).nav?.legalGuide).toBe('Legal Guide');
-      expect((esES as any).nav?.legalGuide).toBe('Amparo Legal');
+      expect((ptBR as any).nav?.legalGuide).toBe('Guia legal');
+      expect((enUS as any).nav?.legalGuide).toBe('Legal guide');
+      expect((esES as any).nav?.legalGuide).toBe('Guía legal');
 
       expect((ptBR as any).legalGuide?.checklist?.steps?.step1?.title).toBeDefined();
       expect((enUS as any).legalGuide?.checklist?.steps?.step1?.title).toBeDefined();

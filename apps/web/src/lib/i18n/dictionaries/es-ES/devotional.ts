@@ -1,7 +1,7 @@
 export const devotional = {
   page: {
-    title: 'Culto Doméstico y Devocional',
-    subtitle: 'Cultive la fe en familia a través de la lectura bíblica, reflexión, alabanza y oración diaria.',
+    title: 'Devocional en familia',
+    subtitle: 'Lean la Biblia, reflexionen, oren y registren este momento juntos.',
     errors: {
       loadDevotional: 'No fue posible cargar el devocional del día.',
       loadDevotionalConnection: 'No fue posible cargar el devocional del día. Compruebe su conexión.',

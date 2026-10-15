@@ -1,6 +1,6 @@
 export const learners = {
-  title: 'Learner Management',
-  subtitle: 'Manage your children\'s pedagogical profiles and developmental stages.',
+  title: 'Learners',
+  subtitle: 'Add your children or students and follow each learning journey.',
   addLearner: '+ Add Learner',
   loadError: 'Could not load learners.',
   loadErrorConnection: 'Could not load learners. Check your connection.',

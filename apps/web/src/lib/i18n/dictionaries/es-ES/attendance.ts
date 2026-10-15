@@ -1,7 +1,7 @@
 export const attendance = {
   page: {
-    title: 'Control de Asistencia y Conformidad Legal',
-    subtitle: 'Acompañe los días lectivos y horas anuales de los educandos sin comparaciones entre hermanos.',
+    title: 'Asistencia y horas de estudio',
+    subtitle: 'Acompañe los días estudiados y las horas de cada estudiante durante el año.',
     loading: 'Cargando control de asistencia...',
     errorLog: 'Error al registrar asistencia',
     errorBulkLog: 'Error al registrar asistencia colectiva',

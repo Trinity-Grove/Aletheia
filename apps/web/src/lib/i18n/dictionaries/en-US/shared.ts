@@ -18,9 +18,8 @@ export const shared = {
   error: 'An error occurred.',
   success: 'Operation completed successfully.',
   schedule: {
-    title: 'Schedule & Learning Routine',
-    subtitle:
-      'Follow the daily schedule, mark completed lessons, and plan the family\'s weekly routine.',
+    title: 'Study schedule',
+    subtitle: 'See what needs to be done today and organize the family\'s weekly routine.',
     tabAgenda: 'Daily Agenda (Checklist)',
     tabRoutine: 'Weekly Routine',
     loading: 'Loading schedule and routine...',

@@ -1,13 +1,13 @@
 export const reports = {
   pages: {
     portfolio: {
-      title: 'Portafolio Vivo de Evidencias',
-      description: 'Exhibición viva de obras de arte, narraciones grabadas, cuadernos de naturaleza e informes de proyectos.',
+      title: 'Portafolio de trabajos',
+      description: 'Vea los trabajos, registros y proyectos que muestran el aprendizaje a lo largo del tiempo.',
       loading: 'Cargando portafolio...',
     },
     reports: {
-      title: 'Generador de Documentos y Expedientes Oficiales',
-      description: 'Emita expedientes académicos oficiales con conversión flexible de notas, resúmenes de asistencia e informes de conformidad.',
+      title: 'Informes e historiales',
+      description: 'Genere historiales, resúmenes de asistencia e informes del aprendizaje familiar.',
       loading: 'Cargando informes oficiales...',
     },
   },

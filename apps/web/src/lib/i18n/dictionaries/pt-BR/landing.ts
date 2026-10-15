@@ -1,6 +1,6 @@
 export const landing = {
   eyebrow: 'Trinity Grove • Aletheia',
-  title: 'Faithful learning, thoughtfully guided.',
+  title: 'Aprendizagem com propósito, guiada com cuidado.',
   description:
     'Registros acadêmicos estruturados e relatórios de apoio pedagógico para conformidade familiar.',
   actions: {

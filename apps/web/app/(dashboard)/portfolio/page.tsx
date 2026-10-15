@@ -125,7 +125,7 @@ export default function PortfolioPage() {
 
   // Actions
   const handleSaveItem = async (dto: CreatePortfolioItemDto): Promise<PortfolioItemResponseDto> => {
-    if (!familyId) throw new Error('Família não autenticada');
+    if (!familyId) throw new Error(t('records.portfolio.messages.authRequired'));
 
     const res = itemToEdit
       ? await fetch(`/api/v1/families/${familyId}/portfolio/${itemToEdit.id}`, {
@@ -142,8 +142,10 @@ export default function PortfolioPage() {
         });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || (itemToEdit ? 'Falha ao atualizar evidência' : 'Falha ao adicionar evidência'));
+      if (itemToEdit) {
+        throw new Error(t('records.portfolio.messages.updateError'));
+      }
+      throw new Error(t('records.portfolio.messages.createError'));
     }
 
     const saved: PortfolioItemResponseDto = await res.json();
@@ -161,14 +163,13 @@ export default function PortfolioPage() {
       body: JSON.stringify({ fileName: file.name, mimeType: file.type, fileSizeBytes: file.size }),
     });
     if (!uploadUrlRes.ok) {
-      const err = await uploadUrlRes.json().catch(() => ({}));
-      throw new Error(err.message || 'Falha ao preparar o envio do arquivo');
+      throw new Error(t('records.portfolio.messages.uploadPrepareError'));
     }
     const { uploadUrl } = await uploadUrlRes.json();
 
     const putRes = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
     if (!putRes.ok) {
-      throw new Error('Falha ao enviar o arquivo para o armazenamento.');
+      throw new Error(t('records.portfolio.messages.uploadTransferError'));
     }
 
     const confirmRes = await fetch(`/api/v1/families/${familyId}/portfolio/${itemId}/confirm-upload`, {
@@ -176,8 +177,7 @@ export default function PortfolioPage() {
       credentials: 'include',
     });
     if (!confirmRes.ok) {
-      const err = await confirmRes.json().catch(() => ({}));
-      throw new Error(err.message || 'Falha ao confirmar o envio do arquivo');
+      throw new Error(t('records.portfolio.messages.uploadConfirmError'));
     }
     await fetchPortfolioItems();
   };
@@ -190,13 +190,12 @@ export default function PortfolioPage() {
         credentials: 'include',
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao excluir evidência.');
+        throw new Error(t('records.portfolio.messages.deleteError'));
       }
       await fetchPortfolioItems();
-      toast({ variant: 'success', title: 'Evidência excluída.' });
-    } catch (err: unknown) {
-      toast({ variant: 'error', title: err instanceof Error ? err.message : 'Falha ao excluir evidência.' });
+      toast({ variant: 'success', title: t('records.portfolio.messages.deleteSuccess') });
+    } catch {
+      toast({ variant: 'error', title: t('records.portfolio.messages.deleteError') });
     }
   };
 

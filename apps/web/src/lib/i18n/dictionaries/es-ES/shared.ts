@@ -18,9 +18,8 @@ export const shared = {
   error: 'Ocurrió un error.',
   success: 'Operación realizada con éxito.',
   schedule: {
-    title: 'Agenda y Rutina de Aprendizaje',
-    subtitle:
-      'Siga el horario diario, marque lecciones completadas y planifique la rutina semanal de la familia.',
+    title: 'Agenda de estudio',
+    subtitle: 'Vea lo que hay que hacer hoy y organice la rutina semanal de la familia.',
     tabAgenda: 'Agenda Diaria (Lista)',
     tabRoutine: 'Rutina Semanal',
     loading: 'Cargando agenda y rutina...',
