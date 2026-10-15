@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, Modal } from '@aletheia/ui';
-import type { CurriculumPackResponseDto } from '@aletheia/contracts';
+import type { CurriculumPackMediaResponseDto, CurriculumPackResponseDto } from '@aletheia/contracts';
 import { useLocale } from '../../lib/i18n/locale-context';
 
 export interface CurriculumPackDetailModalProps {
@@ -21,6 +21,27 @@ export function CurriculumPackDetailModal({
   onInstall,
 }: CurriculumPackDetailModalProps) {
   const { t } = useLocale();
+  const [media, setMedia] = useState<CurriculumPackMediaResponseDto[]>([]);
+  const [mediaRequested, setMediaRequested] = useState(false);
+  const [mediaLoading, setMediaLoading] = useState(false);
+  const [mediaError, setMediaError] = useState(false);
+
+  const loadPublicMedia = async () => {
+    if (!pack || mediaLoading) return;
+    setMediaRequested(true);
+    setMediaLoading(true);
+    setMediaError(false);
+    try {
+      const response = await fetch(`/api/v1/curriculum-packs/${pack.id}/media`, { credentials: 'include' });
+      if (!response.ok) throw new Error('media request failed');
+      setMedia((await response.json()) as CurriculumPackMediaResponseDto[]);
+    } catch {
+      setMediaError(true);
+    } finally {
+      setMediaLoading(false);
+    }
+  };
+
   if (!pack) return null;
 
   const meta = (pack.metadata as Record<string, any>) || {};
@@ -219,6 +240,59 @@ export function CurriculumPackDetailModal({
                 </span>
               ))}
             </div>
+          </div>
+        )}
+
+        {pack.status === 'PUBLISHED' && (
+          <div
+            style={{
+              backgroundColor: 'var(--bg-canvas)',
+              border: '1px solid var(--border-light)',
+              borderRadius: 'var(--radius-md)',
+              padding: '1rem 1.25rem',
+            }}
+          >
+            <h4 style={{ margin: '0 0 0.35rem', fontSize: '0.875rem', fontWeight: 700, color: 'var(--forest)' }}>
+              {t('curriculum.packs.publicMediaTitle')}
+            </h4>
+            <p style={{ margin: '0 0 0.75rem', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
+              {t('curriculum.packs.publicMediaDescription')}
+            </p>
+            {!mediaRequested && (
+              <Button
+                variant="secondary"
+                size="sm"
+                data-testid="load-public-pack-media-btn"
+                onClick={() => void loadPublicMedia()}
+              >
+                {t('curriculum.packs.loadPublicMediaBtn')}
+              </Button>
+            )}
+            {mediaLoading && <p data-testid="public-pack-media-loading">{t('curriculum.packs.publicMediaLoading')}</p>}
+            {mediaError && <p role="alert">{t('curriculum.packs.publicMediaError')}</p>}
+            {mediaRequested && !mediaLoading && !mediaError && media.length === 0 && (
+              <p>{t('curriculum.packs.publicMediaEmpty')}</p>
+            )}
+            {media.length > 0 && (
+              <ul style={{ display: 'grid', gap: '0.5rem', margin: 0, padding: 0, listStyle: 'none' }}>
+                {media.map((item) => (
+                  <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--text-primary)', fontSize: '0.875rem' }}>{item.title}</span>
+                    {item.url && (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        data-testid={`public-pack-media-link-${item.id}`}
+                        style={{ color: 'var(--forest)', fontWeight: 600, fontSize: '0.8125rem' }}
+                      >
+                        {t('curriculum.packs.openPublicMediaBtn')}
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
       </div>

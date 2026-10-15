@@ -24,7 +24,11 @@ import type { DefinitionStatusUpdate } from '../application/definition-status-tr
 export class CurriculumPackRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  createPack(dto: CreateCurriculumPackOutput, authorUserId?: string): Promise<CurriculumPack> {
+  createPack(
+    dto: CreateCurriculumPackOutput,
+    authorUserId?: string,
+    originFamilyCurriculumPackId?: string,
+  ): Promise<CurriculumPack> {
     return this.prisma.curriculumPack.create({
       data: {
         code: dto.code,
@@ -35,9 +39,18 @@ export class CurriculumPackRepository {
         description: dto.description ?? null,
         metadata: dto.metadata as Prisma.InputJsonValue,
         authorUserId: authorUserId ?? null,
+        originFamilyCurriculumPackId: originFamilyCurriculumPackId ?? null,
         moderationStatus: dto.status === 'PUBLISHED' ? 'APPROVED' : 'DRAFT',
       },
     });
+  }
+
+  findPackByOriginFamilyPackId(originFamilyCurriculumPackId: string): Promise<CurriculumPack | null> {
+    return this.prisma.curriculumPack.findUnique({ where: { originFamilyCurriculumPackId } });
+  }
+
+  deletePack(id: string): Promise<CurriculumPack> {
+    return this.prisma.curriculumPack.delete({ where: { id } });
   }
 
   createCommunityPack(userId: string, dto: CreateCurriculumPackOutput): Promise<CurriculumPack> {

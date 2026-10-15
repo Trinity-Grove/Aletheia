@@ -45,6 +45,7 @@ export class CurriculumPackImportService {
     document: CurriculumPackExportDocument,
     dryRun: boolean,
     authorUserId?: string,
+    options?: { originFamilyCurriculumPackId?: string },
   ): Promise<CurriculumPackImportReport> {
     if (document.formatVersion !== CURRICULUM_PACK_EXPORT_FORMAT_VERSION) {
       throw new BadRequestException(
@@ -123,18 +124,20 @@ export class CurriculumPackImportService {
     // Real import: create the pack itself first (if it doesn't already
     // exist), then fixed-point-create every non-conflicting item.
     if (!packAlreadyExists) {
-      await this.packRepository.createPack(
-        {
-          code: document.pack.code,
-          version: document.pack.version,
-          status: 'DRAFT',
-          schemaVersion: document.pack.schemaVersion,
-          name: document.pack.name,
-          description: document.pack.description ?? null,
-          metadata: document.pack.metadata,
-        },
-        authorUserId,
-      );
+      const createDto = {
+        code: document.pack.code,
+        version: document.pack.version,
+        status: 'DRAFT' as const,
+        schemaVersion: document.pack.schemaVersion,
+        name: document.pack.name,
+        description: document.pack.description ?? null,
+        metadata: document.pack.metadata,
+      };
+      if (options?.originFamilyCurriculumPackId) {
+        await this.packRepository.createPack(createDto, authorUserId, options.originFamilyCurriculumPackId);
+      } else {
+        await this.packRepository.createPack(createDto, authorUserId);
+      }
     }
 
     // Locally-created-this-run ids, so later items in the same document

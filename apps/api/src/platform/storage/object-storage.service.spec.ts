@@ -11,6 +11,7 @@ jest.mock('@aws-sdk/client-s3', () => ({
   CreateBucketCommand: jest.fn((input) => ({ ...input, type: 'CreateBucketCommand' })),
   PutBucketCorsCommand: jest.fn((input) => ({ ...input, type: 'PutBucketCorsCommand' })),
   PutObjectCommand: jest.fn((input) => ({ ...input, type: 'PutObjectCommand' })),
+  CopyObjectCommand: jest.fn((input) => ({ ...input, type: 'CopyObjectCommand' })),
   GetObjectCommand: jest.fn((input) => ({ ...input, type: 'GetObjectCommand' })),
   ListObjectsV2Command: jest.fn((input) => ({ ...input, type: 'ListObjectsV2Command' })),
   DeleteObjectCommand: jest.fn((input) => ({ ...input, type: 'DeleteObjectCommand' })),
@@ -85,6 +86,40 @@ describe('ObjectStorageService', () => {
         Key: 'backups/postgres/test.dump',
         Body: buffer,
         ContentType: 'application/octet-stream',
+      }),
+    );
+  });
+
+  it('builds a deterministic community key without a private family namespace', () => {
+    const first = service.buildCommunityCurriculumPackMediaStorageKey(
+      '00000000-0000-4000-8000-000000000001',
+      'lesson notes.pdf',
+    );
+    const second = service.buildCommunityCurriculumPackMediaStorageKey(
+      '00000000-0000-4000-8000-000000000001',
+      'lesson notes.pdf',
+    );
+
+    expect(first).toBe(second);
+    expect(first).toMatch(/^community\/curriculum-media\/[a-f0-9]{64}\/lesson_notes\.pdf$/);
+    expect(first).not.toContain('families/');
+  });
+
+  it('copies a private object into the community namespace', async () => {
+    mockSend.mockResolvedValueOnce({});
+
+    await service.copyObject(
+      'families/private/curriculum-packs/pack/lesson.pdf',
+      'community/curriculum-media/hash/lesson.pdf',
+      'application/pdf',
+    );
+
+    expect(mockSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        Bucket: 'test-bucket',
+        Key: 'community/curriculum-media/hash/lesson.pdf',
+        CopySource: 'test-bucket/families/private/curriculum-packs/pack/lesson.pdf',
+        ContentType: 'application/pdf',
       }),
     );
   });

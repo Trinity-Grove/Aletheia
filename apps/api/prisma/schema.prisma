@@ -2312,6 +2312,7 @@ model CurriculumPack {
   description   String?
   metadata      Json             @default("{}")
   authorUserId      String?                         @map("author_user_id") @db.Uuid
+  originFamilyCurriculumPackId String?              @unique @map("origin_family_curriculum_pack_id") @db.Uuid
   moderationStatus  CurriculumPackModerationStatus @default(DRAFT) @map("moderation_status")
   moderationNotes   String?                         @map("moderation_notes")
   moderatedAt       DateTime?                       @map("moderated_at") @db.Timestamptz
@@ -2321,17 +2322,20 @@ model CurriculumPack {
   deprecatedAt  DateTime?        @map("deprecated_at") @db.Timestamptz
 
   author          User?                      @relation("CurriculumPackAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
+  originFamilyCurriculumPack FamilyCurriculumPack? @relation("CommunityPublicationOrigin", fields: [originFamilyCurriculumPackId], references: [id], onDelete: SetNull)
   moderatedBy     User?                      @relation("CurriculumPackModerator", fields: [moderatedByUserId], references: [id], onDelete: SetNull)
   items           CurriculumPackItem[]
   dependencies    CurriculumPackDependency[]
   familyInstances FamilyCurriculumPack[]
   reports         CurriculumPackReport[]
+  media           CurriculumPackMedia[]
 
   @@unique([code, version])
   @@index([code])
   @@index([status])
   @@index([moderationStatus])
   @@index([authorUserId])
+  @@index([originFamilyCurriculumPackId])
   @@map("curriculum_packs")
 }
 
@@ -2355,6 +2359,7 @@ model FamilyCurriculumPack {
   sourcePack CurriculumPack                 @relation(fields: [sourcePackId], references: [id], onDelete: Restrict)
   revisions  FamilyCurriculumPackRevision[]
   media      FamilyCurriculumPackMedia[]
+  communityPublication CurriculumPack? @relation("CommunityPublicationOrigin")
 
   @@unique([familyId, sourcePackId], name: "family_curriculum_packs_family_source_unique")
   @@index([familyId])
@@ -2393,9 +2398,49 @@ model FamilyCurriculumPackMedia {
   updatedAt              DateTime                            @updatedAt @map("updated_at") @db.Timestamptz
 
   familyCurriculumPack FamilyCurriculumPack @relation(fields: [familyCurriculumPackId], references: [id], onDelete: Cascade)
+  communityCopies     CurriculumPackMedia[]
 
   @@index([familyCurriculumPackId, createdAt])
   @@map("family_curriculum_pack_media")
+}
+
+enum CurriculumPackMediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+
+  @@map("curriculum_pack_media_types")
+}
+
+enum CurriculumPackMediaSourceType {
+  UPLOAD
+  EXTERNAL_URL
+
+  @@map("curriculum_pack_media_source_types")
+}
+
+model CurriculumPackMedia {
+  id                     String                         @id @default(uuid()) @db.Uuid
+  curriculumPackId       String                         @map("curriculum_pack_id") @db.Uuid
+  sourceFamilyMediaId    String?                        @map("source_family_media_id") @db.Uuid
+  mediaType              CurriculumPackMediaType       @map("media_type")
+  sourceType             CurriculumPackMediaSourceType  @map("source_type")
+  provider               String?
+  title                  String
+  description            String?
+  url                    String?
+  storageKey             String?                        @map("storage_key")
+  mimeType               String?                        @map("mime_type")
+  sizeBytes              Int?                           @map("size_bytes")
+  createdAt              DateTime                       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt              DateTime                       @updatedAt @map("updated_at") @db.Timestamptz
+
+  curriculumPack      CurriculumPack             @relation(fields: [curriculumPackId], references: [id], onDelete: Cascade)
+  sourceFamilyMedia   FamilyCurriculumPackMedia? @relation(fields: [sourceFamilyMediaId], references: [id], onDelete: SetNull)
+
+  @@unique([curriculumPackId, sourceFamilyMediaId], name: "curriculum_pack_media_pack_source_unique")
+  @@index([curriculumPackId, createdAt])
+  @@map("curriculum_pack_media")
 }
 
 // Append-only history for family edits. Keeping every document revision

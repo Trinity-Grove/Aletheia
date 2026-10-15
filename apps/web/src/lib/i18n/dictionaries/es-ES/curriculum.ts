@@ -457,6 +457,13 @@ export const curriculum: Dictionary['curriculum'] = {
     noDescription: 'Ninguna descripción detallada proporcionada.',
     methodologicalPillars: 'Pilares Metodológicos',
     includedSubjects: 'Asignaturas y contenidos incluidos',
+    publicMediaTitle: 'Materiales adjuntos',
+    publicMediaDescription: 'Consulta los enlaces y archivos que el autor compartió para este currículo.',
+    loadPublicMediaBtn: 'Ver materiales adjuntos',
+    publicMediaLoading: 'Cargando materiales...',
+    publicMediaEmpty: 'No hay materiales adjuntos.',
+    publicMediaError: 'No se pudieron cargar los materiales. Inténtalo de nuevo.',
+    openPublicMediaBtn: 'Abrir material',
     gallery: {
       sectionEyebrow: 'Materiales para el currículo',
       galleryTitle: 'Biblioteca de currículos y materiales',

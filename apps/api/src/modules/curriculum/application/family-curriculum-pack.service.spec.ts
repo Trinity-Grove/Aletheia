@@ -6,6 +6,9 @@ import type { CurriculumPackRepository } from '../infrastructure/curriculum-pack
 import type { CurriculumPackExportService } from './curriculum-pack-export.service.js';
 import type { CurriculumPackImportService } from './curriculum-pack-import.service.js';
 import type { CurriculumPackService } from './curriculum-pack.service.js';
+import type { FamilyCurriculumPackMediaRepository } from '../infrastructure/family-curriculum-pack-media.repository.js';
+import type { CurriculumPackMediaRepository } from '../infrastructure/curriculum-pack-media.repository.js';
+import type { ObjectStorageService } from '../../../platform/storage/object-storage.service.js';
 
 const FAMILY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 const OTHER_FAMILY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a99';
@@ -35,6 +38,15 @@ describe('FamilyCurriculumPackService.publishToCommunity', () => {
   let findPackByCodeVersion: jest.Mock;
   let importPack: jest.Mock;
   let getPack: jest.Mock;
+  let findPackByOriginFamilyPackId: jest.Mock;
+  let listByFamilyCurriculumPackId: jest.Mock;
+  let createCommunityMedia: jest.Mock;
+  let objectStorage: {
+    headObject: jest.Mock;
+    copyObject: jest.Mock;
+    deleteObject: jest.Mock;
+    buildCommunityCurriculumPackMediaStorageKey: jest.Mock;
+  };
 
   beforeEach(() => {
     findByIdAndFamily = jest.fn().mockResolvedValue({
@@ -50,16 +62,32 @@ describe('FamilyCurriculumPackService.publishToCommunity', () => {
     });
 
     findPackByCodeVersion = jest.fn().mockResolvedValueOnce(null).mockResolvedValueOnce({ id: NEW_PACK_ID });
+    findPackByOriginFamilyPackId = jest.fn().mockResolvedValue(null);
     importPack = jest.fn().mockResolvedValue({ dryRun: false });
     getPack = jest.fn().mockResolvedValue({ id: NEW_PACK_ID, code: 'MY.PACK', moderationStatus: 'DRAFT' });
+    listByFamilyCurriculumPackId = jest.fn().mockResolvedValue([]);
+    createCommunityMedia = jest.fn().mockResolvedValue(undefined);
+    objectStorage = {
+      headObject: jest.fn(),
+      copyObject: jest.fn().mockResolvedValue(undefined),
+      deleteObject: jest.fn().mockResolvedValue(undefined),
+      buildCommunityCurriculumPackMediaStorageKey: jest
+        .fn()
+        .mockImplementation((sourceMediaId: string) => `community/curriculum-media/${sourceMediaId}/file`),
+    };
 
     const repository = { findByIdAndFamily } as unknown as FamilyCurriculumPackRepository;
     const curriculumPackRepository = {
       findPackByCodeVersion,
+      findPackByOriginFamilyPackId,
     } as unknown as CurriculumPackRepository;
     const exportService = {} as CurriculumPackExportService;
     const importService = { importPack } as unknown as CurriculumPackImportService;
     const curriculumPackService = { getPack } as unknown as CurriculumPackService;
+    const familyMediaRepository = { listByFamilyCurriculumPackId } as unknown as FamilyCurriculumPackMediaRepository;
+    const publicMediaRepository = {
+      createCommunityMedia,
+    } as unknown as CurriculumPackMediaRepository;
 
     service = new FamilyCurriculumPackService(
       repository,
@@ -67,6 +95,9 @@ describe('FamilyCurriculumPackService.publishToCommunity', () => {
       exportService,
       importService,
       curriculumPackService,
+      familyMediaRepository,
+      publicMediaRepository,
+      objectStorage as unknown as ObjectStorageService,
     );
   });
 
@@ -91,6 +122,7 @@ describe('FamilyCurriculumPackService.publishToCommunity', () => {
       }),
       false,
       USER_ID,
+      { originFamilyCurriculumPackId: INSTANCE_ID },
     );
     expect(verifyPackChecksum(importPack.mock.calls[0][0])).toBe(true);
     expect(getPack).toHaveBeenCalledWith(NEW_PACK_ID);
@@ -109,6 +141,7 @@ describe('FamilyCurriculumPackService.publishToCommunity', () => {
       }),
       false,
       USER_ID,
+      { originFamilyCurriculumPackId: INSTANCE_ID },
     );
   });
 
@@ -127,6 +160,142 @@ describe('FamilyCurriculumPackService.publishToCommunity', () => {
     await expect(
       service.publishToCommunity(OTHER_FAMILY_ID, INSTANCE_ID, USER_ID, { code: 'MY.PACK', name: 'X' }),
     ).rejects.toThrow(NotFoundException);
+  });
+
+  it('copies external links and confirmed uploads into public media rows', async () => {
+    listByFamilyCurriculumPackId.mockResolvedValue([
+      {
+        id: 'family-media-external',
+        familyCurriculumPackId: INSTANCE_ID,
+        mediaType: 'VIDEO',
+        sourceType: 'EXTERNAL_URL',
+        provider: 'YOUTUBE',
+        title: 'Aula',
+        description: 'Descrição',
+        url: 'https://www.youtube.com/watch?v=123',
+        storageKey: null,
+        mimeType: null,
+        sizeBytes: null,
+      },
+      {
+        id: 'family-media-upload',
+        familyCurriculumPackId: INSTANCE_ID,
+        mediaType: 'DOCUMENT',
+        sourceType: 'UPLOAD',
+        provider: null,
+        title: 'PDF',
+        description: null,
+        url: null,
+        storageKey: 'families/private/file.pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: 4096,
+      },
+    ]);
+    objectStorage.headObject.mockResolvedValue({ contentType: 'application/pdf', contentLength: 4096 });
+
+    await service.publishToCommunity(FAMILY_ID, INSTANCE_ID, USER_ID, { code: 'MY.PACK', name: 'My Pack' });
+
+    expect(objectStorage.copyObject).toHaveBeenCalledWith(
+      'families/private/file.pdf',
+      'community/curriculum-media/family-media-upload/file',
+      'application/pdf',
+    );
+    expect(createCommunityMedia).toHaveBeenCalledWith(NEW_PACK_ID, [
+      expect.objectContaining({
+        sourceFamilyMediaId: 'family-media-external',
+        sourceType: 'EXTERNAL_URL',
+        url: 'https://www.youtube.com/watch?v=123',
+      }),
+      expect.objectContaining({
+        sourceFamilyMediaId: 'family-media-upload',
+        sourceType: 'UPLOAD',
+        storageKey: 'community/curriculum-media/family-media-upload/file',
+      }),
+    ]);
+  });
+
+  it('blocks publication before import when an upload is not confirmed', async () => {
+    listByFamilyCurriculumPackId.mockResolvedValue([
+      {
+        id: 'family-media-upload',
+        sourceType: 'UPLOAD',
+        storageKey: 'families/private/file.pdf',
+        sizeBytes: null,
+        mimeType: 'application/pdf',
+      },
+    ]);
+
+    await expect(
+      service.publishToCommunity(FAMILY_ID, INSTANCE_ID, USER_ID, { code: 'MY.PACK', name: 'My Pack' }),
+    ).rejects.toThrow(BadRequestException);
+    expect(importPack).not.toHaveBeenCalled();
+  });
+
+  it('rejects malformed external media URLs as a domain validation error', async () => {
+    listByFamilyCurriculumPackId.mockResolvedValue([
+      {
+        id: 'family-media-malformed-url',
+        familyCurriculumPackId: INSTANCE_ID,
+        mediaType: 'VIDEO',
+        sourceType: 'EXTERNAL_URL',
+        provider: null,
+        title: 'Material',
+        description: null,
+        url: 'not-a-url',
+        storageKey: null,
+        mimeType: null,
+        sizeBytes: null,
+      },
+    ]);
+
+    await expect(
+      service.publishToCommunity(FAMILY_ID, INSTANCE_ID, USER_ID, { code: 'MY.PACK', name: 'My Pack' }),
+    ).rejects.toThrow(BadRequestException);
+    expect(importPack).not.toHaveBeenCalled();
+  });
+
+  it('cleans previously copied objects when a later upload copy fails', async () => {
+    listByFamilyCurriculumPackId.mockResolvedValue([
+      {
+        id: 'family-media-1',
+        mediaType: 'DOCUMENT',
+        sourceType: 'UPLOAD',
+        storageKey: 'families/private/one.pdf',
+        sizeBytes: 10,
+        mimeType: 'application/pdf',
+      },
+      {
+        id: 'family-media-2',
+        mediaType: 'DOCUMENT',
+        sourceType: 'UPLOAD',
+        storageKey: 'families/private/two.pdf',
+        sizeBytes: 10,
+        mimeType: 'application/pdf',
+      },
+    ]);
+    objectStorage.headObject.mockResolvedValue({ contentType: 'application/pdf', contentLength: 10 });
+    objectStorage.copyObject.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('storage down'));
+
+    await expect(
+      service.publishToCommunity(FAMILY_ID, INSTANCE_ID, USER_ID, { code: 'MY.PACK', name: 'My Pack' }),
+    ).rejects.toThrow('storage down');
+    expect(objectStorage.deleteObject).toHaveBeenCalledWith('community/curriculum-media/family-media-1/file');
+    expect(importPack).not.toHaveBeenCalled();
+  });
+
+  it('returns an existing origin publication without importing or copying again', async () => {
+    findPackByOriginFamilyPackId.mockResolvedValue({ id: 'existing-public-pack' });
+    getPack.mockResolvedValue({ id: 'existing-public-pack', code: 'MY.PACK' });
+
+    const result = await service.publishToCommunity(FAMILY_ID, INSTANCE_ID, USER_ID, {
+      code: 'A-DIFFERENT-CODE',
+      name: 'Retry',
+    });
+
+    expect(getPack).toHaveBeenCalledWith('existing-public-pack');
+    expect(importPack).not.toHaveBeenCalled();
+    expect(objectStorage.copyObject).not.toHaveBeenCalled();
+    expect(result).toEqual({ id: 'existing-public-pack', code: 'MY.PACK' });
   });
 });
 
@@ -296,6 +465,14 @@ describe('FamilyCurriculumPackService safe updates (checkUpdates and applyUpdate
     const exportService = { exportPack } as unknown as CurriculumPackExportService;
     const importService = {} as CurriculumPackImportService;
     const curriculumPackService = {} as CurriculumPackService;
+    const familyMediaRepository = { listByFamilyCurriculumPackId: jest.fn().mockResolvedValue([]) } as unknown as FamilyCurriculumPackMediaRepository;
+    const publicMediaRepository = { createCommunityMedia: jest.fn() } as unknown as CurriculumPackMediaRepository;
+    const objectStorage = {
+      headObject: jest.fn(),
+      copyObject: jest.fn(),
+      deleteObject: jest.fn(),
+      buildCommunityCurriculumPackMediaStorageKey: jest.fn(),
+    } as unknown as ObjectStorageService;
 
     service = new FamilyCurriculumPackService(
       repository,
@@ -303,6 +480,9 @@ describe('FamilyCurriculumPackService safe updates (checkUpdates and applyUpdate
       exportService,
       importService,
       curriculumPackService,
+      familyMediaRepository,
+      publicMediaRepository,
+      objectStorage,
     );
   });
 

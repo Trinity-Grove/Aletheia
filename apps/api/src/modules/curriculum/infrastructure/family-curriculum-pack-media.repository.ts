@@ -44,6 +44,13 @@ export class FamilyCurriculumPackMediaRepository {
     });
   }
 
+  listByFamilyCurriculumPackId(familyCurriculumPackId: string): Promise<FamilyCurriculumPackMedia[]> {
+    return this.prisma.familyCurriculumPackMedia.findMany({
+      where: { familyCurriculumPackId },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
   findById(
     familyId: string,
     familyCurriculumPackId: string,

@@ -1,6 +1,14 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, type CurriculumPack, type FamilyCurriculumPack, type FamilyCurriculumPackRevision } from '@prisma/client';
 import {
+  Prisma,
+  type CurriculumPack,
+  type FamilyCurriculumPack,
+  type FamilyCurriculumPackMedia,
+  type FamilyCurriculumPackRevision,
+} from '@prisma/client';
+import {
+  ALLOWED_FAMILY_CURRICULUM_PACK_MEDIA_MIME_TYPES,
+  FAMILY_CURRICULUM_PACK_MEDIA_MAX_FILE_SIZE_BYTES,
   curriculumPackExportDocumentSchema,
   type ApplyPackUpdateDto,
   type ApplyPackUpdateResponseDto,
@@ -21,6 +29,9 @@ import { CurriculumPackImportService } from './curriculum-pack-import.service.js
 import { CurriculumPackService } from './curriculum-pack.service.js';
 import { CurriculumPackRepository } from '../infrastructure/curriculum-pack.repository.js';
 import { FamilyCurriculumPackRepository } from '../infrastructure/family-curriculum-pack.repository.js';
+import { FamilyCurriculumPackMediaRepository } from '../infrastructure/family-curriculum-pack-media.repository.js';
+import { CurriculumPackMediaRepository } from '../infrastructure/curriculum-pack-media.repository.js';
+import { ObjectStorageService } from '../../../platform/storage/object-storage.service.js';
 
 @Injectable()
 export class FamilyCurriculumPackService {
@@ -30,6 +41,9 @@ export class FamilyCurriculumPackService {
     private readonly exportService: CurriculumPackExportService,
     private readonly importService: CurriculumPackImportService,
     private readonly curriculumPackService: CurriculumPackService,
+    private readonly familyMediaRepository: FamilyCurriculumPackMediaRepository,
+    private readonly publicMediaRepository: CurriculumPackMediaRepository,
+    private readonly objectStorage: ObjectStorageService,
   ) {}
 
   async install(
@@ -189,6 +203,9 @@ export class FamilyCurriculumPackService {
   ): Promise<CurriculumPackResponseDto> {
     const instance = await this.requireInstance(familyId, id);
 
+    const existingOrigin = await this.curriculumPackRepository.findPackByOriginFamilyPackId(instance.id);
+    if (existingOrigin) return this.curriculumPackService.getPack(existingOrigin.id);
+
     const alreadyExists = await this.curriculumPackRepository.findPackByCodeVersion(dto.code, 1);
     if (alreadyExists) {
       throw new BadRequestException(
@@ -211,13 +228,106 @@ export class FamilyCurriculumPackService {
     };
     newDocument.checksumSha256 = calculatePackChecksum(newDocument);
 
-    await this.importService.importPack(newDocument, false, userId);
+    const copiedKeys: string[] = [];
+    let created: { id: string } | null = null;
+    try {
+      const publicMedia = await this.prepareCommunityMedia(instance.id, copiedKeys);
+      await this.importService.importPack(newDocument, false, userId, {
+        originFamilyCurriculumPackId: instance.id,
+      });
 
-    const created = await this.curriculumPackRepository.findPackByCodeVersion(dto.code, 1);
-    if (!created) {
-      throw new BadRequestException('Failed to create the community curriculum pack.');
+      created = await this.curriculumPackRepository.findPackByCodeVersion(dto.code, 1);
+      if (!created) throw new BadRequestException('Failed to create the community curriculum pack.');
+
+      await this.publicMediaRepository.createCommunityMedia(created.id, publicMedia);
+      return this.curriculumPackService.getPack(created.id);
+    } catch (error) {
+      await Promise.allSettled(copiedKeys.map((key) => this.objectStorage.deleteObject(key)));
+      if (created) await this.curriculumPackRepository.deletePack(created.id).catch(() => undefined);
+      throw error;
     }
-    return this.curriculumPackService.getPack(created.id);
+  }
+
+  private async prepareCommunityMedia(
+    familyCurriculumPackId: string,
+    copiedKeys: string[],
+  ): Promise<Array<Omit<Prisma.CurriculumPackMediaUncheckedCreateInput, 'curriculumPackId'>>> {
+    const sourceMedia = await this.familyMediaRepository.listByFamilyCurriculumPackId(familyCurriculumPackId);
+    const result: Array<Omit<Prisma.CurriculumPackMediaUncheckedCreateInput, 'curriculumPackId'>> = [];
+
+    for (const media of sourceMedia) {
+      if (media.sourceType === 'EXTERNAL_URL') {
+        let isHttps = false;
+        try {
+          isHttps = Boolean(media.url && new URL(media.url).protocol === 'https:');
+        } catch {
+          isHttps = false;
+        }
+        if (!isHttps) {
+          throw new BadRequestException('Community media URLs must use HTTPS.');
+        }
+        result.push({
+          sourceFamilyMediaId: media.id,
+          mediaType: media.mediaType,
+          sourceType: media.sourceType,
+          provider: media.provider,
+          title: media.title,
+          description: media.description,
+          url: media.url,
+          storageKey: null,
+          mimeType: null,
+          sizeBytes: null,
+        });
+        continue;
+      }
+
+      const storageKey = this.validateUploadMetadata(media);
+      const metadata = await this.objectStorage.headObject(storageKey);
+      if (!metadata || metadata.contentLength === undefined || !metadata.contentType) {
+        throw new BadRequestException('Uploaded community media is not available.');
+      }
+      this.validateMimeAndSize(media.mediaType, metadata.contentType, metadata.contentLength);
+
+      const publicKey = this.objectStorage.buildCommunityCurriculumPackMediaStorageKey(media.id, media.title);
+      copiedKeys.push(publicKey);
+      await this.objectStorage.copyObject(storageKey, publicKey, metadata.contentType);
+      result.push({
+        sourceFamilyMediaId: media.id,
+        mediaType: media.mediaType,
+        sourceType: media.sourceType,
+        provider: media.provider,
+        title: media.title,
+        description: media.description,
+        url: null,
+        storageKey: publicKey,
+        mimeType: metadata.contentType,
+        sizeBytes: metadata.contentLength,
+      });
+    }
+
+    return result;
+  }
+
+  private validateUploadMetadata(media: FamilyCurriculumPackMedia): string {
+    if (!media.storageKey || !media.mimeType || media.sizeBytes === null) {
+      throw new BadRequestException('Only confirmed uploads can be published.');
+    }
+    this.validateMimeAndSize(media.mediaType, media.mimeType, media.sizeBytes);
+    return media.storageKey;
+  }
+
+  private validateMimeAndSize(mediaType: string, mimeType: string, sizeBytes: number): void {
+    if (!(ALLOWED_FAMILY_CURRICULUM_PACK_MEDIA_MIME_TYPES as readonly string[]).includes(mimeType)) {
+      throw new BadRequestException('Uploaded file type is not allowed.');
+    }
+    if (sizeBytes > FAMILY_CURRICULUM_PACK_MEDIA_MAX_FILE_SIZE_BYTES) {
+      throw new BadRequestException('Uploaded file is too large.');
+    }
+    const matches =
+      (mediaType === 'IMAGE' && mimeType.startsWith('image/')) ||
+      (mediaType === 'VIDEO' && mimeType.startsWith('video/')) ||
+      (mediaType === 'DOCUMENT' && mimeType === 'application/pdf');
+    if (!matches) throw new BadRequestException('MIME type does not match the media type.');
   }
 
   private async requireInstance(familyId: string, id: string): Promise<FamilyCurriculumPack> {

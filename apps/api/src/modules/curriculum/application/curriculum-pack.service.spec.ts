@@ -18,6 +18,7 @@ describe('CurriculumPackService - Community & Moderation', () => {
     description: 'A test pack for community features',
     metadata: {},
     authorUserId,
+    originFamilyCurriculumPackId: null,
     moderationStatus: 'DRAFT',
     moderationNotes: null,
     moderatedAt: null,

@@ -98,6 +98,9 @@ import { FamilyCurriculumPackController } from './presentation/family-curriculum
 import { FamilyCurriculumPackMediaRepository } from './infrastructure/family-curriculum-pack-media.repository.js';
 import { FamilyCurriculumPackMediaService } from './application/family-curriculum-pack-media.service.js';
 import { FamilyCurriculumPackMediaController } from './presentation/family-curriculum-pack-media.controller.js';
+import { CurriculumPackMediaRepository } from './infrastructure/curriculum-pack-media.repository.js';
+import { CurriculumPackMediaService } from './application/curriculum-pack-media.service.js';
+import { CurriculumPackMediaController } from './presentation/curriculum-pack-media.controller.js';
 import { DefinitionVersionOperationsService } from './application/definition-version-operations.service.js';
 import { DefinitionVersionOperationsController } from './presentation/definition-version-operations.controller.js';
 import { AuthorTrustRepository } from './infrastructure/author-trust.repository.js';
@@ -131,6 +134,7 @@ import { FamilyActivityController } from './presentation/family-activity.control
     AchievementController,
     FamilyCurriculumPackController,
     FamilyCurriculumPackMediaController,
+    CurriculumPackMediaController,
     DefinitionVersionOperationsController,
     CurriculumPackCommunityController,
     CurriculumPackReportController,
@@ -204,6 +208,7 @@ import { FamilyActivityController } from './presentation/family-activity.control
     AdvancedSeminaryTheologyPackSeeder,
     FamilyCurriculumPackRepository,
     FamilyCurriculumPackMediaRepository,
+    CurriculumPackMediaRepository,
     FamilyActivityRepository,
     CurriculumService,
     ObjectiveService,
@@ -218,6 +223,7 @@ import { FamilyActivityController } from './presentation/family-activity.control
     LearnerCompetencyTrackingService,
     FamilyCurriculumPackService,
     FamilyCurriculumPackMediaService,
+    CurriculumPackMediaService,
     FamilyActivityService,
     DefinitionVersionOperationsService,
     AuthorTrustRepository,

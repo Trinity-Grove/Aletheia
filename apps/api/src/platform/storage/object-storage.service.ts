@@ -3,6 +3,7 @@ import type { Readable } from 'node:stream';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   CreateBucketCommand,
+  CopyObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
   HeadBucketCommand,
@@ -142,6 +143,23 @@ export class ObjectStorageService {
   ): string {
     const safeName = sanitizeFileNameSegment(fileName);
     return `families/${familyId}/${namespace}/${ownerId}/${randomUUID()}-${safeName}`;
+  }
+
+  buildCommunityCurriculumPackMediaStorageKey(sourceMediaId: string, fileName: string): string {
+    const sourceHash = createHash('sha256').update(sourceMediaId).digest('hex');
+    return `community/curriculum-media/${sourceHash}/${sanitizeFileNameSegment(fileName)}`;
+  }
+
+  async copyObject(sourceKey: string, targetKey: string, contentType?: string): Promise<void> {
+    const { client, bucket } = this.getClient();
+    await client.send(
+      new CopyObjectCommand({
+        Bucket: bucket,
+        Key: targetKey,
+        CopySource: `${bucket}/${sourceKey}`,
+        ...(contentType ? { ContentType: contentType, MetadataDirective: 'REPLACE' } : {}),
+      }),
+    );
   }
 
   async getPresignedUploadUrl(storageKey: string, contentType: string): Promise<{ uploadUrl: string; expiresAt: Date }> {

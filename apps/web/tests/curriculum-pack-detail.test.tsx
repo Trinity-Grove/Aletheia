@@ -115,6 +115,52 @@ describe('CurriculumPackDetailModal & Template Preview Transparency', () => {
       expect(screen.getByText(/Pacote já instalado nesta família/i)).toBeInTheDocument();
       expect(screen.queryByTestId('detail-install-pack-btn')).not.toBeInTheDocument();
     });
+
+    it('loads public attached materials on demand and renders external links', async () => {
+      vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          {
+            id: 'media-1',
+            curriculumPackId: mockPack.id,
+            mediaType: 'VIDEO',
+            sourceType: 'EXTERNAL_URL',
+            provider: 'YOUTUBE',
+            title: 'Aula aberta',
+            description: null,
+            url: 'https://www.youtube.com/watch?v=123',
+            mimeType: null,
+            sizeBytes: null,
+            createdAt: '2026-10-15T00:00:00.000Z',
+            updatedAt: '2026-10-15T00:00:00.000Z',
+          },
+        ],
+      } as Response);
+
+      render(
+        <CurriculumPackDetailModal
+          isOpen={true}
+          pack={mockPack}
+          isInstalled={false}
+          onClose={vi.fn()}
+          onInstall={vi.fn()}
+        />,
+      );
+
+      fireEvent.click(screen.getByTestId('load-public-pack-media-btn'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Aula aberta')).toBeInTheDocument();
+      });
+      expect(global.fetch).toHaveBeenCalledWith(
+        `/api/v1/curriculum-packs/${mockPack.id}/media`,
+        { credentials: 'include' },
+      );
+      expect(screen.getByTestId('public-pack-media-link-media-1')).toHaveAttribute(
+        'href',
+        'https://www.youtube.com/watch?v=123',
+      );
+    });
   });
 
   describe('CurriculumPacksGallery integration', () => {

@@ -455,6 +455,13 @@ export const curriculum = {
     noDescription: 'Nenhuma descrição detalhada informada.',
     methodologicalPillars: 'Pilares Metodológicos',
     includedSubjects: 'Disciplinas & Conteúdos Inclusos',
+    publicMediaTitle: 'Materiais anexados',
+    publicMediaDescription: 'Veja os links e arquivos que o autor disponibilizou para este currículo.',
+    loadPublicMediaBtn: 'Ver materiais anexados',
+    publicMediaLoading: 'Carregando materiais...',
+    publicMediaEmpty: 'Nenhum material anexado.',
+    publicMediaError: 'Não foi possível carregar os materiais. Tente novamente.',
+    openPublicMediaBtn: 'Abrir material',
     gallery: {
       sectionEyebrow: 'Materiais para o currículo',
       galleryTitle: 'Biblioteca de currículos e materiais',
