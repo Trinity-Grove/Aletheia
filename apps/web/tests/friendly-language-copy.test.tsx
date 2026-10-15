@@ -143,4 +143,35 @@ describe('Friendly multilingual content', () => {
       expect(source).not.toContain(literal);
     }
   });
+
+  it('does not keep user-facing portfolio feedback copy in the page', () => {
+    const filePath = path.resolve(__dirname, '../app/(dashboard)/portfolio/page.tsx');
+    const source = fs.readFileSync(filePath, 'utf8');
+
+    for (const key of [
+      'authRequired',
+      'updateError',
+      'createError',
+      'uploadPrepareError',
+      'uploadTransferError',
+      'uploadConfirmError',
+      'deleteSuccess',
+      'deleteError',
+    ]) {
+      expect(source).toContain(`t('records.portfolio.messages.${key}'`);
+    }
+
+    for (const literal of [
+      'Família não autenticada',
+      'Falha ao atualizar evidência',
+      'Falha ao adicionar evidência',
+      'Falha ao preparar o envio do arquivo',
+      'Falha ao enviar o arquivo para o armazenamento.',
+      'Falha ao confirmar o envio do arquivo',
+      'Evidência excluída.',
+      'Falha ao excluir evidência.',
+    ]) {
+      expect(source).not.toContain(literal);
+    }
+  });
 });
