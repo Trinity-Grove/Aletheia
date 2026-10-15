@@ -4,6 +4,12 @@ export const reports = {
       title: 'Work portfolio',
       description: 'See the work, records, and projects that show learning over time.',
       loading: 'Loading portfolio...',
+      noFamilyTitle: 'Choose or create a family',
+      noFamilyDescription: 'Select a family to see learners\' work or create one to get started.',
+      createFamily: 'Create a family',
+      errorTitle: 'We could not load the portfolio',
+      errorDescription: 'Check your connection and try again. Your filters will be kept.',
+      retry: 'Try again',
     },
     reports: {
       title: 'Reports and academic records',

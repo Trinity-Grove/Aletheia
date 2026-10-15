@@ -201,6 +201,13 @@ export const records = {
     emptyTitle: 'Ninguna evidencia en el portafolio',
     emptyDesc: '¡Fotografíe cuadernos, dibujos de la naturaleza, agregue audios de narración y celebre el camino educativo!',
     addFirstWork: 'Agregar Primera Obra',
+    states: {
+      readOnlyTitle: 'Portafolio en modo de lectura',
+      readOnlyDescription: 'Puede consultar los trabajos, pero no tiene permiso para modificarlos.',
+      noResultsTitle: 'Ningún trabajo coincide con estos filtros',
+      noResultsDescription: 'Intente quitar un filtro o buscar otro término.',
+      clearFilters: 'Limpiar filtros',
+    },
     highlightBadge: 'Destacado',
     openMedia: 'Abrir Archivo ↗',
     editBtn: 'Editar',

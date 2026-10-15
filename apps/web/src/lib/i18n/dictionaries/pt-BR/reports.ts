@@ -4,6 +4,12 @@ export const reports = {
       title: 'Trabalhos e portfólio',
       description: 'Veja os trabalhos, registros e projetos que mostram a aprendizagem ao longo do tempo.',
       loading: 'Carregando portfólio...',
+      noFamilyTitle: 'Escolha ou crie uma família',
+      noFamilyDescription: 'Selecione uma família para ver os trabalhos dos educandos ou crie uma para começar.',
+      createFamily: 'Criar uma família',
+      errorTitle: 'Não foi possível carregar o portfólio',
+      errorDescription: 'Verifique sua conexão e tente novamente. Seus filtros serão mantidos.',
+      retry: 'Tentar novamente',
     },
     reports: {
       title: 'Relatórios e históricos',
