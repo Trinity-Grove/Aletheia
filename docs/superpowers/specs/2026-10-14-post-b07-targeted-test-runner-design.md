@@ -61,6 +61,12 @@ Prefer an explicit, testable resolver over shell globbing or assumptions based o
 
 The dispatcher should pass the resolved targets to the package command using the package's existing runner. It must not concatenate user input into a shell command; use argument arrays and child-process APIs.
 
+## Platform invocation notes
+
+On POSIX systems the dispatcher invokes `pnpm --filter <package> test -- <targets...>`. On Windows, `.cmd` shims cannot be spawned directly with Node's shell-disabled process API in this environment, so the dispatcher invokes `ComSpec /d /s /c pnpm.cmd --filter <package> test <targets...>` using an argument array. The Windows form intentionally omits pnpm's script separator: passing it through `ComSpec` makes Vitest receive a literal `--` and run the full suite instead of the requested target.
+
+The root `test` and `test:ci` scripts remain recursive full-suite commands. The new `test:targeted` command is the explicit opt-in path for focused verification.
+
 ## Acceptance criteria
 
 - The B07 targeted command above exits `0`.
