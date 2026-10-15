@@ -129,6 +129,10 @@ const PATH_PERMISSIONS: Partial<Record<string, PermissionAction>> = Object.fromE
     .map((item) => [item.href, NAV_ITEM_PERMISSIONS[item.id] as PermissionAction]),
 );
 
+function isNavigationItemActive(item: NavigationItem, path: string): boolean {
+  return path === item.href || (item.id === 'curriculum' && path.startsWith('/curriculum/'));
+}
+
 export interface UserProfileSummary {
   id?: string | undefined;
   name?: string | undefined;
@@ -315,7 +319,7 @@ export function ProductShell({
     .map<NavigationItem>((item) => ({
       ...item,
       label: t(item.label),
-      active: activePath === item.href,
+      active: isNavigationItemActive(item, activePath),
     }));
 
   const primaryNavigationItems = PRIORITY_NAV_ITEM_IDS
@@ -323,7 +327,7 @@ export function ProductShell({
     .filter((item): item is NavigationItem => item !== undefined)
     .slice(0, tabBarItemCount);
 
-  const activeNavItem = MAIN_NAV_ITEMS.find((item) => item.href === activePath);
+  const activeNavItem = MAIN_NAV_ITEMS.find((item) => isNavigationItemActive(item, activePath));
   const breadcrumbItems: BreadcrumbItem[] =
     activeNavItem && activeNavItem.id !== 'home'
       ? [
