@@ -34,6 +34,7 @@ export * from './curriculum-pack-export.js';
 export * from './curriculum-pack-import.js';
 export * from './family-activity.js';
 export * from './community-activity.js';
+export * from './family-learning-resource.js';
 export * from './family-curriculum-pack.js';
 export * from './family-curriculum-pack-media.js';
 export * from './family-learning-path-selection.js';

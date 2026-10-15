@@ -171,6 +171,20 @@ export function FamilyActivitiesGallery({ familyId }: FamilyActivitiesGalleryPro
               {t('curriculum.familyActivities.newActivity')}
             </Button>
             <a
+              href="/curriculum/community"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: 'var(--forest)',
+                textDecoration: 'underline',
+              }}
+            >
+              {t('curriculum.familyActivities.communityHub')}
+            </a>
+            <a
               href="/curriculum"
               style={{
                 display: 'inline-flex',
