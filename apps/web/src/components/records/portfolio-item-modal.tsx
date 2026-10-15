@@ -207,7 +207,7 @@ export function PortfolioItemModal({
         )}
 
         {/* Learner & Evidence Type */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div className="portfolio-form-grid" data-testid="portfolio-context-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1rem' }}>
           <Select
             label={t('records.portfolioModal.learnerLabel')}
             data-testid="portfolio-learner-select"
@@ -240,7 +240,7 @@ export function PortfolioItemModal({
         />
 
         {/* Subject & Linked Record */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div className="portfolio-form-grid" data-testid="portfolio-subject-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1rem' }}>
           <Select
             label={t('records.portfolioModal.subjectLabel')}
             data-testid="portfolio-subject-select"
@@ -315,7 +315,7 @@ export function PortfolioItemModal({
         />
 
         {/* Date & Tags */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '1rem' }}>
+        <div className="portfolio-form-grid" data-testid="portfolio-date-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.5fr)', gap: '1rem' }}>
           <Input
             label={t('records.portfolioModal.dateLabel')}
             type="date"

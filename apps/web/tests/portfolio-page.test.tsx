@@ -1,5 +1,5 @@
 import React from 'react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToastProvider } from '@aletheia/ui';
 import type { LearnerSummaryDto, LearningRecordResponseDto, PortfolioItemResponseDto } from '@aletheia/contracts';
@@ -298,6 +298,117 @@ describe('PortfolioPage states', () => {
 });
 
 describe('PortfolioGalleryView states', () => {
+  it('opens an accessible enlarged image preview and restores focus when closed', async () => {
+    const imageItem = {
+      ...portfolioItem,
+      type: 'IMAGE' as const,
+      fileUrl: 'https://storage.example.com/portfolio-1.jpg',
+      mimeType: 'image/jpeg',
+    };
+
+    render(
+      <AuthContext.Provider value={makeAuth()}>
+        <LocaleProvider>
+          <ToastProvider>
+            <PortfolioGalleryView
+              items={[imageItem]}
+              learners={[learner]}
+              subjects={[]}
+              activeLearnerId={null}
+              onOpenAddItem={vi.fn()}
+              onEditItem={vi.fn()}
+              onDeleteItem={vi.fn()}
+            />
+          </ToastProvider>
+        </LocaleProvider>
+      </AuthContext.Provider>,
+    );
+
+    const previewButton = await screen.findByTestId(`preview-media-btn-${imageItem.id}`);
+    previewButton.focus();
+    fireEvent.click(previewButton);
+
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByRole('img', { name: imageItem.title })).toHaveAttribute('src', imageItem.fileUrl);
+
+    fireEvent.click(screen.getByTestId('modal-close-button'));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(document.activeElement).toBe(previewButton);
+  });
+
+  it('renders type-specific audio, video, and document previews with metadata', async () => {
+    const mediaItems = [
+      { ...portfolioItem, id: 'audio-1', type: 'AUDIO' as const, title: 'Leitura gravada', fileUrl: 'https://storage.example.com/audio.mp3', mimeType: 'audio/mpeg' },
+      { ...portfolioItem, id: 'video-1', type: 'VIDEO' as const, title: 'Apresentação', fileUrl: 'https://storage.example.com/video.mp4', mimeType: 'video/mp4' },
+      { ...portfolioItem, id: 'document-1', type: 'DOCUMENT' as const, title: 'Redação em PDF', fileUrl: 'https://storage.example.com/essay.pdf', mimeType: 'application/pdf', fileSizeBytes: 2048 },
+    ];
+
+    render(
+      <AuthContext.Provider value={makeAuth()}>
+        <LocaleProvider>
+          <ToastProvider>
+            <PortfolioGalleryView
+              items={mediaItems}
+              learners={[learner]}
+              subjects={[]}
+              activeLearnerId={null}
+              onOpenAddItem={vi.fn()}
+              onEditItem={vi.fn()}
+              onDeleteItem={vi.fn()}
+            />
+          </ToastProvider>
+        </LocaleProvider>
+      </AuthContext.Provider>,
+    );
+
+    fireEvent.click(screen.getByTestId('preview-media-btn-audio-1'));
+    expect(await screen.findByTestId('portfolio-audio-player-audio-1')).toHaveAttribute('controls');
+    fireEvent.click(screen.getByTestId('modal-close-button'));
+
+    fireEvent.click(screen.getByTestId('preview-media-btn-video-1'));
+    expect(await screen.findByTestId('portfolio-video-player-video-1')).toHaveAttribute('controls');
+    expect(screen.getByTestId('portfolio-video-player-video-1')).toHaveStyle({ width: '100%' });
+    fireEvent.click(screen.getByTestId('modal-close-button'));
+
+    fireEvent.click(screen.getByTestId('preview-media-btn-document-1'));
+    expect(await screen.findByTestId('portfolio-document-preview-document-1')).toHaveTextContent('Redação em PDF');
+    expect(screen.getByTestId('portfolio-document-preview-document-1')).toHaveTextContent('2 KB');
+    expect(screen.getByRole('link', { name: /baixar/i })).toHaveAttribute('href', mediaItems[2]!.fileUrl!);
+  });
+
+  it('offers a retry when a preview URL is pending or unavailable', async () => {
+    const resolvedUrl = 'https://storage.example.com/signed/portfolio-1-retry.jpg';
+    const resolveMediaUrl = vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(resolvedUrl);
+    const imageItem = { ...portfolioItem, type: 'IMAGE' as const, mimeType: 'image/jpeg' };
+
+    render(
+      <AuthContext.Provider value={makeAuth()}>
+        <LocaleProvider>
+          <ToastProvider>
+            <PortfolioGalleryView
+              items={[imageItem]}
+              learners={[learner]}
+              subjects={[]}
+              activeLearnerId={null}
+              onOpenAddItem={vi.fn()}
+              onEditItem={vi.fn()}
+              onDeleteItem={vi.fn()}
+              onResolveMediaUrl={resolveMediaUrl}
+            />
+          </ToastProvider>
+        </LocaleProvider>
+      </AuthContext.Provider>,
+    );
+
+    fireEvent.click(screen.getByTestId(`preview-media-btn-${imageItem.id}`));
+    expect(await screen.findByTestId(`portfolio-media-modal-error-${imageItem.id}`)).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId(`retry-media-preview-${imageItem.id}`));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByRole('img', { name: imageItem.title })).toHaveAttribute('src', resolvedUrl);
+    expect(resolveMediaUrl).toHaveBeenCalledTimes(2);
+  });
+
   it('loads an image preview on demand and keeps the card usable when media resolution fails', async () => {
     const resolvedUrl = 'https://storage.example.com/signed/portfolio-1-retry.jpg';
     const resolveMediaUrl = vi.fn()
@@ -441,5 +552,26 @@ describe('PortfolioItemModal context filters', () => {
     expect(recordSelect).toHaveValue('');
     expect(screen.getByRole('option', { name: /Leitura de Miguel/ })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: /Leitura de Sofia/ })).not.toBeInTheDocument();
+  });
+
+  it('marks the context and date fields as responsive form grids', () => {
+    render(
+      <LocaleProvider>
+        <ToastProvider>
+          <PortfolioItemModal
+            isOpen
+            onClose={vi.fn()}
+            onSave={vi.fn()}
+            learners={[learner]}
+            subjects={[]}
+            records={records}
+          />
+        </ToastProvider>
+      </LocaleProvider>,
+    );
+
+    expect(screen.getByTestId('portfolio-context-grid')).toHaveClass('portfolio-form-grid');
+    expect(screen.getByTestId('portfolio-subject-grid')).toHaveClass('portfolio-form-grid');
+    expect(screen.getByTestId('portfolio-date-grid')).toHaveClass('portfolio-form-grid');
   });
 });

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AletheiaIcon, Badge, Button, EmptyState, Input, Select } from '@aletheia/ui';
+import { AletheiaIcon, Alert, Badge, Button, EmptyState, Input, Modal, Select } from '@aletheia/ui';
 import type {
   PortfolioItemResponseDto,
   LearnerSummaryDto,
@@ -31,6 +31,104 @@ interface PortfolioMediaPreviewProps {
   typeConfig: { label: string; icon: React.ReactNode };
   translate: (key: string) => string;
   children?: React.ReactNode;
+}
+
+interface PortfolioMediaDialogProps {
+  item: PortfolioItemResponseDto;
+  mediaUrl: string | null;
+  isLoading: boolean;
+  hasError: boolean;
+  onRetry(): void;
+  onClose(): void;
+  translate: (key: string) => string;
+}
+
+function formatFileSize(bytes: number | null | undefined): string | null {
+  if (bytes == null || !Number.isFinite(bytes)) return null;
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function PortfolioMediaDialog({
+  item,
+  mediaUrl,
+  isLoading,
+  hasError,
+  onRetry,
+  onClose,
+  translate,
+}: PortfolioMediaDialogProps) {
+  const fileSize = formatFileSize(item.fileSizeBytes);
+  const fileDetails = [item.mimeType, fileSize].filter(Boolean).join(' · ');
+
+  return (
+    <Modal isOpen onClose={onClose} title={item.title} maxWidth="xl">
+      <div data-testid={`portfolio-media-dialog-content-${item.id}`} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {isLoading ? (
+          <div role="status" data-testid={`portfolio-media-modal-loading-${item.id}`} aria-live="polite" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            {translate('records.portfolio.states.mediaLoading')}
+          </div>
+        ) : hasError || !mediaUrl ? (
+          <Alert variant="error" data-testid={`portfolio-media-modal-error-${item.id}`}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <span>{translate('records.portfolio.states.mediaUnavailable')}</span>
+              <Button size="sm" variant="outline" data-testid={`retry-media-preview-${item.id}`} onClick={onRetry}>
+                {translate('records.portfolio.retryMedia')}
+              </Button>
+            </div>
+          </Alert>
+        ) : item.type === 'IMAGE' ? (
+          <img
+            src={mediaUrl}
+            alt={item.title}
+            data-testid={`portfolio-image-preview-${item.id}`}
+            style={{ display: 'block', width: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: 'var(--radius-md)' }}
+          />
+        ) : item.type === 'AUDIO' ? (
+          <audio
+            controls
+            preload="metadata"
+            src={mediaUrl}
+            aria-label={item.title}
+            data-testid={`portfolio-audio-player-${item.id}`}
+            style={{ width: '100%' }}
+          />
+        ) : item.type === 'VIDEO' ? (
+          <video
+            controls
+            playsInline
+            preload="metadata"
+            src={mediaUrl}
+            aria-label={item.title}
+            data-testid={`portfolio-video-player-${item.id}`}
+            style={{ display: 'block', width: '100%', maxHeight: '70vh', backgroundColor: 'var(--text-primary)', borderRadius: 'var(--radius-md)' }}
+          />
+        ) : item.type === 'DOCUMENT' || item.type === 'CERTIFICATE' ? (
+          <div
+            data-testid={`portfolio-document-preview-${item.id}`}
+            style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '1rem', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-surface)' }}
+          >
+            <AletheiaIcon name="file-text" size={32} style={{ color: 'var(--forest)' }} />
+            <strong>{item.title}</strong>
+            {fileDetails && <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{fileDetails}</span>}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <a href={mediaUrl} target="_blank" rel="noopener noreferrer" className="ui-button ui-button--outline ui-button--sm">
+                {translate('records.portfolio.openMedia')}
+              </a>
+              <a href={mediaUrl} download={item.title} className="ui-button ui-button--primary ui-button--sm">
+                {translate('records.portfolio.downloadMedia')}
+              </a>
+            </div>
+          </div>
+        ) : (
+          <a href={mediaUrl} target="_blank" rel="noopener noreferrer" className="ui-button ui-button--primary ui-button--sm">
+            {translate('records.portfolio.openMedia')}
+          </a>
+        )}
+      </div>
+    </Modal>
+  );
 }
 
 function PortfolioMediaPreview({
@@ -161,6 +259,9 @@ export function PortfolioGalleryView({
   const [resolvedMediaUrls, setResolvedMediaUrls] = useState<Record<string, string>>({});
   const [mediaLoadingIds, setMediaLoadingIds] = useState<Set<string>>(new Set());
   const [mediaErrorIds, setMediaErrorIds] = useState<Set<string>>(new Set());
+  const [previewItem, setPreviewItem] = useState<PortfolioItemResponseDto | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewState, setPreviewState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
 
   const resolveMediaUrl = useCallback(async (item: PortfolioItemResponseDto): Promise<string | null> => {
     if (item.fileUrl) return item.fileUrl;
@@ -195,6 +296,24 @@ export function PortfolioGalleryView({
       window.open(mediaUrl, '_blank', 'noopener,noreferrer');
     }
   }, [resolveMediaUrl]);
+
+  const handlePreviewMedia = useCallback(async (item: PortfolioItemResponseDto) => {
+    setPreviewItem(item);
+    setPreviewUrl(item.fileUrl ?? resolvedMediaUrls[item.id] ?? null);
+    if (item.fileUrl || resolvedMediaUrls[item.id]) {
+      setPreviewState('ready');
+      return;
+    }
+
+    setPreviewState('loading');
+    const mediaUrl = await resolveMediaUrl(item);
+    setPreviewUrl(mediaUrl);
+    setPreviewState(mediaUrl ? 'ready' : 'error');
+  }, [resolveMediaUrl, resolvedMediaUrls]);
+
+  const handleRetryPreview = useCallback(() => {
+    if (previewItem) void handlePreviewMedia(previewItem);
+  }, [handlePreviewMedia, previewItem]);
 
   // Collect all distinct tags
   const allTags = useMemo(() => {
@@ -299,14 +418,14 @@ export function PortfolioGalleryView({
           gap: '0.75rem',
         }}
       >
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="portfolio-filter-bar" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <Input
             type="text"
             data-testid="search-portfolio-input"
             placeholder={t('records.portfolio.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ minWidth: '180px' }}
+            style={{ minWidth: 'min(180px, 100%)', width: '100%' }}
           />
 
           <Select
@@ -430,9 +549,10 @@ export function PortfolioGalleryView({
       ) : (
         <div
           data-testid="portfolio-gallery-grid"
+          className="portfolio-gallery-grid"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
             gap: '1.25rem',
           }}
         >
@@ -567,6 +687,7 @@ export function PortfolioGalleryView({
 
                   {/* Actions */}
                   <div
+                    className="portfolio-card-action-row"
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -576,11 +697,22 @@ export function PortfolioGalleryView({
                       borderTop: '1px solid var(--sage-soft)',
                     }}
                   >
+                    <div className="portfolio-card-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+                      {(item.fileUrl || item.mimeType) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          data-testid={`preview-media-btn-${item.id}`}
+                          onClick={() => void handlePreviewMedia(item)}
+                        >
+                          {t('records.portfolio.previewMedia')}
+                        </Button>
+                      )}
                     {item.fileUrl ? (
                       <a
                         href={item.fileUrl}
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noopener noreferrer"
                         data-testid={`view-file-link-${item.id}`}
                         style={{
                           fontSize: '0.75rem',
@@ -631,12 +763,28 @@ export function PortfolioGalleryView({
                         </Button>
                       </Can>
                     </div>
+                    </div>
                   </div>
                 </div>
               </article>
             );
           })}
         </div>
+      )}
+      {previewItem && (
+        <PortfolioMediaDialog
+          item={previewItem}
+          mediaUrl={previewUrl}
+          isLoading={previewState === 'loading'}
+          hasError={previewState === 'error'}
+          onRetry={handleRetryPreview}
+          onClose={() => {
+            setPreviewItem(null);
+            setPreviewUrl(null);
+            setPreviewState('idle');
+          }}
+          translate={(key) => t(key as any)}
+        />
       )}
     </div>
   );
