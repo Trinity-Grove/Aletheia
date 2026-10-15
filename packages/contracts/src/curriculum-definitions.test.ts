@@ -50,6 +50,7 @@ describe('Curriculum Definition Contracts', () => {
       code: 'MUSIC.BASS.LEVEL_01.RHYTHM',
       domainId: DOMAIN_ID,
       title: 'Manter pulsação básica no contrabaixo',
+      description: 'Mantém uma pulsação estável em um exercício musical simples.',
       level: 1,
       metadata: {
         ageRecommendation: { min: 8 },
@@ -59,6 +60,7 @@ describe('Curriculum Definition Contracts', () => {
       },
     });
     expect(parsed.title).toBe('Manter pulsação básica no contrabaixo');
+    expect(parsed.description).toBe('Mantém uma pulsação estável em um exercício musical simples.');
     expect(parsed.metadata.assessmentPolicy?.minimumScore).toBe(3);
     expect(parsed.metadata.evidenceTypes).toEqual(['video', 'mentor_assessment']);
   });

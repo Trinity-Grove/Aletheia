@@ -157,6 +157,33 @@ describe('DefinitionVersionOperationsService', () => {
       ]);
     });
 
+    it('includes competency descriptions in the generic version diff', async () => {
+      const { service } = makeService({
+        competencyDefinition: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              id: 'v1', code: 'MATH.ADD', version: 1, status: 'PUBLISHED', schemaVersion: '1.0.0',
+              domainId: 'domain', pathId: null, title: 'Adição', description: 'Soma números naturais.', level: 1,
+              metadata: {}, createdAt: new Date('2026-01-01'), publishedAt: null, deprecatedAt: null,
+            },
+            {
+              id: 'v2', code: 'MATH.ADD', version: 2, status: 'PUBLISHED', schemaVersion: '1.0.0',
+              domainId: 'domain', pathId: null, title: 'Adição', description: 'Soma e interpreta números naturais.', level: 1,
+              metadata: {}, createdAt: new Date('2026-02-01'), publishedAt: null, deprecatedAt: null,
+            },
+          ]),
+        },
+      });
+
+      const result = await service.diffDefinitionVersions({
+        entityType: 'CompetencyDefinition', code: 'MATH.ADD', fromVersion: 1, toVersion: 2,
+      });
+
+      expect(result.changedFields).toContainEqual({
+        field: 'description', from: 'Soma números naturais.', to: 'Soma e interpreta números naturais.',
+      });
+    });
+
     it('rejects missing versions and equal versions', async () => {
       const { service } = makeService({
         learningDomain: { findMany: jest.fn().mockResolvedValue([]) },

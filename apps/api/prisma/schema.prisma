@@ -1169,6 +1169,7 @@ model CompetencyDefinition {
   domainId      String           @map("domain_id") @db.Uuid
   pathId        String?          @map("path_id") @db.Uuid
   title         String
+  description   String?
   level         Int?
   metadata      Json             @default("{}")
   createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz

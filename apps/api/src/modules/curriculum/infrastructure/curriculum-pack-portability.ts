@@ -141,6 +141,7 @@ export async function exportDefinitionContent(
       if (!row) return null;
       return {
         title: row.title,
+        description: row.description,
         level: row.level,
         domainRef: await refFromId(prisma, 'LearningDomain', row.domainId),
         pathRef: await refFromId(prisma, 'LearningPath', row.pathId),
@@ -385,6 +386,7 @@ export async function importDefinition(
           domainId,
           pathId,
           title: content.title as string,
+          description: (content.description as string | null) ?? null,
           level: (content.level as number | null) ?? null,
           metadata,
         },

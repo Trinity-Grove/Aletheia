@@ -864,6 +864,7 @@ export class DefinitionsService {
       domainId: row.domainId,
       pathId: row.pathId,
       title: row.title,
+      description: row.description,
       level: row.level,
       metadata: row.metadata as Record<string, unknown>,
       createdAt: row.createdAt.toISOString(),

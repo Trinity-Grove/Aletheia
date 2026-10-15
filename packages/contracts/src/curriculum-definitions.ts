@@ -124,6 +124,7 @@ export const createCompetencyDefinitionSchema = z.object({
   domainId: z.string().uuid(),
   pathId: z.string().uuid().nullish(),
   title: z.string().min(1).max(250),
+  description: z.string().max(2000).nullish(),
   level: z.number().int().min(0).max(20).nullish(),
   metadata: competencyMetadataSchema.partial().default({}),
 }).transform((value) => ({
@@ -146,6 +147,7 @@ export const competencyDefinitionResponseSchema = z.object({
   domainId: z.string().uuid(),
   pathId: z.string().uuid().nullable().optional(),
   title: z.string(),
+  description: z.string().nullable().optional(),
   level: z.number().int().nullable().optional(),
   metadata: z.record(z.string(), z.unknown()),
   createdAt: z.string(),
