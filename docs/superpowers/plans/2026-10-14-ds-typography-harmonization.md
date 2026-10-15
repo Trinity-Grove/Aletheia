@@ -62,6 +62,47 @@
 - [ ] Confirmar que a alteração não adiciona `useEffect`, requests, listeners de resize ou medição de DOM.
 - [ ] Validar o contrato antes de iniciar a migração das rotas.
 
+### Handoff operacional para o agente implementador
+
+Antes de editar código, o agente deve ler a spec inteira, esta seção e a matriz de rotas. Não começar pelas páginas; primeiro fechar o contrato do `PageHeader`.
+
+#### Ordem obrigatória
+
+1. Confirmar o estado da branch/worktree e garantir que não há alterações de outro agente no escopo.
+2. Executar a Task 0: classes CSS/tokens do `PageHeader`, testes do componente e `.page-container`.
+3. Migrar somente as rotas padrão: `/attendance`, `/learners`, `/devotional`, `/records`, `/portfolio`, `/reports` e `/settings`.
+4. Migrar `/schedule`, preservando tabs, roles, `aria-selected`, foco e comportamento mobile.
+5. Implementar `/curriculum` e `/support` como casos especiais, sem remover badge, ícone, benefícios ou ações existentes.
+6. Executar a Task 5 e registrar evidências antes de declarar conclusão.
+
+#### Decisões que não podem ser inferidas
+
+- Não adicionar `titleAdornment` apenas por conveniência. Só criar a prop se o badge do currículo não puder ser preservado com um shell customizado semanticamente correto.
+- Cada rota deve ter um único proprietário de `max-width`, padding e espaçamento externo. Não aninhar `.page-container` em outro container equivalente.
+- Em `/support`, usar `support.pageTitle` e `support.pageSubtitle`; não criar `support.page.title`/`support.page.subtitle` sem atualizar os três dicionários.
+- Não alterar `.dashboard-page` da home, nem rotas fora da matriz, sem registrar mudança de escopo.
+
+#### Invariantes durante a implementação
+
+- Não adicionar requests, `useEffect`, listeners de resize ou medição de DOM para resolver layout.
+- Não remover ou renomear `data-testid`, roles, atributos ARIA, links, ações, estados de loading ou mensagens traduzidas.
+- Não introduzir classes Tailwind, strings visíveis hardcoded ou estilos inline novos quando houver classe/token equivalente.
+- Não aceitar overflow horizontal em 320px/375px, múltiplos `h1`, perda de foco, truncamento de conteúdo ou regressão de contraste.
+- Não usar contagens fixas de testes como critério de sucesso; registrar a saída real dos comandos.
+
+#### Critérios de parada
+
+O agente deve parar e registrar a decisão pendente se encontrar: API insuficiente do `PageHeader`, chave i18n ausente, conflito de container, teste existente incompatível, regressão de acessibilidade ou necessidade de alterar uma rota fora da matriz. Não resolver esses casos por remoção de conteúdo ou alteração silenciosa de contrato.
+
+#### Evidências mínimas no handoff
+
+- Lista de arquivos alterados e justificativa por rota.
+- Resultado dos testes focados e da suíte completa.
+- Resultado de typecheck, lint, i18n e boundaries.
+- Evidência visual nos breakpoints definidos, incluindo textos longos.
+- Resultado do smoke de acessibilidade e registro das lacunas.
+- `git status` limpo e commit sem trailers de atribuição.
+
 ---
 
 ### Task 1: Contêiner Global Semântico `.page-container` em `globals.css` & Suíte de Testes de Harmonização
