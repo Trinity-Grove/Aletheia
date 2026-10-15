@@ -1142,6 +1142,7 @@ model LearningDomain {
   name          String
   description   String?
   parentId      String?          @map("parent_id") @db.Uuid
+  isActive      Boolean          @default(true) @map("is_active")
   metadata      Json             @default("{}")
   createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz
   publishedAt   DateTime?        @map("published_at") @db.Timestamptz

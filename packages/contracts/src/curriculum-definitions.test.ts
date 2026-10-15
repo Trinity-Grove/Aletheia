@@ -3,6 +3,7 @@ import {
   createLearningDomainSchema,
   createCompetencyDefinitionSchema,
   definitionStatusSchema,
+  updateLearningDomainActivationSchema,
 } from './curriculum-definitions.js';
 
 const DOMAIN_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
@@ -33,6 +34,11 @@ describe('Curriculum Definition Contracts', () => {
     expect(() =>
       createLearningDomainSchema.parse({ code: 'music', name: 'Música' }),
     ).toThrow();
+  });
+
+  it('requires an explicit activation state', () => {
+    expect(updateLearningDomainActivationSchema.parse({ isActive: false })).toEqual({ isActive: false });
+    expect(() => updateLearningDomainActivationSchema.parse({})).toThrow();
   });
 
   it('validates a learning domain with a parent', () => {

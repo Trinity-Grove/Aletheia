@@ -5,6 +5,7 @@ import {
   createCompetencyDefinitionSchema,
   createPedagogicalModelDefinitionSchema,
   createLearningPathSchema,
+  updateLearningDomainActivationSchema,
   createSkillDefinitionSchema,
   createRubricDefinitionSchema,
   createRubricCriterionSchema,
@@ -31,6 +32,7 @@ import {
   transitionDefinitionStatusSchema,
   type CreateLearningDomainOutput,
   type LearningDomainResponseDto,
+  type UpdateLearningDomainActivationDto,
   type CreateCompetencyDefinitionOutput,
   type CompetencyDefinitionResponseDto,
   type CreatePedagogicalModelDefinitionOutput,
@@ -127,6 +129,16 @@ export class DefinitionsController {
     @CurrentUser('userId') actorId: string,
   ): Promise<LearningDomainResponseDto> {
     return this.definitionsService.transitionLearningDomainStatus(id, dto.status, actorId, dto.reason);
+  }
+
+  @Patch('learning-domains/:id/activation')
+  @ApiOperation({ summary: 'Activate or deactivate a learning domain' })
+  async updateLearningDomainActivation(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateLearningDomainActivationSchema)) dto: UpdateLearningDomainActivationDto,
+    @CurrentUser('userId') actorId: string,
+  ): Promise<LearningDomainResponseDto> {
+    return this.definitionsService.updateLearningDomainActivation(id, dto, actorId);
   }
 
   // Competency Definitions
