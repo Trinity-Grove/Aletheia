@@ -6,6 +6,7 @@ import { JurisdictionDefinitionsService } from './application/jurisdiction-defin
 import { JurisdictionDefinitionsController } from './presentation/jurisdiction-definitions.controller.js';
 import { ComplianceEvaluationService } from './application/compliance-evaluation.service.js';
 import { ComplianceEvaluationController } from './presentation/compliance-evaluation.controller.js';
+import { FamilyJurisdictionsController } from './presentation/family-jurisdictions.controller.js';
 
 // Versioned jurisdiction/compliance catalog & evaluation engine (issue #26).
 // Standalone module, same Definition/Version pattern as curriculum's
@@ -13,7 +14,11 @@ import { ComplianceEvaluationController } from './presentation/compliance-evalua
 // with its own lifecycle and no shared state with CurriculumModule.
 @Module({
   imports: [DatabaseModule],
-  controllers: [JurisdictionDefinitionsController, ComplianceEvaluationController],
+  controllers: [
+    JurisdictionDefinitionsController,
+    ComplianceEvaluationController,
+    FamilyJurisdictionsController,
+  ],
   providers: [
     JurisdictionDefinitionsRepository,
     JurisdictionDefinitionSeeder,

@@ -14,4 +14,5 @@ export const nav: Dictionary['nav'] = {
   support: 'Apoyar el Proyecto ❤️',
   settings: 'Configuración',
   startTour: 'Hacer Tour por el Sistema',
+  legalGuide: 'Amparo Legal',
 };

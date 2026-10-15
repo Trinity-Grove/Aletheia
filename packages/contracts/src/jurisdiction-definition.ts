@@ -174,3 +174,16 @@ export const createManualComplianceOverrideSchema = z.object({
 
 export type CreateManualComplianceOverrideDto = z.infer<typeof createManualComplianceOverrideSchema>;
 
+export const familyJurisdictionResponseSchema = z.object({
+  code: z.string(),
+  name: z.string(),
+  version: z.number().int(),
+  confidenceLevel: jurisdictionConfidenceLevelSchema,
+  minInstructionalDays: z.number().int().nullish(),
+  minInstructionalHours: z.number().nullish(),
+  officialSource: z.string().nullish(),
+  legalBasisSummary: z.string().nullish(),
+});
+
+export type FamilyJurisdictionResponseDto = z.infer<typeof familyJurisdictionResponseSchema>;
+
