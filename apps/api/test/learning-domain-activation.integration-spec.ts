@@ -88,7 +88,7 @@ describe('Learning domain activation admin API (real Postgres)', () => {
     const updateLogs = logs.body.filter((log: { operationType: string }) => log.operationType === 'UPDATE');
     expect(updateLogs).toHaveLength(3);
     expect(updateLogs.every((log: { metadata: { changedFields: string[] } }) =>
-      log.metadata.changedFields).toEqual(['isActive']));
+      log.metadata.changedFields.length === 1 && log.metadata.changedFields[0] === 'isActive')).toBe(true);
 
     await supertest(app.getHttpServer())
       .patch(`${base}/00000000-0000-0000-0000-000000000000/activation`)
