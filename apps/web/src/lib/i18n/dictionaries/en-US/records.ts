@@ -207,6 +207,8 @@ export const records = {
       noResultsTitle: 'No work matches these filters',
       noResultsDescription: 'Try removing a filter or searching for another term.',
       clearFilters: 'Clear filters',
+      mediaLoading: 'Preparing media...',
+      mediaUnavailable: 'This media could not be loaded.',
     },
     highlightBadge: 'Highlight',
     openMedia: 'Open Media ↗',

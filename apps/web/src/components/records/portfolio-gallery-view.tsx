@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AletheiaIcon, Badge, Button, EmptyState, Input, Select } from '@aletheia/ui';
 import type {
   PortfolioItemResponseDto,
@@ -19,6 +19,127 @@ export interface PortfolioGalleryViewProps {
   onOpenAddItem(): void;
   onEditItem(item: PortfolioItemResponseDto): void;
   onDeleteItem(itemId: string): void;
+  onResolveMediaUrl?(itemId: string): Promise<string | null>;
+}
+
+interface PortfolioMediaPreviewProps {
+  item: PortfolioItemResponseDto;
+  resolvedUrl: string | undefined;
+  isLoading: boolean;
+  hasError: boolean;
+  onRequestMedia: (() => void) | undefined;
+  typeConfig: { label: string; icon: React.ReactNode };
+  translate: (key: string) => string;
+  children?: React.ReactNode;
+}
+
+function PortfolioMediaPreview({
+  item,
+  resolvedUrl,
+  isLoading,
+  hasError,
+  onRequestMedia,
+  typeConfig,
+  translate,
+  children,
+}: PortfolioMediaPreviewProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [shouldLoad, setShouldLoad] = useState(Boolean(item.fileUrl || resolvedUrl));
+  const [imageLoadError, setImageLoadError] = useState(false);
+  const mediaUrl = item.fileUrl ?? resolvedUrl;
+
+  useEffect(() => {
+    setImageLoadError(false);
+  }, [mediaUrl]);
+
+  useEffect(() => {
+    if (item.type !== 'IMAGE' || mediaUrl || !onRequestMedia) return;
+    const element = containerRef.current;
+    if (!element || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setShouldLoad(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [item.type, mediaUrl, onRequestMedia]);
+
+  useEffect(() => {
+    if (shouldLoad && !mediaUrl && !isLoading && !hasError) {
+      onRequestMedia?.();
+    }
+  }, [hasError, isLoading, mediaUrl, onRequestMedia, shouldLoad]);
+
+  return (
+    <div
+      ref={containerRef}
+      data-testid={`portfolio-media-preview-${item.id}`}
+      onMouseEnter={() => setShouldLoad(true)}
+      onFocus={() => setShouldLoad(true)}
+      style={{
+        height: '160px',
+        backgroundColor: 'var(--sage-soft)',
+        borderBottom: '1px solid var(--border-light)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {item.type === 'IMAGE' && mediaUrl && !imageLoadError ? (
+        <img
+          src={mediaUrl}
+          alt={item.title}
+          loading="lazy"
+          onError={() => setImageLoadError(true)}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      ) : isLoading ? (
+        <div role="status" data-testid={`portfolio-media-loading-${item.id}`} style={{ color: 'var(--text-secondary)' }}>
+          {translate('records.portfolio.states.mediaLoading')}
+        </div>
+      ) : hasError || imageLoadError ? (
+        <div role="status" data-testid={`portfolio-media-error-${item.id}`} style={{ color: 'var(--text-secondary)', textAlign: 'center' }}>
+          <AletheiaIcon name="image-off" size={28} />
+          <div style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+            {translate('records.portfolio.states.mediaUnavailable')}
+          </div>
+        </div>
+      ) : item.type === 'TEXT' && item.textContent ? (
+        <div
+          style={{
+            padding: '1rem',
+            fontSize: '0.8125rem',
+            color: 'var(--text-secondary)',
+            fontStyle: 'italic',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: '-webkit-box',
+            WebkitLineClamp: 5,
+            WebkitBoxOrient: 'vertical',
+            lineHeight: 1.4,
+          }}
+        >
+          “{item.textContent}”
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+          <span style={{ fontSize: '2.5rem' }}>{typeConfig.icon}</span>
+          <div style={{ fontSize: '0.75rem', marginTop: '0.25rem', fontWeight: 600 }}>
+            {translate(`records.evidenceTypes.${item.type.toLowerCase()}`) || typeConfig.label}
+          </div>
+        </div>
+      )}
+      {children}
+    </div>
+  );
 }
 
 export function PortfolioGalleryView({
@@ -29,6 +150,7 @@ export function PortfolioGalleryView({
   onOpenAddItem,
   onEditItem,
   onDeleteItem,
+  onResolveMediaUrl,
 }: PortfolioGalleryViewProps) {
   const { t, formatDate } = useLocale();
   const [filterType, setFilterType] = useState<string>('');
@@ -36,6 +158,43 @@ export function PortfolioGalleryView({
   const [filterOnlyHighlights, setFilterOnlyHighlights] = useState<boolean>(false);
   const [selectedTag, setSelectedTag] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [resolvedMediaUrls, setResolvedMediaUrls] = useState<Record<string, string>>({});
+  const [mediaLoadingIds, setMediaLoadingIds] = useState<Set<string>>(new Set());
+  const [mediaErrorIds, setMediaErrorIds] = useState<Set<string>>(new Set());
+
+  const resolveMediaUrl = useCallback(async (item: PortfolioItemResponseDto): Promise<string | null> => {
+    if (item.fileUrl) return item.fileUrl;
+    if (!onResolveMediaUrl) return null;
+
+    setMediaLoadingIds((current) => new Set(current).add(item.id));
+    setMediaErrorIds((current) => {
+      const next = new Set(current);
+      next.delete(item.id);
+      return next;
+    });
+
+    const resolvedUrl = await onResolveMediaUrl(item.id);
+    setMediaLoadingIds((current) => {
+      const next = new Set(current);
+      next.delete(item.id);
+      return next;
+    });
+
+    if (resolvedUrl) {
+      setResolvedMediaUrls((current) => ({ ...current, [item.id]: resolvedUrl }));
+      return resolvedUrl;
+    }
+
+    setMediaErrorIds((current) => new Set(current).add(item.id));
+    return null;
+  }, [onResolveMediaUrl]);
+
+  const handleOpenMedia = useCallback(async (item: PortfolioItemResponseDto) => {
+    const mediaUrl = await resolveMediaUrl(item);
+    if (mediaUrl) {
+      window.open(mediaUrl, '_blank', 'noopener,noreferrer');
+    }
+  }, [resolveMediaUrl]);
 
   // Collect all distinct tags
   const allTags = useMemo(() => {
@@ -299,50 +458,15 @@ export function PortfolioGalleryView({
                 }}
               >
                 {/* Media Preview Box */}
-                <div
-                  data-testid={`portfolio-media-preview-${item.id}`}
-                  style={{
-                    height: '160px',
-                    backgroundColor: 'var(--sage-soft)',
-                    borderBottom: '1px solid var(--border-light)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    overflow: 'hidden',
-                  }}
+                <PortfolioMediaPreview
+                  item={item}
+                  resolvedUrl={resolvedMediaUrls[item.id]}
+                  isLoading={mediaLoadingIds.has(item.id)}
+                  hasError={mediaErrorIds.has(item.id)}
+                  onRequestMedia={item.type === 'IMAGE' && onResolveMediaUrl ? () => void resolveMediaUrl(item) : undefined}
+                  typeConfig={typeConfig}
+                  translate={(key) => t(key as any)}
                 >
-                  {item.type === 'IMAGE' && item.fileUrl ? (
-                    <img
-                      src={item.fileUrl}
-                      alt={item.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : item.type === 'TEXT' && item.textContent ? (
-                    <div
-                      style={{
-                        padding: '1rem',
-                        fontSize: '0.8125rem',
-                        color: 'var(--text-secondary)',
-                        fontStyle: 'italic',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 5,
-                        WebkitBoxOrient: 'vertical',
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      “{item.textContent}”
-                    </div>
-                  ) : (
-                    <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
-                      <span style={{ fontSize: '2.5rem' }}>{typeConfig.icon}</span>
-                      <div style={{ fontSize: '0.75rem', marginTop: '0.25rem', fontWeight: 600 }}>
-                        {t(`records.evidenceTypes.${item.type.toLowerCase()}` as any) || typeConfig.label}
-                      </div>
-                    </div>
-                  )}
 
                   {/* Highlight Star Badge */}
                   {item.isHighlight && (
@@ -356,7 +480,7 @@ export function PortfolioGalleryView({
                       <span>{t('records.portfolio.highlightBadge')}</span>
                     </Badge>
                   )}
-                </div>
+                </PortfolioMediaPreview>
 
                 {/* Card Details */}
                 <div
@@ -467,6 +591,15 @@ export function PortfolioGalleryView({
                       >
                         {t('records.portfolio.openMedia')}
                       </a>
+                    ) : item.mimeType && onResolveMediaUrl ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        data-testid={`view-file-link-${item.id}`}
+                        onClick={() => void handleOpenMedia(item)}
+                      >
+                        {t('records.portfolio.openMedia')}
+                      </Button>
                     ) : (
                       <div />
                     )}

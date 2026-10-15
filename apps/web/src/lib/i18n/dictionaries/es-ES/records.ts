@@ -207,6 +207,8 @@ export const records = {
       noResultsTitle: 'Ningún trabajo coincide con estos filtros',
       noResultsDescription: 'Intente quitar un filtro o buscar otro término.',
       clearFilters: 'Limpiar filtros',
+      mediaLoading: 'Preparando el archivo...',
+      mediaUnavailable: 'No se pudo cargar este archivo.',
     },
     highlightBadge: 'Destacado',
     openMedia: 'Abrir Archivo ↗',

@@ -126,6 +126,87 @@ afterEach(() => {
 });
 
 describe('PortfolioPage states', () => {
+  it('defers signed media URLs until the user opens the file and reuses the in-memory cache', async () => {
+    let downloadAttempts = 0;
+    const downloadUrl = 'https://storage.example.com/signed/portfolio-1.jpg';
+    const fetchMock = vi.fn().mockImplementation(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url.includes('/learners')) return response([learner]);
+      if (url.includes('/curriculum/subjects')) return response([]);
+      if (url.includes('/records')) return response([]);
+      if (url.includes('/portfolio?')) {
+        return response([{ ...portfolioItem, type: 'IMAGE', mimeType: 'image/jpeg' }]);
+      }
+      if (url.includes('/download-url')) {
+        downloadAttempts += 1;
+        return response({ downloadUrl, expiresAt: '2099-01-01T00:00:00.000Z' });
+      }
+      if (url.includes('/notifications/unread-count')) return response({ count: 0 });
+      if (url.includes('/notifications')) return response([]);
+      return response({});
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+    renderPage();
+
+    expect(await screen.findByTestId(`portfolio-title-${portfolioItem.id}`)).toBeInTheDocument();
+    expect(downloadAttempts).toBe(0);
+
+    fireEvent.click(screen.getByTestId(`view-file-link-${portfolioItem.id}`));
+
+    await waitFor(() => {
+      expect(downloadAttempts).toBe(1);
+      expect(openSpy).toHaveBeenCalledWith(downloadUrl, '_blank', 'noopener,noreferrer');
+    });
+
+    fireEvent.click(screen.getByTestId(`view-file-link-${portfolioItem.id}`));
+    await waitFor(() => expect(openSpy).toHaveBeenCalledTimes(2));
+    expect(downloadAttempts).toBe(1);
+  });
+
+  it('renews an expired signed URL when the user opens the file again', async () => {
+    let downloadAttempts = 0;
+    const downloadUrls = [
+      'https://storage.example.com/signed/portfolio-1-old.jpg',
+      'https://storage.example.com/signed/portfolio-1-new.jpg',
+    ];
+    const fetchMock = vi.fn().mockImplementation(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url.includes('/learners')) return response([learner]);
+      if (url.includes('/curriculum/subjects')) return response([]);
+      if (url.includes('/records')) return response([]);
+      if (url.includes('/portfolio?')) {
+        return response([{ ...portfolioItem, type: 'IMAGE', mimeType: 'image/jpeg' }]);
+      }
+      if (url.includes('/download-url')) {
+        const currentUrl = downloadUrls[downloadAttempts];
+        downloadAttempts += 1;
+        return response({
+          downloadUrl: currentUrl,
+          expiresAt: downloadAttempts === 1 ? '2000-01-01T00:00:00.000Z' : '2099-01-01T00:00:00.000Z',
+        });
+      }
+      if (url.includes('/notifications/unread-count')) return response({ count: 0 });
+      if (url.includes('/notifications')) return response([]);
+      return response({});
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+    renderPage();
+
+    expect(await screen.findByTestId(`portfolio-title-${portfolioItem.id}`)).toBeInTheDocument();
+    const openMediaButton = () => screen.getByTestId(`view-file-link-${portfolioItem.id}`);
+
+    fireEvent.click(openMediaButton());
+    await waitFor(() => expect(openSpy).toHaveBeenCalledWith(downloadUrls[0], '_blank', 'noopener,noreferrer'));
+
+    fireEvent.click(openMediaButton());
+    await waitFor(() => expect(openSpy).toHaveBeenCalledWith(downloadUrls[1], '_blank', 'noopener,noreferrer'));
+    expect(downloadAttempts).toBe(2);
+  });
+
   it('shows a family selection or creation state without requesting portfolio data', async () => {
     const fetchMock = mockPortfolioFetch();
     globalThis.fetch = fetchMock as unknown as typeof fetch;
@@ -170,6 +251,44 @@ describe('PortfolioPage states', () => {
 });
 
 describe('PortfolioGalleryView states', () => {
+  it('loads an image preview on demand and keeps the card usable when media resolution fails', async () => {
+    const resolvedUrl = 'https://storage.example.com/signed/portfolio-1-retry.jpg';
+    const resolveMediaUrl = vi.fn()
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(resolvedUrl);
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+    render(
+      <AuthContext.Provider value={makeAuth()}>
+        <LocaleProvider>
+          <ToastProvider>
+            <PortfolioGalleryView
+              items={[{ ...portfolioItem, type: 'IMAGE', mimeType: 'image/jpeg' }]}
+              learners={[learner]}
+              subjects={[]}
+              activeLearnerId={null}
+              onOpenAddItem={vi.fn()}
+              onEditItem={vi.fn()}
+              onDeleteItem={vi.fn()}
+              onResolveMediaUrl={resolveMediaUrl}
+            />
+          </ToastProvider>
+        </LocaleProvider>
+      </AuthContext.Provider>,
+    );
+
+    expect(resolveMediaUrl).not.toHaveBeenCalled();
+    fireEvent.mouseEnter(screen.getByTestId(`portfolio-media-preview-${portfolioItem.id}`));
+
+    await waitFor(() => expect(resolveMediaUrl).toHaveBeenCalledTimes(1));
+    expect(screen.getByTestId(`portfolio-card-${portfolioItem.id}`)).toBeInTheDocument();
+    expect(screen.getByTestId(`portfolio-media-error-${portfolioItem.id}`)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId(`view-file-link-${portfolioItem.id}`));
+    await waitFor(() => expect(openSpy).toHaveBeenCalledWith(resolvedUrl, '_blank', 'noopener,noreferrer'));
+    expect(resolveMediaUrl).toHaveBeenCalledTimes(2);
+  });
+
   it('announces read-only mode when the current role cannot edit the portfolio', () => {
     render(
       <AuthContext.Provider value={makeAuth({ activeRole: null })}>
