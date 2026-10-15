@@ -79,6 +79,8 @@ export const curriculum = {
     publishSuccessMsg: 'Pacote publicado como rascunho. Acompanhe em "Meus Packs Comunitários".',
     publishConflictMsg: 'Já existe um pacote com esse código. Escolha outro.',
     publishErrorMsg: 'Falha ao publicar o pacote. Tente novamente mais tarde.',
+    familyContext: 'Contexto da família: você está escolhendo materiais para o currículo da família ativa.',
+    communityContext: 'Espaço comunitário: explore materiais e acompanhe seus próprios rascunhos. Selecione uma família para adicionar um material ao currículo.',
     tabCatalog: 'Catálogo',
     tabMyPacks: 'Meus Packs Comunitários',
     myPacksEmpty: 'Você ainda não publicou nenhum pacote na comunidade.',
