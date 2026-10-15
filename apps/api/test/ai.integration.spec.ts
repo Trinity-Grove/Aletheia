@@ -17,6 +17,8 @@ describe('AI-Assisted Features Integration (real Postgres)', () => {
 
   let learnerAId: string;
   let consentDefId: string;
+  let learningDomainId: string;
+  const learningDomainCode = `AI.TEST.DOMAIN.${Date.now()}`;
 
   async function registerWithFamily(
     prefix: string,
@@ -78,6 +80,18 @@ describe('AI-Assisted Features Integration (real Postgres)', () => {
       .expect(201);
     learnerAId = learnerRes.body.id;
 
+    const learningDomain = await prisma.learningDomain.create({
+      data: {
+        code: learningDomainCode,
+        version: 1,
+        status: 'PUBLISHED',
+        name: 'AI Test Science Domain',
+        description: 'A published domain used to verify AI catalog grounding.',
+        publishedAt: new Date(),
+      },
+    });
+    learningDomainId = learningDomain.id;
+
     // Ensure all existing mandatory consent definitions in the test database are granted for Family A
     const existingMandatoryDefs = await prisma.consentDefinition.findMany({
       where: { status: 'PUBLISHED', mandatory: true },
@@ -127,6 +141,9 @@ describe('AI-Assisted Features Integration (real Postgres)', () => {
         await prisma.lessonPlan.deleteMany({ where: { familyId: familyAId } });
         await prisma.subject.deleteMany({ where: { familyId: familyAId } });
         await prisma.consentRecord.deleteMany({ where: { familyId: familyAId } });
+      }
+      if (learningDomainId) {
+        await prisma.learningDomain.delete({ where: { id: learningDomainId } });
       }
       if (familyBId) {
         await prisma.aiSuggestion.deleteMany({ where: { familyId: familyBId } });
@@ -228,6 +245,33 @@ describe('AI-Assisted Features Integration (real Postgres)', () => {
 
       expect(quotaRes.body.requestsUsed).toBe(1);
       expect(quotaRes.body.tokensUsed).toBeGreaterThan(0);
+    });
+
+    it('grounds the draft in the latest published learning domain and persists the snapshot', async () => {
+      const res = await supertest(app.getHttpServer())
+        .post(`/api/v1/families/${familyAId}/ai/lesson-plan-draft`)
+        .set('Cookie', guardianACookie)
+        .send({
+          learnerId: learnerAId,
+          learningDomainCode,
+          subject: 'Ciências',
+          topic: 'Ecossistemas',
+        })
+        .expect(201);
+
+      expect(res.body.catalogContext).toEqual(expect.objectContaining({
+        id: learningDomainId,
+        code: learningDomainCode,
+        version: 1,
+        name: 'AI Test Science Domain',
+      }));
+
+      const stored = await prisma.aiSuggestion.findUnique({ where: { id: res.body.suggestionId } });
+      expect(stored?.catalogContext).toEqual(expect.objectContaining({
+        id: learningDomainId,
+        code: learningDomainCode,
+        version: 1,
+      }));
     });
 
     it('reviews suggestion with ACCEPT -> 200 OK and creates scheduled LessonPlan', async () => {

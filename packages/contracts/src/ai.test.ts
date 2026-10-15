@@ -75,6 +75,16 @@ describe('AI Contracts Zod Schemas', () => {
       }
     });
 
+    it('trims an optional learning domain code', () => {
+      const parsed = generateLessonPlanDraftRequestSchema.parse({
+        learnerId: validUuid,
+        subject: 'História',
+        topic: 'Civilização Grega',
+        learningDomainCode: '  HISTORY  ',
+      });
+      expect(parsed.learningDomainCode).toBe('HISTORY');
+    });
+
     it('should default durationMinutes to 45 when omitted', () => {
       const parsed = generateLessonPlanDraftRequestSchema.safeParse({
         learnerId: validUuid,
@@ -257,6 +267,33 @@ describe('AI Contracts Zod Schemas', () => {
           model: 'mock-deterministic',
           promptTokens: 120,
           completionTokens: 250,
+          estimatedCostMicrosUsd: 0,
+        },
+      });
+      expect(parsed.success).toBe(true);
+    });
+
+    it('accepts the published catalog snapshot used for grounding', () => {
+      const parsed = aiLessonPlanDraftResponseSchema.safeParse({
+        suggestionId: validUuid,
+        status: 'PENDING_REVIEW',
+        catalogContext: {
+          id: validUuid,
+          code: 'HISTORY',
+          version: 2,
+          name: 'História',
+          description: 'Formação histórica',
+        },
+        draft: {
+          title: 'Aula de História',
+          summary: 'Visão geral da Grécia antiga',
+          steps: [{ order: 1, title: 'Introdução', durationMinutes: 10, instructions: 'Apresentar o mapa' }],
+        },
+        metadata: {
+          provider: 'MOCK',
+          model: 'mock-deterministic',
+          promptTokens: 100,
+          completionTokens: 200,
           estimatedCostMicrosUsd: 0,
         },
       });

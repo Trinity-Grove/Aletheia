@@ -17,9 +17,19 @@ export type AiFeatureType = z.infer<typeof aiFeatureTypeSchema>;
 export const aiProviderNameSchema = z.enum(['MOCK', 'OPENAI', 'ANTHROPIC', 'GEMINI']);
 export type AiProviderName = z.infer<typeof aiProviderNameSchema>;
 
+export const aiCatalogContextSchema = z.object({
+  id: z.string().uuid(),
+  code: z.string().min(1),
+  version: z.number().int().positive(),
+  name: z.string().min(1),
+  description: z.string().nullable(),
+});
+export type AiCatalogContextDto = z.infer<typeof aiCatalogContextSchema>;
+
 export const generateLessonPlanDraftRequestSchema = z.object({
   learnerId: z.string().uuid(),
   activityDefinitionId: z.string().uuid().optional(),
+  learningDomainCode: z.string().trim().min(1).max(150).optional(),
   subject: z.string().min(2).max(80),
   topic: z.string().min(3).max(200),
   targetAge: z.number().int().min(3).max(25).optional(),
@@ -54,6 +64,7 @@ export const aiLessonPlanDraftResponseSchema = z.object({
   suggestionId: z.string().uuid(),
   status: z.literal('PENDING_REVIEW'),
   draft: lessonPlanDraftContentSchema,
+  catalogContext: aiCatalogContextSchema.optional(),
   metadata: z.object({
     provider: z.string(),
     model: z.string(),
