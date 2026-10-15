@@ -229,6 +229,15 @@ export const records = {
       deleteSuccess: 'Work deleted.',
       deleteError: 'The work could not be deleted.',
     },
+    timeline: {
+      viewLabel: 'Portfolio view',
+      galleryTab: 'Gallery',
+      timelineTab: 'Timeline',
+      legendLabel: 'Memory types',
+      kinds: { photo: 'Photo', memory: 'Memory', reflection: 'Reflection', book: 'Completed book', milestone: 'Learning milestone' },
+      emptyTitle: 'There are no memories for this learner yet',
+      emptyDescription: 'Add a portfolio work or record a learning moment to start building this story.',
+    },
   },
   validatedEvidence: {
     modalTitle: 'Add validated evidence to portfolio',
