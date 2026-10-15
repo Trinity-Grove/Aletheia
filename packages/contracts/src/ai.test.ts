@@ -58,6 +58,7 @@ describe('AI Contracts Zod Schemas', () => {
     it('should validate complete valid request', () => {
       const parsed = generateLessonPlanDraftRequestSchema.safeParse({
         learnerId: validUuid,
+        activityDefinitionId: '223e4567-e89b-12d3-a456-426614174000',
         subject: 'História',
         topic: 'Civilização Grega',
         targetAge: 10,
@@ -69,6 +70,7 @@ describe('AI Contracts Zod Schemas', () => {
       expect(parsed.success).toBe(true);
       if (parsed.success) {
         expect(parsed.data.learnerId).toBe(validUuid);
+        expect(parsed.data.activityDefinitionId).toBe('223e4567-e89b-12d3-a456-426614174000');
         expect(parsed.data.durationMinutes).toBe(45);
       }
     });

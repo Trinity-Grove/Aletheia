@@ -137,6 +137,38 @@ export class AiSuggestionService implements AiPublicApi {
         : undefined);
     const gradeLevel = dto.gradeLevel || learner.customGrade || undefined;
 
+    let activitySafetyContext = '';
+    if (dto.activityDefinitionId) {
+      const activityDefinition = await this.prisma.activityDefinition.findFirst({
+        where: { id: dto.activityDefinitionId, status: 'PUBLISHED' },
+      });
+      if (!activityDefinition) {
+        throw new NotFoundException('Activity definition not found or not published.');
+      }
+
+      const outsideAgeRange =
+        learnerAge !== undefined &&
+        ((activityDefinition.ageMin !== null && learnerAge < activityDefinition.ageMin) ||
+          (activityDefinition.ageMax !== null && learnerAge > activityDefinition.ageMax));
+      if (outsideAgeRange) {
+        throw new BadRequestException('The selected activity is outside the learner age range.');
+      }
+
+      const ageRange =
+        activityDefinition.ageMin !== null || activityDefinition.ageMax !== null
+          ? `${activityDefinition.ageMin ?? 'sem mínimo'}-${activityDefinition.ageMax ?? 'sem máximo'}`
+          : 'sem limite';
+      const activityName = activityDefinition.name.replace(/\s+/g, ' ').trim();
+      activitySafetyContext = [
+        `Atividade catalogada: ${activityName}.`,
+        `faixa etária ${ageRange}.`,
+        `risco ${activityDefinition.riskLevel ?? 'não definido'}.`,
+        activityDefinition.supervisionRequired
+          ? 'supervisão adulta obrigatória.'
+          : 'supervisão adulta não obrigatória.',
+      ].join(' ');
+    }
+
     const profileContext = [
       pedagogicalProfile
         ? [
@@ -169,6 +201,7 @@ export class AiSuggestionService implements AiPublicApi {
       dto.objectives && dto.objectives.length > 0 ? `Objetivos: ${dto.objectives.join(', ')}.` : '',
       dto.additionalInstructions ? `Instruções adicionais: ${dto.additionalInstructions}` : '',
       ...profileContext,
+      activitySafetyContext,
     ]
       .filter(Boolean)
       .join('\n');

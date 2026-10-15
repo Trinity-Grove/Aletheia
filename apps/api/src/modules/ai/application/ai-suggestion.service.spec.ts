@@ -27,6 +27,7 @@ describe('AiSuggestionService', () => {
   const suggestionId = '55555555-5555-4555-a555-555555555555';
   const lessonId = '66666666-6666-4666-a666-666666666666';
   const defaultSubjectId = '77777777-7777-4777-a777-777777777777';
+  const activityDefinitionId = '88888888-8888-4888-a888-888888888888';
 
   const fakeLearner = {
     id: learnerId,
@@ -162,6 +163,9 @@ describe('AiSuggestionService', () => {
       theologicalProfile: {
         findFirst: jest.fn().mockResolvedValue(null),
       },
+      activityDefinition: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
     };
 
     service = new AiSuggestionService(
@@ -289,6 +293,73 @@ describe('AiSuggestionService', () => {
       const prompt = providerSpy.mock.calls[0]?.[0] ?? '';
       expect(prompt).not.toContain('Preferências pedagógicas');
       expect(prompt).not.toContain('Preferências teológicas');
+    });
+
+    it('should pass published activity safety context to the provider', async () => {
+      prisma.activityDefinition.findFirst.mockResolvedValueOnce({
+        id: activityDefinitionId,
+        status: 'PUBLISHED',
+        name: 'Acender uma fogueira supervisionada',
+        ageMin: 8,
+        ageMax: 12,
+        supervisionRequired: true,
+        riskLevel: 'HIGH',
+        metadata: { internalNote: 'must not be sent' },
+      });
+      const providerSpy = jest.spyOn(mockLlmProvider, 'generateDraft');
+
+      await service.generateLessonPlanDraft(familyId, actorUserId, {
+        ...validDto,
+        activityDefinitionId,
+      });
+
+      const prompt = providerSpy.mock.calls[0]?.[0] ?? '';
+      expect(prompt).toContain('Atividade catalogada: Acender uma fogueira supervisionada');
+      expect(prompt).toContain('faixa etária 8-12');
+      expect(prompt).toContain('risco HIGH');
+      expect(prompt).toContain('supervisão adulta obrigatória');
+      expect(prompt).not.toContain('must not be sent');
+      expect(prisma.activityDefinition.findFirst).toHaveBeenCalledWith({
+        where: { id: activityDefinitionId, status: 'PUBLISHED' },
+      });
+    });
+
+    it('should reject an activity outside the learner age range before provider call or quota charge', async () => {
+      prisma.activityDefinition.findFirst.mockResolvedValueOnce({
+        id: activityDefinitionId,
+        status: 'PUBLISHED',
+        name: 'Soldagem introdutória',
+        ageMin: 12,
+        ageMax: 16,
+        supervisionRequired: true,
+        riskLevel: 'HIGH',
+        metadata: {},
+      });
+      const providerSpy = jest.spyOn(mockLlmProvider, 'generateDraft');
+
+      await expect(
+        service.generateLessonPlanDraft(familyId, actorUserId, {
+          ...validDto,
+          activityDefinitionId,
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(providerSpy).not.toHaveBeenCalled();
+      expect(quotaService.recordUsage).not.toHaveBeenCalled();
+      expect(suggestionRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('should reject an activity that is not published', async () => {
+      const providerSpy = jest.spyOn(mockLlmProvider, 'generateDraft');
+
+      await expect(
+        service.generateLessonPlanDraft(familyId, actorUserId, {
+          ...validDto,
+          activityDefinitionId,
+        }),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(providerSpy).not.toHaveBeenCalled();
     });
 
     it('should audit sensitive data access, mask prompt, generate draft, record quota, and save suggestion as PENDING_REVIEW', async () => {
