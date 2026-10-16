@@ -10,8 +10,27 @@ import { createPrismaProgressionReader, progressionApprovalOptions } from './pri
 export class LearnerCompetencyApprovalRepository {
   constructor(private readonly prisma: PrismaService, private readonly achievements: AchievementRepository) {}
 
-  recordDecision(familyId: string, trackingId: string, actorUserId: string, decision: LearnerCompetencyApprovalDecisionDto): Promise<LearnerCompetencyApprovalEvent> {
+  findApprovalTrackingScope(trackingId: string): Promise<{ familyId: string; learnerId: string } | null> {
+    return this.prisma.learnerCompetencyTracking.findUnique({ where: { id: trackingId }, select: { familyId: true, learnerId: true } });
+  }
+
+  recordDecision(familyId: string, trackingId: string, actorUserId: string, decision: LearnerCompetencyApprovalDecisionDto, authorizedMentorUserId?: string): Promise<LearnerCompetencyApprovalEvent> {
     return this.prisma.$transaction(async (tx) => {
+      if (authorizedMentorUserId) {
+        const target = await tx.learnerCompetencyTracking.findFirst({ where: { id: trackingId, familyId }, select: { learnerId: true } });
+        if (!target) throw new NotFoundException('Approval scope not found');
+        const grants = await tx.$queryRaw<{ id: string }[]>`
+          SELECT id FROM mentor_grants
+          WHERE mentor_user_id = ${authorizedMentorUserId}::uuid
+            AND family_id = ${familyId}::uuid
+            AND learner_id = ${target.learnerId}::uuid
+            AND status = 'ACCEPTED'
+            AND can_approve_progression = true
+            AND revoked_at IS NULL
+            AND expires_at > clock_timestamp()
+          LIMIT 1 FOR UPDATE`;
+        if (!grants.length) throw new NotFoundException('Approval scope not found');
+      }
       // Serialize same-family key use across different learners as well as same-learner races.
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`${familyId}:${decision.idempotencyKey}`}, 0))`;
       const replay = await tx.learnerCompetencyApprovalEvent.findUnique({ where: { familyId_idempotencyKey: { familyId, idempotencyKey: decision.idempotencyKey } } });
@@ -28,7 +47,6 @@ export class LearnerCompetencyApprovalRepository {
       if (!locked.length) throw new NotFoundException('Tracked competency not found');
       const tracking = await tx.learnerCompetencyTracking.findFirst({ where: { id: trackingId, familyId, learnerId: beforeLock.learnerId } });
       if (!tracking?.progressionPolicyId || !tracking.policyVersion) throw new BadRequestException('Human approval requires a policy pinned to this tracking');
-
       const reader = createPrismaProgressionReader(tx, true);
       const query = { trackingId, policyId: tracking.progressionPolicyId };
       const evaluation = await evaluateProgression(reader, familyId, query, progressionApprovalOptions(reader, familyId));

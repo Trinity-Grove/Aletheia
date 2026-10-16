@@ -21,6 +21,9 @@ export const inviteMentorSchema = z.object({
 
 export type InviteMentorDto = z.infer<typeof inviteMentorSchema>;
 
+export const updateMentorProgressionCapabilitySchema = z.object({ enabled: z.boolean() }).strict();
+export type UpdateMentorProgressionCapabilityDto = z.infer<typeof updateMentorProgressionCapabilitySchema>;
+
 export const mentorGrantResponseSchema = z.object({
   id: z.string().uuid(),
   familyId: z.string().uuid(),

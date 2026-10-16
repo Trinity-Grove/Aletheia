@@ -50,6 +50,7 @@ export * from './record.js';
 export * from './portfolio.js';
 export * from './portfolio-permissions.js';
 export * from './mentor-grant.js';
+export * from './mentor-progression-approval.js';
 export * from './attendance.js';
 export * from './report.js';
 export * from './settings.js';

@@ -16,8 +16,13 @@ export class AssessmentResultService {
 
   async createAssessmentResult(
     familyId: string,
+    trustedActorUserId: string,
     dto: CreateAssessmentResultOutput,
   ): Promise<AssessmentResultResponseDto> {
+    if (!trustedActorUserId) throw new BadRequestException('Authenticated assessor is required.');
+    if (dto.assessorUserId && dto.assessorUserId !== trustedActorUserId) {
+      throw new BadRequestException('assessorUserId must match the authenticated user.');
+    }
     const learnerFamilyId = await this.repository.findLearnerFamilyId(dto.learnerId);
     if (!learnerFamilyId || learnerFamilyId !== familyId) {
       throw new NotFoundException('Learner not found in this family.');
@@ -56,7 +61,7 @@ export class AssessmentResultService {
       // row; this result keeps pointing at the original one).
       rubricVersion,
       assessorType: dto.assessorType,
-      assessorUserId: dto.assessorUserId,
+      assessorUserId: trustedActorUserId,
       notes: dto.notes,
       scores: dto.scores,
     });

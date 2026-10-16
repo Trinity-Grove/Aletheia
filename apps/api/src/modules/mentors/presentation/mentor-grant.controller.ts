@@ -1,10 +1,12 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   inviteMentorSchema,
+  updateMentorProgressionCapabilitySchema,
   type AcceptMentorGrantResponseDto,
   type InviteMentorDto,
   type MentorGrantResponseDto,
+  type UpdateMentorProgressionCapabilityDto,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
 import { ZodValidationPipe } from '../../../platform/validation/index.js';
@@ -43,6 +45,19 @@ export class MentorGrantController {
     @Param('learnerId') learnerId: string,
   ): Promise<MentorGrantResponseDto[]> {
     return this.service.listMentorsForLearner(req.user.userId, familyId, learnerId);
+  }
+
+  @Patch('families/:familyId/learners/:learnerId/mentors/:id/progression-approval')
+  @UseGuards(JwtAuthGuard, FamilyTenantGuard)
+  @ApiOperation({ summary: 'Enable or disable this mentor grant’s progression approval capability' })
+  async updateProgressionCapability(
+    @Req() req: { user: { userId: string } },
+    @Param('familyId') familyId: string,
+    @Param('learnerId') learnerId: string,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateMentorProgressionCapabilitySchema)) dto: UpdateMentorProgressionCapabilityDto,
+  ): Promise<MentorGrantResponseDto> {
+    return this.service.updateProgressionCapability(req.user.userId, familyId, learnerId, id, dto.enabled);
   }
 
   @Post('mentors/:token/accept')

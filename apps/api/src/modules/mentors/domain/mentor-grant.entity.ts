@@ -35,6 +35,10 @@ export class MentorGrantEntity {
     return this.props.status;
   }
 
+  get canApproveProgression(): boolean {
+    return this.props.canApproveProgression;
+  }
+
   isExpired(): boolean {
     return new Date() > this.props.expiresAt;
   }

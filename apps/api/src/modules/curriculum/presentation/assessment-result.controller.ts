@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   createAssessmentResultSchema,
@@ -24,10 +24,11 @@ export class AssessmentResultController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Record an assessment result against a rubric' })
   async createAssessmentResult(
+    @Req() req: { user: { userId: string } },
     @Param('familyId') familyId: string,
     @Body(new ZodValidationPipe(createAssessmentResultSchema)) dto: CreateAssessmentResultOutput,
   ): Promise<AssessmentResultResponseDto> {
-    return this.assessmentResultService.createAssessmentResult(familyId, dto);
+    return this.assessmentResultService.createAssessmentResult(familyId, req.user.userId, dto);
   }
 
   @Get()

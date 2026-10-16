@@ -15,6 +15,7 @@ describe('Assessment Result (real Postgres)', () => {
   let familyACookie: string;
   let familyAId: string;
   let familyALearnerId: string;
+  let familyAUserId: string;
   let familyBCookie: string;
   let familyBId: string;
   let evidenceTypeId: string;
@@ -82,6 +83,7 @@ describe('Assessment Result (real Postgres)', () => {
     familyACookie = familyA.cookie;
     familyAId = familyA.familyId;
     familyALearnerId = familyA.learnerId;
+    familyAUserId = (await supertest(app.getHttpServer()).get('/api/v1/auth/me').set('Cookie', familyACookie).expect(200)).body.id;
 
     const familyB = await registerWithFamilyAndLearner('assessment-result-family-b');
     familyBCookie = familyB.cookie;
@@ -109,8 +111,18 @@ describe('Assessment Result (real Postgres)', () => {
 
     expect(created.body.evidenceSubmissionId).toBeNull();
     expect(created.body.rubricVersion).toBe(1);
+    expect(created.body.assessorUserId).toBe(familyAUserId);
     expect(created.body.scores).toHaveLength(1);
     expect(created.body.scores[0].score).toBe(3);
+  });
+
+  it('rejects a client-supplied assessor identity that differs from the authenticated actor', async () => {
+    const rubric = await createRubric(`FORGED.ASSESSOR.${Date.now()}`);
+    await supertest(app.getHttpServer())
+      .post(`/api/v1/families/${familyAId}/curriculum/assessment-results`)
+      .set('Cookie', familyACookie)
+      .send({ learnerId: familyALearnerId, rubricDefinitionId: rubric.id, assessorType: 'MENTOR', assessorUserId: '00000000-0000-4000-8000-000000000001', scores: [{ rubricCriterionId: rubric.criterionId, score: 3 }] })
+      .expect(400);
   });
 
   it('accepts a free-form assessorType, not a closed enum', async () => {

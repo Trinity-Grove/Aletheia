@@ -3,6 +3,8 @@ import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundEx
 import type { AcceptMentorGrantResponseDto, InviteMentorDto, MentorGrantResponseDto } from '@aletheia/contracts';
 import { FAMILY_PUBLIC_API, type FamilyPublicApi } from '../../families/application/public-api.js';
 import { MentorGrantRepository } from '../infrastructure/mentor-grant.repository.js';
+import type { FamilyRole } from '@aletheia/contracts';
+import type { MentorGrantPublicApi } from './public-api.js';
 
 // Mentor/external instructor invite flow (issue #95 section 30, #232).
 // Same invite-by-email + hashed-token shape as InvitationService
@@ -12,11 +14,18 @@ import { MentorGrantRepository } from '../infrastructure/mentor-grant.repository
 const MENTOR_GRANT_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 @Injectable()
-export class MentorGrantService {
+export class MentorGrantService implements MentorGrantPublicApi {
   constructor(
     private readonly repository: MentorGrantRepository,
     @Inject(FAMILY_PUBLIC_API) private readonly familyApi: FamilyPublicApi,
   ) {}
+
+  private async assertCanGrantApproval(userId: string, familyId: string): Promise<void> {
+    const role = await this.familyApi.getFamilyMemberRole(userId, familyId);
+    if (!(['OWNER_GUARDIAN', 'GUARDIAN', 'CO_GUARDIAN'] as FamilyRole[]).includes(role as FamilyRole)) {
+      throw new ForbiddenException('Only a family guardian can grant progression approval capability.');
+    }
+  }
 
   async inviteMentor(
     currentUserId: string,
@@ -24,6 +33,7 @@ export class MentorGrantService {
     learnerId: string,
     dto: InviteMentorDto,
   ): Promise<MentorGrantResponseDto> {
+    if (dto.canApproveProgression) await this.assertCanGrantApproval(currentUserId, familyId);
     const isMember = await this.familyApi.isGuardianInFamily(currentUserId, familyId);
     if (!isMember) {
       throw new ForbiddenException('You must be a member of this family to invite a mentor.');
@@ -96,5 +106,20 @@ export class MentorGrantService {
     }
 
     await this.repository.revoke(id);
+  }
+
+  async updateProgressionCapability(currentUserId: string, familyId: string, learnerId: string, id: string, enabled: boolean): Promise<MentorGrantResponseDto> {
+    await this.assertCanGrantApproval(currentUserId, familyId);
+    const updated = await this.repository.updateProgressionCapability(familyId, learnerId, id, enabled);
+    if (!updated) throw new NotFoundException('Mentor grant not found for this learner and family.');
+    return updated.toDto();
+  }
+
+  canMentorApproveProgression(userId: string, familyId: string, learnerId: string): Promise<boolean> {
+    return this.repository.canMentorApproveProgression(userId, familyId, learnerId);
+  }
+
+  listProgressionApprovalScopes(userId: string) {
+    return this.repository.listProgressionApprovalScopes(userId);
   }
 }

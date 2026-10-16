@@ -68,6 +68,28 @@ export class MentorGrantRepository {
     return rows.map((r) => this.mapToEntity(r));
   }
 
+  async updateProgressionCapability(familyId: string, learnerId: string, id: string, enabled: boolean): Promise<MentorGrantEntity | null> {
+    const result = await this.prisma.mentorGrant.updateMany({ where: { id, familyId, learnerId }, data: { canApproveProgression: enabled } });
+    if (!result.count) return null;
+    return this.findById(id);
+  }
+
+  async canMentorApproveProgression(userId: string, familyId: string, learnerId: string): Promise<boolean> {
+    const grant = await this.prisma.mentorGrant.findFirst({
+      where: { mentorUserId: userId, familyId, learnerId, status: 'ACCEPTED', canApproveProgression: true, revokedAt: null, expiresAt: { gt: new Date() } },
+      select: { id: true },
+    });
+    return !!grant;
+  }
+
+  listProgressionApprovalScopes(userId: string): Promise<{ grantId: string; familyId: string; learnerId: string }[]> {
+    return this.prisma.mentorGrant.findMany({
+      where: { mentorUserId: userId, status: 'ACCEPTED', canApproveProgression: true, revokedAt: null, expiresAt: { gt: new Date() } },
+      select: { id: true, familyId: true, learnerId: true },
+      orderBy: { createdAt: 'desc' },
+    }).then((rows) => rows.map((row) => ({ grantId: row.id, familyId: row.familyId, learnerId: row.learnerId })));
+  }
+
   async accept(id: string, mentorUserId: string): Promise<MentorGrantEntity> {
     const updated = await this.prisma.mentorGrant.update({
       where: { id },
