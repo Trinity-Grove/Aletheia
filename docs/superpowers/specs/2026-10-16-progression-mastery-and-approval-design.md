@@ -23,7 +23,7 @@ Esta é uma fatia da issue #126. `EVIDENCE_COUNT` continua válido e inalterado 
 3. **Evidência validada é pré-requisito para avaliação baseada em evidência.** Submissões `UNVALIDATED` ou `REJECTED` não satisfazem gates nem contam como demonstração de domínio.
 4. **Rubrica avalia critérios observáveis.** Quando uma política exigir avaliação, o resultado deve referenciar a rubrica/versionamento aplicável e satisfazer seu limiar publicado; não basta haver uma avaliação sem resultado suficiente.
 5. **A aprovação humana é um gate final opcional.** Quando exigida, a competência não se torna `MASTERED` antes da decisão de uma pessoa autorizada.
-6. **A família mantém autonomia.** Um responsável/educador autorizado da família pode aprovar. Um mentor externo só pode fazê-lo com capacidade de aprovação explicitamente concedida pela família, além de grant aceito, vigente e dentro do escopo. A autorização não pode ser inferida do texto livre `MentorGrant.role`.
+6. **A família mantém autonomia.** Podem aprovar os papéis familiares `OWNER_GUARDIAN`, `GUARDIAN` e `CO_GUARDIAN`. Um mentor indicado também pode aprovar quando a família conceder explicitamente essa capacidade no convite/grant; a autorização fica limitada ao educando daquele grant, deve estar aceita e vigente, e pode ser revogada. Não inferir permissão do texto livre `MentorGrant.role` nem da mera existência de um grant sem a capacidade de aprovação.
 7. **IA não decide domínio.** Pode ajudar a organizar evidências, explicar critérios ou preparar uma sugestão de avaliação, mas não pode validar evidência, aprovar a competência ou substituir o ator autorizado.
 8. **Decisões são auditáveis.** Avaliações e aprovações registram ator, instante, alvo/versionamento e decisão. Revisões posteriores acrescentam eventos; não apagam a conquista histórica.
 
@@ -33,7 +33,7 @@ Esta é uma fatia da issue #126. `EVIDENCE_COUNT` continua válido e inalterado 
 2. O educando reúne evidências; somente evidências validadas por ator autorizado entram nos gates que as exigem.
 3. Se a política exigir avaliação por rubrica, um ator autorizado registra `AssessmentResult` contra a rubrica/versionamento previsto. O resultado só satisfaz o gate quando os critérios e o limiar definidos forem atingidos.
 4. Se a política exigir aprovação humana, após os demais gates serem satisfeitos o acompanhamento entra no estado explícito `AWAITING_APPROVAL`. Não é ainda uma conquista.
-5. Um responsável/educador da família ou mentor explicitamente autorizado aprova ou devolve/rejeita a solicitação, com registro auditável. A aprovação final reconcilia a conquista de maneira idempotente; uma decisão negativa mantém o acompanhamento sem domínio e deve explicar o próximo passo.
+5. Um membro familiar com papel `OWNER_GUARDIAN`, `GUARDIAN` ou `CO_GUARDIAN`, ou um mentor com capacidade explícita no grant do educando, aprova ou devolve/rejeita a solicitação com registro auditável. A aprovação final reconcilia a conquista de maneira idempotente; uma decisão negativa mantém o acompanhamento sem domínio e deve explicar o próximo passo.
 6. Sem gate humano, a política pode conceder domínio automaticamente quando seus gates objetivos forem satisfeitos, como ocorre hoje com `EVIDENCE_COUNT`.
 
 ## Modelo conceitual da política
@@ -51,7 +51,7 @@ Os requisitos aplicáveis e sua combinação (todos os gates exigidos precisam p
 - Toda consulta ou mutação deve ser scoped por família, educando, acompanhamento e política/versionamento fixados.
 - Validação de evidência, avaliação usada como gate e aprovação usam o ator autenticado; não aceitam `actorId` escolhido pelo cliente. Para reutilizar `AssessmentResult`, a implementação deve derivar a autoria da sessão ou verificar o vínculo/grant do ator, em vez de confiar em `assessorUserId` enviado pelo cliente.
 - A aprovação familiar não pode cruzar famílias.
-- A autorização de mentor deve ser verificada no instante da decisão e limitada ao escopo concedido; concessão ausente, expirada ou revogada bloqueia a ação.
+- A autorização de mentor deve ser verificada no instante da decisão e limitada ao educando do grant; grant ausente, ainda não aceito, expirado, revogado ou sem capacidade explícita de aprovação bloqueia a ação.
 - Requisições repetidas não podem criar conquistas ou decisões duplicadas; transições concorrentes precisam manter consistência transacional.
 
 ## Estados e respostas ao usuário
@@ -75,7 +75,7 @@ Os requisitos aplicáveis e sua combinação (todos os gates exigidos precisam p
 - Uma política que exige rubrica não concede domínio sem `AssessmentResult` válido, ligado à versão correta e acima do limiar exigido.
 - Evidência não validada/rejeitada nunca satisfaz requisito de evidência.
 - Uma política com aprovação humana não concede `MASTERED` antes de uma decisão positiva por ator autorizado.
-- Responsáveis da família podem aprovar somente dentro da própria família; mentores só podem agir com concessão explícita, vigente e do escopo correto.
+- `OWNER_GUARDIAN`, `GUARDIAN` e `CO_GUARDIAN` podem aprovar somente dentro da própria família; mentores só podem agir com capacidade explicitamente concedida, aceita, vigente e limitada ao educando do grant.
 - Rejeição/devolução de aprovação tem motivo e orientação, não apaga avaliação ou evidência e deixa o acompanhamento não dominado.
 - Eventos de avaliação, aprovação, revisão e conquista são auditáveis, versionados, idempotentes e protegidos contra repetição/concor­rência.
 - A interface mostra requisitos pendentes e oferece conteúdo em pt-BR, en-US e es-ES.
@@ -92,8 +92,7 @@ Os requisitos aplicáveis e sua combinação (todos os gates exigidos precisam p
 
 ## Questões para revisão antes do plano
 
-1. A primeira versão deve incluir aprovação de mentor? O grant existente é por educando e não carrega autorização de aprovação; a opção segura é implementar primeiro para responsáveis da família e só incluir mentor se adicionarmos uma permissão explícita, sem inferi-la do campo `role`.
-2. Como representar o limiar inicial de rubrica sem assumir que escalas qualitativas e numéricas são intercambiáveis? O primeiro corte pode suportar um tipo de escala apenas, desde que a política rejeite escalas incompatíveis.
+1. Como representar o limiar inicial de rubrica sem assumir que escalas qualitativas e numéricas são intercambiáveis? A opção recomendada é exigir um mínimo por critério na escala nativa da própria rubrica, sem média ponderada/normalização no primeiro corte. A política rejeita avaliações incompletas, critérios/versões incompatíveis e valores fora da escala publicada.
 
 ## Relação com a issue #126
 
