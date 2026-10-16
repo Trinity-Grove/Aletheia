@@ -2184,5 +2184,117 @@ p.page-subtitle {
     width: 100%;
   }
 }
+/* Community Idea Card Component (BEM) */
+.community-idea-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  background: var(--ui-surface-default, #ffffff);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  transition: transform var(--ui-motion-duration-fast, 150ms) ease, box-shadow var(--ui-motion-duration-fast, 150ms) ease;
+}
 
+.community-idea-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
 
+.community-idea-card__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.community-idea-card__badges {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.community-idea-card__theme-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.community-idea-card__title {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ink);
+  margin: 0;
+}
+
+.community-idea-card__description {
+  font-size: 0.875rem;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.community-idea-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin: 1rem 0;
+}
+
+.community-idea-card__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.community-idea-card__materials {
+  margin-bottom: 1.25rem;
+}
+
+.community-idea-card__materials-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--sage);
+  margin-bottom: 0.5rem;
+}
+
+.community-idea-card__materials-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.community-idea-card__material-pill {
+  font-size: 0.75rem;
+  background: var(--ui-surface-subtle, rgba(0, 0, 0, 0.04));
+  color: var(--ink);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+}
+
+.community-idea-card__footer {
+  margin-top: auto;
+  padding-top: 0.75rem;
+}
+
+.community-idea-card__adopt-btn {
+  width: 100%;
+}
