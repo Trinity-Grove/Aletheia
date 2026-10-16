@@ -32,7 +32,7 @@ Esta é uma fatia da issue #126. `EVIDENCE_COUNT` continua válido e inalterado 
 1. A família ativa um currículo e uma versão publicada de política compatível com as competências acompanhadas.
 2. O educando reúne evidências; somente evidências validadas por ator autorizado entram nos gates que as exigem.
 3. Se a política exigir avaliação por rubrica, um ator autorizado registra `AssessmentResult` contra a rubrica/versionamento previsto. O resultado só satisfaz o gate quando os critérios e o limiar definidos forem atingidos.
-4. Se a política exigir aprovação humana, após os demais gates serem satisfeitos o acompanhamento entra em estado pendente de aprovação (`AWAITING_APPROVAL`, proposta de estado derivado). Não é ainda uma conquista.
+4. Se a política exigir aprovação humana, após os demais gates serem satisfeitos o acompanhamento entra no estado explícito `AWAITING_APPROVAL`. Não é ainda uma conquista.
 5. Um responsável/educador da família ou mentor explicitamente autorizado aprova ou devolve/rejeita a solicitação, com registro auditável. A aprovação final reconcilia a conquista de maneira idempotente; uma decisão negativa mantém o acompanhamento sem domínio e deve explicar o próximo passo.
 6. Sem gate humano, a política pode conceder domínio automaticamente quando seus gates objetivos forem satisfeitos, como ocorre hoje com `EVIDENCE_COUNT`.
 
@@ -57,7 +57,7 @@ Os requisitos aplicáveis e sua combinação (todos os gates exigidos precisam p
 ## Estados e respostas ao usuário
 
 - `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED` e `MASTERED` continuam representando o progresso atual.
-- `AWAITING_APPROVAL` é proposto como estado explícito quando todos os requisitos automáticos passaram e resta aprovação humana. Se a equipe preferir não expandir o enum de progresso, a API deverá expor status de aprovação separado, sem apresentar esse acompanhamento como `MASTERED`.
+- `AWAITING_APPROVAL` é um estado explícito quando todos os requisitos automáticos passaram e resta aprovação humana. Ele será adicionado ao enum de progresso e nunca será apresentado como `MASTERED`.
 - Uma decisão de aprovação negativa nunca deve ser confundida com rejeição da evidência: deve explicar se o educando precisa de nova evidência, nova avaliação ou revisão humana.
 - A interface explica quais gates faltam, quem pode agir e por que uma conquista ainda não foi concedida; mensagens devem ser localizadas em pt-BR, en-US e es-ES.
 
@@ -92,9 +92,8 @@ Os requisitos aplicáveis e sua combinação (todos os gates exigidos precisam p
 
 ## Questões para revisão antes do plano
 
-1. Aprovar `AWAITING_APPROVAL` como estado de progresso explícito ou preferir um status de aprovação separado? O plano deve seguir a escolha registrada antes de modificar contratos.
-2. A primeira versão deve incluir aprovação de mentor? O grant existente é por educando e não carrega autorização de aprovação; a opção segura é implementar primeiro para responsáveis da família e só incluir mentor se adicionarmos uma permissão explícita, sem inferi-la do campo `role`.
-3. Como representar o limiar inicial de rubrica sem assumir que escalas qualitativas e numéricas são intercambiáveis? O primeiro corte pode suportar um tipo de escala apenas, desde que a política rejeite escalas incompatíveis.
+1. A primeira versão deve incluir aprovação de mentor? O grant existente é por educando e não carrega autorização de aprovação; a opção segura é implementar primeiro para responsáveis da família e só incluir mentor se adicionarmos uma permissão explícita, sem inferi-la do campo `role`.
+2. Como representar o limiar inicial de rubrica sem assumir que escalas qualitativas e numéricas são intercambiáveis? O primeiro corte pode suportar um tipo de escala apenas, desde que a política rejeite escalas incompatíveis.
 
 ## Relação com a issue #126
 
