@@ -32,7 +32,9 @@ export interface ProgressionReader {
   requireTrackingPolicyBinding?: boolean;
 }
 
-type ProgressionEvaluationInput = ProgressionEvaluationQueryDto & { approvalGranted?: boolean };
+export interface ProgressionEvaluationOptions {
+  approvalGrantedForTracking?: (trackingId: string) => Promise<boolean>;
+}
 
 export function parseProgressionPolicyRules(policy: Policy): z.infer<typeof evidenceCountRulesSchema> | z.infer<typeof evidenceRubricRulesSchema> {
   if (policy.policyType === 'EVIDENCE_COUNT') {
@@ -50,7 +52,7 @@ export function parseProgressionPolicyRules(policy: Policy): z.infer<typeof evid
 
 // A request evaluates at most 64 distinct competency/policy pairs, 16 levels deep.
 // The repository supplies one database snapshot for the whole traversal.
-export async function evaluateProgression(reader: ProgressionReader, familyId: string, query: ProgressionEvaluationInput): Promise<ProgressionEvaluationResponseDto> {
+export async function evaluateProgression(reader: ProgressionReader, familyId: string, query: ProgressionEvaluationQueryDto, options: ProgressionEvaluationOptions = {}): Promise<ProgressionEvaluationResponseDto> {
   const root = await reader.tracking(familyId, query.trackingId);
   if (!root || !await reader.learnerExists(familyId, root.learnerId)) throw new NotFoundException('Tracked competency not found');
   const visiting = new Set<string>();
@@ -119,13 +121,16 @@ export async function evaluateProgression(reader: ProgressionReader, familyId: s
         });
     }
     const objectiveGatesSatisfied = count >= parsed.minimumEvidenceCount && rubricSatisfied && unmetPrerequisites.length === 0;
+    const approvalGranted = requireHumanApproval && objectiveGatesSatisfied
+      ? await options.approvalGrantedForTracking?.(tracking.id) ?? false
+      : false;
     const result: ProgressionEvaluationResponseDto = {
       learnerId: root!.learnerId, competencyDefinitionId: competencyId, competencyVersion: tracking.competencyVersion,
       trackingId: tracking.id, trackingStatus: tracking.status, curriculumDefinitionId: tracking.curriculumDefinitionId,
       policyId: effectivePolicyId, policyVersion: policy.version, validatedEvidenceCount: count,
       minimumEvidenceCount: parsed.minimumEvidenceCount, unmetPrerequisites,
       state: unmetPrerequisites.length ? 'BLOCKED' : !objectiveGatesSatisfied ? count > 0 ? 'IN_PROGRESS' : 'NOT_STARTED' :
-        requireHumanApproval && !query.approvalGranted ? 'AWAITING_APPROVAL' : 'MASTERED',
+        requireHumanApproval && !approvalGranted ? 'AWAITING_APPROVAL' : 'MASTERED',
     };
     visiting.delete(key);
     results.set(key, result);
@@ -139,6 +144,7 @@ export class ProgressionService {
   constructor(private readonly repository: ProgressionRepository) {}
 
   evaluate(familyId: string, query: ProgressionEvaluationQueryDto): Promise<ProgressionEvaluationResponseDto> {
-    return this.repository.snapshot((reader) => evaluateProgression(reader, familyId, query));
+    const publicQuery: ProgressionEvaluationQueryDto = { trackingId: query.trackingId, policyId: query.policyId };
+    return this.repository.snapshot((reader) => evaluateProgression(reader, familyId, publicQuery));
   }
 }

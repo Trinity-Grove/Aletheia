@@ -27,5 +27,25 @@ Implemented and committed only Task 2 production code and tests. Existing uncomm
 ## Concerns / follow-up
 
 - Real-Postgres integration verification is outstanding until a test database is available.
-- As specified, recording a new assessment does not itself invoke achievement reconciliation; this task preserves the existing validation-triggered reconciliation path. A later task should ensure newly recorded assessment results trigger reconciliation when all evidence is already validated.
+- As specified, recording a new assessment does not itself invoke achievement reconciliation; this task preserves the existing validation-triggered reconciliation path. Record support for assessment-triggered reconciliation in Task 4/6, as appropriate, so passing assessments can reconcile when evidence is already validated.
 - Approval-event persistence/authorization and authenticated assessor attribution remain explicitly out of scope for Task 2.
+
+## Fix round 1: trusted approval boundary and prerequisite propagation
+
+### Changes
+
+- Kept the evaluator's public query parameter strictly `ProgressionEvaluationQueryDto`; moved approval to a separate internal `ProgressionEvaluationOptions.approvalGrantedForTracking(trackingId)` callback.
+- `ProgressionService.evaluate` now constructs a fresh query containing only `trackingId` and `policyId`, so extra properties on a request object cannot reach the trusted approval mechanism.
+- The callback is checked per tracking and inherited by recursive prerequisite evaluation. This gives Task 3 one interface to connect persisted decisions consistently for root and prerequisite evaluations, including reconciliation, without adding persistence or authorization in this fix.
+- Task 3 should add rubric, assessment, approval, and relevant policy/version metadata to the append-only achievement snapshot. Task 4 should support toggling the mentor approval capability without revoking the entire mentor grant. Neither behavior is implemented here.
+
+### TDD and verification evidence
+
+- RED command: `pnpm --filter @aletheia/api test -- --runInBand apps/api/src/modules/curriculum/application/progression.service.spec.ts`
+- RED result: failed as intended in the two new cases — public service returned `MASTERED` for a forged `approvalGranted: true`, and recursive prerequisite evaluation returned `BLOCKED` because the trusted callback interface did not yet exist. Existing cases passed (22 passed, 2 failed).
+- GREEN command: `pnpm --filter @aletheia/api test -- --runInBand apps/api/src/modules/curriculum/application/progression.service.spec.ts`
+- GREEN output: `Test Suites: 1 passed, 1 total`; `Tests: 24 passed, 24 total`.
+- Covering test file: `apps/api/src/modules/curriculum/application/progression.service.spec.ts` (public-service forgery rejection; internally approved prerequisite accepted).
+- `pnpm --filter @aletheia/api typecheck` — passed.
+- Targeted ESLint for `progression.service.ts` and `progression.service.spec.ts` — passed.
+- `git diff --check` — passed.

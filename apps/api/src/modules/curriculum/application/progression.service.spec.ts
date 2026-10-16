@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
-import { evaluateProgression, type ProgressionReader } from './progression.service.js';
+import type { ProgressionRepository } from '../infrastructure/progression.repository.js';
+import { evaluateProgression, ProgressionService, type ProgressionEvaluationOptions, type ProgressionReader } from './progression.service.js';
 
 describe('evidence progression', () => {
   const competencyId = '00000000-0000-4000-8000-000000000001';
@@ -110,11 +111,30 @@ describe('evidence progression', () => {
       }), 'family', query);
       expect(result.state).toBe('BLOCKED');
     });
-    it('waits for explicit trusted approval when required', async () => {
+    it('does not accept a caller-supplied approval flag at the public service boundary', async () => {
       const approvalReader = rubricReader({ policy: async (id) => ({ id, version: 3, status: 'PUBLISHED', schemaVersion: '1.0.0', policyType: 'EVIDENCE_RUBRIC', rules: { ...rules, requireHumanApproval: true }, competencyDefinitionId: null, curriculumDefinitionId: null }) });
-      expect((await evaluateProgression(approvalReader, 'family', query)).state).toBe('AWAITING_APPROVAL');
-      const evaluateWithApproval = evaluateProgression as unknown as (reader: ProgressionReader, familyId: string, input: { trackingId: string; policyId: string; approvalGranted: boolean }) => ReturnType<typeof evaluateProgression>;
-      expect((await evaluateWithApproval(approvalReader, 'family', { ...query, approvalGranted: true })).state).toBe('MASTERED');
+      const repository = { snapshot: async <T>(callback: (reader: ProgressionReader) => Promise<T>): Promise<T> => callback(approvalReader) } as unknown as ProgressionRepository;
+      const service = new ProgressionService(repository);
+      const forgedRequest = Object.assign({}, query, { approvalGranted: true });
+      expect((await service.evaluate('family', forgedRequest)).state).toBe('AWAITING_APPROVAL');
+    });
+    it('uses the internal approval callback for a prerequisite tracking', async () => {
+      const base = rubricReader();
+      const prerequisiteTracking = { ...tracking, id: 'approved-prerequisite', competencyDefinitionId: prerequisiteId };
+      const prerequisiteRules = { ...rules, requireHumanApproval: true };
+      const source = rubricReader({
+        policy: async (id) => id === policyId
+          ? ({ ...(await base.policy(id))!, rules: { ...rules, prerequisites: [{ competencyDefinitionId: prerequisiteId, policyId: prerequisiteId }] } })
+          : ({ ...(await base.policy(id))!, rules: prerequisiteRules }),
+        trackingForCompetency: async () => prerequisiteTracking,
+        evidenceCount: async () => 2,
+      });
+      const options: ProgressionEvaluationOptions = {
+        approvalGrantedForTracking: async (trackingId) => trackingId === prerequisiteTracking.id,
+      };
+      const result = await evaluateProgression(source, 'family', query, options);
+      expect(result.state).toBe('MASTERED');
+      expect(result.unmetPrerequisites).toEqual([]);
     });
   });
 });
