@@ -42,6 +42,7 @@ export * from './curriculum-pack-moderation.js';
 export * from './curriculum-pack-moderation-history.js';
 export * from './learner-competency-tracking.js';
 export * from './learner-competency-achievement.js';
+export * from './learner-competency-approval.js';
 export * from './learner-badges.js';
 export * from './lesson.js';
 export * from './schedule.js';

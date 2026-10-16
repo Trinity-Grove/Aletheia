@@ -14,6 +14,20 @@ export const learnerCompetencyAchievementReviewResponseSchema = z.object({
 // All contributing prerequisites are flattened into this immutable snapshot.
 export const achievementEvidenceSnapshotSchema = z.object({
   evidenceSubmissionIds: z.array(z.string().uuid()).min(1),
+  rubricAssessment: z.object({
+    assessmentResultId: z.string().uuid(),
+    rubricDefinitionId: z.string().uuid(),
+    rubricVersion: z.number().int().positive(),
+    assessorUserId: z.string().uuid().nullable(),
+    assessedAt: z.string().datetime(),
+    scores: z.array(z.object({ rubricCriterionId: z.string().uuid(), score: z.number() }).strict()),
+  }).strict().optional(),
+  approval: z.object({
+    approvalEventId: z.string().uuid(),
+    decision: z.literal('APPROVED'),
+    decidedByUserId: z.string().uuid(),
+    decidedAt: z.string().datetime(),
+  }).strict().optional(),
   prerequisites: z.array(z.object({
     competencyDefinitionId: z.string().uuid(),
     competencyVersion: z.number().int().positive(),
@@ -23,6 +37,12 @@ export const achievementEvidenceSnapshotSchema = z.object({
     minimumEvidenceCount: z.number().int().positive(),
     evidenceSubmissionIds: z.array(z.string().uuid()).min(1),
     state: z.literal('MASTERED'),
+    rubricAssessment: z.object({
+      assessmentResultId: z.string().uuid(), rubricDefinitionId: z.string().uuid(), rubricVersion: z.number().int().positive(),
+      assessorUserId: z.string().uuid().nullable(), assessedAt: z.string().datetime(),
+      scores: z.array(z.object({ rubricCriterionId: z.string().uuid(), score: z.number() }).strict()),
+    }).strict().optional(),
+    approval: z.object({ approvalEventId: z.string().uuid(), decision: z.literal('APPROVED'), decidedByUserId: z.string().uuid(), decidedAt: z.string().datetime() }).strict().optional(),
   }).strict()),
 }).strict();
 

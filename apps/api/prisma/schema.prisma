@@ -10,6 +10,7 @@ datasource db {
 model User {
   competencyAchievements LearnerCompetencyAchievement[]
   competencyAchievementReviews LearnerCompetencyAchievementReview[]
+  competencyApprovalEvents LearnerCompetencyApprovalEvent[] @relation("LearnerCompetencyApprovalActor")
   id                           String                   @id @default(uuid()) @db.Uuid
   email                        String                   @unique
   passwordHash                 String                   @map("password_hash")
@@ -299,6 +300,7 @@ model RegistrationVerificationChallenge {
 model Family {
   competencyAchievements LearnerCompetencyAchievement[]
   competencyAchievementReviews LearnerCompetencyAchievementReview[]
+  competencyApprovalEvents LearnerCompetencyApprovalEvent[]
   id                     String                      @id @default(uuid()) @db.Uuid
   name                   String
   countryCode            String                      @map("country_code")
@@ -369,6 +371,7 @@ enum PrayerType {
 model Learner {
   competencyAchievements LearnerCompetencyAchievement[]
   competencyAchievementReviews LearnerCompetencyAchievementReview[]
+  competencyApprovalEvents LearnerCompetencyApprovalEvent[]
   id            String           @id @default(uuid()) @db.Uuid
   familyId      String           @map("family_id") @db.Uuid
   firstName     String           @map("first_name")
@@ -1165,6 +1168,7 @@ model LearningDomain {
 
 model CompetencyDefinition {
   achievements LearnerCompetencyAchievement[]
+  approvalEvents LearnerCompetencyApprovalEvent[]
   id            String           @id @default(uuid()) @db.Uuid
   code          String
   version       Int              @default(1)
@@ -1980,6 +1984,7 @@ model TheologicalProfile {
 model ProgressionPolicy {
   learnerTrackings LearnerCompetencyTracking[]
   achievements LearnerCompetencyAchievement[]
+  approvalEvents LearnerCompetencyApprovalEvent[]
   id                     String           @id @default(uuid()) @db.Uuid
   code                   String
   version                Int              @default(1)
@@ -2123,6 +2128,7 @@ model AssessmentResult {
   rubricDefinition   RubricDefinition        @relation(fields: [rubricDefinitionId], references: [id], onDelete: Restrict)
   assessor           User?                   @relation("AssessmentResultAssessor", fields: [assessorUserId], references: [id], onDelete: SetNull)
   scores             AssessmentResultScore[]
+  competencyApprovalEvents LearnerCompetencyApprovalEvent[]
 
   @@index([familyId])
   @@index([familyId, learnerId])
@@ -2176,6 +2182,7 @@ model LearnerCompetencyTracking {
   policyVersion Int? @map("policy_version")
   progressionPolicy ProgressionPolicy? @relation(fields: [progressionPolicyId], references: [id], onDelete: Restrict)
   achievement LearnerCompetencyAchievement?
+  approvalEvents LearnerCompetencyApprovalEvent[]
   id                     String                          @id @default(uuid()) @db.Uuid
   familyId               String                          @map("family_id") @db.Uuid
   learnerId              String                          @map("learner_id") @db.Uuid
@@ -2251,6 +2258,37 @@ model LearnerCompetencyAchievementReview {
   @@unique([achievementId, evidenceSubmissionId])
   @@index([familyId, learnerId])
   @@map("learner_competency_achievement_reviews")
+}
+
+// Append-only human decision history, scoped to the exact tracking and
+// published competency/policy versions evaluated at decision time.
+model LearnerCompetencyApprovalEvent {
+  id                     String   @id @default(uuid()) @db.Uuid
+  familyId               String   @map("family_id") @db.Uuid
+  learnerId              String   @map("learner_id") @db.Uuid
+  trackingId             String   @map("tracking_id") @db.Uuid
+  competencyDefinitionId String   @map("competency_definition_id") @db.Uuid
+  competencyVersion      Int      @map("competency_version")
+  progressionPolicyId    String   @map("progression_policy_id") @db.Uuid
+  policyVersion          Int      @map("policy_version")
+  assessmentResultId     String?  @map("assessment_result_id") @db.Uuid
+  decision               String
+  reason                 String?
+  actorUserId            String   @map("actor_user_id") @db.Uuid
+  idempotencyKey         String   @map("idempotency_key") @db.Uuid
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  family       Family                      @relation(fields: [familyId], references: [id], onDelete: Restrict)
+  learner      Learner                     @relation(fields: [learnerId], references: [id], onDelete: Restrict)
+  tracking     LearnerCompetencyTracking   @relation(fields: [trackingId], references: [id], onDelete: Restrict)
+  competency   CompetencyDefinition        @relation(fields: [competencyDefinitionId], references: [id], onDelete: Restrict)
+  policy       ProgressionPolicy           @relation(fields: [progressionPolicyId], references: [id], onDelete: Restrict)
+  assessment   AssessmentResult?           @relation(fields: [assessmentResultId], references: [id], onDelete: Restrict)
+  actor        User                        @relation("LearnerCompetencyApprovalActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@unique([familyId, idempotencyKey])
+  @@index([familyId, learnerId, trackingId, createdAt])
+  @@map("learner_competency_approval_events")
 }
 
 // Gamification badge awards. Append-only per (learner, badge): once earned a
@@ -2894,6 +2932,7 @@ model MentorGrant {
   learnerId    String            @map("learner_id") @db.Uuid
   email        String
   role         String
+  canApproveProgression Boolean @default(false) @map("can_approve_progression")
   status       MentorGrantStatus @default(PENDING)
   tokenHash    String            @unique @map("token_hash")
   invitedBy    String            @map("invited_by") @db.Uuid

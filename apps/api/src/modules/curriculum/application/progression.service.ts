@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { evidenceCountRulesSchema, evidenceRubricRulesSchema, type ProgressionEvaluationQueryDto, type ProgressionEvaluationResponseDto } from '@aletheia/contracts';
 import type { z } from 'zod';
 import { ProgressionRepository } from '../infrastructure/progression.repository.js';
+import { progressionApprovalOptions } from '../infrastructure/prisma-progression-reader.js';
 
 export interface Definition { id: string; version: number; status: string; schemaVersion: string }
 export interface Policy extends Definition {
@@ -27,13 +28,16 @@ export interface ProgressionReader {
   curriculumContains(curriculumId: string, competencyId: string): Promise<boolean>;
   evidenceCount(familyId: string, learnerId: string, competencyId: string, version: number): Promise<number>;
   rubricDefinition(rubricDefinitionId: string): Promise<{ id: string; version: number; status: string; schemaVersion: string; criteria: { id: string; scaleMin: number; scaleMax: number }[] } | null>;
-  latestAssessmentResult(familyId: string, learnerId: string, rubricDefinitionId: string, rubricVersion: number): Promise<{ createdAt: Date; scores: { rubricCriterionId: string; score: number }[] } | null>;
+  latestAssessmentResult(familyId: string, learnerId: string, rubricDefinitionId: string, rubricVersion: number): Promise<{ id?: string; createdAt: Date; assessorUserId?: string | null; scores: { rubricCriterionId: string; score: number }[] } | null>;
+  latestValidatedEvidenceAt?(familyId: string, learnerId: string, competencyDefinitionId: string, competencyVersion: number): Promise<Date | null>;
+  latestApprovalEventForTracking?(familyId: string, trackingId: string): Promise<{ id: string; learnerId: string; competencyDefinitionId: string; competencyVersion: number; progressionPolicyId: string; policyVersion: number; decision: 'APPROVED' | 'RETURNED'; actorUserId: string; createdAt: Date } | null>;
   trackingPolicy?(familyId: string, trackingId: string): Promise<{ id: string; version: number } | null>;
   requireTrackingPolicyBinding?: boolean;
 }
 
 export interface ProgressionEvaluationOptions {
   approvalGrantedForTracking?: (trackingId: string) => Promise<boolean>;
+  approvalEligibleForTracking?: (trackingId: string) => Promise<boolean>;
 }
 
 export function parseProgressionPolicyRules(policy: Policy): z.infer<typeof evidenceCountRulesSchema> | z.infer<typeof evidenceRubricRulesSchema> {
@@ -124,13 +128,16 @@ export async function evaluateProgression(reader: ProgressionReader, familyId: s
     const approvalGranted = requireHumanApproval && objectiveGatesSatisfied
       ? await options.approvalGrantedForTracking?.(tracking.id) ?? false
       : false;
+    const approvalEligible = requireHumanApproval && objectiveGatesSatisfied
+      ? await options.approvalEligibleForTracking?.(tracking.id) ?? true
+      : true;
     const result: ProgressionEvaluationResponseDto = {
       learnerId: root!.learnerId, competencyDefinitionId: competencyId, competencyVersion: tracking.competencyVersion,
       trackingId: tracking.id, trackingStatus: tracking.status, curriculumDefinitionId: tracking.curriculumDefinitionId,
       policyId: effectivePolicyId, policyVersion: policy.version, validatedEvidenceCount: count,
       minimumEvidenceCount: parsed.minimumEvidenceCount, unmetPrerequisites,
       state: unmetPrerequisites.length ? 'BLOCKED' : !objectiveGatesSatisfied ? count > 0 ? 'IN_PROGRESS' : 'NOT_STARTED' :
-        requireHumanApproval && !approvalGranted ? 'AWAITING_APPROVAL' : 'MASTERED',
+        requireHumanApproval && !approvalGranted ? approvalEligible ? 'AWAITING_APPROVAL' : 'IN_PROGRESS' : 'MASTERED',
     };
     visiting.delete(key);
     results.set(key, result);
@@ -145,6 +152,6 @@ export class ProgressionService {
 
   evaluate(familyId: string, query: ProgressionEvaluationQueryDto): Promise<ProgressionEvaluationResponseDto> {
     const publicQuery: ProgressionEvaluationQueryDto = { trackingId: query.trackingId, policyId: query.policyId };
-    return this.repository.snapshot((reader) => evaluateProgression(reader, familyId, publicQuery));
+    return this.repository.snapshot((reader) => evaluateProgression(reader, familyId, publicQuery, progressionApprovalOptions(reader, familyId)));
   }
 }

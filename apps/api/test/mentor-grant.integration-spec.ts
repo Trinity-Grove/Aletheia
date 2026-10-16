@@ -78,8 +78,16 @@ describe('Mentor Grant (real Postgres)', () => {
 
     expect(invited.body.status).toBe('PENDING');
     expect(invited.body.role).toBe('mestre de ofício');
+    expect(invited.body.canApproveProgression).toBe(false);
     expect(invited.body.token).toBeTruthy();
     expect(invited.body.mentorUserId).toBeFalsy();
+
+    const explicitlyAuthorized = await supertest(app.getHttpServer())
+      .post(`/api/v1/families/${familyId}/learners/${learnerId}/mentors`)
+      .set('Cookie', guardianCookie)
+      .send({ email: 'mentor-approver@example.com', role: 'mentor', canApproveProgression: true })
+      .expect(201);
+    expect(explicitlyAuthorized.body.canApproveProgression).toBe(true);
   });
 
   it('rejects an invite for a learner that does not belong to the family', async () => {

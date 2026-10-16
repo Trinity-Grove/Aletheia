@@ -42,6 +42,7 @@ export class MentorGrantService {
       learnerId,
       email: dto.email,
       role: dto.role,
+      canApproveProgression: dto.canApproveProgression,
       token,
       invitedBy: currentUserId,
       expiresAt,

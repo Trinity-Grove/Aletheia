@@ -30,6 +30,7 @@ export class MentorGrantRepository {
     learnerId: string;
     email: string;
     role: string;
+    canApproveProgression?: boolean;
     token: string;
     invitedBy: string;
     expiresAt: Date;
@@ -40,6 +41,7 @@ export class MentorGrantRepository {
         learnerId: data.learnerId,
         email: data.email.toLowerCase().trim(),
         role: data.role,
+        canApproveProgression: data.canApproveProgression ?? false,
         tokenHash: hashToken(data.token),
         invitedBy: data.invitedBy,
         expiresAt: data.expiresAt,
@@ -89,6 +91,7 @@ export class MentorGrantRepository {
       learnerId: row.learnerId,
       email: row.email,
       role: row.role,
+      canApproveProgression: row.canApproveProgression,
       status: row.status as MentorGrantStatus,
       mentorUserId: row.mentorUserId,
       invitedBy: row.invitedBy,

@@ -136,5 +136,31 @@ describe('evidence progression', () => {
       expect(result.state).toBe('MASTERED');
       expect(result.unmetPrerequisites).toEqual([]);
     });
+    it('does not re-enter awaiting approval after a return until fresh input makes it eligible', async () => {
+      const source = rubricReader({
+        policy: async (id: string) => ({ id, version: 3, status: 'PUBLISHED', schemaVersion: '1.0.0', policyType: 'EVIDENCE_RUBRIC', rules: { ...rules, requireHumanApproval: true }, competencyDefinitionId: null, curriculumDefinitionId: null }),
+      });
+      const options: ProgressionEvaluationOptions = {
+        approvalEligibleForTracking: async () => false,
+      };
+      expect((await evaluateProgression(source, 'family', query, options)).state).toBe('IN_PROGRESS');
+      expect((await evaluateProgression(source, 'family', query, { approvalEligibleForTracking: async () => true })).state).toBe('AWAITING_APPROVAL');
+    });
+    it('wires persisted approval state into the public root evaluation', async () => {
+      const base = rubricReader({
+        policy: async (id: string) => ({ id, version: 3, status: 'PUBLISHED', schemaVersion: '1.0.0', policyType: 'EVIDENCE_RUBRIC', rules: { ...rules, requireHumanApproval: true }, competencyDefinitionId: null, curriculumDefinitionId: null }),
+        trackingPolicy: async () => ({ id: policyId, version: 3 }),
+        latestApprovalEventForTracking: async () => ({ id: 'approval', learnerId: 'learner', competencyDefinitionId: tracking.competencyDefinitionId, competencyVersion: tracking.competencyVersion, progressionPolicyId: policyId, policyVersion: 3, decision: 'APPROVED' as const, actorUserId: 'actor', createdAt: new Date('2026-01-01T00:00:00Z') }),
+      });
+      const repository = { snapshot: async <T>(callback: (source: ProgressionReader) => Promise<T>) => callback(base) } as unknown as ProgressionRepository;
+      expect((await new ProgressionService(repository).evaluate('family', query)).state).toBe('MASTERED');
+      const stale = rubricReader({
+        policy: async (id: string) => ({ id, version: 4, status: 'PUBLISHED', schemaVersion: '1.0.0', policyType: 'EVIDENCE_RUBRIC', rules: { ...rules, requireHumanApproval: true }, competencyDefinitionId: null, curriculumDefinitionId: null }),
+        trackingPolicy: async () => ({ id: policyId, version: 4 }),
+        latestApprovalEventForTracking: async () => ({ id: 'approval-old-policy', learnerId: 'learner', competencyDefinitionId: tracking.competencyDefinitionId, competencyVersion: tracking.competencyVersion, progressionPolicyId: policyId, policyVersion: 3, decision: 'APPROVED' as const, actorUserId: 'actor', createdAt: new Date('2026-01-01T00:00:00Z') }),
+      });
+      const staleRepository = { snapshot: async <T>(callback: (source: ProgressionReader) => Promise<T>) => callback(stale) } as unknown as ProgressionRepository;
+      expect((await new ProgressionService(staleRepository).evaluate('family', query)).state).toBe('AWAITING_APPROVAL');
+    });
   });
 });
