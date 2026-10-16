@@ -22,6 +22,17 @@ export class ProgressionRepository {
       evidenceCount: (familyId, learnerId, competencyDefinitionId, competencyVersion) => tx.evidenceSubmission.count({
         where: { familyId, learnerId, validationStatus: 'VALIDATED', competencies: { some: { competencyDefinitionId, competencyVersion } } },
       }),
+      rubricDefinition: async (id) => {
+        const rubric = await tx.rubricDefinition.findUnique({ where: { id }, select: { id: true, version: true, status: true, schemaVersion: true, criteria: { select: { id: true, scaleMin: true, scaleMax: true } } } });
+        return rubric;
+      },
+      latestAssessmentResult: async (familyId, learnerId, rubricDefinitionId, rubricVersion) => {
+        const result = await tx.assessmentResult.findFirst({
+          where: { familyId, learnerId, rubricDefinitionId, rubricVersion }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          select: { createdAt: true, scores: { select: { rubricCriterionId: true, score: true } } },
+        });
+        return result;
+      },
       trackingPolicy: async (familyId, trackingId) => {
         const row = await tx.learnerCompetencyTracking.findFirst({ where: { id: trackingId, familyId }, select: { progressionPolicyId: true, policyVersion: true } });
         return row?.progressionPolicyId && row.policyVersion ? { id: row.progressionPolicyId, version: row.policyVersion } : null;

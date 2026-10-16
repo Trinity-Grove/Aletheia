@@ -128,6 +128,27 @@ describe('Automatic competency achievements (real Postgres)', () => {
     expect(evaluation.body.state).toBe('NOT_STARTED');
   }, 30000);
 
+  it('does not reconcile a rubric policy into an achievement until evidence and all rubric criteria pass', async () => {
+    const f = await fixture();
+    const rubric = await db.rubricDefinition.create({ data: { code: `RUBRIC.${randomUUID()}`, name: 'Achievement rubric', status: 'PUBLISHED', criteria: { create: [
+      { code: 'criterion-a', label: 'Criterion A', scaleMin: 0, scaleMax: 4 },
+      { code: 'criterion-b', label: 'Criterion B', scaleMin: 1, scaleMax: 5 },
+    ] } }, include: { criteria: true } });
+    const policy = await definition('progression-policies', {
+      name: 'Evidence plus rubric', policyType: 'EVIDENCE_RUBRIC', curriculumDefinitionId: f.curriculumId,
+      rules: { minimumEvidenceCount: 1, rubricDefinitionId: rubric.id, rubricVersion: rubric.version,
+        minimumScoresByCriterion: { [rubric.criteria[0]!.id]: 3, [rubric.criteria[1]!.id]: 2 }, requireHumanApproval: false },
+    });
+    await db.learnerCompetencyTracking.update({ where: { id: f.trackingId }, data: { progressionPolicyId: policy.id, policyVersion: policy.version } });
+    await validate(f.evidenceId, 'VALIDATED').expect(200);
+    expect(await db.learnerCompetencyAchievement.count({ where: { trackingId: f.trackingId } })).toBe(0);
+    await db.assessmentResult.create({ data: { familyId: family.familyId, learnerId: family.learnerId,
+      rubricDefinitionId: rubric.id, rubricVersion: rubric.version, assessorType: 'PARENT', assessorUserId: family.actorId,
+      scores: { create: [{ rubricCriterionId: rubric.criteria[0]!.id, score: 4 }, { rubricCriterionId: rubric.criteria[1]!.id, score: 3 }] } } });
+    await validate(f.evidenceId, 'VALIDATED').expect(200);
+    expect(await db.learnerCompetencyAchievement.count({ where: { trackingId: f.trackingId } })).toBe(1);
+  }, 30000);
+
   it('isolates achievement reads and evidence validation by family', async () => {
     const f = await fixture();
     await supertest(app.getHttpServer()).get(`${base()}/achievements`).expect(401);

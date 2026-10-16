@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, type LearnerCompetencyAchievement, type LearnerCompetencyAchievementReview } from '@prisma/client';
 import { PrismaService } from '../../../platform/database/prisma.service.js';
-import { evaluateProgression, type ProgressionReader, type ProgressionTracking } from '../application/progression.service.js';
+import { evaluateProgression, parseProgressionPolicyRules, type ProgressionReader, type ProgressionTracking } from '../application/progression.service.js';
 import type { AchievementEvidenceSnapshot } from '@aletheia/contracts';
-import { evidenceCountRulesSchema } from '@aletheia/contracts';
 
 type EvidenceRow = { id: string; familyId: string; learnerId: string; validationStatus: string; validatedByUserId: string | null; validatedAt: Date | null; competencies: { competencyDefinitionId: string; competencyVersion: number }[] };
 
@@ -47,6 +46,11 @@ export class AchievementRepository {
         policy: (id) => tx.progressionPolicy.findUnique({ where: { id } }),
         curriculumContains: async (curriculumId, competencyId) => !!await tx.curriculumDefinitionCompetency.findFirst({ where: { curriculumDefinitionId: curriculumId, competencyId, curriculumDefinition: { status: { in: ['PUBLISHED', 'DEPRECATED', 'ARCHIVED'] }, schemaVersion: '1.0.0' } }, select: { id: true } }),
         evidenceCount: (f, learnerId, competencyId, version) => tx.evidenceSubmission.count({ where: { familyId: f, learnerId, validationStatus: 'VALIDATED', competencies: { some: { competencyDefinitionId: competencyId, competencyVersion: version } } } }),
+        rubricDefinition: async (id) => tx.rubricDefinition.findUnique({ where: { id }, select: { id: true, version: true, status: true, schemaVersion: true, criteria: { select: { id: true, scaleMin: true, scaleMax: true } } } }),
+        latestAssessmentResult: async (f, learnerId, rubricDefinitionId, rubricVersion) => tx.assessmentResult.findFirst({
+          where: { familyId: f, learnerId, rubricDefinitionId, rubricVersion }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          select: { createdAt: true, scores: { select: { rubricCriterionId: true, score: true } } },
+        }),
         trackingPolicy: async (f, trackingId) => {
           const row = await tx.learnerCompetencyTracking.findFirst({ where: { id: trackingId, familyId: f }, select: { progressionPolicyId: true, policyVersion: true } });
           return row?.progressionPolicyId && row.policyVersion ? { id: row.progressionPolicyId, version: row.policyVersion } : null;
@@ -97,10 +101,11 @@ export class AchievementRepository {
 
   private async collectPrerequisites(tx: Prisma.TransactionClient, familyId: string, learnerId: string, result: Awaited<ReturnType<typeof evaluateProgression>>, reader: ProgressionReader, seen: Set<string>): Promise<AchievementEvidenceSnapshot['prerequisites']> {
     const policy = await tx.progressionPolicy.findUnique({ where: { id: result.policyId } });
-    const parsed = policy ? evidenceCountRulesSchema.safeParse(policy.rules) : null;
-    if (!parsed?.success) return [];
+    if (!policy) return [];
+    let parsed: ReturnType<typeof parseProgressionPolicyRules>;
+    try { parsed = parseProgressionPolicyRules(policy as Parameters<typeof parseProgressionPolicyRules>[0]); } catch { return []; }
     const output: AchievementEvidenceSnapshot['prerequisites'] = [];
-    for (const prerequisite of parsed.data.prerequisites) {
+    for (const prerequisite of parsed.prerequisites) {
       const prerequisiteTracking = await reader.trackingForCompetency(familyId, learnerId, prerequisite.competencyDefinitionId);
       if (!prerequisiteTracking || seen.has(prerequisiteTracking.id)) continue;
       seen.add(prerequisiteTracking.id);
