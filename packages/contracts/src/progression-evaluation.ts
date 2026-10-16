@@ -10,12 +10,21 @@ export const evidenceCountRulesSchema = z.object({
   prerequisites: z.array(progressionPrerequisiteSchema).max(32).default([]),
 }).strict();
 
+export const evidenceRubricRulesSchema = z.object({
+  minimumEvidenceCount: z.number().int().positive(),
+  rubricDefinitionId: z.string().uuid(),
+  rubricVersion: z.number().int().positive(),
+  minimumScoresByCriterion: z.record(z.string().uuid(), z.number()).refine((scores) => Object.keys(scores).length > 0),
+  requireHumanApproval: z.boolean().default(false),
+  prerequisites: z.array(progressionPrerequisiteSchema).max(32).default([]),
+}).strict();
+
 export const progressionEvaluationQuerySchema = z.object({
   trackingId: z.string().uuid(),
   policyId: z.string().uuid(),
 }).strict();
 
-export const progressionStateSchema = z.enum(['NOT_STARTED', 'IN_PROGRESS', 'BLOCKED', 'MASTERED']);
+export const progressionStateSchema = z.enum(['NOT_STARTED', 'IN_PROGRESS', 'BLOCKED', 'MASTERED', 'AWAITING_APPROVAL']);
 const evaluationFields = {
   trackingId: z.string().uuid(),
   trackingStatus: z.enum(['ACTIVE', 'RETIRED']),

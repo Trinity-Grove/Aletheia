@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { evidenceCountRulesSchema, progressionEvaluationQuerySchema } from './progression-evaluation.js';
+import { evidenceCountRulesSchema, evidenceRubricRulesSchema, progressionEvaluationQuerySchema, progressionStateSchema } from './progression-evaluation.js';
 
 describe('progression evaluation contracts', () => {
   it('requires a positive integer threshold and exact prerequisite references', () => {
@@ -17,5 +17,23 @@ describe('progression evaluation contracts', () => {
     expect(progressionEvaluationQuerySchema.safeParse({ ...query, policyId: 'latest' }).success).toBe(false);
     expect(progressionEvaluationQuerySchema.safeParse({ ...query, learnerId: crypto.randomUUID() }).success).toBe(false);
     expect(progressionEvaluationQuerySchema.safeParse({ ...query, competencyDefinitionId: crypto.randomUUID() }).success).toBe(false);
+  });
+
+  it('validates EVIDENCE_RUBRIC rules with a threshold for each criterion', () => {
+    const rules = {
+      minimumEvidenceCount: 2,
+      rubricDefinitionId: crypto.randomUUID(),
+      rubricVersion: 3,
+      minimumScoresByCriterion: { [crypto.randomUUID()]: 2, [crypto.randomUUID()]: 1 },
+      requireHumanApproval: false,
+      prerequisites: [],
+    };
+    expect(evidenceRubricRulesSchema.safeParse(rules).success).toBe(true);
+    expect(evidenceRubricRulesSchema.safeParse({ ...rules, minimumScoresByCriterion: {} }).success).toBe(false);
+    expect(evidenceRubricRulesSchema.safeParse({ ...rules, extra: true }).success).toBe(false);
+  });
+
+  it('adds AWAITING_APPROVAL without changing existing states', () => {
+    expect(progressionStateSchema.options).toEqual(['NOT_STARTED', 'IN_PROGRESS', 'BLOCKED', 'MASTERED', 'AWAITING_APPROVAL']);
   });
 });
