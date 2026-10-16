@@ -57,7 +57,7 @@ export interface LocaleContextValue {
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
-export function LocaleProvider({ children }: { children: React.ReactNode }) {
+export function LocaleProvider({ children, syncFamily = true }: { children: React.ReactNode; syncFamily?: boolean }) {
   const [locale, setLocaleState] = useState<Locale>('pt-BR');
 
   // Instant paint from whatever was last chosen on this device; the family's
@@ -75,6 +75,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     async function reconcileWithFamilySettings() {
+      if (!syncFamily) return;
       let familyId: string | null = null;
       try {
         familyId = localStorage.getItem('familyId');
@@ -100,7 +101,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [syncFamily]);
 
   useEffect(() => {
     document.documentElement.lang = locale;

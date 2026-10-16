@@ -9,6 +9,7 @@ import type {
   LearnerCompetencyTrackingResponseDto,
 } from '@aletheia/contracts';
 import { CompetencyTrackingPanel } from '../src/components/records/competency-tracking-panel';
+import { AuthProvider } from '../src/lib/auth/rbac-context';
 
 const FAMILY_ID = 'fam-1';
 const LEARNER_ID = 'learner-1';
@@ -211,6 +212,54 @@ function stubFetch(overrides: Record<string, unknown> = {}) {
 }
 
 describe('CompetencyTrackingPanel', () => {
+  const pendingEvaluation = {
+    learnerId: LEARNER_ID, trackingId: 'tracking-1', trackingStatus: 'ACTIVE',
+    curriculumDefinitionId: 'curriculum-1', competencyDefinitionId: 'competency-1',
+    competencyVersion: 1, policyId: 'policy-1', policyVersion: 1,
+    validatedEvidenceCount: 1, minimumEvidenceCount: 1, unmetPrerequisites: [], state: 'AWAITING_APPROVAL',
+  };
+
+  it.each(['OWNER_GUARDIAN', 'GUARDIAN', 'CO_GUARDIAN'] as const)('lets %s approve pending progression using the authenticated actor', async (role) => {
+    stubFetch({ progressionEvaluation: pendingEvaluation });
+    render(<AuthProvider role={role} familyId={FAMILY_ID}><CompetencyTrackingPanel familyId={FAMILY_ID} learnerId={LEARNER_ID} /></AuthProvider>);
+    expect(await screen.findByTestId('progression-state-competency-1')).toHaveTextContent('Aguardando aprovação');
+    expect(screen.getByText(/requisitos objetivos foram atendidos/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('approve-tracking-1'));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(
+      `/api/v1/families/${FAMILY_ID}/curriculum/competency-tracking/tracking-1/approval`,
+      expect.objectContaining({ method: 'POST', body: expect.any(String) }),
+    ));
+    const call = vi.mocked(fetch).mock.calls.find(([url]) => String(url).endsWith('/approval'))!;
+    expect(JSON.parse(call[1]!.body as string)).toEqual({ decision: 'APPROVED', idempotencyKey: expect.any(String) });
+  });
+
+  it.each(['EDUCATOR', null] as const)('hides approval controls for %s', async (role) => {
+    stubFetch({ progressionEvaluation: pendingEvaluation });
+    render(<AuthProvider role={role} familyId={FAMILY_ID}><CompetencyTrackingPanel familyId={FAMILY_ID} learnerId={LEARNER_ID} /></AuthProvider>);
+    expect(await screen.findByTestId('progression-state-competency-1')).toHaveTextContent('Aguardando aprovação');
+    expect(screen.queryByTestId('approve-tracking-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('return-tracking-1')).not.toBeInTheDocument();
+  });
+
+  it('requires a trimmed return reason before sending a decision', async () => {
+    stubFetch({ progressionEvaluation: pendingEvaluation });
+    render(<AuthProvider role="GUARDIAN" familyId={FAMILY_ID}><CompetencyTrackingPanel familyId={FAMILY_ID} learnerId={LEARNER_ID} /></AuthProvider>);
+    await screen.findByTestId('return-tracking-1');
+    fireEvent.change(screen.getByTestId('approval-reason-tracking-1'), { target: { value: '   ' } });
+    fireEvent.click(screen.getByTestId('return-tracking-1'));
+    expect(screen.getByRole('alert')).toHaveTextContent('Informe o motivo');
+    expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).endsWith('/approval'))).toBe(false);
+    fireEvent.change(screen.getByTestId('approval-reason-tracking-1'), { target: { value: '  Rever clareza  ' } });
+    fireEvent.click(screen.getByTestId('return-tracking-1'));
+    await waitFor(() => expect(vi.mocked(fetch).mock.calls.some(([url, init]) => String(url).endsWith('/approval') && JSON.parse(init!.body as string).reason === 'Rever clareza')).toBe(true));
+  });
+
+  it('explains unmet prerequisites without offering premature approval', async () => {
+    stubFetch({ progressionEvaluation: { ...pendingEvaluation, state: 'BLOCKED', unmetPrerequisites: [{ ...pendingEvaluation, competencyDefinitionId: 'prerequisite-1', state: 'IN_PROGRESS' }] } });
+    render(<AuthProvider role="GUARDIAN" familyId={FAMILY_ID}><CompetencyTrackingPanel familyId={FAMILY_ID} learnerId={LEARNER_ID} /></AuthProvider>);
+    expect(await screen.findByTestId('progression-gates-tracking-1')).toHaveTextContent('prerequisite-1');
+    expect(screen.queryByTestId('approve-tracking-1')).not.toBeInTheDocument();
+  });
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();

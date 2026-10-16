@@ -15,6 +15,8 @@ import type {
   RubricCatalogEntryDto,
 } from '@aletheia/contracts';
 import { useLocale } from '../../lib/i18n/locale-context';
+import { useAuthRole } from '../../lib/auth/rbac-context';
+import { ProgressionDecisionActions } from '../mentors/progression-decision-actions';
 import { EvidenceSubmissionModal, type EvidenceSubmissionFormValues } from './evidence-submission-modal';
 
 export interface CompetencyTrackingPanelProps {
@@ -23,6 +25,7 @@ export interface CompetencyTrackingPanelProps {
 }
 
 const progressionStateKeys: Record<string, string> = {
+  AWAITING_APPROVAL: 'records.approval.awaiting',
   NOT_STARTED: 'records.competencies.states.notStarted',
   IN_PROGRESS: 'records.competencies.states.inProgress',
   BLOCKED: 'records.competencies.states.blocked',
@@ -30,6 +33,7 @@ const progressionStateKeys: Record<string, string> = {
 };
 
 const progressionStateVariants = {
+  AWAITING_APPROVAL: 'amber',
   NOT_STARTED: 'slate',
   IN_PROGRESS: 'amber',
   BLOCKED: 'rose',
@@ -50,6 +54,8 @@ const progressionStateVariants = {
 // separate, human-reviewed step, not bundled into this PR.
 export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrackingPanelProps) {
   const { t, formatDate } = useLocale();
+  const auth = useAuthRole();
+  const canApprove = auth?.familyId === familyId && ['OWNER_GUARDIAN', 'GUARDIAN', 'CO_GUARDIAN'].includes(auth?.role ?? '');
   const [curriculumCatalog, setCurriculumCatalog] = useState<CurriculumDefinitionCatalogEntryDto[]>([]);
   const [evidenceTypeCatalog, setEvidenceTypeCatalog] = useState<EvidenceTypeCatalogEntryDto[]>([]);
   const [projectCatalog, setProjectCatalog] = useState<FamilyProjectCatalogEntryDto[]>([]);
@@ -553,6 +559,18 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
                         </span>
                       </div>
                   )}
+                  {evaluation && evaluation.state !== 'MASTERED' && <div data-testid={`progression-gates-${tracking.id}`}>
+                    {evaluation.state === 'AWAITING_APPROVAL'
+                      ? <p>{t('records.approval.pending')}</p>
+                      : <p>{t('records.approval.objectivePending')}</p>}
+                    {evaluation.unmetPrerequisites.map((prerequisite) => <p key={prerequisite.trackingId}>
+                      {t('records.approval.prerequisite', { id: prerequisite.competencyDefinitionId })}
+                    </p>)}
+                    {evaluation.state === 'AWAITING_APPROVAL' && canApprove && <ProgressionDecisionActions
+                      key={familyId + learnerId + tracking.id} trackingId={tracking.id}
+                      endpoint={`/api/v1/families/${familyId}/curriculum/competency-tracking/${tracking.id}/approval`}
+                      onSuccess={loadLearnerData} />}
+                  </div>}
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <Badge variant="emerald" data-testid={`tracked-competency-status-${tracking.competencyDefinitionId}`}>

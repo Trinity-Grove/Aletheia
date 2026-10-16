@@ -2,8 +2,7 @@ import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans, Lora } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { ToastProvider } from '@aletheia/ui';
-import { AuthProvider } from '../src/lib/auth/auth-context';
-import { LocaleProvider } from '../src/lib/i18n/locale-context'; // Root layout provides LocaleProvider for useLocale across all views
+import { RouteProviders } from '../src/components/layout/route-providers';
 import '@aletheia/ui/css';
 import './globals.css';
 
@@ -38,9 +37,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     >
       <body suppressHydrationWarning className="font-sans antialiased">
         <ToastProvider>
-          <LocaleProvider>
-            <AuthProvider>{children}</AuthProvider>
-          </LocaleProvider>
+          <RouteProviders>{children}</RouteProviders>
         </ToastProvider>
       </body>
     </html>
