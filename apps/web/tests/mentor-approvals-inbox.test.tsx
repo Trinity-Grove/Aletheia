@@ -11,6 +11,8 @@ const item = { familyId: 'family-1', learnerId: 'learner-1', evaluation: {
   curriculumDefinitionId: null, competencyDefinitionId: 'competency-1', competencyVersion: 1,
   policyId: 'policy-1', policyVersion: 1, validatedEvidenceCount: 2, minimumEvidenceCount: 2,
   state: 'AWAITING_APPROVAL', unmetPrerequisites: [],
+  requiredEvidenceCountMet: true, rubricAssessmentSatisfied: true, humanApprovalRequired: true,
+  humanApprovalEligible: true, freshWorkRequired: false,
 } };
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); localStorage.clear(); });
 
@@ -70,4 +72,17 @@ it('reuses the idempotency key when retrying a failed approval, then refreshes t
   expect(bodies).toHaveLength(2);
   expect(bodies[0]).toEqual({ decision: 'APPROVED', idempotencyKey: expect.stringMatching(/^[a-f0-9-]{36}$/) });
   expect(bodies[1]).toEqual(bodies[0]);
+});
+
+it('keeps a denied decision visible as an error after a grant expires without fetching family data', async () => {
+  const fetcher = vi.fn(async (_url: string, init?: RequestInit) => init?.method === 'POST'
+    ? { ok: false, status: 403, json: async () => ({}) }
+    : { ok: true, json: async () => [item] });
+  vi.stubGlobal('fetch', fetcher);
+  render(<MentorApprovalsInbox />);
+  fireEvent.click(await screen.findByTestId('approve-tracking-1'));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível registrar');
+  expect(screen.getByTestId('mentor-approval-tracking-1')).toBeInTheDocument();
+  expect(fetcher).toHaveBeenCalledTimes(2);
+  expect(fetcher.mock.calls.every(([url]) => url.startsWith('/api/v1/mentors/progression-approvals'))).toBe(true);
 });

@@ -124,11 +124,12 @@ export async function evaluateProgression(reader: ProgressionReader, familyId: s
           return score !== undefined && Number.isFinite(score) && score >= criterion.scaleMin && score <= criterion.scaleMax && score >= rubricRules.minimumScoresByCriterion[criterion.id]!;
         });
     }
-    const objectiveGatesSatisfied = count >= parsed.minimumEvidenceCount && rubricSatisfied && unmetPrerequisites.length === 0;
+    const requiredEvidenceCountMet = count >= parsed.minimumEvidenceCount;
+    const objectiveGatesSatisfied = requiredEvidenceCountMet && rubricSatisfied && unmetPrerequisites.length === 0;
     const approvalGranted = requireHumanApproval && objectiveGatesSatisfied
       ? await options.approvalGrantedForTracking?.(tracking.id) ?? false
       : false;
-    const approvalEligible = requireHumanApproval && objectiveGatesSatisfied
+    const approvalEligible = requireHumanApproval
       ? await options.approvalEligibleForTracking?.(tracking.id) ?? true
       : true;
     const result: ProgressionEvaluationResponseDto = {
@@ -136,6 +137,10 @@ export async function evaluateProgression(reader: ProgressionReader, familyId: s
       trackingId: tracking.id, trackingStatus: tracking.status, curriculumDefinitionId: tracking.curriculumDefinitionId,
       policyId: effectivePolicyId, policyVersion: policy.version, validatedEvidenceCount: count,
       minimumEvidenceCount: parsed.minimumEvidenceCount, unmetPrerequisites,
+      requiredEvidenceCountMet, rubricAssessmentSatisfied: policy.policyType === 'EVIDENCE_RUBRIC' ? rubricSatisfied : null,
+      humanApprovalRequired: requireHumanApproval,
+      humanApprovalEligible: requireHumanApproval && objectiveGatesSatisfied && approvalEligible,
+      freshWorkRequired: requireHumanApproval && !approvalEligible,
       state: unmetPrerequisites.length ? 'BLOCKED' : !objectiveGatesSatisfied ? count > 0 ? 'IN_PROGRESS' : 'NOT_STARTED' :
         requireHumanApproval && !approvalGranted ? approvalEligible ? 'AWAITING_APPROVAL' : 'IN_PROGRESS' : 'MASTERED',
     };

@@ -23,7 +23,7 @@ export const settings = {
     email: "Mentor email",
     role: "Role description (does not grant permissions)",
     invite: "Send mentor invitation",
-    shareLink: "Share this link with the mentor. It is only available when creating the invitation and requires the invited account.",
+    shareLink: "Share this link with the mentor. It is only available when creating the invitation. Sign-in is required to accept it.",
   },
   pageTitle: 'Settings & Family Dashboard',
   pageDescription:

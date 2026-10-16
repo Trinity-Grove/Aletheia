@@ -35,6 +35,11 @@ const evaluationFields = {
   policyVersion: z.number().int().positive(),
   validatedEvidenceCount: z.number().int().nonnegative(),
   minimumEvidenceCount: z.number().int().positive(),
+  requiredEvidenceCountMet: z.boolean(),
+  rubricAssessmentSatisfied: z.boolean().nullable().describe('Null for EVIDENCE_COUNT; otherwise the latest exact-rubric/version assessment satisfies every criterion'),
+  humanApprovalRequired: z.boolean(),
+  humanApprovalEligible: z.boolean().describe('Human approval is required and all objective and post-return freshness gates pass'),
+  freshWorkRequired: z.boolean().describe('A matching RETURNED decision has no newer validated evidence or exact-rubric assessment'),
   state: progressionStateSchema,
 };
 export const progressionEvaluationResponseSchema = z.object({

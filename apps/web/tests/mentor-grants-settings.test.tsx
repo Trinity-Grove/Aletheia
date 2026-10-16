@@ -84,3 +84,12 @@ it('does not use a guardian role from a different family', () => {
   expect(screen.queryByTestId('invite-mentor')).not.toBeInTheDocument();
   expect(fetcher).not.toHaveBeenCalled();
 });
+
+it('shows expired grants without offering capability changes', async () => {
+  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => [{ ...grant, expiresAt: '2000-01-01T00:00:00Z' }] })));
+  render(<AuthProvider role="GUARDIAN" familyId="family-1"><MentorGrantsSettings familyId="family-1" learners={learners} /></AuthProvider>);
+  fireEvent.change(screen.getByTestId('mentor-learner'), { target: { value: 'learner-1' } });
+  expect(await screen.findByTestId('mentor-grant-grant-1')).toHaveTextContent('Expirado');
+  expect(screen.queryByTestId('mentor-capability-grant-1')).not.toBeInTheDocument();
+  expect(screen.getByTestId('revoke-mentor-grant-1')).toBeInTheDocument();
+});

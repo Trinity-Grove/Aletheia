@@ -27,7 +27,10 @@ export class MentorProgressionApprovalService {
       learnerId: tracking.learnerId,
       evaluation: await this.progression.evaluate(tracking.familyId, { trackingId: tracking.id, policyId: tracking.progressionPolicyId! }),
     })));
-    return evaluations.flatMap((result) => result.status === 'fulfilled' && result.value.evaluation.state === 'AWAITING_APPROVAL' ? [result.value] : []);
+    return evaluations.flatMap((result) => {
+      if (result.status !== 'fulfilled' || result.value.evaluation.state !== 'AWAITING_APPROVAL') return [];
+      return [{ ...result.value, evaluation: { ...result.value.evaluation, state: 'AWAITING_APPROVAL' as const } }];
+    });
   }
 
   decide(actorUserId: string, trackingId: string, input: LearnerCompetencyApprovalDecisionDto) {

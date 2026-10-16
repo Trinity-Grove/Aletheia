@@ -23,7 +23,7 @@ export const settings = {
     email: "Correo del mentor",
     role: "Descripción de la función (no concede permisos)",
     invite: "Enviar invitación de mentor",
-    shareLink: "Comparte este enlace con el mentor. Solo aparece al crear la invitación y requiere la cuenta invitada.",
+    shareLink: "Comparte este enlace con el mentor. Solo aparece al crear la invitación. Es necesario iniciar sesión para aceptarlo.",
   },
   pageTitle: 'Configuración y Panel de la Familia',
   pageDescription:

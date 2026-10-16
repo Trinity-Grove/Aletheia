@@ -23,7 +23,7 @@ export const settings = {
     email: "E-mail do mentor",
     role: "Descrição da atuação (não concede permissões)",
     invite: "Enviar convite de mentor",
-    shareLink: "Compartilhe este link com o mentor. Ele só aparece ao criar o convite e exige a conta convidada.",
+    shareLink: "Compartilhe este link com o mentor. Ele só aparece ao criar o convite. É necessário entrar para aceitá-lo.",
   },
   pageTitle: 'Configurações & Painel da Família',
   pageDescription:

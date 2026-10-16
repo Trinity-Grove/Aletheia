@@ -31,12 +31,21 @@ describe('evidence progression', () => {
   it.each([[0, 'NOT_STARTED'], [1, 'IN_PROGRESS']])('explains evidence count %s', async (count, state) => {
     expect((await evaluateProgression(reader({ evidenceCount: async () => count as number }), 'family', query)).state).toBe(state);
   });
+  it.each([0, 2])('reports count-only gates without rubric or human approval for count %s', async (count) => {
+    expect(await evaluateProgression(reader({ evidenceCount: async () => count }), 'family', query)).toMatchObject({
+      requiredEvidenceCountMet: count === 2, rubricAssessmentSatisfied: null,
+      humanApprovalRequired: false, humanApprovalEligible: false, freshWorkRequired: false,
+    });
+  });
   it('blocks despite enough evidence until prerequisites are mastered', async () => {
     const base = reader();
     const source = reader({ policy: async (id) => ({ ...(await base.policy(id))!, rules: { minimumEvidenceCount: id === policyId ? 1 : 2, prerequisites: id === policyId ? [{ competencyDefinitionId: competencyId, policyId: prerequisiteId }] : [] } }), evidenceCount: async () => 1 });
     const result = await evaluateProgression(source, 'family', query);
     expect(result.state).toBe('BLOCKED');
-    expect(result.unmetPrerequisites).toEqual([expect.objectContaining({ policyId: prerequisiteId, state: 'IN_PROGRESS' })]);
+    expect(result.unmetPrerequisites).toEqual([expect.objectContaining({
+      policyId: prerequisiteId, state: 'IN_PROGRESS', requiredEvidenceCountMet: false,
+      rubricAssessmentSatisfied: null, humanApprovalRequired: false, humanApprovalEligible: false, freshWorkRequired: false,
+    })]);
   });
   it('rejects cycles even if evidence meets every threshold', async () => {
     const base = reader();
@@ -79,6 +88,35 @@ describe('evidence progression', () => {
       rubricDefinition: async () => rubric,
       latestAssessmentResult: async () => assessment,
       ...changes,
+    });
+
+    it('reports the unsatisfied exact-rubric gate separately from satisfied evidence', async () => {
+      const base = rubricReader();
+      const result = await evaluateProgression(rubricReader({
+        policy: async (id) => ({ ...(await base.policy(id))!, rules: { ...rules, requireHumanApproval: true } }),
+        latestAssessmentResult: async () => ({ ...assessment, scores: [{ rubricCriterionId: criterionA, score: 2 }, { rubricCriterionId: criterionB, score: 2 }] }),
+      }), 'family', query);
+      expect(result).toMatchObject({ state: 'IN_PROGRESS', requiredEvidenceCountMet: true, rubricAssessmentSatisfied: false,
+        humanApprovalRequired: true, humanApprovalEligible: false, freshWorkRequired: false });
+    });
+
+    it.each([false, true])('reports persisted post-return fresh-work eligibility (new evidence: %s)', async (fresh) => {
+      const base = rubricReader();
+      const source = rubricReader({
+        policy: async (id) => ({ ...(await base.policy(id))!, rules: { ...rules, requireHumanApproval: true } }),
+        trackingPolicy: async () => ({ id: policyId, version: 3 }),
+        latestApprovalEventForTracking: async () => ({
+          id: 'returned', learnerId: tracking.learnerId, competencyDefinitionId: competencyId, competencyVersion: 2,
+          progressionPolicyId: policyId, policyVersion: 3, actorUserId: 'guardian', decision: 'RETURNED',
+          createdAt: new Date('2026-01-02T00:00:00Z'),
+        }),
+        latestValidatedEvidenceAt: async () => new Date(fresh ? '2026-01-03T00:00:00Z' : '2026-01-01T00:00:00Z'),
+      });
+      const repository = { snapshot: async <T>(callback: (reader: ProgressionReader) => Promise<T>) => callback(source) } as unknown as ProgressionRepository;
+      expect(await new ProgressionService(repository).evaluate('family', query)).toMatchObject({
+        state: fresh ? 'AWAITING_APPROVAL' : 'IN_PROGRESS', requiredEvidenceCountMet: true, rubricAssessmentSatisfied: true,
+        humanApprovalRequired: true, humanApprovalEligible: fresh, freshWorkRequired: !fresh,
+      });
     });
 
     it('requires both the minimum validated evidence and exact rubric/version assessment gates', async () => {

@@ -11,6 +11,8 @@ describe('mentor progression approval inbox contract', () => {
         trackingId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14', trackingStatus: 'ACTIVE', curriculumDefinitionId: null,
         policyId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15', policyVersion: 1, validatedEvidenceCount: 1,
         minimumEvidenceCount: 1, unmetPrerequisites: [], state: 'AWAITING_APPROVAL',
+        requiredEvidenceCountMet: true, rubricAssessmentSatisfied: true, humanApprovalRequired: true,
+        humanApprovalEligible: true, freshWorkRequired: false,
       },
     };
     expect(mentorProgressionApprovalInboxSchema.safeParse([item]).success).toBe(true);
