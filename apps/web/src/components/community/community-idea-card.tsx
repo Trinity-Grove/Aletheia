@@ -142,7 +142,7 @@ export function CommunityIdeaCard({
           </span>
           <ul className="community-idea-card__materials-list">
             {materials.map((material, index) => (
-              <li key={index} className="community-idea-card__material-pill">
+              <li key={`${material}-${index}`} className="community-idea-card__material-pill">
                 {material}
               </li>
             ))}
