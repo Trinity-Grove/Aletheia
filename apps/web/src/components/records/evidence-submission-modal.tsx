@@ -7,6 +7,7 @@ import {
   PORTFOLIO_MAX_FILE_SIZE_BYTES,
   type CreateEvidenceSubmissionDto,
   type EvidenceTypeCatalogEntryDto,
+  type FamilyProjectCatalogEntryDto,
   type LearnerCompetencyTrackingResponseDto,
 } from '@aletheia/contracts';
 import { useLocale } from '../../lib/i18n/locale-context';
@@ -19,6 +20,7 @@ export interface EvidenceSubmissionModalProps {
   onSave(dto: EvidenceSubmissionFormValues, file?: File | null): Promise<void>;
   evidenceTypeCatalog: EvidenceTypeCatalogEntryDto[];
   trackedCompetencies: LearnerCompetencyTrackingResponseDto[];
+  projects?: FamilyProjectCatalogEntryDto[];
   initialCompetencyDefinitionId?: string | null | undefined;
   onUploadFile?(file: File): Promise<{ fileUrl: string; storageKey?: string; mimeType?: string; fileSizeBytes?: number }>;
 }
@@ -37,12 +39,14 @@ export function EvidenceSubmissionModal({
   onSave,
   evidenceTypeCatalog,
   trackedCompetencies,
+  projects = [],
   initialCompetencyDefinitionId,
   onUploadFile,
 }: EvidenceSubmissionModalProps) {
   const { t } = useLocale();
   const [evidenceTypeId, setEvidenceTypeId] = useState('');
   const [selectedCompetencyIds, setSelectedCompetencyIds] = useState<string[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState('');
   const [textContent, setTextContent] = useState('');
   const [sourceType, setSourceType] = useState<'UPLOAD' | 'EXTERNAL_URL'>('UPLOAD');
   const [fileUrl, setFileUrl] = useState('');
@@ -55,6 +59,7 @@ export function EvidenceSubmissionModal({
     if (isOpen) {
       setEvidenceTypeId(evidenceTypeCatalog.length > 0 ? evidenceTypeCatalog[0]!.id : '');
       setSelectedCompetencyIds(initialCompetencyDefinitionId ? [initialCompetencyDefinitionId] : []);
+      setSelectedProjectId('');
       setTextContent('');
       setSourceType('UPLOAD');
       setFileUrl('');
@@ -66,6 +71,21 @@ export function EvidenceSubmissionModal({
 
   const toggleCompetency = (id: string) => {
     setSelectedCompetencyIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
+  };
+
+  const handleProjectChange = (projectId: string) => {
+    setSelectedProjectId(projectId);
+    if (!projectId) {
+      setSelectedCompetencyIds(initialCompetencyDefinitionId ? [initialCompetencyDefinitionId] : []);
+      return;
+    }
+    const project = projects.find((candidate) => candidate.id === projectId);
+    const activeIds = new Set(
+      trackedCompetencies.filter((tracking) => tracking.status === 'ACTIVE').map((tracking) => tracking.competencyDefinitionId),
+    );
+    setSelectedCompetencyIds(
+      project?.competencies.filter((competency) => activeIds.has(competency.competencyId)).map((competency) => competency.competencyId) ?? [],
+    );
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,6 +140,7 @@ export function EvidenceSubmissionModal({
       await onSave(
         {
           evidenceTypeId,
+          projectDefinitionId: selectedProjectId || null,
           competencies: selectedCompetencyIds.map((competencyDefinitionId) => ({ competencyDefinitionId })),
           textContent: textContent.trim() || null,
           fileUrl: finalFileUrl,
@@ -182,6 +203,17 @@ export function EvidenceSubmissionModal({
           options={[
             { value: '', label: t('records.evidenceSubmission.selectTypePlaceholder') },
             ...evidenceTypeCatalog.map((t) => ({ value: t.id, label: t.name })),
+          ]}
+        />
+
+        <Select
+          label={t('records.evidenceSubmission.projectLabel')}
+          data-testid="evidence-project-select"
+          value={selectedProjectId}
+          onChange={(event) => handleProjectChange(event.target.value)}
+          options={[
+            { value: '', label: t('records.evidenceSubmission.noProjectOption') },
+            ...projects.map((project) => ({ value: project.id, label: project.name })),
           ]}
         />
 

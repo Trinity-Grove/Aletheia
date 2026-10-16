@@ -7,6 +7,7 @@ import type {
   CurriculumDefinitionCatalogEntryDto,
   EvidenceSubmissionResponseDto,
   EvidenceTypeCatalogEntryDto,
+  FamilyProjectCatalogEntryDto,
   LearnerCompetencyAchievementResponseDto,
   LearnerCompetencyTrackingResponseDto,
   ProgressionEvaluationResponseDto,
@@ -51,6 +52,9 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
   const { t, formatDate } = useLocale();
   const [curriculumCatalog, setCurriculumCatalog] = useState<CurriculumDefinitionCatalogEntryDto[]>([]);
   const [evidenceTypeCatalog, setEvidenceTypeCatalog] = useState<EvidenceTypeCatalogEntryDto[]>([]);
+  const [projectCatalog, setProjectCatalog] = useState<FamilyProjectCatalogEntryDto[]>([]);
+  const [projectCatalogLoading, setProjectCatalogLoading] = useState(true);
+  const [projectCatalogError, setProjectCatalogError] = useState<string | null>(null);
   const [progressionPolicyCatalog, setProgressionPolicyCatalog] = useState<ProgressionPolicyCatalogEntryDto[]>([]);
   const [rubricCatalog, setRubricCatalog] = useState<RubricCatalogEntryDto[]>([]);
   const [trackedCompetencies, setTrackedCompetencies] = useState<LearnerCompetencyTrackingResponseDto[]>([]);
@@ -67,6 +71,8 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
   const [activating, setActivating] = useState(false);
   const [activationError, setActivationError] = useState<string | null>(null);
   const [activationSuccess, setActivationSuccess] = useState<string | null>(null);
+  const [updatingProjectId, setUpdatingProjectId] = useState<string | null>(null);
+  const [projectSelectionError, setProjectSelectionError] = useState<string | null>(null);
 
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
   const [evidenceModalInitialCompetencyId, setEvidenceModalInitialCompetencyId] = useState<string | null>(null);
@@ -78,11 +84,12 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
   const [assessmentError, setAssessmentError] = useState<string | null>(null);
 
   const loadCatalogs = useCallback(async () => {
-    const [curriculumRes, evidenceTypeRes, progressionRes, rubricRes] = await Promise.all([
+    const [curriculumRes, evidenceTypeRes, progressionRes, rubricRes, projectRes] = await Promise.all([
       fetch(`/api/v1/families/${familyId}/curriculum/curriculum-definitions/catalog`, { credentials: 'include' }),
       fetch(`/api/v1/families/${familyId}/curriculum/evidence-types/catalog`, { credentials: 'include' }),
       fetch(`/api/v1/families/${familyId}/curriculum/progression-policies/catalog`, { credentials: 'include' }),
       fetch(`/api/v1/families/${familyId}/curriculum/rubrics/catalog`, { credentials: 'include' }),
+      fetch(`/api/v1/families/${familyId}/curriculum/projects/catalog`, { credentials: 'include' }).catch(() => null),
     ]);
     if (curriculumRes.ok) setCurriculumCatalog(await curriculumRes.json());
     if (evidenceTypeRes.ok) setEvidenceTypeCatalog(await evidenceTypeRes.json());
@@ -99,6 +106,13 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
         setAssessmentScores(Object.fromEntries(rubrics[0].criteria.map((criterion) => [criterion.id, criterion.scaleMin])));
       }
     }
+    if (projectRes?.ok) {
+      setProjectCatalog(await projectRes.json());
+      setProjectCatalogError(null);
+    } else {
+      setProjectCatalogError(t('records.competencies.errorLoadProjects'));
+    }
+    setProjectCatalogLoading(false);
   }, [familyId]);
 
   const loadLearnerData = useCallback(async () => {
@@ -215,6 +229,29 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
     setIsEvidenceModalOpen(true);
   };
 
+  const handleToggleProject = async (project: FamilyProjectCatalogEntryDto) => {
+    setUpdatingProjectId(project.id);
+    setProjectSelectionError(null);
+    const enabled = !project.enabled;
+    try {
+      const response = await fetch(`/api/v1/families/${familyId}/curriculum/projects/${project.id}/selection`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ enabled }),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || t('records.competencies.errorUpdateProject'));
+      }
+      setProjectCatalog((current) => current.map((candidate) => candidate.id === project.id ? { ...candidate, enabled } : candidate));
+    } catch (error) {
+      setProjectSelectionError(error instanceof Error ? error.message : t('records.competencies.errorUpdateProject'));
+    } finally {
+      setUpdatingProjectId(null);
+    }
+  };
+
   const handleSaveEvidence = async (dto: EvidenceSubmissionFormValues) => {
     if (!learnerId) throw new Error(t('records.competencies.selectLearnerFirst'));
     const res = await fetch(`/api/v1/families/${familyId}/curriculum/evidence-submissions`, {
@@ -309,14 +346,67 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
     }
   };
 
+  const familyProjectsSection = (
+    <Card data-testid="family-projects-card" style={{ padding: '1.75rem' }}>
+      <div style={{ marginBottom: '1.25rem' }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+          {t('records.competencies.projectsTitle')}
+        </h2>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0' }}>
+          {t('records.competencies.projectsDesc')}
+        </p>
+      </div>
+      {projectCatalogError && <Alert variant="error" data-testid="family-project-catalog-error">{projectCatalogError}</Alert>}
+      {projectSelectionError && <Alert variant="error" data-testid="family-project-selection-error">{projectSelectionError}</Alert>}
+      {projectCatalogLoading ? (
+        <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{t('records.competencies.loading')}</div>
+      ) : projectCatalogError ? null : projectCatalog.length === 0 ? (
+        <EmptyState title={t('records.competencies.noProjectsTitle')} description={t('records.competencies.noProjectsDesc')} />
+      ) : (
+        <div style={{ display: 'grid', gap: '0.625rem' }}>
+          {projectCatalog.map((project) => (
+            <div
+              key={project.id}
+              data-testid={`family-project-${project.id}`}
+              style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap', padding: '0.875rem 1rem', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-sm)' }}
+            >
+              <div style={{ minWidth: 0, flex: '1 1 240px' }}>
+                <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{project.name}</div>
+                {project.description && <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{project.description}</div>}
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
+                  {project.competencies.length > 0
+                    ? project.competencies.map((competency) => competency.title).join(' · ')
+                    : t('records.competencies.projectNoCompetencies')}
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant={project.enabled ? 'secondary' : 'primary'}
+                data-testid={`toggle-family-project-${project.id}`}
+                onClick={() => void handleToggleProject(project)}
+                isLoading={updatingProjectId === project.id}
+                disabled={updatingProjectId !== null}
+              >
+                {project.enabled ? t('records.competencies.removeProjectBtn') : t('records.competencies.addProjectBtn')}
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+
   if (!learnerId) {
     return (
-      <Card style={{ padding: '1.75rem' }}>
-        <EmptyState
-          title={t('records.competencies.emptyLearnerTitle')}
-          description={t('records.competencies.emptyLearnerDesc')}
-        />
-      </Card>
+      <div style={{ display: 'grid', gap: '1.5rem' }}>
+        <Card style={{ padding: '1.75rem' }}>
+          <EmptyState
+            title={t('records.competencies.emptyLearnerTitle')}
+            description={t('records.competencies.emptyLearnerDesc')}
+          />
+        </Card>
+        {familyProjectsSection}
+      </div>
     );
   }
 
@@ -395,6 +485,8 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
           </Button>
         </div>
       </Card>
+
+      {familyProjectsSection}
 
       <Card data-testid="tracked-competencies-card" style={{ padding: '1.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
@@ -610,6 +702,9 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
                 </div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
                   {t('records.competencies.linkedCompetenciesCount', { count: submission.competencies.length })} --{' '}
+                  {submission.projectDefinitionId && projectCatalog.find((project) => project.id === submission.projectDefinitionId)
+                    ? `${t('records.competencies.projectLabel')}: ${projectCatalog.find((project) => project.id === submission.projectDefinitionId)!.name} · `
+                    : ''}
                   {formatDate(new Date(submission.createdAt))}
                 </div>
                 {submission.validationStatus === 'UNVALIDATED' && (
@@ -763,6 +858,7 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
         onSave={handleSaveEvidence}
         evidenceTypeCatalog={evidenceTypeCatalog}
         trackedCompetencies={trackedCompetencies}
+        projects={projectCatalog.filter((project) => project.enabled)}
         initialCompetencyDefinitionId={evidenceModalInitialCompetencyId}
       />
     </div>

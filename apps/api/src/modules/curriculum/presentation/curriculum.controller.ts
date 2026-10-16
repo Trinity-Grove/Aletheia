@@ -38,6 +38,7 @@ import {
   type UpsertLearnerPlanDto,
   type UpsertFamilyLearningPathSelectionDto,
   type FamilyProjectSelectionResponseDto,
+  type FamilyProjectCatalogEntryDto,
   type UpsertFamilyProjectSelectionDto,
 } from '@aletheia/contracts';
 import { JwtAuthGuard, FamilyTenantGuard } from '../../../platform/auth/index.js';
@@ -166,6 +167,14 @@ export class CurriculumController {
     @Param('familyId') familyId: string,
   ): Promise<FamilyProjectSelectionResponseDto[]> {
     return this.familyProjectSelectionService.list(familyId);
+  }
+
+  @Get('projects/catalog')
+  @ApiOperation({ summary: 'List published projects and mapped competencies for this family' })
+  async listFamilyProjectCatalog(
+    @Param('familyId') familyId: string,
+  ): Promise<FamilyProjectCatalogEntryDto[]> {
+    return this.familyProjectSelectionService.listPublishedCatalog(familyId);
   }
 
   @Put('projects/:projectId/selection')
