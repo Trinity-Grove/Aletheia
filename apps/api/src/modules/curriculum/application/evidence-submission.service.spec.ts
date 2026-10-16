@@ -70,3 +70,36 @@ describe('EvidenceSubmissionService preview', () => {
     expect(objectStorage.getPresignedDownloadUrl).not.toHaveBeenCalled();
   });
 });
+
+describe('EvidenceSubmissionService project linking', () => {
+  const familyId = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+  const learnerId = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
+  const projectId = 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33';
+  const competencyId = 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44';
+
+  it('rejects project evidence unless the project is published and enabled for the same family', async () => {
+    const repository = {
+      findLearnerFamilyId: jest.fn().mockResolvedValue(familyId),
+      findCompetencyDefinitionVersionsByIds: jest.fn().mockResolvedValue(new Map([[competencyId, 1]])),
+      projectDefinitionExists: jest.fn().mockResolvedValue(true),
+      isProjectEnabledForFamily: jest.fn().mockResolvedValue(false),
+      create: jest.fn(),
+    };
+    const service = new EvidenceSubmissionService(
+      repository as never,
+      {} as never,
+      { recordSensitiveDataAccess: jest.fn() } as never,
+      {} as never,
+    );
+
+    await expect(service.createEvidenceSubmission(familyId, 'guardian-1', {
+      learnerId,
+      evidenceTypeId: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
+      projectDefinitionId: projectId,
+      competencies: [{ competencyDefinitionId: competencyId }],
+      textContent: 'Evidence from this project.',
+    })).rejects.toThrow('The project must be published and enabled for this family before submitting evidence.');
+    expect(repository.isProjectEnabledForFamily).toHaveBeenCalledWith(familyId, projectId);
+    expect(repository.create).not.toHaveBeenCalled();
+  });
+});

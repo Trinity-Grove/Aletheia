@@ -1,10 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type {
+  FamilyProjectCatalogEntryDto,
   FamilyProjectSelectionResponseDto,
   UpsertFamilyProjectSelectionDto,
 } from '@aletheia/contracts';
 import {
   FamilyProjectSelectionRepository,
+  type PublishedFamilyProjectCatalogRow,
   type FamilyProjectSelectionWithProject,
 } from '../infrastructure/family-project-selection.repository.js';
 
@@ -27,6 +29,11 @@ export class FamilyProjectSelectionService {
     return selections.map((selection) => this.toDto(selection));
   }
 
+  async listPublishedCatalog(familyId: string): Promise<FamilyProjectCatalogEntryDto[]> {
+    const projects = await this.repository.listPublishedCatalog(familyId);
+    return projects.map((project) => this.toCatalogEntry(project));
+  }
+
   private toDto(selection: FamilyProjectSelectionWithProject): FamilyProjectSelectionResponseDto {
     return {
       id: selection.id,
@@ -40,7 +47,33 @@ export class FamilyProjectSelectionService {
         name: selection.project.name,
         version: selection.project.version,
         status: selection.project.status,
+        description: selection.project.description,
+        competencies: selection.project.competencies.map((link) => ({
+          competencyId: link.competencyId,
+          code: link.competency.code,
+          title: link.competency.title,
+          required: link.required,
+          order: link.order,
+        })),
       },
+    };
+  }
+
+  private toCatalogEntry(project: PublishedFamilyProjectCatalogRow): FamilyProjectCatalogEntryDto {
+    return {
+      id: project.id,
+      code: project.code,
+      name: project.name,
+      version: project.version,
+      description: project.description,
+      enabled: project.familySelections[0]?.enabled ?? false,
+      competencies: project.competencies.map((link) => ({
+        competencyId: link.competencyId,
+        code: link.competency.code,
+        title: link.competency.title,
+        required: link.required,
+        order: link.order,
+      })),
     };
   }
 }

@@ -12,6 +12,7 @@ describe('Family project selections (real Postgres)', () => {
   let familyBCookie: string;
   let projectId: string;
   let draftProjectId: string;
+  let competencyId: string;
 
   async function registerFamily(prefix: string): Promise<{ cookie: string; familyId: string }> {
     const response = await registerAndConfirmGuardian(app, {
@@ -53,6 +54,27 @@ describe('Family project selections (real Postgres)', () => {
       },
     });
     projectId = publishedProject.id;
+    const domain = await prisma.learningDomain.create({
+      data: {
+        code: `TEST.PROJECT.SELECTION.DOMAIN.${Date.now()}`,
+        name: 'Project Selection Test Domain',
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
+      },
+    });
+    const competency = await prisma.competencyDefinition.create({
+      data: {
+        code: `TEST.PROJECT.SELECTION.COMPETENCY.${Date.now()}`,
+        title: 'Plan the garden bed',
+        domainId: domain.id,
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
+      },
+    });
+    competencyId = competency.id;
+    await prisma.projectDefinitionCompetency.create({
+      data: { projectId, competencyId, required: true, order: 0 },
+    });
     const draftProject = await prisma.projectDefinition.create({
       data: {
         code: `TEST.PROJECT.SELECTION.DRAFT.${Date.now()}`,
@@ -77,6 +99,9 @@ describe('Family project selections (real Postgres)', () => {
     expect(enabled.body.projectId).toBe(projectId);
     expect(enabled.body.enabled).toBe(true);
     expect(enabled.body.project.status).toBe('PUBLISHED');
+    expect(enabled.body.project.competencies).toEqual([
+      expect.objectContaining({ competencyId, title: 'Plan the garden bed', required: true, order: 0 }),
+    ]);
 
     const disabled = await supertest(app.getHttpServer())
       .put(`/api/v1/families/${familyAId}/curriculum/projects/${projectId}/selection`)
@@ -94,6 +119,32 @@ describe('Family project selections (real Postgres)', () => {
 
     expect(list.body).toHaveLength(1);
     expect(list.body[0]).toEqual(expect.objectContaining({ id: enabled.body.id, enabled: false }));
+  });
+
+  it('lists published projects with mapped competencies and family-specific selection state', async () => {
+    await supertest(app.getHttpServer())
+      .put(`/api/v1/families/${familyAId}/curriculum/projects/${projectId}/selection`)
+      .set('Cookie', familyACookie)
+      .send({ enabled: true })
+      .expect(200);
+
+    const familyACatalog = await supertest(app.getHttpServer())
+      .get(`/api/v1/families/${familyAId}/curriculum/projects/catalog`)
+      .set('Cookie', familyACookie)
+      .expect(200);
+    expect(familyACatalog.body).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: projectId,
+        enabled: true,
+        competencies: [expect.objectContaining({ competencyId, code: expect.any(String), title: 'Plan the garden bed' })],
+      }),
+    ]));
+
+    const familyBCatalog = await supertest(app.getHttpServer())
+      .get(`/api/v1/families/${familyAId}/curriculum/projects/catalog`)
+      .set('Cookie', familyBCookie)
+      .expect(403);
+    expect(familyBCatalog.body).toBeDefined();
   });
 
   it('rejects unpublished projects and cross-family access', async () => {

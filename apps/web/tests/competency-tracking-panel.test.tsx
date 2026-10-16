@@ -12,6 +12,19 @@ import { CompetencyTrackingPanel } from '../src/components/records/competency-tr
 
 const FAMILY_ID = 'fam-1';
 const LEARNER_ID = 'learner-1';
+const PROJECT_ID = 'project-1';
+
+const mockProjectCatalog = [
+  {
+    id: PROJECT_ID,
+    code: 'GARDEN_BUILD',
+    name: 'Construir uma horta',
+    version: 1,
+    description: 'Planejar e cultivar uma horta.',
+    enabled: true,
+    competencies: [{ competencyId: 'competency-1', code: 'GARDEN.SOIL', title: 'Preparar o solo', required: true, order: 0 }],
+  },
+];
 
 const mockCurriculumCatalog: CurriculumDefinitionCatalogEntryDto[] = [
   { id: 'curriculum-1', code: 'TRIVIUM.CORE', name: 'Trivium Clássico', description: null },
@@ -71,6 +84,7 @@ const mockEvidenceSubmission: EvidenceSubmissionResponseDto = {
   familyId: FAMILY_ID,
   learnerId: LEARNER_ID,
   evidenceTypeId: 'evidence-type-1',
+  projectDefinitionId: PROJECT_ID,
   authorId: 'user-1',
   textContent: 'Leu três capítulos.',
   fileUrl: null,
@@ -148,6 +162,9 @@ function stubFetch(overrides: Record<string, unknown> = {}) {
       if (url.includes('/curriculum-definitions/catalog')) {
         return Promise.resolve({ ok: true, json: async () => overrides.curriculumCatalog ?? mockCurriculumCatalog });
       }
+      if (url.includes('/projects/catalog')) {
+        return Promise.resolve({ ok: true, json: async () => overrides.projectCatalog ?? mockProjectCatalog });
+      }
       if (url.includes('/evidence-types/catalog')) {
         return Promise.resolve({ ok: true, json: async () => overrides.evidenceTypeCatalog ?? mockEvidenceTypeCatalog });
       }
@@ -204,6 +221,7 @@ describe('CompetencyTrackingPanel', () => {
     stubFetch();
     render(<CompetencyTrackingPanel familyId={FAMILY_ID} learnerId={null} />);
     expect(screen.getByText('Selecione um educando')).toBeInTheDocument();
+    return waitFor(() => expect(screen.getByTestId(`family-project-${PROJECT_ID}`)).toBeInTheDocument());
   });
 
   it('shows a loading state before data arrives', () => {
@@ -222,6 +240,7 @@ describe('CompetencyTrackingPanel', () => {
 
     expect(screen.getByTestId('tracked-competency-competency-1')).toHaveTextContent('Leitura Fluente');
     expect(screen.getByTestId('evidence-submission-evidence-1')).toBeInTheDocument();
+    expect(screen.getByTestId('evidence-submission-evidence-1')).toHaveTextContent('Projeto: Construir uma horta');
     expect(screen.getByTestId('assessment-result-assessment-1')).toBeInTheDocument();
 
     const curriculumSelect = screen.getByTestId('curriculum-catalog-select') as HTMLSelectElement;
@@ -343,6 +362,46 @@ describe('CompetencyTrackingPanel', () => {
 
     await waitFor(() => {
       expect(screen.queryByTestId('evidence-text-content-input')).not.toBeInTheDocument();
+    });
+  });
+
+  it('lets the family activate a published project and link its evidence to the mapped active competency', async () => {
+    stubFetch();
+    render(<CompetencyTrackingPanel familyId={FAMILY_ID} learnerId={LEARNER_ID} />);
+
+    await waitFor(() => expect(screen.getByTestId(`family-project-${PROJECT_ID}`)).toBeInTheDocument());
+    expect(screen.getByTestId(`family-project-${PROJECT_ID}`)).toHaveTextContent('Preparar o solo');
+    fireEvent.click(screen.getByTestId(`toggle-family-project-${PROJECT_ID}`));
+
+    await waitFor(() => {
+      expect(vi.mocked(fetch).mock.calls.some(([url, init]) =>
+        String(url).includes(`/projects/${PROJECT_ID}/selection`) && init?.method === 'PUT' &&
+        JSON.parse(String(init.body)).enabled === false,
+      )).toBe(true);
+    });
+  });
+
+  it('submits evidence linked to an active project and suggests only competencies tracked for this learner', async () => {
+    stubFetch();
+    render(<CompetencyTrackingPanel familyId={FAMILY_ID} learnerId={LEARNER_ID} />);
+
+    await waitFor(() => expect(screen.getByTestId('open-evidence-modal-btn')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('open-evidence-modal-btn'));
+    await waitFor(() => expect(screen.getByTestId('evidence-project-select')).toBeInTheDocument());
+    fireEvent.change(screen.getByTestId('evidence-project-select'), { target: { value: PROJECT_ID } });
+    expect((screen.getByTestId('evidence-competency-checkbox-competency-1') as HTMLInputElement).checked).toBe(true);
+    fireEvent.change(screen.getByTestId('evidence-text-content-input'), { target: { value: 'Plantamos sementes e registramos o crescimento.' } });
+    fireEvent.click(screen.getByTestId('save-evidence-submission-btn'));
+
+    await waitFor(() => {
+      const submission = vi.mocked(fetch).mock.calls.find(([url, init]) =>
+        String(url).includes('/evidence-submissions') && init?.method === 'POST',
+      );
+      expect(JSON.parse(String(submission?.[1]?.body))).toMatchObject({
+        learnerId: LEARNER_ID,
+        projectDefinitionId: PROJECT_ID,
+        competencies: [{ competencyDefinitionId: 'competency-1' }],
+      });
     });
   });
 

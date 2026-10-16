@@ -54,6 +54,9 @@ export class EvidenceSubmissionService {
     if (dto.projectDefinitionId && !(await this.repository.projectDefinitionExists(dto.projectDefinitionId))) {
       throw new BadRequestException('Referenced project definition does not exist.');
     }
+    if (dto.projectDefinitionId && !(await this.repository.isProjectEnabledForFamily(familyId, dto.projectDefinitionId))) {
+      throw new BadRequestException('The project must be published and enabled for this family before submitting evidence.');
+    }
 
     if (dto.storageKey) {
       this.assertFamilyStorageKey(familyId, dto.storageKey);

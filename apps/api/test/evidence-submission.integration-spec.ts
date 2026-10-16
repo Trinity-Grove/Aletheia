@@ -305,16 +305,35 @@ describe('Evidence Submission (real Postgres)', () => {
       .send({ code: `TEST.EVIDENCE.PROJECT.${Date.now()}`, name: 'Construir uma horta (Test)' })
       .expect(201);
 
+    await supertest(app.getHttpServer())
+      .patch(`/api/v1/admin/curriculum-definitions/project-definitions/${project.body.id}/status`)
+      .set('Cookie', adminCookie)
+      .send({ status: 'PUBLISHED' })
+      .expect(200);
+
+    const projectEvidence = {
+      learnerId: familyALearnerId,
+      evidenceTypeId,
+      projectDefinitionId: project.body.id,
+      competencies: [{ competencyDefinitionId: competency.id }],
+      textContent: 'Fotos do canteiro preparado.',
+    };
+    await supertest(app.getHttpServer())
+      .post(`/api/v1/families/${familyAId}/curriculum/evidence-submissions`)
+      .set('Cookie', familyACookie)
+      .send(projectEvidence)
+      .expect(400);
+
+    await supertest(app.getHttpServer())
+      .put(`/api/v1/families/${familyAId}/curriculum/projects/${project.body.id}/selection`)
+      .set('Cookie', familyACookie)
+      .send({ enabled: true })
+      .expect(200);
+
     const first = await supertest(app.getHttpServer())
       .post(`/api/v1/families/${familyAId}/curriculum/evidence-submissions`)
       .set('Cookie', familyACookie)
-      .send({
-        learnerId: familyALearnerId,
-        evidenceTypeId,
-        projectDefinitionId: project.body.id,
-        competencies: [{ competencyDefinitionId: competency.id }],
-        textContent: 'Fotos do canteiro preparado.',
-      })
+      .send(projectEvidence)
       .expect(201);
     expect(first.body.projectDefinitionId).toBe(project.body.id);
 
@@ -331,6 +350,17 @@ describe('Evidence Submission (real Postgres)', () => {
       .expect(201);
     expect(second.body.projectDefinitionId).toBe(project.body.id);
     expect(second.body.id).not.toBe(first.body.id);
+
+    await supertest(app.getHttpServer())
+      .put(`/api/v1/families/${familyAId}/curriculum/projects/${project.body.id}/selection`)
+      .set('Cookie', familyACookie)
+      .send({ enabled: false })
+      .expect(200);
+    await supertest(app.getHttpServer())
+      .post(`/api/v1/families/${familyAId}/curriculum/evidence-submissions`)
+      .set('Cookie', familyACookie)
+      .send(projectEvidence)
+      .expect(400);
   });
 
   it('rejects an evidence submission referencing a project definition that does not exist, 400 not 500', async () => {

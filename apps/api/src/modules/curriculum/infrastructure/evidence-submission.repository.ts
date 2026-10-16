@@ -56,6 +56,14 @@ export class EvidenceSubmissionRepository {
     return row !== null;
   }
 
+  async isProjectEnabledForFamily(familyId: string, projectId: string): Promise<boolean> {
+    const selection = await this.prisma.familyProjectSelection.findFirst({
+      where: { familyId, projectId, enabled: true, project: { status: 'PUBLISHED' } },
+      select: { id: true },
+    });
+    return selection !== null;
+  }
+
   async create(input: CreateEvidenceSubmissionInput): Promise<EvidenceSubmissionWithCompetencies> {
     return this.prisma.evidenceSubmission.create({
       data: {

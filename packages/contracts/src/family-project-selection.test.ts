@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { familyProjectSelectionResponseSchema, upsertFamilyProjectSelectionSchema } from './family-project-selection.js';
+import {
+  familyProjectCatalogEntrySchema,
+  familyProjectSelectionResponseSchema,
+  upsertFamilyProjectSelectionSchema,
+} from './family-project-selection.js';
 
 const UUID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 
@@ -20,5 +24,20 @@ describe('Family project selection contracts', () => {
       project: { code: 'GARDEN_BUILD', name: 'Construir uma horta', version: 1, status: 'PUBLISHED' },
     });
     expect(parsed.project.status).toBe('PUBLISHED');
+  });
+
+  it('validates published project catalog entries and mapped competencies', () => {
+    const entry = {
+      id: UUID,
+      code: 'GARDEN_BUILD',
+      name: 'Build a garden',
+      version: 1,
+      description: 'Grow food together.',
+      enabled: true,
+      competencies: [{ competencyId: UUID, code: 'GARDEN.SOIL', title: 'Prepare soil', required: true, order: 0 }],
+    };
+
+    expect(familyProjectCatalogEntrySchema.parse(entry)).toEqual(entry);
+    expect(familyProjectCatalogEntrySchema.safeParse({ ...entry, enabled: 'yes' }).success).toBe(false);
   });
 });
