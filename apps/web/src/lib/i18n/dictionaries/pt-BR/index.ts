@@ -23,6 +23,7 @@ import { shared } from './shared';
 import { showcase } from './showcase';
 import { dashboard } from './dashboard';
 import { legalGuide } from './legal-guide';
+import { community } from './community';
 
 export const ptBR = {
   common,
@@ -50,4 +51,5 @@ export const ptBR = {
   showcase,
   dashboard,
   legalGuide,
+  community,
 } as const;

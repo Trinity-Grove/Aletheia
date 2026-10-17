@@ -137,6 +137,23 @@ describe('ProductShell adapter', () => {
     expect(link).toHaveAttribute('aria-current', 'page');
   });
 
+  it('includes the community navigation item in MAIN_NAV_ITEMS pointing to /community', () => {
+    const communityItem = MAIN_NAV_ITEMS.find((item) => item.id === 'community');
+    expect(communityItem).toBeDefined();
+    expect(communityItem?.href).toBe('/community');
+    expect(communityItem?.label).toBe('nav.community');
+
+    render(
+      <ProductShell currentPath="/community">
+        <p>Conteúdo da Comunidade</p>
+      </ProductShell>,
+    );
+
+    const link = screen.getByRole('link', { name: 'Comunidade' });
+    expect(link).toHaveAttribute('href', '/community');
+    expect(link).toHaveAttribute('aria-current', 'page');
+  });
+
   it('derives the active route from Next and renders Next-integrated desktop and overflow-sheet links', () => {
     nextNavigation.pathname = '/curriculum';
 
@@ -235,8 +252,8 @@ describe('ProductShell adapter', () => {
     expect(screen.getByTestId('appshell-tab-bar-schedule')).toBeInTheDocument();
     expect(screen.getByTestId('appshell-tab-bar-learners')).toBeInTheDocument();
     expect(screen.getByTestId('appshell-tab-bar-curriculum')).toBeInTheDocument();
-    expect(screen.getByTestId('appshell-tab-bar-records')).toBeInTheDocument();
-    expect(screen.queryByTestId('appshell-tab-bar-portfolio')).not.toBeInTheDocument();
+    expect(screen.getByTestId('appshell-tab-bar-community')).toBeInTheDocument();
+    expect(screen.queryByTestId('appshell-tab-bar-records')).not.toBeInTheDocument();
   });
 
   it('adjusts the primary tab-bar item count when the viewport is resized after mount', async () => {

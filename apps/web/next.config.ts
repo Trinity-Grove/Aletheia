@@ -20,6 +20,7 @@ const nextConfig: NextConfig = {
     const apiOrigin = (process.env.API_PROXY_TARGET || 'http://127.0.0.1:3001').replace(/\/+$/, '');
     return [
       { source: '/guia-legal', destination: '/legal-guide' },
+      { source: '/comunidade', destination: '/community' },
       { source: '/api/:path*', destination: `${apiOrigin}/api/:path*` },
     ];
   },

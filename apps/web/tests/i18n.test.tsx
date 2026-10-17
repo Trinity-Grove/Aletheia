@@ -964,6 +964,201 @@ describe('i18n (Issue #33: Internacionalização, Dicionários e Formatadores)',
       expect((esES as any).legalGuide?.checklist?.steps?.step1?.title).toBeDefined();
     });
   });
+
+  describe('Hub Comunitário & Mural de Inspiração (Task 2)', () => {
+    it('traduz chaves de nav.community em pt-BR, en-US e es-ES', () => {
+      // pt-BR
+      const { unmount: unmountPt } = render(
+        <LocaleProvider>
+          <Probe translationKey="nav.community" />
+        </LocaleProvider>
+      );
+      expect(screen.getByTestId('probe')).toHaveTextContent('Comunidade');
+      unmountPt();
+
+      // en-US
+      localStorage.setItem('aletheia_locale', 'en-US');
+      const { unmount: unmountEn } = render(
+        <LocaleProvider>
+          <Probe translationKey="nav.community" />
+        </LocaleProvider>
+      );
+      expect(screen.getByTestId('probe')).toHaveTextContent('Community');
+      unmountEn();
+
+      // es-ES
+      localStorage.setItem('aletheia_locale', 'es-ES');
+      render(
+        <LocaleProvider>
+          <Probe translationKey="nav.community" />
+        </LocaleProvider>
+      );
+      expect(screen.getByTestId('probe')).toHaveTextContent('Comunidad');
+    });
+
+    it('traduz chaves completas de community.* (hub, themes, card, shareModal, adoptModal) com interpolação em pt-BR, en-US e es-ES', () => {
+      // pt-BR
+      const { unmount: unmountPt } = render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="community.hub.title" />
+            <Probe translationKey="community.hub.subtitle" />
+            <Probe translationKey="community.hub.ideasCount" vars={{ count: 12 }} />
+            <Probe translationKey="community.themes.natureStudy" />
+            <Probe translationKey="community.themes.livingBooks" />
+            <Probe translationKey="community.themes.handicraft" />
+            <Probe translationKey="community.themes.seasonalHistory" />
+            <Probe translationKey="community.themes.familyProjects" />
+            <Probe translationKey="community.card.estimatedTime" vars={{ minutes: 45 }} />
+            <Probe translationKey="community.card.ageRange" vars={{ min: 5, max: 10 }} />
+            <Probe translationKey="community.card.adoptBtn" />
+            <Probe translationKey="community.card.seedBadge" />
+            <Probe translationKey="community.shareModal.title" />
+            <Probe translationKey="community.shareModal.privacyNotice" />
+            <Probe translationKey="community.adoptModal.title" />
+          </div>
+        </LocaleProvider>
+      );
+      expect(screen.getByText('Mural de Inspiração Comunitária')).toBeInTheDocument();
+      expect(screen.getByText('12 ideias encontradas')).toBeInTheDocument();
+      expect(screen.getByText('🌿 Estudos da Natureza')).toBeInTheDocument();
+      expect(screen.getByText('📚 Leituras Vivas & Clássicos')).toBeInTheDocument();
+      expect(screen.getByText('🛠️ Trabalhos Manuais & Oficinas')).toBeInTheDocument();
+      expect(screen.getByText('⏳ História & Épocas do Ano')).toBeInTheDocument();
+      expect(screen.getByText('🏡 Projetos em Família')).toBeInTheDocument();
+      expect(screen.getByText('45 min')).toBeInTheDocument();
+      expect(screen.getByText('5-10 anos')).toBeInTheDocument();
+      expect(screen.getByText('Adotar para a Nossa Família')).toBeInTheDocument();
+      expect(screen.getByText('Curadoria Aletheia')).toBeInTheDocument();
+      expect(screen.getByText('Compartilhar Ideia com Outras Famílias')).toBeInTheDocument();
+      expect(screen.getByText('Garantia de Privacidade: Nenhuma identificação pessoal, nome de crianças ou registros privados são compartilhados.')).toBeInTheDocument();
+      expect(screen.getByText('Adotar Atividade para Nossa Rotina')).toBeInTheDocument();
+      unmountPt();
+
+      // en-US
+      localStorage.setItem('aletheia_locale', 'en-US');
+      const { unmount: unmountEn } = render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="community.hub.title" />
+            <Probe translationKey="community.hub.ideasCount" vars={{ count: 7 }} />
+            <Probe translationKey="community.themes.natureStudy" />
+            <Probe translationKey="community.card.estimatedTime" vars={{ minutes: 30 }} />
+            <Probe translationKey="community.card.ageRange" vars={{ min: 4, max: 8 }} />
+            <Probe translationKey="community.card.adoptBtn" />
+            <Probe translationKey="community.shareModal.title" />
+            <Probe translationKey="community.adoptModal.title" />
+          </div>
+        </LocaleProvider>
+      );
+      expect(screen.getByText('Community Inspiration Board')).toBeInTheDocument();
+      expect(screen.getByText('7 ideas found')).toBeInTheDocument();
+      expect(screen.getByText('🌿 Nature Study')).toBeInTheDocument();
+      expect(screen.getByText('30 min')).toBeInTheDocument();
+      expect(screen.getByText('4-8 years')).toBeInTheDocument();
+      expect(screen.getByText('Adopt for Our Family')).toBeInTheDocument();
+      expect(screen.getByText('Share Idea with Other Families')).toBeInTheDocument();
+      expect(screen.getByText('Adopt Activity for Our Routine')).toBeInTheDocument();
+      unmountEn();
+
+      // es-ES
+      localStorage.setItem('aletheia_locale', 'es-ES');
+      const { unmount: unmountEs } = render(
+        <LocaleProvider>
+          <div>
+            <Probe translationKey="community.hub.title" />
+            <Probe translationKey="community.hub.ideasCount" vars={{ count: 9 }} />
+            <Probe translationKey="community.themes.natureStudy" />
+            <Probe translationKey="community.card.estimatedTime" vars={{ minutes: 20 }} />
+            <Probe translationKey="community.card.ageRange" vars={{ min: 6, max: 12 }} />
+            <Probe translationKey="community.card.adoptBtn" />
+            <Probe translationKey="community.shareModal.title" />
+            <Probe translationKey="community.adoptModal.title" />
+          </div>
+        </LocaleProvider>
+      );
+      expect(screen.getByText('Mural de Inspiración Comunitaria')).toBeInTheDocument();
+      expect(screen.getByText('9 ideas encontradas')).toBeInTheDocument();
+      expect(screen.getByText('🌿 Estudios de la Naturaleza')).toBeInTheDocument();
+      expect(screen.getByText('20 min')).toBeInTheDocument();
+      expect(screen.getByText('6-12 años')).toBeInTheDocument();
+      expect(screen.getByText('Adoptar para Nuestra Familia')).toBeInTheDocument();
+      expect(screen.getByText('Compartir Idea con Otras Familias')).toBeInTheDocument();
+      expect(screen.getByText('Adoptar Actividad para Nuestra Rutina')).toBeInTheDocument();
+      unmountEs();
+    });
+
+    it('possui todas as chaves de nav.community e community.* com simetria estrutural nos objetos dos dicionários', () => {
+      expect((ptBR as any).nav?.community).toBe('Comunidade');
+      expect((enUS as any).nav?.community).toBe('Community');
+      expect((esES as any).nav?.community).toBe('Comunidad');
+
+      for (const dict of [ptBR, enUS, esES]) {
+        expect((dict as any).community?.hub?.title).toBeDefined();
+        expect((dict as any).community?.hub?.subtitle).toBeDefined();
+        expect((dict as any).community?.hub?.searchPlaceholder).toBeDefined();
+        expect((dict as any).community?.hub?.allThemes).toBeDefined();
+        expect((dict as any).community?.hub?.emptyTitle).toBeDefined();
+        expect((dict as any).community?.hub?.emptyDescription).toBeDefined();
+        expect((dict as any).community?.hub?.clearFilters).toBeDefined();
+        expect((dict as any).community?.hub?.shareButton).toBeDefined();
+        expect((dict as any).community?.hub?.ideasCount).toBeDefined();
+        expect((dict as any).community?.hub?.filterAge).toBeDefined();
+        expect((dict as any).community?.hub?.allAges).toBeDefined();
+
+        expect((dict as any).community?.themes?.natureStudy).toBeDefined();
+        expect((dict as any).community?.themes?.natureStudyDesc).toBeDefined();
+        expect((dict as any).community?.themes?.livingBooks).toBeDefined();
+        expect((dict as any).community?.themes?.livingBooksDesc).toBeDefined();
+        expect((dict as any).community?.themes?.handicraft).toBeDefined();
+        expect((dict as any).community?.themes?.handicraftDesc).toBeDefined();
+        expect((dict as any).community?.themes?.seasonalHistory).toBeDefined();
+        expect((dict as any).community?.themes?.seasonalHistoryDesc).toBeDefined();
+        expect((dict as any).community?.themes?.familyProjects).toBeDefined();
+        expect((dict as any).community?.themes?.familyProjectsDesc).toBeDefined();
+
+        expect((dict as any).community?.card?.estimatedTime).toBeDefined();
+        expect((dict as any).community?.card?.ageRange).toBeDefined();
+        expect((dict as any).community?.card?.supervisionRequired).toBeDefined();
+        expect((dict as any).community?.card?.independent).toBeDefined();
+        expect((dict as any).community?.card?.materialsTitle).toBeDefined();
+        expect((dict as any).community?.card?.adoptBtn).toBeDefined();
+        expect((dict as any).community?.card?.adopting).toBeDefined();
+        expect((dict as any).community?.card?.seedBadge).toBeDefined();
+        expect((dict as any).community?.card?.communityBadge).toBeDefined();
+
+        expect((dict as any).community?.shareModal?.title).toBeDefined();
+        expect((dict as any).community?.shareModal?.subtitle).toBeDefined();
+        expect((dict as any).community?.shareModal?.privacyNotice).toBeDefined();
+        expect((dict as any).community?.shareModal?.nameLabel).toBeDefined();
+        expect((dict as any).community?.shareModal?.namePlaceholder).toBeDefined();
+        expect((dict as any).community?.shareModal?.descriptionLabel).toBeDefined();
+        expect((dict as any).community?.shareModal?.descriptionPlaceholder).toBeDefined();
+        expect((dict as any).community?.shareModal?.themeLabel).toBeDefined();
+        expect((dict as any).community?.shareModal?.materialsLabel).toBeDefined();
+        expect((dict as any).community?.shareModal?.materialsPlaceholder).toBeDefined();
+        expect((dict as any).community?.shareModal?.ageMinLabel).toBeDefined();
+        expect((dict as any).community?.shareModal?.ageMaxLabel).toBeDefined();
+        expect((dict as any).community?.shareModal?.durationLabel).toBeDefined();
+        expect((dict as any).community?.shareModal?.supervisionLabel).toBeDefined();
+        expect((dict as any).community?.shareModal?.cancelBtn).toBeDefined();
+        expect((dict as any).community?.shareModal?.submitBtn).toBeDefined();
+        expect((dict as any).community?.shareModal?.submitting).toBeDefined();
+        expect((dict as any).community?.shareModal?.successToast).toBeDefined();
+        expect((dict as any).community?.shareModal?.errorToast).toBeDefined();
+
+        expect((dict as any).community?.adoptModal?.title).toBeDefined();
+        expect((dict as any).community?.adoptModal?.subtitle).toBeDefined();
+        expect((dict as any).community?.adoptModal?.learnerSelectLabel).toBeDefined();
+        expect((dict as any).community?.adoptModal?.allLearnersOption).toBeDefined();
+        expect((dict as any).community?.adoptModal?.cancelBtn).toBeDefined();
+        expect((dict as any).community?.adoptModal?.confirmBtn).toBeDefined();
+        expect((dict as any).community?.adoptModal?.adopting).toBeDefined();
+        expect((dict as any).community?.adoptModal?.successToast).toBeDefined();
+        expect((dict as any).community?.adoptModal?.errorToast).toBeDefined();
+      }
+    });
+  });
 });
 
 describe('Guardrails de Integridade Estrutural e Paridade de Dicionários', () => {

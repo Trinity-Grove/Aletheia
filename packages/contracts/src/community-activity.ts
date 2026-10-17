@@ -1,6 +1,25 @@
 import { z } from 'zod';
 import { evidenceRequirementModeSchema } from './activity-definition.js';
 
+export const communityIdeaThemeSchema = z.enum([
+  'NATURE_STUDY',
+  'LIVING_BOOKS',
+  'HANDICRAFT',
+  'SEASONAL_HISTORY',
+  'FAMILY_PROJECTS',
+]);
+
+export type CommunityIdeaTheme = z.infer<typeof communityIdeaThemeSchema>;
+
+export interface CommunityActivityMetadata {
+  theme?: CommunityIdeaTheme | undefined;
+  materials?: string[] | undefined;
+  seasonalPeriod?: string | undefined;
+  steps?: string[] | undefined;
+  isSeed?: boolean | undefined;
+  [key: string]: unknown;
+}
+
 // Deliberately omits familyId and author information: the community catalog
 // shares the activity, not the identity of the family that created it.
 export const communityActivityResponseSchema = z.object({

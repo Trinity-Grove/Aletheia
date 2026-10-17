@@ -13,4 +13,5 @@ export const nav = {
   settings: 'Configurações',
   startTour: 'Fazer Tour',
   legalGuide: 'Guia legal',
+  community: 'Comunidade',
 } as const;
