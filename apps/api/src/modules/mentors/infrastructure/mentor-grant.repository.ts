@@ -82,6 +82,14 @@ export class MentorGrantRepository {
     return !!grant;
   }
 
+  async canMentorAssess(userId: string, familyId: string, learnerId: string): Promise<boolean> {
+    const grant = await this.prisma.mentorGrant.findFirst({
+      where: { mentorUserId: userId, familyId, learnerId, status: 'ACCEPTED', revokedAt: null, expiresAt: { gt: new Date() } },
+      select: { id: true },
+    });
+    return !!grant;
+  }
+
   listProgressionApprovalScopes(userId: string): Promise<{ grantId: string; familyId: string; learnerId: string }[]> {
     return this.prisma.mentorGrant.findMany({
       where: { mentorUserId: userId, status: 'ACCEPTED', canApproveProgression: true, revokedAt: null, expiresAt: { gt: new Date() } },

@@ -1,5 +1,7 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { AssessmentResultResponseDto, CreateAssessmentResultOutput } from '@aletheia/contracts';
+import { FAMILY_PUBLIC_API, type FamilyPublicApi } from '../../families/application/public-api.js';
+import { MENTOR_GRANT_PUBLIC_API, type MentorGrantPublicApi } from '../../mentors/application/public-api.js';
 import {
   AssessmentResultRepository,
   type AssessmentResultWithScores,
@@ -12,7 +14,11 @@ import {
 // design, per the issue's own anti-hardcode principle.
 @Injectable()
 export class AssessmentResultService {
-  constructor(private readonly repository: AssessmentResultRepository) {}
+  constructor(
+    private readonly repository: AssessmentResultRepository,
+    @Inject(FAMILY_PUBLIC_API) private readonly familyApi: FamilyPublicApi,
+    @Inject(MENTOR_GRANT_PUBLIC_API) private readonly mentorApi: MentorGrantPublicApi,
+  ) {}
 
   async createAssessmentResult(
     familyId: string,
@@ -26,6 +32,12 @@ export class AssessmentResultService {
     const learnerFamilyId = await this.repository.findLearnerFamilyId(dto.learnerId);
     if (!learnerFamilyId || learnerFamilyId !== familyId) {
       throw new NotFoundException('Learner not found in this family.');
+    }
+    const familyRole = await this.familyApi.getFamilyMemberRole(trustedActorUserId, familyId);
+    const isMentor = familyRole === null
+      && await this.mentorApi.canMentorAssess(trustedActorUserId, familyId, dto.learnerId);
+    if (familyRole === null && !isMentor) {
+      throw new ForbiddenException('Only a family member or an assigned mentor may assess this learner.');
     }
 
     if (dto.evidenceSubmissionId) {

@@ -910,7 +910,7 @@ describe('Data-Driven Extensibility (Issue #96 Section 40 - Real Postgres)', () 
       // 8. Registrar AssessmentResult formal com assessorType: 'MENTOR' e ID real do mentor
       const assessment = await supertest(app.getHttpServer())
         .post(`${familyBase}/assessment-results`)
-        .set('Cookie', family.cookie)
+        .set('Cookie', mentor.cookie)
         .send({
           learnerId: family.learnerId,
           rubricDefinitionId: rubric.id,

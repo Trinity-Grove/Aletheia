@@ -2,6 +2,16 @@ import type { PrismaService } from '../../../platform/database/prisma.service.js
 import { MentorGrantRepository } from './mentor-grant.repository.js';
 
 describe('MentorGrantRepository progression authorization scope', () => {
+  it('authorizes assessment only for an active, accepted grant scoped to the learner', async () => {
+    const findFirst = jest.fn().mockResolvedValue({ id: 'grant' });
+    const repository = new MentorGrantRepository({ mentorGrant: { findFirst } } as unknown as PrismaService);
+    await expect(repository.canMentorAssess('mentor', 'family', 'learner')).resolves.toBe(true);
+    expect(findFirst).toHaveBeenCalledWith({ where: {
+      mentorUserId: 'mentor', familyId: 'family', learnerId: 'learner', status: 'ACCEPTED',
+      revokedAt: null, expiresAt: { gt: expect.any(Date) },
+    }, select: { id: true } });
+  });
+
   it('requires the authenticated mentor, exact family and learner, accepted grant, capability, and unexpired/unrevoked status', async () => {
     const findFirst = jest.fn().mockResolvedValue({ id: 'grant' });
     const repository = new MentorGrantRepository({ mentorGrant: { findFirst } } as unknown as PrismaService);

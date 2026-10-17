@@ -119,6 +119,10 @@ export class MentorGrantService implements MentorGrantPublicApi {
     return this.repository.canMentorApproveProgression(userId, familyId, learnerId);
   }
 
+  canMentorAssess(userId: string, familyId: string, learnerId: string): Promise<boolean> {
+    return this.repository.canMentorAssess(userId, familyId, learnerId);
+  }
+
   listProgressionApprovalScopes(userId: string) {
     return this.repository.listProgressionApprovalScopes(userId);
   }

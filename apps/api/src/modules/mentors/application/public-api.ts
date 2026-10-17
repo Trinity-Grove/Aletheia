@@ -7,6 +7,7 @@ export interface MentorApprovalGrantScope {
 }
 
 export interface MentorGrantPublicApi {
+  canMentorAssess(userId: string, familyId: string, learnerId: string): Promise<boolean>;
   canMentorApproveProgression(userId: string, familyId: string, learnerId: string): Promise<boolean>;
   listProgressionApprovalScopes(userId: string): Promise<MentorApprovalGrantScope[]>;
 }

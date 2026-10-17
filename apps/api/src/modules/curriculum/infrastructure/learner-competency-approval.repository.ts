@@ -32,7 +32,9 @@ export class LearnerCompetencyApprovalRepository {
         if (!grants.length) throw new NotFoundException('Approval scope not found');
       }
       // Serialize same-family key use across different learners as well as same-learner races.
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`${familyId}:${decision.idempotencyKey}`}, 0))`;
+      await tx.$queryRaw<{ locked: number }[]>`WITH lock_acquired AS MATERIALIZED (
+        SELECT pg_advisory_xact_lock(hashtextextended(${`${familyId}:${decision.idempotencyKey}`}, 0))
+      ) SELECT 1::int AS locked FROM lock_acquired`;
       const replay = await tx.learnerCompetencyApprovalEvent.findUnique({ where: { familyId_idempotencyKey: { familyId, idempotencyKey: decision.idempotencyKey } } });
       if (replay) {
         if (replay.actorUserId !== actorUserId || replay.trackingId !== trackingId || replay.decision !== decision.decision || replay.reason !== (decision.reason ?? null)) {
