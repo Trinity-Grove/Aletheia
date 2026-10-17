@@ -1,192 +1,219 @@
 # Aletheia
 
-> **A parent-first platform for faithful, thoughtful home education.**
+<div align="center">
 
-Aletheia is an open, sovereign, and deeply pedagogical platform designed to serve homeschooling families across the globe. Built from the ground up on strict hexagonal architecture and multi-tenant family boundary isolation, Aletheia combines daily Christian devotionals, customizable educational frameworks (*Classical, Charlotte Mason, Traditional*), flexible lesson and routine planning, qualitative mastery tracking, legal attendance compliance, official transcripts generation, and complete data portability.
+> **A parent-first platform for faithful, thoughtful home education.**  
+> *Uma plataforma soberana e centrada na família para a educação domiciliar cristã e clássica.*
 
-**Project status:** Aletheia is an MIT-licensed, community-driven MVP under active development. There is no billing, subscription, or paid tier today — the broader product vision (jurisdiction compliance engine, student portal, resource marketplace) is tracked as future work, not shipped functionality. See [Open Issues](https://github.com/Trinity-Grove/Aletheia/issues) for the current roadmap.
+[![CI](https://github.com/Trinity-Grove/Aletheia/actions/workflows/ci.yml/badge.svg)](https://github.com/Trinity-Grove/Aletheia/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D24-brightgreen?logo=node.js)](package.json)
+[![pnpm](https://img.shields.io/badge/pnpm-11-orange?logo=pnpm)](package.json)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript)](tsconfig.json)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](apps/web)
+[![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs)](apps/api)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)](prisma)
+[![i18n](https://img.shields.io/badge/i18n-100%25%20(pt--BR%20%7C%20en--US%20%7C%20es--ES)-059669)](apps/web/src/lib/i18n)
+[![Architecture](https://img.shields.io/badge/Hexagonal%20Boundaries-14%2F14%20Pass-7C3AED)](scripts/check-module-boundaries.mjs)
+
+<br />
+
+[Visão Geral](#-visão-geral) • [Funcionalidades](#-principais-funcionalidades) • [Arquitetura](#-arquitetura--monorepo) • [Guia Rápido](#-guia-rápido) • [Testes & Qualidade](#-testes--qualidade) • [Licença](#-licença)
+
+</div>
 
 ---
 
-## 🏛️ Architecture & Tech Stack
+## 📖 Visão Geral
 
-Aletheia is structured as a high-performance **pnpm monorepo** with strict architectural boundaries:
+O **Aletheia** é uma plataforma aberta, soberana e profundamente pedagógica projetada para servir famílias educadoras em todo o mundo. Construído sobre uma **arquitetura hexagonal rigorosa** e isolamento absoluto de dados entre lares (*multi-tenant family boundary*), o Aletheia combina:
+
+- **Espiritualidade e Vida em Família:** Devocionais diários, mural de orações e comparador de traduções bíblicas.
+- **Riqueza Pedagógica:** Amparo aos métodos Clássico (*Trivium*), Charlotte Mason (*livros vivos, estudos da natureza, narração oral e hábitos*) e Tradicional/Eclético.
+- **Mural de Inspiração Comunitária:** Compartilhamento anônimo e voluntário de atividades práticas e adoção em 1 clique para a agenda da família.
+- **Segurança Jurídica & Primeiros Passos:** Dossiê anual de conformidade, metas de dias/horas por jurisdição e checklist interativo dos primeiros 30 dias.
+- **Avaliação Não-Punitiva:** Domínio qualitativo de competências, portfólio multimídia de evidências e zero ranqueamento entre irmãos.
+- **Soberania Digital:** Exportação integral dos dados familiares em formato JSON aberto e portabilidade irrestrita.
+
+> **Status do Projeto:** O Aletheia é um projeto open-source sob licença MIT em desenvolvimento ativo pela comunidade. Não há planos de assinatura ou recursos pagos — veja as [Issues Abertas](https://github.com/Trinity-Grove/Aletheia/issues) para acompanhar nosso roadmap.
+
+---
+
+## ✨ Principais Funcionalidades
+
+### 🌿 1. Mural de Inspiração & Hub Comunitário
+- **Descoberta por Pilares Pedagógicos:** Filtros rápidos com contadores para *Estudos da Natureza*, *Leituras Vivas*, *Trabalhos Manuais*, *História Estacional* e *Projetos em Família*.
+- **Acervo Semente Curado:** Ideias ricas e prontas para uso, com lista de materiais domésticos, duração e faixa etária.
+- **Adoção em 1 Clique:** Criação de cópias privadas e isoladas diretamente no tenant e na agenda da família.
+- **Compartilhamento Anônimo:** As famílias compartilham ideias práticas sem qualquer exposição de nomes, filhos ou dados pessoais.
+
+### ⚖️ 2. Hub 'Por Onde Começar' & Amparo Legal
+- **Enquadramento Constitucional & Jurisprudência:** Fundamentação jurídica nos arts. 226/229 da CF/88 e no julgamento do STF (RE 888.815).
+- **Metas Anuais da Jurisdição:** Acompanhamento automático de 200 dias letivos e 800 horas anuais.
+- **Checklist dos Primeiros 30 Dias:** 6 etapas interativas com persistência local e auto-detecção de educandos cadastrados.
+- **Dossiê de Conformidade Anual:** Emissão consolidada de evidências com hash verificável para prestação de contas.
+
+### 🧭 3. Tour Interativo Guiado (Spotlight)
+- **Onboarding Acolhedor:** Destaque dinâmico de elementos-chave da tela com efeito de foco e backdrop escuro.
+- **Gamificação de Boas-Vindas:** Atribuição da insígnia *"Primeiro Passo"* ao concluir o tour.
+- **Autonomia Total:** Controle para reativar o tour a qualquer momento na barra superior ou nas configurações da família.
+
+### 📚 4. Currículo & Planejamento de Rotinas
+- **Assistente de Planejamento Curricular:** Diagnóstico da filosofia educacional da família e blocos pedagógicos estruturados.
+- **Grade Curricular Flexível:** Suporte a múltiplos anos letivos, matérias e árvores hierárquicas de objetivos de aprendizagem.
+- **Agenda de Estudos e Rotina Inteligente:** Planejamento semanal por blocos de horários e checklist diário de lições por educando.
+
+### 📖 5. Devocional Familiar & Comparador Bíblico
+- **Devocional Diário:** Leitura bíblica integrada com versículo do dia, anotações de reflexão e oração em família.
+- **Comparador Bíblico Lado a Lado:** Análise comparativa entre diferentes traduções bíblicas para estudo aprofundado.
+- **Mural de Oração:** Registro de pedidos, tags de acompanhamento e celebração de orações respondidas.
+
+### 🎓 6. Portal do Educando (Modo Aluno) & Gamificação
+- **Interface Focada:** Visão dedicada para a criança realizar suas lições, registrar narrações orais e reflexões diárias.
+- **Insígnias e Conquistas:** Incentivos lúdicos e construtivos baseados em hábitos, constância e crescimento pessoal.
+
+### 🎨 7. Diário de Aprendizagem & Portfólio de Evidências
+- **Avaliação Qualitativa:** Progressão pedagógica positiva (*Exposição*, *Em Desenvolvimento*, *Com Auxílio*, *Autônomo*, *Dominado*).
+- **Galeria de Evidências Multimídia:** Upload e organização de fotos, áudios, textos e documentos com marcação de destaques.
+
+### 🌐 8. Internacionalização Integral (i18n)
+- **100% de Cobertura Simétrica:** Suporte completo e paritário a Português do Brasil (`pt-BR`), Inglês (`en-US`) e Espanhol (`es-ES`).
+- **Auditoria Automatizada:** Scanner estático (`audit-i18n-coverage.mjs`) garantindo zero strings hardcoded na interface.
+
+---
+
+## 🏛️ Arquitetura & Monorepo
+
+O Aletheia adota o modelo de **Monorepo pnpm** com separação estrita de camadas e limites de dependência verificados via CI:
 
 ```
 aletheia/
 ├── apps/
-│   ├── api/          # Backend API (NestJS 11 + Fastify adapter, Prisma ORM, PostgreSQL)
-│   └── web/          # Frontend Web (Next.js 15 App Router, React 19, Tailwind CSS)
+│   ├── api/          # Backend NestJS 11 + Fastify, Prisma ORM, PostgreSQL (Arquitetura Hexagonal)
+│   └── web/          # Frontend Next.js 15 (App Router, Turbopack), React 19, BEM Design System
 ├── packages/
-│   ├── contracts/    # Shared Domain Contracts, DTOs & Zod Schemas
-│   ├── eslint-config/# Shared ESLint Configurations
-│   └── tsconfig/     # Strict TypeScript Base Configurations
-├── docs/             # Architecture specifications, domain models & ADRs
-└── scripts/          # Architecture boundary verification & CI checks
+│   ├── contracts/    # Contratos de Domínio compartilhados, DTOs & Schemas de Validação Zod
+│   ├── ui/           # Biblioteca de Componentes de Design System e Ícones (@aletheia/ui)
+│   ├── eslint-config/# Configurações compartilhadas de ESLint 9 Flat Config
+│   └── tsconfig/     # Configurações TypeScript estritas (exactOptionalPropertyTypes: true)
+├── docs/             # Especificações de arquitetura, ADRs e planos de implementação
+└── scripts/          # Verificação de fronteiras modulares, auditoria i18n e integridade
 ```
 
-- **Runtime & Language:** Node.js 22+ / 24, TypeScript 5.9 (with `exactOptionalPropertyTypes: true` & `noImplicitAny`).
-- **Backend Framework:** NestJS with Fastify HTTP adapter.
-- **Database & ORM:** PostgreSQL 16+ with Prisma ORM and automated migrations.
-- **Frontend Framework:** Next.js 15 (App Router, Turbopack), React 19, Tailwind CSS, Lucide Icons.
-- **Testing:** Vitest (contracts and frontend component testing), Jest (backend unit testing), Supertest (Fastify E2E testing), Playwright (E2E browser testing).
+### Stack Tecnológica
+
+| Camada | Tecnologia | Detalhes |
+| :--- | :--- | :--- |
+| **Linguagem** | TypeScript 5.9 | Modo estrito, `exactOptionalPropertyTypes: true`, `noImplicitAny` |
+| **Backend** | NestJS 11 + Fastify | Alta performance, modular, injeção de dependência nativa |
+| **Banco de Dados** | PostgreSQL 16 + Prisma ORM | Modelagem relacional estrita, migrações automatizadas |
+| **Frontend** | Next.js 15 + React 19 | Server & Client Components, Turbopack, App Router |
+| **Design System** | `@aletheia/ui` + BEM CSS | Tokens semânticos, acessibilidade, zero dependência de utilitários no JSX |
+| **Testes** | Vitest + Jest + Supertest | Testes unitários de alta velocidade, integração de API e componentes |
+| **Governança** | Node Test Runner + ESLint 9 | Verificação de fronteiras modulares (14/14 regras) e auditoria i18n contínua |
 
 ---
 
-## 🌟 Core Modules & Capabilities
+## 🛡️ Princípios & Salvaguardas Éticas
 
-### 1. Identity, Families & Multi-Tenant RBAC
-- Multi-tenant architecture ensuring complete data isolation per family.
-- Secure JWT authentication (bearer token).
-- Role-Based Access Control (`OWNER_GUARDIAN`, `GUARDIAN`, `CO_GUARDIAN`, `EDUCATOR`) and co-educator invitations. A self-service `STUDENT` portal is intentionally out of scope for the current MVP.
-
-### 2. Learners & Educational Profiles
-- Individual pedagogical profiles for each child (educational stages: *Early Years*, *Primary/Grammar*, *Middle/Logic*, *High/Rhetoric*).
-- Learning styles, developmental adaptations, custom grades, and avatar customization.
-- Global **Learner Focus Context** in the navigation shell.
-
-### 3. Family Devotionals, Prayer Journal & Scripture Integration
-- Daily family devotional journal with reflection notes and prayer requests.
-- Integrated scripture lookup with chapter-and-verse referencing (YouVersion scripture engine).
-- Interactive prayer request board with tags, active requests, and praise/answered prayer tracking.
-
-### 4. Curriculum, Pedagogical Frameworks & Learning Objectives
-- Pedagogical framework support:
-  - **Classical Education:** Trivium stages, memory work, rhetoric.
-  - **Charlotte Mason:** Living books, narration, habits, nature study.
-  - **Traditional / Eclectic:** Standard subjects, competency milestones.
-- Multi-year curriculum management by Academic Year and Subject catalogs.
-- Hierarchical learning objective trees with mastery tracking.
-
-### 5. Lesson Planning, Weekly Routine & Daily Schedule Agenda
-- Flexible weekly routine planner by recurring time slots and days of the week.
-- Interactive daily schedule checklist with multi-learner lesson assignment.
-- Lesson rescheduling and duration logging without losing historical progress.
-
-### 6. Learning Records, Qualitative Mastery & Evidence Portfolio
-- Chronological learning journal for planned lessons and spontaneous life experiences.
-- Non-punitive qualitative mastery progression (*Exposure*, *Developing*, *With Assistance*, *Autonomous*, *Mastered*).
-- Character and habit practice observations.
-- Multimedia evidence portfolio gallery (photos, audio narrations, video demonstrations, documents, certificates) with tagging and highlight favorites.
-
-### 7. Compliance, Attendance Tracking & Academic Transcripts
-- Legal attendance logging with customizable status (*Present*, *Excused*, *Unexcused*, *Holiday*, *Field Trip*, *Sick*).
-- Regulatory compliance progress gauges against annual targets (e.g. 200 instructional days / 800 hours).
-- Official Academic Transcript generator with multi-grading scale converter (*Mastery Qualitative*, *Letter Grades A–F*, *Numeric 0–10 / 0–100*, *Narrative*).
-- Browser print-ready layout (via print stylesheet) with homeschool organization header, plus structured CSV data export. No server-generated PDF document yet — printing to PDF is left to the browser.
-
-### 8. Family Settings, Notification Center & Data Sovereignty
-- Homeschool identity customization (Organization Name, Motto, Timezone, Pedagogical Defaults).
-- In-app notification center and reminder preferences for devotionals and attendance.
-- **Complete Family Data Backup Export (JSON):** data sovereignty and GDPR/LGPD-minded portability, letting families download their full educational and devotional history — every domain record scoped to the family — in a single structured file. (Operational metadata such as pending co-educator invitations is not included.)
+- 🚫 **Proibição de Ranqueamento entre Irmãos:** É proibido por design qualquer gráfico comparativo de desempenho ou ranking entre filhos.
+- 💚 **Avaliação Não-Punitiva:** O aprendizado foca na maestria qualitativa e no encorajamento do caráter.
+- 🔒 **Privacidade Absoluta:** O isolamento multi-tenant assegura que nenhum dado familiar vaze entre contas.
+- 📂 **Soberania dos Dados:** As famílias têm a garantia de exportar todo o seu histórico em formato aberto a qualquer momento.
 
 ---
 
-## 🛡️ Pedagogical & Ethical Guardrails
+## 🚀 Guia Rápido
 
-Aletheia is intentionally designed around human dignity and the sacred nature of family education:
-- **No Sibling Ranking / Comparisons:** Comparison graphs and sibling ranking are strictly prohibited across all services and components.
-- **Non-Punitive Assessment:** Qualitative mastery and constructive growth feedback replace anxiety-inducing grading shaming.
-- **Absolute Data Privacy:** Family educational records, children profiles, and devotional reflections are private and sovereign.
+### Pré-requisitos
+- **Node.js:** `>= 24.18.1 < 25` (ou Node 22+)
+- **pnpm:** `>= 9.0.0` (recomendado: `pnpm 11`)
+- **PostgreSQL:** `>= 16.0` (ou via Docker Compose)
 
----
-
-## 🚀 Quick Start Guide
-
-### Prerequisites
-- **Node.js:** `>= 22.0.0`
-- **pnpm:** `>= 9.0.0` (`corepack enable pnpm`)
-- **PostgreSQL:** `>= 16.0`
-
-### 1. Installation
+### 1. Clonar o Repositório e Instalar Dependências
 
 ```bash
 git clone git@github.com:Trinity-Grove/Aletheia.git
 cd Aletheia
-corepack pnpm install
+pnpm install
 ```
 
-### 2. Environment Setup
+### 2. Configurar Variáveis de Ambiente
 
-Configure your environment variables in `apps/api/.env`:
+Crie o arquivo `.env` em `apps/api/.env`:
 
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/aletheia?schema=public"
-JWT_SECRET="your-secure-jwt-secret-key"
+JWT_SECRET="sua-chave-secreta-jwt-super-segura"
 PORT=3333
 NODE_ENV=development
 ```
 
-### 3. Database Migration & Prisma Generation
+### 3. Banco de Dados e Migrações
 
 ```bash
-# Generate Prisma Client
-corepack pnpm prisma:generate
+# Gerar o cliente Prisma
+pnpm prisma:generate
 
-# Apply database migrations
-corepack pnpm --filter @aletheia/api prisma migrate deploy
+# Aplicar migrações ao banco de dados
+pnpm --filter @aletheia/api prisma migrate deploy
 ```
 
-### 4. Running the Development Servers
-
-Curriculum template application reads published pedagogical models from the
-database. Migrations install the eight existing models; no manual seed step is
-needed. Re-running `seed:pedagogical-models` only inserts missing baseline
-versions and never overwrites catalog content or publication status.
-
-An administrator can create and publish a model through
-`/api/v1/admin/curriculum-definitions/pedagogical-model-definitions`. A family
-can then pass its code as `template` to the existing
-`/api/v1/families/:familyId/curriculum/templates/apply` endpoint. The learner
-plan records `pedagogicalModelDefinitionId` for the exact published version
-used. Unknown or unpublished codes are rejected. The existing web template
-picker still offers the legacy models; discovering new models in that UI is
-a separate step.
-
-The legacy `pedagogicalFramework` field remains compatible: known models keep
-their existing values and new codes use `CUSTOM`. Applying the old `CUSTOM`
-template keeps its traditional-content behavior through the catalog.
+### 4. Executar os Servidores de Desenvolvimento
 
 ```bash
-# Run both Frontend (port 3000) and Backend (port 3333) in parallel:
-corepack pnpm dev
+# Inicia simultaneamente o Frontend (porta 3000) e a API (porta 3333):
+pnpm dev
 ```
 
-- **Frontend Application:** [http://localhost:3000](http://localhost:3000)
+- **Frontend:** [http://localhost:3000](http://localhost:3000)
 - **API Backend:** [http://localhost:3333](http://localhost:3333)
-- **Swagger API Documentation:** [http://localhost:3333/api/docs](http://localhost:3333/api/docs)
+- **Documentação Swagger:** [http://localhost:3333/api/docs](http://localhost:3333/api/docs)
 
 ---
 
-## 🧪 Testing & Quality Gates
+## 🧪 Testes & Qualidade
 
-The monorepo enforces 100% type safety and strict hexagonal architectural boundaries:
+O projeto conta com uma esteira rigorosa de validação local e em CI:
 
 ```bash
-# Run complete verification quality gate (boundaries, lint, typecheck, unit, e2e, build)
-corepack pnpm verify
+# Executa a esteira completa de verificação (fronteiras, lint, types, testes e build)
+pnpm verify
 
-# Architecture boundaries check
-corepack pnpm check:boundaries
+# Validação de fronteiras modulares hexagonais (14 verificações estritas)
+pnpm check:boundaries
 
-# Linting across all workspace packages
-corepack pnpm lint
+# Auditoria estática de internacionalização (100% de cobertura nos 3 idiomas)
+pnpm audit:i18n
 
-# TypeScript compilation checks
-corepack pnpm typecheck
+# Verificação de tipos TypeScript em todo o monorepo
+pnpm typecheck
 
-# Unit tests
-corepack pnpm test
+# Linter em todos os pacotes
+pnpm lint
 
-# API E2E tests (Fastify Supertest)
-corepack pnpm --filter @aletheia/api test:e2e
+# Testes unitários de contratos
+pnpm --filter @aletheia/contracts test
 
-# Web Frontend component tests (Vitest)
-corepack pnpm --filter @aletheia/web test
+# Testes de componentes frontend
+pnpm --filter @aletheia/web test
+
+# Testes E2E da API
+pnpm --filter @aletheia/api test:e2e
 ```
 
 ---
 
-## 📄 License
+## 🤝 Como Contribuir
 
-This project is licensed under the [MIT License](LICENSE).
+Contribuições são muito bem-vindas! Se você deseja colaborar:
+1. Faça um Fork do projeto.
+2. Crie uma branch para a sua feature (`git checkout -b feat/minha-melhoria`).
+3. Certifique-se de que `pnpm verify` e `pnpm check:boundaries` passam com 100% de sucesso.
+4. Abra um Pull Request detalhado com a descrição das mudanças.
+
+---
+
+## 📄 Licença
+
+Este projeto está licenciado sob a [Licença MIT](LICENSE).
