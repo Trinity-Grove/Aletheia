@@ -19,6 +19,7 @@ import type {
 import { ProductShell } from '../../../src/components/layout/product-shell';
 import { FamilyGeneralSettings } from '../../../src/components/settings/family-general-settings';
 import { FamilyMembersSettings } from '../../../src/components/settings/family-members-settings';
+import { MentorGrantsSettings } from '../../../src/components/settings/mentor-grants-settings';
 import { NotificationPreferences } from '../../../src/components/settings/notification-preferences';
 import { DataBackupCard } from '../../../src/components/settings/data-backup-card';
 import { SupporterSettingsCard } from '../../../src/components/settings/supporter-settings-card';
@@ -583,12 +584,15 @@ function SettingsPageContent() {
               )}
 
               {activeTab === 'family' && (
+                <>
                 <FamilyMembersSettings
                   members={members}
                   invitations={invitations}
                   onInvite={handleInviteGuardian}
                   onCancelInvitation={handleCancelInvitation}
                 />
+                {familyId && <MentorGrantsSettings familyId={familyId} learners={learners} />}
+                </>
               )}
 
               {activeTab === 'profile' && familyId && (

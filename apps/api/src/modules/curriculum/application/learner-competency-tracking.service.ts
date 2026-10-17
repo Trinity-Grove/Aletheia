@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { evidenceCountRulesSchema } from '@aletheia/contracts';
+import { evidenceCountRulesSchema, evidenceRubricRulesSchema } from '@aletheia/contracts';
 import type {
   ActivateCurriculumForLearnerDto,
   ActivateCurriculumForLearnerResultDto,
@@ -60,11 +60,34 @@ export class LearnerCompetencyTrackingService {
     let policy: { id: string; version: number } | null = null;
     if (dto.progressionPolicyId) {
       const policyRow = await this.repository.findProgressionPolicy(dto.progressionPolicyId);
-      if (!policyRow || policyRow.status !== 'PUBLISHED' || policyRow.schemaVersion !== '1.0.0' || policyRow.policyType !== 'EVIDENCE_COUNT') {
-        throw new BadRequestException('Automatic achievements require a published supported EVIDENCE_COUNT policy.');
+      if (!policyRow || policyRow.status !== 'PUBLISHED' || policyRow.schemaVersion !== '1.0.0') {
+        throw new BadRequestException('Automatic achievements require a published supported progression policy.');
       }
-      const parsedRules = evidenceCountRulesSchema.safeParse(policyRow.rules);
-      if (!parsedRules.success) throw new BadRequestException('The progression policy has invalid EVIDENCE_COUNT rules.');
+      if (policyRow.policyType === 'EVIDENCE_COUNT') {
+        const parsedRules = evidenceCountRulesSchema.safeParse(policyRow.rules);
+        if (!parsedRules.success) throw new BadRequestException('The progression policy has invalid EVIDENCE_COUNT rules.');
+      } else if (policyRow.policyType === 'EVIDENCE_RUBRIC') {
+        const parsedRules = evidenceRubricRulesSchema.safeParse(policyRow.rules);
+        if (!parsedRules.success) throw new BadRequestException('The progression policy has invalid EVIDENCE_RUBRIC rules.');
+        const rubric = await this.repository.findRubricForProgressionValidation(parsedRules.data.rubricDefinitionId);
+        if (!rubric || rubric.version !== parsedRules.data.rubricVersion || rubric.status !== 'PUBLISHED'
+          || rubric.schemaVersion !== '1.0.0' || rubric.criteria.length === 0) {
+          throw new BadRequestException('The progression policy requires its exact published rubric version.');
+        }
+        const thresholds = parsedRules.data.minimumScoresByCriterion;
+        const criterionIds = new Set(rubric.criteria.map((criterion) => criterion.id));
+        if (Object.keys(thresholds).length !== criterionIds.size
+          || Object.keys(thresholds).some((id) => !criterionIds.has(id))
+          || rubric.criteria.some((criterion) => {
+            const threshold = thresholds[criterion.id];
+            return threshold === undefined || !Number.isInteger(threshold)
+              || threshold < criterion.scaleMin || threshold > criterion.scaleMax;
+          })) {
+          throw new BadRequestException('The progression policy has invalid rubric criterion thresholds.');
+        }
+      } else {
+        throw new BadRequestException('Automatic achievements require a supported progression policy.');
+      }
       if (policyRow.curriculumDefinitionId && policyRow.curriculumDefinitionId !== dto.curriculumDefinitionId) {
         throw new BadRequestException('The progression policy is scoped to a different curriculum.');
       }

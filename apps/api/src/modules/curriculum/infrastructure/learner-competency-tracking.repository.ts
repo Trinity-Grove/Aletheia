@@ -22,6 +22,13 @@ export interface ProgressionPolicyBinding {
   version: number;
 }
 
+export interface RubricForProgressionValidation {
+  version: number;
+  status: string;
+  schemaVersion: string;
+  criteria: { id: string; scaleMin: number; scaleMax: number }[];
+}
+
 // Thin persistence for LearnerCompetencyTracking (issue #126 item 3) --
 // same pattern as EvidenceSubmissionRepository/AssessmentResultRepository:
 // simple, family-tenant-scoped Prisma reads/writes against the shared
@@ -107,6 +114,14 @@ export class LearnerCompetencyTrackingRepository {
 
   findProgressionPolicy(id: string): Promise<ProgressionPolicy | null> {
     return this.prisma.progressionPolicy.findUnique({ where: { id } });
+  }
+
+  findRubricForProgressionValidation(id: string): Promise<RubricForProgressionValidation | null> {
+    return this.prisma.rubricDefinition.findUnique({
+      where: { id },
+      select: { version: true, status: true, schemaVersion: true,
+        criteria: { select: { id: true, scaleMin: true, scaleMax: true } } },
+    });
   }
 
   findByLearnerAndCompetencies(

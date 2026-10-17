@@ -1,9 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import {
+  updateMentorProgressionCapabilitySchema,
   acceptMentorGrantResponseSchema,
   inviteMentorSchema,
   mentorGrantResponseSchema,
 } from './mentor-grant.js';
+
+describe('mentor progression capability update', () => {
+  it('accepts an explicit boolean toggle', () => {
+    expect(updateMentorProgressionCapabilitySchema.parse({ enabled: true })).toEqual({ enabled: true });
+  });
+
+  it('rejects missing or non-boolean toggle values', () => {
+    expect(updateMentorProgressionCapabilitySchema.safeParse({}).success).toBe(false);
+    expect(updateMentorProgressionCapabilitySchema.safeParse({ enabled: 'true' }).success).toBe(false);
+  });
+});
 
 const FAMILY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 const LEARNER_ID = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';

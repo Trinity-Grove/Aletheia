@@ -102,6 +102,25 @@ describe('Progression policy admin API (real Postgres)', () => {
       .expect(404);
   });
 
+  it('accepts a structurally valid EVIDENCE_RUBRIC policy and rejects missing per-criterion thresholds', async () => {
+    const policy = await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-definitions/progression-policies')
+      .set('Cookie', adminCookie)
+      .send({ code: `TEST.POLICY.RUBRIC.${Date.now()}`, name: 'Rubric policy', policyType: 'EVIDENCE_RUBRIC', rules: {
+        minimumEvidenceCount: 2, rubricDefinitionId: '10000000-0000-4000-8000-000000000001', rubricVersion: 1,
+        minimumScoresByCriterion: { '20000000-0000-4000-8000-000000000001': 3 }, requireHumanApproval: true, prerequisites: [],
+      } }).expect(201);
+    expect(policy.body.policyType).toBe('EVIDENCE_RUBRIC');
+    expect(policy.body.rules.requireHumanApproval).toBe(true);
+
+    await supertest(app.getHttpServer())
+      .post('/api/v1/admin/curriculum-definitions/progression-policies')
+      .set('Cookie', adminCookie)
+      .send({ code: `TEST.POLICY.RUBRIC.INVALID.${Date.now()}`, name: 'Invalid rubric policy', policyType: 'EVIDENCE_RUBRIC', rules: {
+        minimumEvidenceCount: 2, rubricDefinitionId: '10000000-0000-4000-8000-000000000001', rubricVersion: 1, minimumScoresByCriterion: {},
+      } }).expect(400);
+  });
+
   it('optionally scopes a policy to a competency definition', async () => {
     const domain = await supertest(app.getHttpServer())
       .post('/api/v1/admin/curriculum-definitions/learning-domains')

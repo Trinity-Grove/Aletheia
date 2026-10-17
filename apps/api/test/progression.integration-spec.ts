@@ -82,6 +82,38 @@ describe('Progression evaluation (real Postgres)', () => {
     expect((await evaluate(second.id, p.id).expect(200)).body.validatedEvidenceCount).toBe(1);
   });
 
+  it('requires exact published rubric assessment, every native criterion threshold, and sufficient validated evidence', async () => {
+    const c = await competency();
+    const rubric = await db.rubricDefinition.create({ data: { code: randomUUID(), name: 'Progression rubric', status: 'PUBLISHED', criteria: { create: [
+      { code: 'criterion-a', label: 'Criterion A', scaleMin: 0, scaleMax: 4 },
+      { code: 'criterion-b', label: 'Criterion B', scaleMin: 1, scaleMax: 5 },
+    ] } }, include: { criteria: true } });
+    const p = await policy({ policyType: 'EVIDENCE_RUBRIC', rules: {
+      minimumEvidenceCount: 2, rubricDefinitionId: rubric.id, rubricVersion: rubric.version,
+      minimumScoresByCriterion: { [rubric.criteria[0]!.id]: 3, [rubric.criteria[1]!.id]: 2 }, requireHumanApproval: true,
+    } });
+    const expectEvaluation = async (state: string) => {
+      const result = await evaluate(c.id, p.id).expect(200);
+      expect(result.body.state).toBe(state);
+    };
+    await evidence(c.id, c.version, 'VALIDATED');
+    await expectEvaluation('IN_PROGRESS');
+    let assessmentTime = Date.now();
+    const createAssessment = async (scores: { rubricCriterionId: string; score: number }[], version = rubric.version) => db.assessmentResult.create({ data: {
+      familyId, learnerId, rubricDefinitionId: rubric.id, rubricVersion: version, assessorType: 'PARENT', assessorUserId: authorId,
+      createdAt: new Date(++assessmentTime), scores: { create: scores },
+    } });
+    await createAssessment(rubric.criteria.map((criterion) => ({ rubricCriterionId: criterion.id, score: 4 })), rubric.version - 1);
+    await expectEvaluation('IN_PROGRESS');
+    await createAssessment(rubric.criteria.map((criterion) => ({ rubricCriterionId: criterion.id, score: 4 })));
+    await expectEvaluation('IN_PROGRESS');
+    await evidence(c.id, c.version, 'VALIDATED');
+    await createAssessment([{ rubricCriterionId: rubric.criteria[0]!.id, score: 4 }, { rubricCriterionId: rubric.criteria[1]!.id, score: 1 }]);
+    await expectEvaluation('IN_PROGRESS');
+    await createAssessment(rubric.criteria.map((criterion) => ({ rubricCriterionId: criterion.id, score: 4 })));
+    await expectEvaluation('AWAITING_APPROVAL');
+  });
+
   it('enforces authentication and family isolation', async () => {
     const c = await competency();
     const p = await policy();

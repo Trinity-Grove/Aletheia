@@ -6,6 +6,7 @@ export interface MentorGrantProps {
   learnerId: string;
   email: string;
   role: string;
+  canApproveProgression: boolean;
   status: MentorGrantStatus;
   mentorUserId: string | null;
   invitedBy: string;
@@ -34,6 +35,10 @@ export class MentorGrantEntity {
     return this.props.status;
   }
 
+  get canApproveProgression(): boolean {
+    return this.props.canApproveProgression;
+  }
+
   isExpired(): boolean {
     return new Date() > this.props.expiresAt;
   }
@@ -56,6 +61,7 @@ export class MentorGrantEntity {
       learnerId: this.props.learnerId,
       email: this.props.email,
       role: this.props.role,
+      canApproveProgression: this.props.canApproveProgression,
       status: this.props.status,
       mentorUserId: this.props.mentorUserId,
       ...(plainToken !== undefined ? { token: plainToken } : {}),

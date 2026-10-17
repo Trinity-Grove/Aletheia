@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { definitionStatusSchema } from './curriculum-definitions.js';
+import { evidenceRubricRulesSchema } from './progression-evaluation.js';
 
 // --- Progression policy (Aletheia issue #96, Fase 2, section 11) ---
 //
@@ -30,6 +31,12 @@ export const createProgressionPolicySchema = z.object({
   competencyDefinitionId: z.string().uuid().nullish(),
   curriculumDefinitionId: z.string().uuid().nullish(),
   metadata: z.record(z.string(), z.unknown()).default({}),
+}).superRefine((policy, context) => {
+  if (policy.policyType !== 'EVIDENCE_RUBRIC') return;
+  const parsed = evidenceRubricRulesSchema.safeParse(policy.rules);
+  if (!parsed.success) {
+    for (const issue of parsed.error.issues) context.addIssue({ ...issue, path: ['rules', ...issue.path] });
+  }
 });
 
 export type CreateProgressionPolicyDto = z.input<typeof createProgressionPolicySchema>;
@@ -58,7 +65,7 @@ export type ProgressionPolicyResponseDto = z.infer<typeof progressionPolicyRespo
 // Lean family-facing catalog entry. Only policies the live activation and
 // evaluation path can execute are exposed here; the full definition remains
 // an admin concern.
-export const progressionPolicyCatalogEntrySchema = z.object({
+const evidenceCountCatalogEntrySchema = z.object({
   id: z.string().uuid(),
   code: z.string(),
   name: z.string(),
@@ -67,5 +74,17 @@ export const progressionPolicyCatalogEntrySchema = z.object({
   minimumEvidenceCount: z.number().int().positive(),
   curriculumDefinitionId: z.string().uuid().nullable().optional(),
 });
+
+const evidenceRubricCatalogEntrySchema = z.object({
+  id: z.string().uuid(), code: z.string(), name: z.string(),
+  description: z.string().nullable().optional(), policyType: z.literal('EVIDENCE_RUBRIC'),
+  minimumEvidenceCount: z.number().int().positive(), rubricDefinitionId: z.string().uuid(),
+  rubricVersion: z.number().int().positive(), minimumScoresByCriterion: z.record(z.string().uuid(), z.number()),
+  requireHumanApproval: z.boolean(), curriculumDefinitionId: z.string().uuid().nullable().optional(),
+});
+
+export const progressionPolicyCatalogEntrySchema = z.discriminatedUnion('policyType', [
+  evidenceCountCatalogEntrySchema, evidenceRubricCatalogEntrySchema,
+]);
 
 export type ProgressionPolicyCatalogEntryDto = z.infer<typeof progressionPolicyCatalogEntrySchema>;

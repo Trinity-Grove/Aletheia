@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Badge, Button, Card, EmptyState, Input, Modal, Select, Textarea } from '@aletheia/ui';
 import type {
   AssessmentResultResponseDto,
@@ -15,6 +15,8 @@ import type {
   RubricCatalogEntryDto,
 } from '@aletheia/contracts';
 import { useLocale } from '../../lib/i18n/locale-context';
+import { useAuthRole } from '../../lib/auth/rbac-context';
+import { ProgressionDecisionActions } from '../mentors/progression-decision-actions';
 import { EvidenceSubmissionModal, type EvidenceSubmissionFormValues } from './evidence-submission-modal';
 
 export interface CompetencyTrackingPanelProps {
@@ -23,6 +25,7 @@ export interface CompetencyTrackingPanelProps {
 }
 
 const progressionStateKeys: Record<string, string> = {
+  AWAITING_APPROVAL: 'records.approval.awaiting',
   NOT_STARTED: 'records.competencies.states.notStarted',
   IN_PROGRESS: 'records.competencies.states.inProgress',
   BLOCKED: 'records.competencies.states.blocked',
@@ -30,6 +33,7 @@ const progressionStateKeys: Record<string, string> = {
 };
 
 const progressionStateVariants = {
+  AWAITING_APPROVAL: 'amber',
   NOT_STARTED: 'slate',
   IN_PROGRESS: 'amber',
   BLOCKED: 'rose',
@@ -48,8 +52,14 @@ const progressionStateVariants = {
 // of) the existing Diario de Aprendizagem tab on this same page -- the
 // human's explicit instruction is that hiding/retiring that old flow is a
 // separate, human-reviewed step, not bundled into this PR.
-export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrackingPanelProps) {
+export function CompetencyTrackingPanel(props: CompetencyTrackingPanelProps) {
+  return <ScopedCompetencyTrackingPanel key={JSON.stringify([props.familyId, props.learnerId])} {...props} />;
+}
+
+function ScopedCompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrackingPanelProps) {
   const { t, formatDate } = useLocale();
+  const auth = useAuthRole();
+  const canApprove = auth?.familyId === familyId && ['OWNER_GUARDIAN', 'GUARDIAN', 'CO_GUARDIAN'].includes(auth?.role ?? '');
   const [curriculumCatalog, setCurriculumCatalog] = useState<CurriculumDefinitionCatalogEntryDto[]>([]);
   const [evidenceTypeCatalog, setEvidenceTypeCatalog] = useState<EvidenceTypeCatalogEntryDto[]>([]);
   const [projectCatalog, setProjectCatalog] = useState<FamilyProjectCatalogEntryDto[]>([]);
@@ -82,6 +92,8 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
   const [assessmentNotes, setAssessmentNotes] = useState('');
   const [assessmentSubmitting, setAssessmentSubmitting] = useState(false);
   const [assessmentError, setAssessmentError] = useState<string | null>(null);
+  const learnerRequest = useRef<{ generation: number; controller: AbortController | null }>({ generation: 0, controller: null });
+  const mounted = useRef(true);
 
   const loadCatalogs = useCallback(async () => {
     const [curriculumRes, evidenceTypeRes, progressionRes, rubricRes, projectRes] = await Promise.all([
@@ -116,6 +128,12 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
   }, [familyId]);
 
   const loadLearnerData = useCallback(async () => {
+    if (!mounted.current) return;
+    learnerRequest.current.controller?.abort();
+    const generation = ++learnerRequest.current.generation;
+    const controller = new AbortController();
+    learnerRequest.current.controller = controller;
+    const current = () => mounted.current && generation === learnerRequest.current.generation && !controller.signal.aborted;
     if (!learnerId) {
       setTrackedCompetencies([]);
       setProgressionEvaluations({});
@@ -124,40 +142,62 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
       setAchievements([]);
       return;
     }
-    const [trackingRes, evidenceRes, assessmentRes, achievementRes] = await Promise.all([
-      fetch(`/api/v1/families/${familyId}/curriculum/competency-tracking?learnerId=${learnerId}`, {
-        credentials: 'include',
-      }),
-      fetch(`/api/v1/families/${familyId}/curriculum/evidence-submissions?learnerId=${learnerId}`, {
-        credentials: 'include',
-      }),
-      fetch(`/api/v1/families/${familyId}/curriculum/assessment-results?learnerId=${learnerId}`, {
-        credentials: 'include',
-      }),
-      fetch(`/api/v1/families/${familyId}/curriculum/achievements?learnerId=${learnerId}`, {
-        credentials: 'include',
-      }),
-    ]);
-    const nextTrackings: LearnerCompetencyTrackingResponseDto[] = trackingRes.ok ? await trackingRes.json() : [];
-    if (trackingRes.ok) setTrackedCompetencies(nextTrackings);
-    if (evidenceRes.ok) setEvidenceSubmissions(await evidenceRes.json());
-    if (assessmentRes.ok) setAssessmentResults(await assessmentRes.json());
-    if (achievementRes.ok) setAchievements(await achievementRes.json());
-    const evaluationEntries = await Promise.all(
-      nextTrackings.map(async (tracking) => {
-        if (!tracking.progressionPolicyId) return null;
-        const response = await fetch(
-          `/api/v1/families/${familyId}/curriculum/progression/evaluation?trackingId=${tracking.id}&policyId=${tracking.progressionPolicyId}`,
-          { credentials: 'include' },
-        );
-        if (!response.ok) return null;
-        return [tracking.competencyDefinitionId, (await response.json()) as ProgressionEvaluationResponseDto] as const;
-      }),
-    );
-    setProgressionEvaluations(Object.fromEntries(evaluationEntries.filter((entry): entry is readonly [string, ProgressionEvaluationResponseDto] => entry !== null)));
+    try {
+      const [trackingRes, evidenceRes, assessmentRes, achievementRes] = await Promise.all([
+        fetch(`/api/v1/families/${familyId}/curriculum/competency-tracking?learnerId=${learnerId}`, {
+          credentials: 'include',
+          signal: controller.signal,
+        }),
+        fetch(`/api/v1/families/${familyId}/curriculum/evidence-submissions?learnerId=${learnerId}`, {
+          credentials: 'include',
+          signal: controller.signal,
+        }),
+        fetch(`/api/v1/families/${familyId}/curriculum/assessment-results?learnerId=${learnerId}`, {
+          credentials: 'include',
+          signal: controller.signal,
+        }),
+        fetch(`/api/v1/families/${familyId}/curriculum/achievements?learnerId=${learnerId}`, {
+          credentials: 'include',
+          signal: controller.signal,
+        }),
+      ]);
+      const [trackings, evidence, assessments, awards]: [
+        LearnerCompetencyTrackingResponseDto[], EvidenceSubmissionResponseDto[], AssessmentResultResponseDto[], LearnerCompetencyAchievementResponseDto[],
+      ] = await Promise.all([
+        trackingRes.ok ? trackingRes.json() : [],
+        evidenceRes.ok ? evidenceRes.json() : [],
+        assessmentRes.ok ? assessmentRes.json() : [],
+        achievementRes.ok ? achievementRes.json() : [],
+      ]);
+      if (!current()) return;
+      const inScope = (row: { familyId: string; learnerId: string }) => row.familyId === familyId && row.learnerId === learnerId;
+      const nextTrackings = trackings.filter(inScope);
+      const evaluationEntries = await Promise.all(
+        nextTrackings.map(async (tracking) => {
+          if (!tracking.progressionPolicyId) return null;
+          const response = await fetch(
+            `/api/v1/families/${familyId}/curriculum/progression/evaluation?trackingId=${tracking.id}&policyId=${tracking.progressionPolicyId}`,
+            { credentials: 'include', signal: controller.signal },
+          );
+          if (!response.ok) return null;
+          const evaluation: ProgressionEvaluationResponseDto = await response.json();
+          if (evaluation.learnerId !== learnerId || evaluation.trackingId !== tracking.id || evaluation.competencyDefinitionId !== tracking.competencyDefinitionId) return null;
+          return [tracking.competencyDefinitionId, evaluation] as const;
+        }),
+      );
+      if (!current()) return;
+      setTrackedCompetencies(nextTrackings);
+      setEvidenceSubmissions(evidence.filter(inScope));
+      setAssessmentResults(assessments.filter(inScope));
+      setAchievements(awards.filter(inScope));
+      setProgressionEvaluations(Object.fromEntries(evaluationEntries.filter((entry): entry is readonly [string, ProgressionEvaluationResponseDto] => entry !== null)));
+    } catch (error) {
+      if (current()) throw error;
+    }
   }, [familyId, learnerId]);
 
   useEffect(() => {
+    mounted.current = true;
     let cancelled = false;
     async function loadAll() {
       setLoading(true);
@@ -170,6 +210,9 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
     loadAll();
     return () => {
       cancelled = true;
+      mounted.current = false;
+      learnerRequest.current.generation++;
+      learnerRequest.current.controller?.abort();
     };
   }, [loadCatalogs, loadLearnerData]);
 
@@ -553,6 +596,21 @@ export function CompetencyTrackingPanel({ familyId, learnerId }: CompetencyTrack
                         </span>
                       </div>
                   )}
+                  {evaluation && evaluation.state !== 'MASTERED' && <div data-testid={`progression-gates-${tracking.id}`}>
+                    {!evaluation.requiredEvidenceCountMet && <p>{t('records.approval.evidencePending')}</p>}
+                    {evaluation.rubricAssessmentSatisfied === false && <p>{t('records.approval.rubricPending')}</p>}
+                    {evaluation.unmetPrerequisites.map((prerequisite) => <p key={prerequisite.trackingId}>
+                      {t('records.approval.prerequisite', { id: prerequisite.competencyDefinitionId })}
+                    </p>)}
+                    {evaluation.freshWorkRequired && <p>{t('records.approval.freshWorkPending')}</p>}
+                    {evaluation.humanApprovalRequired && <p>{t(evaluation.humanApprovalEligible ? 'records.approval.pending' : 'records.approval.approvalBlocked')}</p>}
+                    {evaluation.state === 'AWAITING_APPROVAL' && evaluation.humanApprovalRequired && evaluation.humanApprovalEligible && canApprove &&
+                      tracking.familyId === familyId && tracking.learnerId === learnerId &&
+                      evaluation.learnerId === learnerId && evaluation.trackingId === tracking.id && <ProgressionDecisionActions
+                      key={familyId + learnerId + tracking.id} trackingId={tracking.id}
+                      endpoint={`/api/v1/families/${familyId}/curriculum/competency-tracking/${tracking.id}/approval`}
+                      onSuccess={loadLearnerData} />}
+                  </div>}
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <Badge variant="emerald" data-testid={`tracked-competency-status-${tracking.competencyDefinitionId}`}>

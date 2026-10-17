@@ -78,8 +78,28 @@ describe('Mentor Grant (real Postgres)', () => {
 
     expect(invited.body.status).toBe('PENDING');
     expect(invited.body.role).toBe('mestre de ofício');
+    expect(invited.body.canApproveProgression).toBe(false);
     expect(invited.body.token).toBeTruthy();
     expect(invited.body.mentorUserId).toBeFalsy();
+
+    const explicitlyAuthorized = await supertest(app.getHttpServer())
+      .post(`/api/v1/families/${familyId}/learners/${learnerId}/mentors`)
+      .set('Cookie', guardianCookie)
+      .send({ email: 'mentor-approver@example.com', role: 'mentor', canApproveProgression: true })
+      .expect(201);
+    expect(explicitlyAuthorized.body.canApproveProgression).toBe(true);
+
+    const disabledAgain = await supertest(app.getHttpServer())
+      .patch(`/api/v1/families/${familyId}/learners/${learnerId}/mentors/${explicitlyAuthorized.body.id}/progression-approval`)
+      .set('Cookie', guardianCookie).send({ enabled: false }).expect(200);
+    expect(disabledAgain.body.canApproveProgression).toBe(false);
+    const enabledAgain = await supertest(app.getHttpServer())
+      .patch(`/api/v1/families/${familyId}/learners/${learnerId}/mentors/${explicitlyAuthorized.body.id}/progression-approval`)
+      .set('Cookie', guardianCookie).send({ enabled: true }).expect(200);
+    expect(enabledAgain.body.canApproveProgression).toBe(true);
+    await supertest(app.getHttpServer())
+      .patch(`/api/v1/families/${familyId}/learners/${learnerId}/mentors/${explicitlyAuthorized.body.id}/progression-approval`)
+      .set('Cookie', guardianCookie).send({ enabled: 'true' }).expect(400);
   });
 
   it('rejects an invite for a learner that does not belong to the family', async () => {
@@ -219,7 +239,7 @@ describe('Mentor Grant (real Postgres)', () => {
       .send({ code: 'CRAFTSMANSHIP', label: 'Acabamento' })
       .expect(201);
 
-    const assessment = await supertest(app.getHttpServer())
+    await supertest(app.getHttpServer())
       .post(`/api/v1/families/${familyId}/curriculum/assessment-results`)
       .set('Cookie', guardianCookie)
       .send({
@@ -229,10 +249,17 @@ describe('Mentor Grant (real Postgres)', () => {
         assessorUserId: mentorUserId,
         scores: [{ rubricCriterionId: criterion.body.id, score: 4 }],
       })
+      .expect(400);
+
+    const guardian = await supertest(app.getHttpServer()).get('/api/v1/auth/me').set('Cookie', guardianCookie).expect(200);
+    const assessment = await supertest(app.getHttpServer())
+      .post(`/api/v1/families/${familyId}/curriculum/assessment-results`)
+      .set('Cookie', guardianCookie)
+      .send({ learnerId, rubricDefinitionId: rubric.body.id, assessorType: 'MENTOR', scores: [{ rubricCriterionId: criterion.body.id, score: 4 }] })
       .expect(201);
 
     expect(assessment.body.assessorType).toBe('MENTOR');
-    expect(assessment.body.assessorUserId).toBe(mentorUserId);
+    expect(assessment.body.assessorUserId).toBe(guardian.body.id);
   });
 
   it('rejects an unauthenticated invite', async () => {

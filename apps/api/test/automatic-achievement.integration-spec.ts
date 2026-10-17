@@ -4,6 +4,7 @@ import supertest from 'supertest';
 import { learnerCompetencyAchievementResponseSchema } from '@aletheia/contracts';
 import { createApplication } from '../src/main.js';
 import { PrismaService } from '../src/platform/database/prisma.service.js';
+import { LearnerCompetencyApprovalService } from '../src/modules/curriculum/application/learner-competency-approval.service.js';
 import { registerAndConfirmGuardian } from './helpers/register-verified-guardian.js';
 
 describe('Automatic competency achievements (real Postgres)', () => {
@@ -126,6 +127,100 @@ describe('Automatic competency achievements (real Postgres)', () => {
     const evaluation = await supertest(app.getHttpServer()).get(`${base()}/progression/evaluation`)
       .set('Cookie', family.cookie).query({ trackingId: f.trackingId, policyId: f.policy.id }).expect(200);
     expect(evaluation.body.state).toBe('NOT_STARTED');
+  }, 30000);
+
+  it('does not reconcile a rubric policy into an achievement until evidence and all rubric criteria pass', async () => {
+    const f = await fixture();
+    const rubric = await db.rubricDefinition.create({ data: { code: `RUBRIC.${randomUUID()}`, name: 'Achievement rubric', status: 'PUBLISHED', criteria: { create: [
+      { code: 'criterion-a', label: 'Criterion A', scaleMin: 0, scaleMax: 4 },
+      { code: 'criterion-b', label: 'Criterion B', scaleMin: 1, scaleMax: 5 },
+    ] } }, include: { criteria: true } });
+    const policy = await definition('progression-policies', {
+      name: 'Evidence plus rubric', policyType: 'EVIDENCE_RUBRIC', curriculumDefinitionId: f.curriculumId,
+      rules: { minimumEvidenceCount: 1, rubricDefinitionId: rubric.id, rubricVersion: rubric.version,
+        minimumScoresByCriterion: { [rubric.criteria[0]!.id]: 3, [rubric.criteria[1]!.id]: 2 }, requireHumanApproval: false },
+    });
+    await db.learnerCompetencyTracking.update({ where: { id: f.trackingId }, data: { progressionPolicyId: policy.id, policyVersion: policy.version } });
+    await validate(f.evidenceId, 'VALIDATED').expect(200);
+    expect(await db.learnerCompetencyAchievement.count({ where: { trackingId: f.trackingId } })).toBe(0);
+    await db.assessmentResult.create({ data: { familyId: family.familyId, learnerId: family.learnerId,
+      rubricDefinitionId: rubric.id, rubricVersion: rubric.version, assessorType: 'PARENT', assessorUserId: family.actorId,
+      scores: { create: [{ rubricCriterionId: rubric.criteria[0]!.id, score: 4 }, { rubricCriterionId: rubric.criteria[1]!.id, score: 3 }] } } });
+    await validate(f.evidenceId, 'VALIDATED').expect(200);
+    expect(await db.learnerCompetencyAchievement.count({ where: { trackingId: f.trackingId } })).toBe(1);
+  }, 30000);
+
+  it('persists an idempotent approval and awards atomically with rubric and decision provenance', async () => {
+    const f = await fixture();
+    const rubric = await db.rubricDefinition.create({ data: { code: `RUBRIC.${randomUUID()}`, name: 'Approval rubric', status: 'PUBLISHED', criteria: { create: [
+      { code: 'criterion-a', label: 'Criterion A', scaleMin: 0, scaleMax: 4 },
+    ] } }, include: { criteria: true } });
+    const policy = await definition('progression-policies', {
+      name: 'Human-approved rubric', policyType: 'EVIDENCE_RUBRIC', curriculumDefinitionId: f.curriculumId,
+      rules: { minimumEvidenceCount: 1, rubricDefinitionId: rubric.id, rubricVersion: rubric.version,
+        minimumScoresByCriterion: { [rubric.criteria[0]!.id]: 3 }, requireHumanApproval: true },
+    });
+    await db.learnerCompetencyTracking.update({ where: { id: f.trackingId }, data: { progressionPolicyId: policy.id, policyVersion: policy.version } });
+    await db.assessmentResult.create({ data: { familyId: family.familyId, learnerId: family.learnerId,
+      rubricDefinitionId: rubric.id, rubricVersion: rubric.version, assessorType: 'PARENT', assessorUserId: family.actorId,
+      scores: { create: [{ rubricCriterionId: rubric.criteria[0]!.id, score: 4 }] } } });
+    await validate(f.evidenceId, 'VALIDATED').expect(200);
+    const service = app.get(LearnerCompetencyApprovalService);
+    const decision = { idempotencyKey: randomUUID(), decision: 'APPROVED' as const };
+    const concurrent = await Promise.all([
+      service.record(family.familyId, f.trackingId, family.actorId, decision),
+      service.record(family.familyId, f.trackingId, family.actorId, decision),
+    ]);
+    expect(concurrent[0]).toEqual(concurrent[1]);
+    expect(await db.learnerCompetencyApprovalEvent.count({ where: { familyId: family.familyId, trackingId: f.trackingId } })).toBe(1);
+    expect(await db.learnerCompetencyAchievement.count({ where: { trackingId: f.trackingId } })).toBe(1);
+    const award = await db.learnerCompetencyAchievement.findUniqueOrThrow({ where: { trackingId: f.trackingId } });
+    expect(award.evidenceSnapshot).toMatchObject({
+      rubricAssessment: { rubricDefinitionId: rubric.id, rubricVersion: rubric.version, assessorUserId: family.actorId },
+      approval: { approvalEventId: concurrent[0].id, decision: 'APPROVED', decidedByUserId: family.actorId },
+    });
+    await expect(service.record(family.familyId, f.trackingId, other.actorId, decision)).rejects.toThrow();
+    await expect(service.record(family.familyId, f.trackingId, family.actorId,
+      { ...decision, decision: 'RETURNED', reason: 'Different payload' })).rejects.toThrow();
+    await expect(db.learnerCompetencyApprovalEvent.update({ where: { id: concurrent[0].id }, data: { reason: 'tamper' } })).rejects.toThrow();
+  }, 30000);
+
+  it('requires fresh qualifying input after a return and scopes each decision to the exact learner tracking', async () => {
+    const f = await fixture();
+    const rubric = await db.rubricDefinition.create({ data: { code: `RUBRIC.${randomUUID()}`, name: 'Return rubric', status: 'PUBLISHED', criteria: { create: [
+      { code: 'criterion-a', label: 'Criterion A', scaleMin: 0, scaleMax: 4 },
+    ] } }, include: { criteria: true } });
+    const policy = await definition('progression-policies', {
+      name: 'Returned rubric', policyType: 'EVIDENCE_RUBRIC', curriculumDefinitionId: f.curriculumId,
+      rules: { minimumEvidenceCount: 1, rubricDefinitionId: rubric.id, rubricVersion: rubric.version,
+        minimumScoresByCriterion: { [rubric.criteria[0]!.id]: 3 }, requireHumanApproval: true },
+    });
+    await db.learnerCompetencyTracking.update({ where: { id: f.trackingId }, data: { progressionPolicyId: policy.id, policyVersion: policy.version } });
+    await db.assessmentResult.create({ data: { familyId: family.familyId, learnerId: family.learnerId,
+      rubricDefinitionId: rubric.id, rubricVersion: rubric.version, assessorType: 'PARENT', assessorUserId: family.actorId,
+      scores: { create: [{ rubricCriterionId: rubric.criteria[0]!.id, score: 4 }] } } });
+    await validate(f.evidenceId, 'VALIDATED').expect(200);
+    const service = app.get(LearnerCompetencyApprovalService);
+    const returned = await service.record(family.familyId, f.trackingId, family.actorId,
+      { idempotencyKey: randomUUID(), decision: 'RETURNED', reason: 'Please add a new example' });
+    const evaluate = () => supertest(app.getHttpServer()).get(`${base()}/progression/evaluation`)
+      .set('Cookie', family.cookie).query({ trackingId: f.trackingId, policyId: policy.id });
+    expect((await evaluate().expect(200)).body.state).toBe('IN_PROGRESS');
+    await expect(service.record(family.familyId, f.trackingId, family.actorId,
+      { idempotencyKey: randomUUID(), decision: 'APPROVED' })).rejects.toThrow();
+    await db.assessmentResult.create({ data: { familyId: family.familyId, learnerId: family.learnerId,
+      rubricDefinitionId: rubric.id, rubricVersion: rubric.version, assessorType: 'PARENT', assessorUserId: family.actorId,
+      scores: { create: [{ rubricCriterionId: rubric.criteria[0]!.id, score: 4 }] } } });
+    expect((await evaluate().expect(200)).body.state).toBe('AWAITING_APPROVAL');
+    const returnedAgain = await service.record(family.familyId, f.trackingId, family.actorId,
+      { idempotencyKey: randomUUID(), decision: 'RETURNED', reason: 'Please include a new demonstration' });
+    expect((await evaluate().expect(200)).body.state).toBe('IN_PROGRESS');
+    await validate(f.evidenceId, 'VALIDATED').expect(200);
+    expect((await evaluate().expect(200)).body.state).toBe('AWAITING_APPROVAL');
+    expect(returned).toMatchObject({ familyId: family.familyId, learnerId: family.learnerId, trackingId: f.trackingId,
+      progressionPolicyId: policy.id, competencyVersion: f.competency.version, decision: 'RETURNED' });
+    expect(await db.learnerCompetencyAchievement.count({ where: { trackingId: f.trackingId } })).toBe(0);
+    expect(returnedAgain.decision).toBe('RETURNED');
   }, 30000);
 
   it('isolates achievement reads and evidence validation by family', async () => {

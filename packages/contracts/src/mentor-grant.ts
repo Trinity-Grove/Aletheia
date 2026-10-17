@@ -16,9 +16,13 @@ export type MentorGrantStatus = z.infer<typeof mentorGrantStatusSchema>;
 export const inviteMentorSchema = z.object({
   email: z.string().email(),
   role: z.string().min(1).max(100),
+  canApproveProgression: z.boolean().default(false),
 });
 
 export type InviteMentorDto = z.infer<typeof inviteMentorSchema>;
+
+export const updateMentorProgressionCapabilitySchema = z.object({ enabled: z.boolean() }).strict();
+export type UpdateMentorProgressionCapabilityDto = z.infer<typeof updateMentorProgressionCapabilitySchema>;
 
 export const mentorGrantResponseSchema = z.object({
   id: z.string().uuid(),
@@ -26,6 +30,7 @@ export const mentorGrantResponseSchema = z.object({
   learnerId: z.string().uuid(),
   email: z.string(),
   role: z.string(),
+  canApproveProgression: z.boolean().optional(),
   status: mentorGrantStatusSchema,
   mentorUserId: z.string().uuid().nullable().optional(),
   // Only present in the response of the create call -- the plaintext

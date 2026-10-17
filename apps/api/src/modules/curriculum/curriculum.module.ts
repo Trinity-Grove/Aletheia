@@ -6,6 +6,7 @@ import { DatabaseModule } from '../../platform/database/database.module.js';
 import { StorageModule } from '../../platform/storage/storage.module.js';
 import { DevotionalModule } from '../devotional/devotional.module.js';
 import { PrivacyModule } from '../privacy/privacy.module.js';
+import { MentorsModule } from '../mentors/mentors.module.js';
 import { CurriculumRepository } from './infrastructure/curriculum.repository.js';
 import { ObjectiveRepository } from './infrastructure/objective.repository.js';
 import { CurriculumTemplateEngine } from './infrastructure/curriculum-template.engine.js';
@@ -85,6 +86,10 @@ import { BibleTranslationCompareController } from './presentation/bible-translat
 import { CurriculumPackController } from './presentation/curriculum-pack.controller.js';
 import { LearnerCompetencyTrackingController } from './presentation/learner-competency-tracking.controller.js';
 import { AchievementRepository } from './infrastructure/achievement.repository.js';
+import { LearnerCompetencyApprovalRepository } from './infrastructure/learner-competency-approval.repository.js';
+import { LearnerCompetencyApprovalService } from './application/learner-competency-approval.service.js';
+import { MentorProgressionApprovalService } from './application/mentor-progression-approval.service.js';
+import { LearnerCompetencyApprovalController, MentorProgressionApprovalController } from './presentation/learner-competency-approval.controller.js';
 import { AchievementController } from './presentation/achievement.controller.js';
 import { ArtsFormationSeeder } from './infrastructure/arts-formation.seeder.js';
 import { ServiceCommunityFormationSeeder } from './infrastructure/service-community-formation.seeder.js';
@@ -131,7 +136,7 @@ import { FamilyProjectSelectionRepository } from './infrastructure/family-projec
 import { FamilyProjectSelectionService } from './application/family-project-selection.service.js';
 
 @Module({
-  imports: [DatabaseModule, DevotionalModule, StorageModule, PrivacyModule],
+  imports: [DatabaseModule, DevotionalModule, StorageModule, PrivacyModule, MentorsModule],
   controllers: [
     ProgressionController,
     CurriculumController,
@@ -143,6 +148,8 @@ import { FamilyProjectSelectionService } from './application/family-project-sele
     BibleTranslationCompareController,
     CurriculumPackController,
     LearnerCompetencyTrackingController,
+    LearnerCompetencyApprovalController,
+    MentorProgressionApprovalController,
     AchievementController,
     FamilyCurriculumPackController,
     FamilyCurriculumPackMediaController,
@@ -215,6 +222,9 @@ import { FamilyProjectSelectionService } from './application/family-project-sele
     CurriculumPackRepository,
     LearnerCompetencyTrackingRepository,
     AchievementRepository,
+    LearnerCompetencyApprovalRepository,
+    LearnerCompetencyApprovalService,
+    MentorProgressionApprovalService,
     ArtsFormationSeeder,
     ServiceCommunityFormationSeeder,
     OfficialCurriculumPacksSeeder,

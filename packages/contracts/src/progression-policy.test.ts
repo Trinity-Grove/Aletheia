@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createProgressionPolicySchema } from './progression-policy.js';
+import { createProgressionPolicySchema, progressionPolicyCatalogEntrySchema } from './progression-policy.js';
 
 describe('Progression Policy Contracts', () => {
   it('validates a minimal policy with defaults', () => {
@@ -47,5 +47,25 @@ describe('Progression Policy Contracts', () => {
     });
     expect(parsed.competencyDefinitionId).toBe(competencyId);
     expect(parsed.curriculumDefinitionId).toBeUndefined();
+  });
+
+  it('accepts catalog entries for both supported policy types', () => {
+    const common = { id: crypto.randomUUID(), code: 'P', name: 'Policy', curriculumDefinitionId: null };
+    expect(progressionPolicyCatalogEntrySchema.safeParse({ ...common, policyType: 'EVIDENCE_COUNT', minimumEvidenceCount: 1 }).success).toBe(true);
+    expect(progressionPolicyCatalogEntrySchema.safeParse({ ...common, policyType: 'EVIDENCE_RUBRIC', minimumEvidenceCount: 1, rubricDefinitionId: crypto.randomUUID(), rubricVersion: 2, minimumScoresByCriterion: { [crypto.randomUUID()]: 3 }, requireHumanApproval: true }).success).toBe(true);
+  });
+
+  it('validates EVIDENCE_RUBRIC rules while leaving arbitrary types backward compatible', () => {
+    const base = { code: 'RUBRIC.DEFAULT', name: 'Rubric', policyType: 'EVIDENCE_RUBRIC' };
+    const rubricRules = {
+      minimumEvidenceCount: 2,
+      rubricDefinitionId: crypto.randomUUID(),
+      rubricVersion: 1,
+      minimumScoresByCriterion: { [crypto.randomUUID()]: 2 },
+      requireHumanApproval: true,
+    };
+    expect(createProgressionPolicySchema.safeParse({ ...base, rules: rubricRules }).success).toBe(true);
+    expect(createProgressionPolicySchema.safeParse({ ...base, rules: { ...rubricRules, minimumScoresByCriterion: {} } }).success).toBe(false);
+    expect(createProgressionPolicySchema.safeParse({ ...base, policyType: 'A_FUTURE_TYPE', rules: { futureRule: true } }).success).toBe(true);
   });
 });

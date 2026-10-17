@@ -10,12 +10,21 @@ export const evidenceCountRulesSchema = z.object({
   prerequisites: z.array(progressionPrerequisiteSchema).max(32).default([]),
 }).strict();
 
+export const evidenceRubricRulesSchema = z.object({
+  minimumEvidenceCount: z.number().int().positive(),
+  rubricDefinitionId: z.string().uuid(),
+  rubricVersion: z.number().int().positive(),
+  minimumScoresByCriterion: z.record(z.string().uuid(), z.number()).refine((scores) => Object.keys(scores).length > 0),
+  requireHumanApproval: z.boolean().default(false),
+  prerequisites: z.array(progressionPrerequisiteSchema).max(32).default([]),
+}).strict();
+
 export const progressionEvaluationQuerySchema = z.object({
   trackingId: z.string().uuid(),
   policyId: z.string().uuid(),
 }).strict();
 
-export const progressionStateSchema = z.enum(['NOT_STARTED', 'IN_PROGRESS', 'BLOCKED', 'MASTERED']);
+export const progressionStateSchema = z.enum(['NOT_STARTED', 'IN_PROGRESS', 'BLOCKED', 'MASTERED', 'AWAITING_APPROVAL']);
 const evaluationFields = {
   trackingId: z.string().uuid(),
   trackingStatus: z.enum(['ACTIVE', 'RETIRED']),
@@ -26,6 +35,11 @@ const evaluationFields = {
   policyVersion: z.number().int().positive(),
   validatedEvidenceCount: z.number().int().nonnegative(),
   minimumEvidenceCount: z.number().int().positive(),
+  requiredEvidenceCountMet: z.boolean(),
+  rubricAssessmentSatisfied: z.boolean().nullable().describe('Null for EVIDENCE_COUNT; otherwise the latest exact-rubric/version assessment satisfies every criterion'),
+  humanApprovalRequired: z.boolean(),
+  humanApprovalEligible: z.boolean().describe('Human approval is required and all objective and post-return freshness gates pass'),
+  freshWorkRequired: z.boolean().describe('A matching RETURNED decision has no newer validated evidence or exact-rubric assessment'),
   state: progressionStateSchema,
 };
 export const progressionEvaluationResponseSchema = z.object({
