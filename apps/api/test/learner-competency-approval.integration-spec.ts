@@ -112,8 +112,10 @@ describe('Authenticated competency approval API (real Postgres)', () => {
 
     await supertest(app.getHttpServer()).patch(`/api/v1/families/${familyId}/learners/${learnerId}/mentors/${grantId}/progression-approval`)
       .set('Cookie', familyCookie).send({ enabled: true }).expect(200);
+    await supertest(app.getHttpServer()).post(`/api/v1/mentors/progression-approvals/${trackingId}/decision`).set('Cookie', mentorCookie)
+      .send({ idempotencyKey: randomUUID(), decision: 'APPROVED', actorUserId: guardianId }).expect(400);
     const decision = await supertest(app.getHttpServer()).post(`/api/v1/mentors/progression-approvals/${trackingId}/decision`).set('Cookie', mentorCookie)
-      .send({ idempotencyKey: randomUUID(), decision: 'APPROVED', actorUserId: guardianId }).expect(200);
+      .send({ idempotencyKey: randomUUID(), decision: 'APPROVED' }).expect(200);
     expect(decision.body.actorUserId).toBe(mentorId);
     expect(await db.learnerCompetencyAchievement.count({ where: { trackingId } })).toBe(1);
     await supertest(app.getHttpServer()).delete(`/api/v1/mentors/${grantId}`).set('Cookie', familyCookie).expect(204);
