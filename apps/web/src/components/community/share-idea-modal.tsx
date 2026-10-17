@@ -66,13 +66,16 @@ export function ShareIdeaModal({
       .map((item) => item.trim())
       .filter((item) => item.length > 0);
 
+    const normalizedAgeMin = Math.min(ageMin, ageMax);
+    const normalizedAgeMax = Math.max(ageMin, ageMax);
+
     void onSubmit({
       name: trimmedName,
       description: trimmedDescription,
       theme,
       materials: parsedMaterials,
-      ageMin,
-      ageMax,
+      ageMin: normalizedAgeMin,
+      ageMax: normalizedAgeMax,
       estimatedDurationMinutes,
       supervisionRequired,
     });

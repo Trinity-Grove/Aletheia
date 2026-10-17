@@ -125,6 +125,36 @@ describe('ShareIdeaModal', () => {
     });
   });
 
+  it('normalizes ageMin and ageMax when ageMin is greater than ageMax on submit', () => {
+    const onSubmit = vi.fn();
+    render(<ShareIdeaModal isOpen onClose={vi.fn()} onSubmit={onSubmit} />);
+
+    fireEvent.change(screen.getByLabelText('Título da Atividade'), {
+      target: { value: 'Atividade de Teste' },
+    });
+    fireEvent.change(screen.getByLabelText('Como Fazer (Descrição prática)'), {
+      target: { value: 'Descrição prática da atividade de teste.' },
+    });
+    // Invert ages: min 14, max 6
+    fireEvent.change(screen.getByLabelText('Idade mínima'), {
+      target: { value: '14' },
+    });
+    fireEvent.change(screen.getByLabelText('Idade máxima'), {
+      target: { value: '6' },
+    });
+
+    const submitBtn = screen.getByRole('button', { name: 'Publicar Ideia' });
+    fireEvent.click(submitBtn);
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ageMin: 6,
+        ageMax: 14,
+      })
+    );
+  });
+
   it('calls onClose when clicking cancel button', () => {
     const onClose = vi.fn();
     render(<ShareIdeaModal isOpen onClose={onClose} onSubmit={vi.fn()} />);

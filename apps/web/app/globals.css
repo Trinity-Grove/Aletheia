@@ -2354,3 +2354,217 @@ p.page-subtitle {
   padding-top: 1rem;
   border-top: 1px solid var(--line);
 }
+
+/* Community Hub & Inspiration Mural (BEM) */
+.community-hub {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.community-hub__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.community-hub__header-content {
+  flex: 1 1 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.community-hub__title {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.community-hub__subtitle {
+  font-size: 1rem;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 680px;
+}
+
+.community-hub__header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.community-hub__share-btn {
+  white-space: nowrap;
+}
+
+.community-hub__toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+  background: var(--ui-surface-subtle, rgba(0, 0, 0, 0.02));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.community-hub__search {
+  flex: 2 1 260px;
+}
+
+.community-hub__search .ui-form-group {
+  margin-bottom: 0;
+}
+
+.community-hub__age-filter {
+  flex: 1 1 180px;
+}
+
+.community-hub__age-filter .ui-form-group {
+  margin-bottom: 0;
+}
+
+.community-hub__count {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--muted);
+  padding-bottom: 0.625rem;
+  white-space: nowrap;
+}
+
+.community-hub__main {
+  width: 100%;
+}
+
+.community-mural {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.community-mural__tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: thin;
+}
+
+.community-mural__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--muted);
+  background: var(--ui-surface-default, #ffffff);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full, 9999px);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--ui-motion-duration-fast, 150ms) ease;
+}
+
+.community-mural__tab:hover {
+  background: var(--ui-surface-subtle, rgba(0, 0, 0, 0.04));
+  color: var(--ink);
+  border-color: var(--forest);
+}
+
+.community-mural__tab--active {
+  background: var(--forest);
+  color: #ffffff;
+  border-color: var(--forest);
+}
+
+.community-mural__tab--active:hover {
+  background: var(--forest-dark, #1b382b);
+  color: #ffffff;
+  border-color: var(--forest-dark, #1b382b);
+}
+
+.community-mural__tab-label {
+  display: inline;
+}
+
+.community-mural__tab-count {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.community-mural__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.community-mural__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--ui-surface-subtle, rgba(0, 0, 0, 0.02));
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-lg);
+  gap: 1rem;
+}
+
+.community-mural__empty-icon {
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+
+.community-mural__empty-title {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+
+.community-mural__empty-description {
+  font-size: 0.9375rem;
+  color: var(--muted);
+  max-width: 480px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .community-hub__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .community-hub__share-btn {
+    width: 100%;
+  }
+
+  .community-hub__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .community-mural__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
