@@ -593,11 +593,9 @@ describe('Donation & Voluntary Support Components', () => {
   });
 
   describe('Navigation & i18n Integration', () => {
-    it('includes support navigation link in MAIN_NAV_ITEMS', () => {
+    it('keeps MAIN_NAV_ITEMS streamlined by relying on the permanent topbar action', () => {
       const supportItem = MAIN_NAV_ITEMS.find((item) => item.id === 'support');
-      expect(supportItem).toBeDefined();
-      expect(supportItem?.href).toBe('/support');
-      expect(supportItem?.label).toBe('nav.support');
+      expect(supportItem).toBeUndefined();
     });
 
     it('has translation for nav.support in pt-BR, en-US, and es-ES dictionaries', () => {
