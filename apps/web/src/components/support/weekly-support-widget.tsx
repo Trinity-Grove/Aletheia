@@ -24,7 +24,7 @@ export function WeeklySupportWidget({ familyId, role, pathname, settings, onSeen
  }, [visible, familyId, onSeen]);
  if (!familyId || !eligible) return null;
  return <>
-  {visible && <button type="button" data-testid="weekly-support-widget" aria-label={t('supportWidget.triggerLabel')} onClick={() => { recordInteraction(); setModalOpen(true); }} style={{ position: 'fixed', right: 'var(--support-widget-right, 1.5rem)', bottom: 'var(--support-widget-bottom, 1.5rem)', width: 44, height: 44, borderRadius: '50%', zIndex: 200 }}><AletheiaIcon name="book" size={20} /></button>}
+  {visible && <button type="button" data-testid="weekly-support-widget" aria-label={t('supportWidget.triggerLabel')} onClick={() => { recordInteraction(); setModalOpen(true); }} style={{ position: 'fixed', right: 'var(--support-widget-right, 1.5rem)', bottom: 'var(--support-widget-bottom, 1.5rem)', width: 44, height: 44, borderRadius: '50%', zIndex: 200 }}><AletheiaIcon name="heart" size={20} /></button>}
   <SupportWidgetModal familyId={familyId} isOpen={modalOpen} onSubmitted={recordInteraction} onClose={() => { recordInteraction(); setModalOpen(false); setDismissed(true); }} onSnoozed={preset => { setDismissed(true); onSnoozed?.(preset); }} />
  </>;
 }

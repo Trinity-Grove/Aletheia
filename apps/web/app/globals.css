@@ -536,6 +536,16 @@ p.page-subtitle {
   justify-content: flex-end;
 }
 
+.product-shell-topbar-btn-text {
+  display: inline;
+}
+
+@media (max-width: 640px) {
+  .product-shell-topbar-btn-text {
+    display: none;
+  }
+}
+
 .product-shell-user-avatar {
   width: 2.25rem;
   height: 2.25rem;

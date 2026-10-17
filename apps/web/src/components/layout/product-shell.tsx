@@ -35,6 +35,7 @@ import { LearnerFocusSwitcher } from './learner-focus-switcher';
 import { RoleBadge } from '../auth/role-badge';
 import { UnverifiedEmailBanner } from './unverified-email-banner';
 import { FamilySupportWidget } from '../support/family-support-widget';
+import { SupportWidgetModal } from '../support/support-widget-modal';
 
 export { LearnerFocusSwitcher } from './learner-focus-switcher';
 export { NotificationBell } from './notification-bell';
@@ -56,7 +57,6 @@ export const MAIN_NAV_ITEMS: NavigationItem[] = [
   { id: 'attendance', label: 'nav.attendance', href: '/attendance', icon: <AletheiaIcon name="clipboard-check" size={18} /> },
   { id: 'reports', label: 'nav.reports', href: '/reports', icon: <AletheiaIcon name="bar-chart-3" size={18} /> },
   { id: 'legal-guide', label: 'nav.legalGuide', href: '/legal-guide', icon: <AletheiaIcon name="shield-check" size={18} /> },
-  { id: 'support', label: 'nav.support', href: '/support', icon: <AletheiaIcon name="heart" size={18} /> },
   { id: 'settings', label: 'nav.settings', href: '/settings', icon: <AletheiaIcon name="settings" size={18} /> },
 ];
 
@@ -76,7 +76,6 @@ const PRIORITY_NAV_ITEM_IDS: ReadonlyArray<NavigationItem['id']> = [
   'reports',
   'legal-guide',
   'attendance',
-  'support',
   'settings',
 ];
 
@@ -177,6 +176,7 @@ export function ProductShell({
   const existingRbac = useAuthRole();
   const tabBarItemCount = useResponsiveTabBarItemCount();
   const { t } = useLocale();
+  const [supportFeedbackModalOpen, setSupportFeedbackModalOpen] = useState(false);
   const activePath = currentPath ?? pathname;
 
   // Derive active family id up front (moved ahead of the early returns
@@ -221,7 +221,21 @@ export function ProductShell({
           onClick={onStartTour}
           leftIcon={<AletheiaIcon name="compass" size={16} />}
         >
-          <span className="hidden sm:inline">{t('nav.startTour')}</span>
+          <span className="product-shell-topbar-btn-text">{t('nav.startTour')}</span>
+        </Button>
+      )}
+
+      {activeFamilyId !== null && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="support-feedback-trigger-btn"
+          aria-label={t('supportWidget.triggerLabel')}
+          onClick={() => setSupportFeedbackModalOpen(true)}
+          leftIcon={<AletheiaIcon name="heart" size={16} />}
+        >
+          <span className="product-shell-topbar-btn-text">{t('supportWidget.triggerLabel')}</span>
         </Button>
       )}
 
@@ -398,6 +412,14 @@ export function ProductShell({
         <UnverifiedEmailBanner />
       )}
       <FamilySupportWidget familyId={activeFamilyId} role={activeRole} pathname={activePath} />
+      {activeFamilyId !== null && (
+        <SupportWidgetModal
+          familyId={activeFamilyId}
+          isOpen={supportFeedbackModalOpen}
+          onClose={() => setSupportFeedbackModalOpen(false)}
+          onSubmitted={() => setSupportFeedbackModalOpen(false)}
+        />
+      )}
       {breadcrumbItems.length > 0 && (
         <Breadcrumbs items={breadcrumbItems} renderLink={renderNextNavigationLink} />
       )}

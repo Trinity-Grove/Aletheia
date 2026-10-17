@@ -108,16 +108,27 @@ describe('ProductShell adapter', () => {
     expect(screen.getByTestId('appshell-nav-learners')).not.toHaveAttribute('aria-current');
   });
 
-  it('always shows "Apoiar o Projeto" in the sidebar, not only when already on /support', () => {
-    nextNavigation.pathname = '/learners';
-
+  it('renders permanent "Apoio e feedback" button in topbar and opens SupportWidgetModal', async () => {
     render(
-      <ProductShell>
+      <ProductShell familyId="fam-1">
         <p>Conteúdo</p>
       </ProductShell>,
     );
 
-    expect(screen.getByTestId('appshell-nav-support')).toBeInTheDocument();
+    const triggerBtn = screen.getByTestId('support-feedback-trigger-btn');
+    expect(triggerBtn).toBeInTheDocument();
+    expect(triggerBtn).toHaveTextContent(/apoio e feedback/i);
+
+    fireEvent.click(triggerBtn);
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByTestId('support-widget-choose-feedback')).toBeInTheDocument();
+    expect(screen.getByTestId('support-widget-choose-support')).toBeInTheDocument();
+  });
+
+  it('does not include support as a sidebar navigation item in MAIN_NAV_ITEMS', () => {
+    const supportItem = MAIN_NAV_ITEMS.find((item) => item.id === 'support');
+    expect(supportItem).toBeUndefined();
+    expect(screen.queryByTestId('appshell-nav-support')).not.toBeInTheDocument();
   });
 
   it('includes the legal-guide navigation item in MAIN_NAV_ITEMS pointing to /legal-guide', () => {
