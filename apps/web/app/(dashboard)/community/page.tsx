@@ -21,6 +21,7 @@ export default function CommunityPage() {
   const [activeLearnerId, setActiveLearnerId] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     async function loadBaseData() {
       try {
         const storedFamilyId =
@@ -30,12 +31,12 @@ export default function CommunityPage() {
             : null);
 
         if (!storedFamilyId) return;
-        setFamilyId(storedFamilyId);
+        if (isMounted) setFamilyId(storedFamilyId);
 
         const learnersRes = await fetch(`/api/v1/families/${encodeURIComponent(storedFamilyId)}/learners`, {
           credentials: 'include',
         });
-        if (learnersRes.ok) {
+        if (learnersRes.ok && isMounted) {
           const lData = await learnersRes.json();
           setLearners(Array.isArray(lData) ? lData : []);
         }
@@ -44,6 +45,9 @@ export default function CommunityPage() {
       }
     }
     void loadBaseData();
+    return () => {
+      isMounted = false;
+    };
   }, [auth?.activeFamilyId]);
 
   const hubLearners = useMemo(
