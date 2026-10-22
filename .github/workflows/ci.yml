@@ -203,7 +203,7 @@ jobs:
 
       - name: Probe real application readiness
         env:
-          NODE_OPTIONS: "--max-old-space-size=6144"
+          NODE_OPTIONS: "--max-old-space-size=8192"
         run: pnpm --filter @aletheia/api test:integration
 
       - name: Build and start the distributable API
