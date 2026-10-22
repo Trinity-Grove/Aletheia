@@ -14,7 +14,7 @@ import {
 // content -- unlike PedagogicalModelDefinitionSeeder (which replays
 // CurriculumTemplateEngine's old switch-case content) or
 // EvidenceTypeDefinitionSeeder, this is genuinely new, more granular
-// catalog data: ten separate CompetencyDefinition rows where the old
+// catalog data: separate CompetencyDefinition rows where the old
 // engine only ever had two coarse Subject-level stubs
 // ("Fundamentos da Fé Cristã" / "Estudo das Escrituras" in
 // curriculum-template.engine.ts's FAITH_AND_THEOLOGY_SUBJECTS). Both can
@@ -25,13 +25,10 @@ import {
 //
 // Scope is deliberately narrow, per issue #95 section 5's own
 // "progressão" principle: only the introductory tier (children /
-// PRIMARY_GRAMMAR-ish ages), and only the topics explicitly called out for
-// this slice -- narrativas bíblicas, personagens bíblicos, panorama da
-// Bíblia, Antigo Testamento, Novo Testamento, vida de Jesus, Atos e Igreja
-// Primitiva, salmos e sabedoria, oração, aplicação prática. Section 5 also
-// lists "Introdução às cartas", "Memorização de textos" and "Devocionais"
-// -- explicitly left for a later slice so this one stays small and
-// reviewable, per the task's own instruction.
+// PRIMARY_GRAMMAR-ish ages), and the introductory topics listed in section
+// 5, including letters, memorization and devotional practice. They remain
+// narrative, historical and literacy-level, without requiring a specific
+// denominational interpretation.
 //
 // Anti-bias framing (issue #96's interdenominational principle, and #95
 // section 4's "a plataforma evita apresentar determinada tradição
@@ -140,6 +137,17 @@ export function buildBiblicalFormationSeedData(): BiblicalFormationSeedData {
         ],
       },
       {
+        code: 'FAITH.BIBLICAL_FORMATION.LETTERS_INTRODUCTION',
+        title: 'Introdução às Cartas',
+        level: 1,
+        ageRecommendation: { min: 9, max: 11 },
+        evidenceTypes: ['text', 'photo'],
+        starterObjectives: [
+          'Identificar cartas do Novo Testamento em uma Bíblia e reconhecer elementos simples do gênero epistolar, como remetente, destinatário e saudação',
+          'Relacionar uma carta a seu destinatário e a um contexto histórico básico, consultando uma fonte escolhida pela família',
+        ],
+      },
+      {
         code: 'FAITH.BIBLICAL_FORMATION.LIFE_OF_JESUS',
         title: 'Vida de Jesus',
         level: 1,
@@ -167,6 +175,28 @@ export function buildBiblicalFormationSeedData(): BiblicalFormationSeedData {
         evidenceTypes: ['audio', 'video', 'text'],
         starterObjectives: [
           'Memorizar e recitar um Salmo ou provérbio à escolha, explicando com as próprias palavras o que ele ensina',
+        ],
+      },
+      {
+        code: 'FAITH.BIBLICAL_FORMATION.TEXT_MEMORIZATION',
+        title: 'Memorização de Textos Bíblicos',
+        level: 1,
+        ageRecommendation: { min: 6, max: 11 },
+        evidenceTypes: ['text', 'audio'],
+        starterObjectives: [
+          'Escolher com a família um trecho bíblico curto, praticá-lo em partes ao longo de vários dias e reproduzi-lo de memória',
+          'Localizar o trecho memorizado por sua referência e explicar com palavras próprias o que entendeu, considerando seu contexto imediato',
+        ],
+      },
+      {
+        code: 'FAITH.BIBLICAL_FORMATION.DEVOTIONALS',
+        title: 'Devocionais',
+        level: 1,
+        ageRecommendation: { min: 6, max: 11 },
+        evidenceTypes: ['text', 'observation'],
+        starterObjectives: [
+          'Realizar uma leitura devocional curta e registrar uma observação e uma pergunta sobre o texto lido',
+          'Registrar uma reflexão pessoal e uma prática ou oração que deseja levar da leitura, sem exigir uma interpretação denominacional específica',
         ],
       },
       {
