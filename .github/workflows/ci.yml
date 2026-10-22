@@ -79,6 +79,8 @@ jobs:
         run: pnpm typecheck
 
       - name: Run unit tests
+        env:
+          NODE_OPTIONS: "--max-old-space-size=6144"
         run: pnpm test:ci
 
       - name: Run API end-to-end tests
