@@ -141,11 +141,11 @@
 - Add a visible section/tab for Trivium paths, fetching the new API catalog whenever `familyId`, learner, or academic year changes.
 - Adopt/unadopt via the new learner/year API; selected state is scoped to the chosen context and is refreshed after mutation.
 
-- [ ] Write UI tests for showing all three API paths, changing learner/year refreshes state, adopting one path updates only that context, no-learner/no-year disabled states, loading/error/empty states, and preserving template flow.
-- [ ] Run the targeted Vitest file and confirm expected failures.
-- [ ] Implement the section with existing `@aletheia/ui` components, semantic labels, visible selected state, and accessible status feedback.
-- [ ] Add mobile-first BEM CSS; ensure selector/card stacking and no horizontal overflow at 320px.
-- [ ] Run targeted UI tests and confirm they pass.
+- [x] Write UI tests for all three API paths, learner/year refresh, adopt/unadopt in the selected context, missing learner/year guidance, loading/error/empty states, and preserving template flow.
+- [x] Run the targeted Vitest file and confirm expected failures.
+- [x] Implement the section with existing `@aletheia/ui` components, semantic labels, visible selected state, and accessible status feedback.
+- [x] Add mobile-first BEM CSS; use fluid card grids and compact tabs without fixed widths.
+- [x] Run targeted UI tests and confirm they pass (12/12).
 
 ## Task 6: Localize catalog copy and finish integration checks
 
@@ -155,8 +155,8 @@
 - Modify: `apps/web/src/lib/i18n/dictionaries/es-ES/curriculum.ts`
 - Relevant: `apps/api/prisma/schema.prisma`, API/controller tests, web explorer tests, and package scripts
 
-- [ ] Add matching translation keys for headings, path names/descriptions, competencies/objectives shown in UI, learner/year context, advisory age/stage copy, mutation feedback, and all loading/empty/error states.
-- [ ] Add or update locale parity test assertions for all three dictionaries.
-- [ ] Run API focused specs, contracts tests, web focused tests, i18n audit, Prisma validation, and relevant typechecks using repository commands.
-- [ ] Review the diff against every acceptance criterion in the spec; confirm existing family-wide selections and template adoption remain unchanged.
-- [ ] Commit in coherent slices after each independently passing task.
+- [x] Add matching translation keys for headings, path names/descriptions, competencies/objectives shown in UI, learner/year context, advisory age/stage copy, mutation feedback, and all loading/empty/error states.
+- [x] Add locale parity assertions for all three dictionaries.
+- [x] Run API focused specs (12/12), contracts tests (10/10 previously), web focused tests (12/12), i18n audit, Prisma validation (passed in Task 3), and relevant API/web typechecks.
+- [x] Review the diff against the spec; existing family-wide routes and template adoption remain unchanged.
+- [ ] Commit the UI and localization slice after final verification.

@@ -40,6 +40,20 @@ describe('Wave 3: Curriculum & Lessons i18n parity', () => {
       expect((esES as any).curriculum.pages.curriculum.title).toBe('Planificación curricular');
     });
 
+    it('mantém a descoberta do Trivium com a mesma estrutura nos três idiomas', () => {
+      const dictionaries = [ptBR, enUS, esES];
+      const reference = (dictionaries[0] as any).curriculum.explore.trivium;
+      expect(reference).toBeDefined();
+      for (const dictionary of dictionaries.slice(1)) {
+        expect(Object.keys((dictionary as any).curriculum.explore.trivium)).toEqual(Object.keys(reference));
+        for (const pathKey of ['grammar', 'logic', 'rhetoric']) {
+          expect(Object.keys((dictionary as any).curriculum.explore.trivium.paths[pathKey].competencies)).toEqual(
+            Object.keys(reference.paths[pathKey].competencies),
+          );
+        }
+      }
+    });
+
     it('possui chaves de modais de lição em ptBR, enUS e esES', () => {
       expect((ptBR as any).lessons.formModal.newTitle).toBe('Planejar Nova Lição');
       expect((enUS as any).lessons.formModal.newTitle).toBe('Plan New Lesson');
