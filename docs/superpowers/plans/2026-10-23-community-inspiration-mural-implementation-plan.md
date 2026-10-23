@@ -39,12 +39,12 @@
 - Extend validated activity metadata with `theme`, `materials`, `seasonalPeriod`, `steps`, and `isSeed`; keep `CommunityIdeaTheme` defined without a circular contract import. Add optional input `anonymousSharingConsent?: boolean`; require `true` whenever `visibility === 'PUBLIC'`.
 - Community metadata allowlist: `theme`, `materials`, `seasonalPeriod`, `steps` only; curated seed status is never accepted from public submissions. omit malformed or all other properties.
 
-- [ ] Contract test: PRIVATE remains valid without consent; PUBLIC fails without consent and passes with consent.
+- [x] Contract test: PRIVATE remains valid without consent; PUBLIC fails without consent and passes with consent.
 - [x] API service test: public response excludes `familyId`, `origin`, `learnerId`, `authorName`, arbitrary metadata; it preserves valid theme/material/step fields.
 - [x] Run focused contract/API tests and observe RED.
 - [x] Implement validation and allowlisted public DTO mapping.
 - [x] Run focused tests and API typecheck.
-- [ ] Commit `fix: require consent and sanitize community activity metadata`.
+- [x] Commit `fix: require consent and sanitize community activity metadata` (`7b541b4`).
 
 ### Task 2: Make mural share/adopt flows truthful and complete
 
@@ -54,19 +54,19 @@
 - Modify `apps/web/tests/community-hub-view.test.tsx`, `community-modals.test.tsx`; add focused family activity modal coverage if needed.
 - Add symmetric translations in `apps/web/src/lib/i18n/dictionaries/{pt-BR,en-US,es-ES}/community.ts` and `curriculum.ts`.
 
-- [ ] Test: seed adoption sends a PRIVATE family activity create request carrying only the idea snapshot; community adoption uses the existing `/families/:familyId/activities/adopt` endpoint.
-- [ ] Test: adoption/share API errors show an error and preserve a retryable UI; success is announced and links to the family activity library.
-- [ ] Test: share form requires explicit anonymous-sharing consent; PUBLIC activity create/edit submits consent, and a PRIVATE activity does not require it.
-- [ ] Run focused web/contract tests and observe RED.
-- [ ] Implement one-click adoption without a nonfunctional learner selector; preserve the family-private copy and show feedback.
-- [ ] Add a required consent checkbox for mural sharing and for public family-activity visibility; block submission until checked.
-- [ ] Check non-OK responses, keep the form open on failure, and show localized status feedback.
-- [ ] Run focused web tests, web typecheck, and i18n audit.
-- [ ] Commit `fix: complete community mural share and adopt flows`.
+- [x] Test: seed adoption sends a PRIVATE family activity create request carrying only the idea snapshot; community adoption uses the existing `/families/:familyId/activities/adopt` endpoint.
+- [x] Test: adoption/share API errors show an error and preserve a retryable UI; success is announced and links to the family activity library.
+- [x] Test: share form requires explicit anonymous-sharing consent; PUBLIC activity create/edit submits consent, and a PRIVATE activity does not require it.
+- [x] Run focused web/contract tests and observe RED.
+- [x] Implement one-click adoption without a nonfunctional learner selector; preserve the family-private copy and show feedback.
+- [x] Add a required consent checkbox for mural sharing and for public family-activity visibility; block submission until checked.
+- [x] Check non-OK responses, keep the form open on failure, and show localized status feedback.
+- [x] Run focused web tests, web typecheck, and i18n audit.
+- [x] Commit `fix: complete community mural share and adopt flows` (`62442a4`).
 
 ### Task 3: End-to-end focused verification and review
 
-- [ ] Run contracts, API, and web suites relevant to community and family activities.
-- [ ] Run i18n coverage, module boundaries, API/web typechecks, and `git diff --check`.
-- [ ] Inspect final public DTO and all public-create/update call sites against the consent contract.
-- [ ] Keep #290 closed: original implementation is merged by PR #356 and the mural by PR #362; report this as a follow-up correction rather than attempting to close it again.
+- [x] Run contracts, API, and web suites relevant to community and family activities.
+- [x] Run i18n coverage, module boundaries, API/web typechecks, and `git diff --check`.
+- [x] Inspect final public DTO and public-create/update call sites against the consent contract.
+- [x] Keep #290 closed: original implementation is merged by PR #356 and the mural by PR #362; report this as a follow-up correction rather than attempting to close it again.

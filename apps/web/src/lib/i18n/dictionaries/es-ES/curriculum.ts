@@ -704,6 +704,7 @@ export const curriculum: Dictionary['curriculum'] = {
     supervisionRequired: 'Requiere supervisión de un adulto',
     visibilityLabel: 'Visibilidad',
     visibilityHelp: 'Elige si esta actividad permanece privada para tu familia o visible para la comunidad.',
+    anonymousConsent: 'Confirmo que esta actividad se compartirá de forma anónima, sin identificar a mi familia ni a los estudiantes.',
     cancel: 'Cancelar',
     save: 'Guardar',
     saveError: 'Error al guardar la actividad.',

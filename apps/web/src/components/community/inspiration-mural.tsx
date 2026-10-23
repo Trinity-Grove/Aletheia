@@ -13,6 +13,7 @@ export interface InspirationMuralProps {
   onAdopt(idea: CommunityActivityResponseDto): void;
   onClearFilters?(): void;
   disabled?: boolean | undefined;
+  adoptingIdeaId?: string | null | undefined;
 }
 
 interface ThemeTabConfig {
@@ -36,6 +37,7 @@ export function InspirationMural({
   onAdopt,
   onClearFilters,
   disabled = false,
+  adoptingIdeaId = null,
 }: InspirationMuralProps) {
   const { t } = useLocale();
 
@@ -123,7 +125,8 @@ export function InspirationMural({
               key={idea.id}
               idea={idea}
               onAdopt={onAdopt}
-              disabled={disabled}
+              disabled={disabled || adoptingIdeaId !== null}
+              isAdopting={adoptingIdeaId === idea.id}
             />
           ))}
         </div>

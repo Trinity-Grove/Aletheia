@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { CommunityActivityResponseDto } from '@aletheia/contracts';
 import { CommunityHubView } from '../src/components/community/community-hub-view';
 import { InspirationMural } from '../src/components/community/inspiration-mural';
@@ -154,18 +154,93 @@ describe('CommunityHubView', () => {
     expect(screen.getByText('Compartilhar Ideia com Outras Famílias')).toBeInTheDocument();
   });
 
-  it('6. opens AdoptIdeaModal when clicking on "Adotar" on an idea card', () => {
-    const mockLearners = [{ id: 'learner-1', name: 'Beatriz Silva' }];
-    render(<CommunityHubView familyId="fam-123" learners={mockLearners} />);
+  it('adopts a curated seed as a private family activity on the first click', async () => {
+    const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+      if (url.includes('/api/v1/curriculum/community-activities')) {
+        return { ok: true, json: async () => [mockApiIdea] };
+      }
+      return { ok: true, json: async () => ({ id: 'private-copy' }) };
+    });
+    global.fetch = fetchMock;
+    render(<CommunityHubView familyId="fam-123" />);
 
-    const adoptButtons = screen.getAllByRole('button', { name: 'Adotar para a Nossa Família' });
-    expect(adoptButtons.length).toBeGreaterThan(0);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Adotar para a Nossa Família' })[0]!);
 
-    fireEvent.click(adoptButtons[0]!);
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/v1/families/fam-123/activities',
+        expect.objectContaining({ method: 'POST' }),
+      );
+    });
+    const createCall = fetchMock.mock.calls.find(([url]) => url === '/api/v1/families/fam-123/activities');
+    const body = JSON.parse((createCall?.[1] as RequestInit).body as string) as Record<string, unknown>;
+    expect(body).toMatchObject({
+      name: SEED_IDEAS[0]!.name,
+      visibility: 'PRIVATE',
+      metadata: { theme: 'NATURE_STUDY', materials: expect.any(Array) },
+    });
+    expect(await screen.findByText('Atividade adotada com sucesso! Uma cópia privada foi salva para sua família.'))
+      .toBeInTheDocument();
+  });
 
+  it('adopts a community idea through the existing family-scoped endpoint', async () => {
+    const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+      if (url.includes('/api/v1/curriculum/community-activities')) {
+        return { ok: true, json: async () => [mockApiIdea] };
+      }
+      return { ok: true, json: async () => ({ id: 'private-copy' }) };
+    });
+    global.fetch = fetchMock;
+    render(<CommunityHubView familyId="fam-123" />);
+
+    const communityCard = await screen.findByTestId(`community-idea-card-${mockApiIdea.id}`);
+    fireEvent.click(communityCard.querySelector('button')!);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/v1/families/fam-123/activities/adopt',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ sourceActivityId: mockApiIdea.id }),
+        }),
+      );
+    });
+  });
+
+  it('shows an adoption error and leaves the idea available to retry', async () => {
+    const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+      if (url.includes('/api/v1/curriculum/community-activities')) {
+        return { ok: true, json: async () => [] };
+      }
+      return { ok: false, status: 500 };
+    });
+    global.fetch = fetchMock;
+    render(<CommunityHubView familyId="fam-123" />);
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Adotar para a Nossa Família' })[0]!);
+
+    expect(await screen.findByText('Erro ao adotar atividade. Tente novamente.')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Adotar para a Nossa Família' }).length).toBeGreaterThan(0);
+  });
+
+  it('shows a retryable error when sharing fails and keeps the modal open', async () => {
+    const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+      if (url.includes('/api/v1/curriculum/community-activities')) {
+        return { ok: true, json: async () => [] };
+      }
+      return { ok: false, status: 500, json: async () => ({}) };
+    });
+    global.fetch = fetchMock;
+    render(<CommunityHubView familyId="fam-123" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Compartilhar uma Ideia' }));
+    fireEvent.change(screen.getByLabelText('Título da Atividade'), { target: { value: 'Minha ideia' } });
+    fireEvent.change(screen.getByLabelText('Como Fazer (Descrição prática)'), { target: { value: 'Passos da ideia.' } });
+    fireEvent.click(screen.getByLabelText(/Confirmo que esta ideia será publicada sem identificar/i));
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar Ideia' }));
+
+    expect(await screen.findByText('Não foi possível compartilhar a ideia. Tente novamente.'))
+      .toBeInTheDocument();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText('Adotar Atividade para Nossa Rotina')).toBeInTheDocument();
-    expect(screen.getByText('Beatriz Silva')).toBeInTheDocument();
   });
 
   it('7. filters cards by age range selector', async () => {

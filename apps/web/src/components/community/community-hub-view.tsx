@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import type { CommunityActivityResponseDto, CommunityIdeaTheme } from '@aletheia/contracts';
-import { AletheiaIcon, Button, Input, Select } from '@aletheia/ui';
+import { Alert, AletheiaIcon, Button, Input, Select } from '@aletheia/ui';
 import { useLocale } from '../../lib/i18n/locale-context';
 import { SEED_IDEAS } from './seed-ideas-data';
 import { InspirationMural } from './inspiration-mural';
 import { ShareIdeaModal } from './share-idea-modal';
-import { AdoptIdeaModal } from './adopt-idea-modal';
 
 export interface CommunityHubViewProps {
   familyId: string;
@@ -90,8 +90,9 @@ export function CommunityHubView({
   const [apiActivities, setApiActivities] = useState<CommunityActivityResponseDto[]>([]);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
-  const [selectedIdeaForAdopt, setSelectedIdeaForAdopt] = useState<CommunityActivityResponseDto | null>(null);
-  const [isAdopting, setIsAdopting] = useState(false);
+  const [adoptingIdeaId, setAdoptingIdeaId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -145,8 +146,12 @@ export function CommunityHubView({
     ageMax: number;
     estimatedDurationMinutes: number;
     supervisionRequired: boolean;
+    anonymousSharingConsent: true;
   }) => {
     try {
+      setActionError(null);
+      setActionSuccess(null);
+      if (!familyId) throw new Error('Missing family context');
       setIsSharing(true);
       const res = await fetch(`/api/v1/families/${familyId}/activities`, {
         method: 'POST',
@@ -156,6 +161,7 @@ export function CommunityHubView({
           name: data.name,
           description: data.description,
           visibility: 'PUBLIC',
+          anonymousSharingConsent: data.anonymousSharingConsent,
           ageMin: data.ageMin,
           ageMax: data.ageMax,
           estimatedDurationMinutes: data.estimatedDurationMinutes,
@@ -168,50 +174,76 @@ export function CommunityHubView({
         }),
       });
 
-      if (res.ok) {
-        const created = await res.json();
-        if (created && typeof created === 'object' && created.id) {
-          setApiActivities((prev) => [created, ...prev]);
-        }
-      }
+      if (!res.ok) throw new Error('Share failed');
+      const created = await res.json() as { id?: string; createdAt?: string; updatedAt?: string };
+      if (!created?.id) throw new Error('Share response missing id');
+      const now = new Date().toISOString();
+      setApiActivities((prev) => [{
+        id: created.id!,
+        name: data.name,
+        description: data.description,
+        ageMin: data.ageMin,
+        ageMax: data.ageMax,
+        estimatedDurationMinutes: data.estimatedDurationMinutes,
+        supervisionRequired: data.supervisionRequired,
+        riskLevel: null,
+        evidenceRequirementMode: 'ANY',
+        metadata: { theme: data.theme, materials: data.materials, isSeed: false },
+        createdAt: created.createdAt ?? now,
+        updatedAt: created.updatedAt ?? now,
+      }, ...prev]);
       setIsShareModalOpen(false);
+      setActionSuccess(t('community.shareModal.successToast'));
     } catch {
-      // Non-fatal
+      setActionError(t('community.shareModal.errorToast'));
     } finally {
       setIsSharing(false);
     }
   };
 
-  const handleAdoptConfirm = async (data: {
-    ideaId: string;
-    learnerId?: string | undefined;
-  }) => {
+  const handleAdopt = async (idea: CommunityActivityResponseDto) => {
+    if (!familyId) {
+      setActionError(t('community.adoptModal.errorToast'));
+      return;
+    }
+    setActionError(null);
+    setActionSuccess(null);
+    setAdoptingIdeaId(idea.id);
     try {
-      setIsAdopting(true);
-      const res = await fetch(`/api/v1/curriculum/community-activities/${data.ideaId}/adopt`, {
+      const isCuratedSeed = idea.metadata?.isSeed === true;
+      const url = isCuratedSeed
+        ? `/api/v1/families/${familyId}/activities`
+        : `/api/v1/families/${familyId}/activities/adopt`;
+      const body = isCuratedSeed
+        ? {
+            name: idea.name,
+            description: idea.description ?? null,
+            visibility: 'PRIVATE',
+            ageMin: idea.ageMin,
+            ageMax: idea.ageMax,
+            estimatedDurationMinutes: idea.estimatedDurationMinutes,
+            supervisionRequired: idea.supervisionRequired,
+            riskLevel: idea.riskLevel,
+            evidenceRequirementMode: idea.evidenceRequirementMode,
+            metadata: {
+              ...(typeof idea.metadata?.theme === 'string' ? { theme: idea.metadata.theme } : {}),
+              ...(Array.isArray(idea.metadata?.materials) ? { materials: idea.metadata.materials } : {}),
+              ...(Array.isArray(idea.metadata?.steps) ? { steps: idea.metadata.steps } : {}),
+            },
+          }
+        : { sourceActivityId: idea.id };
+      const res = await fetch(url, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          familyId,
-          ...(data.learnerId ? { learnerId: data.learnerId } : {}),
-        }),
+        body: JSON.stringify(body),
       });
-
-      if (!res.ok && res.status === 404) {
-        await fetch(`/api/v1/families/${familyId}/activities/adopt`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sourceActivityId: data.ideaId }),
-        });
-      }
-
-      setSelectedIdeaForAdopt(null);
+      if (!res.ok) throw new Error('Adoption failed');
+      setActionSuccess(t('community.adoptModal.successToast'));
     } catch {
-      // Non-fatal
+      setActionError(t('community.adoptModal.errorToast'));
     } finally {
-      setIsAdopting(false);
+      setAdoptingIdeaId(null);
     }
   };
 
@@ -225,6 +257,17 @@ export function CommunityHubView({
 
   return (
     <div className="community-hub" data-testid="community-hub-view">
+      {actionSuccess && (
+        <Alert variant="success" data-testid="community-action-success" aria-live="polite">
+          {actionSuccess}{' '}
+          <Link href="/curriculum/activities">{t('community.hub.manageActivities')}</Link>
+        </Alert>
+      )}
+      {actionError && !isShareModalOpen && (
+        <Alert variant="error" data-testid="community-action-error" aria-live="assertive">
+          {actionError}
+        </Alert>
+      )}
       <header className="community-hub__header">
         <div className="community-hub__header-content">
           <h1 className="community-hub__title">{t('community.hub.title')}</h1>
@@ -236,7 +279,7 @@ export function CommunityHubView({
             variant="primary"
             className="community-hub__share-btn"
             leftIcon={<AletheiaIcon name="plus-circle" size={18} />}
-            onClick={() => setIsShareModalOpen(true)}
+            onClick={() => { setActionError(null); setActionSuccess(null); setIsShareModalOpen(true); }}
           >
             {t('community.hub.shareButton')}
           </Button>
@@ -275,8 +318,9 @@ export function CommunityHubView({
           ideas={filteredIdeas}
           selectedTheme={selectedTheme}
           onThemeSelect={setSelectedTheme}
-          onAdopt={(idea) => setSelectedIdeaForAdopt(idea)}
+          onAdopt={(idea) => { void handleAdopt(idea); }}
           onClearFilters={handleClearFilters}
+          adoptingIdeaId={adoptingIdeaId}
         />
       </main>
 
@@ -285,16 +329,9 @@ export function CommunityHubView({
         onClose={() => setIsShareModalOpen(false)}
         onSubmit={handleShareSubmit}
         isSubmitting={isSharing}
+        errorMessage={isShareModalOpen ? actionError : null}
       />
 
-      <AdoptIdeaModal
-        isOpen={Boolean(selectedIdeaForAdopt)}
-        idea={selectedIdeaForAdopt}
-        learners={learners}
-        onClose={() => setSelectedIdeaForAdopt(null)}
-        onConfirm={handleAdoptConfirm}
-        isAdopting={isAdopting}
-      />
     </div>
   );
 }

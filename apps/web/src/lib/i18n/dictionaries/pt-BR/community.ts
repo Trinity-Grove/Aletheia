@@ -11,6 +11,7 @@ export const community = {
     ideasCount: '{count} ideias encontradas',
     filterAge: 'Faixa etária',
     allAges: 'Todas as idades',
+    manageActivities: 'Ver atividades da família',
   },
   themes: {
     natureStudy: '🌿 Estudos da Natureza',
@@ -39,6 +40,7 @@ export const community = {
     title: 'Compartilhar Ideia com Outras Famílias',
     subtitle: 'Sua ideia será compartilhada de forma totalmente anônima, sem expor dados pessoais ou da sua família.',
     privacyNotice: 'Garantia de Privacidade: Nenhuma identificação pessoal, nome de crianças ou registros privados são compartilhados.',
+    anonymousConsent: 'Confirmo que esta ideia será publicada sem identificar minha família ou os educandos.',
     nameLabel: 'Título da Atividade',
     namePlaceholder: 'Ex: Diário da Natureza: Caça às Folhas de Outono',
     descriptionLabel: 'Como Fazer (Descrição prática)',

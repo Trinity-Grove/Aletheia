@@ -704,6 +704,7 @@ export const curriculum: Dictionary['curriculum'] = {
     supervisionRequired: 'Requires adult supervision',
     visibilityLabel: 'Visibility',
     visibilityHelp: 'Choose whether this activity is private to your family or visible to the community.',
+    anonymousConsent: 'I confirm this activity will be shared anonymously, without identifying my family or learners.',
     cancel: 'Cancel',
     save: 'Save',
     saveError: 'Failed to save activity.',

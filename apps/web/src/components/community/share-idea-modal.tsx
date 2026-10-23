@@ -17,8 +17,10 @@ export interface ShareIdeaModalProps {
     ageMax: number;
     estimatedDurationMinutes: number;
     supervisionRequired: boolean;
+    anonymousSharingConsent: true;
   }): Promise<void> | void;
   isSubmitting?: boolean | undefined;
+  errorMessage?: string | null | undefined;
 }
 
 export function ShareIdeaModal({
@@ -26,6 +28,7 @@ export function ShareIdeaModal({
   onClose,
   onSubmit,
   isSubmitting = false,
+  errorMessage,
 }: ShareIdeaModalProps) {
   const { t } = useLocale();
 
@@ -37,6 +40,7 @@ export function ShareIdeaModal({
   const [ageMax, setAgeMax] = useState(12);
   const [estimatedDurationMinutes, setEstimatedDurationMinutes] = useState(45);
   const [supervisionRequired, setSupervisionRequired] = useState(true);
+  const [anonymousSharingConsent, setAnonymousSharingConsent] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -48,6 +52,7 @@ export function ShareIdeaModal({
       setAgeMax(12);
       setEstimatedDurationMinutes(45);
       setSupervisionRequired(true);
+      setAnonymousSharingConsent(false);
     }
   }, [isOpen]);
 
@@ -59,7 +64,7 @@ export function ShareIdeaModal({
 
     const trimmedName = name.trim();
     const trimmedDescription = description.trim();
-    if (!trimmedName || !trimmedDescription) return;
+    if (!trimmedName || !trimmedDescription || !anonymousSharingConsent) return;
 
     const parsedMaterials = materials
       .split(',')
@@ -78,6 +83,7 @@ export function ShareIdeaModal({
       ageMax: normalizedAgeMax,
       estimatedDurationMinutes,
       supervisionRequired,
+      anonymousSharingConsent: true,
     });
   };
 
@@ -103,6 +109,8 @@ export function ShareIdeaModal({
             <span>{t('community.shareModal.privacyNotice')}</span>
           </Alert>
         </div>
+
+        {errorMessage && <Alert variant="error" data-testid="share-idea-error">{errorMessage}</Alert>}
 
         <Input
           label={t('community.shareModal.nameLabel')}
@@ -181,6 +189,13 @@ export function ShareIdeaModal({
           disabled={isSubmitting}
         />
 
+        <Checkbox
+          label={t('community.shareModal.anonymousConsent')}
+          checked={anonymousSharingConsent}
+          onChange={(e) => setAnonymousSharingConsent(e.target.checked)}
+          disabled={isSubmitting}
+        />
+
         <div className="community-modal-footer">
           <Button
             type="button"
@@ -195,7 +210,7 @@ export function ShareIdeaModal({
             type="submit"
             variant="primary"
             isLoading={isSubmitting}
-            disabled={isSubmitting || !name.trim() || !description.trim()}
+            disabled={isSubmitting || !name.trim() || !description.trim() || !anonymousSharingConsent}
           >
             {isSubmitting ? t('community.shareModal.submitting') : t('community.shareModal.submitBtn')}
           </Button>
