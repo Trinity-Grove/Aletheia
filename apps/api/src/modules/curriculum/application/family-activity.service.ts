@@ -7,6 +7,7 @@ import type {
   FamilyContentVisibility,
   UpdateFamilyActivityOutput,
 } from '@aletheia/contracts';
+import { communityActivityMetadataSchema, communityIdeaThemeSchema } from '@aletheia/contracts';
 import { FamilyActivityRepository } from '../infrastructure/family-activity.repository.js';
 
 @Injectable()
@@ -107,6 +108,23 @@ export class FamilyActivityService {
   }
 
   private toCommunityDto(row: FamilyActivity): CommunityActivityResponseDto {
+    const rawMetadata = row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+      ? row.metadata as Record<string, unknown>
+      : {};
+    const theme = communityIdeaThemeSchema.safeParse(rawMetadata.theme);
+    const metadata = communityActivityMetadataSchema.parse({
+      ...(theme.success ? { theme: theme.data } : {}),
+      ...(Array.isArray(rawMetadata.materials) && rawMetadata.materials.every((item) => typeof item === 'string')
+        ? { materials: rawMetadata.materials }
+        : {}),
+      ...(typeof rawMetadata.seasonalPeriod === 'string'
+        ? { seasonalPeriod: rawMetadata.seasonalPeriod }
+        : {}),
+      ...(Array.isArray(rawMetadata.steps) && rawMetadata.steps.every((item) => typeof item === 'string')
+        ? { steps: rawMetadata.steps }
+        : {}),
+    });
+
     return {
       id: row.id,
       name: row.name,
@@ -117,7 +135,7 @@ export class FamilyActivityService {
       supervisionRequired: row.supervisionRequired,
       riskLevel: row.riskLevel,
       evidenceRequirementMode: row.evidenceRequirementMode as 'ANY' | 'ALL',
-      metadata: row.metadata as Record<string, unknown>,
+      metadata,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };

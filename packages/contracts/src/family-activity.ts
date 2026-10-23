@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { activityMetadataSchema, evidenceRequirementModeSchema } from './activity-definition.js';
+import { communityIdeaThemeSchema } from './community-activity.js';
 
 // Family-owned Activity (issue #96 section 7: "Pode ser criada pela
 // família", issue #245). Its own model/contract, not a family-scoped
@@ -28,12 +29,30 @@ export const createFamilyActivitySchema = z
     supervisionRequired: z.boolean().default(false),
     riskLevel: z.string().max(50).nullish(),
     evidenceRequirementMode: evidenceRequirementModeSchema.default('ANY'),
-    metadata: activityMetadataSchema.partial().default({}),
+    metadata: activityMetadataSchema.partial().extend({
+      theme: communityIdeaThemeSchema.optional(),
+      seasonalPeriod: z.string().max(160).optional(),
+      steps: z.array(z.string().min(1).max(2_000)).max(30).optional(),
+      isSeed: z.boolean().optional(),
+    }).default({}),
     visibility: familyContentVisibilitySchema.default('PRIVATE'),
+    anonymousSharingConsent: z.boolean().optional(),
   })
-  .refine(({ ageMin, ageMax }) => ageMin == null || ageMax == null || ageMin <= ageMax, {
-    message: 'ageMax must be greater than or equal to ageMin',
-    path: ['ageMax'],
+  .superRefine(({ ageMin, ageMax, visibility, anonymousSharingConsent }, ctx) => {
+    if (ageMin != null && ageMax != null && ageMin > ageMax) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'ageMax must be greater than or equal to ageMin',
+        path: ['ageMax'],
+      });
+    }
+    if (visibility === 'PUBLIC' && anonymousSharingConsent !== true) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Anonymous-sharing consent is required for public activities.',
+        path: ['anonymousSharingConsent'],
+      });
+    }
   });
 
 export type CreateFamilyActivityDto = z.input<typeof createFamilyActivitySchema>;

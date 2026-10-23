@@ -56,4 +56,18 @@ describe('community activity contracts', () => {
     });
     expect(activity.name).toBe('Diário da Natureza: Coleta de Folhas');
   });
+
+  it('rejects identity and private fields from community metadata', () => {
+    const result = communityActivityResponseSchema.safeParse({
+      id: 'a0000000-0000-4000-8000-000000000001',
+      name: 'Ideia compartilhada',
+      supervisionRequired: false,
+      evidenceRequirementMode: 'ANY',
+      metadata: { familyId: '22222222-2222-4222-8222-222222222222' },
+      createdAt: '2026-10-16T00:00:00.000Z',
+      updatedAt: '2026-10-16T00:00:00.000Z',
+    });
+
+    expect(result.success).toBe(false);
+  });
 });

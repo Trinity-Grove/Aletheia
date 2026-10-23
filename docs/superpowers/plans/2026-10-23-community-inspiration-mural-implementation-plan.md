@@ -37,13 +37,13 @@
 
 **Interfaces:**
 - Extend validated activity metadata with `theme`, `materials`, `seasonalPeriod`, `steps`, and `isSeed`; keep `CommunityIdeaTheme` defined without a circular contract import. Add optional input `anonymousSharingConsent?: boolean`; require `true` whenever `visibility === 'PUBLIC'`.
-- Community metadata allowlist: `theme`, `materials`, `seasonalPeriod`, `steps`, `isSeed` only; omit malformed or all other properties.
+- Community metadata allowlist: `theme`, `materials`, `seasonalPeriod`, `steps` only; curated seed status is never accepted from public submissions. omit malformed or all other properties.
 
 - [ ] Contract test: PRIVATE remains valid without consent; PUBLIC fails without consent and passes with consent.
-- [ ] API service test: public response excludes `familyId`, `origin`, `learnerId`, `authorName`, arbitrary metadata; it preserves valid theme/material/step fields.
-- [ ] Run focused contract/API tests and observe RED.
-- [ ] Implement validation and allowlisted public DTO mapping.
-- [ ] Run focused tests and API typecheck.
+- [x] API service test: public response excludes `familyId`, `origin`, `learnerId`, `authorName`, arbitrary metadata; it preserves valid theme/material/step fields.
+- [x] Run focused contract/API tests and observe RED.
+- [x] Implement validation and allowlisted public DTO mapping.
+- [x] Run focused tests and API typecheck.
 - [ ] Commit `fix: require consent and sanitize community activity metadata`.
 
 ### Task 2: Make mural share/adopt flows truthful and complete
@@ -70,4 +70,3 @@
 - [ ] Run i18n coverage, module boundaries, API/web typechecks, and `git diff --check`.
 - [ ] Inspect final public DTO and all public-create/update call sites against the consent contract.
 - [ ] Keep #290 closed: original implementation is merged by PR #356 and the mural by PR #362; report this as a follow-up correction rather than attempting to close it again.
-
