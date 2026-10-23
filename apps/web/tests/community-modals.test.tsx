@@ -53,6 +53,7 @@ describe('ShareIdeaModal', () => {
         'Garantia de Privacidade: Nenhuma identificação pessoal, nome de crianças ou registros privados são compartilhados.'
       )
     ).toBeInTheDocument();
+    expect(screen.getByLabelText(/Confirmo que esta ideia será publicada sem identificar/i)).toBeInTheDocument();
 
     // Fields
     expect(screen.getByLabelText('Título da Atividade')).toBeInTheDocument();
@@ -108,6 +109,7 @@ describe('ShareIdeaModal', () => {
     // Toggle checkbox (default is true, unchecking sets to false)
     const supervisionCheckbox = screen.getByLabelText('Exige supervisão próxima dos pais');
     fireEvent.click(supervisionCheckbox);
+    fireEvent.click(screen.getByLabelText(/Confirmo que esta ideia será publicada sem identificar/i));
 
     const submitBtn = screen.getByRole('button', { name: 'Publicar Ideia' });
     fireEvent.click(submitBtn);
@@ -122,7 +124,20 @@ describe('ShareIdeaModal', () => {
       ageMax: 9,
       estimatedDurationMinutes: 30,
       supervisionRequired: false,
+      anonymousSharingConsent: true,
     });
+  });
+
+  it('requires anonymous-sharing consent before it can submit', () => {
+    const onSubmit = vi.fn();
+    render(<ShareIdeaModal isOpen onClose={vi.fn()} onSubmit={onSubmit} />);
+    fireEvent.change(screen.getByLabelText('Título da Atividade'), { target: { value: 'Ideia' } });
+    fireEvent.change(screen.getByLabelText('Como Fazer (Descrição prática)'), { target: { value: 'Descrição' } });
+
+    const submit = screen.getByRole('button', { name: 'Publicar Ideia' });
+    expect(submit).toBeDisabled();
+    fireEvent.click(submit);
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it('normalizes ageMin and ageMax when ageMin is greater than ageMax on submit', () => {
@@ -135,6 +150,7 @@ describe('ShareIdeaModal', () => {
     fireEvent.change(screen.getByLabelText('Como Fazer (Descrição prática)'), {
       target: { value: 'Descrição prática da atividade de teste.' },
     });
+    fireEvent.click(screen.getByLabelText(/Confirmo que esta ideia será publicada sem identificar/i));
     // Invert ages: min 14, max 6
     fireEvent.change(screen.getByLabelText('Idade mínima'), {
       target: { value: '14' },

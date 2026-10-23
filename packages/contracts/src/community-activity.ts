@@ -17,8 +17,15 @@ export interface CommunityActivityMetadata {
   seasonalPeriod?: string | undefined;
   steps?: string[] | undefined;
   isSeed?: boolean | undefined;
-  [key: string]: unknown;
 }
+
+export const communityActivityMetadataSchema = z.object({
+  theme: communityIdeaThemeSchema.optional(),
+  materials: z.array(z.string()).optional(),
+  seasonalPeriod: z.string().optional(),
+  steps: z.array(z.string()).optional(),
+  isSeed: z.boolean().optional(),
+}).strict();
 
 // Deliberately omits familyId and author information: the community catalog
 // shares the activity, not the identity of the family that created it.
@@ -32,7 +39,7 @@ export const communityActivityResponseSchema = z.object({
   supervisionRequired: z.boolean(),
   riskLevel: z.string().nullable().optional(),
   evidenceRequirementMode: evidenceRequirementModeSchema,
-  metadata: z.record(z.string(), z.unknown()),
+  metadata: communityActivityMetadataSchema,
   createdAt: z.string(),
   updatedAt: z.string(),
 });

@@ -702,6 +702,7 @@ export const curriculum = {
     supervisionRequired: 'Requer supervisão de um adulto',
     visibilityLabel: 'Visibilidade',
     visibilityHelp: 'Você decide se esta atividade fica só com a sua família ou visível para a comunidade.',
+    anonymousConsent: 'Confirmo que esta atividade será compartilhada anonimamente, sem identificar minha família ou os educandos.',
     cancel: 'Cancelar',
     save: 'Salvar',
     saveError: 'Falha ao salvar a atividade.',

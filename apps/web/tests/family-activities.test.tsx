@@ -83,6 +83,8 @@ describe('FamilyActivitiesGallery', () => {
 
     // Creator's own choice, per issue #244/#245: default PRIVATE, explicit opt-in to PUBLIC.
     fireEvent.click(screen.getByTestId('family-activity-visibility-public'));
+    expect(screen.getByLabelText(/Confirmo que esta atividade será compartilhada anonimamente/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText(/Confirmo que esta atividade será compartilhada anonimamente/i));
 
     fetchMock.mockResolvedValueOnce({
       ok: true,
@@ -96,7 +98,7 @@ describe('FamilyActivitiesGallery', () => {
         `/api/v1/families/${testFamilyId}/activities`,
         expect.objectContaining({
           method: 'POST',
-          body: expect.stringContaining('"visibility":"PUBLIC"'),
+          body: expect.stringContaining('"anonymousSharingConsent":true'),
         }),
       );
     });
@@ -104,6 +106,17 @@ describe('FamilyActivitiesGallery', () => {
     await waitFor(() => {
       expect(screen.getByText('Nova atividade')).toBeInTheDocument();
     });
+  });
+
+  it('does not allow a public activity to be saved without explicit anonymity consent', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => [] }) as unknown as typeof fetch;
+    render(<FamilyActivitiesGallery familyId={testFamilyId} />);
+    await waitFor(() => expect(screen.getByText(/nenhuma atividade própria ainda/i)).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('create-family-activity-btn'));
+    fireEvent.change(screen.getByTestId('family-activity-name-input'), { target: { value: 'Atividade pública' } });
+    fireEvent.click(screen.getByTestId('family-activity-visibility-public'));
+
+    expect(screen.getByTestId('family-activity-save-btn')).toBeDisabled();
   });
 
   it('deletes an activity', async () => {

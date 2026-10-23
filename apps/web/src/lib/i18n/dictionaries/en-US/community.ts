@@ -11,6 +11,7 @@ export const community = {
     ideasCount: '{count} ideas found',
     filterAge: 'Age range',
     allAges: 'All ages',
+    manageActivities: 'View family activities',
   },
   themes: {
     natureStudy: '🌿 Nature Study',
@@ -39,6 +40,7 @@ export const community = {
     title: 'Share Idea with Other Families',
     subtitle: 'Your idea will be shared completely anonymously, without exposing personal or family data.',
     privacyNotice: 'Privacy Guarantee: No personal identification, children names, or private records are shared.',
+    anonymousConsent: 'I confirm this idea will be shared without identifying my family or learners.',
     nameLabel: 'Activity Title',
     namePlaceholder: 'e.g. Nature Journal: Autumn Leaf Hunt',
     descriptionLabel: 'How to Do It (Practical description)',

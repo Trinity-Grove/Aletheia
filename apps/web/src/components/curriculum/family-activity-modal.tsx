@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Card } from '@aletheia/ui';
+import { Alert, Button, Card, Checkbox } from '@aletheia/ui';
 import type { FamilyActivityResponseDto } from '@aletheia/contracts';
 import { useLocale } from '../../lib/i18n/locale-context';
 
@@ -24,6 +24,7 @@ export function FamilyActivityModal({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<'PRIVATE' | 'PUBLIC'>('PRIVATE');
+  const [anonymousSharingConsent, setAnonymousSharingConsent] = useState(false);
   const [supervisionRequired, setSupervisionRequired] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +41,7 @@ export function FamilyActivityModal({
     setName(activity?.name ?? '');
     setDescription(activity?.description ?? '');
     setVisibility(activity?.visibility ?? 'PRIVATE');
+    setAnonymousSharingConsent(false);
     setSupervisionRequired(activity?.supervisionRequired ?? false);
     setError(null);
   }, [isOpen, activity]);
@@ -99,6 +101,7 @@ export function FamilyActivityModal({
         description: description.trim() || null,
         supervisionRequired,
         visibility,
+        ...(visibility === 'PUBLIC' ? { anonymousSharingConsent } : {}),
       };
 
       const url = activity
@@ -205,7 +208,7 @@ export function FamilyActivityModal({
                 type="button"
                 data-testid="family-activity-visibility-private"
                 aria-pressed={visibility === 'PRIVATE'}
-                onClick={() => setVisibility('PRIVATE')}
+                onClick={() => { setVisibility('PRIVATE'); setAnonymousSharingConsent(false); }}
                 style={{
                   padding: '0.4rem 0.875rem',
                   borderRadius: 'var(--radius-full)',
@@ -224,7 +227,7 @@ export function FamilyActivityModal({
                 type="button"
                 data-testid="family-activity-visibility-public"
                 aria-pressed={visibility === 'PUBLIC'}
-                onClick={() => setVisibility('PUBLIC')}
+                onClick={() => { setVisibility('PUBLIC'); setAnonymousSharingConsent(false); }}
                 style={{
                   padding: '0.4rem 0.875rem',
                   borderRadius: 'var(--radius-full)',
@@ -240,6 +243,14 @@ export function FamilyActivityModal({
                 {t('curriculum.familyActivities.publicBadge')}
               </button>
             </div>
+            {visibility === 'PUBLIC' && (
+              <Checkbox
+                label={t('curriculum.familyActivities.anonymousConsent')}
+                checked={anonymousSharingConsent}
+                onChange={(event) => setAnonymousSharingConsent(event.target.checked)}
+                disabled={saving}
+              />
+            )}
           </div>
         </div>
 
@@ -252,6 +263,7 @@ export function FamilyActivityModal({
             data-testid="family-activity-save-btn"
             onClick={handleSave}
             isLoading={saving}
+            disabled={saving || (visibility === 'PUBLIC' && !anonymousSharingConsent)}
           >
             {t('curriculum.familyActivities.save')}
           </Button>

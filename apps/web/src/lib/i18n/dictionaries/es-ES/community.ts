@@ -11,6 +11,7 @@ export const community = {
     ideasCount: '{count} ideas encontradas',
     filterAge: 'Rango de edad',
     allAges: 'Todas las edades',
+    manageActivities: 'Ver actividades de la familia',
   },
   themes: {
     natureStudy: '🌿 Estudios de la Naturaleza',
@@ -39,6 +40,7 @@ export const community = {
     title: 'Compartir Idea con Otras Familias',
     subtitle: 'Su idea se compartirá de forma totalmente anónima, sin exponer datos personales o de su familia.',
     privacyNotice: 'Garantía de Privacidad: No se comparte ninguna identificación personal, nombre de niños ni registros privados.',
+    anonymousConsent: 'Confirmo que esta idea se compartirá sin identificar a mi familia ni a los estudiantes.',
     nameLabel: 'Título de la Actividad',
     namePlaceholder: 'Ej: Diario de la Naturaleza: Búsqueda de Hojas de Otoño',
     descriptionLabel: 'Cómo Hacerlo (Descripción práctica)',

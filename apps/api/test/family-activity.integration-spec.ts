@@ -84,8 +84,21 @@ describe('Family-created activities (issue #96 section 7, issue #245) (real Post
         description: 'Observar plantas e insetos',
         visibility: 'PUBLIC',
       })
+      .expect(400);
+
+    expect(updated.body.message).toBeDefined();
+
+    const published = await supertest(app.getHttpServer())
+      .put(`/api/v1/families/${familyId}/activities/${created.body.id}`)
+      .set('Cookie', familyCookie)
+      .send({
+        name: 'Passeio no parque',
+        description: 'Observar plantas e insetos',
+        visibility: 'PUBLIC',
+        anonymousSharingConsent: true,
+      })
       .expect(200);
-    expect(updated.body.visibility).toBe('PUBLIC');
+    expect(published.body.visibility).toBe('PUBLIC');
 
     const community = await supertest(app.getHttpServer())
       .get('/api/v1/activities/community')

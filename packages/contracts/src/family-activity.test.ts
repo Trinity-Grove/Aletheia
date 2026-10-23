@@ -16,11 +16,50 @@ describe('family activity contracts', () => {
     const result = createFamilyActivitySchema.safeParse({
       name: 'Passeio no parque',
       visibility: 'PUBLIC',
+      anonymousSharingConsent: true,
     });
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.visibility).toBe('PUBLIC');
     }
+  });
+
+  it('requires explicit anonymous-sharing consent for public activities', () => {
+    expect(createFamilyActivitySchema.safeParse({
+      name: 'Passeio no parque',
+      visibility: 'PUBLIC',
+    }).success).toBe(false);
+
+    expect(createFamilyActivitySchema.safeParse({
+      name: 'Passeio no parque',
+      visibility: 'PUBLIC',
+      anonymousSharingConsent: false,
+    }).success).toBe(false);
+  });
+
+  it('retains and validates community theme metadata', () => {
+    const result = createFamilyActivitySchema.safeParse({
+      name: 'Herbário caseiro',
+      metadata: {
+        theme: 'NATURE_STUDY',
+        materials: ['Papel'],
+        steps: ['Prensar folhas'],
+      },
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.metadata).toMatchObject({
+        theme: 'NATURE_STUDY',
+        materials: ['Papel'],
+        steps: ['Prensar folhas'],
+      });
+    }
+
+    expect(createFamilyActivitySchema.safeParse({
+      name: 'Ideia com tema inválido',
+      metadata: { theme: 'UNKNOWN_THEME' },
+    }).success).toBe(false);
   });
 
   it('rejects an invalid visibility value', () => {
