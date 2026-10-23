@@ -10,7 +10,7 @@ export type LearningPathExplorerQueryDto = z.infer<typeof learningPathExplorerQu
 export const learningPathExplorerCompetencySchema = z.object({
   code: z.string(),
   title: z.string(),
-  level: z.number().int(),
+  level: z.number().int().nullable(),
   metadata: z.record(z.string(), z.unknown()),
 });
 

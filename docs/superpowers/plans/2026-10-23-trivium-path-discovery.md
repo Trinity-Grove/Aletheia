@@ -99,7 +99,7 @@
 **Interfaces:**
 - `UpsertLearnerLearningPathSelectionDto`: `{ enabled: boolean }`.
 - `LearnerLearningPathSelectionResponseDto`: selection id, familyId, learnerId, academicYearId, pathId, enabled, timestamps, and path code/name/version/status.
-- `LearningPathExplorerCatalogEntryDto`: published path id/code/version/name/description/metadata, ordered competency code/title/metadata, and `selected` boolean.
+- `LearningPathExplorerCatalogEntryDto`: published path id/code/version/name/description/metadata, ordered competency code/title/nullable level/metadata, and `selected` boolean.
 - Prisma model `LearnerLearningPathSelection` has a unique key `(familyId, learnerId, academicYearId, pathId)` and relations to family, learner, academic year, and path.
 - Repository methods: `listPublishedCatalog(familyId, learnerId, academicYearId)` restricted to published paths in `CLASSICAL_EDUCATION`, and `upsert(familyId, learnerId, academicYearId, pathId, enabled)`.
 
@@ -123,10 +123,10 @@
 - `PUT /families/:familyId/curriculum/paths/:pathId/learners/:learnerId/academic-years/:academicYearId/selection` accepts `{ enabled: boolean }` and returns the selection response.
 - `LearnerLearningPathSelectionService.listCatalog(familyId, learnerId, academicYearId)` and `.upsert(familyId, learnerId, academicYearId, pathId, dto)`.
 
-- [ ] Write service/controller tests for route mapping, missing/unpublished path behavior, family ownership errors, and that legacy `/paths/selections` and `/paths/:pathId/selection` remain available unchanged.
-- [ ] Run targeted specs and confirm expected failures.
-- [ ] Implement DTO mapping, ownership checks, route decorators, Zod validation, provider registration, and permission metadata (`manage_curriculum` on mutation).
-- [ ] Run targeted API specs and confirm they pass.
+- [x] Write service/controller tests for route mapping, missing/unpublished path behavior, family ownership errors, and keep legacy `/paths/selections` and `/paths/:pathId/selection` methods unchanged.
+- [x] Run targeted specs and confirm the missing service and handlers fail as expected.
+- [x] Implement DTO mapping, ownership checks, family-protected route decorators, Zod validation, and provider registration. `manage_curriculum` is available to all four family roles, so existing `FamilyTenantGuard` enforces the same authorized family-member set.
+- [x] Run targeted API specs; service/controller tests passed (6/6).
 
 ## Task 5: Extend the curriculum explorer UI
 

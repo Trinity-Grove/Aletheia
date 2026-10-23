@@ -133,6 +133,8 @@ import { CurriculumPackCompositionRepository } from './infrastructure/curriculum
 import { CurriculumPackCompositionService } from './application/curriculum-pack-composition.service.js';
 import { FamilyLearningPathSelectionRepository } from './infrastructure/family-learning-path-selection.repository.js';
 import { FamilyLearningPathSelectionService } from './application/family-learning-path-selection.service.js';
+import { LearnerLearningPathSelectionRepository } from './infrastructure/learner-learning-path-selection.repository.js';
+import { LearnerLearningPathSelectionService } from './application/learner-learning-path-selection.service.js';
 import { FamilyProjectSelectionRepository } from './infrastructure/family-project-selection.repository.js';
 import { FamilyProjectSelectionService } from './application/family-project-selection.service.js';
 
@@ -241,6 +243,7 @@ import { FamilyProjectSelectionService } from './application/family-project-sele
     FamilyLearningResourceRepository,
     CurriculumPackCompositionRepository,
     FamilyLearningPathSelectionRepository,
+    LearnerLearningPathSelectionRepository,
     FamilyProjectSelectionRepository,
     CurriculumService,
     ObjectiveService,
@@ -260,6 +263,7 @@ import { FamilyProjectSelectionService } from './application/family-project-sele
     FamilyLearningResourceService,
     CurriculumPackCompositionService,
     FamilyLearningPathSelectionService,
+    LearnerLearningPathSelectionService,
     FamilyProjectSelectionService,
     DefinitionVersionOperationsService,
     AuthorTrustRepository,

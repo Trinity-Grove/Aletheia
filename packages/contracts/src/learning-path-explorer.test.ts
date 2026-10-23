@@ -25,4 +25,18 @@ describe('learning path explorer contracts', () => {
     expect(entry.selected).toBe(true);
     expect(() => learningPathExplorerCatalogEntrySchema.parse({ ...entry, selected: 'true' })).toThrow();
   });
+
+  it('preserves a legacy competency with no assigned level', () => {
+    const entry = learningPathExplorerCatalogEntrySchema.parse({
+      id: UUID,
+      code: 'TRIVIUM.GRAMMAR',
+      version: 1,
+      name: 'Grammar',
+      metadata: {},
+      selected: false,
+      competencies: [{ code: 'TRIVIUM.GRAMMAR.CLOSE_READING', title: 'Close reading', level: null, metadata: {} }],
+    });
+
+    expect(entry.competencies[0]?.level).toBeNull();
+  });
 });
