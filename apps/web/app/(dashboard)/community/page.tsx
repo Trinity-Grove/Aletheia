@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { LearnerSummaryDto } from '@aletheia/contracts';
 import { ProductShell } from '../../../src/components/layout/product-shell';
 import { CommunityHubView } from '../../../src/components/community';
@@ -50,15 +50,6 @@ export default function CommunityPage() {
     };
   }, [auth?.activeFamilyId]);
 
-  const hubLearners = useMemo(
-    () =>
-      learners.map((l) => ({
-        id: l.id,
-        name: l.preferredName || l.firstName,
-      })),
-    [learners],
-  );
-
   return (
     <ProductShell
       familyId={familyId}
@@ -69,7 +60,6 @@ export default function CommunityPage() {
     >
       <CommunityHubView
         familyId={familyId ?? ''}
-        learners={hubLearners}
       />
     </ProductShell>
   );

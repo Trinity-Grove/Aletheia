@@ -11,7 +11,6 @@ import { ShareIdeaModal } from './share-idea-modal';
 
 export interface CommunityHubViewProps {
   familyId: string;
-  learners?: Array<{ id: string; name: string }> | undefined;
   initialActivities?: CommunityActivityResponseDto[] | undefined;
 }
 
@@ -79,7 +78,6 @@ function matchesSearch(idea: CommunityActivityResponseDto, query: string): boole
 
 export function CommunityHubView({
   familyId,
-  learners,
   initialActivities,
 }: CommunityHubViewProps) {
   const { t } = useLocale();
