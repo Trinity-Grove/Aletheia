@@ -70,3 +70,6 @@ export * from './seminary-theology.js';
 export * from './pack-licensing.js';
 export * from './pack-diff.js';
 export * from './ai.js';
+
+export * from './learner-learning-path-selection.js';
+export * from './learning-path-explorer.js';

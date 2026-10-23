@@ -29,7 +29,7 @@ The catalog currently names Classical Education / Trivium as a pedagogical appro
 ## API and data contract
 
 - Keep the published catalog separate from family state. The catalog is read-only for family users and contains only published paths.
-- Add a family-protected catalog read that returns path identity, domain identity, description, metadata, ordered competencies, starter objectives, and the current learner/year adoption state when context is supplied.
+- Add a family-protected catalog read for the `CLASSICAL_EDUCATION` domain that returns path identity, description, metadata, ordered competencies, starter objectives, and the current learner/year adoption state. Do not surface unrelated domains until their discoverability and localized presentation are in scope.
 - Add learner/year-scoped enable/disable operations. Validate that the learner and academic year both belong to the route's family before reading or writing state.
 - Preserve existing family-wide selection endpoints and records for compatibility; do not silently reinterpret historical selections as learner-specific.
 - Persist learner/year path adoption with a normalized record and a unique key across family, learner, academic year, and path. Disabling is a reversible state change and never deletes progress or definitions.

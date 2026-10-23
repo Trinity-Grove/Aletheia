@@ -101,13 +101,13 @@
 - `LearnerLearningPathSelectionResponseDto`: selection id, familyId, learnerId, academicYearId, pathId, enabled, timestamps, and path code/name/version/status.
 - `LearningPathExplorerCatalogEntryDto`: published path id/code/version/name/description/metadata, ordered competency code/title/metadata, and `selected` boolean.
 - Prisma model `LearnerLearningPathSelection` has a unique key `(familyId, learnerId, academicYearId, pathId)` and relations to family, learner, academic year, and path.
-- Repository methods: `listPublishedCatalog(familyId, learnerId, academicYearId)` and `upsert(familyId, learnerId, academicYearId, pathId, enabled)`.
+- Repository methods: `listPublishedCatalog(familyId, learnerId, academicYearId)` restricted to published paths in `CLASSICAL_EDUCATION`, and `upsert(familyId, learnerId, academicYearId, pathId, enabled)`.
 
-- [ ] Write contract tests for valid enabled/disabled payloads, response shape, and catalog entries with selected state.
-- [ ] Write repository tests for published catalog ordering/latest versions, independent state per learner/year, idempotent upsert, unknown/unpublished path rejection, and learner/year ownership mismatch.
-- [ ] Run contract and repository specs; confirm failures match missing schema/model/repository behavior.
-- [ ] Add Zod schemas and exports; add Prisma model, relations, and additive migration; implement repository queries scoped by family, learner, and year.
-- [ ] Generate Prisma client with the repository's established command, then run targeted contract/repository tests.
+- [x] Write contract tests for valid enabled/disabled payloads, response shape, and catalog entries with selected state.
+- [x] Write repository tests for published Trivium catalog ordering/latest versions, independent state per learner/year, idempotent upsert, unpublished-path rejection, and learner/year ownership mismatch.
+- [x] Run contract and repository specs; confirmed failures on missing contract/repository modules and missing Prisma delegate.
+- [x] Add Zod schemas and exports; add the learner/year Prisma model, relations, additive migration, and family-scoped repository queries.
+- [x] Generate Prisma client from the new schema; `prisma validate` passed, contract tests passed (10/10), and repository tests passed (6/6).
 
 ## Task 4: Add family-protected API routes
 
