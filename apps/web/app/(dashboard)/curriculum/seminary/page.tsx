@@ -108,6 +108,7 @@ export default function SeminaryPage() {
       setTrackingError(false);
       return;
     }
+    const learnerId = selectedLearnerId;
 
     const controller = new AbortController();
     setIsTrackingLoading(true);
@@ -115,7 +116,7 @@ export default function SeminaryPage() {
 
     async function loadTrackedCompetencies() {
       try {
-        const params = new URLSearchParams({ learnerId: selectedLearnerId, status: 'ACTIVE' });
+        const params = new URLSearchParams({ learnerId, status: 'ACTIVE' });
         const response = await fetch(
           `/api/v1/families/${effectiveFamilyId}/curriculum/competency-tracking?${params.toString()}`,
           { credentials: 'include', signal: controller.signal }
