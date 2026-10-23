@@ -31,12 +31,12 @@
 ### Task 1: Enforce consent and sanitize public activity metadata
 
 **Files:**
-- Modify `packages/contracts/src/family-activity.ts` and `family-activity.test.ts`.
+- Modify `packages/contracts/src/activity-definition.ts`, `community-activity.ts`, `family-activity.ts`, and their tests.
 - Modify `apps/api/src/modules/curriculum/application/family-activity.service.ts`.
 - Create `apps/api/src/modules/curriculum/application/family-activity.service.spec.ts`.
 
 **Interfaces:**
-- Add optional input `anonymousSharingConsent?: boolean`; require `true` whenever `visibility === 'PUBLIC'`.
+- Extend validated activity metadata with `theme`, `materials`, `seasonalPeriod`, `steps`, and `isSeed`; keep `CommunityIdeaTheme` defined without a circular contract import. Add optional input `anonymousSharingConsent?: boolean`; require `true` whenever `visibility === 'PUBLIC'`.
 - Community metadata allowlist: `theme`, `materials`, `seasonalPeriod`, `steps`, `isSeed` only; omit malformed or all other properties.
 
 - [ ] Contract test: PRIVATE remains valid without consent; PUBLIC fails without consent and passes with consent.
@@ -70,3 +70,4 @@
 - [ ] Run i18n coverage, module boundaries, API/web typechecks, and `git diff --check`.
 - [ ] Inspect final public DTO and all public-create/update call sites against the consent contract.
 - [ ] Keep #290 closed: original implementation is merged by PR #356 and the mural by PR #362; report this as a follow-up correction rather than attempting to close it again.
+
