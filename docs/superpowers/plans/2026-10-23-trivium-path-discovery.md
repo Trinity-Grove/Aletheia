@@ -79,11 +79,11 @@
 - `TriviumFormationSeeder.seed(): Promise<void>` uses `DefinitionsService` and the seed data from Task 1.
 - Register the seeder under the stable boot migration code `trivium-formation` and manual command `seed:trivium-formation`.
 
-- [ ] Write seeder tests for first insert/publish, rerun with already published records, and partial existing catalog without duplicate codes.
-- [ ] Run the targeted seeder spec and confirm the missing seeder fails as expected.
-- [ ] Implement idempotent domain→paths→competencies creation and publication, matching existing service seeder patterns; do not rewrite published values on every boot.
-- [ ] Register the provider and boot/manual seed entry points.
-- [ ] Run the seeder spec and confirm it passes.
+- [x] Write seeder tests for first insert/publish, rerun with already published records, partial existing catalog without duplicate codes, and existing drafts.
+- [x] Run the targeted seeder spec and confirm the missing seeder fails as expected.
+- [x] Implement idempotent domain→paths→competencies creation and publication; existing published records remain untouched.
+- [x] Register the provider and boot/manual seed entry points.
+- [x] Run the seeder spec and confirm all 4 tests pass.
 
 ## Task 3: Add learner/year selection contracts and persistence
 
