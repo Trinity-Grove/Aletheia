@@ -2067,6 +2067,7 @@ model EvidenceSubmission {
   evidenceTypeId    String                   @map("evidence_type_id") @db.Uuid
   projectDefinitionId String?                @map("project_definition_id") @db.Uuid
   authorId          String                   @map("author_id") @db.Uuid
+  title             String?                  @map("title")
   textContent       String?                  @map("text_content")
   fileUrl           String?                  @map("file_url")
   storageKey        String?                  @unique @map("storage_key")

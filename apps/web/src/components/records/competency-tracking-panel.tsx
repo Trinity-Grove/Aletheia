@@ -738,6 +738,11 @@ function ScopedCompetencyTrackingPanel({ familyId, learnerId }: CompetencyTracki
                   border: '1px solid var(--border-light)',
                 }}
               >
+                {submission.title && (
+                  <strong style={{ display: 'block', marginBottom: '0.35rem', color: 'var(--text-primary)' }}>
+                    {submission.title}
+                  </strong>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>
                     {submission.textContent || submission.fileUrl || t('records.competencies.evidenceNoDesc')}
