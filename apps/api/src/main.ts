@@ -24,6 +24,7 @@ import { HistorySubjectSeeder } from './modules/curriculum/infrastructure/histor
 import { GeographySubjectSeeder } from './modules/curriculum/infrastructure/geography-subject.seeder';
 import { LanguageSubjectSeeder } from './modules/curriculum/infrastructure/language-subject.seeder';
 import { ArtsFormationSeeder } from './modules/curriculum/infrastructure/arts-formation.seeder';
+import { TriviumFormationSeeder } from './modules/curriculum/infrastructure/trivium-formation.seeder';
 import { ServiceCommunityFormationSeeder } from './modules/curriculum/infrastructure/service-community-formation.seeder';
 import { PhysicalFormationSeeder } from './modules/curriculum/infrastructure/physical-formation.seeder';
 import { TechnologyFormationSeeder } from './modules/curriculum/infrastructure/technology-formation.seeder';
@@ -177,6 +178,7 @@ async function runDataMigrationsOnBoot(app: NestFastifyApplication): Promise<voi
     toCatalogMigration('geography-subject', () => app.get(GeographySubjectSeeder).seed()),
     toCatalogMigration('language-subjects', () => app.get(LanguageSubjectSeeder).seed()),
     toCatalogMigration('arts-formation', () => app.get(ArtsFormationSeeder).seed()),
+    toCatalogMigration('trivium-formation', () => app.get(TriviumFormationSeeder).seed()),
     toCatalogMigration('service-community-formation', () => app.get(ServiceCommunityFormationSeeder).seed()),
     toCatalogMigration('physical-formation', () => app.get(PhysicalFormationSeeder).seed()),
     toCatalogMigration('technology-formation', () => app.get(TechnologyFormationSeeder).seed()),

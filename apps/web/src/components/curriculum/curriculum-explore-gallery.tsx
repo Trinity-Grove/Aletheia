@@ -16,6 +16,7 @@ import {
 } from '@aletheia/ui';
 import type {
   AcademicYearResponseDto,
+  LearningPathExplorerCatalogEntryDto,
   LearnerSummaryDto,
   PedagogicalModelCatalogEntryDto,
 } from '@aletheia/contracts';
@@ -57,6 +58,7 @@ export function CurriculumExploreGallery({
   const [selectedLearnerId, setSelectedLearnerId] = useState(learners[0]?.id ?? '');
   const [selectedAcademicYearId, setSelectedAcademicYearId] = useState(currentYearId(academicYears));
   const [adoptingCode, setAdoptingCode] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'models' | 'trivium'>('models');
   const [selectionError, setSelectionError] = useState(false);
   const [adoptionError, setAdoptionError] = useState(false);
   const [adoptionSuccess, setAdoptionSuccess] = useState<{
@@ -209,6 +211,36 @@ export function CurriculumExploreGallery({
         </div>
       </div>
 
+      <div className="curriculum-explore__tabs" role="tablist" aria-label={t('curriculum.explore.tabsLabel')}>
+        <button
+          id="curriculum-explore-models-tab"
+          className="curriculum-explore__tab"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'models'}
+          aria-controls="curriculum-explore-models-panel"
+          data-testid="curriculum-explore-models-tab"
+          onClick={() => setActiveTab('models')}
+        >
+          {t('curriculum.explore.modelsTab')}
+        </button>
+        <button
+          id="curriculum-explore-trivium-tab"
+          className="curriculum-explore__tab"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'trivium'}
+          aria-controls="curriculum-explore-trivium-panel"
+          data-testid="curriculum-explore-trivium-tab"
+          onClick={() => setActiveTab('trivium')}
+        >
+          {t('curriculum.explore.triviumTab')}
+        </button>
+      </div>
+
+      {activeTab === 'models' ? (
+      <div id="curriculum-explore-models-panel" role="tabpanel" aria-labelledby="curriculum-explore-models-tab">
+
       <div className="curriculum-explore__filters" data-testid="curriculum-explore-filters">
         <div className="curriculum-explore__filter-field">
           <label htmlFor="curriculum-explore-approach-filter">{t('curriculum.explore.approachFilter')}</label>
@@ -337,6 +369,230 @@ export function CurriculumExploreGallery({
           })}
         </div>
       )}
+      </div>
+      ) : (
+        <div id="curriculum-explore-trivium-panel" role="tabpanel" aria-labelledby="curriculum-explore-trivium-tab">
+          <TriviumPathGallery
+            familyId={familyId}
+            learnerId={selectedLearnerId}
+            academicYearId={selectedAcademicYearId}
+            hasLearners={learners.length > 0}
+            hasAcademicYears={academicYears.length > 0}
+          />
+        </div>
+      )}
     </div>
+  );
+}
+
+interface TriviumPathGalleryProps {
+  familyId: string;
+  learnerId: string;
+  academicYearId: string;
+  hasLearners: boolean;
+  hasAcademicYears: boolean;
+}
+
+const TRIVIUM_PATH_COPY: Record<string, string> = {
+  'TRIVIUM.GRAMMAR': 'grammar',
+  'TRIVIUM.LOGIC': 'logic',
+  'TRIVIUM.RHETORIC': 'rhetoric',
+};
+
+const TRIVIUM_COMPETENCY_COPY: Record<string, string> = {
+  'TRIVIUM.GRAMMAR.LANGUAGE_PATTERNS': 'grammar.competencies.languagePatterns',
+  'TRIVIUM.GRAMMAR.CLOSE_READING': 'grammar.competencies.closeReading',
+  'TRIVIUM.GRAMMAR.VOCABULARY_MEMORY': 'grammar.competencies.vocabularyMemory',
+  'TRIVIUM.LOGIC.QUESTIONING': 'logic.competencies.questioning',
+  'TRIVIUM.LOGIC.CLAIMS_AND_REASONS': 'logic.competencies.claimsAndReasons',
+  'TRIVIUM.LOGIC.REASONING': 'logic.competencies.reasoning',
+  'TRIVIUM.RHETORIC.AUDIENCE_AND_PURPOSE': 'rhetoric.competencies.audienceAndPurpose',
+  'TRIVIUM.RHETORIC.COMPOSITION': 'rhetoric.competencies.composition',
+  'TRIVIUM.RHETORIC.REVISION_AND_DELIVERY': 'rhetoric.competencies.revisionAndDelivery',
+};
+
+function ageRecommendation(path: LearningPathExplorerCatalogEntryDto): { min: number; max: number } | null {
+  const recommendation = path.metadata.ageRecommendation;
+  if (typeof recommendation !== 'object' || recommendation === null || Array.isArray(recommendation)) return null;
+  const { min, max } = recommendation as { min?: unknown; max?: unknown };
+  return typeof min === 'number' && typeof max === 'number' ? { min, max } : null;
+}
+
+function educationalStages(path: LearningPathExplorerCatalogEntryDto): string[] {
+  const stages = path.metadata.educationalStages;
+  return Array.isArray(stages) && stages.every((stage) => typeof stage === 'string') ? stages : [];
+}
+
+function TriviumPathGallery({ familyId, learnerId, academicYearId, hasLearners, hasAcademicYears }: TriviumPathGalleryProps) {
+  const { t } = useLocale();
+  const [paths, setPaths] = useState<LearningPathExplorerCatalogEntryDto[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [mutationError, setMutationError] = useState(false);
+  const [mutationSuccess, setMutationSuccess] = useState(false);
+  const [savingPathId, setSavingPathId] = useState<string | null>(null);
+  const hasContext = hasLearners && hasAcademicYears && learnerId !== '' && academicYearId !== '';
+
+  useEffect(() => {
+    if (!hasContext) {
+      setPaths([]);
+      setLoading(false);
+      setLoadError(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setLoadError(false);
+    fetch(
+      `/api/v1/families/${familyId}/curriculum/paths/catalog?learnerId=${encodeURIComponent(learnerId)}&academicYearId=${encodeURIComponent(academicYearId)}`,
+      { credentials: 'include' },
+    )
+      .then(async (response) => {
+        if (!response.ok) throw new Error('catalog');
+        return response.json() as Promise<LearningPathExplorerCatalogEntryDto[]>;
+      })
+      .then((entries) => {
+        if (!cancelled) setPaths(Array.isArray(entries) ? entries : []);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPaths([]);
+          setLoadError(true);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [familyId, hasContext, learnerId, academicYearId]);
+
+  const handleSelection = async (path: LearningPathExplorerCatalogEntryDto) => {
+    const enabled = !path.selected;
+    setMutationError(false);
+    setMutationSuccess(false);
+    setSavingPathId(path.id);
+    try {
+      const response = await fetch(
+        `/api/v1/families/${familyId}/curriculum/paths/${path.id}/learners/${learnerId}/academic-years/${academicYearId}/selection`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ enabled }),
+        },
+      );
+      if (!response.ok) throw new Error('selection');
+      const result = (await response.json()) as { enabled?: boolean };
+      const selected = typeof result.enabled === 'boolean' ? result.enabled : enabled;
+      setPaths((current) => current.map((entry) => entry.id === path.id ? { ...entry, selected } : entry));
+      setMutationSuccess(true);
+    } catch {
+      setMutationError(true);
+    } finally {
+      setSavingPathId(null);
+    }
+  };
+
+  if (!hasContext) {
+    return (
+      <Alert variant="info" data-testid="curriculum-explore-context-required">
+        <strong>{t('curriculum.explore.trivium.contextRequiredTitle')}</strong>{' '}
+        {hasLearners ? t('curriculum.explore.trivium.contextRequiredYear') : t('curriculum.explore.trivium.contextRequiredLearner')}{' '}
+        <a href={hasLearners ? '/curriculum' : '/learners'}>
+          {hasLearners ? t('curriculum.explore.trivium.setupYear') : t('curriculum.explore.trivium.setupLearner')}
+        </a>
+      </Alert>
+    );
+  }
+
+  return (
+    <section className="curriculum-explore__trivium" data-testid="curriculum-trivium-gallery">
+      <div className="curriculum-explore__trivium-intro">
+        <h2>{t('curriculum.explore.trivium.title')}</h2>
+        <p>{t('curriculum.explore.trivium.description')}</p>
+      </div>
+
+      {mutationError && <Alert variant="error" data-testid="curriculum-trivium-mutation-error">{t('curriculum.explore.trivium.mutationError')}</Alert>}
+      {mutationSuccess && <Alert variant="success" data-testid="curriculum-trivium-mutation-success">{t('curriculum.explore.trivium.mutationSuccess')}</Alert>}
+
+      {loading ? (
+        <div className="curriculum-explore__state" data-testid="curriculum-trivium-loading">{t('curriculum.explore.trivium.loading')}</div>
+      ) : loadError ? (
+        <Alert variant="error" data-testid="curriculum-trivium-catalog-error">{t('curriculum.explore.trivium.catalogError')}</Alert>
+      ) : paths.length === 0 ? (
+        <EmptyState
+          data-testid="curriculum-trivium-empty"
+          icon={<AletheiaIcon name="search" size={32} />}
+          title={t('curriculum.explore.trivium.emptyTitle')}
+          description={t('curriculum.explore.trivium.emptyDescription')}
+        />
+      ) : (
+        <div className="curriculum-explore__grid" data-testid="curriculum-trivium-grid">
+          {paths.map((path) => {
+            const pathKey = TRIVIUM_PATH_COPY[path.code];
+            if (!pathKey) return null;
+            const age = ageRecommendation(path);
+            const isSaving = savingPathId === path.id;
+            return (
+              <Card
+                key={path.id}
+                variant="bordered"
+                className={`curriculum-explore__card curriculum-explore__trivium-card${path.selected ? ' is-selected' : ''}`}
+                data-testid={`curriculum-path-card-${path.code}`}
+                data-selected={path.selected}
+              >
+                <CardHeader>
+                  <div className="curriculum-explore__card-heading">
+                    <CardTitle>{t(`curriculum.explore.trivium.paths.${pathKey}.name`)}</CardTitle>
+                    {path.selected && <Badge variant="emerald" size="sm">{t('curriculum.explore.trivium.selected')}</Badge>}
+                  </div>
+                  <p className="curriculum-explore__card-description">{t(`curriculum.explore.trivium.paths.${pathKey}.description`)}</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="curriculum-explore__metadata">
+                    {age && <span><AletheiaIcon name="users" size={14} />{t('curriculum.explore.ageRange', age)}</span>}
+                    {educationalStages(path).length > 0 && (
+                      <span><AletheiaIcon name="layers" size={14} />{educationalStages(path).map((stage) => t(`curriculum.explore.stages.${stage}`)).join(', ')}</span>
+                    )}
+                  </div>
+                  <p className="curriculum-explore__advisory">{t('curriculum.explore.trivium.ageAdvisory')}</p>
+                  <h3 className="curriculum-explore__competencies-title">{t('curriculum.explore.trivium.competenciesTitle')}</h3>
+                  <ul className="curriculum-explore__competencies">
+                    {path.competencies.map((competency) => {
+                      const competencyKey = TRIVIUM_COMPETENCY_COPY[competency.code];
+                      if (!competencyKey) return null;
+                      return (
+                        <li key={competency.code}>
+                          <strong>{t(`curriculum.explore.trivium.paths.${competencyKey}.title`)}</strong>
+                          <p>{t(`curriculum.explore.trivium.paths.${competencyKey}.objective`)}</p>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                  <Can action="manage_curriculum">
+                    <Button
+                      size="sm"
+                      data-testid={`adopt-learning-path-${path.code}`}
+                      isLoading={isSaving}
+                      disabled={savingPathId !== null && !isSaving}
+                      onClick={() => void handleSelection(path)}
+                      leftIcon={<AletheiaIcon name={path.selected ? 'check' : 'plus'} size={16} />}
+                    >
+                      {path.selected ? t('curriculum.explore.trivium.remove') : t('curriculum.explore.trivium.adopt')}
+                    </Button>
+                  </Can>
+                </CardFooter>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }

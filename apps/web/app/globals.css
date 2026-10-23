@@ -2121,6 +2121,101 @@ p.page-subtitle {
   font: inherit;
 }
 
+.curriculum-explore__tabs {
+  display: flex;
+  gap: 0.375rem;
+  margin: 0 0 1.25rem;
+  padding: 0.25rem;
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-subtle);
+}
+
+.curriculum-explore__tab {
+  min-height: 2.75rem;
+  flex: 1 0 auto;
+  padding: 0.625rem 1rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.curriculum-explore__tab[aria-selected='true'] {
+  background: var(--bg-surface);
+  color: var(--forest);
+  box-shadow: var(--shadow-sm);
+}
+
+.curriculum-explore__tab:focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: 2px;
+}
+
+.curriculum-explore__trivium-intro {
+  margin: 0 0 1rem;
+}
+
+.curriculum-explore__trivium-intro h2,
+.curriculum-explore__competencies-title {
+  margin: 0 0 0.5rem;
+  color: var(--text-primary);
+  font-size: 1.125rem;
+}
+
+.curriculum-explore__trivium-intro p,
+.curriculum-explore__competencies p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.curriculum-explore__advisory {
+  margin: 0.75rem 0 1rem;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.curriculum-explore__competencies-title {
+  margin-top: 1rem;
+  font-size: 0.9375rem;
+}
+
+.curriculum-explore__competencies {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding-left: 1.125rem;
+}
+
+.curriculum-explore__competencies li {
+  padding-left: 0.125rem;
+}
+
+.curriculum-explore__competencies strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 420px) {
+  .curriculum-explore__tabs {
+    margin-right: -0.25rem;
+    margin-left: -0.25rem;
+  }
+
+  .curriculum-explore__tab {
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+    font-size: 0.875rem;
+  }
+}
+
 .curriculum-explore__filters {
   margin-bottom: 1.5rem;
 }

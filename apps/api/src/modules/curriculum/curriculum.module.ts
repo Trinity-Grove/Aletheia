@@ -92,6 +92,7 @@ import { MentorProgressionApprovalService } from './application/mentor-progressi
 import { LearnerCompetencyApprovalController, MentorProgressionApprovalController } from './presentation/learner-competency-approval.controller.js';
 import { AchievementController } from './presentation/achievement.controller.js';
 import { ArtsFormationSeeder } from './infrastructure/arts-formation.seeder.js';
+import { TriviumFormationSeeder } from './infrastructure/trivium-formation.seeder.js';
 import { ServiceCommunityFormationSeeder } from './infrastructure/service-community-formation.seeder.js';
 import { OfficialCurriculumPacksSeeder } from './infrastructure/official-curriculum-packs.seeder.js';
 import { SeminaryEvidenceTypesSeeder } from './infrastructure/seminary-evidence-types.seeder.js';
@@ -132,6 +133,8 @@ import { CurriculumPackCompositionRepository } from './infrastructure/curriculum
 import { CurriculumPackCompositionService } from './application/curriculum-pack-composition.service.js';
 import { FamilyLearningPathSelectionRepository } from './infrastructure/family-learning-path-selection.repository.js';
 import { FamilyLearningPathSelectionService } from './application/family-learning-path-selection.service.js';
+import { LearnerLearningPathSelectionRepository } from './infrastructure/learner-learning-path-selection.repository.js';
+import { LearnerLearningPathSelectionService } from './application/learner-learning-path-selection.service.js';
 import { FamilyProjectSelectionRepository } from './infrastructure/family-project-selection.repository.js';
 import { FamilyProjectSelectionService } from './application/family-project-selection.service.js';
 
@@ -226,6 +229,7 @@ import { FamilyProjectSelectionService } from './application/family-project-sele
     LearnerCompetencyApprovalService,
     MentorProgressionApprovalService,
     ArtsFormationSeeder,
+    TriviumFormationSeeder,
     ServiceCommunityFormationSeeder,
     OfficialCurriculumPacksSeeder,
     SeminaryEvidenceTypesSeeder,
@@ -239,6 +243,7 @@ import { FamilyProjectSelectionService } from './application/family-project-sele
     FamilyLearningResourceRepository,
     CurriculumPackCompositionRepository,
     FamilyLearningPathSelectionRepository,
+    LearnerLearningPathSelectionRepository,
     FamilyProjectSelectionRepository,
     CurriculumService,
     ObjectiveService,
@@ -258,6 +263,7 @@ import { FamilyProjectSelectionService } from './application/family-project-sele
     FamilyLearningResourceService,
     CurriculumPackCompositionService,
     FamilyLearningPathSelectionService,
+    LearnerLearningPathSelectionService,
     FamilyProjectSelectionService,
     DefinitionVersionOperationsService,
     AuthorTrustRepository,

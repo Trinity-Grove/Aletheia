@@ -346,6 +346,7 @@ model Family {
   aiFamilyUsages         AiFamilyUsage[]
   badgeAwards            LearnerBadgeAward[]
   learningPathSelections FamilyLearningPathSelection[]
+  learnerPathSelections  LearnerLearningPathSelection[]
   projectSelections      FamilyProjectSelection[]
 
   @@map("families")
@@ -407,6 +408,7 @@ model Learner {
   mentorGrants           MentorGrant[]
   aiSuggestions          AiSuggestion[]
   badgeAwards            LearnerBadgeAward[]
+  learningPathSelections LearnerLearningPathSelection[]
 
   @@index([familyId])
   @@index([familyId, archivedAt])
@@ -565,6 +567,7 @@ model AcademicYear {
   complianceRequirements ComplianceRequirement[]
   officialReports        OfficialReport[]
   complianceManualOverrides ComplianceManualOverride[]
+  learningPathSelections LearnerLearningPathSelection[]
 
   @@unique([familyId, year])
   @@index([familyId])
@@ -1223,6 +1226,7 @@ model LearningPath {
   curriculumLinks CurriculumDefinitionPath[]
   competencies    CompetencyDefinition[]
   familySelections FamilyLearningPathSelection[]
+  learnerSelections LearnerLearningPathSelection[]
 
   @@unique([code, version])
   @@index([code])
@@ -1246,6 +1250,27 @@ model FamilyLearningPathSelection {
   @@index([familyId])
   @@index([pathId])
   @@map("family_learning_path_selections")
+}
+
+model LearnerLearningPathSelection {
+  id             String   @id @default(uuid()) @db.Uuid
+  familyId       String   @map("family_id") @db.Uuid
+  learnerId      String   @map("learner_id") @db.Uuid
+  academicYearId String   @map("academic_year_id") @db.Uuid
+  pathId         String   @map("path_id") @db.Uuid
+  enabled        Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  family       Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner      Learner      @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  path         LearningPath @relation(fields: [pathId], references: [id], onDelete: Restrict)
+
+  @@unique([familyId, learnerId, academicYearId, pathId])
+  @@index([familyId, learnerId, academicYearId])
+  @@index([pathId])
+  @@map("learner_learning_path_selections")
 }
 
 // Skill definition: belongs to a competency (issue #96 section 6).

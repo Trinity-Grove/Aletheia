@@ -16,7 +16,9 @@ import {
   applyCurriculumTemplateSchema,
   createAcademicYearSchema,
   createSubjectSchema,
+  learningPathExplorerQuerySchema,
   upsertFamilyLearningPathSelectionSchema,
+  upsertLearnerLearningPathSelectionSchema,
   upsertFamilyProjectSelectionSchema,
   updateSubjectSchema,
   upsertLearnerPlanSchema,
@@ -37,6 +39,10 @@ import {
   type UpdateSubjectDto,
   type UpsertLearnerPlanDto,
   type UpsertFamilyLearningPathSelectionDto,
+  type LearnerLearningPathSelectionResponseDto,
+  type LearningPathExplorerCatalogEntryDto,
+  type LearningPathExplorerQueryDto,
+  type UpsertLearnerLearningPathSelectionDto,
   type FamilyProjectSelectionResponseDto,
   type FamilyProjectCatalogEntryDto,
   type UpsertFamilyProjectSelectionDto,
@@ -46,6 +52,7 @@ import { ZodValidationPipe } from '../../../platform/validation/index.js';
 import { CurriculumService } from '../application/curriculum.service.js';
 import { FamilyLearningPathSelectionService } from '../application/family-learning-path-selection.service.js';
 import { FamilyProjectSelectionService } from '../application/family-project-selection.service.js';
+import { LearnerLearningPathSelectionService } from '../application/learner-learning-path-selection.service.js';
 
 @ApiTags('Curriculum')
 @ApiBearerAuth()
@@ -56,6 +63,7 @@ export class CurriculumController {
     private readonly curriculumService: CurriculumService,
     private readonly familyLearningPathSelectionService: FamilyLearningPathSelectionService,
     private readonly familyProjectSelectionService: FamilyProjectSelectionService,
+    private readonly learnerLearningPathSelectionService: LearnerLearningPathSelectionService,
   ) {}
 
   // Academic Years
@@ -159,6 +167,27 @@ export class CurriculumController {
     @Body(new ZodValidationPipe(upsertFamilyLearningPathSelectionSchema)) dto: UpsertFamilyLearningPathSelectionDto,
   ): Promise<FamilyLearningPathSelectionResponseDto> {
     return this.familyLearningPathSelectionService.upsert(familyId, pathId, dto);
+  }
+
+  @Get('paths/catalog')
+  @ApiOperation({ summary: 'List published Trivium paths and selection state for a learner and year' })
+  async listTriviumPathCatalog(
+    @Param('familyId') familyId: string,
+    @Query(new ZodValidationPipe(learningPathExplorerQuerySchema)) query: LearningPathExplorerQueryDto,
+  ): Promise<LearningPathExplorerCatalogEntryDto[]> {
+    return this.learnerLearningPathSelectionService.listCatalog(familyId, query.learnerId, query.academicYearId);
+  }
+
+  @Put('paths/:pathId/learners/:learnerId/academic-years/:academicYearId/selection')
+  @ApiOperation({ summary: 'Enable or disable a Trivium path for a learner and academic year' })
+  async upsertLearnerPathSelection(
+    @Param('familyId') familyId: string,
+    @Param('pathId') pathId: string,
+    @Param('learnerId') learnerId: string,
+    @Param('academicYearId') academicYearId: string,
+    @Body(new ZodValidationPipe(upsertLearnerLearningPathSelectionSchema)) dto: UpsertLearnerLearningPathSelectionDto,
+  ): Promise<LearnerLearningPathSelectionResponseDto> {
+    return this.learnerLearningPathSelectionService.upsert(familyId, learnerId, academicYearId, pathId, dto);
   }
 
   @Get('projects/selections')
