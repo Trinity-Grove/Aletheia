@@ -1,9 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Button, Card } from '@aletheia/ui';
 import {
+  SEMINARY_EVIDENCE_TYPE_CODES,
   SEMINARY_CYCLES_METADATA,
+  type EvidenceTypeCatalogEntryDto,
+  type LearnerCompetencyTrackingResponseDto,
   type SeminaryDiscipline,
 } from '@aletheia/contracts';
 import { TheologicalLensCard } from './theological-lens-card';
@@ -18,16 +22,30 @@ const DEFAULT_DISCIPLINE = DEFAULT_CYCLE.disciplines[0]!;
 
 export interface SeminaryModuleViewerProps {
   preferredTraditionCode?: string | null | undefined;
+  familyId?: string | null | undefined;
+  selectedLearnerId?: string | null | undefined;
+  evidenceTypes?: EvidenceTypeCatalogEntryDto[] | undefined;
+  trackedCompetencies?: LearnerCompetencyTrackingResponseDto[] | undefined;
+  isSubmissionContextLoading?: boolean | undefined;
+  hasSubmissionContextError?: boolean | undefined;
   onSelectEvidenceSubmission?(discipline: SeminaryDiscipline): void;
   onSubmitPaper?(data: SeminaryPaperSubmissionData): Promise<void>;
 }
 
 export function SeminaryModuleViewer({
   preferredTraditionCode,
+  familyId,
+  selectedLearnerId,
+  evidenceTypes,
+  trackedCompetencies,
+  isSubmissionContextLoading,
+  hasSubmissionContextError,
   onSelectEvidenceSubmission,
   onSubmitPaper,
 }: SeminaryModuleViewerProps) {
   const { t } = useLocale();
+  const submissionContextLoading = isSubmissionContextLoading ?? false;
+  const submissionContextError = hasSubmissionContextError ?? false;
 
   const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
 
@@ -43,6 +61,24 @@ export function SeminaryModuleViewer({
     activeCycle.disciplines.find((d) => d.code === selectedDisciplineCode) ??
     activeCycle.disciplines[0] ??
     DEFAULT_DISCIPLINE;
+  const activeCompetency = (trackedCompetencies ?? []).find(
+    (tracking) => tracking.competency.code === activeDiscipline.competencyCode && tracking.status === 'ACTIVE'
+  );
+  const availableEvidenceTypes = useMemo(
+    () => (evidenceTypes ?? []).filter((entry) => SEMINARY_EVIDENCE_TYPE_CODES.includes(entry.code as (typeof SEMINARY_EVIDENCE_TYPE_CODES)[number])),
+    [evidenceTypes]
+  );
+  const hasSubmissionContext = Boolean(
+    familyId !== undefined || selectedLearnerId !== undefined || evidenceTypes !== undefined ||
+    trackedCompetencies !== undefined || isSubmissionContextLoading !== undefined ||
+    hasSubmissionContextError !== undefined || onSubmitPaper !== undefined
+  );
+  const canSubmitPaper = Boolean(
+    familyId && selectedLearnerId && !submissionContextLoading && !submissionContextError &&
+    activeCompetency && availableEvidenceTypes.length > 0 && onSubmitPaper
+  );
+  const canOpenSubmissionModal =
+    canSubmitPaper || (!hasSubmissionContext && Boolean(onSelectEvidenceSubmission));
 
   const handleCycleChange = (cycleNum: number) => {
     setActiveCycleNumber(cycleNum);
@@ -327,7 +363,9 @@ export function SeminaryModuleViewer({
               <Button
                 data-testid="submit-paper-btn"
                 variant="primary"
+                disabled={!canOpenSubmissionModal}
                 onClick={() => {
+                  if (!canOpenSubmissionModal) return;
                   setIsSubmissionModalOpen(true);
                   if (onSelectEvidenceSubmission) {
                     onSelectEvidenceSubmission(activeDiscipline);
@@ -337,6 +375,18 @@ export function SeminaryModuleViewer({
                 {t('curriculum.seminary.submitPaperBtn')} 📤
               </Button>
             </div>
+
+            {!submissionContextLoading && !submissionContextError && familyId && selectedLearnerId && !activeCompetency && (
+              <p data-testid="seminary-competency-inactive" style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                {t('curriculum.seminary.competencyNotActive')}{' '}
+                <Link href="/curriculum">{t('curriculum.seminary.activateCurriculumLink')}</Link>
+              </p>
+            )}
+            {!submissionContextLoading && !submissionContextError && familyId && selectedLearnerId && activeCompetency && availableEvidenceTypes.length === 0 && (
+              <p data-testid="seminary-evidence-types-unavailable" style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                {t('curriculum.seminary.evidenceTypesUnavailable')}
+              </p>
+            )}
 
             <p
               style={{
@@ -710,9 +760,12 @@ export function SeminaryModuleViewer({
         isOpen={isSubmissionModalOpen}
         onClose={() => setIsSubmissionModalOpen(false)}
         discipline={activeDiscipline}
+        evidenceTypes={evidenceTypes === undefined ? undefined : availableEvidenceTypes}
         onSubmit={async (data) => {
           if (onSubmitPaper) {
             await onSubmitPaper(data);
+          } else {
+            throw new Error(t('curriculum.seminaryPaperModal.submissionFailed'));
           }
         }}
       />

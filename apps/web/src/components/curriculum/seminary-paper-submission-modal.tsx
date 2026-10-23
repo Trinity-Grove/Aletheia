@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   SEMINARY_EVIDENCE_TYPE_CODES,
+  type EvidenceTypeCatalogEntryDto,
   type SeminaryDiscipline,
   type SeminaryEvidenceTypeCode,
 } from '@aletheia/contracts';
@@ -21,24 +22,38 @@ export interface SeminaryPaperSubmissionModalProps {
   isOpen: boolean;
   onClose(): void;
   discipline: SeminaryDiscipline | null;
+  evidenceTypes?: Pick<EvidenceTypeCatalogEntryDto, 'code'>[] | undefined;
   onSubmit(data: SeminaryPaperSubmissionData): Promise<void>;
 }
 
-const EVIDENCE_TYPE_LABELS: Record<SeminaryEvidenceTypeCode, string> = {
-  THEOLOGICAL_ESSAY: 'Ensaio Teológico',
-  EXEGESIS_PAPER: 'Artigo Exegético',
-  BOOK_REVIEW: 'Resenha Crítica',
-  ORAL_DEFENSE: 'Defesa Oral',
-  THEOLOGICAL_DEBATE: 'Debate Teológico',
-};
+function getInitialEvidenceTypeCode(
+  discipline: SeminaryDiscipline | null,
+  evidenceTypes: Pick<EvidenceTypeCatalogEntryDto, 'code'>[] | undefined
+): SeminaryEvidenceTypeCode {
+  const available = evidenceTypes
+    ? evidenceTypes.filter((entry) => SEMINARY_EVIDENCE_TYPE_CODES.includes(entry.code as SeminaryEvidenceTypeCode))
+    : SEMINARY_EVIDENCE_TYPE_CODES.map((code) => ({ code }));
+  const suggested = discipline?.suggestedEvidenceTypes?.find((code) =>
+    available.some((entry) => entry.code === code)
+  );
+  return (suggested ?? available[0]?.code ?? 'THEOLOGICAL_ESSAY') as SeminaryEvidenceTypeCode;
+}
 
 export function SeminaryPaperSubmissionModal({
   isOpen,
   onClose,
   discipline,
+  evidenceTypes,
   onSubmit,
 }: SeminaryPaperSubmissionModalProps) {
   const { t } = useLocale();
+  const evidenceTypeLabels: Record<SeminaryEvidenceTypeCode, string> = {
+    THEOLOGICAL_ESSAY: t('curriculum.seminaryPaperModal.evidenceTypes.THEOLOGICAL_ESSAY'),
+    EXEGESIS_PAPER: t('curriculum.seminaryPaperModal.evidenceTypes.EXEGESIS_PAPER'),
+    BOOK_REVIEW: t('curriculum.seminaryPaperModal.evidenceTypes.BOOK_REVIEW'),
+    ORAL_DEFENSE: t('curriculum.seminaryPaperModal.evidenceTypes.ORAL_DEFENSE'),
+    THEOLOGICAL_DEBATE: t('curriculum.seminaryPaperModal.evidenceTypes.THEOLOGICAL_DEBATE'),
+  };
 
   const [evidenceTypeCode, setEvidenceTypeCode] = useState<SeminaryEvidenceTypeCode>(
     discipline?.suggestedEvidenceTypes?.[0] ?? 'THEOLOGICAL_ESSAY'
@@ -48,22 +63,30 @@ export function SeminaryPaperSubmissionModal({
   const [fileUrl, setFileUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const availableSeminaryEvidenceTypes = evidenceTypes
+    ? evidenceTypes.filter((entry) => SEMINARY_EVIDENCE_TYPE_CODES.includes(entry.code as SeminaryEvidenceTypeCode))
+    : SEMINARY_EVIDENCE_TYPE_CODES.map((code) => ({ code }));
 
   // Synchronize or reset form when discipline changes or modal is opened
   useEffect(() => {
     if (isOpen) {
-      setEvidenceTypeCode(discipline?.suggestedEvidenceTypes?.[0] ?? 'THEOLOGICAL_ESSAY');
+      setEvidenceTypeCode(getInitialEvidenceTypeCode(discipline, evidenceTypes));
       setTitle('');
       setTextContent('');
       setFileUrl('');
       setError(null);
       setIsSubmitting(false);
     }
-  }, [isOpen, discipline]);
+  }, [isOpen, discipline, evidenceTypes]);
 
   if (!isOpen || !discipline) return null;
 
-  const isFormValid = title.trim().length > 0 && textContent.trim().length > 0;
+  const isFormValid =
+    title.trim().length > 0 &&
+    title.trim().length <= 200 &&
+    textContent.trim().length > 0 &&
+    textContent.trim().length <= 20000 &&
+    availableSeminaryEvidenceTypes.some((entry) => entry.code === evidenceTypeCode);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,7 +105,7 @@ export function SeminaryPaperSubmissionModal({
       onClose();
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Falha ao processar submissão do trabalho acadêmico';
+        err instanceof Error ? err.message : t('curriculum.seminaryPaperModal.submissionFailed');
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -113,7 +136,7 @@ export function SeminaryPaperSubmissionModal({
       }
       description={
         <span>
-          Submissão de produção acadêmica e evidência de aprendizado para a disciplina{' '}
+          {t('curriculum.seminaryPaperModal.description')}{' '}
           <strong>{discipline.competencyCode}</strong>.
         </span>
       }
@@ -146,7 +169,7 @@ export function SeminaryPaperSubmissionModal({
               color: 'var(--text-primary)',
             }}
           >
-            Formato de Trabalho Acadêmico
+            {t('curriculum.seminaryPaperModal.evidenceTypeLabel')}
           </label>
           <select
             id="evidence-type-select"
@@ -162,9 +185,9 @@ export function SeminaryPaperSubmissionModal({
               fontSize: '0.9rem',
             }}
           >
-            {SEMINARY_EVIDENCE_TYPE_CODES.map((code) => (
-              <option key={code} value={code}>
-                {EVIDENCE_TYPE_LABELS[code]} ({code})
+            {availableSeminaryEvidenceTypes.map((entry) => (
+              <option key={entry.code} value={entry.code}>
+                {evidenceTypeLabels[entry.code as SeminaryEvidenceTypeCode]}
               </option>
             ))}
           </select>
@@ -180,12 +203,13 @@ export function SeminaryPaperSubmissionModal({
               color: 'var(--text-primary)',
             }}
           >
-            Título do Trabalho <span style={{ color: 'var(--color-danger, #dc2626)' }}>*</span>
+            {t('curriculum.seminaryPaperModal.titleLabel')} <span style={{ color: 'var(--color-danger, #dc2626)' }}>*</span>
           </label>
           <input
             id="paper-title-input"
             data-testid="paper-title-input"
             type="text"
+            maxLength={200}
             placeholder={t('curriculum.seminaryPaperModal.titlePlaceholder')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -211,13 +235,14 @@ export function SeminaryPaperSubmissionModal({
               color: 'var(--text-primary)',
             }}
           >
-            Conteúdo / Síntese do Trabalho <span style={{ color: 'var(--color-danger, #dc2626)' }}>*</span>
+            {t('curriculum.seminaryPaperModal.contentLabel')} <span style={{ color: 'var(--color-danger, #dc2626)' }}>*</span>
           </label>
           <textarea
             id="paper-content-textarea"
             data-testid="paper-content-textarea"
             placeholder={t('curriculum.seminaryPaperModal.textPlaceholder')}
             rows={8}
+            maxLength={20000}
             value={textContent}
             onChange={(e) => setTextContent(e.target.value)}
             disabled={isSubmitting}
@@ -244,13 +269,13 @@ export function SeminaryPaperSubmissionModal({
               color: 'var(--text-primary)',
             }}
           >
-            URL do Documento / Anexo PDF (opcional)
+            {t('curriculum.seminaryPaperModal.fileUrlLabel')}
           </label>
           <input
             id="paper-file-url-input"
             data-testid="paper-file-url-input"
             type="url"
-            placeholder="https://exemplo.com/documentos/trabalho-teologico.pdf"
+            placeholder={t('curriculum.seminaryPaperModal.fileUrlPlaceholder')}
             value={fileUrl}
             onChange={(e) => setFileUrl(e.target.value)}
             disabled={isSubmitting}
@@ -283,7 +308,7 @@ export function SeminaryPaperSubmissionModal({
             onClick={onClose}
             disabled={isSubmitting}
           >
-            Cancelar
+            {t('curriculum.seminaryPaperModal.cancel')}
           </Button>
 
           <Button
@@ -292,7 +317,7 @@ export function SeminaryPaperSubmissionModal({
             data-testid="save-paper-submission-btn"
             disabled={!isFormValid || isSubmitting}
           >
-            {isSubmitting ? 'Salvando...' : 'Salvar Submissão'}
+            {isSubmitting ? t('curriculum.seminaryPaperModal.saving') : t('curriculum.seminaryPaperModal.submit')}
           </Button>
         </div>
       </form>

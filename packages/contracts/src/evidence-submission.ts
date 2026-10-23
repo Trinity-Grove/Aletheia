@@ -28,6 +28,7 @@ const createEvidenceSubmissionBaseSchema = z.object({
   // (issue #96 section 8: "pode gerar múltiplas evidências") -- most
   // evidence is not project work, so this stays optional.
   projectDefinitionId: z.string().uuid().nullish(),
+  title: z.string().trim().min(1).max(200).nullish(),
   competencies: z.array(evidenceSubmissionCompetencyLinkSchema).min(1),
   textContent: z.string().max(20000).nullish(),
   fileUrl: z.string().url().nullish(),
@@ -95,6 +96,7 @@ export const evidenceSubmissionResponseSchema = z.object({
   evidenceTypeId: z.string().uuid(),
   projectDefinitionId: z.string().uuid().nullable().optional(),
   authorId: z.string().uuid(),
+  title: z.string().nullable().optional(),
   textContent: z.string().nullable().optional(),
   fileUrl: z.string().nullable().optional(),
   storageKey: z.string().nullable().optional(),

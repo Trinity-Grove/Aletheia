@@ -12,6 +12,7 @@ export interface CreateEvidenceSubmissionInput {
   evidenceTypeId: string;
   projectDefinitionId?: string | null | undefined;
   authorId: string;
+  title?: string | null | undefined;
   textContent?: string | null | undefined;
   fileUrl?: string | null | undefined;
   storageKey?: string | null | undefined;
@@ -72,6 +73,7 @@ export class EvidenceSubmissionRepository {
         evidenceTypeId: input.evidenceTypeId,
         projectDefinitionId: input.projectDefinitionId ?? null,
         authorId: input.authorId,
+        title: input.title ?? null,
         textContent: input.textContent ?? null,
         fileUrl: input.fileUrl ?? null,
         storageKey: input.storageKey ?? null,
