@@ -19,6 +19,19 @@ describe('universal educational taxonomy', () => {
     });
   });
 
+  it('preserves advisory age guidance on a published-path definition', () => {
+    const path = createLearningPathSchema.parse({
+      code: 'TRIVIUM.GRAMMAR',
+      domainId: DOMAIN_ID,
+      name: 'Grammar',
+      metadata: { ageRecommendation: { min: 6, max: 12 } },
+    });
+
+    expect(path.metadata).toMatchObject({
+      ageRecommendation: { min: 6, max: 12 },
+    });
+  });
+
   it('aligns a domain-proficiency competency with overlapping stages', () => {
     const competency = createCompetencyDefinitionSchema.parse({
       code: 'TRADES.FOUNDATIONS.TOOL_SAFETY',

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  competencyAgeRecommendationSchema,
   definitionStatusSchema,
 } from './curriculum-definitions.js';
 import {
@@ -24,6 +25,7 @@ const DEFINITION_CODE_REGEX = /^[A-Z0-9][A-Z0-9_.]*$/;
 // Learning Path
 export const learningPathMetadataSchema = z.object({
   levels: z.array(z.string()).default([]),
+  ageRecommendation: competencyAgeRecommendationSchema.optional(),
   educationalStage: universalEducationalStageSchema.optional(),
   educationalStages: z.array(universalEducationalStageSchema).min(1).optional(),
   progressionAxis: progressionAxisSchema.optional(),
